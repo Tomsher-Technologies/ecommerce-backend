@@ -1,0 +1,39 @@
+import 'module-alias/register';
+import { Request, Response } from 'express';
+import AuthService from '../../services/admin/auth-service';
+import BaseController from '@controllers/admin/base-controller';
+
+class AuthController extends BaseController {
+    constructor() {
+        super();
+        this.login = this.login.bind(this);
+    }
+
+    async login(req: Request, res: Response): Promise<void> {
+        try {
+            const { username, password } = req.body;
+            const insertedValues = await AuthService.login(username, password);
+            if (insertedValues) {
+                this.sendSuccessResponse(res, {
+                    data: insertedValues,
+                    message: 'Login successfully!'
+                }, 200);
+            } else {
+                return this.sendErrorResponse(res, 201, { message: 'Please try again' });
+            }
+
+        } catch (error: any) {
+            console.log('akmal', error.message);
+            if (error.message === 'Invalid user name.') {
+                return this.sendErrorResponse(res, 401, { message: 'Authentication failed. User not found.' });
+            } else if (error.message === 'Invalid password.') {
+                return this.sendErrorResponse(res, 401, { message: 'Authentication failed. Invalid password.' });
+            } else {
+                // console.error("Error during login:", error);
+                return this.sendErrorResponse(res, 500, { message: 'Internal Server Error' });
+            }
+        }
+    }
+}
+
+export default new AuthController();
