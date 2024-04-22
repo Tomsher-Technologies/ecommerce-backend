@@ -8,8 +8,9 @@ require('dotenv').config();
 import { url as dbUrl } from './config/database.config.ts';
 
 import AuthRoute from './routes/admin/auth-routes.ts';
-import UserRoute from './routes/admin/user-routes.ts';
-import UserTypeRoute from './routes/admin/user-type-routes.ts';
+import UserRoute from './routes/admin/account/user-routes.ts';
+import UserTypeRoute from './routes/admin/account/user-type-routes.ts';
+import PrivilagesRoute from './routes/admin/account/privilage-routes.ts';
 import CategoryRoutes from './routes/admin/ecommerce/category-routes.ts';
 import BrandsRoutes from './routes/admin/ecommerce/brands-routes.ts';
 import BannersRoutes from './routes/admin/ecommerce/banners-routes.ts';
@@ -63,8 +64,10 @@ const frontendRouter = express.Router();
 // admin
 adminRouter.use('/auth', AuthRoute);
 // adminRouter.use(authMiddleware); // Apply authMiddleware only to the following routes
-adminRouter.use('/user', UserRoute);
-adminRouter.use('/user-types', UserTypeRoute);
+adminRouter.use('/account/user', UserRoute);
+adminRouter.use('/account/user-types', UserTypeRoute);
+adminRouter.use('/account/privilages', PrivilagesRoute);
+
 adminRouter.use('/category', CategoryRoutes);
 adminRouter.use('/brands', BrandsRoutes);
 adminRouter.use('/banners', BannersRoutes);
