@@ -17,7 +17,7 @@ router.use(express.urlencoded({ extended: true }));
 router.use(authMiddleware);
 
 
-router.get('/', userPermissionMiddleware({ permissionBlock: 'users', readOnly: 1 }), UserTypeController.findAll);
+router.get('/', UserTypeController.findAll);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: 'users', readOnly: 1 }), UserTypeController.findOne);
 router.post('/', userPermissionMiddleware({ permissionBlock: 'users', writeOnly: 1 }), UserTypeController.create);
 router.post('/:id', userPermissionMiddleware({ permissionBlock: 'users', writeOnly: 1 }), UserTypeController.update);

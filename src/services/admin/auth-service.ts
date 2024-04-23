@@ -27,7 +27,9 @@ class AuthService {
                         phone: user.phone
                     }, 'your-secret-key', { expiresIn: '1h' });
 
-                    const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id });
+                    const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id }).populate('userTypeId', ['userTypeName', 'slug']);
+         
+
                     let insertedValues: any = {};
                     if (existingUserAuth) {
                         existingUserAuth.token = token;
@@ -40,14 +42,17 @@ class AuthService {
                             expiresIn: '1h',
                             createdOn: new Date(),
                         });
-
-                        insertedValues = await authorisationValues.save();
+                        await authorisationValues.save();
+                        insertedValues = await AuthorisationModel.findOne({ userID: user._id }).populate('userTypeId', ['userTypeName', 'slug']);
                     }
                     if (insertedValues) {
                         const privilages = await PrivilagesService.findOne(insertedValues.userTypeId);
                         return {
-                            token: insertedValues.token,
                             userID: insertedValues.userID,
+                            firstName: user.firstName,
+                            email: user.email,
+                            phone: user.phone,
+                            token: insertedValues.token,
                             userTypeId: insertedValues.userTypeId,
                             expiresIn: insertedValues.expiresIn,
                             privilages

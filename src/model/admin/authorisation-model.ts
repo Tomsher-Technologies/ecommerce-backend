@@ -1,8 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface IAuthorisation extends Document {
-    userID: string;
-    userTypeId: string;
+    userID: Schema.Types.ObjectId;
+    userTypeId: Schema.Types.ObjectId;
     token: string;
     expiresIn: string;
     createdOn: Date;
@@ -10,11 +10,13 @@ interface IAuthorisation extends Document {
 
 const authorisationSchema: Schema = new Schema({
     userID: {
-        type: String,
+        type: Schema.Types.ObjectId,
         required: true,
+        ref: 'User',
     },
     userTypeId: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'UserType',
         required: true,
     },
     token: {
