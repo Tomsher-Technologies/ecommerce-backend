@@ -18,7 +18,7 @@ router.use(authMiddleware);
 
 router.get('/', PrivilagesController.findAll);
 router.get('/:id', PrivilagesController.findOne);
-router.post('/', PrivilagesController.create);
+router.post('/manage-privilage/:id', PrivilagesController.managePrivilage);
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);

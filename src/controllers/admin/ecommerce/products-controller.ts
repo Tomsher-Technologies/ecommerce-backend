@@ -173,19 +173,19 @@ class ProductsController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.en_productTitle) {
+            if (error && error.errors && error.errors.en_productTitle && error.errors.en_productTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        en_productTitle: "Product english name already exists"
+                        en_productTitle: error.errors.en_productTitle.properties.message
                     }
                 }, req);
             }
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.ar_productTitle) {
+            if (error && error.errors && error.errors.ar_productTitle && error.errors.ar_productTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        ar_productTitle: "Product arabic name already exists"
+                        ar_productTitle: error.errors.ar_productTitle.properties.message
                     }
                 }, req);
             }

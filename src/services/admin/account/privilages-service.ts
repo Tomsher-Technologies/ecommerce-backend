@@ -32,7 +32,9 @@ class PrivilagesService {
         return PrivilagesModel.findOne({ userTypeId });
     }
 
-
+    async update(privilageId: string, privilageData: any): Promise<PrivilagesProps | null> {
+        return PrivilagesModel.findByIdAndUpdate(privilageId, privilageData, { new: true, useFindAndModify: false });
+    }
 }
 
 export default new PrivilagesService();

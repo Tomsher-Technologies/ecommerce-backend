@@ -124,11 +124,11 @@ class BrandsController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.brandTitle) {
+            if (error && error.errors && error.errors.brandTitle && error.errors.brandTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        brandTitle: "Brand name already exists"
+                        brandTitle: error.errors.brandTitle.properties.message
                     }
                 }, req);
             }

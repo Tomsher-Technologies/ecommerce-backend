@@ -25,7 +25,7 @@ class CategoryController extends BaseController {
             } else {
                 query.status = '1';
             }
-            
+
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
@@ -48,9 +48,9 @@ class CategoryController extends BaseController {
                 for (const key in filteredQuery) {
                     if (filteredQuery[key] === '> 0') {
                         filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
-                    } else if (filteredQuery[key]  === '0') {
+                    } else if (filteredQuery[key] === '0') {
                         filteredPriorityQuery[key] = 0; // Set query for key equal to 0
-                    } else if (filteredQuery[key]  === '< 0' || filteredQuery[key]  === null || filteredQuery[key]  === undefined) {
+                    } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
                         filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
                     }
                 }
@@ -63,16 +63,16 @@ class CategoryController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
 
-            const categories = await CategoryService.findAll({ 
-                page: parseInt(page_size as string), 
-                limit: parseInt(limit as string), 
+            const categories = await CategoryService.findAll({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
                 query,
                 sort
-             });
+            });
 
             controller.sendSuccessResponse(res, {
                 requestedData: categories,
-                totalCount:  await CategoryService.getTotalCount(query),
+                totalCount: await CategoryService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
@@ -82,13 +82,13 @@ class CategoryController extends BaseController {
 
     async findAllParentCategories(req: Request, res: Response): Promise<void> {
         try {
-            const {  status = '1' } = req.query;
+            const { status = '1' } = req.query;
             const query = { status, _id: { $exists: true } };
-            const categories = await CategoryService.findAllParentCategories({  query });
+            const categories = await CategoryService.findAllParentCategories({ query });
 
             controller.sendSuccessResponse(res, {
                 requestedData: categories,
-                totalCount:  await CategoryService.getTotalCount(query),
+                totalCount: await CategoryService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
@@ -113,7 +113,7 @@ class CategoryController extends BaseController {
                 const categoryData = {
                     categoryTitle,
                     slug: slug || slugify(categoryTitle),
-                    categoryImageUrl: handleFileUpload(req, null, req.file, 'categoryImageUrl','category'),
+                    categoryImageUrl: handleFileUpload(req, null, req.file, 'categoryImageUrl', 'category'),
                     description,
                     parentCategory,
                     type,
@@ -136,11 +136,11 @@ class CategoryController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.categoryTitle) {
+            if (error && error.errors && error.errors.categoryTitle && error.errors.categoryTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        categoryTitle: "Category name already exists"
+                        categoryTitle: error.errors.categoryTitle.properties.message
                     }
                 }, req);
             }
@@ -243,7 +243,7 @@ class CategoryController extends BaseController {
 
             controller.sendSuccessResponse(res, {
                 requestedData: categories,
-                totalCount:  await CategoryService.getTotalCount(query),
+                totalCount: await CategoryService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {

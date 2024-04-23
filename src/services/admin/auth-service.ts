@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 
 import UserModel, { UserProps } from '@model/admin/account/user-model';
 import AuthorisationModel from '@model/admin/authorisation-model';
+import PrivilagesService from './account/privilages-service';
 
 class AuthService {
     async login(username: string, password: string): Promise<any> {
@@ -21,6 +22,7 @@ class AuthService {
 
                     const token: string = jwt.sign({
                         userId: user._id,
+                        userTypeID: user.userTypeID,
                         email: user.email,
                         phone: user.phone
                     }, 'your-secret-key', { expiresIn: '1h' });
@@ -33,7 +35,7 @@ class AuthService {
                     } else {
                         const authorisationValues = new AuthorisationModel({
                             userID: user._id,
-                            userTypeID: user?.userTypeID,
+                            userTypeId: user?.userTypeID,
                             token,
                             expiresIn: '1h',
                             createdOn: new Date(),
@@ -41,8 +43,19 @@ class AuthService {
 
                         insertedValues = await authorisationValues.save();
                     }
+                    if (insertedValues) {
+                        const privilages = await PrivilagesService.findOne(insertedValues.userTypeId);
+                        return {
+                            token: insertedValues.token,
+                            userID: insertedValues.userID,
+                            userTypeId: insertedValues.userTypeId,
+                            expiresIn: insertedValues.expiresIn,
+                            privilages
+                        }
+                    } else {
+                        throw new Error('Something went wrong. please try agaim!');
+                    }
 
-                    return insertedValues;
                 } else {
                     throw new Error('Invalid password.');
                 }

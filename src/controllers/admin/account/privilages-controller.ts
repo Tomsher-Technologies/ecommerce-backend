@@ -1,9 +1,7 @@
 
 import 'module-alias/register'
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 
-import { userSchema } from '@utils/schemas/admin/account/user-schema';
 import { formatZodError } from '@utils/helpers';
 
 import BaseController from '@controllers/admin/base-controller';
@@ -16,7 +14,6 @@ class PrivilagesController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {
             let query: any = { _id: { $exists: true } };
-
 
             const privilages = await PrivilagesService.findAll({
                 query,
@@ -32,44 +29,72 @@ class PrivilagesController extends BaseController {
         }
     }
 
-    async create(req: Request, res: Response): Promise<void> {
+    async managePrivilage(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = privilageSchema.safeParse(req.body);
+            const userTypeId = req.params.id;
+            if (userTypeId) {
+                const validatedData = privilageSchema.safeParse(req.body);
+                if (validatedData.success) {
 
-            if (validatedData.success) {
-                const { userTypeID } = validatedData.data;
-                const user = res.locals.user;
+                    const {  menuItems, status } = validatedData.data;
+                    const privilages = await PrivilagesService.findOne(userTypeId);
+                    const user = res.locals.user;
 
-                const userData = {
-                    userTypeID,
-                    status: '1',
-                    createdBy: user._id,
-                    createdAt: new Date()
-                };
-                const newUser = await PrivilagesService.create(userData);
-                controller.sendSuccessResponse(res, {
-                    requestedData: newUser,
-                    message: 'User created successfully!'
-                });
+                    let privilageData = {};
+                    if (privilages) {// update new privilage based on user type
+                        const updatedData = {
+                            userTypeId,
+                            menuItems,
+                            updatedBy: user._id,
+                            updatedAt: new Date()
+                        };
+                        const newPrivilageData = await PrivilagesService.update(privilages._id, updatedData);
+
+                        privilageData = {
+                            requestedData: newPrivilageData,
+                            message: 'Privilage updated successfully!'
+                        };
+                    } else { // insert new privilage based on user type
+                        const insertData = {
+                            userTypeId,
+                            menuItems,
+                            status: status || '1',
+                            createdBy: user._id,
+                            createdAt: new Date()
+                        };
+                        const updatedPrivilageData = await PrivilagesService.create(insertData);
+
+                        privilageData = {
+                            requestedData: updatedPrivilageData,
+                            message: 'Privilage created successfully!'
+                        }
+                    }
+
+                    controller.sendSuccessResponse(res, privilageData);
+                } else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: formatZodError(validatedData.error.errors)
+                    });
+                }
             } else {
                 controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: formatZodError(validatedData.error.errors)
+                    message: 'Privilage Id not found!',
                 });
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+            if (error && error.errors && error.errors.userTypeId && error.errors.userTypeId.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        email: "Email already exists"
+                        userTypeId: error.errors.userTypeId.properties.message
                     }
                 });
-            } else if (error.code === 11000 && error.keyPattern && error.keyPattern.phone) {
+            } else if (error && error.errors && error.errors.menuItems && error.errors.menuItems.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        phone: "Phone number already exists"
+                        menuItems: error.errors.menuItems.properties.message
                     }
                 });
             }

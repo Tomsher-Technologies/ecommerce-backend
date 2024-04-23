@@ -7,6 +7,7 @@ export interface PrivilagesProps extends Document {
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    updatedBy?: string;
 }
 
 const privilageSchema: Schema<PrivilagesProps> = new Schema({
@@ -42,7 +43,11 @@ const privilageSchema: Schema<PrivilagesProps> = new Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    updatedBy: {
+        type: String,
+        default: ''
+    },
 });
 
 const PrivilagesModel = mongoose.model<PrivilagesProps>('Privilages', privilageSchema);

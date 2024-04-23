@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 interface IAuthorisation extends Document {
     userID: string;
-    userType: string;
+    userTypeId: string;
     token: string;
     expiresIn: string;
     createdOn: Date;
@@ -13,9 +13,8 @@ const authorisationSchema: Schema = new Schema({
         type: String,
         required: true,
     },
-    userType: {
+    userTypeId: {
         type: String,
-        default: 'customer',
         required: true,
     },
     token: {

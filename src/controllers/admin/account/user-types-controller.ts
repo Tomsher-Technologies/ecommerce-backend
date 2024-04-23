@@ -6,7 +6,7 @@ import { usertypeSchema } from '@utils/schemas/admin/account/user-type-schema';
 import { QueryParams } from '@utils/types/common';
 
 import BaseController from '@controllers/admin/base-controller';
-import UserTypeService from '@services/admin/account/user-type-service'
+import UserTypeService from '@services/admin/account/user-type-service';
 
 const controller = new BaseController();
 
@@ -80,11 +80,11 @@ class UserTypeController extends BaseController {
                 });
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.userTypeName) {
+            if (error && error.errors && error.errors.userTypeName && error.errors.userTypeName.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        userTypeName: "User type name already exists"
+                        userTypeName: error.errors.userTypeName.properties.message
                     }
                 });
             }

@@ -6,6 +6,7 @@ import authMiddleware from '@middleware/auth-middleware';
 import { logResponseStatus } from '@components/response-status';
 
 import CategoryController from '@controllers/admin/ecommerce/category-controller';
+import userPermissionMiddleware from '@middleware/admin-user-permission-roll-middleware';
 
 const router: Router = express.Router();
 
@@ -13,7 +14,7 @@ const { upload } = configureMulter('category', ['categoryImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, CategoryController.findAll);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.findAll);
 router.get('/parent-categories', logResponseStatus, CategoryController.findAllParentCategories);
 router.get('/:id', CategoryController.findOne);
 router.post('/', upload.single('categoryImage'), logResponseStatus, CategoryController.create);

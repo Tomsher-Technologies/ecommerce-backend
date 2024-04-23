@@ -87,11 +87,11 @@ class BannerController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.bannerTitle) {
+            if (error && error.errors && error.errors.bannerTitle && error.errors.bannerTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        bannerTitle: "Banner name already exists"
+                        bannerTitle: error.errors.bannerTitle.properties.message
                     }
                 }, req);
             }
