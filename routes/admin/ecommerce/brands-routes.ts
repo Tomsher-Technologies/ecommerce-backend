@@ -2,8 +2,9 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
 import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/auth-middleware';
+import authMiddleware from '@middleware/admin/auth-middleware';
 import { logResponseStatus } from '@components/response-status';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 
 import BrandsController from '@controllers/admin/ecommerce/brands-controller';
 
@@ -13,12 +14,12 @@ const { upload } = configureMulter('brand', ['brandImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, BrandsController.findAll);
-router.get('/:id', BrandsController.findOne);
-router.post('/', upload.single('brandImage'), logResponseStatus, BrandsController.create);
-router.post('/:id', upload.single('brandImage'), logResponseStatus, BrandsController.update);
-router.post('/website/update-website-priority', logResponseStatus, BrandsController.updateWebsitePriority);
-router.delete('/:id', BrandsController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'brands', readOnly: 1 }), BrandsController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), BrandsController.findOne);
+router.post('/', upload.single('brandImage'), userPermissionMiddleware({ permissionBlock: 'brands', readOnly: 1 }), logResponseStatus, BrandsController.create);
+router.post('/:id', upload.single('brandImage'), userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), logResponseStatus, BrandsController.update);
+router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), logResponseStatus, BrandsController.updateWebsitePriority);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'brands'}), BrandsController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

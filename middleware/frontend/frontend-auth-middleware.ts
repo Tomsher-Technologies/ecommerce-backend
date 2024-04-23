@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import AuthorisationModel from '../src/model/frontend/customer-authorisation-model'; // Ensure the correct export is used
-import CustomerModel from '../src/model/frontend/customers-model';
+import AuthorisationModel from '../../src/model/frontend/customer-authorisation-model'; // Ensure the correct export is used
+import CustomerModel from '../../src/model/frontend/customers-model';
 
 interface CustomRequest extends Request {
     user?: any;

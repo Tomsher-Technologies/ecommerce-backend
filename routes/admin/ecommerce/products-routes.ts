@@ -2,7 +2,8 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
 import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/auth-middleware';
+import authMiddleware from '@middleware/admin/auth-middleware';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 import { logResponseStatus } from '@components/response-status';
 
 import ProductsController from '@controllers/admin/ecommerce/products-controller';
@@ -13,9 +14,9 @@ const { upload } = configureMulter('product', ['productImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, ProductsController.findAll);
-router.get('/:id', ProductsController.findOne);
-router.post('/', upload.any(), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'products', readOnly: 1 }), ProductsController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'products', readOnly: 1 }), ProductsController.findOne);
+router.post('/', userPermissionMiddleware({ permissionBlock: 'products', writeOnly: 1 }), upload.any(), async (req: Request, res: Response, next: NextFunction) => {
     try {
         await ProductsController.create(req, res);
     } catch (error) {
@@ -24,9 +25,9 @@ router.post('/', upload.any(), async (req: Request, res: Response, next: NextFun
         res.status(500).json({ message: 'Internal server error' });
     }
 }, ProductsController.create)
-router.post('/:id', upload.any(), logResponseStatus, ProductsController.update);
-router.post('/website/update-website-priority', logResponseStatus, ProductsController.updateWebsitePriority);
-router.delete('/:id', ProductsController.destroy);
+router.post('/:id', userPermissionMiddleware({ permissionBlock: 'products', writeOnly: 1 }), upload.any(), logResponseStatus, ProductsController.update);
+router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: 'products', writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'products' }), ProductsController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

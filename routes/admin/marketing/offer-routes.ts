@@ -1,9 +1,10 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { logResponseStatus } from '@components/response-status';
-import authMiddleware from '@middleware/auth-middleware';
 import { configureMulter } from '@utils/file-uploads';
+import { logResponseStatus } from '@components/response-status';
+import authMiddleware from '@middleware/admin/auth-middleware';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 
 import OffersController from '@controllers/admin/marketing/offers-controller';
 
@@ -13,11 +14,11 @@ const { upload } = configureMulter('offer', ['offerImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, OffersController.findAll);
-router.get('/:id', OffersController.findOne);
-router.post('/', upload.single('offerImage'), logResponseStatus, OffersController.create);
-router.post('/:id', upload.single('offerImage'), logResponseStatus, OffersController.update);
-router.delete('/:id', OffersController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'offers', readOnly: 1 }), OffersController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'offers', readOnly: 1 }), OffersController.findOne);
+router.post('/', upload.single('offerImage'), userPermissionMiddleware({ permissionBlock: 'offers', writeOnly: 1 }), logResponseStatus, OffersController.create);
+router.post('/:id', upload.single('offerImage'), userPermissionMiddleware({ permissionBlock: 'offers', writeOnly: 1 }), logResponseStatus, OffersController.update);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'offers' }), OffersController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

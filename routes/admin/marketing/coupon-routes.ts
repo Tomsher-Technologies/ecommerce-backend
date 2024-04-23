@@ -1,8 +1,9 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import authMiddleware from '@middleware/auth-middleware';
 import { logResponseStatus } from '@components/response-status';
+import authMiddleware from '@middleware/admin/auth-middleware';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 
 import CouponsController from '@controllers/admin/marketing/coupons-controller';
 
@@ -11,11 +12,11 @@ const router: Router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, CouponsController.findAll);
-router.get('/:id', CouponsController.findOne);
-router.post('/', logResponseStatus, CouponsController.create);
-router.post('/:id', logResponseStatus, CouponsController.update);
-router.delete('/:id', CouponsController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'coupons', readOnly: 1 }), CouponsController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'coupons', readOnly: 1 }), CouponsController.findOne);
+router.post('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'coupons', writeOnly: 1 }), CouponsController.create);
+router.post('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'coupons', writeOnly: 1 }), CouponsController.update);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'coupons' }), CouponsController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

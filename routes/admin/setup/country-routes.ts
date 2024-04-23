@@ -2,10 +2,11 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
 import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/auth-middleware';
+import authMiddleware from '@middleware/admin/auth-middleware';
 import { logResponseStatus } from '@components/response-status';
 
 import CountryController from '@controllers/admin/setup/country-controller';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 
 const router: Router = express.Router();
 
@@ -13,12 +14,11 @@ const { upload } = configureMulter('country', ['countryImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, CountryController.findAll);
-router.get('/:id', CountryController.findOne);
-router.post('/', upload.single('countryImage'), logResponseStatus, CountryController.create);
-router.post('/:id', upload.single('countryImage'), logResponseStatus, CountryController.update);
-router.delete('/:id', CountryController.destroy);
-
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'country', readOnly: 1 }), CountryController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'country', readOnly: 1 }), CountryController.findOne);
+router.post('/', upload.single('countryImage'), userPermissionMiddleware({ permissionBlock: 'country', writeOnly: 1 }), logResponseStatus, CountryController.create);
+router.post('/:id', upload.single('countryImage'), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'country', writeOnly: 1 }), CountryController.update);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'country' }), CountryController.destroy);
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     // Check if the error is from multer

@@ -2,11 +2,11 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
 import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/auth-middleware';
+import authMiddleware from '@middleware/admin/auth-middleware';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 import { logResponseStatus } from '@components/response-status';
 
 import CategoryController from '@controllers/admin/ecommerce/category-controller';
-import userPermissionMiddleware from '@middleware/admin-user-permission-roll-middleware';
 
 const router: Router = express.Router();
 
@@ -16,11 +16,11 @@ router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.findAll);
 router.get('/parent-categories', logResponseStatus, CategoryController.findAllParentCategories);
-router.get('/:id', CategoryController.findOne);
-router.post('/', upload.single('categoryImage'), logResponseStatus, CategoryController.create);
-router.post('/:id', upload.single('categoryImage'), logResponseStatus, CategoryController.update);
-router.post('/website/update-website-priority', logResponseStatus, CategoryController.updateWebsitePriority);
-router.delete('/:id', CategoryController.destroy);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.findOne);
+router.post('/', upload.single('categoryImage'), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.create);
+router.post('/:id', upload.single('categoryImage'), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.update);
+router.post('/website/update-website-priority', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.updateWebsitePriority);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'category' }), CategoryController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

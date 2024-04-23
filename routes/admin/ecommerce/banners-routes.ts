@@ -2,7 +2,9 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
 import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/auth-middleware';
+import authMiddleware from '@middleware/admin/auth-middleware';
+import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
+
 import { logResponseStatus } from '@components/response-status';
 
 import BannerController from '@controllers/admin/ecommerce/banner-controller';
@@ -13,11 +15,11 @@ const { upload } = configureMulter('banner', ['bannerImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, BannerController.findAll);
-router.get('/:id', BannerController.findOne);
-router.post('/', upload.single('bannerImage'), logResponseStatus, BannerController.create);
-router.post('/:id', upload.single('bannerImage'), logResponseStatus, BannerController.update);
-router.delete('/:id', BannerController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'banners', readOnly: 1 }), BannerController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: 'banners', writeOnly: 1 }), BannerController.findOne);
+router.post('/', upload.single('bannerImage'), userPermissionMiddleware({ permissionBlock: 'banners', readOnly: 1 }), logResponseStatus, BannerController.create);
+router.post('/:id', upload.single('bannerImage'), userPermissionMiddleware({ permissionBlock: 'banners', writeOnly: 1 }), logResponseStatus, BannerController.update);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'banners', deleteOnly: 1 }), BannerController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

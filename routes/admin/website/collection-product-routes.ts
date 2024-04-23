@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
 import { logResponseStatus } from '@components/response-status';
-import authMiddleware from '@middleware/auth-middleware';
+import authMiddleware from '@middleware/admin/auth-middleware';
 import { configureMulter } from '@utils/file-uploads';
 
 import CollectionsProductsController from '@controllers/admin/website/collections-products-controller';
