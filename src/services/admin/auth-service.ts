@@ -10,7 +10,7 @@ import PrivilagesService from './account/privilages-service';
 class AuthService {
     async login(username: string, password: string): Promise<any> {
         try {
-            const user: UserProps | null = await UserModel.findOne({ email: username });
+            const user: UserProps | null = await UserModel.findOne({ email: username }).populate('userTypeID', ['userTypeName', 'slug']);
 
             if (user) {
                 const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -23,12 +23,12 @@ class AuthService {
                     const token: string = jwt.sign({
                         userId: user._id,
                         userTypeID: user.userTypeID,
+                        countryId: user.countryId,
                         email: user.email,
                         phone: user.phone
                     }, 'your-secret-key', { expiresIn: '1h' });
 
-                    const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id }).populate('userTypeId', ['userTypeName', 'slug']);
-         
+                    const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id });
 
                     let insertedValues: any = {};
                     if (existingUserAuth) {
@@ -42,18 +42,19 @@ class AuthService {
                             expiresIn: '1h',
                             createdOn: new Date(),
                         });
-                        await authorisationValues.save();
-                        insertedValues = await AuthorisationModel.findOne({ userID: user._id }).populate('userTypeId', ['userTypeName', 'slug']);
+                        insertedValues = await authorisationValues.save();
                     }
                     if (insertedValues) {
-                        const privilages = await PrivilagesService.findOne(insertedValues.userTypeId);
+                        const privilages = await PrivilagesService.findOne(user.userTypeID as any);
+
                         return {
                             userID: insertedValues.userID,
+                            userTypeId: user.userTypeID,
+                            countryId: user.countryId,
                             firstName: user.firstName,
                             email: user.email,
                             phone: user.phone,
                             token: insertedValues.token,
-                            userTypeId: insertedValues.userTypeId,
                             expiresIn: insertedValues.expiresIn,
                             privilages
                         }

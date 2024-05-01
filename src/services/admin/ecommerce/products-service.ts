@@ -63,6 +63,10 @@ class ProductsService {
         return ProductGalleryImagesModel.create(gallaryImageData);
     }
 
+    
+
+
+    
     async destroyGalleryImages(gallaryImageID: string): Promise<ProductsProps | null> {
         return ProductGalleryImagesModel.findOneAndDelete({ _id: gallaryImageID });
     }

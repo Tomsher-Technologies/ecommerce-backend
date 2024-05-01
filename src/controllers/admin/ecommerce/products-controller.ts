@@ -21,7 +21,7 @@ class ProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '', category, unCollectionedProducts } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '', productId, category, unCollectionedProducts } = req.query as ProductsQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -37,6 +37,7 @@ class ProductsController extends BaseController {
                     $or: [
                         { en_productTitle: keywordRegex },
                         { ar_productTitle: keywordRegex },
+                        { productTitle: keywordRegex },
                         { categoryTitle: keywordRegex },
                         { brandTitle: keywordRegex },
                     ],
@@ -44,6 +45,12 @@ class ProductsController extends BaseController {
                 } as any;
             }
 
+            if (productId) {
+                query = {
+                    ...query, _id: productId
+                } as any;
+            }
+            
             if (category) {
                 query = {
                     ...query, category: category

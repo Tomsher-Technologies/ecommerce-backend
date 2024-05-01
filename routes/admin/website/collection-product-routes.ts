@@ -15,8 +15,8 @@ router.use(authMiddleware);
 
 router.get('/', logResponseStatus, CollectionsProductsController.findAll);
 router.get('/:id', CollectionsProductsController.findOne);
-router.post('/', upload.single('collectionImage'), logResponseStatus, CollectionsProductsController.create);
-router.post('/:id', upload.single('collectionImage'), logResponseStatus, CollectionsProductsController.update);
+router.post('/', upload.any(), logResponseStatus, CollectionsProductsController.create);
+router.post('/:id', upload.any(), logResponseStatus, CollectionsProductsController.update);
 router.delete('/:id', CollectionsProductsController.destroy);
 
 

@@ -2,6 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import AuthService from '../../services/admin/auth-service';
 import BaseController from '@controllers/admin/base-controller';
+import LanguagesService from '@services/admin/setup/languages-service';
 
 class AuthController extends BaseController {
     constructor() {
@@ -14,8 +15,17 @@ class AuthController extends BaseController {
             const { username, password } = req.body;
             const insertedValues = await AuthService.login(username, password);
             if (insertedValues) {
+
+                const languages = await LanguagesService.findAll({
+                    query: { status: '1' },
+                });
+                // console.log('languages', languages);
+
                 this.sendSuccessResponse(res, {
-                    data: insertedValues,
+                    requestedData: {
+                        userData: insertedValues,
+                        languages: languages
+                    },
                     message: 'Login successfully!'
                 }, 200);
             } else {

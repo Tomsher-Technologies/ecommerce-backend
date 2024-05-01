@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface IAuthorisation extends Document {
+interface Authorisation extends Document {
     userID: Schema.Types.ObjectId;
     userTypeId: Schema.Types.ObjectId;
     token: string;
@@ -34,5 +34,5 @@ const authorisationSchema: Schema = new Schema({
     },
 });
 
-const Authorisation = mongoose.model<IAuthorisation>('Authorisation', authorisationSchema);
+const Authorisation = mongoose.model<Authorisation>('Authorisation', authorisationSchema);
 export default Authorisation;

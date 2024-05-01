@@ -29,7 +29,7 @@ export const handleFileUpload = (req: any, data: any, file: any, fieldName: stri
     if (data && data[fieldName]) {
         if (file) {
             deleteImage(data, fieldName);
-            console.log('${req.protocol}://${req.hostname}/${file.path}`', `${req.protocol}://${req.hostname}/${file.path}`);
+            console.log('${req.protocol}://${req.hostname}/${file.path}`', file);
 
             // return `${file.path}`; // Construct the URL using req.protocol and req.hostname
             return `/public/uploads/${folderPath}/${file.filename}`;
@@ -38,7 +38,7 @@ export const handleFileUpload = (req: any, data: any, file: any, fieldName: stri
         }
     } else {
         if (file) {
-            // console.log('file',file);
+            // console.log('file',file.filename);
             return `/public/uploads/${folderPath}/${file.filename}`; // Construct the URL using req.protocol and req.hostname
         } else {
             return null;

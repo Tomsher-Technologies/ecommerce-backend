@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface UserProps extends Document {
     userTypeID?: Schema.Types.ObjectId;
+    countryId?: Schema.Types.ObjectId;
     email: string;
     firstName: string;
     lastName: string;
@@ -19,6 +20,11 @@ const userSchema: Schema<UserProps> = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'UserType', // Reference to the UserType model
+    },
+    countryId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Countries', // Reference to the Countries model
     },
     email: {
         type: String,

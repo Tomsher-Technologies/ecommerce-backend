@@ -16,8 +16,8 @@ router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'brands', readOnly: 1 }), BrandsController.findAll);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), BrandsController.findOne);
-router.post('/', upload.single('brandImage'), userPermissionMiddleware({ permissionBlock: 'brands', readOnly: 1 }), logResponseStatus, BrandsController.create);
-router.post('/:id', upload.single('brandImage'), userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), logResponseStatus, BrandsController.update);
+router.post('/', upload.any(), userPermissionMiddleware({ permissionBlock: 'brands', readOnly: 1 }), logResponseStatus, BrandsController.create);
+router.post('/:id', upload.any(), userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), logResponseStatus, BrandsController.update);
 router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: 'brands', writeOnly: 1 }), logResponseStatus, BrandsController.updateWebsitePriority);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'brands'}), BrandsController.destroy);
 

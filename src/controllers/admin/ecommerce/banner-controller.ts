@@ -2,11 +2,14 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { bannerSchema } from '@utils/schemas/admin/ecommerce/banner-schema';
+import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '@utils/schemas/admin/ecommerce/banner-schema';
 import { QueryParams } from '@utils/types/common';
 
 import BaseController from '@controllers/admin/base-controller';
 import BannerService from '@services/admin/ecommerce/banner-service'
+import GeneralService from '@services/admin/general-service';
+import BannerModel from '@model/admin/ecommerce/banner-model';
+import { multiLanguageSources } from '@constants/multi-languages';
 
 const controller = new BaseController();
 
@@ -14,7 +17,7 @@ class BannerController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams; 
+            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -25,7 +28,7 @@ class BannerController extends BaseController {
 
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
-                query = { 
+                query = {
                     $or: [
                         { bannerTitle: keywordRegex }
                     ],
@@ -37,12 +40,12 @@ class BannerController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
 
-            const banners = await BannerService.findAll({ 
-                page: parseInt(page_size as string), 
-                limit: parseInt(limit as string), 
+            const banners = await BannerService.findAll({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
                 query,
                 sort
-             });
+            });
 
             controller.sendSuccessResponse(res, {
                 requestedData: banners,
@@ -60,27 +63,81 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { bannerTitle, slug, description, pageTitle } = validatedData.data;
+                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
-                const bannerData = {
-                    bannerTitle,
-                    slug: slug || slugify(bannerTitle),
-                    bannerImageUrl: handleFileUpload(req, null, req.file, 'bannerImageUrl', 'banner'),
-                    description,
-                    pageTitle,
-                    status: '1',
-                    createdBy: user._id,
-                    createdAt: new Date()
-                };
-                const newBanner = await BannerService.create(bannerData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newBanner,
-                    message: 'Banner created successfully!'
-                });
-            } else {
-                console.log('res', (req as any).file);
+                const mewBannerImages = (req as any).files.filter((file: any) =>
+                    file.fieldname &&
+                    file.fieldname.startsWith('bannerImages[') &&
+                    file.fieldname.includes('[bannerImage]')
+                );
+                if (mewBannerImages?.length > 0) {
+                    let bannerImages = []
 
+                    bannerImages = await BannerService.setBannerBlocksImages(req, mewBannerImages);
+
+                    const bannerData = {
+                        countryId,
+                        bannerTitle,
+                        slug: slug || slugify(bannerTitle),
+                        page,
+                        linkType,
+                        link,
+                        position,
+                        blocks,
+                        bannerImages: bannerImages,
+                        bannerImagesUrl: handleFileUpload(req, null, (req.file || mewBannerImages), 'bannerImagesUrl', 'banner'),
+                        description,
+                        status: '1',
+                        createdBy: user._id,
+                        createdAt: new Date()
+                    };
+                    const newBanner = await BannerService.create(bannerData);
+                    if (newBanner) {
+
+                        if (languageValues && languageValues.length > 0) {
+
+                            const languageValuesImages = (req as any).files.filter((file: any) =>
+                                file.fieldname &&
+                                file.fieldname.startsWith('languageValues[') &&
+                                file.fieldname.includes('[bannerImage]')
+                            );
+
+                            await languageValues.map(async (languageValue: any, index: number) => {
+
+                                let languageBannerImages = []
+                                if (languageValuesImages.length > 0) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages);
+                                }
+                                console.log('languageBannerImages', languageBannerImages);
+
+                                GeneralService.multiLanguageFieledsManage(newBanner._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        bannerImages: languageBannerImages
+                                    }
+                                })
+                            })
+                        }
+
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: newBanner,
+                            message: 'Banner created successfully!'
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Error',
+                            validation: 'Something went wrong! banner cant be inserted. please try again'
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: "Banner image is required"
+                    }, req);
+                }
+            } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
@@ -100,7 +157,6 @@ class BannerController extends BaseController {
             }, req);
         }
     }
-
 
     async findOne(req: Request, res: Response): Promise<void> {
         try {
@@ -127,18 +183,140 @@ class BannerController extends BaseController {
             if (validatedData.success) {
                 const bannerId = req.params.id;
                 if (bannerId) {
-                    let updatedbannerData = req.body;
-                    updatedbannerData = {
-                        ...updatedbannerData,
-                        bannerImageUrl: handleFileUpload(req, await BannerService.findOne(bannerId), req.file, 'bannerImageUrl', 'banner'),
+                    const mewBannerImages = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('bannerImages[') &&
+                        file.fieldname.includes('[bannerImage]')
+                    );
+
+                    let bannerImages: any[] = []
+
+                    bannerImages = await BannerService.setBannerBlocksImages(req, mewBannerImages, req.body.bannerImages);
+
+                    let updatedBannerData = req.body;
+                    updatedBannerData = {
+                        ...updatedBannerData,
+                        bannerImages: bannerImages,
                         updatedAt: new Date()
                     };
 
-                    const updatedBanner = await BannerService.update(bannerId, updatedbannerData);
+                    const updatedBanner: any = await BannerService.update(bannerId, updatedBannerData);
+                    if (updatedBanner) {
+
+                        let newLanguageValues: any = []
+                        if (updatedBannerData.languageValues && updatedBannerData.languageValues.length > 0) {
+
+                            const languageValuesImages = (req as any).files.filter((file: any) =>
+                                file.fieldname &&
+                                file.fieldname.startsWith('languageValues[') &&
+                                file.fieldname.includes('[bannerImage]')
+                            );
+
+                            for (let i = 0; i < updatedBannerData.languageValues.length; i++) {
+                                const languageValue = updatedBannerData.languageValues[i];
+                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id);
+                                let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
+
+                                if (languageValuesImages.length > i && languageValuesImages[i]) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages, languageBannerImages);
+                                }
+
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        bannerImages: languageBannerImages
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
+                            }
+                        }
+
+                        const updatedBannerMapped = Object.keys(updatedBanner).reduce((mapped: any, key: string) => {
+                            mapped[key] = updatedBanner[key];
+                            return mapped;
+                        }, {});
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: {
+                                ...updatedBannerMapped,
+                                languageValues: newLanguageValues
+                            },
+                            message: 'Banner updated successfully!'
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Banner Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Banner Id not found! Please try again with banner id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating banner'
+            }, req);
+        }
+    }
+
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = bannerStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const bannerId = req.params.id;
+                if (bannerId) {
+                    let { status } = req.body;
+                    const updatedBannerData = { status };
+
+                    const updatedBanner = await BannerService.update(bannerId, updatedBannerData);
                     if (updatedBanner) {
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedBanner,
-                            message: 'Banner updated successfully!'
+                            message: 'Banner status updated successfully!'
+                        });
+                    } else {
+                        controller.sendErrorResponse(res, 200, {
+                            message: 'Banner Id not found!',
+                        }, req);
+                    }
+                } else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Banner Id not found! Please try again with banner id',
+                    }, req);
+                }
+            } else {
+                controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating banner'
+            }, req);
+        }
+    }
+
+    async positionChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = bannerPositionSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const bannerId = req.params.id;
+                if (bannerId) {
+                    let { position } = req.body;
+
+                    const updatedBanner = await GeneralService.changePosition(BannerModel, bannerId, position);
+                    if (updatedBanner) {
+                        controller.sendSuccessResponse(res, {
+                            requestedData: updatedBanner,
+                            message: 'Banner status updated successfully!'
                         });
                     } else {
                         controller.sendErrorResponse(res, 200, {
@@ -170,9 +348,14 @@ class BannerController extends BaseController {
                 const banner = await BannerService.findOne(bannerId);
                 if (banner) {
                     await BannerService.destroy(bannerId);
+
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, bannerId);
+                    if (existingLanguageValues) {
+                        await GeneralService.destroyLanguageValues(existingLanguageValues._id);
+                    }
                     controller.sendSuccessResponse(res, { message: 'Banner deleted successfully!' });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This banner details not found!',
                     });
                 }

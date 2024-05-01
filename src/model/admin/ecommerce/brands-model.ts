@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface BrandProps extends Document {
+    categoryId:Schema.Types.ObjectId;
     brandTitle: string;
     slug: string;
     description: string;
@@ -22,6 +23,10 @@ export interface BrandProps extends Document {
 }
 
 const brandSchema: Schema<BrandProps> = new Schema({
+    categoryId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    },
     brandTitle: {
         type: String,
         required: true,

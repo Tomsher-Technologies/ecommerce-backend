@@ -36,11 +36,19 @@ class UserService {
     }
 
     async findOne(userId: string): Promise<UserProps | null> {
-        return UserModel.findById(userId);
+        return UserModel.findById(userId).populate({
+            path: 'userTypeID',
+            match: { _id: { $exists: true } }, // Filter out invalid ObjectId values
+            select: 'userTypeName'
+        });
     }
 
     async update(userId: string, userData: any): Promise<UserProps | null> {
-        return UserModel.findByIdAndUpdate(userId, userData, { new: true, useFindAndModify: false });
+        return UserModel.findByIdAndUpdate(userId, userData, { new: true, useFindAndModify: false }).populate({
+            path: 'userTypeID',
+            match: { _id: { $exists: true } }, // Filter out invalid ObjectId values
+            select: 'userTypeName'
+        });
     }
 
     async destroy(userId: string): Promise<UserProps | null> {

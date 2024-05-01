@@ -16,7 +16,9 @@ class BaseController {
                 await unlink(req.file.path);
             } else if ((req) && (req.files?.length > 0)) {
                 req.files.map(async (filePath: any) => {
-                    await unlink(filePath.path);
+                    if(filePath.path){
+                        await unlink(filePath.path);
+                    }
                 })
             }
         }

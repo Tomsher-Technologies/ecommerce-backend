@@ -2,20 +2,53 @@ import { FilterOptionsProps, pagination } from '@components/pagination';
 
 import CollectionsProductsModel, { CollectionsProductsProps } from '@model/admin/website/collections-products-model';
 import ProductsModel from '@model/admin/ecommerce/products-model';
+import { multiLanguageSources } from '@constants/multi-languages';
 
 class CollectionsProductsService {
+    private lookup: any;
+    constructor() {
+        this.lookup = {
+            $lookup: {
+                from: 'multilanguagefieleds', // Ensure 'from' field is included
+                let: { collectionsProductId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$sourceId', '$$collectionsProductId'] },
+                                    { $eq: ['$source', multiLanguageSources.collectionsProducts] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'languageValues',
+            },
+        };
+    }
+
     async findAll(options: FilterOptionsProps = {}): Promise<CollectionsProductsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        let queryBuilder = CollectionsProductsModel.find(query)
-            .skip(skip)
-            .limit(limit)
-            .lean();
 
-        if (sort) {
-            queryBuilder = queryBuilder.sort(sort);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
         }
 
-        return queryBuilder;
+        let pipeline: any[] = [
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+
+            this.lookup,
+
+        ];
+
+        return CollectionsProductsModel.aggregate(pipeline).exec();
     }
 
     async findUnCollectionedProducts(productIds: any[]) {
@@ -53,16 +86,58 @@ class CollectionsProductsService {
         }
     }
 
-    async create(collectionsProductData: any): Promise<CollectionsProductsProps> {
-        return CollectionsProductsModel.create(collectionsProductData);
+    async create(collectionsProductData: any): Promise<CollectionsProductsProps | null> {
+        const createdCollections = await CollectionsProductsModel.create(collectionsProductData);
+
+        if (createdCollections) {
+            const pipeline = [
+                { $match: { _id: createdCollections._id } },
+                this.lookup,
+            ];
+
+            const createdCollectionsWithValues = await CollectionsProductsModel.aggregate(pipeline);
+
+            return createdCollectionsWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async findOne(collectionsProductId: string): Promise<CollectionsProductsProps | null> {
-        return CollectionsProductsModel.findById(collectionsProductId);
+        const collectionsProductData = await CollectionsProductsModel.findById(collectionsProductId);
+
+        if (collectionsProductData) {
+            const pipeline = [
+                { $match: { _id: collectionsProductData._id } },
+                this.lookup,
+            ];
+
+            const collectionsProductDataWithValues = await CollectionsProductsModel.aggregate(pipeline);
+
+            return collectionsProductDataWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async update(collectionsProductId: string, collectionsProductData: any): Promise<CollectionsProductsProps | null> {
-        return CollectionsProductsModel.findByIdAndUpdate(collectionsProductId, collectionsProductData, { new: true, useFindAndModify: false });
+        const updatedCollectionsProduct = await CollectionsProductsModel.findByIdAndUpdate(
+            collectionsProductId,
+            collectionsProductData,
+            { new: true, useFindAndModify: false }
+        );
+        if (updatedCollectionsProduct) {
+            const pipeline = [
+                { $match: { _id: updatedCollectionsProduct._id } },
+                this.lookup,
+            ];
+
+            const updatedCollectionsProductWithValues = await CollectionsProductsModel.aggregate(pipeline);
+
+            return updatedCollectionsProductWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async destroy(collectionsProductId: string): Promise<CollectionsProductsProps | null> {

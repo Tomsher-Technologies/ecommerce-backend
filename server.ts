@@ -7,20 +7,33 @@ require('dotenv').config();
 
 import { url as dbUrl } from './config/database.config.ts';
 
+//admin
 import AuthRoute from './routes/admin/auth-routes.ts';
-import UserRoute from './routes/admin/account/user-routes.ts';
-import UserTypeRoute from './routes/admin/account/user-type-routes.ts';
-import PrivilagesRoute from './routes/admin/account/privilage-routes.ts';
+
+//admin ecommerce 
 import CategoryRoutes from './routes/admin/ecommerce/category-routes.ts';
 import BrandsRoutes from './routes/admin/ecommerce/brands-routes.ts';
 import BannersRoutes from './routes/admin/ecommerce/banners-routes.ts';
+import SliderRoutes from './routes/admin/ecommerce/slider-routes.ts';
 import ProductsRoutes from './routes/admin/ecommerce/products-routes.ts';
 import AttributesRoutes from './routes/admin/ecommerce/attributes-routes.ts';
+
+// admin account
+import UserRoute from './routes/admin/account/user-routes.ts';
+import UserTypeRoute from './routes/admin/account/user-type-routes.ts';
+import PrivilagesRoute from './routes/admin/account/privilage-routes.ts';
+
+// admin marketing
 import CouponRoutes from './routes/admin/marketing/coupon-routes.ts';
 import OfferRoutes from './routes/admin/marketing/offer-routes.ts';
+
+// admin setup
 import CountryRoutes from './routes/admin/setup/country-routes.ts';
+import LanguagesRoutes from './routes/admin/setup/languages-routes.ts';
+
 import CollectionProductRoutes from './routes/admin/website/collection-product-routes.ts'
 
+// frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes.ts'
 
 const app = express();
@@ -64,21 +77,29 @@ const frontendRouter = express.Router();
 // admin
 adminRouter.use('/auth', AuthRoute);
 // adminRouter.use(authMiddleware); // Apply authMiddleware only to the following routes
+
+//admin ecommerce 
 adminRouter.use('/account/user', UserRoute);
 adminRouter.use('/account/user-types', UserTypeRoute);
 adminRouter.use('/account/privilages', PrivilagesRoute);
 
+//admin ecommerce 
 adminRouter.use('/category', CategoryRoutes);
 adminRouter.use('/brands', BrandsRoutes);
 adminRouter.use('/banners', BannersRoutes);
+adminRouter.use('/sliders', SliderRoutes);
 adminRouter.use('/products', ProductsRoutes);
 adminRouter.use('/attributes', AttributesRoutes);
 
+// admin marketing
 adminRouter.use('/marketing/coupons', CouponRoutes);
 adminRouter.use('/marketing/offers', OfferRoutes);
 
+// //admin setup
 adminRouter.use('/setup/country', CountryRoutes);
+adminRouter.use('/setup/languages', LanguagesRoutes);
 
+//admin website 
 adminRouter.use('/website/collection-products', CollectionProductRoutes);
 
 

@@ -8,6 +8,8 @@ import BaseController from '@controllers/admin/base-controller';
 import CollectionsProductsService from '@services/admin/website/collections-products-service';
 import { collectionProductSchema } from '@utils/schemas/admin/website/collection-product-shema';
 import path from 'path';
+import GeneralService from '@services/admin/general-service';
+import { multiLanguageSources } from '@constants/multi-languages';
 
 const controller = new BaseController();
 
@@ -60,8 +62,10 @@ class CollectionsProductsController extends BaseController {
         try {
             const validatedData = collectionProductSchema.safeParse(req.body);
 
+            const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
+
             if (validatedData.success) {
-                const { collectionTitle, slug, collectionSubTitle, collectionsProducts } = validatedData.data;
+                const { collectionTitle, slug, collectionSubTitle, collectionsProducts, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const collectionData = {
@@ -69,17 +73,48 @@ class CollectionsProductsController extends BaseController {
                     slug: slug || slugify(collectionTitle),
                     collectionSubTitle,
                     collectionsProducts: collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [],
-                    collectionImageUrl: handleFileUpload(req, null, req.file, 'collectionImageUrl', 'collection'),
+                    collectionImageUrl: handleFileUpload(req, null, (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                     status: '1',
                     createdBy: user._id,
                     createdAt: new Date()
                 };
 
                 const newCollection = await CollectionsProductsService.create(collectionData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newCollection,
-                    message: 'Collection created successfully!'
-                });
+                if (newCollection) {
+                    const languageValuesImages = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[collectionImage]')
+                    );
+
+                    if (languageValues && languageValues.length > 0) {
+                        await languageValues.map((languageValue: any, index: number) => {
+
+                            let collectionImageUrl = ''
+                            if (languageValuesImages.length > 0) {
+                                collectionImageUrl = handleFileUpload(req, null, languageValuesImages[index], `collectionImageUrl`, 'collection');
+                            }
+
+                            GeneralService.multiLanguageFieledsManage(newCollection._id, {
+                                ...languageValue,
+                                languageValues: {
+                                    ...languageValue.languageValues,
+                                    collectionImageUrl
+                                }
+                            })
+                        })
+                    }
+
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newCollection,
+                        message: 'Collection created successfully!'
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'Something went wrong! collection cant be inserted. please try again'
+                    }, req);
+                }
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -105,9 +140,8 @@ class CollectionsProductsController extends BaseController {
     async findOne(req: Request, res: Response): Promise<void> {
         try {
             const collectionId = req.params.id;
-            console.log('productIds', collectionId);
             if (collectionId) {
-                const collection = await CollectionsProductsService.findOne(collectionId);
+                const collection: any = await CollectionsProductsService.findOne(collectionId);
                 if (collection) {
                     const collectionProducts = await CollectionsProductsService.findCollectionProducts(collection.collectionsProducts);
                     // const unCollectionedProducts = await CollectionsProductsService.findUnCollectionedProducts(collection.collectionsProducts);
@@ -120,6 +154,7 @@ class CollectionsProductsController extends BaseController {
                             collectionSubTitle: collection.collectionSubTitle,
                             collectionImageUrl: collection.collectionImageUrl,
                             collectionsProducts: collectionProducts,
+                            languageValues: collection.languageValues,
                             // unCollectionedProducts: unCollectionedProducts,
                         },
                         message: 'Success'
@@ -190,6 +225,11 @@ class CollectionsProductsController extends BaseController {
                 const collection = await CollectionsProductsService.findOne(collectionId);
                 if (collection) {
                     await CollectionsProductsService.destroy(collectionId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.collectionsProducts, collectionId);
+                    if (existingLanguageValues) {
+                        await GeneralService.destroyLanguageValues(existingLanguageValues._id);
+                    }
+
                     // console.log('collectionData', path.join(__dirname, `../../../${collection.collectionImageUrl}`));
                     // deleteFile(path.join(__dirname, `../../../${collection.collectionImageUrl}`))
                     controller.sendSuccessResponse(res, {

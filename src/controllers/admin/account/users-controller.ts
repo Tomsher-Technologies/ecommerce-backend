@@ -62,11 +62,12 @@ class UserController extends BaseController {
             const validatedData = userSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { userTypeID, email, firstName, lastName, phone, password } = validatedData.data;
+                const { userTypeID, countryId, email, firstName, lastName, phone, password } = validatedData.data;
                 const user = res.locals.user;
 
                 const userData = {
                     userTypeID,
+                    countryId,
                     email,
                     firstName,
                     lastName,
