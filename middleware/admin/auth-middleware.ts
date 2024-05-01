@@ -8,10 +8,10 @@ interface CustomRequest extends Request {
 
 const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.header('Authorization');
+    const token = req.header('Authorization')?.split(' ')[1];
     if (token) {
       const existingUserAuth = await AuthorisationModel.findOne({ token: token });
-      // console.log('existingUserAuth', existingUserAuth);
+      console.log('existingUserAuth', token);
 
       if (existingUserAuth) {
         const user = await UserModel.findOne({ _id: existingUserAuth.userID });
