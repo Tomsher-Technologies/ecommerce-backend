@@ -21,14 +21,6 @@ const multiLanguageFieledsSchema: Schema = new Schema({
     sourceId: {
         type: Schema.Types.ObjectId,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('MultiLanguageFieleds').countDocuments({ languageTitle: value });
-                return count === 0;
-            },
-            message: 'Value from id must be unique'
-        },
     },
     languageValues: {
         type: Schema.Types.Mixed,
@@ -39,6 +31,9 @@ const multiLanguageFieledsSchema: Schema = new Schema({
         required: true,
     },
 });
+
+// Remove the unique constraint from the sourceId field
+// multiLanguageFieledsSchema.index({ sourceId: 1 }, { unique: true }); // Commented out to remove uniqueness constraint
 
 const MultiLanguageFieledsModel = mongoose.model<MultiLanguageFieledsProps>('MultiLanguageFieleds', multiLanguageFieledsSchema);
 export default MultiLanguageFieledsModel;

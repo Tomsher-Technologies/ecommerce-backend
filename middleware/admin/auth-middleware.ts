@@ -11,7 +11,6 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
     const token = req.header('Authorization')?.split(' ')[1];
     if (token) {
       const existingUserAuth = await AuthorisationModel.findOne({ token: token });
-      console.log('existingUserAuth', token);
 
       if (existingUserAuth) {
         const user = await UserModel.findOne({ _id: existingUserAuth.userID });

@@ -216,9 +216,12 @@ class BannerController extends BaseController {
                                 const languageValue = updatedBannerData.languageValues[i];
                                 const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id);
                                 let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
-                                if (languageValuesImages.length > i && languageValuesImages[i]) {
-                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages, languageBannerImages);
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage, languageBannerImages);
+                                } else {
+                                    languageBannerImages = updatedBannerData.languageValues[i].languageValues?.languageBannerImages
                                 }
 
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
