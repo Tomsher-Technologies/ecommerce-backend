@@ -166,8 +166,6 @@ class SlidersController extends BaseController {
             const validatedData = sliderSchema.safeParse(req.body);
             if (validatedData.success) {
                 const sliderId = req.params.id;
-
-
                 if (sliderId) {
                     const sliderImage = (req as any).files.find((file: any) => file.fieldname === 'sliderImage');
 
@@ -192,10 +190,13 @@ class SlidersController extends BaseController {
                             for (let i = 0; i < updatedSliderData.languageValues.length; i++) {
                                 const languageValue = updatedSliderData.languageValues[i];
                                 let sliderImageUrl = '';
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
-                                if (languageValuesImages.length > i && languageValuesImages[i]) {
+                                if (languageValuesImages.length > 0 && matchingImage) {
                                     const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.sliders, updatedSlider._id);
-                                    sliderImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, languageValuesImages[i], `sliderImageUrl`, 'slider');
+                                    sliderImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `sliderImageUrl`, 'slider');
+                                } else {
+                                    sliderImageUrl = updatedSliderData.languageValues[i].languageValues?.sliderImageUrl
                                 }
 
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedSlider._id, {

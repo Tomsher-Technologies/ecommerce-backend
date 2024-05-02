@@ -1,13 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface BrandProps extends Document {
-    categoryId:Schema.Types.ObjectId;
+    categoryId: Schema.Types.ObjectId;
     brandTitle: string;
     slug: string;
     description: string;
     brandImageUrl: string;
     corporateGiftsPriority: string;
-    pageTitle?: string;
     status: string;
     statusAt?: Date;
     metaTitle?: string;
@@ -26,6 +25,7 @@ const brandSchema: Schema<BrandProps> = new Schema({
     categoryId: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
+        default: ''
     },
     brandTitle: {
         type: String,
@@ -50,10 +50,6 @@ const brandSchema: Schema<BrandProps> = new Schema({
     corporateGiftsPriority: {
         type: String,
         default: '0'
-    },
-    pageTitle: {
-        type: String,
-        default: ''
     },
     status: {
         type: String,
