@@ -217,13 +217,12 @@ class BannerController extends BaseController {
                                 const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id, languageValue.languageId);
                                 const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
-
                                 let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
 
                                 if (languageValuesImages.length > 0 && matchingImage) {
                                     languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage, languageBannerImages);
                                 }
-                                console.log('existingLanguageValues', languageBannerImages, 'akmal', existingLanguageValues.languageValues);
+                        
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
                                     ...languageValue,
                                     languageValues: {
@@ -239,9 +238,7 @@ class BannerController extends BaseController {
                             mapped[key] = updatedBanner[key];
                             return mapped;
                         }, {});
-                        // return controller.sendErrorResponse(res, 200, {
-                        //     message: 'Banner Id not found!',
-                        // }, req);
+           
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedBannerMapped,
