@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { TokenExpiredError } from 'jsonwebtoken';
 
 import AuthorisationModel from '@model/admin/authorisation-model'; // Ensure the correct export is used
 import UserModel from '@model/admin/account/user-model';
@@ -12,32 +12,31 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
   try {
     const token = req.header('Authorization')?.split(' ')[1];
     if (token) {
-      // const existingUserAuth = await AuthorisationModel.findOne({ token: token });
-      const checkToken: any = jwt.verify(token, 'your-secret-key');
-      // console.log('checkToken', checkToken);
+      const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
       if (checkToken) {
         const user = await UserModel.findOne({ _id: checkToken.userId });
         if (user) {
           req.user = user;
-
           res.locals.user = user;
           next();
         } else {
-          return res.status(201).json({ message: 'Inavlid user name or password!', status: false });
+          return res.status(201).json({ message: 'Invalid user name or password!', status: false, reLogin: false });
         }
       } else {
-        return res.status(201).json({ message: 'Unauthorized - Invalid token', status: false });
+        return res.status(201).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
       }
 
     } else {
-      return res.status(201).json({ message: 'Unauthorized - Missing token', status: false });
+      return res.status(201).json({ message: 'Unauthorized - Missing token', status: false, reLogin: true });
     }
-
-
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    if (error instanceof TokenExpiredError) {
+      return res.status(201).json({ message: 'Unauthorized - Token expired', status: false, reLogin: true });
+    } else {
+      console.error(error);
+      return res.status(500).json({ message: 'Internal Server Error', status: false, reLogin: false });
+    }
   }
 };
 

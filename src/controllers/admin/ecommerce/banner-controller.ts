@@ -105,9 +105,7 @@ class BannerController extends BaseController {
 
                             await languageValues.map(async (languageValue: any, index: number) => {
                                 const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${index}]`));
-                                // console.log(index, 'languageValuesImages', languageValuesImages);
-                                console.log('akmal', languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${index}]`)));
-                               
+
                                 let languageBannerImages = []
                                 if (Array.isArray(matchingImage) && matchingImage?.length > 0) {
                                     languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage);
@@ -122,10 +120,7 @@ class BannerController extends BaseController {
                                 })
                             })
                         }
-                        // return controller.sendErrorResponse(res, 200, {
-                        //     message: 'Error',
-                        //     validation: 'Something went wrong! banner cant be inserted. please try again'
-                        // }, req);
+
                         return controller.sendSuccessResponse(res, {
                             requestedData: newBanner,
                             message: 'Banner created successfully!'
@@ -219,23 +214,24 @@ class BannerController extends BaseController {
 
                             for (let i = 0; i < updatedBannerData.languageValues.length; i++) {
                                 const languageValue = updatedBannerData.languageValues[i];
-                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id);
-                                console.log('existingLanguageValues', existingLanguageValues);
+                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id, languageValue.languageId);
+                                const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
 
                                 let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
 
-                                if (languageValuesImages.length > i && languageValuesImages[i]) {
-                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages, languageBannerImages);
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage, languageBannerImages);
                                 }
-
-                                // const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
-                                //     ...languageValue,
-                                //     languageValues: {
-                                //         ...languageValue.languageValues,
-                                //         bannerImages: languageBannerImages
-                                //     }
-                                // });
-                                // newLanguageValues.push(languageValues);
+                                console.log('existingLanguageValues', languageBannerImages, 'akmal', existingLanguageValues.languageValues);
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        bannerImages: languageBannerImages
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
                             }
                         }
 
@@ -243,9 +239,9 @@ class BannerController extends BaseController {
                             mapped[key] = updatedBanner[key];
                             return mapped;
                         }, {});
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Banner Id not found!',
-                        }, req);
+                        // return controller.sendErrorResponse(res, 200, {
+                        //     message: 'Banner Id not found!',
+                        // }, req);
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedBannerMapped,

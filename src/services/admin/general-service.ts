@@ -4,13 +4,19 @@ import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "@model/adm
 
 class GeneralService {
 
-    async findOneLanguageValues(source: string, sourceId: string) {
+    async findOneLanguageValues(source: string, sourceId: string, languageId?: string) {
         try {
-            const languageValues: any = await MultiLanguageFieledsModel.findOne({
+            let query: any = {
                 source: source,
                 sourceId: sourceId
-            });
-
+            };
+    
+            if (languageId) {
+                query.languageId = languageId;
+            }
+    
+            const languageValues: any = await MultiLanguageFieledsModel.findOne(query);
+    
             return languageValues || [];
         } catch (error: any) {
             throw new Error('Error occurred while changing slider position: ' + error.message);
