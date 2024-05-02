@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
 import AuthorisationModel from '@model/admin/authorisation-model'; // Ensure the correct export is used
 import UserModel from '@model/admin/account/user-model';
 
@@ -10,10 +12,12 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
   try {
     const token = req.header('Authorization')?.split(' ')[1];
     if (token) {
-      const existingUserAuth = await AuthorisationModel.findOne({ token: token });
+      // const existingUserAuth = await AuthorisationModel.findOne({ token: token });
+      const checkToken: any = jwt.verify(token, 'your-secret-key');
+      // console.log('checkToken', checkToken);
 
-      if (existingUserAuth) {
-        const user = await UserModel.findOne({ _id: existingUserAuth.userID });
+      if (checkToken) {
+        const user = await UserModel.findOne({ _id: checkToken.userId });
         if (user) {
           req.user = user;
 

@@ -144,7 +144,7 @@ class BannerService {
                 const bannerImagesUrl = await Promise.all(newBannerImages.map(async (newImage) => {
                     let bannerImageUrl = '';
                     if (newImage) {
-
+                    
                         index = this.getIndexFromFieldName(newImage.fieldname);
                         if (index !== -1 && oldBannerImages && index < oldBannerImages.length) {
                             // Update the corresponding element if index is found
@@ -155,6 +155,7 @@ class BannerService {
                         } else {
                             // Otherwise, upload a new image
                             bannerImageUrl = await handleFileUpload(req, null, newImage, 'bannerImageUrl', 'banner');
+                          
                         }
                     } else {
 
@@ -173,7 +174,9 @@ class BannerService {
                 } else {
                     combinedImages = bannerImagesUrl
                 }
-                console.log('oldBannerImages', oldBannerImages);
+                console.log(index, 'combinedImages', combinedImages);
+
+                // console.log('oldBannerImages', oldBannerImages);
                 return combinedImages;
             } else {
            
