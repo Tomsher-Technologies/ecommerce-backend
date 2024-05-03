@@ -1,21 +1,53 @@
 import { FilterOptionsProps, pagination } from '@components/pagination';
+import { multiLanguageSources } from '@constants/multi-languages';
 
 import BrandsModel, { BrandProps } from '@model/admin/ecommerce/brands-model';
 
 
 class BrandsService {
+
+    private lookup: any;
+    constructor() {
+        this.lookup = {
+            $lookup: {
+                from: 'multilanguagefieleds', // Ensure 'from' field is included
+                let: { brandId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$sourceId', '$$brandId'] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.brands] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'languageValues',
+            },
+        };
+    }
+
     async findAll(options: FilterOptionsProps = {}): Promise<BrandProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        let queryBuilder = BrandsModel.find(query) 
-        .skip(skip)
-        .limit(limit)
-        .lean();
-
-        if (sort) {
-            queryBuilder = queryBuilder.sort(sort);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
         }
 
-        return queryBuilder;
+        let pipeline: any[] = [
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+
+            this.lookup,
+        ];
+
+        return BrandsModel.aggregate(pipeline).exec();
     }
     async getTotalCount(query: any = {}): Promise<number> {
         try {
@@ -26,16 +58,59 @@ class BrandsService {
         }
     }
 
-    async create(brandData: any): Promise<BrandProps> {
-        return BrandsModel.create(brandData);
+    async create(brandData: any): Promise<BrandProps | null> {
+        const createdBrand = await BrandsModel.create(brandData);
+
+        if (createdBrand) {
+            const pipeline = [
+                { $match: { _id: createdBrand._id } },
+                this.lookup,
+            ];
+
+            const createdBrandWithValues = await BrandsModel.aggregate(pipeline);
+
+            return createdBrandWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async findOne(brandId: string): Promise<BrandProps | null> {
-        return BrandsModel.findById(brandId);
+        const brandData = await BrandsModel.findById(brandId);
+
+        if (brandData) {
+            const pipeline = [
+                { $match: { _id: brandData._id } },
+                this.lookup,
+            ];
+
+            const brandDataWithValues = await BrandsModel.aggregate(pipeline);
+
+            return brandDataWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async update(brandId: string, brandData: any): Promise<BrandProps | null> {
-        return BrandsModel.findByIdAndUpdate(brandId, brandData, { new: true, useFindAndModify: false });
+        const updatedBrand = await BrandsModel.findByIdAndUpdate(
+            brandId,
+            brandData,
+            { new: true, useFindAndModify: false }
+        );
+
+        if (updatedBrand) {
+            const pipeline = [
+                { $match: { _id: updatedBrand._id } },
+                this.lookup,
+            ];
+
+            const updatedBrandWithValues = await BrandsModel.aggregate(pipeline);
+
+            return updatedBrandWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async destroy(brandId: string): Promise<BrandProps | null> {

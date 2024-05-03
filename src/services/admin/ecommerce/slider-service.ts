@@ -19,7 +19,7 @@ class SliderService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$sliderId'] },
-                                    { $eq: ['$source', multiLanguageSources.sliders] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.sliders] },
                                 ],
                             },
                         },

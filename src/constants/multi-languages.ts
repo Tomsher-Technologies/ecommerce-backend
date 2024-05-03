@@ -1,5 +1,12 @@
+
 export const multiLanguageSources = {
-    sliders: 'sliders',
-    banner: 'banner',
-    collectionsProducts: 'collectionsproducts'
+    ecommerce: {
+        brands: 'brands',
+        sliders: 'sliders',
+        banner: 'banner',
+        attribute: 'attributes',
+    },
+    website: {
+        collectionsProducts: 'collectionsproducts',
+    }
 }

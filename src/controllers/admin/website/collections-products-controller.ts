@@ -225,7 +225,7 @@ class CollectionsProductsController extends BaseController {
                 const collection = await CollectionsProductsService.findOne(collectionId);
                 if (collection) {
                     await CollectionsProductsService.destroy(collectionId);
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.collectionsProducts, collectionId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.website.collectionsProducts, collectionId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }

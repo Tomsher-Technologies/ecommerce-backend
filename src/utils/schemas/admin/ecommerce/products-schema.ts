@@ -35,7 +35,6 @@ export const updateWebsitePrioritySchema = zod.object({
 
 export const attributeSchema = zod.object({
     attributeTitle: zod.string({ required_error: 'Attribute title is required', }).min(2, 'Attribute title is should be 2 chars minimum'),
-    en_attributeLabel: zod.string({ required_error: 'Attribute english label is required', }).min(2, 'Attribute english label is should be 2 chars minimum'),
-    ar_attributeLabel: zod.string({ required_error: 'Attribute arabic label is required', }).min(2, 'Attribute arabic label is should be 2 chars minimum'),
+    attributeType: zod.string({ required_error: 'Attribute type is required', }).min(2, 'Attribute type is should be 2 chars minimum'),
     attributeValues: zod.array(zod.unknown()),
 }).nonstrict();

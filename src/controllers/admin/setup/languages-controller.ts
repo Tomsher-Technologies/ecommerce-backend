@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, slugify } from '@utils/helpers';
-import { languageSchema } from '@utils/schemas/admin/setup/language-shema';
+import { languageSchema, languageStatusSchema } from '@utils/schemas/admin/setup/language-shema';
 import { QueryParams } from '@utils/types/common';
 
 import BaseController from '@controllers/admin/base-controller';
@@ -164,14 +164,55 @@ class LanguagesController extends BaseController {
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = languageStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const language = req.params.id;
+                if (language) {
+                    let { status } = req.body;
+                    const updatedLanguageData = { status };
+
+                    const updatedLanguage = await LanguagesService.update(language, updatedLanguageData);
+                    if (updatedLanguage) {
+                        controller.sendSuccessResponse(res, {
+                            requestedData: updatedLanguage,
+                            message: 'Language status updated successfully!'
+                        });
+                    } else {
+                        controller.sendErrorResponse(res, 200, {
+                            message: 'Language Id not found!',
+                        }, req);
+                    }
+                } else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Language Id not found! Please try again with language id',
+                    }, req);
+                }
+            } else {
+                controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating language'
+            }, req);
+        }
+    }
+
     async destroy(req: Request, res: Response): Promise<void> {
         try {
             const languageId = req.params.id;
             if (languageId) {
                 const language = await LanguagesService.findOne(languageId);
                 if (language) {
-                    await LanguagesService.destroy(languageId);
-                    controller.sendSuccessResponse(res, { message: 'Language deleted successfully!' });
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'You cant delete this language!',
+                    });
+                    // await LanguagesService.destroy(languageId);
+                    // controller.sendSuccessResponse(res, { message: 'Language deleted successfully!' });
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This language details not found!',

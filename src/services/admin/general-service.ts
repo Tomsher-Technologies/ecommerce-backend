@@ -4,13 +4,19 @@ import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "@model/adm
 
 class GeneralService {
 
-    async findOneLanguageValues(source: string, sourceId: string) {
+    async findOneLanguageValues(source: string, sourceId: string, languageId?: string) {
         try {
-            const languageValues: any = await MultiLanguageFieledsModel.findOne({
+            let query: any = {
                 source: source,
                 sourceId: sourceId
-            });
-
+            };
+    
+            if (languageId) {
+                query.languageId = languageId;
+            }
+    
+            const languageValues: any = await MultiLanguageFieledsModel.findOne(query);
+    
             return languageValues || [];
         } catch (error: any) {
             throw new Error('Error occurred while changing slider position: ' + error.message);
@@ -25,7 +31,7 @@ class GeneralService {
                 source: languageValues.source,
                 sourceId: sourceId
             });
-          
+
             let managedLanguageValue: any = {};
             if (existingEntries) {
                 const filter = {
@@ -51,9 +57,9 @@ class GeneralService {
 
             } else {
                 if (languageValues.languageValues) {
-                    const isEmptyValue = Object.values(languageValues.languageValues).some(value => value !== '');
-                    
-                    console.log('isEmptyValue', isEmptyValue);
+                    const isEmptyValue = Object.values(languageValues.languageValues).some(value => (value !== ''));
+
+                    // console.log('isEmptyValue', isEmptyValue);
                     if (isEmptyValue) {
                         const multiLanguageData = {
                             languageId: languageValues.languageId,
@@ -63,7 +69,7 @@ class GeneralService {
                             languageValues: languageValues.languageValues,
                             createdAt: new Date()
                         };
-                        console.log('multiLanguageData', multiLanguageData);
+                        // console.log('multiLanguageData', multiLanguageData);
 
                         managedLanguageValue = await MultiLanguageFieledsModel.create(multiLanguageData);
                     }

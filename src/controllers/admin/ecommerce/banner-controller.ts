@@ -104,12 +104,12 @@ class BannerController extends BaseController {
                             );
 
                             await languageValues.map(async (languageValue: any, index: number) => {
+                                const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${index}]`));
 
                                 let languageBannerImages = []
-                                if (languageValuesImages.length > 0) {
-                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages);
+                                if (Array.isArray(matchingImage) && matchingImage?.length > 0) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage);
                                 }
-                                console.log('languageBannerImages', languageBannerImages);
 
                                 GeneralService.multiLanguageFieledsManage(newBanner._id, {
                                     ...languageValue,
@@ -214,13 +214,15 @@ class BannerController extends BaseController {
 
                             for (let i = 0; i < updatedBannerData.languageValues.length; i++) {
                                 const languageValue = updatedBannerData.languageValues[i];
-                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id);
+                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, updatedBanner._id, languageValue.languageId);
+                                const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
                                 let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
 
-                                if (languageValuesImages.length > i && languageValuesImages[i]) {
-                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages, languageBannerImages);
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage, languageBannerImages);
                                 }
-
+                        
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
                                     ...languageValue,
                                     languageValues: {
@@ -236,6 +238,7 @@ class BannerController extends BaseController {
                             mapped[key] = updatedBanner[key];
                             return mapped;
                         }, {});
+           
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedBannerMapped,
@@ -349,7 +352,7 @@ class BannerController extends BaseController {
                 if (banner) {
                     await BannerService.destroy(bannerId);
 
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, bannerId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, bannerId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }

@@ -23,7 +23,7 @@ class AttributesController extends BaseController {
                 query = {
                     $or: [
                         { attributeTitle: keywordRegex },
-                        { en_attributeLabel: keywordRegex },
+                        { attributeLabel: keywordRegex },
                         { ar_attributeLabel: keywordRegex }
                     ],
                     ...query
@@ -57,23 +57,29 @@ class AttributesController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { attributeTitle, en_attributeLabel, ar_attributeLabel, attributeValues } = validatedData.data;
+                const { attributeTitle, attributeType, attributeValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
                     attributeTitle,
-                    en_attributeLabel,
-                    ar_attributeLabel,
+                    slug: slugify(attributeTitle),
+                    attributeType,
                     createdAt: new Date(),
                 };
 
                 const newAttribute = await AttributesService.create(attributeData);
                 if (newAttribute) {
-                    const newValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues)
+                    if (attributeType === 'pattern') {
+                        const attributePatternValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('attributeValues[') &&
+                            file.fieldname.includes('[patternImage]')
+                        );
+                    }
+                    const newValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newAttribute._id,
-                            ar_attributeLabel: newAttribute.ar_attributeLabel,
-                            en_attributeLabel: newAttribute.en_attributeLabel,
+                            attributeTitle: newAttribute.attributeTitle,
                             attributeValues: newValue
                         },
                         message: 'Please try again!'
@@ -91,11 +97,11 @@ class AttributesController extends BaseController {
             }
         } catch (error: any) {
 
-            if (error && error.errors && error.errors.attributeTitle && error.errors.attributeTitle.properties) {
+            if (error && error.errors && (error.errors?.attributeTitle || error.errors?.attributeType) && (error.errors?.attributeTitle?.properties || error.errors?.attributeType?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        attributeTitle: error.errors.attributeTitle.properties.message
+                        attributeTitle: (error.errors?.attributeTitle?.properties || error.errors?.attributeType?.properties)
                     }
                 }, req);
             }
@@ -144,11 +150,11 @@ class AttributesController extends BaseController {
                             const newValue = await AttributesService.attributeDetailsService(updatedAttribute._id, validatedData.data.attributeValues);
 
                             return controller.sendSuccessResponse(res, {
-                                requestedData: { 
+                                requestedData: {
                                     _id: updatedAttribute._id,
-                                    ar_attributeLabel: updatedAttribute.ar_attributeLabel,
-                                    en_attributeLabel: updatedAttribute.en_attributeLabel,
-                                     attributeValues: newValue },
+                                    attributeTitle: updatedAttribute.attributeTitle,
+                                    attributeValues: newValue
+                                },
                                 message: 'Please try again!'
                             });
                         } else {

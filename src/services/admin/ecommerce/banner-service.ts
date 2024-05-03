@@ -19,7 +19,7 @@ class BannerService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$bannerId'] },
-                                    { $eq: ['$source', multiLanguageSources.banner] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.banner] },
                                 ],
                             },
                         },
@@ -144,7 +144,7 @@ class BannerService {
                 const bannerImagesUrl = await Promise.all(newBannerImages.map(async (newImage) => {
                     let bannerImageUrl = '';
                     if (newImage) {
-
+                    
                         index = this.getIndexFromFieldName(newImage.fieldname);
                         if (index !== -1 && oldBannerImages && index < oldBannerImages.length) {
                             // Update the corresponding element if index is found
@@ -155,6 +155,7 @@ class BannerService {
                         } else {
                             // Otherwise, upload a new image
                             bannerImageUrl = await handleFileUpload(req, null, newImage, 'bannerImageUrl', 'banner');
+                          
                         }
                     } else {
 
@@ -173,7 +174,9 @@ class BannerService {
                 } else {
                     combinedImages = bannerImagesUrl
                 }
-                console.log('oldBannerImages', oldBannerImages);
+                // console.log(index, 'combinedImages', combinedImages);
+
+                // console.log('oldBannerImages', oldBannerImages);
                 return combinedImages;
             } else {
            
@@ -187,12 +190,20 @@ class BannerService {
 
     getIndexFromFieldName(fieldname: string): number {
         // Extract the index from fieldname using regular expression
-        const match = fieldname?.match(/bannerImages\[(\d+)\]/);
+        const match = fieldname?.match(/languageValues\[\d+\]\[languageValues\]\[(\d+)\]/);
         if (match && match[1]) {
             return parseInt(match[1], 10);
         }
         return -1; // Return -1 if index not found
     }
+    // getIndexFromFieldName(fieldname: string): number {
+    //     // Extract the index from fieldname using regular expression
+    //     const match = fieldname?.match(/bannerImages\[(\d+)\]/);
+    //     if (match && match[1]) {
+    //         return parseInt(match[1], 10);
+    //     }
+    //     return -1; // Return -1 if index not found
+    // }
 
     async destroy(bannerId: string): Promise<BannerProps | null> {
         return BannerModel.findOneAndDelete({ _id: bannerId });
