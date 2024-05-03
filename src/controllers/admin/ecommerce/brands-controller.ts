@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { brandSchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/brand-schema';
+import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/brand-schema';
 import { QueryParams } from '@utils/types/common';
 import { BrandQueryParams } from '@utils/types/brands';
 import { multiLanguageSources } from '@constants/multi-languages';
@@ -216,8 +216,6 @@ class BrandsController extends BaseController {
                             file.fieldname.includes('[brandImage]')
                         );
 
-
-
                         let newLanguageValues: any = []
                         if (updatedBrandData.languageValues && updatedBrandData.languageValues.length > 0) {
                             for (let i = 0; i < updatedBrandData.languageValues.length; i++) {
@@ -226,7 +224,7 @@ class BrandsController extends BaseController {
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
                     
                                 if (languageValuesImages.length > 0 && matchingImage) {
-                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.brands, updatedBrand._id);
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.brands, updatedBrand._id, languageValue.languageId);
                                     brandImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `brandImageUrl`, 'brand');
                                 } else {
                                     brandImageUrl = updatedBrandData.languageValues[i].languageValues?.brandImageUrl
@@ -247,9 +245,7 @@ class BrandsController extends BaseController {
                             mapped[key] = updatedBrand[key];
                             return mapped;
                         }, {});
-                        // return controller.sendErrorResponse(res, 200, {
-                        //     message: 'Brand Id not found!',
-                        // }, req);
+                        
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedBrandMapped,
@@ -275,6 +271,44 @@ class BrandsController extends BaseController {
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
             return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating brand'
+            }, req);
+        }
+    }
+
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = brandStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const brandId = req.params.id;
+                if (brandId) {
+                    let { status } = req.body;
+                    const updatedBrandData = { status };
+
+                    const updatedBrand = await BrandsService.update(brandId, updatedBrandData);
+                    if (updatedBrand) {
+                        controller.sendSuccessResponse(res, {
+                            requestedData: updatedBrand,
+                            message: 'Brand status updated successfully!'
+                        });
+                    } else {
+                        controller.sendErrorResponse(res, 200, {
+                            message: 'Brand Id not found!',
+                        }, req);
+                    }
+                } else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Brand Id not found! Please try again with brand id',
+                    }, req);
+                }
+            } else {
+                controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating brand'
             }, req);
         }

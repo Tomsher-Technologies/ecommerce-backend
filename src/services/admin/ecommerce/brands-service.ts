@@ -18,7 +18,7 @@ class BrandsService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$brandId'] },
-                                    { $eq: ['$source', multiLanguageSources.brands] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.brands] },
                                 ],
                             },
                         },
