@@ -19,6 +19,7 @@ router.get('/parent-categories', logResponseStatus, CategoryController.findAllPa
 router.get('/:id', userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.findOne);
 router.post('/', upload.single('categoryImage'), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.create);
 router.post('/:id', upload.single('categoryImage'), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.update);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.statusChange);
 router.post('/website/update-website-priority', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.updateWebsitePriority);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'category' }), CategoryController.destroy);
 
