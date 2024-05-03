@@ -193,7 +193,7 @@ class SlidersController extends BaseController {
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
                                 if (languageValuesImages.length > 0 && matchingImage) {
-                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.sliders, updatedSlider._id);
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, updatedSlider._id, languageValue.languageId);
                                     sliderImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `sliderImageUrl`, 'slider');
                                 } else {
                                     sliderImageUrl = updatedSliderData.languageValues[i].languageValues?.sliderImageUrl
@@ -328,7 +328,7 @@ class SlidersController extends BaseController {
                 const slider = await SliderService.findOne(sliderId);
                 if (slider) {
                     const SliderServices = await SliderService.destroy(sliderId);
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.sliders, sliderId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, sliderId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }

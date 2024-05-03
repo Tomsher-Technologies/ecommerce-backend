@@ -2,8 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface AttributeDetailProps extends Document {
     attributeId:Schema.Types.ObjectId; 
-    en_itemName: string;
-    ar_itemName: string;
+    itemName: string;
     itemValue: string;
     createdAt?: Date;
 }
@@ -14,11 +13,7 @@ const attributeSchema: Schema<AttributeDetailProps> = new Schema({
         required: [true, 'Attribute id is required'],
         ref: 'Attributes', 
     },
-    en_itemName: {
-        type: String,
-        required: true,
-    },
-    ar_itemName: {
+    itemName: {
         type: String,
         required: true,
     },

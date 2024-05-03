@@ -216,8 +216,6 @@ class BrandsController extends BaseController {
                             file.fieldname.includes('[brandImage]')
                         );
 
-
-
                         let newLanguageValues: any = []
                         if (updatedBrandData.languageValues && updatedBrandData.languageValues.length > 0) {
                             for (let i = 0; i < updatedBrandData.languageValues.length; i++) {
@@ -226,7 +224,7 @@ class BrandsController extends BaseController {
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
                     
                                 if (languageValuesImages.length > 0 && matchingImage) {
-                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.brands, updatedBrand._id);
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.brands, updatedBrand._id, languageValue.languageId);
                                     brandImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `brandImageUrl`, 'brand');
                                 } else {
                                     brandImageUrl = updatedBrandData.languageValues[i].languageValues?.brandImageUrl

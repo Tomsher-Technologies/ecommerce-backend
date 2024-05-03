@@ -16,13 +16,13 @@ const { upload } = configureMulter('brand', ['brandImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.brands, readOnly: 1 }), BrandsController.findAll);
-router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.brands, writeOnly: 1 }), BrandsController.findOne);
-router.post('/', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.brands, readOnly: 1 }), logResponseStatus, BrandsController.create);
-router.post('/:id', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.brands, writeOnly: 1 }), logResponseStatus, BrandsController.update);
-router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.brands, writeOnly: 1 }), logResponseStatus, BrandsController.updateWebsitePriority);
-router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.brands, writeOnly: 1 }), BrandsController.statusChange);
-router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.brands}), BrandsController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, readOnly: 1 }), BrandsController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, writeOnly: 1 }), BrandsController.findOne);
+router.post('/', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, readOnly: 1 }), logResponseStatus, BrandsController.create);
+router.post('/:id', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, writeOnly: 1 }), logResponseStatus, BrandsController.update);
+router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, writeOnly: 1 }), logResponseStatus, BrandsController.updateWebsitePriority);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, writeOnly: 1 }), BrandsController.statusChange);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands}), BrandsController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -1,7 +1,15 @@
 
 
 export const permissionBlocks = {
-    brands: 'brands',
-    sliders: 'sliders',
-    banners: 'banners'
+    ecommerce: {
+        attributes: 'attributes',
+        banners: 'banners',
+        brands: 'brands',
+        sliders: 'sliders',
+
+    },
+
+    setup: {
+        languages: 'languages'
+    }
 }

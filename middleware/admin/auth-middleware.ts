@@ -13,6 +13,7 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
     const token = req.header('Authorization')?.split(' ')[1];
     if (token) {
       const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+      // console.log('checkToken', checkToken);
 
       if (checkToken) {
         const user = await UserModel.findOne({ _id: checkToken.userId });

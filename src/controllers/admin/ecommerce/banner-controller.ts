@@ -214,7 +214,7 @@ class BannerController extends BaseController {
 
                             for (let i = 0; i < updatedBannerData.languageValues.length; i++) {
                                 const languageValue = updatedBannerData.languageValues[i];
-                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id, languageValue.languageId);
+                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, updatedBanner._id, languageValue.languageId);
                                 const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
                                 let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
@@ -352,7 +352,7 @@ class BannerController extends BaseController {
                 if (banner) {
                     await BannerService.destroy(bannerId);
 
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, bannerId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, bannerId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }

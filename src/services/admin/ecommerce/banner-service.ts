@@ -19,7 +19,7 @@ class BannerService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$bannerId'] },
-                                    { $eq: ['$source', multiLanguageSources.banner] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.banner] },
                                 ],
                             },
                         },
