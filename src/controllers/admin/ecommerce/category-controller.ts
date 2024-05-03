@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { categorySchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/category-schema';
+import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '@utils/schemas/admin/ecommerce/category-schema';
 import { QueryParams } from '@utils/types/common';
 import { CategoryQueryParams } from '@utils/types/category';
 
@@ -102,7 +102,7 @@ class CategoryController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { categoryTitle, slug, description, parentCategory, type, pageTitle } = validatedData.data;
+                const { categoryTitle, slug, description, parentCategory, type } = validatedData.data;
                 const user = res.locals.user;
 
                 // let parentCategory = validatedData.data.parentCategory;
@@ -117,7 +117,6 @@ class CategoryController extends BaseController {
                     description,
                     parentCategory,
                     type,
-                    pageTitle,
                     status: '1',
                     createdBy: user._id,
                     createdAt: new Date()
@@ -289,6 +288,43 @@ class CategoryController extends BaseController {
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = categoryStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const categoryId = req.params.id;
+                if (categoryId) {
+                    let { status } = req.body;
+                    const updatedCategoryData = { status };
+
+                    const updatedCategory = await CategoryService.update(categoryId, updatedCategoryData);
+                    if (updatedCategory) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedCategory,
+                            message: 'Category status updated successfully!'
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Category Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Category Id not found! Please try again with Category id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating Category'
+            }, req);
+        }
+    }
 }
 
 export default new CategoryController();
