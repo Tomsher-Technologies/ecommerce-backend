@@ -4,6 +4,12 @@ export const categorySchema = zod.object({
     categoryTitle: zod.string({ required_error: 'Category title is required', }).min(2, 'Category title is should be 2 chars minimum'),
     description: zod.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     parentCategory: zod.string().optional(),
+    categoryImageUrl: zod.string().optional(),
+    categoryImage: zod.any({ required_error: 'Category image is required' }).nullable(),
+    languageValues: zod.any().optional(),
+    status: zod.string().optional(),
+    slug: zod.any().optional(),
+    level: zod.any().optional()
 }).nonstrict();
 
 
