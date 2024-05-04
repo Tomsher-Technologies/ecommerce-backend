@@ -39,11 +39,10 @@ const attributeSchema: Schema<AttributesProps> = new Schema({
         required: true,
         enum : ['text','hex', 'pattern'],
         validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Attributes').countDocuments({ attributeType: value });
-                return count === 0;
+            validator: function (value: string): boolean {
+                return ['text', 'hex', 'pattern'].includes(value);
             },
-            message: 'Attribute type only support  text, hex or pattern'
+            message: 'Attribute type only supports text, hex, or pattern'
         }
     },
     createdAt: {

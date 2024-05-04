@@ -8,6 +8,7 @@ import { attributeSchema } from '@utils/schemas/admin/ecommerce/products-schema'
 import { AttributesProps } from '@model/admin/ecommerce/attribute-model';
 import BaseController from '@controllers/admin/base-controller';
 import AttributesService from '@services/admin/ecommerce/attributes-service'
+import GeneralService from '@services/admin/general-service';
 
 const controller = new BaseController();
 
@@ -57,7 +58,7 @@ class AttributesController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { attributeTitle, attributeType, attributeValues } = validatedData.data;
+                const { attributeTitle, attributeType, attributeValues, languageValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
                     attributeTitle,
@@ -68,19 +69,56 @@ class AttributesController extends BaseController {
 
                 const newAttribute = await AttributesService.create(attributeData);
                 if (newAttribute) {
+                    let attributeDetailsValue: any = []
                     if (attributeType === 'pattern') {
                         const attributePatternValuesImages = (req as any).files.filter((file: any) =>
                             file.fieldname &&
                             file.fieldname.startsWith('attributeValues[') &&
-                            file.fieldname.includes('[patternImage]')
-                        );
+                            file.fieldname.includes('[itemName]')
+                        )
+
+                        if (attributePatternValuesImages.length > 0) {
+                            const itemName = attributePatternValuesImages.map((patternImage: any) => ({
+                                itemName: handleFileUpload(req, null, patternImage, `attributeImageUrl`, 'attributes')
+                            }))
+                            attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, itemName);
+                        }
+                    } else {
+                        attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     }
-                    const newValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
+
+                    if (languageValues && languageValues.length > 0) {
+                        await languageValues.map((languageValue: any, index: number) => {
+                            if (attributeType === 'pattern') {
+                                GeneralService.multiLanguageFieledsManage(newAttribute._id, {
+                                    languageId:languageValue.languageId,
+                                    source:languageValue.source,
+                                    languageValues: {
+                                        attributeTitle: languageValue.languageValues.attributeTitle,
+                                    }
+                                })
+                                console.log('what happene');
+                            } else {
+                                console.log('here');
+                                
+                                GeneralService.multiLanguageFieledsManage(newAttribute._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                    }
+                                })
+                            }
+                        })
+                    }
+
+                    // return controller.sendErrorResponse(res, 200, {
+                    //     message: 'Validation error',
+                    // }, req);
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newAttribute._id,
                             attributeTitle: newAttribute.attributeTitle,
-                            attributeValues: newValue
+                            attributeValues: attributeDetailsValue
                         },
                         message: 'Please try again!'
                     });
@@ -97,11 +135,18 @@ class AttributesController extends BaseController {
             }
         } catch (error: any) {
 
-            if (error && error.errors && (error.errors?.attributeTitle || error.errors?.attributeType) && (error.errors?.attributeTitle?.properties || error.errors?.attributeType?.properties)) {
+            if (error && error.errors && (error.errors?.attributeTitle) && (error.errors?.attributeTitle?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        attributeTitle: (error.errors?.attributeTitle?.properties || error.errors?.attributeType?.properties)
+                        attributeTitle: error.errors?.attributeTitle?.properties.message
+                    }
+                }, req);
+            } else if (error && error.errors && error.errors?.attributeType && error.errors?.attributeType?.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        attributeType: error.errors?.attributeType?.properties.message
                     }
                 }, req);
             }

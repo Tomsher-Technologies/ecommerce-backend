@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface AttributeDetailProps extends Document {
     attributeId:Schema.Types.ObjectId; 
-    itemName: string;
+    itemName: any;
     itemValue: string;
     createdAt?: Date;
 }
@@ -14,7 +14,7 @@ const attributeSchema: Schema<AttributeDetailProps> = new Schema({
         ref: 'Attributes', 
     },
     itemName: {
-        type: String,
+        type: Schema.Types.Mixed,
         required: true,
     },
     itemValue: {

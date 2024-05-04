@@ -58,8 +58,7 @@ class GeneralService {
             } else {
                 if (languageValues.languageValues) {
                     const isEmptyValue = Object.values(languageValues.languageValues).some(value => (value !== ''));
-
-                    // console.log('isEmptyValue', isEmptyValue);
+               
                     if (isEmptyValue) {
                         const multiLanguageData = {
                             languageId: languageValues.languageId,
@@ -69,11 +68,11 @@ class GeneralService {
                             languageValues: languageValues.languageValues,
                             createdAt: new Date()
                         };
-                        // console.log('multiLanguageData', multiLanguageData);
-
+                        
                         managedLanguageValue = await MultiLanguageFieledsModel.create(multiLanguageData);
                     }
                 }
+                // console.log('managedLanguageValuemanagedLanguageValue', managedLanguageValue);
                 return { languageValues: { ...managedLanguageValue } };
             }
         } else {
