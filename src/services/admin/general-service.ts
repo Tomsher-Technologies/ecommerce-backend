@@ -1,7 +1,17 @@
 
 import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "@model/admin/multi-language-fieleds-model";
+import AdminTaskLogModel from "@model/admin/task-log";
 
-
+const Address6 = require('ip-address').Address6;
+const address = new Address6('2001:0:ce49:7601:e866:efff:62c3:fffe');
+const ipAddress = address.inspectTeredo();
+export interface AdminTaskLogProps {
+    sourceFromId: string;
+    sourceFrom: string;
+    userId?: string;
+    activity: string;
+    activityStatus: string;
+}
 class GeneralService {
 
     async findOneLanguageValues(source: string, sourceId: string, languageId?: string) {
@@ -10,16 +20,38 @@ class GeneralService {
                 source: source,
                 sourceId: sourceId
             };
-    
+
             if (languageId) {
                 query.languageId = languageId;
             }
-    
+
             const languageValues: any = await MultiLanguageFieledsModel.findOne(query);
-    
+
             return languageValues || [];
         } catch (error: any) {
             throw new Error('Error occurred while changing slider position: ' + error.message);
+        }
+    }
+
+    async taskLog(taskLogs: AdminTaskLogProps) {
+        if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
+            console.log(ipAddress);
+            
+            const taskLogData = {
+                userId: taskLogs.userId,
+                sourceFromId: taskLogs.sourceFromId,
+                sourceFrom: taskLogs.sourceFrom,
+                activity: taskLogs.activity,
+                activityStatus: taskLogs.activityStatus,
+                ipAddress: ipAddress.client4,
+                createdAt: new Date()
+            };
+
+            await AdminTaskLogModel.create(taskLogData);
+
+            return true;
+        } else {
+            return false;
         }
     }
 
