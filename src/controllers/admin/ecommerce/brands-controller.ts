@@ -112,7 +112,6 @@ class BrandsController extends BaseController {
                     updatedAt: new Date()
                 };
 
-
                 const newBrand = await BrandsService.create(brandData);
                 // const fetchedBrand = await BrandsService.findOne(newBrand._id);
                 if (newBrand) {
