@@ -17,6 +17,7 @@ import BannersRoutes from './routes/admin/ecommerce/banners-routes.ts';
 import SliderRoutes from './routes/admin/ecommerce/slider-routes.ts';
 import ProductsRoutes from './routes/admin/ecommerce/products-routes.ts';
 import AttributesRoutes from './routes/admin/ecommerce/attributes-routes.ts';
+import SpecificationRoutes from './routes/admin/ecommerce/specification-route.ts';
 
 // admin account
 import UserRoute from './routes/admin/account/user-routes.ts';
@@ -90,6 +91,7 @@ adminRouter.use('/banners', BannersRoutes);
 adminRouter.use('/sliders', SliderRoutes);
 adminRouter.use('/products', ProductsRoutes);
 adminRouter.use('/attributes', AttributesRoutes);
+adminRouter.use('/specification', SpecificationRoutes);
 
 // admin marketing
 adminRouter.use('/marketing/coupons', CouponRoutes);
