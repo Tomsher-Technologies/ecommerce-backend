@@ -2,11 +2,12 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify, stringToArray } from '@utils/helpers';
-import { offersSchema } from '@utils/schemas/admin/marketing/offers-schema';
+import { offerStatusSchema, offersSchema } from '@utils/schemas/admin/marketing/offers-schema';
 import { QueryParams } from '@utils/types/common';
 
 import BaseController from '@controllers/admin/base-controller';
 import OfferService from '@services/admin/marketing/offer-service'
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
 
 const controller = new BaseController();
 
@@ -45,7 +46,7 @@ class OffersController extends BaseController {
                 sort
             });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: offers,
                 totalCount: await OfferService.getTotalCount(query),
                 message: 'Success!'
@@ -80,11 +81,16 @@ class OffersController extends BaseController {
                     createdBy: user._id,
                     createdAt: new Date()
                 };
-                console.log('offerData', offerData);
+
                 const newOffer = await OfferService.create(offerData);
                 return controller.sendSuccessResponse(res, {
                     requestedData: newOffer,
                     message: 'Offer created successfully!'
+                }, 200, { // task log
+                    sourceFromId: newOffer._id,
+                    sourceFrom: adminTaskLog.marketing.offers,
+                    activity: adminTaskLogActivity.create,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -113,7 +119,7 @@ class OffersController extends BaseController {
             const offerId = req.params.id;
             if (offerId) {
                 const offer = await OfferService.findOne(offerId);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: offer,
                     message: 'Success'
                 });
@@ -144,9 +150,14 @@ class OffersController extends BaseController {
 
                     const updatedOffer = await OfferService.update(offerId, updatedofferData);
                     if (updatedOffer) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedOffer,
                             message: 'Offer updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedOffer._id,
+                            sourceFrom: adminTaskLog.marketing.offers,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         controller.sendErrorResponse(res, 200, {
@@ -171,14 +182,60 @@ class OffersController extends BaseController {
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = offerStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const offerId = req.params.id;
+                if (offerId) {
+                    let { status } = req.body;
+                    const updatedOfferData = { status };
+
+                    const updatedOffer = await OfferService.update(offerId, updatedOfferData);
+                    if (updatedOffer) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedOffer,
+                            message: 'Offers status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedOffer._id,
+                            sourceFrom: adminTaskLog.marketing.offers,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Offer Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Offer Id not found! Please try again with offer id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating offer'
+            }, req);
+        }
+    }
+
     async destroy(req: Request, res: Response): Promise<void> {
         try {
             const offerId = req.params.id;
             if (offerId) {
                 const offer = await OfferService.findOne(offerId);
                 if (offer) {
-                    await OfferService.destroy(offerId);
-                    controller.sendSuccessResponse(res, { message: 'Offer deleted successfully!' });
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'You cant delete this offer',
+                    });
+                    // await OfferService.destroy(offerId);
+                    // return controller.sendSuccessResponse(res, { message: 'Offer deleted successfully!' });
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This offer details not found!',

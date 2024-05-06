@@ -70,3 +70,13 @@ export const offersSchema = zod.object({
         }
     }
 });
+
+
+export const offerStatusSchema = zod.object({
+    status: zod.string()
+        .min(1, { message: "Status is required" })
+        .max(1, { message: "Status must be a single character" })
+        .refine(value => value === "1" || value === "2", {
+            message: "Status must be either '1' or '2'"
+        })
+});

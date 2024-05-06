@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
 import { QueryParams } from '@utils/types/common';
 import { sliderPositionSchema, sliderSchema, sliderStatusSchema } from '@utils/schemas/admin/ecommerce/slider-schema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
 
 import BaseController from '@controllers/admin/base-controller';
 
@@ -222,6 +223,11 @@ class SlidersController extends BaseController {
                                 languageValues: newLanguageValues
                             },
                             message: 'Slider updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedSliderMapped._id,
+                            sourceFrom: adminTaskLog.ecommerce.sliders,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -260,6 +266,11 @@ class SlidersController extends BaseController {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: sliderId,
+                            sourceFrom: adminTaskLog.ecommerce.sliders,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -297,6 +308,11 @@ class SlidersController extends BaseController {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: sliderId,
+                            sourceFrom: adminTaskLog.ecommerce.sliders,
+                            activity: adminTaskLogActivity.positionChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -333,7 +349,14 @@ class SlidersController extends BaseController {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }
 
-                    return controller.sendSuccessResponse(res, { message: 'Slider deleted successfully!' });
+                    return controller.sendSuccessResponse(res,
+                        { message: 'Slider deleted successfully!' },
+                        200, { // task log
+                        sourceFromId: sliderId,
+                        sourceFrom: adminTaskLog.ecommerce.sliders,
+                        activity: adminTaskLogActivity.delete,
+                        activityStatus: adminTaskLogStatus.success
+                    });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'This slider details not found!',

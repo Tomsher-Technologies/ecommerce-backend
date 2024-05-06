@@ -45,6 +45,7 @@ class AttributesService {
                 attributeTitle: 1,
                 slug: 1,
                 attributeType: 1,
+                status: 1,
                 createdAt: 1,
                 attributeValues: {
                     $ifNull: ['$attributeValues', []]

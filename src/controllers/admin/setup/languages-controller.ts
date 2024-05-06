@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 
 import { formatZodError, slugify } from '@utils/helpers';
 import { languageSchema, languageStatusSchema } from '@utils/schemas/admin/setup/language-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
 import { QueryParams } from '@utils/types/common';
 
 import BaseController from '@controllers/admin/base-controller';
@@ -46,13 +47,13 @@ class LanguagesController extends BaseController {
                 sort
             });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: languages,
                 totalCount: await LanguagesService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching languages' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching languages' });
         }
     }
 
@@ -81,6 +82,11 @@ class LanguagesController extends BaseController {
                 return controller.sendSuccessResponse(res, {
                     requestedData: newLanguage,
                     message: 'Language created successfully!'
+                }, 200, { // task log
+                    sourceFromId: newLanguage._id,
+                    sourceFrom: adminTaskLog.setup.languages,
+                    activity: adminTaskLogActivity.create,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -109,17 +115,17 @@ class LanguagesController extends BaseController {
             const languageId = req.params.id;
             if (languageId) {
                 const language = await LanguagesService.findOne(languageId);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: language,
                     message: 'Success'
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Language Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
@@ -137,28 +143,33 @@ class LanguagesController extends BaseController {
 
                     const updatedLanguage = await LanguagesService.update(languageId, updatedLanguageData);
                     if (updatedLanguage) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedLanguage,
                             message: 'Language updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedLanguage._id,
+                            sourceFrom: adminTaskLog.setup.languages,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Language Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Language Id not found! Please try again with language id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating language'
             }, req);
         }
@@ -175,28 +186,33 @@ class LanguagesController extends BaseController {
 
                     const updatedLanguage = await LanguagesService.update(language, updatedLanguageData);
                     if (updatedLanguage) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedLanguage,
                             message: 'Language status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedLanguage._id,
+                            sourceFrom: adminTaskLog.setup.languages,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Language Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Language Id not found! Please try again with language id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating language'
             }, req);
         }
@@ -208,23 +224,23 @@ class LanguagesController extends BaseController {
             if (languageId) {
                 const language = await LanguagesService.findOne(languageId);
                 if (language) {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'You cant delete this language!',
                     });
                     // await LanguagesService.destroy(languageId);
                     // controller.sendSuccessResponse(res, { message: 'Language deleted successfully!' });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This language details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Language id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting language' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting language' });
         }
     }
 

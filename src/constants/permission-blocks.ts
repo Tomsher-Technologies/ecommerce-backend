@@ -11,6 +11,16 @@ export const permissionBlocks = {
     },
 
     setup: {
-        languages: 'languages'
+        languages: 'languages',
+        country: 'country',
+    },
+    account: {
+        privilages: 'privilages',
+        users: 'users',
+        userTypes: 'usertypes',
+    },
+    marketing: {
+        coupons: 'coupons',
+        offers: 'offers',
     }
 }
