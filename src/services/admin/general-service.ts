@@ -35,8 +35,6 @@ class GeneralService {
 
     async taskLog(taskLogs: AdminTaskLogProps) {
         if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
-            console.log(ipAddress);
-            
             const taskLogData = {
                 userId: taskLogs.userId,
                 sourceFromId: taskLogs.sourceFromId,
