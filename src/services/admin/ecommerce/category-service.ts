@@ -1,9 +1,55 @@
 import { FilterOptionsProps, pagination } from '@components/pagination';
+import { multiLanguageSources } from '@constants/multi-languages';
 
 import CategoryModel, { CategoryProps } from '@model/admin/ecommerce/category-model';
 
 
 class CategoryService {
+
+    private lookup: any;
+    private project: any;
+    constructor() {
+        this.lookup = {
+            $lookup: {
+                from: 'multilanguagefieleds', // Ensure 'from' field is included
+                let: { categoryId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$sourceId', '$$categoryId'] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.categories] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'languageValues',
+            },
+        };
+
+        this.project = {
+            $project: {
+                _id: 1,
+                countryId: 1,
+                categoryTitle: 1,
+                page: 1,
+                linkType: 1,
+                link: 1,
+                description: 1,
+                categoryImageUrl: 1,
+                metaTitle: 1,
+                metaDescription: 1,
+                metaKeywords: 1,
+                position: 1,
+                status: 1,
+                createdAt: 1,
+                languageValues: { $ifNull: ['$languageValues', []] }
+            }
+        }
+    }
+
     async findAll(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options); 
         let queryBuilder = CategoryModel.find(query)
@@ -65,9 +111,34 @@ class CategoryService {
         const { query } = pagination(options.query || {}, options);
         return CategoryModel.find(query);
     }
+    // async findCategory(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
+    //     const { query, skip, limit, sort } = pagination(options.query || {}, options);
+    //     const defaultSort = { createdAt: -1 };
+    //     let finalSort = sort || defaultSort;
+    //     const sortKeys = Object.keys(finalSort);
+    //     if (sortKeys.length === 0) {
+    //         finalSort = defaultSort;
+    //     }
 
-    async create(categoryData: any): Promise<CategoryProps> {
-        return CategoryModel.create(categoryData);
+    //     let pipeline: any[] =[{ $project: { parentCategory: 1 } }]
+
+    //     return CategoryModel.aggregate(pipeline).exec();
+    // }
+    
+    async create(categoryData: any): Promise<CategoryProps | null> {
+        const createdCategory = await CategoryModel.create(categoryData);
+        if (createdCategory) {
+            const pipeline = [
+                { $match: { _id: createdCategory._id } },
+                this.lookup,
+            ];
+
+            const createdCategoryWithValues = await CategoryModel.aggregate(pipeline);
+
+            return createdCategoryWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async findOne(categoryId: string): Promise<CategoryProps | null> {

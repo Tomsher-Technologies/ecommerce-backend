@@ -6,6 +6,7 @@ export const permissionBlocks = {
         banners: 'banners',
         brands: 'brands',
         sliders: 'sliders',
+        specifications: 'specifications'
 
     },
 
