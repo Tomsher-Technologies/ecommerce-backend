@@ -16,3 +16,12 @@ export const couponSchema = zod.object({
         message: 'Discount Date must contain at least 1 element' 
     }),
 }).nonstrict();
+
+export const couponStatusSchema = zod.object({
+    status: zod.string()
+        .min(1, { message: "Status is required" })
+        .max(1, { message: "Status must be a single character" })
+        .refine(value => value === "1" || value === "2", {
+            message: "Status must be either '1' or '2'"
+        })
+});

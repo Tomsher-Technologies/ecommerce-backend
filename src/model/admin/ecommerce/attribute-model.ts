@@ -5,6 +5,7 @@ export interface AttributesProps extends Document {
     attributeTitle: string;
     attributeType: string;
     slug: string;
+    status: string;
     createdAt?: Date;
 }
 
@@ -37,13 +38,18 @@ const attributeSchema: Schema<AttributesProps> = new Schema({
     attributeType: {
         type: String,
         required: true,
-        enum : ['text','hex', 'pattern'],
+        enum: ['text', 'hex', 'pattern'],
         validate: {
             validator: function (value: string): boolean {
                 return ['text', 'hex', 'pattern'].includes(value);
             },
             message: 'Attribute type only supports text, hex, or pattern'
         }
+    },
+    status: {
+        type: String,
+        required: true,
+        default: "1"
     },
     createdAt: {
         type: Date,

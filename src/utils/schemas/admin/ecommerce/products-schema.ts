@@ -33,13 +33,6 @@ export const updateWebsitePrioritySchema = zod.object({
     container1: zod.array(zod.any()).optional(),
 }).nonstrict();
 
-export const attributeSchema = zod.object({
-    attributeTitle: zod.string({ required_error: 'Attribute title is required', }).min(2, 'Attribute title is should be 2 chars minimum'),
-    attributeType: zod.string({ required_error: 'Attribute type is required', }).min(2, 'Attribute type is should be 2 chars minimum'),
-    attributeValues: zod.array(zod.unknown()).optional(),
-    languageValues: zod.any().optional(),
-}).nonstrict();
-
 export const specificationSchema = zod.object({
     specificationTitle: zod.string({ required_error: 'Specification title is required', }).min(2, 'Specification title is should be 2 chars minimum'),
     SpecificationValues: zod.array(zod.unknown()).optional(),

@@ -2,8 +2,9 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '@utils/helpers';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { attributeSchema, attributeStatusSchema } from '@utils/schemas/admin/ecommerce/attribute-schema';
 import { QueryParams } from '@utils/types/common';
-import { attributeSchema } from '@utils/schemas/admin/ecommerce/products-schema';
 
 import { AttributesProps } from '@model/admin/ecommerce/attribute-model';
 import BaseController from '@controllers/admin/base-controller';
@@ -42,13 +43,13 @@ class AttributesController extends BaseController {
                 sort
             });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: attributes,
                 totalCount: await AttributesService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching attributes' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching attributes' });
         }
     }
 
@@ -156,6 +157,11 @@ class AttributesController extends BaseController {
                             attributeValues: attributeDetailsValue
                         },
                         message: 'Attribute successfully created'
+                    }, 200, {  // task log
+                        sourceFromId: newAttribute._id,
+                        sourceFrom: adminTaskLog.ecommerce.attributes,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
@@ -196,17 +202,17 @@ class AttributesController extends BaseController {
             const attributeId = req.params.id;
             if (attributeId) {
                 const attribute = await AttributesService.findOne(attributeId);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: attribute,
                     message: 'Success'
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Attribute Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
@@ -296,6 +302,11 @@ class AttributesController extends BaseController {
                                     languageValues: updatedAttributeData.languageValues
                                 },
                                 message: 'Attribute successfully updated'
+                            }, 200, { // task log
+                                sourceFromId: updatedAttribute._id,
+                                sourceFrom: adminTaskLog.ecommerce.attributes,
+                                activity: adminTaskLogActivity.update,
+                                activityStatus: adminTaskLogStatus.success
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {
@@ -304,29 +315,70 @@ class AttributesController extends BaseController {
                         }
 
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Attribute Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Attribute Id not found! Please try again with attribute id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating attribute'
             }, req);
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = attributeStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const attributeId = req.params.id;
+                if (attributeId) {
+                    let { status } = req.body;
+                    const updatedAttributeData = { status };
 
+                    const updatedAttribute = await AttributesService.update(attributeId, updatedAttributeData);
+                    if (updatedAttribute) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedAttribute,
+                            message: 'Attribute status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedAttribute._id,
+                            sourceFrom: adminTaskLog.ecommerce.attributes,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Attribute Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Attribute Id not found! Please try again with attribute id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating brand'
+            }, req);
+        }
+    }
 
     async destroy(req: Request, res: Response): Promise<void> {
         try {
@@ -335,19 +387,19 @@ class AttributesController extends BaseController {
                 const attribute = await AttributesService.findOne(attributeId);
                 if (attribute) {
                     await AttributesService.destroy(attributeId);
-                    controller.sendSuccessResponse(res, { message: 'Attribute deleted successfully!' });
+                    return controller.sendSuccessResponse(res, { message: 'Attribute deleted successfully!' });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This attribute details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Attribute id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting attribute' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting attribute' });
         }
     }
 

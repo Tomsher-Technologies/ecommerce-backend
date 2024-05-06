@@ -22,7 +22,7 @@ const adminTaskLogsSchema: Schema = new Schema({
     },
     sourceFromId: {
         type: Schema.Types.ObjectId,
-        required: true,
+        default: '',
     },
     activity: {
         type: String,
