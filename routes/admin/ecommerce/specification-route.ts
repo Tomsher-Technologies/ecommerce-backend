@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction, Router } from 'express';
+import express, { Router } from 'express';
 
 import { logResponseStatus } from '@components/response-status';
 
@@ -16,6 +16,7 @@ router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: p
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.specifications, writeOnly: 1 }), SpecificationController.findOne);
 router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.specifications, readOnly: 1 }), logResponseStatus, SpecificationController.create);
 router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.specifications, writeOnly: 1 }), logResponseStatus, SpecificationController.update);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.specifications, writeOnly: 1 }), SpecificationController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.specifications }), SpecificationController.destroy);
 
 
