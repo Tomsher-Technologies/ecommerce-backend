@@ -134,3 +134,12 @@ export const stringToArray = (input: string): string[] => {
         return [];
     }
 };
+
+
+export const getIndexFromFieldName = (fieldname: string, keyValue: string): number => {
+    const match = fieldname?.match(new RegExp(`${keyValue}\\[(\\d+)\\]`));
+    if (match && match[1]) {
+        return parseInt(match[1], 10);
+    }
+    return -1;
+}

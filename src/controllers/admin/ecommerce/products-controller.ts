@@ -116,7 +116,6 @@ class ProductsController extends BaseController {
         try {
             const validatedData = productsSchema.safeParse(req.body);
 
-
             if (validatedData.success) {
                 const { en_productTitle, ar_productTitle, slug, category, brand, unit, tags, inventryDetails, sku, description, longDescription, cartMinQuantity, cartMaxQuantity,
                     pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription } = validatedData.data;

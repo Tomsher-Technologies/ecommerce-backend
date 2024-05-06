@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
+import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '@utils/helpers';
 import { QueryParams } from '@utils/types/common';
 import { attributeSchema } from '@utils/schemas/admin/ecommerce/products-schema';
 
@@ -88,39 +88,74 @@ class AttributesController extends BaseController {
                     }
 
                     if (languageValues && languageValues.length > 0) {
+
                         await languageValues.map((languageValue: any, index: number) => {
                             if (attributeType === 'pattern') {
                                 GeneralService.multiLanguageFieledsManage(newAttribute._id, {
-                                    languageId:languageValue.languageId,
-                                    source:languageValue.source,
+                                    languageId: languageValue.languageId,
+                                    source: languageValue.source,
                                     languageValues: {
                                         attributeTitle: languageValue.languageValues.attributeTitle,
                                     }
                                 })
-                                console.log('what happene');
                             } else {
-                                console.log('here');
-                                
-                                GeneralService.multiLanguageFieledsManage(newAttribute._id, {
-                                    ...languageValue,
-                                    languageValues: {
-                                        ...languageValue.languageValues,
-                                    }
-                                })
+                                if ((languageValue.attributeTitle !== '') && (languageValue.languageValues?.attributeValues?.length > 0)) {
+                                    const languageAttributeValues = languageValue.languageValues.attributeValues.map((attributeValueItem: any, keyValueIndex: number) => {
+                                        if (attributeDetailsValue[keyValueIndex]) {
+                                            return {
+                                                attributeId: attributeDetailsValue[keyValueIndex].attributeId,
+                                                attributeDetailId: attributeDetailsValue[keyValueIndex]._id,
+                                                itemName: attributeValueItem.itemName,
+                                                itemValue: attributeValueItem.itemValue,
+                                            }
+                                        }
+                                    })
+                                    GeneralService.multiLanguageFieledsManage(newAttribute._id, {
+                                        ...languageValue,
+                                        languageValues: {
+                                            ...languageValue.languageValues,
+                                            attributeValues: { ...languageAttributeValues }
+                                        }
+                                    })
+
+                                    // const attributeValues = Object.keys(languageValues)
+                                    //     .filter(key => !isNaN(Number(key)))
+                                    //     .map((key) => languageValue.languageValues[key]);
+                                    // if (attributeValues.length > 0) {
+                                    //     const transformedLanguageValues = {
+                                    //         attributeValues: attributeValues?.map((attributeValueItem: any, keyValueIndex: number) => {
+                                    //             if (attributeDetailsValue[keyValueIndex]) {
+                                    //                 return {
+                                    //                     attributeId: attributeDetailsValue[keyValueIndex].attributeId,
+                                    //                     attributeDetailId: attributeDetailsValue[keyValueIndex]._id,
+                                    //                     itemName: attributeValueItem.itemName,
+                                    //                     itemValue: attributeValueItem.itemValue,
+                                    //                 }
+                                    //             }
+                                    //         }),
+                                    //         attributeTitle: languageValue.languageValues.attributeTitle
+                                    //     };
+
+                                    //     GeneralService.multiLanguageFieledsManage(newAttribute._id, {
+                                    //         ...languageValue,
+                                    //         languageValues: {
+                                    //             ...transformedLanguageValues,
+                                    //         }
+                                    //     })
+                                    // }
+                                }
                             }
                         })
                     }
 
-                    // return controller.sendErrorResponse(res, 200, {
-                    //     message: 'Validation error',
-                    // }, req);
+
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newAttribute._id,
                             attributeTitle: newAttribute.attributeTitle,
                             attributeValues: attributeDetailsValue
                         },
-                        message: 'Please try again!'
+                        message: 'Attribute successfully created'
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
@@ -134,7 +169,6 @@ class AttributesController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-
             if (error && error.errors && (error.errors?.attributeTitle) && (error.errors?.attributeTitle?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -188,19 +222,80 @@ class AttributesController extends BaseController {
                         updatedAt: new Date()
                     };
 
+
                     const updatedAttribute = await AttributesService.update(attributeId, updatedAttributeData);
                     if (updatedAttribute) {
                         if (updatedAttribute) {
 
-                            const newValue = await AttributesService.attributeDetailsService(updatedAttribute._id, validatedData.data.attributeValues);
+                            let attributeDetailsValue: any = []
+                            if (updatedAttributeData.attributeType === 'pattern') {
+                                const attributePatternValuesImages = (req as any).files.filter((file: any) =>
+                                    file.fieldname &&
+                                    file.fieldname.startsWith('attributeValues[') &&
+                                    file.fieldname.includes('[itemName]')
+                                )
+                                if (attributePatternValuesImages.length > 0) {
+                                    const attributeDetails: any = await AttributesService.findOne(attributeId);
+
+                                    const newItemName = attributePatternValuesImages.map((patternImage: any) => {
+                                        const index = getIndexFromFieldName(patternImage.fieldname, 'attributeValues');
+                                        let oldItemName = ''
+                                        if (index !== -1 && attributeDetails && index < attributeDetails.attributeValues.length) {
+                                            oldItemName = attributeDetails[index]?.attributeValues?.itemName;
+                                            if ((!oldItemName) || (oldItemName !== undefined)) {
+                                                return {
+                                                    attributeId: attributeId,
+                                                    itemName: handleFileUpload(req, null, patternImage, 'itemName', 'attributes'),
+                                                    itemValue: ''
+                                                }
+                                            }
+                                        } else {
+                                            return {
+                                                attributeId: attributeId,
+                                                itemName: handleFileUpload(req, null, patternImage, 'itemName', 'attributes'),
+                                                itemValue: ''
+                                            }
+                                        }
+                                    })
+
+                                    const oldAttributeValues = [...updatedAttributeData.attributeValues, ...newItemName];
+
+                                    attributeDetailsValue = await AttributesService.attributeDetailsService(updatedAttribute._id, oldAttributeValues);
+                                } else {
+                                    attributeDetailsValue = await AttributesService.attributeDetailsService(updatedAttribute._id, updatedAttributeData.attributeValues);
+                                }
+                            } else {
+                                attributeDetailsValue = await AttributesService.attributeDetailsService(updatedAttribute._id, updatedAttributeData.attributeValues);
+                            }
+
+                            if (updatedAttributeData.languageValues && updatedAttributeData.languageValues.length > 0) {
+                                await updatedAttributeData.languageValues.map((languageValue: any, index: number) => {
+                                    if (updatedAttributeData.attributeType === 'pattern') {
+                                        GeneralService.multiLanguageFieledsManage(updatedAttribute._id, {
+                                            languageId: languageValue.languageId,
+                                            source: languageValue.source,
+                                            languageValues: {
+                                                attributeTitle: languageValue.languageValues.attributeTitle,
+                                            }
+                                        })
+                                    } else {
+                                        GeneralService.multiLanguageFieledsManage(updatedAttribute._id, {
+                                            ...languageValue,
+                                            languageValues: {
+                                                ...languageValue.languageValues,
+                                            }
+                                        })
+                                    }
+                                })
+                            }
 
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
-                                    _id: updatedAttribute._id,
-                                    attributeTitle: updatedAttribute.attributeTitle,
-                                    attributeValues: newValue
+                                    ...updatedAttribute,
+                                    attributeValues: attributeDetailsValue,
+                                    languageValues: updatedAttributeData.languageValues
                                 },
-                                message: 'Please try again!'
+                                message: 'Attribute successfully updated'
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {
@@ -230,6 +325,8 @@ class AttributesController extends BaseController {
             }, req);
         }
     }
+
+
 
     async destroy(req: Request, res: Response): Promise<void> {
         try {
