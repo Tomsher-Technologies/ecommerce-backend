@@ -242,6 +242,11 @@ class SpecificationController extends BaseController {
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedSpecification,
                             message: 'Specification status updated successfully!'
+                        }, 200, {
+                            sourceFromId: updatedSpecification._id,
+                            sourceFrom: adminTaskLog.ecommerce.specifications,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         controller.sendErrorResponse(res, 200, {
