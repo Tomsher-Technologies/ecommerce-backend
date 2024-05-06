@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface SpecificationProps extends Document {
     specificationTitle: string;
     slug: string;
+    status: string;
     createdAt?: Date;
 }
 
@@ -31,6 +32,10 @@ const specificationSchema: Schema<SpecificationProps> = new Schema({
             },
             message: 'Slug must be unique'
         }
+    },    
+    status: {
+        type: String,
+        required: true
     },
     createdAt: {
         type: Date,

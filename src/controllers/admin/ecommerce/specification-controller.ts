@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
 import { QueryParams } from '@utils/types/common';
-import { specificationSchema } from '@utils/schemas/admin/ecommerce/products-schema';
+import { specificationSchema,specificationStatusSchema } from '@utils/schemas/admin/ecommerce/specification-schema';
 
 import { SpecificationProps } from '@model/admin/ecommerce/specifications-model';
 import BaseController from '@controllers/admin/base-controller';
@@ -170,14 +170,29 @@ class SpecificationController extends BaseController {
                         if (updatedSpecification) {
 
                             const newValue = await SpecificationService.specificationDetailsService(updatedSpecification._id, validatedData.data.specificationValues);
+                            let newLanguageValues: any = []
 
+                            if (updatedSpecificationData.languageValues && updatedSpecificationData.languageValues.length > 0) {
+                                for (let i = 0; i < updatedSpecificationData.languageValues.length; i++) {
+                                    const languageValue = updatedSpecificationData.languageValues[i];
+
+                                    const languageValues = await GeneralService.multiLanguageFieledsManage(updatedSpecification._id, {
+                                        ...languageValue,
+                                        languageValues: {
+                                            ...languageValue.languageValues,
+                                        }
+                                    });
+                                    newLanguageValues.push(languageValues);
+                                }
+
+                            }
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     _id: updatedSpecification._id,
                                     specificationTitle: updatedSpecification.specificationTitle,
                                     specificationValue: newValue
                                 },
-                                message: 'Please try again!'
+                                message: 'Specification updated successfully!'
                             }, 200, {
                                 sourceFromId: updatedSpecification._id,
                                 sourceFrom: adminTaskLog.ecommerce.specifications,
@@ -213,14 +228,55 @@ class SpecificationController extends BaseController {
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = specificationStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const specificationId = req.params.id;
+                if (specificationId) {
+                    let { status } = req.body;
+                    const updatedSpecificationData = { status };
+
+                    const updatedSpecification = await SpecificationService.update(specificationId, updatedSpecificationData);
+                    if (updatedSpecification) {
+                        controller.sendSuccessResponse(res, {
+                            requestedData: updatedSpecification,
+                            message: 'Specification status updated successfully!'
+                        });
+                    } else {
+                        controller.sendErrorResponse(res, 200, {
+                            message: 'Specification Id not found!',
+                        }, req);
+                    }
+                } else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Specification Id not found! Please try again with specification id',
+                    }, req);
+                }
+            } else {
+                controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating specification'
+            }, req);
+        }
+    }
+
     async destroy(req: Request, res: Response): Promise<void> {
         try {
             const specificationId = req.params.id;
             if (specificationId) {
                 const specification = await SpecificationService.findOne(specificationId);
                 if (specification) {
-                    await SpecificationService.destroy(specificationId);
-                    controller.sendSuccessResponse(res, { message: 'Specification deleted successfully!' });
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Cant to be delete specification!!',
+                    });
+                    // await SpecificationService.destroy(specificationId);
+                    // controller.sendSuccessResponse(res, { message: 'Specification deleted successfully!' });
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This specification details not found!',
