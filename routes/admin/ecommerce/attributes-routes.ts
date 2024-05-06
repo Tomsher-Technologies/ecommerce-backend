@@ -19,6 +19,7 @@ router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: p
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.attributes, writeOnly: 1 }), AttributesController.findOne);
 router.post('/', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.attributes, readOnly: 1 }), logResponseStatus, AttributesController.create);
 router.post('/:id', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.attributes, writeOnly: 1 }), logResponseStatus, AttributesController.update);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.brands, writeOnly: 1 }), AttributesController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.attributes }), AttributesController.destroy);
 
 

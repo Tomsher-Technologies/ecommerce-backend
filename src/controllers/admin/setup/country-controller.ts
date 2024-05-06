@@ -2,8 +2,9 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { countrySchema } from '@utils/schemas/admin/setup/country-schema';
+import { countrySchema, countryStatusSchema } from '@utils/schemas/admin/setup/country-schema';
 import { QueryParams } from '@utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
 
 import BaseController from '@controllers/admin/base-controller';
 import CountryService from '@services/admin/setup/country-service'
@@ -84,9 +85,13 @@ class CountryController extends BaseController {
                 return controller.sendSuccessResponse(res, {
                     requestedData: newCountry,
                     message: 'Country created successfully!'
+                }, 200, { // task log
+                    sourceFromId: newCountry._id,
+                    sourceFrom: adminTaskLog.setup.country,
+                    activity: adminTaskLogActivity.create,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
-                console.log('res', (req as any).file);
 
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -146,6 +151,11 @@ class CountryController extends BaseController {
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedCountry,
                             message: 'Country updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedCountry._id,
+                            sourceFrom: adminTaskLog.setup.country,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         controller.sendErrorResponse(res, 200, {
@@ -170,14 +180,61 @@ class CountryController extends BaseController {
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = countryStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const countryId = req.params.id;
+                if (countryId) {
+                    let { status } = req.body;
+                    const updatedCountryData = { status };
+
+                    const updatedCountry = await CountryService.update(countryId, updatedCountryData);
+                    if (updatedCountry) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedCountry,
+                            message: 'Country status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedCountry._id,
+                            sourceFrom: adminTaskLog.setup.country,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Country Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Country Id not found! Please try again with country id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating brand'
+            }, req);
+        }
+    }
+    
     async destroy(req: Request, res: Response): Promise<void> {
         try {
             const countryId = req.params.id;
             if (countryId) {
                 const country = await CountryService.findOne(countryId);
                 if (country) {
-                    await CountryService.destroy(countryId);
-                    controller.sendSuccessResponse(res, { message: 'Country deleted successfully!' });
+                    // await CountryService.destroy(countryId);
+                    // controller.sendSuccessResponse(res, { message: 'Country deleted successfully!' });
+
+                       controller.sendErrorResponse(res, 200, {
+                        message: 'You cant delete this country!',
+                    });
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This Country details not found!',

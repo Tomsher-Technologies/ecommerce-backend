@@ -7,6 +7,7 @@ import { logResponseStatus } from '@components/response-status';
 import { configureMulter } from '@utils/file-uploads';
 import authMiddleware from '@middleware/admin/auth-middleware';
 import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
+import { permissionBlocks } from '@constants/permission-blocks';
 
 import UserController from '@controllers/admin/account/users-controller';
 
@@ -25,11 +26,11 @@ router.use(authMiddleware);
 // .post(UserController.create)
 // .post(UserController.update)
 // .delete(UserController.destroy);
-router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'users', readOnly: 1 }), UserController.findAll);
-router.get('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'users', readOnly: 1 }), UserController.findOne);
-router.post('/', upload.single('userImage'), userPermissionMiddleware({ permissionBlock: 'users', writeOnly: 1 }), logResponseStatus, UserController.create);
-router.post('/:id', upload.single('userImage'), userPermissionMiddleware({ permissionBlock: 'users', writeOnly: 1 }), logResponseStatus, UserController.update);
-router.delete('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'users'}), UserController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.account.users, readOnly: 1 }), UserController.findAll);
+router.get('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.account.users, readOnly: 1 }), UserController.findOne);
+router.post('/', upload.single('userImage'), userPermissionMiddleware({ permissionBlock: permissionBlocks.account.users, writeOnly: 1 }), logResponseStatus, UserController.create);
+router.post('/:id', upload.single('userImage'), userPermissionMiddleware({ permissionBlock: permissionBlocks.account.users, writeOnly: 1 }), logResponseStatus, UserController.update);
+router.delete('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.account.users }), UserController.destroy);
 
 // Error handling middleware
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -7,6 +7,7 @@ import { formatZodError } from '@utils/helpers';
 import BaseController from '@controllers/admin/base-controller';
 import PrivilagesService from '@services/admin/account/privilages-service';
 import { privilageSchema } from '@utils/schemas/admin/account/privilage-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
 
 const controller = new BaseController();
 
@@ -19,13 +20,13 @@ class PrivilagesController extends BaseController {
                 query,
             });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: privilages,
                 totalCount: await PrivilagesService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching users' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching users' });
         }
     }
 
@@ -36,7 +37,7 @@ class PrivilagesController extends BaseController {
                 const validatedData = privilageSchema.safeParse(req.body);
                 if (validatedData.success) {
 
-                    const {  menuItems, status } = validatedData.data;
+                    const { menuItems, status } = validatedData.data;
                     const privilages = await PrivilagesService.findOne(userTypeId);
                     const user = res.locals.user;
 
@@ -70,15 +71,20 @@ class PrivilagesController extends BaseController {
                         }
                     }
 
-                    controller.sendSuccessResponse(res, privilageData);
+                    return controller.sendSuccessResponse(res, privilageData, 200, { // task log
+                        sourceFromId: '',
+                        sourceFrom: adminTaskLog.account.privilages,
+                        activity: adminTaskLogActivity.managePrivilages,
+                        activityStatus: adminTaskLogStatus.success
+                    });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
                         validation: formatZodError(validatedData.error.errors)
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Privilage Id not found!',
                 });
             }
@@ -98,7 +104,7 @@ class PrivilagesController extends BaseController {
                     }
                 });
             }
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating user'
             });
         }
@@ -110,23 +116,23 @@ class PrivilagesController extends BaseController {
             if (userTypeId) {
                 const privilages = await PrivilagesService.findOne(userTypeId);
                 if (privilages) {
-                    controller.sendSuccessResponse(res, {
+                    return controller.sendSuccessResponse(res, {
                         requestedData: privilages,
                         message: 'Success'
                     });
                 } else {
-                    controller.sendSuccessResponse(res, {
+                    return controller.sendSuccessResponse(res, {
                         requestedData: {},
                         message: 'Privilages not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Privilage Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
