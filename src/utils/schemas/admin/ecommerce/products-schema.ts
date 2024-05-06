@@ -32,9 +32,3 @@ export const updateWebsitePrioritySchema = zod.object({
     root: zod.array(zod.any()).optional(),
     container1: zod.array(zod.any()).optional(),
 }).nonstrict();
-
-export const specificationSchema = zod.object({
-    specificationTitle: zod.string({ required_error: 'Specification title is required', }).min(2, 'Specification title is should be 2 chars minimum'),
-    SpecificationValues: zod.array(zod.unknown()).optional(),
-    languageValues: zod.any().optional(),
-}).nonstrict();
