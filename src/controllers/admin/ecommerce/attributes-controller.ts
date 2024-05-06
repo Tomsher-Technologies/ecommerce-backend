@@ -155,7 +155,7 @@ class AttributesController extends BaseController {
                             attributeTitle: newAttribute.attributeTitle,
                             attributeValues: attributeDetailsValue
                         },
-                        message: 'Please try again!'
+                        message: 'Attribute successfully created'
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
@@ -295,7 +295,7 @@ class AttributesController extends BaseController {
                                     attributeValues: attributeDetailsValue,
                                     languageValues: updatedAttributeData.languageValues
                                 },
-                                message: 'Please try again!'
+                                message: 'Attribute successfully updated'
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {
