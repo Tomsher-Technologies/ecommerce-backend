@@ -5,6 +5,7 @@ import { configureMulter } from '@utils/file-uploads';
 import authMiddleware from '@middleware/admin/auth-middleware';
 import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
 import { logResponseStatus } from '@components/response-status';
+import { permissionBlocks } from '@constants/permission-blocks';
 
 import ProductsController from '@controllers/admin/ecommerce/products-controller';
 
@@ -14,9 +15,9 @@ const { upload } = configureMulter('product', ['productImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'products', readOnly: 1 }), ProductsController.findAll);
-router.get('/:id', userPermissionMiddleware({ permissionBlock: 'products', readOnly: 1 }), ProductsController.findOne);
-router.post('/', userPermissionMiddleware({ permissionBlock: 'products', writeOnly: 1 }), upload.any(), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findOne);
+router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), async (req: Request, res: Response, next: NextFunction) => {
     try {
         await ProductsController.create(req, res);
     } catch (error) {
@@ -25,9 +26,9 @@ router.post('/', userPermissionMiddleware({ permissionBlock: 'products', writeOn
         res.status(500).json({ message: 'Internal server error' });
     }
 }, ProductsController.create)
-router.post('/:id', userPermissionMiddleware({ permissionBlock: 'products', writeOnly: 1 }), upload.any(), logResponseStatus, ProductsController.update);
-router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: 'products', writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);
-router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'products' }), ProductsController.destroy);
+router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), logResponseStatus, ProductsController.update);
+router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products }), ProductsController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

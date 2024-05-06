@@ -7,6 +7,7 @@ import userPermissionMiddleware from '@middleware/admin/admin-user-permission-ro
 import { logResponseStatus } from '@components/response-status';
 
 import CategoryController from '@controllers/admin/ecommerce/category-controller';
+import { permissionBlocks } from '@constants/permission-blocks';
 
 const router: Router = express.Router();
 
@@ -14,14 +15,14 @@ const { upload } = configureMulter('category', ['categoryImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.findAll);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findAll);
 router.get('/parent-categories', logResponseStatus, CategoryController.findAllParentCategories);
-router.get('/:id', userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.findOne);
-router.post('/', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', readOnly: 1 }), CategoryController.create);
-router.post('/:id', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.update);
-router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.statusChange);
-router.post('/website/update-website-priority', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'category', writeOnly: 1 }), CategoryController.updateWebsitePriority);
-router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'category' }), CategoryController.destroy);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findOne);
+router.post('/', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.create);
+router.post('/:id', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, writeOnly: 1 }), CategoryController.update);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, writeOnly: 1 }), CategoryController.statusChange);
+router.post('/website/update-website-priority', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, writeOnly: 1 }), CategoryController.updateWebsitePriority);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories }), CategoryController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
