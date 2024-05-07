@@ -5,6 +5,33 @@ import SpecificationModel, { SpecificationProps } from '@model/admin/ecommerce/s
 
 
 class SpecificationService {
+    private lookup: any;
+    private project: any;
+    constructor() {
+
+
+        this.lookup = {
+            $lookup: {
+                from: 'specificationdetails',
+                localField: '_id',
+                foreignField: 'specificationId',
+                as: 'specificationValues'
+            }
+        };
+        this.project = {
+            $project: {
+                _id: 1,
+                specificationTitle: 1,
+                slug: 1,
+                status: 1,
+                createdAt: 1,
+                specificationValues: {
+                    $ifNull: ['$specificationValues', []]
+                }
+            }
+        }
+
+    }
     async findAll(options: FilterOptionsProps = {}): Promise<SpecificationProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
 
@@ -14,33 +41,16 @@ class SpecificationService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-    
+
         let pipeline: any[] = [
             { $match: query },
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
-            {
-                $lookup: {
-                    from: 'specificationdetails', 
-                    localField: '_id', 
-                    foreignField: 'specificationId', 
-                    as: 'specificationValues'
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    specificationTitle: 1,
-                    slug: 1,
-                    createdAt: 1,
-                    specificationValues: {
-                        $ifNull: ['$specificationValues', []] 
-                    }
-                }
-            }
+            this.lookup,
+            this.project
         ];
-    
+
         return SpecificationModel.aggregate(pipeline).exec();
     }
     async getTotalCount(query: any = {}): Promise<number> {
@@ -52,12 +62,38 @@ class SpecificationService {
         }
     }
 
-    async create(specificationData: any): Promise<SpecificationProps> {
-        return SpecificationModel.create(specificationData);
+    async create(specificationData: any): Promise<any> {
+        const createSpecification = await SpecificationModel.create(specificationData);
+        if (createSpecification) {
+            const pipeline = [
+                { $match: { _id: createSpecification._id } },
+                this.lookup,
+                this.project
+            ];
+
+            const createdSpecificationWithValues = await SpecificationModel.aggregate(pipeline);
+
+            return createdSpecificationWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async findOne(specificationId: string): Promise<SpecificationProps | null> {
-        return SpecificationModel.findById(specificationId);
+        const specificationData = await SpecificationModel.findById(specificationId);
+        if (specificationData) {
+            const pipeline = [
+                { $match: { _id: specificationData._id } },
+                this.lookup,
+                this.project
+            ];
+
+            const SpecificationDataWithValues = await SpecificationModel.aggregate(pipeline);
+
+            return SpecificationDataWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async update(specificationId: string, specificationData: any): Promise<SpecificationProps | null> {
@@ -84,20 +120,20 @@ class SpecificationService {
                         await SpecificationDetailModel.create({ ...data, specificationId: specificationId });
                     }
                 }));
-    
+
                 await Promise.all(inventryPricingPromises);
-    
+
                 return await SpecificationDetailModel.find({ specificationId: specificationId });
             } else {
                 throw 'Could not find specification Id';
             }
-    
+
         } catch (error) {
             console.error('Error in specificationDetailService:', error);
             throw error;
         }
     }
-    
+
 
     async destroy(specificationId: string): Promise<SpecificationProps | null> {
         return SpecificationModel.findOneAndDelete({ _id: specificationId });
