@@ -1,12 +1,15 @@
 import { FilterOptionsProps, pagination } from '@components/pagination';
 import SpecificationDetailModel from '@model/admin/ecommerce/specifications-detail-model';
+import { multiLanguageSources } from '@constants/multi-languages';
 
 import SpecificationModel, { SpecificationProps } from '@model/admin/ecommerce/specifications-model';
 
 
 class SpecificationService {
     private lookup: any;
+    private multilanguageFieldsLookup: any;
     private project: any;
+
     constructor() {
 
 
@@ -18,6 +21,25 @@ class SpecificationService {
                 as: 'specificationValues'
             }
         };
+        this.multilanguageFieldsLookup = {
+            $lookup: {
+                from: 'multilanguagefieleds', // Ensure 'from' field is included
+                let: { specificationId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$sourceId', '$$specificationId'] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.specifications] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'languageValues',
+            },
+        };
         this.project = {
             $project: {
                 _id: 1,
@@ -27,6 +49,9 @@ class SpecificationService {
                 createdAt: 1,
                 specificationValues: {
                     $ifNull: ['$specificationValues', []]
+                },
+                languageValues: {
+                    $ifNull: ['$languageValues', []]
                 }
             }
         }
@@ -48,7 +73,9 @@ class SpecificationService {
             { $limit: limit },
             { $sort: finalSort },
             this.lookup,
-            this.project
+            this.multilanguageFieldsLookup,
+            this.project,
+
         ];
 
         return SpecificationModel.aggregate(pipeline).exec();
@@ -62,13 +89,14 @@ class SpecificationService {
         }
     }
 
-    async create(specificationData: any): Promise<any> {
+    async create(specificationData: any): Promise<SpecificationProps | null> {
         const createSpecification = await SpecificationModel.create(specificationData);
         if (createSpecification) {
             const pipeline = [
                 { $match: { _id: createSpecification._id } },
                 this.lookup,
-                this.project
+                this.multilanguageFieldsLookup,
+                this.project,
             ];
 
             const createdSpecificationWithValues = await SpecificationModel.aggregate(pipeline);
@@ -85,7 +113,8 @@ class SpecificationService {
             const pipeline = [
                 { $match: { _id: specificationData._id } },
                 this.lookup,
-                this.project
+                this.project,
+                this.multilanguageFieldsLookup
             ];
 
             const SpecificationDataWithValues = await SpecificationModel.aggregate(pipeline);
@@ -97,7 +126,21 @@ class SpecificationService {
     }
 
     async update(specificationId: string, specificationData: any): Promise<SpecificationProps | null> {
-        return SpecificationModel.findByIdAndUpdate(specificationId, specificationData, { new: true, useFindAndModify: false });
+        const updateSpecification = await SpecificationModel.findByIdAndUpdate(specificationId, specificationData, { new: true, useFindAndModify: false });
+        if (updateSpecification) {
+            const pipeline = [
+                { $match: { _id: updateSpecification._id } },
+                this.lookup,
+                this.multilanguageFieldsLookup,
+                this.project
+            ];
+
+            const updatedSpecificationWithValues = await SpecificationModel.aggregate(pipeline);
+
+            return updatedSpecificationWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async specificationDetailsService(specificationId: string | null, specificationDetails: any): Promise<SpecificationProps[]> {
