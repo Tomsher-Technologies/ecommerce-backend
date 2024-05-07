@@ -86,7 +86,7 @@ class SpecificationController extends BaseController {
                             if (setSpecificationDetailsValues && setSpecificationDetailsValues.length > 0) {
                                 GeneralService.multiLanguageFieledsManage(newSpecification._id, {
                                     ...languageValue,
-                                    source: multiLanguageSources.ecommerce.specification,
+                                    source: multiLanguageSources.ecommerce.specifications,
                                     languageValues: {
                                         specificationValues: setSpecificationDetailsValues,
                                     }
