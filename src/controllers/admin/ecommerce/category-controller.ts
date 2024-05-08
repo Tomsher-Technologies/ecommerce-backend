@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
+import { formatZodError, handleFileUpload, slugify, categorySlugify } from '@utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '@utils/schemas/admin/ecommerce/category-schema';
 import { QueryParams } from '@utils/types/common';
 import { CategoryQueryParams } from '@utils/types/category';
@@ -100,32 +100,63 @@ class CategoryController extends BaseController {
         }
     }
 
+    async findAllCategories(req: Request, res: Response): Promise<void> {
+        try {
+            const { status = '1' } = req.query;
+            const query = { status, _id: { $exists: true } };
+            const categories = await CategoryService.findAllCategories();
+            
+
+            controller.sendSuccessResponse(res, {
+                requestedData: categories,
+                totalCount: await CategoryService.getTotalCount(query),
+                message: 'Success!'
+            }, 200);
+        } catch (error: any) {
+            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
+        }
+    }
+
     async create(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = categorySchema.safeParse(req.body);
-            // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { categoryTitle, slug, description, parentCategory, type, languageValues } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 // let parentCategory = validatedData.data.parentCategory;
                 // if (parentCategory === '') {
                 //     parentCategory = ''; // Convert empty string to null
                 // }
-                const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+                const category = await CategoryService.findParentCategory(req.body.parentCategory);
+                var slugData
+                const data: any = category?.slug + "-" + req.body.categoryTitle
+                console.log(category);
+
+                if (req.body.parentCategory == undefined) {
+                    slugData = slugify(categoryTitle)
+
+                }
+                else {
+                    slugData = categorySlugify(data)
+
+                }
+
+                const categoryImage = (req?.files) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
                     categoryTitle,
-                    slug: slug || slugify(categoryTitle),
+                    slug: slug || slugData,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
-                    parentCategory,
+                    corporateGiftsPriority,
                     type,
-                    status: '1',
+                    parentCategory,
+                    level,
                     createdBy: user._id,
-                    createdAt: new Date()
                 };
+
                 const newCategory = await CategoryService.create(categoryData);
 
                 if (newCategory) {
@@ -229,7 +260,6 @@ class CategoryController extends BaseController {
                     const updatedCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
                     if (updatedCategory) {
 
-                       
                         const languageValuesImages = (req as any).files.filter((file: any) =>
                             file.fieldname &&
                             file.fieldname.startsWith('languageValues[') &&
@@ -272,7 +302,7 @@ class CategoryController extends BaseController {
                                 ...updatedCategoryMapped,
                                 message: 'Category updated successfully!'
                             }
-                        },200, {
+                        }, 200, {
                             sourceFromId: updatedCategory._id,
                             sourceFrom: adminTaskLog.ecommerce.categories,
                             activity: adminTaskLogActivity.update,
