@@ -98,11 +98,9 @@ class BannerService {
     }
 
     async findOne(bannerId: string): Promise<BannerProps | null> {
-        const bannerData = await BannerModel.findById(bannerId);
-
-        if (bannerData) {
+        if (bannerId) {
             const pipeline = [
-                { $match: { _id: bannerData._id } },
+                { $match: { _id: bannerId } },
                 this.lookup,
                 this.project
             ];

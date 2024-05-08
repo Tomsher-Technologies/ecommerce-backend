@@ -88,7 +88,7 @@ class BrandsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { brandTitle, slug, description, categoryId, metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues } = validatedData.data;
+                const { brandTitle, slug, description,  metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues,status } = validatedData.data;
                 const user = res.locals.user;
 
                 const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
@@ -98,7 +98,6 @@ class BrandsController extends BaseController {
                     slug: slug || slugify(brandTitle) as any,
                     brandImageUrl: handleFileUpload(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
                     description,
-                    categoryId: categoryId as any,
                     metaTitle: metaTitle as string,
                     metaDescription: metaDescription as string,
                     ogTitle: ogTitle as string,
@@ -106,7 +105,7 @@ class BrandsController extends BaseController {
                     metaImageUrl: metaImage as string,
                     twitterTitle: twitterTitle as string,
                     twitterDescription: twitterDescription as string,
-                    status: '1', // active
+                    ['status' as string] : status || '1',
                     statusAt: new Date(),
                     createdBy: user._id,
                     createdAt: new Date(),

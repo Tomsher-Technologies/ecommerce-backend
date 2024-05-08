@@ -113,11 +113,9 @@ class AttributesService {
     }
 
     async findOne(attributeId: string): Promise<AttributesProps | null> {
-        const attributeData = await AttributesModel.findById(attributeId);
-
-        if (attributeData) {
+        if (attributeId) {
             const pipeline = [
-                { $match: { _id: attributeData._id } },
+                { $match: { _id: attributeId } },
                 this.attributeDetailsLookup,
                 this.multilanguageFieldsLookup,
 

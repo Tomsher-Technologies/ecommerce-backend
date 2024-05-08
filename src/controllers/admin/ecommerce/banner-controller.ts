@@ -64,7 +64,7 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues } = validatedData.data;
+                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const mewBannerImages = (req as any).files.filter((file: any) =>
@@ -89,7 +89,7 @@ class BannerController extends BaseController {
                         bannerImages: bannerImages,
                         bannerImagesUrl: handleFileUpload(req, null, (req.file || mewBannerImages), 'bannerImagesUrl', 'banner'),
                         description,
-                        status: '1',
+                        status: status || '1',
                         createdBy: user._id,
                         createdAt: new Date()
                     };
