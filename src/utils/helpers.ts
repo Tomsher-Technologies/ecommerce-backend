@@ -118,7 +118,12 @@ export const slugify = (text: string): string => {
         .replace(/-+/g, '-') // Replace multiple hyphens with a single hyphen
         .trim(); // Trim leading and trailing spaces
 };
-
+export const categorySlugify = (text: string): string => {
+    return text.toLowerCase().replace(/[^\w\s-]/g, '') // Remove non-alphanumeric characters except spaces and hyphens
+        .replace(/\s+/g, '_') // Replace spaces with hyphens
+        .replace(/-+/g, '-') // Replace multiple hyphens with a single hyphen
+        .trim(); // Trim leading and trailing spaces
+};
 export const isValidPriceFormat = (value: string): boolean => {
     const priceRegex = /^\d+(\.\d{1,2})?$/;
     return priceRegex.test(value);
