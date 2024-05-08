@@ -17,6 +17,7 @@ router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findAll);
 router.get('/parent-categories', logResponseStatus, CategoryController.findAllParentCategories);
+router.get('/categories', logResponseStatus, CategoryController.findAllCategories);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findOne);
 router.post('/', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.create);
 router.post('/:id', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, writeOnly: 1 }), CategoryController.update);
