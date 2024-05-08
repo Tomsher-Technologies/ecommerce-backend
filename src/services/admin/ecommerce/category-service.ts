@@ -72,6 +72,7 @@ class CategoryService {
                 slug: 1,
                 description: 1,
                 categoryImageUrl: 1,
+                parentCategory: 1,
                 corporateGiftsPriority: 1,
                 type: 1,
                 level: 1,
@@ -142,6 +143,89 @@ class CategoryService {
         return categories;
     }
 
+    // async findAllCategories(): Promise<CategoryProps[] | null> {
+    //     try {
+    //         const pipeline = [
+    //             {
+    //                 $match: { parentCategory: { $exists: false } } // Find root categories
+    //             },
+    //             {
+    //                 $graphLookup: {
+    //                     from: "categories",
+    //                     startWith: "$_id",
+    //                     connectFromField: "_id",
+    //                     connectToField: "parentCategory",
+    //                     as: "subCategories",
+    //                     maxDepth: 1 // Limit depth to 1 level
+    //                 }
+    //             },
+    //             {
+    //                 $addFields: {
+    //                     subCategories: {
+    //                         $map: {
+    //                             input: "$subCategories",
+    //                             as: "subcategory",
+    //                             in: {
+    //                                 $mergeObjects: [
+    //                                     "$$subcategory",
+    //                                     {
+    //                                         subCategories: [] // Empty array to limit to one level
+    //                                     }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         ];
+
+    //         const categoriesWithSubcategories = await CategoryModel.aggregate(pipeline);
+    //         return categoriesWithSubcategories;
+    //     } catch (error) {
+    //         console.error("Error finding categories:", error);
+    //         return null;
+    //     }
+    // }
+
+
+
+
+    async findAllCategories(): Promise<CategoryProps[] | null> {
+        try {
+            const rootCategories = await CategoryModel.find({ parentCategory: { $exists: false } }); // Find root categories
+            if (!rootCategories || rootCategories.length === 0) {
+                console.log("No root categories found.");
+                return null;
+            }
+
+            const categoriesWithSubcategories: CategoryProps[] = [];
+            for (const rootCategory of rootCategories) {
+                const processedCategory = await this.processCategory(rootCategory);
+                categoriesWithSubcategories.push(processedCategory);
+            }
+
+            return categoriesWithSubcategories;
+        } catch (error) {
+            console.error("Error finding categories:", error);
+            return null;
+        }
+    }
+
+    async processCategory(category: any): Promise<any> {
+        const subcategories: any = await CategoryModel.find({ parentCategory: category._id });
+        if (subcategories && subcategories.length > 0) {
+            const processedSubcategories: CategoryProps[] = [];
+            for (const subcategory of subcategories) {
+                const processedSubcategory = await this.processCategory(subcategory);
+                processedSubcategories.push(processedSubcategory);
+            }
+            return { ...category.toObject(), subCategories: processedSubcategories };
+        } else {
+            return { ...category.toObject(), subCategories: [] };
+        }
+    }
+
+
     async getParentChilledCategory(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
         const { query } = pagination(options.query || {}, options);
         return CategoryModel.find(query);
@@ -186,21 +270,21 @@ class CategoryService {
         return CategoryModel.findOne({ _id: parentCategory });
     }
 
-    async findAllCategories(): Promise<CategoryProps | null> {
+    // async findAllCategories(): Promise<CategoryProps | null> {
 
-        const pipeline = [
-            this.parentCategoryLookup
-        ];
+    //     const pipeline = [
+    //         this.parentCategoryLookup
+    //     ];
 
-        const categoryDataWithValues: any = await CategoryModel.aggregate(pipeline).match({ level: "0" });
-        if (categoryDataWithValues) {
-            return categoryDataWithValues
-        } else {
-            return null
-        }
+    //     const categoryDataWithValues: any = await CategoryModel.aggregate(pipeline).match({ level: "0" });
+    //     if (categoryDataWithValues) {
+    //         return categoryDataWithValues
+    //     } else {
+    //         return null
+    //     }
 
 
-    }
+    // }
 
     async update(categoryId: string, categoryData: any): Promise<CategoryProps | null> {
         return CategoryModel.findByIdAndUpdate(categoryId, categoryData, { new: true, useFindAndModify: false });
