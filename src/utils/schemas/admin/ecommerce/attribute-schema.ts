@@ -5,6 +5,7 @@ export const attributeSchema = zod.object({
     attributeType: zod.string({ required_error: 'Attribute type is required', }).min(2, 'Attribute type is should be 2 chars minimum'),
     attributeValues: zod.array(zod.unknown()).optional(),
     languageValues: zod.any().optional(),
+    status: zod.string().optional(),
 }).nonstrict();
 
 export const attributeStatusSchema = zod.object({
