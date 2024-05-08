@@ -59,12 +59,13 @@ class AttributesController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { attributeTitle, attributeType, attributeValues, languageValues } = validatedData.data;
+                const { attributeTitle, attributeType, attributeValues, status,languageValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
                     attributeTitle,
                     slug: slugify(attributeTitle),
                     attributeType,
+                    status: status || '1',
                     createdAt: new Date(),
                 };
 

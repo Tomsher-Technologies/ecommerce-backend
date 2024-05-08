@@ -99,11 +99,9 @@ class SliderService {
     }
 
     async findOne(sliderId: string): Promise<SliderProps | null> {
-        const sliderData = await SliderModel.findById(sliderId);
-
-        if (sliderData) {
+        if (sliderId) {
             const pipeline = [
-                { $match: { _id: sliderData._id } },
+                { $match: { _id: sliderId } },
                 this.lookup,
                 this.project
             ];

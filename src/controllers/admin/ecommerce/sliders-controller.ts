@@ -64,7 +64,7 @@ class SlidersController extends BaseController {
             const validatedData = sliderSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { countryId, sliderTitle, slug, page, linkType, link, position, description, languageValues } = validatedData.data;
+                const { countryId, sliderTitle, slug, page, linkType, link, position, description, status, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const sliderImage = (req as any).files.find((file: any) => file.fieldname === 'sliderImage');
@@ -79,7 +79,7 @@ class SlidersController extends BaseController {
                     position,
                     sliderImageUrl: handleFileUpload(req, null, (req.file || sliderImage), 'sliderImageUrl', 'slider'),
                     description,
-                    status: '1',
+                    status: status || '1',
                     createdBy: user._id,
                     createdAt: new Date()
                 };
