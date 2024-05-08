@@ -1,0 +1,30 @@
+
+
+export const permissionBlocks = {
+    ecommerce: {
+        products: 'products',
+        categories: 'categories',
+        brands: 'brands',
+        attributes: 'attributes',
+        banners: 'banners',
+        sliders: 'sliders',
+        specifications: 'specifications'
+
+    },
+    website: {
+        collectionsProducts: 'collectionsproducts',
+    },
+    setup: {
+        languages: 'languages',
+        country: 'country',
+    },
+    account: {
+        privilages: 'privilages',
+        users: 'users',
+        userTypes: 'usertypes',
+    },
+    marketing: {
+        coupons: 'coupons',
+        offers: 'offers',
+    }
+}

@@ -26,7 +26,7 @@ class AuthService {
                         countryId: user.countryId,
                         email: user.email,
                         phone: user.phone
-                    }, 'your-secret-key', { expiresIn: '1h' });
+                    }, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn: '8h' });
 
                     const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id });
 

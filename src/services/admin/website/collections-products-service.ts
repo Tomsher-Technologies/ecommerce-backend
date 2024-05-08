@@ -17,7 +17,7 @@ class CollectionsProductsService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$collectionsProductId'] },
-                                    { $eq: ['$source', multiLanguageSources.collectionsProducts] },
+                                    { $eq: ['$source', multiLanguageSources.website.collectionsProducts] },
                                 ],
                             },
                         },

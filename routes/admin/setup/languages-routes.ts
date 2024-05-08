@@ -1,22 +1,25 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import authMiddleware from '@middleware/admin/auth-middleware';
 import { logResponseStatus } from '@components/response-status';
 
+import authMiddleware from '@middleware/admin/auth-middleware';
+import { permissionBlocks } from '@constants/permission-blocks';
+
 import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import languagesController from '@controllers/admin/setup/languages-controller';
+import LanguagesController from '@controllers/admin/setup/languages-controller';
 
 const router: Router = express.Router();
 
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'languages', readOnly: 1 }), languagesController.findAll);
-router.get('/:id', userPermissionMiddleware({ permissionBlock: 'languages', readOnly: 1 }), languagesController.findOne);
-router.post('/', userPermissionMiddleware({ permissionBlock: 'languages', writeOnly: 1 }), logResponseStatus, languagesController.create);
-router.post('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: 'languages', writeOnly: 1 }), languagesController.update);
-router.delete('/:id', userPermissionMiddleware({ permissionBlock: 'languages' }), languagesController.destroy);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.setup.languages, readOnly: 1 }), LanguagesController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.setup.languages, readOnly: 1 }), LanguagesController.findOne);
+router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.setup.languages, writeOnly: 1 }), logResponseStatus, LanguagesController.create);
+router.post('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.setup.languages, writeOnly: 1 }), LanguagesController.update);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.setup.languages, writeOnly: 1 }), LanguagesController.statusChange);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.setup.languages }), LanguagesController.destroy);
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     // Check if the error is from multer

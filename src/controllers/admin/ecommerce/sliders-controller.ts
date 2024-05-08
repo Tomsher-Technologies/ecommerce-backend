@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
 import { QueryParams } from '@utils/types/common';
 import { sliderPositionSchema, sliderSchema, sliderStatusSchema } from '@utils/schemas/admin/ecommerce/slider-schema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
 
 import BaseController from '@controllers/admin/base-controller';
 
@@ -63,7 +64,7 @@ class SlidersController extends BaseController {
             const validatedData = sliderSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { countryId, sliderTitle, slug, page, linkType, link, position, description, languageValues } = validatedData.data;
+                const { countryId, sliderTitle, slug, page, linkType, link, position, description, status, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const sliderImage = (req as any).files.find((file: any) => file.fieldname === 'sliderImage');
@@ -78,7 +79,7 @@ class SlidersController extends BaseController {
                     position,
                     sliderImageUrl: handleFileUpload(req, null, (req.file || sliderImage), 'sliderImageUrl', 'slider'),
                     description,
-                    status: '1',
+                    status: status || '1',
                     createdBy: user._id,
                     createdAt: new Date()
                 };
@@ -193,7 +194,7 @@ class SlidersController extends BaseController {
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
                                 if (languageValuesImages.length > 0 && matchingImage) {
-                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.sliders, updatedSlider._id);
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, updatedSlider._id, languageValue.languageId);
                                     sliderImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `sliderImageUrl`, 'slider');
                                 } else {
                                     sliderImageUrl = updatedSliderData.languageValues[i].languageValues?.sliderImageUrl
@@ -222,6 +223,11 @@ class SlidersController extends BaseController {
                                 languageValues: newLanguageValues
                             },
                             message: 'Slider updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedSliderMapped._id,
+                            sourceFrom: adminTaskLog.ecommerce.sliders,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -260,6 +266,11 @@ class SlidersController extends BaseController {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: sliderId,
+                            sourceFrom: adminTaskLog.ecommerce.sliders,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -297,6 +308,11 @@ class SlidersController extends BaseController {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: sliderId,
+                            sourceFrom: adminTaskLog.ecommerce.sliders,
+                            activity: adminTaskLogActivity.positionChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -328,12 +344,19 @@ class SlidersController extends BaseController {
                 const slider = await SliderService.findOne(sliderId);
                 if (slider) {
                     const SliderServices = await SliderService.destroy(sliderId);
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.sliders, sliderId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, sliderId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }
 
-                    return controller.sendSuccessResponse(res, { message: 'Slider deleted successfully!' });
+                    return controller.sendSuccessResponse(res,
+                        { message: 'Slider deleted successfully!' },
+                        200, { // task log
+                        sourceFromId: sliderId,
+                        sourceFrom: adminTaskLog.ecommerce.sliders,
+                        activity: adminTaskLogActivity.delete,
+                        activityStatus: adminTaskLogStatus.success
+                    });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'This slider details not found!',

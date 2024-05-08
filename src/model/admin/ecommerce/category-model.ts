@@ -8,7 +8,7 @@ export interface CategoryProps extends Document {
     corporateGiftsPriority: string;
     type?: string;
     categoryImageUrl: string;
-    pageTitle?: string;
+    level: string;
     status: string;
     statusAt: Date;
     createdBy?: string;
@@ -55,15 +55,15 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         type: String,
         required: true,
     },
+    level: {
+        type: String,
+        default: '0',
+    },
     corporateGiftsPriority: {
         type: String,
         default: '0'
     },
     type: {
-        type: String,
-        default: ''
-    },
-    pageTitle: {
         type: String,
         default: ''
     },

@@ -2,13 +2,17 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { categorySchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/category-schema';
+import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '@utils/schemas/admin/ecommerce/category-schema';
 import { QueryParams } from '@utils/types/common';
 import { CategoryQueryParams } from '@utils/types/category';
 
 import BaseController from '@controllers/admin/base-controller';
 import CategoryService from '@services/admin/ecommerce/category-service'
+import GeneralService from '@services/admin/general-service';
 import CategoryModel, { CategoryProps } from '@model/admin/ecommerce/category-model';
+import { multiLanguageSources } from '@constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+
 
 const controller = new BaseController();
 
@@ -102,38 +106,75 @@ class CategoryController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { categoryTitle, slug, description, parentCategory, type, pageTitle } = validatedData.data;
+                const { categoryTitle, slug, description, parentCategory, type, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 // let parentCategory = validatedData.data.parentCategory;
                 // if (parentCategory === '') {
                 //     parentCategory = ''; // Convert empty string to null
                 // }
+                const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
                     categoryTitle,
                     slug: slug || slugify(categoryTitle),
-                    categoryImageUrl: handleFileUpload(req, null, req.file, 'categoryImageUrl', 'category'),
+                    categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
                     parentCategory,
                     type,
-                    pageTitle,
                     status: '1',
                     createdBy: user._id,
                     createdAt: new Date()
                 };
                 const newCategory = await CategoryService.create(categoryData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newCategory,
-                    message: 'Category created successfully!'
-                });
+
+                if (newCategory) {
+                    const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[categoryImage]')
+                    );
+
+                    if (languageValues && languageValues?.length > 0) {
+                        await languageValues.map((languageValue: any, index: number) => {
+
+                            let categoryImageUrl = ''
+                            if (languageValuesImages?.length > 0) {
+                                categoryImageUrl = handleFileUpload(req
+                                    , null, languageValuesImages[index], `categoryImageUrl`, 'category');
+                            }
+
+                            GeneralService.multiLanguageFieledsManage(newCategory._id, {
+                                ...languageValue,
+                                source: multiLanguageSources.ecommerce.categories,
+                                languageValues: {
+                                    ...languageValue.languageValues,
+                                    categoryImageUrl
+                                }
+                            })
+                        })
+                    }
+
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newCategory,
+                        message: 'Category created successfully!'
+                    }, 200, {
+                        sourceFromId: newCategory._id,
+                        sourceFrom: adminTaskLog.ecommerce.categories,
+                        activity: adminTaskLogActivity.update,
+                        activityStatus: adminTaskLogStatus.success
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: 'Something went wrong! category cant be inserted. please try again'
+                    }, req);
+                }
+
+
             } else {
                 console.log('res', (req as any).file);
 
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: formatZodError(validatedData.error.errors)
-                }, req);
             }
         } catch (error: any) {
             if (error && error.errors && error.errors.categoryTitle && error.errors.categoryTitle.properties) {
@@ -175,6 +216,8 @@ class CategoryController extends BaseController {
             const validatedData = categorySchema.safeParse(req.body);
             if (validatedData.success) {
                 const categoryId = req.params.id;
+                const user = res.locals.user;
+
                 if (categoryId) {
                     let updatedCategoryData = req.body;
                     updatedCategoryData = {
@@ -183,11 +226,57 @@ class CategoryController extends BaseController {
                         updatedAt: new Date()
                     };
 
-                    const updatedCategory = await CategoryService.update(categoryId, updatedCategoryData);
+                    const updatedCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
                     if (updatedCategory) {
+
+                       
+                        const languageValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[categoryImage]')
+                        );
+
+                        let newLanguageValues: any = []
+                        if (updatedCategoryData.languageValues && updatedCategoryData.languageValues.length > 0) {
+                            for (let i = 0; i < updatedCategoryData.languageValues.length; i++) {
+                                const languageValue = updatedCategoryData.languageValues[i];
+                                let categoryImageUrl = '';
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.categories, updatedCategory._id, languageValue.languageId);
+                                    categoryImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `categoryImageUrl`, 'category');
+                                } else {
+                                    categoryImageUrl = updatedCategoryData.languageValues[i].languageValues?.categoryImageUrl
+                                }
+
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedCategory._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        categoryImageUrl
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
+                            }
+                        }
+
+                        const updatedCategoryMapped = Object.keys(updatedCategory).reduce((mapped: any, key: string) => {
+                            mapped[key] = updatedCategory[key];
+                            return mapped;
+                        }, {});
+
+
                         controller.sendSuccessResponse(res, {
-                            requestedData: updatedCategory,
-                            message: 'Category updated successfully!'
+                            requestedData: {
+                                ...updatedCategoryMapped,
+                                message: 'Category updated successfully!'
+                            }
+                        },200, {
+                            sourceFromId: updatedCategory._id,
+                            sourceFrom: adminTaskLog.ecommerce.categories,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         controller.sendErrorResponse(res, 200, {
@@ -289,6 +378,43 @@ class CategoryController extends BaseController {
         }
     }
 
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = categoryStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const categoryId = req.params.id;
+                if (categoryId) {
+                    let { status } = req.body;
+                    const updatedCategoryData = { status };
+
+                    const updatedCategory = await CategoryService.update(categoryId, updatedCategoryData);
+                    if (updatedCategory) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedCategory,
+                            message: 'Category status updated successfully!'
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Category Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Category Id not found! Please try again with Category id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating Category'
+            }, req);
+        }
+    }
 }
 
 export default new CategoryController();
