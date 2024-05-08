@@ -102,10 +102,37 @@ class CategoryController extends BaseController {
 
     async findAllCategories(req: Request, res: Response): Promise<void> {
         try {
-            const { status = '1' } = req.query;
-            const query = { status, _id: { $exists: true } };
-            const categories = await CategoryService.findAllCategories();
-            
+            const { status = '1', keyword = '' } = req.query as QueryParams;
+            // const query = { status, _id: { $exists: true } };
+
+            let query: any = { _id: { $exists: true } };
+
+            if (status && status !== '') {
+                query.status = { $in: Array.isArray(status) ? status : [status] };
+            } else {
+                query.status = '1';
+            }
+
+            if (keyword) {
+                query = {
+                    $or: [
+                        { categoryTitle: keyword },
+                        { slug: keyword },
+                    ],
+                    ...query
+
+                } as any;
+            } else if (req.query._id) {
+                query = { _id: req.query._id }
+            } else if (req.query.parentCategory) {
+                query = { parentCategory: req.query.parentCategory }
+            } else {
+                query = { parentCategory: { $exists: false } }
+            }
+            console.log("query", query);
+
+            const categories = await CategoryService.findAllCategories(query);
+
 
             controller.sendSuccessResponse(res, {
                 requestedData: categories,
@@ -337,8 +364,11 @@ class CategoryController extends BaseController {
             if (categoryId) {
                 const category = await CategoryService.findOne(categoryId);
                 if (category) {
-                    await CategoryService.destroy(categoryId);
-                    controller.sendSuccessResponse(res, { message: 'Category deleted successfully!' });
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Cant to be delete category!!',
+                    });
+                    // await CategoryService.destroy(categoryId);
+                    // controller.sendSuccessResponse(res, { message: 'Category deleted successfully!' });
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This Category details not found!',
