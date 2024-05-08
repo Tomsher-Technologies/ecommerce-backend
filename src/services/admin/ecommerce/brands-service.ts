@@ -76,11 +76,9 @@ class BrandsService {
     }
 
     async findOne(brandId: string): Promise<BrandProps | null> {
-        const brandData = await BrandsModel.findById(brandId);
-
-        if (brandData) {
+        if (brandId) {
             const pipeline = [
-                { $match: { _id: brandData._id } },
+                { $match: { _id: brandId} },
                 this.lookup,
             ];
 

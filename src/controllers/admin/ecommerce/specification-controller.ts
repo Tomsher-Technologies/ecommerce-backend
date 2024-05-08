@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
 import { QueryParams } from '@utils/types/common';
-import { specificationSchema,specificationStatusSchema } from '@utils/schemas/admin/ecommerce/specification-schema';
+import { specificationSchema, specificationStatusSchema } from '@utils/schemas/admin/ecommerce/specification-schema';
 
 import { SpecificationProps } from '@model/admin/ecommerce/specifications-model';
 import BaseController from '@controllers/admin/base-controller';
@@ -62,6 +62,7 @@ class SpecificationController extends BaseController {
 
                 const specificationData: Partial<SpecificationProps> = {
                     specificationTitle,
+                    status: '1',
                     slug: slugify(specificationTitle),
                     createdAt: new Date(),
                 };
@@ -85,7 +86,7 @@ class SpecificationController extends BaseController {
                             if (setSpecificationDetailsValues && setSpecificationDetailsValues.length > 0) {
                                 GeneralService.multiLanguageFieledsManage(newSpecification._id, {
                                     ...languageValue,
-                                    source: multiLanguageSources.ecommerce.specification,
+                                    source: multiLanguageSources.ecommerce.specifications,
                                     languageValues: {
                                         specificationValues: setSpecificationDetailsValues,
                                     }
