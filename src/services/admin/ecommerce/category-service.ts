@@ -190,9 +190,9 @@ class CategoryService {
 
 
 
-    async findAllCategories(): Promise<CategoryProps[] | null> {
+    async findAllCategories(query: any): Promise<CategoryProps[] | null> {
         try {
-            const rootCategories = await CategoryModel.find({ parentCategory: { $exists: false } }); // Find root categories
+            const rootCategories = await CategoryModel.find(query); // Find root categories
             if (!rootCategories || rootCategories.length === 0) {
                 console.log("No root categories found.");
                 return null;
