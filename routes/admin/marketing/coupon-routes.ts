@@ -1,12 +1,12 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { logResponseStatus } from '@components/response-status';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import { logResponseStatus } from '../../../src/components/response-status';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import CouponsController from '@controllers/admin/marketing/coupons-controller';
+import CouponsController from '../../../src/controllers/admin/marketing/coupons-controller';
 
 const router: Router = express.Router();
 

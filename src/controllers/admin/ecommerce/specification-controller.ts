@@ -1,16 +1,16 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
-import { specificationSchema, specificationStatusSchema } from '@utils/schemas/admin/ecommerce/specification-schema';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { QueryParams } from '../../../utils/types/common';
+import { specificationSchema, specificationStatusSchema } from '../../../utils/schemas/admin/ecommerce/specification-schema';
 
-import { SpecificationProps } from '@model/admin/ecommerce/specifications-model';
-import BaseController from '@controllers/admin/base-controller';
-import SpecificationService from '@services/admin/ecommerce/specification-service'
-import GeneralService from '@services/admin/general-service';
-import { multiLanguageSources } from '@constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { SpecificationProps } from '../../../model/admin/ecommerce/specifications-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import SpecificationService from '../../../services/admin/ecommerce/specification-service'
+import GeneralService from '../../../services/admin/general-service';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 const controller = new BaseController();
 

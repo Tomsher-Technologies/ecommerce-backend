@@ -1,16 +1,16 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { deleteFile, formatZodError, handleFileUpload, slugify, stringToArray } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
+import { deleteFile, formatZodError, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import CollectionsProductsService from '@services/admin/website/collections-products-service';
-import { collectionProductSchema } from '@utils/schemas/admin/website/collection-product-shema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import BaseController from '../../../controllers/admin/base-controller';
+import CollectionsProductsService from '../../../services/admin/website/collections-products-service';
+import { collectionProductSchema } from '../../../utils/schemas/admin/website/collection-product-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import GeneralService from '@services/admin/general-service';
-import { multiLanguageSources } from '@constants/multi-languages';
+import GeneralService from '../../../services/admin/general-service';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 const controller = new BaseController();
 

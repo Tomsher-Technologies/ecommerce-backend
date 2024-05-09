@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
-import categoryController from '@controllers/admin/ecommerce/category-controller';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import categoryController from '../../../controllers/admin/ecommerce/category-controller';
 
-import CategoryModel, { CategoryProps } from '@model/admin/ecommerce/category-model';
+import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { pipeline } from 'stream';
 
 

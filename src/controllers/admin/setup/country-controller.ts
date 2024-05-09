@@ -1,14 +1,14 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { countrySchema, countryStatusSchema } from '@utils/schemas/admin/setup/country-schema';
-import { QueryParams } from '@utils/types/common';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { countrySchema, countryStatusSchema } from '../../../utils/schemas/admin/setup/country-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import CountryService from '@services/admin/setup/country-service'
-import { CountryProps } from '@model/admin/setup/country-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import CountryService from '../../../services/admin/setup/country-service'
+import { CountryProps } from '../../../model/admin/setup/country-model';
 
 const controller = new BaseController();
 

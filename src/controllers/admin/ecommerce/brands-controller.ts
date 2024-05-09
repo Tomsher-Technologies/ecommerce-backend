@@ -1,17 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/brand-schema';
-import { QueryParams } from '@utils/types/common';
-import { BrandQueryParams } from '@utils/types/brands';
-import { multiLanguageSources } from '@constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/brand-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { BrandQueryParams } from '../../../utils/types/brands';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import BrandsService from '@services/admin/ecommerce/brands-service'
-import BrandsModel, { BrandProps } from '@model/admin/ecommerce/brands-model';
-import GeneralService from '@services/admin/general-service';
+import BaseController from '../../../controllers/admin/base-controller';
+import BrandsService from '../../../services/admin/ecommerce/brands-service'
+import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
+import GeneralService from '../../../services/admin/general-service';
 
 const controller = new BaseController();
 

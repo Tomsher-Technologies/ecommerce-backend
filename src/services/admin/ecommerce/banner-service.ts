@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
-import BannerModel, { BannerProps } from '@model/admin/ecommerce/banner-model';
-import { handleFileUpload } from '@utils/helpers';
+import BannerModel, { BannerProps } from '../../../model/admin/ecommerce/banner-model';
+import { handleFileUpload } from '../../../utils/helpers';
 
 
 class BannerService {
