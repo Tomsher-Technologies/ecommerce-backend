@@ -2,7 +2,7 @@ import 'module-alias/register';
 import express, { Request, Response, NextFunction, Router } from 'express';
 import helmet from 'helmet';
 
-import AuthController from '@controllers/admin/auth';
+import AuthController from '../../src/controllers/admin/auth';
 
 const router: Router = express.Router();
 

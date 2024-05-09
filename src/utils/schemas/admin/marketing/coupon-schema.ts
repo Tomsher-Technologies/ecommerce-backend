@@ -1,5 +1,5 @@
 import { z as zod } from 'zod';
-import { isValidPriceFormat } from '@utils/helpers';
+import { isValidPriceFormat } from '../../../helpers';
 
 export const couponSchema = zod.object({
     _id: zod.string().optional(),

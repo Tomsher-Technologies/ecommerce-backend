@@ -1,17 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify, categorySlugify } from '@utils/helpers';
-import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '@utils/schemas/admin/ecommerce/category-schema';
-import { QueryParams } from '@utils/types/common';
-import { CategoryQueryParams } from '@utils/types/category';
+import { formatZodError, handleFileUpload, slugify, categorySlugify } from '../../../utils/helpers';
+import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { CategoryQueryParams } from '../../../utils/types/category';
 
-import BaseController from '@controllers/admin/base-controller';
-import CategoryService from '@services/admin/ecommerce/category-service'
-import GeneralService from '@services/admin/general-service';
-import CategoryModel, { CategoryProps } from '@model/admin/ecommerce/category-model';
-import { multiLanguageSources } from '@constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import BaseController from '../../../controllers/admin/base-controller';
+import CategoryService from '../../../services/admin/ecommerce/category-service'
+import GeneralService from '../../../services/admin/general-service';
+import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 
 const controller = new BaseController();

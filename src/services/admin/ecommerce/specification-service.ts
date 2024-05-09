@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import SpecificationDetailModel from '@model/admin/ecommerce/specifications-detail-model';
-import { multiLanguageSources } from '@constants/multi-languages';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import SpecificationDetailModel from '../../../model/admin/ecommerce/specifications-detail-model';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
-import SpecificationModel, { SpecificationProps } from '@model/admin/ecommerce/specifications-model';
+import SpecificationModel, { SpecificationProps } from '../../../model/admin/ecommerce/specifications-model';
 
 
 class SpecificationService {

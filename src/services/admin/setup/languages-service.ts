@@ -1,6 +1,6 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../../src/components/pagination';
 
-import LanguagesModel, { LanguageProps } from '@model/admin/setup/language-model';
+import LanguagesModel, { LanguageProps } from '../../../../src/model/admin/setup/language-model';
 
 
 class LanguagesService {

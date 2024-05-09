@@ -2,14 +2,14 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 
-import { deleteFile, formatZodError, handleFileUpload, slugify, uploadGallaryImages } from '@utils/helpers';
-import { productsSchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/products-schema';
-import { ProductsProps, ProductsQueryParams } from '@utils/types/products';
+import { deleteFile, formatZodError, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { productsSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
+import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 
-import BaseController from '@controllers/admin/base-controller';
-import ProductsService from '@services/admin/ecommerce/products-service'
-import ProductsModel from '@model/admin/ecommerce/products-model';
-import collectionsProductsService from '@services/admin/website/collections-products-service';
+import BaseController from '../../../controllers/admin/base-controller';
+import ProductsService from '../../../services/admin/ecommerce/products-service'
+import ProductsModel from '../../../model/admin/ecommerce/products-model';
+import collectionsProductsService from '../../../services/admin/website/collections-products-service';
 
 const controller = new BaseController();
 

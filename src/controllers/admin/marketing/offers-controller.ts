@@ -1,13 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify, stringToArray } from '@utils/helpers';
-import { offerStatusSchema, offersSchema } from '@utils/schemas/admin/marketing/offers-schema';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { offerStatusSchema, offersSchema } from '../../../utils/schemas/admin/marketing/offers-schema';
+import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import OfferService from '@services/admin/marketing/offer-service'
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import BaseController from '../../../controllers/admin/base-controller';
+import OfferService from '../../../services/admin/marketing/offer-service'
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 const controller = new BaseController();
 

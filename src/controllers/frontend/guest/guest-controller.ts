@@ -4,13 +4,13 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { loginSchema, registerSchema } from '@utils/schemas/frontend/guest/authSchema';
-import { formatZodError } from '@utils/helpers';
+import { loginSchema, registerSchema } from '../../../utils/schemas/frontend/guest/authSchema';
+import { formatZodError } from '../../../utils/helpers';
 
-import BaseController from '@controllers/admin/base-controller';
-import CustomerService from '@services/frontend/customer-service';
-import CustomerAuthorisationModel from '@model/frontend/customer-authorisation-model';
-import CustomerModel, { CustomrProps } from '@model/frontend/customers-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import CustomerService from '../../../services/frontend/customer-service';
+import CustomerAuthorisationModel from '../../../model/frontend/customer-authorisation-model';
+import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
 
 
 const controller = new BaseController();

@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
-import UserModel, { UserProps } from '@model/admin/account/user-model';
-import AuthorisationModel from '@model/admin/authorisation-model';
+import UserModel, { UserProps } from '../../../src/model/admin/account/user-model';
+import AuthorisationModel from '../../../src/model/admin/authorisation-model';
 import PrivilagesService from './account/privilages-service';
 
 class AuthService {
