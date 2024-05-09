@@ -1,10 +1,10 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import { ProductsProps } from '@utils/types/products';
+import { ProductsProps } from '../../../utils/types/products';
 
-import ProductsModel from '@model/admin/ecommerce/products-model';
-import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '@model/admin/ecommerce/product-gallery-images-model';
-import InventryPricingModel, { InventryPricingProps } from '@model/admin/ecommerce/inventry-pricing-model';
+import ProductsModel from '../../../model/admin/ecommerce/products-model';
+import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product-gallery-images-model';
+import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
 
 class ProductsService {
     async findAll(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {

@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { configureMulter } from '@utils/file-uploads';
-import { logResponseStatus } from '@components/response-status';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import { configureMulter } from '../../../src/utils/file-uploads';
+import { logResponseStatus } from '../../../src/components/response-status';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import OffersController from '@controllers/admin/marketing/offers-controller';
+import OffersController from '../../../src/controllers/admin/marketing/offers-controller';
 
 const router: Router = express.Router();
 

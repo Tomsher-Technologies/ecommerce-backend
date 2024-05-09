@@ -1,15 +1,15 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '@utils/helpers';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
-import { attributeSchema, attributeStatusSchema } from '@utils/schemas/admin/ecommerce/attribute-schema';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '../../../utils/helpers';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { attributeSchema, attributeStatusSchema } from '../../../utils/schemas/admin/ecommerce/attribute-schema';
+import { QueryParams } from '../../../utils/types/common';
 
-import { AttributesProps } from '@model/admin/ecommerce/attribute-model';
-import BaseController from '@controllers/admin/base-controller';
-import AttributesService from '@services/admin/ecommerce/attributes-service'
-import GeneralService from '@services/admin/general-service';
+import { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import AttributesService from '../../../services/admin/ecommerce/attributes-service'
+import GeneralService from '../../../services/admin/general-service';
 
 const controller = new BaseController();
 

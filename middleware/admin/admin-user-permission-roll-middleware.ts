@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
-import PrivilagesService from '@services/admin/account/privilages-service';
-import UserTypeService from '@services/admin/account/user-type-service'
+import PrivilagesService from '../../src/services/admin/account/privilages-service';
+import UserTypeService from '../../src/services/admin/account/user-type-service'
 
 interface CustomRequest extends Request {
     user?: any;

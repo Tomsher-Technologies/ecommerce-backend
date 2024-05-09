@@ -1,8 +1,8 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 import AuthService from '../../services/admin/auth-service';
-import BaseController from '@controllers/admin/base-controller';
-import LanguagesService from '@services/admin/setup/languages-service';
+import BaseController from '../../../src/controllers/admin/base-controller';
+import LanguagesService from '../../../src/services/admin/setup/languages-service';
 
 class AuthController extends BaseController {
     constructor() {

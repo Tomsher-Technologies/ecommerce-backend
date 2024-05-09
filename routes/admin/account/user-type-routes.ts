@@ -2,10 +2,10 @@ import 'module-alias/register';
 import express, { Request, Response, NextFunction, Router } from 'express';
 import helmet from 'helmet';
 
-import authMiddleware from '@middleware/admin/auth-middleware';
-import UserTypeController from '@controllers/admin/account/user-types-controller';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import UserTypeController from '../../../src/controllers/admin/account/user-types-controller';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
 const router: Router = express.Router();
 
