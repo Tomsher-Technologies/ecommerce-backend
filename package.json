@@ -2,11 +2,12 @@
   "name": "ecom",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js -- -p ${process.env.PORT}",
-    "dev": "nodemon --exec ts-node server.ts"
+    "start": "node app.js -- -p ${process.env.PORT}",
+    "build": "npx tsc",
+    "dev": "nodemon --exec ts-node app.ts"
   },
   "_moduleAliases": {
     "@services": "./src/services",
