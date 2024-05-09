@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
-import AttributeDetailModel from '@model/admin/ecommerce/attribute-detail-model';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
 
-import AttributesModel, { AttributesProps } from '@model/admin/ecommerce/attribute-model';
+import AttributesModel, { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
 
 
 class AttributesService {

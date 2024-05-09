@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import CollectionsProductsModel, { CollectionsProductsProps } from '@model/admin/website/collections-products-model';
-import ProductsModel from '@model/admin/ecommerce/products-model';
-import { multiLanguageSources } from '@constants/multi-languages';
+import CollectionsProductsModel, { CollectionsProductsProps } from '../../../model/admin/website/collections-products-model';
+import ProductsModel from '../../../model/admin/ecommerce/products-model';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 class CollectionsProductsService {
     private lookup: any;

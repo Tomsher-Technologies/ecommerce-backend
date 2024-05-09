@@ -1,12 +1,12 @@
 import express, { Router } from 'express';
 
-import { logResponseStatus } from '@components/response-status';
+import { logResponseStatus } from '../../../src/components/response-status';
 
-import authMiddleware from '@middleware/admin/auth-middleware';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import SpecificationController from '@controllers/admin/ecommerce/specification-controller';
+import SpecificationController from '../../../src/controllers/admin/ecommerce/specification-controller';
 
 const router: Router = express.Router();
 

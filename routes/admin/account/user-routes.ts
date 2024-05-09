@@ -2,14 +2,14 @@ import 'module-alias/register';
 import express, { Request, Response, NextFunction, Router } from 'express';
 import helmet from 'helmet';
 
-import { logResponseStatus } from '@components/response-status';
+import { logResponseStatus } from '../../../src/components/response-status';
 
-import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import { configureMulter } from '../../../src/utils/file-uploads';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import UserController from '@controllers/admin/account/users-controller';
+import UserController from '../../../src/controllers/admin/account/users-controller';
 
 const router: Router = express.Router();
 

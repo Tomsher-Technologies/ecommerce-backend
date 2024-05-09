@@ -1,13 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError } from '@utils/helpers';
-import { couponSchema, couponStatusSchema } from '@utils/schemas/admin/marketing/coupon-schema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError } from '../../../utils/helpers';
+import { couponSchema, couponStatusSchema } from '../../../utils/schemas/admin/marketing/coupon-schema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import CouponService from '@services/admin/marketing/coupon-service'
+import BaseController from '../../../controllers/admin/base-controller';
+import CouponService from '../../../services/admin/marketing/coupon-service'
 
 const controller = new BaseController();
 

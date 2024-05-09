@@ -1,17 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
-import { sliderPositionSchema, sliderSchema, sliderStatusSchema } from '@utils/schemas/admin/ecommerce/slider-schema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { QueryParams } from '../../../utils/types/common';
+import { sliderPositionSchema, sliderSchema, sliderStatusSchema } from '../../../utils/schemas/admin/ecommerce/slider-schema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
+import BaseController from '../../../controllers/admin/base-controller';
 
-import SliderService from '@services/admin/ecommerce/slider-service';
-import GeneralService from '@services/admin/general-service';
-import SliderModel from '@model/admin/ecommerce/slider-model';
-import { multiLanguageSources } from '@constants/multi-languages';
+import SliderService from '../../../services/admin/ecommerce/slider-service';
+import GeneralService from '../../../services/admin/general-service';
+import SliderModel from '../../../model/admin/ecommerce/slider-model';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 const controller = new BaseController();
 

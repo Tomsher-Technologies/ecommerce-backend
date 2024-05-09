@@ -1,14 +1,14 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, slugify } from '@utils/helpers';
-import { languageSchema, languageStatusSchema } from '@utils/schemas/admin/setup/language-shema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, slugify } from '../../../utils/helpers';
+import { languageSchema, languageStatusSchema } from '../../../utils/schemas/admin/setup/language-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import LanguagesService from '@services/admin/setup/languages-service';
-import { LanguageProps } from '@model/admin/setup/language-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import LanguagesService from '../../../services/admin/setup/languages-service';
+import { LanguageProps } from '../../../model/admin/setup/language-model';
 
 const controller = new BaseController();
 

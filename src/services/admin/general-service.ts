@@ -1,6 +1,6 @@
 
-import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "@model/admin/multi-language-fieleds-model";
-import AdminTaskLogModel from "@model/admin/task-log";
+import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
+import AdminTaskLogModel from "../../model/admin/task-log";
 
 const Address6 = require('ip-address').Address6;
 const address = new Address6('2001:0:ce49:7601:e866:efff:62c3:fffe');

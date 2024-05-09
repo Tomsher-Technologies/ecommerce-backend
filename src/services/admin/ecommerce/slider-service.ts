@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import { multiLanguageSources } from '@constants/multi-languages';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
-import SliderModel, { SliderProps } from '@model/admin/ecommerce/slider-model';
+import SliderModel, { SliderProps } from '../../../model/admin/ecommerce/slider-model';
 
 class SliderService {
 

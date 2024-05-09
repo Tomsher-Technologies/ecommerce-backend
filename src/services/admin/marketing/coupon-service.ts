@@ -1,6 +1,6 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import CouponModel, { CouponProps } from '@model/admin/marketing/coupon-model';
+import CouponModel, { CouponProps } from '../../../model/admin/marketing/coupon-model';
 import mongoose from 'mongoose';
 
 
