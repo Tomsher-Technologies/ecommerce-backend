@@ -88,6 +88,7 @@ class SpecificationController extends BaseController {
                                     ...languageValue,
                                     source: multiLanguageSources.ecommerce.specifications,
                                     languageValues: {
+                                        specificationTitle: languageValue.languageValues.specificationTitle,
                                         specificationValues: setSpecificationDetailsValues,
                                     }
                                 })
