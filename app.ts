@@ -6,6 +6,7 @@ import cors from "cors";
 require('dotenv').config();
 
 import { url as dbUrl } from './config/database.config';
+import { allowedOrigins } from './config/allowed-origins';
 
 //admin
 import AuthRoute from './routes/admin/auth-routes';
@@ -37,6 +38,7 @@ import CollectionProductRoutes from './routes/admin/website/collection-product-r
 // frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes'
 
+
 const app = express();
 const port = process.env.PORT;
 
@@ -46,12 +48,19 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/public", express.static('public'));
 
 
-const corsOrigin = {
-  origin: process.env.FRONTEND_BASE_URL, //or whatever port your frontend is using
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionSuccessStatus: 200
-}
-app.use(cors(corsOrigin));
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
 mongoose
