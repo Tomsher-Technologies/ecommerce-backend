@@ -8,9 +8,9 @@
     "sourceMap": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "outDir": "dist",
+    "outDir": "build",
     "strict": true,
-    "declaration": true,
+    "declaration": false,
     "declarationMap": false
   },
   "lib": ["es2020"],
