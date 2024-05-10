@@ -40,6 +40,8 @@ export const handleFileUpload = (req: any, data: any, file: any, fieldName: stri
             // console.log('file',file.filename);
             return `/public/uploads/${folderPath}/${file.filename}`; // Construct the URL using req.protocol and req.hostname
         } else {
+            console.log('herere',data);
+            
             return null;
         }
     }

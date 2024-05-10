@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
@@ -114,8 +115,9 @@ class AttributesService {
 
     async findOne(attributeId: string): Promise<AttributesProps | null> {
         if (attributeId) {
+            const objectId = new mongoose.Types.ObjectId(attributeId); 
             const pipeline = [
-                { $match: { _id: attributeId } },
+                { $match: { _id: objectId } },
                 this.attributeDetailsLookup,
                 this.multilanguageFieldsLookup,
 
