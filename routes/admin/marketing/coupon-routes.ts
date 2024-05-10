@@ -17,7 +17,7 @@ router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: p
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, readOnly: 1 }), CouponsController.findOne);
 router.post('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.create);
 router.post('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.update);
-router.post('/position-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.statusChange);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons }), CouponsController.destroy);
 
 
