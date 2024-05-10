@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import categoryController from '../../../controllers/admin/ecommerce/category-controller';
@@ -134,13 +135,6 @@ class CategoryService {
     async findAllParentCategories(options: FilterOptionsProps = {}): Promise<any[]> {
         const { query } = pagination(options.query || {}, options);
 
-        try {
-            await CategoryModel.updateMany({ parentCategory: { $eq: '' } }, { $set: { parentCategory: null } });
-            console.log('Data cleanup completed successfully');
-        } catch (error) {
-            console.error('Error cleaning up data:', error);
-        }
-
         let categories: any = await CategoryModel.find(query)
             .populate('parentCategory', 'categoryTitle')
             .lean();
@@ -202,7 +196,6 @@ class CategoryService {
         try {
             const rootCategories = await CategoryModel.find(query); // Find root categories
             if (!rootCategories || rootCategories.length === 0) {
-                console.log("No root categories found.");
                 return null;
             }
 
@@ -270,9 +263,35 @@ class CategoryService {
         }
     }
 
+
     async findOne(categoryId: string): Promise<CategoryProps | null> {
-        return CategoryModel.findById(categoryId);
+        try {
+            if (categoryId) {
+                const objectId = new mongoose.Types.ObjectId(categoryId);
+
+                const pipeline = [
+                    { $match: { _id: objectId } },
+                    this.multilanguageFieldsLookup,
+                ];
+
+                const categoryDataWithValues = await CategoryModel.aggregate(pipeline);
+
+                return categoryDataWithValues[0] || null;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            return null;
+        }
     }
+
+
+
+
+    // async findOne(categoryId: string): Promise<CategoryProps | null> {
+    //     return CategoryModel.findById(categoryId);
+
+    // }
 
     async findParentCategory(parentCategory: string): Promise<CategoryProps | null> {
         return CategoryModel.findOne({ _id: parentCategory });
@@ -295,7 +314,24 @@ class CategoryService {
     // }
 
     async update(categoryId: string, categoryData: any): Promise<CategoryProps | null> {
-        return CategoryModel.findByIdAndUpdate(categoryId, categoryData, { new: true, useFindAndModify: false });
+        const updatedCategory = await CategoryModel.findByIdAndUpdate(
+            categoryId,
+            categoryData,
+            { new: true, useFindAndModify: false }
+        );
+
+        if (updatedCategory) {
+            const pipeline = [
+                { $match: { _id: updatedCategory._id } },
+                this.multilanguageFieldsLookup,
+            ];
+
+            const updatedCategoryWithValues = await CategoryModel.aggregate(pipeline);
+
+            return updatedCategoryWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async destroy(categoryId: string): Promise<CategoryProps | null> {

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
@@ -99,8 +100,9 @@ class BannerService {
 
     async findOne(bannerId: string): Promise<BannerProps | null> {
         if (bannerId) {
+            const objectId = new mongoose.Types.ObjectId(bannerId); 
             const pipeline = [
-                { $match: { _id: bannerId } },
+                { $match: { _id: objectId } },
                 this.lookup,
                 this.project
             ];
