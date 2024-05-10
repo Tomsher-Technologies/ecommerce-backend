@@ -37,7 +37,7 @@ const categorySchema: Schema<CategoryProps> = new Schema({
     parentCategory: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
-        default: ''
+        default: null
     },
     description: {
         type: String,

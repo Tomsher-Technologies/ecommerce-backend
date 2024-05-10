@@ -88,16 +88,24 @@ class CategoryService {
 
     async findAll(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        let queryBuilder = CategoryModel.find(query)
-            .skip(skip)
-            .limit(limit)
-            .lean();
-
-        if (sort) {
-            queryBuilder = queryBuilder.sort(sort);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
         }
+        let pipeline: any[] = [
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
 
-        return queryBuilder;
+            this.multilanguageFieldsLookup,
+
+            this.project
+        ];
+
+        return CategoryModel.aggregate(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
