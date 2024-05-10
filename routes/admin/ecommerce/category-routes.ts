@@ -16,6 +16,7 @@ const { upload } = configureMulter('category', ['categoryImage',]);
 router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findAll);
+router.get('/parent-categories', logResponseStatus, CategoryController.findAllParentCategories);
 router.get('/chilled-categories', logResponseStatus, CategoryController.findAllChilledCategories);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findOne);
 router.post('/', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.create);
