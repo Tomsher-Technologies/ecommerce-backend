@@ -160,7 +160,7 @@ class CategoryController extends BaseController {
 
                 }
 
-                const categoryImage = (req?.files) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+                const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
                     categoryTitle,
