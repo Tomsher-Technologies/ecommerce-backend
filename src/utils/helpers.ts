@@ -40,8 +40,8 @@ export const handleFileUpload = (req: any, data: any, file: any, fieldName: stri
             // console.log('file',file.filename);
             return `/public/uploads/${folderPath}/${file.filename}`; // Construct the URL using req.protocol and req.hostname
         } else {
-            console.log('herere',data);
-            
+            console.log('herere', data);
+
             return null;
         }
     }
@@ -113,18 +113,13 @@ export const uploadGallaryImages = async (req: Request, productID: string, galle
 //     }
 // };
 
-export const slugify = (text: string): string => {
+export const slugify = (text: string, slugDiff = '-'): string => {
     return text.toLowerCase().replace(/[^\w\s-]/g, '') // Remove non-alphanumeric characters except spaces and hyphens
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/\s+/g, slugDiff) // Replace spaces with hyphens
         .replace(/-+/g, '-') // Replace multiple hyphens with a single hyphen
         .trim(); // Trim leading and trailing spaces
 };
-export const categorySlugify = (text: string): string => {
-    return text.toLowerCase().replace(/[^\w\s-]/g, '') // Remove non-alphanumeric characters except spaces and hyphens
-        .replace(/\s+/g, '_') // Replace spaces with hyphens
-        .replace(/-+/g, '-') // Replace multiple hyphens with a single hyphen
-        .trim(); // Trim leading and trailing spaces
-};
+
 export const isValidPriceFormat = (value: string): boolean => {
     const priceRegex = /^\d+(\.\d{1,2})?$/;
     return priceRegex.test(value);
