@@ -112,14 +112,42 @@ class CategoryController extends BaseController {
                 query = { _id: categoryId }
             }
 
-            if (parentCategory) {
-                query = { parentCategory: parentCategory }
-            } else {
-                if ((keyword === '' && categoryId === '')) {
-                    query = { parentCategory: { $exists: false } }
-                }
+            if (!parentCategory && keyword === '' && categoryId === '') {
+                query.$or = [
+                    { parentCategory: null },
+                    { parentCategory: { $exists: false } }
+                ];
+            } else if (parentCategory) {
+                query.parentCategory = parentCategory;
             }
             const categories = await CategoryService.findAllChilledCategories(query);
+
+            controller.sendSuccessResponse(res, {
+                requestedData: categories,
+                totalCount: await CategoryService.getTotalCount(query),
+                message: 'Success!ddd'
+            }, 200);
+        } catch (error: any) {
+            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
+        }
+    }
+
+    async findAllParentCategories(req: Request, res: Response): Promise<void> {
+        try {
+            const { status = '1', categoryId = '' } = req.query;
+            let query: any = { _id: { $exists: true } };
+            if (status && status !== '') {
+                query.status = { $in: Array.isArray(status) ? status : [status] };
+            } else {
+                query.status = '1';
+            }
+
+            if (categoryId) {
+                query._id = categoryId as string;
+            } else {
+                query._id = { $exists: true };
+            }
+            const categories = await CategoryService.findAllParentCategories({ query });
 
             controller.sendSuccessResponse(res, {
                 requestedData: categories,
@@ -130,6 +158,7 @@ class CategoryController extends BaseController {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
         }
     }
+
 
     async create(req: Request, res: Response): Promise<void> {
         try {
@@ -149,18 +178,16 @@ class CategoryController extends BaseController {
 
                 if (!parentCategory) {
                     slugData = categorySlugify(categoryTitle)
-
                 }
                 else {
                     slugData = categorySlugify(data)
-
                 }
 
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
                     categoryTitle,
-                    slug: slug || slugData,
+                    slug: slugData || slug,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
                     corporateGiftsPriority,
@@ -263,10 +290,13 @@ class CategoryController extends BaseController {
                 const user = res.locals.user;
 
                 if (categoryId) {
+                    const categoryImage = (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+
                     let updatedCategoryData = req.body;
                     updatedCategoryData = {
                         ...updatedCategoryData,
-                        categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), req.file, 'categoryImageUrl', 'category'),
+                        parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
+                        categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
                         updatedAt: new Date()
                     };
 
