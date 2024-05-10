@@ -20,7 +20,7 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -84,25 +84,9 @@ class CategoryController extends BaseController {
         }
     }
 
-    async findAllParentCategories(req: Request, res: Response): Promise<void> {
+    async findAllChilledCategories(req: Request, res: Response): Promise<void> {
         try {
-            const { status = '1' } = req.query;
-            const query = { status, _id: { $exists: true } };
-            const categories = await CategoryService.findAllParentCategories({ query });
-
-            controller.sendSuccessResponse(res, {
-                requestedData: categories,
-                totalCount: await CategoryService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
-        } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
-        }
-    }
-
-    async findAllCategories(req: Request, res: Response): Promise<void> {
-        try {
-            const { status = '1', keyword = '' } = req.query as QueryParams;
+            const { status = '1', keyword = '', categoryId = '', parentCategory = '' } = req.query as CategoryQueryParams;
             // const query = { status, _id: { $exists: true } };
 
             let query: any = { _id: { $exists: true } };
@@ -114,25 +98,31 @@ class CategoryController extends BaseController {
             }
 
             if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+
                 query = {
                     $or: [
-                        { categoryTitle: keyword },
-                        { slug: keyword },
+                        { categoryTitle: keywordRegex },
+                        { slug: keywordRegex },
                     ],
                     ...query
 
                 } as any;
-            } else if (req.query._id) {
-                query = { _id: req.query._id }
-            } else if (req.query.parentCategory) {
-                query = { parentCategory: req.query.parentCategory }
-            } else {
-                query = { parentCategory: { $exists: false } }
             }
-            console.log("query", query);
 
-            const categories = await CategoryService.findAllCategories(query);
+            if (categoryId) {
+                console.log("categoryId", categoryId);
+                query = { _id: categoryId }
+            }
 
+            if (parentCategory) {
+                query = { parentCategory: parentCategory }
+            } else {
+                if ((keyword === '' && categoryId === '')) {
+                    query = { parentCategory: { $exists: false } }
+                }
+            }
+            const categories = await CategoryService.findAllChilledCategories(query);
 
             controller.sendSuccessResponse(res, {
                 requestedData: categories,
