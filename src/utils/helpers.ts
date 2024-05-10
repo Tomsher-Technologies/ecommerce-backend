@@ -4,9 +4,8 @@ import { ZodError } from 'zod';
 import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
+import ProductsService from '../services/admin/ecommerce/products-service';
 
-
-import ProductsService from '@services/admin/ecommerce/products-service';
 
 type ZodValidationError = {
     path: (string | number)[];

@@ -1,13 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, slugify } from '@utils/helpers';
-import { usertypeSchema } from '@utils/schemas/admin/account/user-type-schema';
-import { QueryParams } from '@utils/types/common';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, slugify } from '../../../../src/utils/helpers';
+import { usertypeSchema } from '../../../../src/utils/schemas/admin/account/user-type-schema';
+import { QueryParams } from '../../../../src/utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import UserTypeService from '@services/admin/account/user-type-service';
+import BaseController from '../../../../src/controllers/admin/base-controller';
+import UserTypeService from '../../../../src/services/admin/account/user-type-service';
 
 const controller = new BaseController();
 

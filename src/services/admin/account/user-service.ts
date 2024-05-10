@@ -1,5 +1,5 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import UserModel, { UserProps } from '@model/admin/account/user-model';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import UserModel, { UserProps } from '../../../model/admin/account/user-model';
 
 
 class UserService {

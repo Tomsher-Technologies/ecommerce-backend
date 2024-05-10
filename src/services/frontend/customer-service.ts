@@ -1,5 +1,5 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import CustomerModel, { CustomrProps } from '@model/frontend/customers-model';
+import { FilterOptionsProps, pagination } from '../../components/pagination';
+import CustomerModel, { CustomrProps } from '../../model/frontend/customers-model';
 
 
 class CustomerService {

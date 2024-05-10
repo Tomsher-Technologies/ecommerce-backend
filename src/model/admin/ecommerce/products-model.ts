@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-import { ProductsProps } from '@utils/types/products';
+import { ProductsProps } from '../../../../src/utils/types/products';
 
 
 const productsSchema: Schema<ProductsProps> = new Schema({

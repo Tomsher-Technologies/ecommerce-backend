@@ -1,8 +1,8 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
-import categoryController from '@controllers/admin/ecommerce/category-controller';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import categoryController from '../../../controllers/admin/ecommerce/category-controller';
 
-import CategoryModel, { CategoryProps } from '@model/admin/ecommerce/category-model';
+import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { pipeline } from 'stream';
 
 
@@ -112,7 +112,7 @@ class CategoryService {
     async populateParentCategories(category: any): Promise<any> {
         if (category.parentCategory) {
             try {
-                const parentCategory = await CategoryModel.findById(category.parentCategory._id);
+                const parentCategory = await CategoryModel.findById(category.parentCategory);
                 if (parentCategory) {
                     category.parentCategory = await this.populateParentCategories(parentCategory);
                 }
@@ -190,7 +190,7 @@ class CategoryService {
 
 
 
-    async findAllCategories(query: any): Promise<CategoryProps[] | null> {
+    async findAllChilledCategories(query: any): Promise<CategoryProps[] | null> {
         try {
             const rootCategories = await CategoryModel.find(query); // Find root categories
             if (!rootCategories || rootCategories.length === 0) {

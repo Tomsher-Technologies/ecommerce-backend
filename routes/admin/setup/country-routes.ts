@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import { logResponseStatus } from '@components/response-status';
+import { configureMulter } from '../../../src/utils/file-uploads';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { logResponseStatus } from '../../../src/components/response-status';
 
-import CountryController from '@controllers/admin/setup/country-controller';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import CountryController from '../../../src/controllers/admin/setup/country-controller';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
 const router: Router = express.Router();
 

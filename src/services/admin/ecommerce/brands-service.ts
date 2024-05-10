@@ -1,7 +1,7 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
-import BrandsModel, { BrandProps } from '@model/admin/ecommerce/brands-model';
+import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 
 
 class BrandsService {

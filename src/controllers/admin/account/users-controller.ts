@@ -3,13 +3,13 @@ import 'module-alias/register'
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 
-import { userSchema } from '@utils/schemas/admin/account/user-schema';
-import { formatZodError, handleFileUpload } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { userSchema } from '../../../../src/utils/schemas/admin/account/user-schema';
+import { formatZodError, handleFileUpload } from '../../../../src/utils/helpers';
+import { QueryParams } from '../../../../src/utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
 
-import UserService from '@services/admin/account/user-service';
-import BaseController from '@controllers/admin/base-controller';
+import UserService from '../../../services/admin/account/user-service';
+import BaseController from '../../../controllers/admin/base-controller';
 
 const controller = new BaseController();
 

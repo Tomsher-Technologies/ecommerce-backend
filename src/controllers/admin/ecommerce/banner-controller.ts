@@ -1,16 +1,16 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '@utils/schemas/admin/ecommerce/banner-schema';
-import { QueryParams } from '@utils/types/common';
-import { multiLanguageSources } from '@constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import BannerService from '@services/admin/ecommerce/banner-service'
-import GeneralService from '@services/admin/general-service';
-import BannerModel from '@model/admin/ecommerce/banner-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import BannerService from '../../../services/admin/ecommerce/banner-service'
+import GeneralService from '../../../services/admin/general-service';
+import BannerModel from '../../../model/admin/ecommerce/banner-model';
 
 const controller = new BaseController();
 

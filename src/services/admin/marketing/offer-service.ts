@@ -1,6 +1,6 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import OffersModel, { OffersProps } from '@model/admin/marketing/offers-model';
+import OffersModel, { OffersProps } from '../../../model/admin/marketing/offers-model';
 
 
 class OfferService {

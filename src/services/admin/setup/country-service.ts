@@ -1,6 +1,6 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import CountryModel, { CountryProps } from '@model/admin/setup/country-model';
+import CountryModel, { CountryProps } from '../../../model/admin/setup/country-model';
 
 
 class CountryService {

@@ -5,37 +5,39 @@ import cors from "cors";
 
 require('dotenv').config();
 
-import { url as dbUrl } from './config/database.config.ts';
+import { url as dbUrl } from './config/database.config';
+import { allowedOrigins } from './config/allowed-origins';
 
 //admin
-import AuthRoute from './routes/admin/auth-routes.ts';
+import AuthRoute from './routes/admin/auth-routes';
 
 //admin ecommerce 
-import CategoryRoutes from './routes/admin/ecommerce/category-routes.ts';
-import BrandsRoutes from './routes/admin/ecommerce/brands-routes.ts';
-import BannersRoutes from './routes/admin/ecommerce/banners-routes.ts';
-import SliderRoutes from './routes/admin/ecommerce/slider-routes.ts';
-import ProductsRoutes from './routes/admin/ecommerce/products-routes.ts';
-import AttributesRoutes from './routes/admin/ecommerce/attributes-routes.ts';
-import SpecificationRoutes from './routes/admin/ecommerce/specification-route.ts';
+import CategoryRoutes from './routes/admin/ecommerce/category-routes';
+import BrandsRoutes from './routes/admin/ecommerce/brands-routes';
+import BannersRoutes from './routes/admin/ecommerce/banners-routes';
+import SliderRoutes from './routes/admin/ecommerce/slider-routes';
+import ProductsRoutes from './routes/admin/ecommerce/products-routes';
+import AttributesRoutes from './routes/admin/ecommerce/attributes-routes';
+import SpecificationRoutes from './routes/admin/ecommerce/specification-route';
 
 // admin account
-import UserRoute from './routes/admin/account/user-routes.ts';
-import UserTypeRoute from './routes/admin/account/user-type-routes.ts';
-import PrivilagesRoute from './routes/admin/account/privilage-routes.ts';
+import UserRoute from './routes/admin/account/user-routes';
+import UserTypeRoute from './routes/admin/account/user-type-routes';
+import PrivilagesRoute from './routes/admin/account/privilage-routes';
 
 // admin marketing
-import CouponRoutes from './routes/admin/marketing/coupon-routes.ts';
-import OfferRoutes from './routes/admin/marketing/offer-routes.ts';
+import CouponRoutes from './routes/admin/marketing/coupon-routes';
+import OfferRoutes from './routes/admin/marketing/offer-routes';
 
 // admin setup
-import CountryRoutes from './routes/admin/setup/country-routes.ts';
-import LanguagesRoutes from './routes/admin/setup/languages-routes.ts';
+import CountryRoutes from './routes/admin/setup/country-routes';
+import LanguagesRoutes from './routes/admin/setup/languages-routes';
 
-import CollectionProductRoutes from './routes/admin/website/collection-product-routes.ts'
+import CollectionProductRoutes from './routes/admin/website/collection-product-routes'
 
 // frontend
-import GuestRoutes from './routes/frontend/guest/auth-routes.ts'
+import GuestRoutes from './routes/frontend/guest/auth-routes'
+
 
 const app = express();
 const port = process.env.PORT;
@@ -46,12 +48,19 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/public", express.static('public'));
 
 
-const corsOrigin = {
-  origin: process.env.FRONTEND_BASE_URL, //or whatever port your frontend is using
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionSuccessStatus: 200
-}
-app.use(cors(corsOrigin));
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
 mongoose
