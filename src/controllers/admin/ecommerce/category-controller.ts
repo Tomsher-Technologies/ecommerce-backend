@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify, categorySlugify } from '../../../utils/helpers';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
 import { QueryParams } from '../../../utils/types/common';
 import { CategoryQueryParams } from '../../../utils/types/category';
@@ -177,10 +177,10 @@ class CategoryController extends BaseController {
                 const data: any = category?.slug + "-" + categoryTitle
 
                 if (!parentCategory) {
-                    slugData = categorySlugify(categoryTitle)
+                    slugData = slugify(categoryTitle, '_')
                 }
                 else {
-                    slugData = categorySlugify(data)
+                    slugData = slugify(data)
                 }
 
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
