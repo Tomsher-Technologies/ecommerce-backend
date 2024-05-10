@@ -87,8 +87,6 @@ class CategoryController extends BaseController {
     async findAllChilledCategories(req: Request, res: Response): Promise<void> {
         try {
             const { status = '1', keyword = '', categoryId = '', parentCategory = '' } = req.query as CategoryQueryParams;
-            // const query = { status, _id: { $exists: true } };
-
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -111,7 +109,6 @@ class CategoryController extends BaseController {
             }
 
             if (categoryId) {
-                console.log("categoryId", categoryId);
                 query = { _id: categoryId }
             }
 
@@ -146,13 +143,12 @@ class CategoryController extends BaseController {
                 // if (parentCategory === '') {
                 //     parentCategory = ''; // Convert empty string to null
                 // }
-                const category = await CategoryService.findParentCategory(req.body.parentCategory);
+                const category = parentCategory ? await CategoryService.findParentCategory(parentCategory) : null;
                 var slugData
-                const data: any = category?.slug + "-" + req.body.categoryTitle
-                console.log(category);
+                const data: any = category?.slug + "-" + categoryTitle
 
-                if (req.body.parentCategory == undefined) {
-                    slugData = slugify(categoryTitle)
+                if (!parentCategory) {
+                    slugData = categorySlugify(categoryTitle)
 
                 }
                 else {
@@ -169,8 +165,8 @@ class CategoryController extends BaseController {
                     description,
                     corporateGiftsPriority,
                     type,
-                    parentCategory,
-                    level,
+                    parentCategory: parentCategory ? parentCategory : null,
+                    level: category?.level ? parseInt(category?.level) + 1 : null,
                     createdBy: user._id,
                 };
 
