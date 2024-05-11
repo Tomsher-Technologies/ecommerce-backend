@@ -174,14 +174,15 @@ class CategoryController extends BaseController {
                 // }
                 const category = parentCategory ? await CategoryService.findParentCategory(parentCategory) : null;
                 var slugData
-                const data: any = category?.slug + "-" + categoryTitle
-
+                var data: any = []
                 if (!parentCategory) {
-                    slugData = slugify(categoryTitle, '_')
+                    data = categoryTitle
                 }
                 else {
-                    slugData = slugify(data)
+                    data = category?.slug + "-" + categoryTitle
                 }
+                slugData = slugify(data, '_')
+
 
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
@@ -193,7 +194,7 @@ class CategoryController extends BaseController {
                     corporateGiftsPriority,
                     type,
                     parentCategory: parentCategory ? parentCategory : null,
-                    level: category?.level ? parseInt(category?.level) + 1 : null,
+                    level: category?.level ? parseInt(category?.level) + 1 : '0',
                     createdBy: user._id,
                 };
 
@@ -293,14 +294,25 @@ class CategoryController extends BaseController {
                     const categoryImage = (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                     let updatedCategoryData = req.body;
+
+                    const updatedCategory: any = await CategoryService.findOne(categoryId);
+
                     updatedCategoryData = {
                         ...updatedCategoryData,
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
+                        level: req.body.level,
+                        slug: req.body.slug,
                         categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
                         updatedAt: new Date()
                     };
 
-                    const updatedCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
+                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory) {
+                        const updatedSlugCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
+                        if (updatedSlugCategory) {
+                            await CategoryService.findSubCategory(updatedSlugCategory)
+                        }
+                    }
+
                     if (updatedCategory) {
 
                         const languageValuesImages = (req as any).files.filter((file: any) =>
