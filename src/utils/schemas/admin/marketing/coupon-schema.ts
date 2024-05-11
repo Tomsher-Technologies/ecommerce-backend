@@ -3,6 +3,7 @@ import { isValidPriceFormat } from '../../../helpers';
 
 export const couponSchema = zod.object({
     _id: zod.string().optional(),
+    countryId: zod.string({ required_error: 'Country is required', }).min(2, 'Country is should be 2 chars minimum'),
     couponCode: zod.string({ required_error: 'Coupon code is required' }).min(2, { message: 'Coupon code is should be 2 chars minimum' }),
     status: zod.string().optional(),
     couponDescription: zod.string().optional(),

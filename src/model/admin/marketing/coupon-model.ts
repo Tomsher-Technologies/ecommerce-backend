@@ -3,13 +3,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface CouponProps extends Document {
     couponCode: string;
     couponDescription?: string;
-
     couponType: string;
     couponApplyValues: any;
     minPurchaseValue: string;
-
     discountType?: string;
-
     couponProducts?: any;
     discountAmount?: string;
     discountMaxRedeemAmount?: string;
