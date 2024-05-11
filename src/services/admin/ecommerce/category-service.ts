@@ -5,6 +5,7 @@ import categoryController from '../../../controllers/admin/ecommerce/category-co
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { pipeline } from 'stream';
+import { slugify } from '../../../utils/helpers';
 
 
 class CategoryService {
@@ -226,11 +227,32 @@ class CategoryService {
         }
     }
 
+    async findSubCategory(category: any): Promise<any> {
 
-    async getParentChilledCategory(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
-        const { query } = pagination(options.query || {}, options);
+        const findCategories: any = await this.getParentChilledCategory({ parentCategory: category._id });
+        const categoriesWithSubcategories: CategoryProps[] = [];
+
+        if (findCategories) {
+            for (let i = 0; i < findCategories.length; i++) {
+                const data = {
+                    level: parseInt(category.level) + 1,
+                    slug: slugify(category.slug + "-" + findCategories[i].categoryTitle)
+                }
+                const query = findCategories[i]._id
+
+                const categories: any = await this.update(query, data);
+                const result:any =await this.findSubCategory(categories)
+                categoriesWithSubcategories.push(result);
+            }         
+        }
+    }
+
+
+    async getParentChilledCategory(query: any): Promise<CategoryProps[]> {
+
         return CategoryModel.find(query);
     }
+
     // async findCategory(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
     //     const { query, skip, limit, sort } = pagination(options.query || {}, options);
     //     const defaultSort = { createdAt: -1 };
