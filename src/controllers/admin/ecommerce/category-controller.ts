@@ -300,13 +300,14 @@ class CategoryController extends BaseController {
                     updatedCategoryData = {
                         ...updatedCategoryData,
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
-                        level: req.body.level,
-                        slug: req.body.slug,
+                        level: updatedCategoryData.level,
+                        slug: updatedCategoryData.slug,
                         categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
                         updatedAt: new Date()
                     };
 
-                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory) {
+                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData ) {
+
                         const updatedSlugCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
                         if (updatedSlugCategory) {
                             await CategoryService.findSubCategory(updatedSlugCategory)
