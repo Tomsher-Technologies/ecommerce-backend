@@ -7,6 +7,7 @@ export const collections = {
         attributes: 'attributes',
         attribute: 'attributes',
         categories:'categories',
-        specifications:'specifications'
+        specifications:'specifications',
+        products:'products'
     },
 }

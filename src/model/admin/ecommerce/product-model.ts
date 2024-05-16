@@ -1,34 +1,20 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-import { ProductsProps } from '../../../../src/utils/types/products';
-
+import { ProductsProps } from '../../../utils/types/products';
 
 const productsSchema: Schema<ProductsProps> = new Schema({
-    en_productTitle: {
+    productTitle: {
         type: String,
         required: true,
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Products').countDocuments({ en_productTitle: value });
+                const count = await this.model('Products').countDocuments({ productTitle: value });
                 return count === 0;
             },
-            message: 'Product english title must be unique'
+            message: 'Product title must be unique'
         },
-        minlength: [3, 'Product english title must be at least 3 characters long']
-    },
-    ar_productTitle: {
-        type: String,
-        required: true,
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Products').countDocuments({ ar_productTitle: value });
-                return count === 0;
-            },
-            message: 'Product arabic title must be unique'
-        },
-        minlength: [3, 'Product arabic title must be at least 3 characters long']
+        minlength: [3, 'Product title must be at least 3 characters long']
     },
     slug: {
         type: String,
@@ -42,14 +28,23 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             message: 'Slug must be unique'
         }
     },
-    isVariant: {
+    productImageUrl:{
         type: String,
-        default: 'single'
+        required: true,
     },
-    category: {
-        type: Schema.Types.ObjectId,
-        required: [true, 'Category is required'],
-        ref: 'Category', // Reference to the Category model
+    isVariant: {
+        type: Boolean,
+        default: true
+    },
+    description: {
+        type: String,
+        required: true,
+        minlength: [5, 'Description must be at least 5 characters long']
+    },
+    longDescription: {
+        type: String,
+        required: true,
+        minlength: [7, 'Long description must be at least 7 characters long']
     },
     brand: {
         type: Schema.Types.ObjectId,
@@ -59,6 +54,18 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     unit: {
         type: String,
         default: ''
+    },
+    weight: {
+        type: String,
+    },
+    hight: {
+        type: String,
+    },
+    length: {
+        type: String,
+    },
+    width: {
+        type: String,
     },
     cartMinQuantity: {
         type: Number,
@@ -72,11 +79,6 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         type: String,
         default: ''
     },
-
-    inventryDetails: {
-        type: Schema.Types.Mixed,
-        required: [true, 'Inventry pricing is required'],
-    },
     sku: {
         type: String,
         required: [true, 'SKU is required'],
@@ -88,20 +90,6 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             },
             message: 'SKU must be unique'
         }
-    },
-    description: {
-        type: String,
-        required: true,
-        minlength: [5, 'Description must be at least 5 characters long']
-    },
-    longDescription: {
-        type: String,
-        required: true,
-        minlength: [7, 'Long description must be at least 7 characters long']
-    },
-    productImageUrl: {
-        type: String,
-        required: [true, 'Image URL is required'],
     },
     newArrivalPriority: {
         type: String,
@@ -130,11 +118,11 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         type: String,
         default: ''
     },
-    metaImageUrl: {
+    metaDescription: {
         type: String,
         default: ''
     },
-    metaDescription: {
+    metaImageUrl: {
         type: String,
         default: ''
     },
@@ -160,6 +148,7 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     createdAt: {
         type: Date,
+        default: Date.now
     },
     updatedAt: {
         type: Date,

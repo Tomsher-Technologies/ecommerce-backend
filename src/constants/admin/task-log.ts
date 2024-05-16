@@ -6,6 +6,8 @@ export const adminTaskLog = {
         banner: 'banner',
         categories: 'categories',
         attributes: 'attributes',
+        products: 'products',
+        productVariants: 'productVariants',
         specifications: 'specifications'
     },
     website: {

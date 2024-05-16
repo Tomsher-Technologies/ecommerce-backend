@@ -2,11 +2,113 @@ import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import { ProductsProps } from '../../../utils/types/products';
 
-import ProductsModel from '../../../model/admin/ecommerce/products-model';
-import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product-gallery-images-model';
+import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import mongoose from 'mongoose';
 
 class ProductsService {
+    private variantLookup: any;
+    private categoryLookup: any;
+    private imageLookup: any;
+
+    private multilanguageFieldsLookup: any;
+    private project: any;
+    
+    constructor() {
+
+
+        this.variantLookup = {
+            $lookup: {
+                from: 'productvariants',
+                localField: '_id',
+                foreignField: 'productId',
+                as: 'productVariants',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'productvariantattributes',
+                            localField: '_id',
+                            foreignField: 'variantId',
+                            as: 'productVariantAttributes',
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'productspecifications',
+                            localField: '_id',
+                            foreignField: 'variantId',
+                            as: 'productSpecification',
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'productseos',
+                            localField: '_id',
+                            foreignField: 'variantId',
+                            as: 'productSeo',
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'productgallaryimages',
+                            localField: '_id',
+                            foreignField: 'variantId',
+                            as: 'variantImageGallery',
+                        },
+                    }
+                ],
+            }
+        };
+        this.categoryLookup = {
+            $lookup: {
+                from: 'productcategorylinks',
+                localField: '_id',
+                foreignField: 'productId',
+                as: 'category',
+
+            }
+        };
+        this.imageLookup = {
+            $lookup: {
+                from: 'productgallaryimages',
+                localField: '_id',
+                foreignField: 'productID',
+                as: 'imageGallery',
+
+            }
+        };
+        this.multilanguageFieldsLookup = {
+            $lookup: {
+                from: 'multilanguagefieleds', // Ensure 'from' field is included
+                let: { categoryId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$sourceId', '$$productId'] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.products] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: 'languageValues',
+            },
+        };
+
+        this.project = {
+            newRoot: {
+                $mergeObjects: ["$$ROOT", {
+                    appliedValues: {
+                        $concatArrays: ["$category", "$variants"]
+                    }
+                }]
+            }
+        }
+    }
     async findAll(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         let queryBuilder = ProductsModel.find(query)
@@ -37,6 +139,33 @@ class ProductsService {
     }
 
     async findOne(productId: string): Promise<ProductsProps | null> {
+        try {
+            if (productId) {
+                const objectId = new mongoose.Types.ObjectId(productId);
+                // console.log("objectId:",objectId);
+
+                const pipeline = [
+                    { $match: { _id: objectId } },
+                    { $replaceRoot: this.project },
+                    // this.multilanguageFieldsLookup,
+                    this.categoryLookup,
+                    this.variantLookup,
+                    this.imageLookup,
+
+                    // this.project
+                ];
+
+                const productDataWithValues = await ProductsModel.aggregate(pipeline);
+// console.log("productDataWithValues:",productDataWithValues);
+
+                return productDataWithValues[0] || null;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            return null;
+        }
+        
         return ProductsModel.findById(productId);
     }
 
@@ -63,10 +192,10 @@ class ProductsService {
         return ProductGalleryImagesModel.create(gallaryImageData);
     }
 
-    
 
 
-    
+
+
     async destroyGalleryImages(gallaryImageID: string): Promise<ProductsProps | null> {
         return ProductGalleryImagesModel.findOneAndDelete({ _id: gallaryImageID });
     }
