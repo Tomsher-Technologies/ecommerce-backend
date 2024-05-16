@@ -10,6 +10,7 @@ export const adminTaskLog = {
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+        navigationMenu: 'navigationmenu',
     },
     marketing: {
         coupons: 'coupons',

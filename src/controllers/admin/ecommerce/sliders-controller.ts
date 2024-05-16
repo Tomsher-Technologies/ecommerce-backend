@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
 import { QueryParams } from '../../../utils/types/common';
 import { sliderPositionSchema, sliderSchema, sliderStatusSchema } from '../../../utils/schemas/admin/ecommerce/slider-schema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -21,6 +21,12 @@ class SlidersController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+            const userData = await res.locals.user;
+
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };

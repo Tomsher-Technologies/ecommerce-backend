@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CouponProps extends Document {
+    countryId: Schema.Types.ObjectId;
     couponCode: string;
     couponDescription?: string;
     couponType: string;
@@ -20,6 +21,11 @@ export interface CouponProps extends Document {
 }
 
 const couponSchema: Schema<CouponProps> = new Schema({
+    countryId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Countries',  
+    },
     couponCode: {
         type: String,
         required: true,

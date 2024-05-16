@@ -6,10 +6,14 @@ export const multiLanguageSources = {
         banner: 'banner',
         attributes: 'attributes',
         attribute: 'attributes',
-        categories:'categories',
-        specifications:'specifications'
+        categories: 'categories',
+        specifications: 'specifications'
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+       
+    },
+    setup:{
+         websiteSetups: 'websitesetups',
     }
 }

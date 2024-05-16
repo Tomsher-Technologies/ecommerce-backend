@@ -99,11 +99,11 @@ class CountryController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.countryTitle) {
+            if (error && error.errors && (error.errors?.countryTitle) && (error.errors?.countryTitle?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        countryTitle: "Country name already exists"
+                        countryTitle: error.errors?.countryTitle?.properties.message
                     }
                 }, req);
             }
