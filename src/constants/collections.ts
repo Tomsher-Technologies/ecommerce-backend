@@ -8,6 +8,8 @@ export const collections = {
         banner: 'banner',
         attributes: 'attributes',
         attribute: 'attributes',
-        specifications:'specifications'
+        categories:'categories',
+        specifications:'specifications',
+        products:'products',
     },
 }

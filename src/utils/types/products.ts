@@ -1,21 +1,22 @@
 import { Document, Schema } from "mongoose";
 
 export interface ProductsProps extends Document {
-    en_productTitle: string;
-    ar_productTitle: string;
+    productTitle: string;
     slug: string;
+    isVariant:Boolean;
     description: string;
-    longDescription: string;
     productImageUrl: string;
-    category: Schema.Types.ObjectId;
+    longDescription: string;
     brand: Schema.Types.ObjectId;
     unit: string;
+    weight: string;
+    hight: string;
+    length: string;
+    width: string;
     cartMinQuantity: number;
     cartMaxQuantity: number;
     tags: string;
-    inventryDetails: any;
     sku: string;
-    isVariant: string;
     newArrivalPriority: string;
     corporateGiftsPriority: string;
     pageTitle?: string;

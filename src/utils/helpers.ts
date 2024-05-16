@@ -6,8 +6,7 @@ import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
 
-import ProductsService from '../services/admin/ecommerce/products-service';
-
+import ProductsService from '../services/admin/ecommerce/product-service';
 
 type ZodValidationError = {
     path: (string | number)[];
@@ -92,14 +91,23 @@ export const deleteFile = (filePath: string): Promise<void> => {
 };
 
 
-export const uploadGallaryImages = async (req: Request, productID: string, galleryImages: any[]): Promise<void> => {
+export const uploadGallaryImages = async (req: Request, Id: any, galleryImages: any[]): Promise<void> => {
     try {
         await Promise.all(galleryImages.map(async (galleryImage) => {
-            const galleryImageData = {
-                productID: productID,
-                galleryImageUrl: handleFileUpload(req, null, galleryImage, 'galleryImageUrl', 'product'),
-                status: '1'
-            };
+            var galleryImageData
+            if (Id.variantId) {
+                galleryImageData = {
+                    variantId: Id.variantId,
+                    galleryImageUrl: handleFileUpload(req, null, galleryImage, 'galleryImageUrl', 'product'),
+                    status: '1'
+                };
+            } else {
+                galleryImageData = {
+                    productID: Id,
+                    galleryImageUrl: handleFileUpload(req, null, galleryImage, 'galleryImageUrl', 'product'),
+                    status: '1'
+                };
+            }
             await ProductsService.createGalleryImages(galleryImageData);
         }));
     } catch (error) {

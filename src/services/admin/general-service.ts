@@ -1,10 +1,12 @@
-
 import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
 import AdminTaskLogModel from "../../model/admin/task-log";
 
-const Address6 = require('ip-address').Address6;
-const address = new Address6('2001:0:ce49:7601:e866:efff:62c3:fffe');
-const ipAddress = address.inspectTeredo();
+const os = require('os');
+// Get network interfaces
+const networkInterfaces = os.networkInterfaces();
+
+// Iterate through each network interface
+
 export interface AdminTaskLogProps {
     sourceFromId: string;
     sourceFrom: string;
@@ -35,13 +37,23 @@ class GeneralService {
 
     async taskLog(taskLogs: AdminTaskLogProps) {
         if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
+            var ip
+            Object.keys(networkInterfaces).forEach(interfaceName => {
+                const interfaceDetails = networkInterfaces[interfaceName];
+                interfaceDetails.forEach((interfaceInfo: any) => {
+                    // Check if it's an IPv4 address and not internal
+                    if (interfaceInfo.family === 'IPv4' && !interfaceInfo.internal) {
+                        ip = interfaceInfo.address
+                    }
+                });
+            });
             const taskLogData = {
                 userId: taskLogs.userId,
                 sourceFromId: taskLogs.sourceFromId,
                 sourceFrom: taskLogs.sourceFrom,
                 activity: taskLogs.activity,
                 activityStatus: taskLogs.activityStatus,
-                ipAddress: ipAddress.client4,
+                ipAddress: ip,
                 createdAt: new Date()
             };
 
@@ -88,7 +100,7 @@ class GeneralService {
             } else {
                 if (languageValues.languageValues) {
                     const isEmptyValue = Object.values(languageValues.languageValues).some(value => (value !== ''));
-               
+
                     if (isEmptyValue) {
                         const multiLanguageData = {
                             languageId: languageValues.languageId,
@@ -98,7 +110,7 @@ class GeneralService {
                             languageValues: languageValues.languageValues,
                             createdAt: new Date()
                         };
-                        
+
                         managedLanguageValue = await MultiLanguageFieledsModel.create(multiLanguageData);
                     }
                 }
@@ -143,6 +155,24 @@ class GeneralService {
             return updatedService;
         } catch (error: any) {
             throw new Error('Error occurred while changing slider position: ' + error.message);
+        }
+    }
+    async deleteParentModel(deleteModel: any) {
+        if ((deleteModel) && (deleteModel.length > 0)) {
+            for (const deleteKey of deleteModel) {
+                const { model, ...deleteKeyIds } = deleteKey;
+
+                try {
+                    const deletedKeyValue = Object.keys(deleteKeyIds)[0];
+                    const deletedKeyId = Object.values(deleteKeyIds)[0];
+
+                    if ((deletedKeyValue) && (deletedKeyId)) {
+                        await model.deleteMany({ [deletedKeyValue]: deletedKeyId })
+                    }
+                } catch (error) {
+                    console.error(`Error deleting document from ${model.modelName}:`, error);
+                }
+            }
         }
     }
 }

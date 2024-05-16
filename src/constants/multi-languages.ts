@@ -6,8 +6,9 @@ export const multiLanguageSources = {
         banner: 'banner',
         attributes: 'attributes',
         attribute: 'attributes',
-        categories: 'categories',
-        specifications: 'specifications'
+        categories:'categories',
+        products:'products',
+        specifications:'specifications'
     },
     website: {
         collectionsProducts: 'collectionsproducts',
