@@ -5,7 +5,6 @@ export const collections = {
         sliders: 'sliders',
         banner: 'banner',
         attributes: 'attributes',
-        attribute: 'attributes',
         categories:'categories',
         specifications:'specifications',
         products:'products'
