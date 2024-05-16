@@ -95,11 +95,11 @@ class LanguagesController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.languageTitle) {
+            if (error && error.errors && (error.errors?.languageTitle) && (error.errors?.languageTitle?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        languageTitle: "Language name already exists"
+                        languageTitle: error.errors?.languageTitle?.properties.message
                     }
                 }, req);
             }

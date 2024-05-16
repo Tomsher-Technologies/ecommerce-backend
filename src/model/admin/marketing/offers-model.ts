@@ -1,13 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface OffersProps extends Document {
+    countryId: Schema.Types.ObjectId;
     offerTitle?: string;
     slug?: string;
     offerImageUrl: string;
-    linkType: string;
-    link: any;
-    category: string;
-    brand: string
+    offerDescription: string;
+    offersBy: string;
+    offerApplyValues: any;
     offerType: string;
     offerIN: string;
     buyQuantity: string;
@@ -20,6 +20,11 @@ export interface OffersProps extends Document {
 }
 
 const offersSchema: Schema<OffersProps> = new Schema({
+    countryId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Countries',  
+    },
     offerTitle: {
         type: String,
         required: true,
@@ -50,23 +55,19 @@ const offersSchema: Schema<OffersProps> = new Schema({
     },
     offerImageUrl: {
         type: String,
-        required: true,
+        default: ''
     },
-    linkType: {
+    offerDescription: {
+        type: String,
+        default: ''
+    },
+    offersBy: {
         type: String,
         required: true,
     },
-    link: {
+    offerApplyValues: {
         type: Schema.Types.Mixed,
-        default: [],
-    },
-    category: {
-        type: String,
-        default: '',
-    },
-    brand: {
-        type: String,
-        default: '',
+        required: true,
     },
     offerType: {
         type: String,

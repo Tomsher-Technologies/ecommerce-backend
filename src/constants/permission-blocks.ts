@@ -13,6 +13,7 @@ export const permissionBlocks = {
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+        navigationMenu: 'navigation menu',
     },
     setup: {
         languages: 'languages',

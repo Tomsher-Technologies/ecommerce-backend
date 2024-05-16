@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 
 import { userSchema } from '../../../../src/utils/schemas/admin/account/user-schema';
-import { formatZodError, handleFileUpload } from '../../../../src/utils/helpers';
+import { formatZodError, getCountryId, handleFileUpload } from '../../../../src/utils/helpers';
 import { QueryParams } from '../../../../src/utils/types/common';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
 
@@ -18,6 +18,12 @@ class UserController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+
+            const userData = await res.locals.user;
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };

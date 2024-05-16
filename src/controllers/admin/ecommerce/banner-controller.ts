@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
 import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
 import { QueryParams } from '../../../utils/types/common';
 import { multiLanguageSources } from '../../../constants/multi-languages';
@@ -11,6 +11,7 @@ import BaseController from '../../../controllers/admin/base-controller';
 import BannerService from '../../../services/admin/ecommerce/banner-service'
 import GeneralService from '../../../services/admin/general-service';
 import BannerModel from '../../../model/admin/ecommerce/banner-model';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -20,6 +21,12 @@ class BannerController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+            const userData = await res.locals.user;
+
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
