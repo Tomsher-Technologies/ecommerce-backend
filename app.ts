@@ -64,14 +64,13 @@ app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
 mongoose
-  .connect(process.env.MONGODB_URI as any)
-  .then(() => {
-    console.log("Database Connected Successfully!!");
-  })
-  .catch((err) => {
-    console.log('Could not connect to the database', err);
-    process.exit(1);
-  });
+.connect(process.env.MONGODB_URI as any)
+.then((x) => {
+   console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
+ })
+ .catch((err) => {
+   console.error('Could not connect to the database', err)
+ });
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Ecommerce" });
