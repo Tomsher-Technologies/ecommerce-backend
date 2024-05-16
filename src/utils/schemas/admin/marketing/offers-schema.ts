@@ -2,46 +2,32 @@ import { z as zod } from 'zod';
 
 export const offersSchema = zod.object({
     _id: zod.string().optional(),
+    countryId: zod.string({ required_error: 'Country is required', }).min(2, 'Country is should be 2 chars minimum'),
     offerTitle: zod.string({ required_error: 'Offer name is required' }).min(2, { message: 'Offer must be at least 2 characters long' }),
     slug: zod.string().min(2, { message: 'Slug is required' }),
-    linkType: zod.string().refine((val) => val.trim().length > 0, {
-        message: 'Link type must not be empty'
+    offerDescription: zod.string().optional(),
+    offersBy: zod.string({ required_error: 'Offer to must not be empty' }).refine((val) => val.trim().length > 0, {
+        message: 'Offer to must not be empty'
     }),
-    link: zod.any().optional(),
-    category: zod.string().optional(),
-    brand: zod.string().optional(),
+    offerApplyValues: zod.any({ required_error: 'lease select at least one item to apply the offer to.' }),
+
     offerType: zod.string().refine((val) => val.trim().length > 0, {
         message: 'Offer type must not be empty'
     }),
     offerIN: zod.string().optional(),
     buyQuantity: zod.string().optional(),
     getQuantity: zod.string().optional(),
-    offerDateRange: zod.any(),
+    offerDateRange: zod.any({ required_error: 'Offer Date must to select start date to end date ranges' }),
     offerImageUrl: zod.string().optional(),
     offerImage: zod.any({ required_error: 'Offer image is required' }).nullable(),
     status: zod.string().optional(),
-}).superRefine(({ linkType, category, brand, link, offerType, buyQuantity, getQuantity, offerIN }, ctx) => {
-    if (linkType === 'category') {
-        if (category === '') {
+}).superRefine(({ offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerIN }, ctx) => {
+    if (((offersBy === 'product') || (offersBy === 'category') || (offersBy === 'brand'))) {
+        if (offerApplyValues?.length === 0) {
             ctx.addIssue({
                 code: "custom",
-                message: "Category is required when link type is category",
-                path: ["category"]
-            });
-        }
-        if (brand === '') {
-            ctx.addIssue({
-                code: "custom",
-                message: "Brand is required when link type is brand",
-                path: ["brand"]
-            });
-        }
-    } else if (linkType === 'product') {
-        if (link.length <= 0) {
-            ctx.addIssue({
-                code: "custom",
-                message: "Product is required when link type is product",
-                path: ["link"]
+                message: "Please select at least one item to apply the offer to.",
+                path: ["offerApplyValues"]
             });
         }
     }
@@ -70,6 +56,7 @@ export const offersSchema = zod.object({
         }
     }
 });
+
 
 
 export const offerStatusSchema = zod.object({

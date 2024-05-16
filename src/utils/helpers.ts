@@ -1,17 +1,27 @@
+import mongoose from 'mongoose';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
 import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
-import ProductsService from '../services/admin/ecommerce/product-service';
 
+import ProductsService from '../services/admin/ecommerce/product-service';
 
 type ZodValidationError = {
     path: (string | number)[];
     message: string;
 };
 
+
+export function getCountryId(userData: any): mongoose.Types.ObjectId | undefined {
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose.Types.ObjectId(userData.countryId);
+        }
+    }
+    return undefined;
+}
 
 export const formatZodError = (errors: ZodError['errors']): Record<string, string> => {
     const formattedErrors: Record<string, string> = {};

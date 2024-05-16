@@ -62,24 +62,17 @@ class OffersController extends BaseController {
 
 
             if (validatedData.success) {
-                const { offerTitle, slug, linkType, link, category, brand, offerType, buyQuantity, getQuantity, offerDateRange } = validatedData.data;
+                const { countryId, offerTitle, slug, offerDescription, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const offerData = {
-                    offerTitle,
-                    slug: slug || slugify(offerTitle),
-                    offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
-                    linkType,
-                    link: stringToArray(link),
-                    category,
-                    brand,
-                    offerType,
-                    buyQuantity,
-                    getQuantity,
-                    offerDateRange: stringToArray(offerDateRange),
-                    status: '1',
-                    createdBy: user._id,
-                    createdAt: new Date()
+                    countryId,
+                    offerTitle, slug: slug || slugify(offerTitle), offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
+                    offerDescription, offersBy,
+                    offerApplyValues: Array.isArray(offerApplyValues) ? offerApplyValues : stringToArray(offerApplyValues),
+                    offerType, buyQuantity, getQuantity,
+                    offerDateRange: Array.isArray(offerDateRange) ? offerDateRange : stringToArray(offerDateRange),
+                    status: status || '1', createdBy: user._id, createdAt: new Date()
                 };
 
                 const newOffer = await OfferService.create(offerData);
@@ -142,8 +135,8 @@ class OffersController extends BaseController {
                     let updatedofferData = req.body;
                     updatedofferData = {
                         ...updatedofferData,
-                        link: stringToArray(updatedofferData.link),
-                        offerDateRange: stringToArray(updatedofferData.offerDateRange),
+                        offerApplyValues: Array.isArray(updatedofferData.offerApplyValues) ? updatedofferData.offerApplyValues : stringToArray(updatedofferData.offerApplyValues),
+                        offerDateRange: Array.isArray(updatedofferData.offerDateRange) ? updatedofferData.offerDateRange : stringToArray(updatedofferData.offerDateRange),
                         offerImageUrl: handleFileUpload(req, await OfferService.findOne(offerId), req.file, 'offerImageUrl', 'offer'),
                         updatedAt: new Date()
                     };

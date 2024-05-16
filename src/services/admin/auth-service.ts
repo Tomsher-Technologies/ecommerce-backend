@@ -28,22 +28,8 @@ class AuthService {
                         phone: user.phone
                     }, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn: '8h' });
 
-                    const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id });
-
                     let insertedValues: any = {};
-                    if (existingUserAuth) {
-                        existingUserAuth.token = token;
-                        insertedValues = await existingUserAuth.save();
-                    } else {
-                        const authorisationValues = new AuthorisationModel({
-                            userID: user._id,
-                            userTypeId: user?.userTypeID,
-                            token,
-                            expiresIn: '1h',
-                            createdOn: new Date(),
-                        });
-                        insertedValues = await authorisationValues.save();
-                    }
+
                     if (insertedValues) {
                         const privilages = await PrivilagesService.findOne(user.userTypeID as any);
 
@@ -54,7 +40,7 @@ class AuthService {
                             firstName: user.firstName,
                             email: user.email,
                             phone: user.phone,
-                            token: insertedValues.token,
+                            token,
                             expiresIn: insertedValues.expiresIn,
                             privilages
                         }

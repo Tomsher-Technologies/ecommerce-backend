@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 
 import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
-import { QueryParams } from '../../../utils/types/common';
 import { CategoryQueryParams } from '../../../utils/types/category';
 
 import BaseController from '../../../controllers/admin/base-controller';
@@ -35,6 +34,7 @@ class CategoryController extends BaseController {
                 query = {
                     $or: [
                         { categoryTitle: keywordRegex },
+                        { slug: keywordRegex },
                     ],
                     ...query
                 } as any;
@@ -233,7 +233,7 @@ class CategoryController extends BaseController {
                     }, 200, {
                         sourceFromId: newCategory._id,
                         sourceFrom: adminTaskLog.ecommerce.categories,
-                        activity: adminTaskLogActivity.update,
+                        activity: adminTaskLogActivity.create,
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

@@ -60,10 +60,11 @@ class CouponsController extends BaseController {
             const validatedData = couponSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { couponCode, status, couponDescription, couponType, couponApplyValues, minPurchaseValue, discountType, discountAmount, discountMaxRedeemAmount, couponUsage, enableFreeShipping, discountDateRange } = validatedData.data;
+                const { countryId, couponCode, status, couponDescription, couponType, couponApplyValues, minPurchaseValue, discountType, discountAmount, discountMaxRedeemAmount, couponUsage, enableFreeShipping, discountDateRange } = validatedData.data;
                 const user = res.locals.user;
 
                 const couponData = {
+                    countryId,
                     couponCode, couponDescription, couponType, couponApplyValues, minPurchaseValue, discountType, discountAmount, discountMaxRedeemAmount, couponUsage, enableFreeShipping, discountDateRange,
                     status: status || '1',
                     createdBy: user._id,

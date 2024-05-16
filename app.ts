@@ -34,6 +34,7 @@ import CountryRoutes from './routes/admin/setup/country-routes';
 import LanguagesRoutes from './routes/admin/setup/languages-routes';
 
 import CollectionProductRoutes from './routes/admin/website/collection-product-routes'
+import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes'
 
 // frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes'
@@ -111,6 +112,7 @@ adminRouter.use('/setup/languages', LanguagesRoutes);
 
 //admin website 
 adminRouter.use('/website/collection-products', CollectionProductRoutes);
+adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 
 
 // adminRouter.use(logResponseStatus);
