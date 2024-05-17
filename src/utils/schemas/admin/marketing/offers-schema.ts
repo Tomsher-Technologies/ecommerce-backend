@@ -2,7 +2,7 @@ import { z as zod } from 'zod';
 
 export const offersSchema = zod.object({
     _id: zod.string().optional(),
-    countryId: zod.string({ required_error: 'Country is required', }).min(2, 'Country is should be 2 chars minimum'),
+    countryId: zod.string().optional(),
     offerTitle: zod.string({ required_error: 'Offer name is required' }).min(2, { message: 'Offer must be at least 2 characters long' }),
     slug: zod.string().min(2, { message: 'Slug is required' }),
     offerDescription: zod.string().optional(),

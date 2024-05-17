@@ -74,7 +74,7 @@ class UserController extends BaseController {
 
                 const userData = {
                     userTypeID,
-                    countryId,
+                    countryId: countryId || getCountryId(user),
                     email,
                     firstName,
                     lastName,

@@ -64,12 +64,9 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
-mongoose
-.connect(process.env.MONGODB_URI as any)
-.then((x) => {
+mongoose.connect(process.env.MONGODB_URI as any).then((x) => {
    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
- })
- .catch((err) => {
+ }).catch((err) => {
    console.error('Could not connect to the database', err)
  });
 

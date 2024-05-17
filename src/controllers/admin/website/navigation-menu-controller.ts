@@ -6,11 +6,11 @@ import { formatZodError, getCountryId, handleFileUpload } from '../../../utils/h
 import { websiteSetup } from '../../../constants/website-setup';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { navigationMenutSchema } from '../../../utils/schemas/admin/website/navigation-menu-shema';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import BaseController from "../base-controller";
 import NavigationMenuService from "../../../services/admin/website/navigation-menu-service";
 import GeneralService from '../../../services/admin/general-service';
-import { multiLanguageSources } from '../../../constants/multi-languages';
 
 
 const controller = new BaseController();
@@ -70,7 +70,8 @@ class NavigationMenuController extends BaseController {
         try {
             const validatedData = navigationMenutSchema.safeParse(req.body);
 
-            const countryId = req.params.id || req.body.countryId;
+            const userData = await res.locals.user;
+            const countryId = req.params.id || req.body.countryId || getCountryId(userData);
             if (validatedData.success) {
                 if (countryId) {
                     const { languageId, websiteSetupId, status, blockValues, deviceType } = validatedData.data;
@@ -175,7 +176,7 @@ class NavigationMenuController extends BaseController {
                             requestedData: languageValues.languageValues,
                             message: 'Success'
                         });
-                    }else{
+                    } else {
                         return controller.sendErrorResponse(res, 200, {
                             message: 'Not found on this language menu item. Please try to add new menu item!',
                         });

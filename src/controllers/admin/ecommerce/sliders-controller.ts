@@ -76,7 +76,7 @@ class SlidersController extends BaseController {
                 const sliderImage = (req as any).files.find((file: any) => file.fieldname === 'sliderImage');
 
                 const sliderData = {
-                    countryId,
+                    countryId: countryId || getCountryId(user),
                     sliderTitle,
                     slug: slug || slugify(sliderTitle),
                     page,
