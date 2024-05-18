@@ -307,6 +307,9 @@ class CategoryService {
         }
     }
 
+    async findCategoryId(slug: string): Promise<CategoryProps | null> {
+        return CategoryModel.findOne({ slug: slug });
+    }
 
 
 
