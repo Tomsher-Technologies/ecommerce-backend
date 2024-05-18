@@ -12,19 +12,9 @@ class ProductSpecificationService {
             $project: {
                 _id: 1,
                 productId: 1,
-                sku: 1,
-                countryId: 1,
-                price: 1,
-                quantity: 1,
-                discountPrice: 1,
-                isDefualt: 1,
-                hsn: 1,
-                mpn: 1,
-                barcode: 1,
-                variantDescription: 1,
-                cartMinQuantity: 1,
-                cartMaxQuantity: 1,
-                status: 1,
+                variantId: 1,
+                specificationId: 1,
+                specificationDetailId: 1,
                 createdAt: 1,
             }
         }

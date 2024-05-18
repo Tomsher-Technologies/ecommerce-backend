@@ -36,6 +36,6 @@ const productGallaryImagesSchema: Schema<ProductGalleryImagesProps> = new Schema
     },
 });
 
-const CategoryModel = mongoose.model<ProductGalleryImagesProps>('ProductGallaryImages', productGallaryImagesSchema);
+const ProductGalleryImagesModel = mongoose.model<ProductGalleryImagesProps>('ProductGallaryImages', productGallaryImagesSchema);
 
-export default CategoryModel;
+export default ProductGalleryImagesModel;

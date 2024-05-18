@@ -4,13 +4,12 @@ export interface ProductVariantsProps extends Document {
     productId: Schema.Types.ObjectId;
     slug:string;
     extraProductTitle: string;
-    description: string;
     variantSku: string;
     countryId: Schema.Types.ObjectId;
     price: number;
     quantity: string;
     discountPrice: number;
-    isDefualt: String,
+    isDefualt: Boolean,
     hsn: string;
     mpn: string;
     barcode: string;
@@ -45,7 +44,7 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     extraProductTitle: {
         type: String,
     },
-    description: {
+    variantDescription: {
         type: String,
     },
     countryId: {
@@ -62,7 +61,7 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
                 const count = await this.model('ProductVariants').countDocuments({ variantSku: value });
                 return count === 0;
             },
-            message: 'variantSku must be unique'
+            message: 'variant Sku must be unique'
         },
         minlength: [3, 'variantSku must be at least 3 characters long']
     },
@@ -78,7 +77,7 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: Number,
     },
     isDefualt: {
-        type: String,
+        type: Boolean,
         required: true,
         default: true
     },
