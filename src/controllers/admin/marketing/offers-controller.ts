@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 import { offerStatusSchema, offersSchema } from '../../../utils/schemas/admin/marketing/offers-schema';
 import { QueryParams } from '../../../utils/types/common';
 
@@ -17,6 +17,12 @@ class OffersController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+            
+            const userData = await res.locals.user;
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -66,7 +72,7 @@ class OffersController extends BaseController {
                 const user = res.locals.user;
 
                 const offerData = {
-                    countryId,
+                    countryId: countryId || getCountryId(user),
                     offerTitle, slug: slug || slugify(offerTitle), offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
                     offerDescription, offersBy,
                     offerApplyValues: Array.isArray(offerApplyValues) ? offerApplyValues : stringToArray(offerApplyValues),
