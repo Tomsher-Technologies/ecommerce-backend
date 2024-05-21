@@ -34,6 +34,7 @@ import CountryRoutes from './routes/admin/setup/country-routes';
 import LanguagesRoutes from './routes/admin/setup/languages-routes';
 
 import CollectionProductRoutes from './routes/admin/website/collection-product-routes'
+import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes'
 
 // frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes'
@@ -47,7 +48,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/public", express.static('public'));
 
-
+app.use(function (request, response, next) {
+  response.header("Access-Control-Allow-Origin", "*");
+  response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
@@ -63,15 +68,11 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
-mongoose
-  .connect(process.env.MONGODB_URI as any)
-  .then(() => {
-    console.log("Database Connected Successfully!!");
-  })
-  .catch((err) => {
-    console.log('Could not connect to the database', err);
-    process.exit(1);
-  });
+mongoose.connect(process.env.MONGODB_URI as any).then((x) => {
+   console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
+ }).catch((err) => {
+   console.error('Could not connect to the database', err)
+ });
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Ecommerce" });
@@ -112,6 +113,7 @@ adminRouter.use('/setup/languages', LanguagesRoutes);
 
 //admin website 
 adminRouter.use('/website/collection-products', CollectionProductRoutes);
+adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 
 
 // adminRouter.use(logResponseStatus);

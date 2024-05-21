@@ -1,7 +1,7 @@
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import CollectionsProductsModel, { CollectionsProductsProps } from '../../../model/admin/website/collections-products-model';
-import ProductsModel from '../../../model/admin/ecommerce/products-model';
+import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
 class CollectionsProductsService {
@@ -55,7 +55,7 @@ class CollectionsProductsService {
         try {
             const query = { _id: { $nin: productIds } };
 
-            const unCollectionedProducts = await ProductsModel.find(query).select('_id en_productTitle ar_productTitle slug description productImageUrl status');
+            const unCollectionedProducts = await ProductsModel.find(query).select('_id productTitle slug description productImageUrl status');
 
             return unCollectionedProducts;
         } catch (error) {
@@ -68,7 +68,7 @@ class CollectionsProductsService {
         try {
             const query = { _id: { $in: productIds } };
 
-            const products = await ProductsModel.find(query).select('_id en_productTitle ar_productTitle slug description productImageUrl status');
+            const products = await ProductsModel.find(query).select('_id productTitle slug description productImageUrl status');
 
             return products;
         } catch (error) {

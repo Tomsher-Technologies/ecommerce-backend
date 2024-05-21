@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
@@ -77,8 +78,9 @@ class BrandsService {
 
     async findOne(brandId: string): Promise<BrandProps | null> {
         if (brandId) {
+            const objectId = new mongoose.Types.ObjectId(brandId); 
             const pipeline = [
-                { $match: { _id: brandId} },
+                { $match: { _id: objectId} },
                 this.lookup,
             ];
 
@@ -113,6 +115,9 @@ class BrandsService {
 
     async destroy(brandId: string): Promise<BrandProps | null> {
         return BrandsModel.findOneAndDelete({ _id: brandId });
+    }
+    async findBrandId(brandTitle: string): Promise<BrandProps | null> {
+        return BrandsModel.findOne({ brandTitle: brandTitle });
     }
 
     async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof BrandProps): Promise<void> {

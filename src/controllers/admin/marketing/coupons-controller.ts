@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError } from '../../../utils/helpers';
+import { formatZodError, getCountryId } from '../../../utils/helpers';
 import { couponSchema, couponStatusSchema } from '../../../utils/schemas/admin/marketing/coupon-schema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { QueryParams } from '../../../utils/types/common';
@@ -17,6 +17,12 @@ class CouponsController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+
+            const userData = await res.locals.user;
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -60,10 +66,11 @@ class CouponsController extends BaseController {
             const validatedData = couponSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { couponCode, status, couponDescription, couponType, couponApplyValues, minPurchaseValue, discountType, discountAmount, discountMaxRedeemAmount, couponUsage, enableFreeShipping, discountDateRange } = validatedData.data;
+                const { countryId, couponCode, status, couponDescription, couponType, couponApplyValues, minPurchaseValue, discountType, discountAmount, discountMaxRedeemAmount, couponUsage, enableFreeShipping, discountDateRange } = validatedData.data;
                 const user = res.locals.user;
 
                 const couponData = {
+                    countryId: countryId || getCountryId(user),
                     couponCode, couponDescription, couponType, couponApplyValues, minPurchaseValue, discountType, discountAmount, discountMaxRedeemAmount, couponUsage, enableFreeShipping, discountDateRange,
                     status: status || '1',
                     createdBy: user._id,

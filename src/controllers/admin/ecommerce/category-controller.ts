@@ -1,9 +1,8 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify, categorySlugify } from '../../../utils/helpers';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
-import { QueryParams } from '../../../utils/types/common';
 import { CategoryQueryParams } from '../../../utils/types/category';
 
 import BaseController from '../../../controllers/admin/base-controller';
@@ -20,7 +19,7 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -35,6 +34,7 @@ class CategoryController extends BaseController {
                 query = {
                     $or: [
                         { categoryTitle: keywordRegex },
+                        { slug: keywordRegex },
                     ],
                     ...query
                 } as any;
@@ -84,10 +84,69 @@ class CategoryController extends BaseController {
         }
     }
 
+    async findAllChilledCategories(req: Request, res: Response): Promise<void> {
+        try {
+            const { status = '1', keyword = '', categoryId = '', parentCategory = '' } = req.query as CategoryQueryParams;
+            let query: any = { _id: { $exists: true } };
+
+            if (status && status !== '') {
+                query.status = { $in: Array.isArray(status) ? status : [status] };
+            } else {
+                query.status = '1';
+            }
+
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+
+                query = {
+                    $or: [
+                        { categoryTitle: keywordRegex },
+                        { slug: keywordRegex },
+                    ],
+                    ...query
+
+                } as any;
+            }
+
+            if (categoryId) {
+                query = { _id: categoryId }
+            }
+
+            if (!parentCategory && keyword === '' && categoryId === '') {
+                query.$or = [
+                    { parentCategory: null },
+                    { parentCategory: { $exists: false } }
+                ];
+            } else if (parentCategory) {
+                query.parentCategory = parentCategory;
+            }
+            const categories = await CategoryService.findAllChilledCategories(query);
+
+            controller.sendSuccessResponse(res, {
+                requestedData: categories,
+                totalCount: await CategoryService.getTotalCount(query),
+                message: 'Success!ddd'
+            }, 200);
+        } catch (error: any) {
+            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
+        }
+    }
+
     async findAllParentCategories(req: Request, res: Response): Promise<void> {
         try {
-            const { status = '1' } = req.query;
-            const query = { status, _id: { $exists: true } };
+            const { status = '1', categoryId = '' } = req.query;
+            let query: any = { _id: { $exists: true } };
+            if (status && status !== '') {
+                query.status = { $in: Array.isArray(status) ? status : [status] };
+            } else {
+                query.status = '1';
+            }
+
+            if (categoryId) {
+                query._id = categoryId as string;
+            } else {
+                query._id = { $exists: true };
+            }
             const categories = await CategoryService.findAllParentCategories({ query });
 
             controller.sendSuccessResponse(res, {
@@ -100,49 +159,6 @@ class CategoryController extends BaseController {
         }
     }
 
-    async findAllCategories(req: Request, res: Response): Promise<void> {
-        try {
-            const { status = '1', keyword = '' } = req.query as QueryParams;
-            // const query = { status, _id: { $exists: true } };
-
-            let query: any = { _id: { $exists: true } };
-
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
-            } else {
-                query.status = '1';
-            }
-
-            if (keyword) {
-                query = {
-                    $or: [
-                        { categoryTitle: keyword },
-                        { slug: keyword },
-                    ],
-                    ...query
-
-                } as any;
-            } else if (req.query._id) {
-                query = { _id: req.query._id }
-            } else if (req.query.parentCategory) {
-                query = { parentCategory: req.query.parentCategory }
-            } else {
-                query = { parentCategory: { $exists: false } }
-            }
-            console.log("query", query);
-
-            const categories = await CategoryService.findAllCategories(query);
-
-
-            controller.sendSuccessResponse(res, {
-                requestedData: categories,
-                totalCount: await CategoryService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
-        } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
-        }
-    }
 
     async create(req: Request, res: Response): Promise<void> {
         try {
@@ -156,31 +172,29 @@ class CategoryController extends BaseController {
                 // if (parentCategory === '') {
                 //     parentCategory = ''; // Convert empty string to null
                 // }
-                const category = await CategoryService.findParentCategory(req.body.parentCategory);
+                const category = parentCategory ? await CategoryService.findParentCategory(parentCategory) : null;
                 var slugData
-                const data: any = category?.slug + "-" + req.body.categoryTitle
-                console.log(category);
-
-                if (req.body.parentCategory == undefined) {
-                    slugData = slugify(categoryTitle)
-
+                var data: any = []
+                if (!parentCategory) {
+                    data = categoryTitle
                 }
                 else {
-                    slugData = categorySlugify(data)
-
+                    data = category?.slug + "-" + categoryTitle
                 }
+                slugData = slugify(data, '_')
 
-                const categoryImage = (req?.files) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+
+                const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
                     categoryTitle,
-                    slug: slug || slugData,
+                    slug: slugData || slug,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
                     corporateGiftsPriority,
                     type,
-                    parentCategory,
-                    level,
+                    parentCategory: parentCategory ? parentCategory : null,
+                    level: category?.level ? parseInt(category?.level) + 1 : '0',
                     createdBy: user._id,
                 };
 
@@ -219,7 +233,7 @@ class CategoryController extends BaseController {
                     }, 200, {
                         sourceFromId: newCategory._id,
                         sourceFrom: adminTaskLog.ecommerce.categories,
-                        activity: adminTaskLogActivity.update,
+                        activity: adminTaskLogActivity.create,
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -277,14 +291,29 @@ class CategoryController extends BaseController {
                 const user = res.locals.user;
 
                 if (categoryId) {
+                    const categoryImage = (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+
                     let updatedCategoryData = req.body;
+
+                    const updatedCategory: any = await CategoryService.findOne(categoryId);
+
                     updatedCategoryData = {
                         ...updatedCategoryData,
-                        categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), req.file, 'categoryImageUrl', 'category'),
+                        parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
+                        level: updatedCategoryData.level,
+                        slug: updatedCategoryData.slug,
+                        categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
                         updatedAt: new Date()
                     };
 
-                    const updatedCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
+                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData ) {
+
+                        const updatedSlugCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
+                        if (updatedSlugCategory) {
+                            await CategoryService.findSubCategory(updatedSlugCategory)
+                        }
+                    }
+
                     if (updatedCategory) {
 
                         const languageValuesImages = (req as any).files.filter((file: any) =>

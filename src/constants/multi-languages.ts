@@ -7,9 +7,14 @@ export const multiLanguageSources = {
         attributes: 'attributes',
         attribute: 'attributes',
         categories:'categories',
+        products:'products',
         specifications:'specifications'
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+       
+    },
+    setup:{
+         websiteSetups: 'websitesetups',
     }
 }

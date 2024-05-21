@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 import { offerStatusSchema, offersSchema } from '../../../utils/schemas/admin/marketing/offers-schema';
 import { QueryParams } from '../../../utils/types/common';
 
@@ -17,6 +17,12 @@ class OffersController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+            
+            const userData = await res.locals.user;
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -62,24 +68,17 @@ class OffersController extends BaseController {
 
 
             if (validatedData.success) {
-                const { offerTitle, slug, linkType, link, category, brand, offerType, buyQuantity, getQuantity, offerDateRange } = validatedData.data;
+                const { countryId, offerTitle, slug, offerDescription, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const offerData = {
-                    offerTitle,
-                    slug: slug || slugify(offerTitle),
-                    offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
-                    linkType,
-                    link: stringToArray(link),
-                    category,
-                    brand,
-                    offerType,
-                    buyQuantity,
-                    getQuantity,
-                    offerDateRange: stringToArray(offerDateRange),
-                    status: '1',
-                    createdBy: user._id,
-                    createdAt: new Date()
+                    countryId: countryId || getCountryId(user),
+                    offerTitle, slug: slug || slugify(offerTitle), offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
+                    offerDescription, offersBy,
+                    offerApplyValues: Array.isArray(offerApplyValues) ? offerApplyValues : stringToArray(offerApplyValues),
+                    offerType, buyQuantity, getQuantity,
+                    offerDateRange: Array.isArray(offerDateRange) ? offerDateRange : stringToArray(offerDateRange),
+                    status: status || '1', createdBy: user._id, createdAt: new Date()
                 };
 
                 const newOffer = await OfferService.create(offerData);
@@ -142,8 +141,8 @@ class OffersController extends BaseController {
                     let updatedofferData = req.body;
                     updatedofferData = {
                         ...updatedofferData,
-                        link: stringToArray(updatedofferData.link),
-                        offerDateRange: stringToArray(updatedofferData.offerDateRange),
+                        offerApplyValues: Array.isArray(updatedofferData.offerApplyValues) ? updatedofferData.offerApplyValues : stringToArray(updatedofferData.offerApplyValues),
+                        offerDateRange: Array.isArray(updatedofferData.offerDateRange) ? updatedofferData.offerDateRange : stringToArray(updatedofferData.offerDateRange),
                         offerImageUrl: handleFileUpload(req, await OfferService.findOne(offerId), req.file, 'offerImageUrl', 'offer'),
                         updatedAt: new Date()
                     };

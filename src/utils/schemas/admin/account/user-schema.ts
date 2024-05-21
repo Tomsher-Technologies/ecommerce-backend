@@ -1,7 +1,7 @@
 import { z as zod } from 'zod';
 
 export const userSchema = zod.object({
-    countryId: zod.string({ required_error: 'Country is required', }).min(2, 'Country is should be 2 chars minimum'),
+    countryId: zod.string().optional(),
     userTypeID: zod.string({ required_error: 'User type is required', }),
     email: zod.string({ required_error: 'Email is required', }).email('Please provide a valid email address'),
     firstName: zod.string({ required_error: 'First name is required', }).min(3, 'First name is should be 3 chars minimum'),

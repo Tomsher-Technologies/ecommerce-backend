@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import { multiLanguageSources } from '../../../constants/multi-languages';
@@ -100,8 +101,9 @@ class SliderService {
 
     async findOne(sliderId: string): Promise<SliderProps | null> {
         if (sliderId) {
+            const objectId = new mongoose.Types.ObjectId(sliderId); 
             const pipeline = [
-                { $match: { _id: sliderId } },
+                { $match: { _id: objectId } },
                 this.lookup,
                 this.project
             ];

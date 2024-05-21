@@ -17,6 +17,7 @@ router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findAll);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findOne);
+router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.single('file'), ProductsController.importProductExcel);
 router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), async (req: Request, res: Response, next: NextFunction) => {
     try {
         await ProductsController.create(req, res);
@@ -29,7 +30,7 @@ router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.ec
 router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), logResponseStatus, ProductsController.update);
 router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products }), ProductsController.destroy);
-
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), ProductsController.statusChange);
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     // Check if the error is from multer

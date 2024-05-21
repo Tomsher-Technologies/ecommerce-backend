@@ -19,7 +19,7 @@ router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: p
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, readOnly: 1 }), OffersController.findOne);
 router.post('/', upload.single('offerImage'), userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), logResponseStatus, OffersController.create);
 router.post('/:id', upload.single('offerImage'), userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), logResponseStatus, OffersController.update);
-router.post('/position-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), OffersController.statusChange);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), OffersController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers }), OffersController.destroy);
 
 

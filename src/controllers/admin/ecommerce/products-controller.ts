@@ -2,14 +2,31 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 
-import { deleteFile, formatZodError, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
-import { productsSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
+import { deleteFile, formatZodError, getCountryId, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { productStatusSchema, productFormSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { seoPage } from '../../../constants/admin/seo-page';
 
 import BaseController from '../../../controllers/admin/base-controller';
-import ProductsService from '../../../services/admin/ecommerce/products-service'
-import ProductsModel from '../../../model/admin/ecommerce/products-model';
+
 import collectionsProductsService from '../../../services/admin/website/collections-products-service';
+import ProductVariantService from '../../../services/admin/ecommerce/product/product-variant-service';
+import ProductVariantAttributeService from '../../../services/admin/ecommerce/product/product-variant-attributes-service';
+import ProductCategoryLinkService from '../../../services/admin/ecommerce/product/product-category-link-service';
+import ProductsService from '../../../services/admin/ecommerce/product-service'
+import GeneralService from '../../../services/admin/general-service';
+import ProductSpecificationService from '../../../services/admin/ecommerce/product/product-specification-service';
+import BrandsService from '../../../services/admin/ecommerce/brands-service'
+import CategoryService from '../../../services/admin/ecommerce/category-service'
+import SeoPageService from '../../../services/admin/seo-page-service';
+
+import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
+import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fieleds-model';
+import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
+import ProductSpecificationModel, { ProductSpecificationProps } from '../../../model/admin/ecommerce/product/product-specification-model';
 
 const controller = new BaseController();
 
@@ -35,8 +52,6 @@ class ProductsController extends BaseController {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { en_productTitle: keywordRegex },
-                        { ar_productTitle: keywordRegex },
                         { productTitle: keywordRegex },
                         { categoryTitle: keywordRegex },
                         { brandTitle: keywordRegex },
@@ -50,7 +65,7 @@ class ProductsController extends BaseController {
                     ...query, _id: productId
                 } as any;
             }
-            
+
             if (category) {
                 query = {
                     ...query, category: category
@@ -114,57 +129,244 @@ class ProductsController extends BaseController {
 
     async create(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = productsSchema.safeParse(req.body);
+            const validatedData = productFormSchema.safeParse(req.body);
+            var newProduct: any
+            var newCategory: any
 
             if (validatedData.success) {
-                const { en_productTitle, ar_productTitle, slug, category, brand, unit, tags, inventryDetails, sku, description, longDescription, cartMinQuantity, cartMaxQuantity,
-                    pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription } = validatedData.data;
+                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription,
+                    completeTab, productSpecification, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const productImage = (req as any).files.find((file: any) => file.fieldname === 'productImage');
-                const galleryImages = (req as any).files.filter((file: any) => file.fieldname === 'galleryImage[]');
+                const galleryImages = (req as any).files.filter((file: any) =>
+                    file.fieldname &&
+                    file.fieldname.startsWith('galleryImage[')
+                );
 
                 const productData: Partial<ProductsProps> = {
-                    en_productTitle,
-                    ar_productTitle,
-                    slug: slug || slugify(en_productTitle) as any,
-                    category: category as any,
+                    productTitle,
+                    slug: slugify(productTitle) as any,
                     brand: brand as any,
                     description,
                     longDescription,
+                    completeTab,
                     productImageUrl: handleFileUpload(req, null, (req.file || productImage), 'productImageUrl', 'product'),
-                    inventryDetails,
                     unit: unit as string,
-                    tags: tags as string,
-                    cartMinQuantity,
-                    cartMaxQuantity,
+                    measurements: measurements as {
+                        weight?: string,
+                        hight?: string,
+                        length?: string,
+                        width?: string
+                    },
                     sku,
+                    isVariant: Boolean(isVariant),
                     pageTitle: pageTitle as string,
-                    metaTitle: metaTitle as string,
-                    metaKeywords: metaKeywords as string,
-                    metaDescription: metaDescription as string,
-                    metaImageUrl: metaImage as string,
-                    ogTitle: ogTitle as string,
-                    ogDescription: ogDescription as string,
-                    twitterTitle: twitterTitle as string,
-                    twitterDescription: twitterDescription as string,
                     status: '1', // active
                     statusAt: new Date(),
                     createdBy: user._id,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
                 };
 
-                const newProduct = await ProductsService.create(productData);
-                // const fetchedProduct = await ProductsService.findOne(newProduct._id);
+                newProduct = await ProductsService.create(productData);
                 if (newProduct) {
-                    if (galleryImages?.length > 0) {
+                    const seoData: Partial<SeoPageProps> = {
+                        metaTitle,
+                        metaKeywords,
+                        metaDescription,
+                        ogTitle,
+                        ogDescription,
+                        twitterTitle,
+                        twitterDescription
+                    }
+                    if (seoData.metaTitle || seoData.metaKeywords || seoData.metaDescription || seoData.ogTitle || seoData.ogDescription || seoData.twitterTitle || seoData.twitterDescription) {
+                        const newSeo = await SeoPageService.create({
+                            pageId: newProduct._id,
+                            page: seoPage.ecommerce.products,
+                            ...seoData
+                        })
+                    }
+
+                    if (productSpecification && productSpecification.length > 0) {
+                        await productSpecification.map(async (specification: any) => {
+                            const specificationData = {
+                                productId: newProduct._id,
+                                ...specification
+                            }
+                            await ProductSpecificationService.create(specificationData)
+                        })
+
+                    }
+
+                    if (productCategory && productCategory.length > 0) {
+                        await productCategory.map(async (item: any, index: number) => {
+                            newCategory = await ProductCategoryLinkService.create({
+                                productId: newProduct._id,
+                                categoryId: item.categoryId
+                            })
+
+                        })
+                    }
+                    if (galleryImages && galleryImages?.length > 0) {
                         uploadGallaryImages(req, newProduct._id, galleryImages);
+                    }
+                    if (variants && variants?.length > 0) {
+
+                        var productVariantData
+                        // await variants.map(async (variant: any, index: number) => {
+                        for (let i = 0; i < variants.length; i++) {
+                            var slugData
+                            console.log("fdsfsdfsdfsd", variants[0].productVariants.variantSku);
+
+                            if (variants[i].productVariants.extraProductTitle) {
+                                slugData = newProduct?.slug + "-" + variants[i].productVariants.extraProductTitle + "-" + variants[i].productVariants.variantSku
+                            }
+                            else {
+                                slugData = newProduct?.slug + "-" + variants[i].productVariants.variantSku
+                            }
+                            if (((variants[i]) && (variants[i].productVariants))) {
+
+
+                                const userData = await res.locals.user;
+
+
+                                productVariantData = await ProductVariantService.create(newProduct._id, {
+                                    slug: slugify(slugData),
+                                    countryId: variants[i].countryId || getCountryId(userData),
+                                    ...variants[i],
+                                })
+
+                                // console.log("------------",productVariantData);
+
+
+                                // const galleryImages = (req as any).files.filter((file: any) => file.fieldname === 'variants[' + i + '][productVariants]galleryImage[');
+                                const galleryImages = (req as any).files.filter((file: any) =>
+                                    file.fieldname &&
+                                    file.fieldname.startsWith('variants[' + i + '][productVariants][galleryImage][')
+                                );
+
+                                console.log("------------", galleryImages)
+                                if (galleryImages?.length > 0) {
+
+                                    uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
+                                }
+
+                                if (((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productVariantAtrributes) && (variants[i].productVariants.productVariantAtrributes.length > 0))) {
+                                    for (let j = 0; j < variants[i].productVariants.productVariantAtrributes.length; j++) {
+
+                                        const attributeData = {
+                                            productId: newProduct._id,
+                                            variantId: productVariantData._id,
+                                            attributeId: variants[i].productVariants.productVariantAtrributes[j].attributeId,
+                                            attributeDetailId: variants[i].productVariants.productVariantAtrributes[j].attributeDetailId
+                                        }
+
+                                        await ProductVariantAttributeService.create(attributeData)
+                                    }
+                                }
+
+                            }
+                            if (((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productSeo))) {
+                                const seoData = {
+                                    pageId: newProduct._id,
+                                    pageReferenceId: productVariantData._id,
+                                    page: seoPage.ecommerce.products,
+                                    ...variants[i].productVariants.productSeo
+                                }
+                                await SeoPageService.create(seoData)
+                            }
+
+                            if ((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productSpecification) && (variants[i].productVariants.productSpecification.length > 0)) {
+                                for (let j = 0; j < variants[i].productVariants.productVariantAtrributes.length; j++) {
+
+                                    const specificationData = {
+                                        productId: newProduct._id,
+                                        variantId: productVariantData._id,
+                                        ...variants[i].productVariants.productSpecification[j]
+                                    }
+
+                                    await ProductSpecificationService.create(specificationData)
+                                }
+                            }
+                        }
+
+                    }
+
+
+
+                    const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[productImage]')
+                    );
+                    const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[languageValues][galleryImage]')
+                    );
+
+
+                    if (languageValues && languageValues?.length > 0) {
+                        await languageValues.map(async (languageValue: any, index: number) => {
+
+                            let productImageUrl = ''
+                            if (languageValuesImages?.length > 0) {
+                                productImageUrl = handleFileUpload(req
+                                    , null, languageValuesImages[index], `productImageUrl`, 'product');
+                            }
+
+                            var galleryImages: any = [];
+                            var productGalleryImages: any = [];
+                            if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
+                                await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
+                                    let variantImageUrl = ''
+                                    const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
+                                        file.fieldname &&
+                                        file.fieldname.startsWith('languageValues[') &&
+                                        file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
+                                    );
+                                    console.log("languageValuesVariantImages:", languageValuesVariantImages);
+
+                                    if (languageValuesVariantImages?.length > 0) {
+                                        await languageValuesVariantImages.map((variantImage: any, index: number) => {
+                                            variantImageUrl = handleFileUpload(req
+                                                , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
+                                            galleryImages.push({ variantImageUrl: variantImageUrl })
+                                        })
+                                        languageValue.languageValues.variants[index].galleryImages = galleryImages
+
+
+                                    }
+                                    if (languageValuesGalleryImages?.length > 0) {
+                                        productImageUrl = handleFileUpload(req
+                                            , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
+                                        productGalleryImages.push({ productImageUrl: productImageUrl })
+
+                                    }
+
+                                    // languageValue.languageValues.variants[index].galleryImages = galleryImages
+                                    languageValue.languageValues.galleryImages = productGalleryImages
+                                })
+
+                                GeneralService.multiLanguageFieledsManage(newProduct._id, {
+                                    ...languageValue,
+                                    source: multiLanguageSources.ecommerce.products,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        productImageUrl
+                                    }
+                                })
+                            }
+                        })
                     }
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: newProduct,
                         message: 'Product created successfully!'
+                    }, 200, {
+                        sourceFromId: newProduct._id,
+                        sourceFrom: adminTaskLog.ecommerce.products,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
@@ -179,28 +381,91 @@ class ProductsController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error && error.errors && error.errors.en_productTitle && error.errors.en_productTitle.properties) {
+
+            if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        en_productTitle: error.errors.en_productTitle.properties.message
+                        productTitle: error.errors.productTitle.properties.message
                     }
                 }, req);
             }
-            if (error && error.errors && error.errors.ar_productTitle && error.errors.ar_productTitle.properties) {
+            if (error && error.errors && error.errors.variantSku && error.errors.variantSku.properties) {
+                await GeneralService.deleteParentModel([
+                    {
+                        _id: newProduct._id,
+                        model: ProductsModel
+                    },
+                    {
+                        pageId: newProduct._id,
+                        model: SeoPageModel
+                    },
+                    {
+                        productId: newProduct._id,
+                        model: ProductSpecificationModel
+                    },
+                    {
+                        sourceId: newProduct._id,
+                        model: MultiLanguageFieledsModel
+                    },
+                    {
+                        productId: newProduct._id,
+                        model: ProductCategoryLinkModel
+                    },
+                ]);
+
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        ar_productTitle: error.errors.ar_productTitle.properties.message
+                        variantSku: error.errors.variantSku.properties.message
                     }
                 }, req);
             }
+            // await generalService.deleteParentModel([
+            //     {
+            //         _id: newProduct._id,
+            //         model: ProductsModel
+            //     },
+            //     {
+            //         productId: newProduct._id,
+            //         model: ProductCategoryLinkModel
+            //     },
+            // ]);
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating product',
             }, req);
         }
     }
 
+    async importProductExcel(req: Request, res: Response): Promise<void> {
+        const fs = require('fs');
+        const xlsx = require('xlsx');
+
+        // Load the Excel file
+        const workbook = xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/${req.file?.filename}`));
+
+        // Assume the first sheet is the one you want to convert
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Convert the worksheet to JSON
+        const jsonData = xlsx.utils.sheet_to_json(worksheet);
+        await jsonData.map(async (data: any, index: number) => {
+            const brandId = await BrandsService.findBrandId(data.Brand)
+            const CategoryNames: any = [];
+
+            for (const columnName in data) {
+                if (columnName.startsWith('Category')) {
+                    CategoryNames.push(columnName);
+                }
+            }
+            await CategoryNames.map(async (category: any) => {
+                const categoryId = await CategoryService.findCategoryId(data[category])
+            })
+
+        })
+
+    }
 
     async findOne(req: Request, res: Response): Promise<void> {
         try {
@@ -209,18 +474,16 @@ class ProductsController extends BaseController {
 
                 const product = await ProductsService.findOne(productId);
                 if (product) {
-                    const imageGallery = await ProductsService.findGalleryImagesByProductId('', productId);
-                    const inventryPricingData = await ProductsService.findInventryPricingByProductId('', productId);
 
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            ...product.toObject(),
-                            inventryDetails: inventryPricingData?.map(inventryPricing => inventryPricing),
-                            imageGallery: imageGallery ? imageGallery.map(image => ({
-                                galleryImageID: image._id,
-                                src: `${process.env.BASE_URL}${process.env.PORT}${image.galleryImageUrl}`,
-                                name: product.en_productTitle,
-                            })) : null
+                            product
+                            // ...product.toObject(),
+                            // category: productCategoryData,
+                            // imageGallery: imageGallery ? imageGallery.map(image => ({
+                            //     galleryImageID: image._id,
+                            //     src: `${process.env.BASE_URL}${process.env.PORT}${image.galleryImageUrl}`,
+                            // })) : null
                         },
                         message: 'Success'
                     });
@@ -242,17 +505,20 @@ class ProductsController extends BaseController {
     async update(req: Request, res: Response): Promise<void> {
         try {
             // console.log('updatedProductData', req.body);
-            const validatedData = productsSchema.safeParse(req.body);
+            const validatedData = productFormSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const inventryDetailsArray = Object.values(validatedData.data?.inventryDetails ?? {});
+                // const inventryDetailsArray = Object.values(validatedData.data?.inventryDetails ?? {});
 
                 const productId = req.params.id;
                 if (productId) {
                     let updatedProductData = req.body;
 
                     const productImage = (req as any).files?.find((file: any) => file.fieldname === 'productImage');
-                    const galleryImages = (req as any).files?.filter((file: any) => file.fieldname === 'galleryImage[]');
+                    const galleryImages = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('galleryImage[')
+                    );
 
                     updatedProductData = {
                         ...updatedProductData,
@@ -260,9 +526,91 @@ class ProductsController extends BaseController {
                         updatedAt: new Date()
                     };
 
+                    var updatedCategory: any
+
                     const updatedProduct = await ProductsService.update(productId, updatedProductData);
                     if (updatedProduct) {
-                        const updatedinventryDetailsData = await ProductsService.inventryDetailsService(productId, inventryDetailsArray);
+
+                        // console.log(validatedData.data);
+                        //product category link update
+                        // if (validatedData.data.productCategory && validatedData.data.productCategory.length > 0) {
+                        const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, validatedData.data.productCategory);
+                        // }
+                        // product variant update
+
+                        // if (validatedData.data.variants && validatedData.data.variants.length > 0) {
+                        const newVariant = await ProductVariantService.variantService(updatedProduct._id, validatedData.data?.variants);
+                        // }
+                        let newLanguageValues: any = []
+
+                        const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[productImage]')
+                        );
+                        const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[galleryImage]')
+                        );
+
+                        if (updatedProductData.languageValues && updatedProductData.languageValues.length > 0) {
+                            for (let i = 0; i < updatedProductData.languageValues.length; i++) {
+
+                                const languageValue = updatedProductData.languageValues[i];
+                                let productImageUrl = '';
+                                if (languageValuesImages?.length > 0) {
+                                    productImageUrl = handleFileUpload(req
+                                        , null, languageValuesImages[i], `productImageUrl`, 'product');
+                                }
+                                var variantGalleryImages: any = [];
+                                var productGalleryImages: any = [];
+
+                                if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
+                                    await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
+                                        let variantImageUrl = ''
+                                        const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
+                                            file.fieldname &&
+                                            file.fieldname.startsWith('languageValues[') &&
+                                            file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
+                                        );
+                                        if (languageValuesVariantImages?.length > 0) {
+                                            await languageValuesVariantImages.map((variantImage: any, index: number) => {
+
+                                                variantImageUrl = handleFileUpload(req
+                                                    , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
+                                                variantGalleryImages.push({ variantImageUrl: variantImageUrl })
+                                            })
+                                            languageValue.languageValues.variants[index].galleryImages = variantGalleryImages
+
+                                        }
+                                        if (languageValuesGalleryImages?.length > 0) {
+                                            productImageUrl = handleFileUpload(req
+                                                , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
+                                            productGalleryImages.push({ productImageUrl: productImageUrl })
+
+                                        }
+
+                                        languageValue.languageValues.galleryImages = productGalleryImages
+                                    })
+                                    const languageValues = await GeneralService.multiLanguageFieledsManage(updatedProduct._id, {
+                                        ...languageValue,
+                                        source: multiLanguageSources.ecommerce.products,
+                                        languageValues: {
+                                            ...languageValue.languageValues,
+                                            productImageUrl
+                                        }
+                                    });
+                                    newLanguageValues.push(languageValues);
+                                }
+
+
+                            }
+
+                        }
+
+
+
 
                         if (updatedProductData?.removedGalleryImages) {
 
@@ -276,9 +624,11 @@ class ProductsController extends BaseController {
                                         imageGallery.push(imageGalleries[0]);
                                     }
                                 }));
+
                                 if (imageGallery.length > 0) {
                                     await Promise.all(imageGallery.map(async (image: any) => {
-                                        deleteFile(path.join(__dirname, `../../../${image.galleryImageUrl}`))
+
+                                        deleteFile(path.resolve(__dirname, `../../../../${image.galleryImageUrl}`))
                                             .then(() => {
                                                 console.log('imageGallery', image.galleryImageUrl);
                                                 ProductsService.destroyGalleryImages(image)
@@ -296,6 +646,11 @@ class ProductsController extends BaseController {
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedProduct,
                             message: 'Product updated successfully!'
+                        }, 200, {
+                            sourceFromId: updatedProduct._id,
+                            sourceFrom: adminTaskLog.ecommerce.products,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         controller.sendErrorResponse(res, 200, {
@@ -325,9 +680,12 @@ class ProductsController extends BaseController {
             const productId = req.params.id;
             if (productId) {
                 const product = await ProductsService.findOne(productId);
-                if (productId) {
-                    await ProductsService.destroy(productId);
-                    controller.sendSuccessResponse(res, { message: 'Product deleted successfully!' });
+                if (product) {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Cant to be delete product!!',
+                    });
+                    // await ProductsService.destroy(productId);
+                    // controller.sendSuccessResponse(res, { message: 'Product deleted successfully!' });
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This product details not found!',
@@ -380,6 +738,118 @@ class ProductsController extends BaseController {
             }, req);
         }
     }
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = productStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                let { status } = req.body;
+
+                const updatedProductData = { status };
+
+                const variantId: any = req.query.variantId;
+                if (variantId) {
+                    const updatedProductVariant = await ProductVariantService.update(variantId, updatedProductData);
+                    if (updatedProductVariant) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedProductVariant,
+                            message: 'Product variant status updated successfully!'
+                        }, 200, {
+                            sourceFromId: updatedProductVariant._id,
+                            sourceFrom: adminTaskLog.ecommerce.productVariants,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
+                        });
+                        // }
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Product variant Id not found!',
+                        }, req);
+                    }
+                } else {
+
+                    const productId = req.params.id;
+                    if (productId) {
+                        const updatedProduct = await ProductsService.update(productId, updatedProductData);
+                        if (updatedProduct) {
+                            const updatedProductVariant = await ProductVariantService.updateVariant(productId, updatedProductData);
+                            // if (updatedProductVariant) {
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: updatedProduct,
+                                message: 'Product status updated successfully!'
+                            }, 200, {
+                                sourceFromId: updatedProduct._id,
+                                sourceFrom: adminTaskLog.ecommerce.products,
+                                activity: adminTaskLogActivity.statusChange,
+                                activityStatus: adminTaskLogStatus.success
+                            });
+                            // }
+                        } else {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Product Id not found!',
+                            }, req);
+                        }
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Product Id not found! Please try again with Product id',
+                        }, req);
+                    }
+                }
+
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating Product'
+            }, req);
+        }
+    }
+    // async statusChangeProductVariant(req: Request, res: Response): Promise<void> {
+    //     try {
+    //         const validatedData = productStatusSchema.safeParse(req.body);
+    //         if (validatedData.success) {
+    //             const productVariantId = req.params.id;
+    //             if (productVariantId) {
+    //                 let { status } = req.body;
+    //                 const updatedProductData = { status };
+
+    //                 const updatedProduct = await ProductVariantService.update(productVariantId, updatedProductData);
+    //                 if (updatedProduct) {
+
+    //                     return controller.sendSuccessResponse(res, {
+    //                         requestedData: updatedProduct,
+    //                         message: 'Product Variant status updated successfully!'
+    //                     },200, {
+    //                         sourceFromId: updatedProduct._id,
+    //                         sourceFrom: adminTaskLog.ecommerce.products,
+    //                         activity: adminTaskLogActivity.statusChange,
+    //                         activityStatus: adminTaskLogStatus.success
+    //                     });
+    //                 } else {
+    //                     return controller.sendErrorResponse(res, 200, {
+    //                         message: 'Product Variant Id not found!',
+    //                     }, req);
+    //                 }
+    //             } else {
+    //                 return controller.sendErrorResponse(res, 200, {
+    //                     message: 'Product Variant Id not found! Please try again with Product Variant id',
+    //                 }, req);
+    //             }
+    //         } else {
+    //             return controller.sendErrorResponse(res, 200, {
+    //                 message: 'Validation error',
+    //                 validation: formatZodError(validatedData.error.errors)
+    //             }, req);
+    //         }
+    //     } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+    //         return controller.sendErrorResponse(res, 500, {
+    //             message: error.message || 'Some error occurred while updating Product'
+    //         }, req);
+    //     }
+    // }
 
     // async uploadGallaryImages(req: Request, productID: string, galleryImages: any[]): Promise<void> {
     //     try {
@@ -403,3 +873,43 @@ class ProductsController extends BaseController {
 }
 
 export default new ProductsController();
+const category = [{
+
+}]
+
+const countryWiseProducts = [
+    { // variant table
+        countryId: '',
+        productVariants: [
+            {
+                extraProductTitle: '',
+                variantId: '',
+                slug: '',
+                sku: '',
+                price: '1',
+                discountPrice: '',
+                quantity: '',
+                isDefualt: true,
+                variantDescription: '',
+                cartMinQuantity: '',
+                cartMaxQuantity: '',
+                productVariantAtrributes: [{//variant details
+                    productId: '',
+                    variantProductId: '_id',
+                    attributeId: '',
+                    attributeDetaileId: '',
+                }],
+                variantImageGallery: [ // image gallery
+
+                ],
+                productSpecification: [{}],
+                productSeo: {
+
+                },
+                status: '1',
+                statusAt: 'createdUser',
+
+            },
+        ]
+    }
+]
