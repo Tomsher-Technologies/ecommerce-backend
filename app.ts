@@ -48,7 +48,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/public", express.static('public'));
 
-
+app.use(function (request, response, next) {
+  response.header("Access-Control-Allow-Origin", "*");
+  response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
