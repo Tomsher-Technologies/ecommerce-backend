@@ -1,28 +1,32 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
-// import excelToJson from 'convert-excel-to-json';
 
-import { deleteFile, formatZodError, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
-import { productStatusSchema, productsSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
+import { deleteFile, formatZodError, getCountryId, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { productStatusSchema, productFormSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { seoPage } from '../../../constants/admin/seo-page';
 
 import BaseController from '../../../controllers/admin/base-controller';
-import ProductsService from '../../../services/admin/ecommerce/product-service'
-import GeneralService from '../../../services/admin/general-service';
-import ProductsModel from '../../../model/admin/ecommerce/product-model';
+
 import collectionsProductsService from '../../../services/admin/website/collections-products-service';
 import ProductVariantService from '../../../services/admin/ecommerce/product/product-variant-service';
 import ProductVariantAttributeService from '../../../services/admin/ecommerce/product/product-variant-attributes-service';
 import ProductCategoryLinkService from '../../../services/admin/ecommerce/product/product-category-link-service';
-import { collections } from '../../../constants/collections';
-import generalService from '../../../services/admin/general-service';
-import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
-import ProductSeoService from '../../../services/admin/ecommerce/product/product-seo-service';
+import ProductsService from '../../../services/admin/ecommerce/product-service'
+import GeneralService from '../../../services/admin/general-service';
 import ProductSpecificationService from '../../../services/admin/ecommerce/product/product-specification-service';
-import { multiLanguageSources } from '../../../constants/multi-languages';
+import BrandsService from '../../../services/admin/ecommerce/brands-service'
+import CategoryService from '../../../services/admin/ecommerce/category-service'
+import SeoPageService from '../../../services/admin/seo-page-service';
+
+import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fieleds-model';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
+import ProductSpecificationModel, { ProductSpecificationProps } from '../../../model/admin/ecommerce/product/product-specification-model';
 
 const controller = new BaseController();
 
@@ -125,13 +129,13 @@ class ProductsController extends BaseController {
 
     async create(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = productsSchema.safeParse(req.body);
+            const validatedData = productFormSchema.safeParse(req.body);
             var newProduct: any
             var newCategory: any
 
             if (validatedData.success) {
-                const { productTitle, slug, brand, unit, weight, hight, length, width, tags, sku, description, longDescription, cartMinQuantity, cartMaxQuantity,
-                    pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, variants, productCategory, languageValues } = validatedData.data;
+                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription,
+                    completeTab, productSpecification, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const productImage = (req as any).files.find((file: any) => file.fieldname === 'productImage');
@@ -142,29 +146,22 @@ class ProductsController extends BaseController {
 
                 const productData: Partial<ProductsProps> = {
                     productTitle,
-                    slug: slug || slugify(productTitle) as any,
+                    slug: slugify(productTitle) as any,
                     brand: brand as any,
                     description,
                     longDescription,
+                    completeTab,
                     productImageUrl: handleFileUpload(req, null, (req.file || productImage), 'productImageUrl', 'product'),
                     unit: unit as string,
-                    weight: weight as string,
-                    hight: hight as string,
-                    length: length as string,
-                    width: width as string,
-                    tags: tags as string,
-                    cartMinQuantity,
-                    cartMaxQuantity,
+                    measurements: measurements as {
+                        weight?: string,
+                        hight?: string,
+                        length?: string,
+                        width?: string
+                    },
                     sku,
+                    isVariant: Boolean(isVariant),
                     pageTitle: pageTitle as string,
-                    metaTitle: metaTitle as string,
-                    metaKeywords: metaKeywords as string,
-                    metaDescription: metaDescription as string,
-                    metaImageUrl: metaImage as string,
-                    ogTitle: ogTitle as string,
-                    ogDescription: ogDescription as string,
-                    twitterTitle: twitterTitle as string,
-                    twitterDescription: twitterDescription as string,
                     status: '1', // active
                     statusAt: new Date(),
                     createdBy: user._id,
@@ -172,8 +169,35 @@ class ProductsController extends BaseController {
 
                 newProduct = await ProductsService.create(productData);
                 if (newProduct) {
+                    const seoData: Partial<SeoPageProps> = {
+                        metaTitle,
+                        metaKeywords,
+                        metaDescription,
+                        ogTitle,
+                        ogDescription,
+                        twitterTitle,
+                        twitterDescription
+                    }
+                    if (seoData.metaTitle || seoData.metaKeywords || seoData.metaDescription || seoData.ogTitle || seoData.ogDescription || seoData.twitterTitle || seoData.twitterDescription) {
+                        const newSeo = await SeoPageService.create({
+                            pageId: newProduct._id,
+                            page: seoPage.ecommerce.products,
+                            ...seoData
+                        })
+                    }
 
-                    if (productCategory.length > 0) {
+                    if (productSpecification && productSpecification.length > 0) {
+                        await productSpecification.map(async (specification: any) => {
+                            const specificationData = {
+                                productId: newProduct._id,
+                                ...specification
+                            }
+                            await ProductSpecificationService.create(specificationData)
+                        })
+
+                    }
+
+                    if (productCategory && productCategory.length > 0) {
                         await productCategory.map(async (item: any, index: number) => {
                             newCategory = await ProductCategoryLinkService.create({
                                 productId: newProduct._id,
@@ -182,7 +206,7 @@ class ProductsController extends BaseController {
 
                         })
                     }
-                    if (galleryImages?.length > 0) {
+                    if (galleryImages && galleryImages?.length > 0) {
                         uploadGallaryImages(req, newProduct._id, galleryImages);
                     }
                     if (variants && variants?.length > 0) {
@@ -191,16 +215,23 @@ class ProductsController extends BaseController {
                         // await variants.map(async (variant: any, index: number) => {
                         for (let i = 0; i < variants.length; i++) {
                             var slugData
+                            console.log("fdsfsdfsdfsd", variants[0].productVariants.variantSku);
+
                             if (variants[i].productVariants.extraProductTitle) {
-                                slugData = newProduct?.slug + "-" + variants[i].productVariants.extraProductTitle + "-" + variants[i].productVariants.sku
+                                slugData = newProduct?.slug + "-" + variants[i].productVariants.extraProductTitle + "-" + variants[i].productVariants.variantSku
                             }
                             else {
-                                slugData = newProduct?.slug + "-" + variants[i].productVariants.sku
+                                slugData = newProduct?.slug + "-" + variants[i].productVariants.variantSku
                             }
-                            if (((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productVariantAtrributes))) {
+                            if (((variants[i]) && (variants[i].productVariants))) {
+
+
+                                const userData = await res.locals.user;
+
 
                                 productVariantData = await ProductVariantService.create(newProduct._id, {
                                     slug: slugify(slugData),
+                                    countryId: variants[i].countryId || getCountryId(userData),
                                     ...variants[i],
                                 })
 
@@ -236,11 +267,12 @@ class ProductsController extends BaseController {
                             }
                             if (((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productSeo))) {
                                 const seoData = {
-                                    productId: newProduct._id,
-                                    variantId: productVariantData._id,
+                                    pageId: newProduct._id,
+                                    pageReferenceId: productVariantData._id,
+                                    page: seoPage.ecommerce.products,
                                     ...variants[i].productVariants.productSeo
                                 }
-                                await ProductSeoService.create(seoData)
+                                await SeoPageService.create(seoData)
                             }
 
                             if ((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productSpecification) && (variants[i].productVariants.productSpecification.length > 0)) {
@@ -359,10 +391,18 @@ class ProductsController extends BaseController {
                 }, req);
             }
             if (error && error.errors && error.errors.variantSku && error.errors.variantSku.properties) {
-                await generalService.deleteParentModel([
+                await GeneralService.deleteParentModel([
                     {
                         _id: newProduct._id,
                         model: ProductsModel
+                    },
+                    {
+                        pageId: newProduct._id,
+                        model: SeoPageModel
+                    },
+                    {
+                        productId: newProduct._id,
+                        model: ProductSpecificationModel
                     },
                     {
                         sourceId: newProduct._id,
@@ -377,7 +417,7 @@ class ProductsController extends BaseController {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        productTitle: error.errors.variantSku.properties.message
+                        variantSku: error.errors.variantSku.properties.message
                     }
                 }, req);
             }
@@ -395,6 +435,36 @@ class ProductsController extends BaseController {
                 message: error.message || 'Some error occurred while creating product',
             }, req);
         }
+    }
+
+    async importProductExcel(req: Request, res: Response): Promise<void> {
+        const fs = require('fs');
+        const xlsx = require('xlsx');
+
+        // Load the Excel file
+        const workbook = xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/${req.file?.filename}`));
+
+        // Assume the first sheet is the one you want to convert
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Convert the worksheet to JSON
+        const jsonData = xlsx.utils.sheet_to_json(worksheet);
+        await jsonData.map(async (data: any, index: number) => {
+            const brandId = await BrandsService.findBrandId(data.Brand)
+            const CategoryNames: any = [];
+
+            for (const columnName in data) {
+                if (columnName.startsWith('Category')) {
+                    CategoryNames.push(columnName);
+                }
+            }
+            await CategoryNames.map(async (category: any) => {
+                const categoryId = await CategoryService.findCategoryId(data[category])
+            })
+
+        })
+
     }
 
     async findOne(req: Request, res: Response): Promise<void> {
@@ -435,7 +505,7 @@ class ProductsController extends BaseController {
     async update(req: Request, res: Response): Promise<void> {
         try {
             // console.log('updatedProductData', req.body);
-            const validatedData = productsSchema.safeParse(req.body);
+            const validatedData = productFormSchema.safeParse(req.body);
 
             if (validatedData.success) {
                 // const inventryDetailsArray = Object.values(validatedData.data?.inventryDetails ?? {});

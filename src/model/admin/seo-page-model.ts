@@ -1,10 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface ProductSeoProps extends Document {
-    productId: Schema.Types.ObjectId;
-    variantId:Schema.Types.ObjectId;
-    description: string;
-    longDescription: string;
+export interface SeoPageProps extends Document {
+    pageId: Schema.Types.ObjectId;
+    pageReferenceId: Schema.Types.ObjectId;
+    page: string;
     metaTitle?: string;
     metaKeywords?: string;
     metaDescription?: string;
@@ -16,26 +15,19 @@ export interface ProductSeoProps extends Document {
     updatedAt?: Date;
 }
 
-const productSeoSchema: Schema<ProductSeoProps> = new Schema({
-    productId: {
+const seoPageSchema: Schema<SeoPageProps> = new Schema({
+    pageId: {
         type: Schema.Types.ObjectId,
         required: [true, 'Product Id is required'],
         ref: 'Products', // Reference to the Product model
     },
-    variantId: {
+    pageReferenceId: {
         type: Schema.Types.ObjectId,
-        required: [true, 'variant Id is required'],
-        ref: 'ProductVariant', 
+        ref: 'ProductVariant',
     },
-    description: {
+    page: {
         type: String,
-        required: true,
-        minlength: [5, 'Description must be at least 5 characters long']
-    },
-    longDescription: {
-        type: String,
-        required: true,
-        minlength: [7, 'Long description must be at least 7 characters long']
+        default: ''
     },
     metaTitle: {
         type: String,
@@ -75,6 +67,6 @@ const productSeoSchema: Schema<ProductSeoProps> = new Schema({
     }
 });
 
-const ProductSeoModel = mongoose.model<ProductSeoProps>('ProductSeos', productSeoSchema);
+const SeoPageModel = mongoose.model<SeoPageProps>('SeoPages', seoPageSchema);
 
-export default ProductSeoModel;
+export default SeoPageModel;

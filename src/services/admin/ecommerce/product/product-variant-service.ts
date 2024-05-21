@@ -2,10 +2,10 @@ import { FilterOptionsProps, pagination } from '../../../../components/paginatio
 
 import ProductVariantModel, { ProductVariantsProps } from '../../../../model/admin/ecommerce/product/product-variants-model';
 import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
-import ProductSeoService from '../../../../services/admin/ecommerce/product/product-seo-service';
+import ProductSeoService from '../../seo-page-service';
 import ProductSpecificationService from '../../../../services/admin/ecommerce/product/product-specification-service';
-import generalService from '../../general-service';
-import ProductSeoModel from '../../../../model/admin/ecommerce/product/product-seo-model';
+import GeneralService from '../../general-service';
+import SeoPagesModel from '../../../../model/admin/seo-page-model';
 import ProductVariantAttributesModel from '../../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductSpecificationModel from '../../../../model/admin/ecommerce/product/product-specification-model';
 
@@ -19,7 +19,7 @@ class ProductVariantService {
             $project: {
                 _id: 1,
                 productId: 1,
-                sku: 1,
+                variantSku: 1,
                 countryId: 1,
                 price: 1,
                 quantity: 1,
@@ -83,13 +83,14 @@ class ProductVariantService {
     }
 
     async create(productId: string, productVariants: any) {
+
+        
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
             countryId: productVariants.countryId,
-            variantSku: productVariants.productVariants.sku,
+            variantSku: productVariants.productVariants.variantSku,
             price: productVariants.productVariants.price,
-            description: productVariants.productVariants.description,
             discountPrice: productVariants.productVariants.discountPrice,
             quantity: productVariants.productVariants.quantity,
             isDefault: productVariants.productVariants.isDefault,
@@ -193,14 +194,14 @@ class ProductVariantService {
                     if(deleteVariant){
                         console.log("test",variantIDsToRemove);
                         
-                        await generalService.deleteParentModel([
+                        await GeneralService.deleteParentModel([
                             {
                                 variantId: variantIDsToRemove,
                                 model: ProductVariantAttributesModel
                             },
                             {
                                 variantId: variantIDsToRemove,
-                                model: ProductSeoModel
+                                model: SeoPagesModel
                             },
                             {
                                 variantId: variantIDsToRemove,
@@ -221,7 +222,7 @@ class ProductVariantService {
                                 await ProductVariantAttributeService.variantAttributeService(productId, { ...data.productVariantAtrributes })
                                 // }
                                 // if (data.productSeo && data.productSeo.length > 0) {
-                                await ProductSeoService.productSeoService(productId, { ...data.productSeo })
+                                await ProductSeoService.seoPageService(productId, { ...data.productSeo })
                                 // }
                                 // if (data.productSpecification && data.productSpecification.length > 0) {
                                 await ProductSpecificationService.productSpecificationService(productId, { ...data.productSpecification })

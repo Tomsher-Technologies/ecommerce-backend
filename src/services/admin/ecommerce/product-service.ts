@@ -7,44 +7,116 @@ import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../m
 import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 class ProductsService {
     private variantLookup: any;
     private categoryLookup: any;
     private imageLookup: any;
+    private brandLookup: any;
+    private seoLookup: any;
 
     private multilanguageFieldsLookup: any;
     private project: any;
-    
+
     constructor() {
 
 
         this.variantLookup = {
             $lookup: {
-                from: 'productvariants',
+                from: `${collections.ecommerce.products.productvariants.productvariants}`,
                 localField: '_id',
                 foreignField: 'productId',
                 as: 'productVariants',
                 pipeline: [
                     {
                         $lookup: {
-                            from: 'productvariantattributes',
+                            from: `${collections.ecommerce.products.productvariants.productvariantattributes}`,
                             localField: '_id',
                             foreignField: 'variantId',
                             as: 'productVariantAttributes',
+                            pipeline: [
+                                {
+                                    $lookup: {
+                                        from: `${collections.ecommerce.attributes}`,
+                                        localField: 'attributeId',
+                                        foreignField: '_id',
+                                        as: 'attributeId',
+
+                                        pipeline: [{
+                                            $project: {
+                                                _id: 1,
+                                                attributeTitle: 1,
+                                                slug: 1,
+                                                attributeType: 1,
+                                                status: 1,
+                                            }
+                                        }]
+                                    },
+                                },
+                                {
+                                    $lookup: {
+                                        from: `${collections.ecommerce.attributedetails}`,
+                                        localField: 'attributeDetailId',
+                                        foreignField: '_id',
+                                        as: 'attributeDetailId',
+
+                                        pipeline: [{
+                                            $project: {
+                                                _id: 1,
+                                                itemName: 1,
+                                                itemValue: 1,
+                                            }
+                                        }]
+                                    },
+                                }
+                            ]
                         },
                     },
                     {
                         $lookup: {
-                            from: 'productspecifications',
+                            from: `${collections.ecommerce.products.productvariants.productspecifications}`,
                             localField: '_id',
                             foreignField: 'variantId',
                             as: 'productSpecification',
+                            pipeline: [
+                                {
+                                    $lookup: {
+                                        from: `${collections.ecommerce.specifications}`,
+                                        localField: 'specificationId',
+                                        foreignField: '_id',
+                                        as: 'specificationId',
+                                        pipeline: [{
+                                            $project: {
+                                                _id: 1,
+                                                specificationId: 1,
+                                                slug: 1,
+                                                status: 1,
+                                            }
+                                        }]
+                                    },
+                                },
+                                {
+                                    $lookup: {
+                                        from: `${collections.ecommerce.specificationdetails}`,
+                                        localField: 'specificationDetailId',
+                                        foreignField: '_id',
+                                        as: 'specificationDetailId',
+                                        pipeline: [{
+                                            $project: {
+                                                _id: 1,
+                                                itemName: 1,
+                                                itemValue: 1,
+                                            }
+                                        }]
+                                    },
+                                }
+                            ]
                         },
                     },
                     {
                         $lookup: {
-                            from: 'productseos',
+                            from: `${collections.ecommerce.seopages}`,
                             localField: '_id',
                             foreignField: 'variantId',
                             as: 'productSeo',
@@ -52,7 +124,7 @@ class ProductsService {
                     },
                     {
                         $lookup: {
-                            from: 'productgallaryimages',
+                            from: `${collections.ecommerce.products.productgallaryimages}`,
                             localField: '_id',
                             foreignField: 'variantId',
                             as: 'variantImageGallery',
@@ -63,20 +135,67 @@ class ProductsService {
         };
         this.categoryLookup = {
             $lookup: {
-                from: 'productcategorylinks',
+                from: `${collections.ecommerce.products.productcategorylinks}`,
                 localField: '_id',
                 foreignField: 'productId',
-                as: 'category',
+                as: 'productCategory',
+                pipeline: [{
+                    $lookup: {
+                        from: `${collections.ecommerce.categories}`,
+                        localField: 'categoryId',
+                        foreignField: '_id',
+                        as: 'categoryId',
+                        pipeline: [{
+                            $project: {
+                                _id: 1,
+                                categoryTitle: 1,
+                                slug: 1,
+                                categoryImageUrl: 1,
+                                status: 1,
+                                categoryId: { $arrayToObject: "$categoryId" }
+                            }
+                        }]
+                    },
+
+                }]
 
             }
         };
+        this.seoLookup = {
+            $lookup: {
+                from: `${collections.ecommerce.seopages}`,
+                localField: '_id',
+                foreignField: 'pageId',
+                as: 'productSeo',
+            },
+        };
+        this.brandLookup = {
+            $lookup: {
+                from: `${collections.ecommerce.brands}`,
+                localField: 'brand',
+                foreignField: '_id',
+                as: 'brand',
+                pipeline: [{
+                    $project: {
+                        _id: 1,
+                        brandTitle: 1,
+                        slug: 1,
+                        brandImageUrl: 1,
+                        status: 1,
+                    }
+                }],
+                // brand: {
+                //     $arrayToObject: "$brand"
+                // }
+
+            },
+        };
         this.imageLookup = {
             $lookup: {
-                from: 'productgallaryimages',
+                from: collections.ecommerce.products.productgallaryimages,
                 localField: '_id',
                 foreignField: 'productID',
                 as: 'imageGallery',
-
             }
         };
         this.multilanguageFieldsLookup = {
@@ -99,15 +218,13 @@ class ProductsService {
             },
         };
 
-        this.project = {
-            newRoot: {
-                $mergeObjects: ["$$ROOT", {
-                    appliedValues: {
-                        $concatArrays: ["$category", "$variants"]
-                    }
-                }]
-            }
-        }
+        // this.project = {
+        //     newRoot: {
+        //         $mergeObjects: ["$$ROOT", {
+
+        //         }]
+        //     }
+        // }
     }
     async findAll(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
@@ -142,21 +259,22 @@ class ProductsService {
         try {
             if (productId) {
                 const objectId = new mongoose.Types.ObjectId(productId);
-                // console.log("objectId:",objectId);
 
                 const pipeline = [
                     { $match: { _id: objectId } },
-                    { $replaceRoot: this.project },
+                    // { $replaceRoot: this.project },
                     // this.multilanguageFieldsLookup,
                     this.categoryLookup,
                     this.variantLookup,
-                    this.imageLookup,
+                    // this.imageLookup,
+                    this.brandLookup,
+                    this.seoLookup
 
                     // this.project
                 ];
 
                 const productDataWithValues = await ProductsModel.aggregate(pipeline);
-// console.log("productDataWithValues:",productDataWithValues);
+                // console.log("productDataWithValues:",productDataWithValues);
 
                 return productDataWithValues[0] || null;
             } else {
@@ -165,8 +283,7 @@ class ProductsService {
         } catch (error) {
             return null;
         }
-        
-        return ProductsModel.findById(productId);
+
     }
 
     async update(productId: string, productData: any): Promise<ProductsProps | null> {

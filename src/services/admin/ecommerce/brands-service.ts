@@ -116,6 +116,9 @@ class BrandsService {
     async destroy(brandId: string): Promise<BrandProps | null> {
         return BrandsModel.findOneAndDelete({ _id: brandId });
     }
+    async findBrandId(brandTitle: string): Promise<BrandProps | null> {
+        return BrandsModel.findOne({ brandTitle: brandTitle });
+    }
 
     async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof BrandProps): Promise<void> {
         try {

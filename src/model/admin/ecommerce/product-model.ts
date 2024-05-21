@@ -28,7 +28,7 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             message: 'Slug must be unique'
         }
     },
-    productImageUrl:{
+    productImageUrl: {
         type: String,
         required: true,
     },
@@ -55,25 +55,24 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         type: String,
         default: ''
     },
-    weight: {
-        type: String,
-    },
-    hight: {
-        type: String,
-    },
-    length: {
-        type: String,
-    },
-    width: {
-        type: String,
-    },
-    cartMinQuantity: {
-        type: Number,
-        default: 1
-    },
-    cartMaxQuantity: {
-        type: Number,
-        default: 30
+
+    measurements: {
+        weight: {
+            type: String,
+            default: ''
+        },
+        hight: {
+            type: String,
+            default: ''
+        },
+        length: {
+            type: String,
+            default: ''
+        },
+        width: {
+            type: String,
+            default: ''
+        },
     },
     tags: {
         type: String,
@@ -99,6 +98,10 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         type: String,
         default: '0'
     },
+    completeTab: {
+        type: Number,
+        default: 0
+    },
     pageTitle: {
         type: String,
         default: ''
@@ -109,38 +112,6 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     statusAt: {
         type: Date,
-    },
-    metaTitle: {
-        type: String,
-        default: ''
-    },
-    metaKeywords: {
-        type: String,
-        default: ''
-    },
-    metaDescription: {
-        type: String,
-        default: ''
-    },
-    metaImageUrl: {
-        type: String,
-        default: ''
-    },
-    ogTitle: {
-        type: String,
-        default: ''
-    },
-    ogDescription: {
-        type: String,
-        default: ''
-    },
-    twitterTitle: {
-        type: String,
-        default: ''
-    },
-    twitterDescription: {
-        type: String,
-        default: ''
     },
     createdBy: {
         type: String,
