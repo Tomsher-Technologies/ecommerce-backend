@@ -85,7 +85,7 @@ class BannerController extends BaseController {
                     bannerImages = await BannerService.setBannerBlocksImages(req, mewBannerImages);
 
                     const bannerData = {
-                        countryId,
+                        countryId: countryId || getCountryId(user),
                         bannerTitle,
                         slug: slug || slugify(bannerTitle),
                         page,

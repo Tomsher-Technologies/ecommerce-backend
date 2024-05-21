@@ -11,7 +11,7 @@ const isNonNegativeInteger = (val: any): boolean => {
 };
 
 export const sliderSchema = zod.object({
-    countryId: zod.string({ required_error: 'Country is required', }).min(2, 'Country is should be 2 chars minimum'),
+    countryId: zod.string().optional(),
     sliderTitle: zod.string({ required_error: 'Slider title is required', }).min(2, 'Slider title is should be 2 chars minimum'),
     slug: zod.any().optional(),
     page: zod.string().refine((val) => val.trim().length > 0, {
