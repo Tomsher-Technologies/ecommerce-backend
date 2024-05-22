@@ -75,7 +75,7 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         },
     },
     deliveryDays:{
-        type: Number
+        type: String
     },
     tags: {
         type: String,
