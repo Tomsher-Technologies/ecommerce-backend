@@ -6,10 +6,10 @@ import CountryModel, { CountryProps } from '../../../model/admin/setup/country-m
 class CountryService {
     async findAll(options: FilterOptionsProps = {}): Promise<CountryProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        let queryBuilder = CountryModel.find(query) 
-        .skip(skip)
-        .limit(limit)
-        .lean();
+        let queryBuilder = CountryModel.find(query)
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
         if (sort) {
             queryBuilder = queryBuilder.sort(sort);
@@ -32,6 +32,11 @@ class CountryService {
 
     async findOne(countryId: string): Promise<CountryProps | null> {
         return CountryModel.findById(countryId);
+    }
+
+    async findOneByCountryCode(countryCode: string): Promise<CountryProps | null> {
+        const result:any =await  CountryModel.findOne({ countryCode: countryCode });
+        return result._id
     }
 
     async update(countryId: string, countryData: any): Promise<CountryProps | null> {
