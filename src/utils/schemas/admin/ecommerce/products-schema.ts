@@ -37,7 +37,7 @@ export const productSchema = zod.object({
     removedGalleryImages: zod.any().optional(),
     completeTab: zod.any().optional(),
     isVariant: zod.string(),
-    deliveryDays: zod.number().optional(),
+    deliveryDays: zod.string().optional(),
     attributes: zod.array(zod.unknown()).optional(),
     productSpecification: zod.array(
         zod.object({
