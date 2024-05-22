@@ -17,7 +17,7 @@ export interface ProductsProps extends Document {
     };
     tags: string;
     sku: string;
-    deliveryDays:number;
+    deliveryDays:string;
     newArrivalPriority: string;
     corporateGiftsPriority: string;
     completeTab: number;
