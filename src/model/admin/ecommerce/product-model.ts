@@ -33,8 +33,8 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         required: true,
     },
     isVariant: {
-        type: Boolean,
-        default: true
+        type: Number,
+        default: 0
     },
     description: {
         type: String,
@@ -73,6 +73,9 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             type: String,
             default: ''
         },
+    },
+    deliveryDays:{
+        type: Number
     },
     tags: {
         type: String,

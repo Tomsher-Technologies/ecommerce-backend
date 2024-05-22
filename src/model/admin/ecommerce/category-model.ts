@@ -8,6 +8,7 @@ export interface CategoryProps extends Document {
     corporateGiftsPriority: string;
     type?: string;
     categoryImageUrl: string;
+    isExcel: Boolean;
     level: string;
     status: string;
     statusAt: Date;
@@ -41,11 +42,21 @@ const categorySchema: Schema<CategoryProps> = new Schema({
     },
     description: {
         type: String,
-        required: true,
+        required: function () {
+            // Require description field if isExcel is not true
+            return !this.isExcel;
+        }
     },
     categoryImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            // Require categoryImageUrl field if isExcel is not true
+            return !this.isExcel;
+        }
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
     },
     level: {
         type: String,
@@ -70,7 +81,9 @@ const categorySchema: Schema<CategoryProps> = new Schema({
     },
     createdBy: {
         type: String,
-        required: true
+        required: function () {
+            return !this.isExcel;
+        }
     },
     createdAt: {
         type: Date,
@@ -83,12 +96,12 @@ const categorySchema: Schema<CategoryProps> = new Schema({
 categorySchema.pre("save", function (next) {
     const now = new Date();
     if (!this.createdAt) {
-      this.createdAt = now;
+        this.createdAt = now;
     }
     this.updatedAt = now;
     next();
-  });
-  
+});
+
 
 const CategoryModel = mongoose.model<CategoryProps>('Category', categorySchema);
 

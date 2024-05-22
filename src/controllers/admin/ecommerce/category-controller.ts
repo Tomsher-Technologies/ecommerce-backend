@@ -187,7 +187,7 @@ class CategoryController extends BaseController {
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
-                    categoryTitle,
+                    categoryTitle: await GeneralService.capitalizeWords(categoryTitle),
                     slug: slugData || slug,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
@@ -306,7 +306,7 @@ class CategoryController extends BaseController {
                         updatedAt: new Date()
                     };
 
-                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData ) {
+                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData) {
 
                         const updatedSlugCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
                         if (updatedSlugCategory) {

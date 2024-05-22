@@ -64,7 +64,7 @@ class CountryController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryTitle, slug, countryCode, currencyCode } = validatedData.data;
+                const { countryTitle, slug, countryCode, currencyCode, isOrigin } = validatedData.data;
                 const user = res.locals.user;
 
                 const countryData: Partial<CountryProps> = {
@@ -73,6 +73,7 @@ class CountryController extends BaseController {
                     countryImageUrl: handleFileUpload(req, null, req.file, 'countryImageUrl', 'country'),
                     countryCode,
                     currencyCode,
+                    isOrigin,
                     status: '1', // active
                     statusAt: new Date(),
                     createdBy: user._id,
@@ -222,7 +223,7 @@ class CountryController extends BaseController {
             }, req);
         }
     }
-    
+
     async destroy(req: Request, res: Response): Promise<void> {
         try {
             const countryId = req.params.id;
@@ -232,7 +233,7 @@ class CountryController extends BaseController {
                     // await CountryService.destroy(countryId);
                     // controller.sendSuccessResponse(res, { message: 'Country deleted successfully!' });
 
-                       controller.sendErrorResponse(res, 200, {
+                    controller.sendErrorResponse(res, 200, {
                         message: 'You cant delete this country!',
                     });
                 } else {

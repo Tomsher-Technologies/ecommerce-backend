@@ -35,25 +35,37 @@ class GeneralService {
         }
     }
 
+    async getVisitorIP() {
+        try {
+            const response = await fetch('https://api64.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            console.error('Error fetching IP address:', error);
+            return null;
+        }
+    }
+
+    async getCountryFromIP(ipAddress: any) {
+        try {
+            const response = await fetch(`https://ipapi.co/${ipAddress}/country/`);
+            const country = await response.text();
+            return country;
+        } catch (error) {
+            console.error('Error fetching country from IP:', error);
+            return null;
+        }
+    }
+
     async taskLog(taskLogs: AdminTaskLogProps) {
         if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
-            var ip
-            Object.keys(networkInterfaces).forEach(interfaceName => {
-                const interfaceDetails = networkInterfaces[interfaceName];
-                interfaceDetails.forEach((interfaceInfo: any) => {
-                    // Check if it's an IPv4 address and not internal
-                    if (interfaceInfo.family === 'IPv4' && !interfaceInfo.internal) {
-                        ip = interfaceInfo.address
-                    }
-                });
-            });
             const taskLogData = {
                 userId: taskLogs.userId,
                 sourceFromId: taskLogs.sourceFromId,
                 sourceFrom: taskLogs.sourceFrom,
                 activity: taskLogs.activity,
                 activityStatus: taskLogs.activityStatus,
-                ipAddress: ip,
+                ipAddress: await this.getVisitorIP(),
                 createdAt: new Date()
             };
 
@@ -63,6 +75,16 @@ class GeneralService {
         } else {
             return false;
         }
+    }
+
+    async capitalizeWords(sentence: any) {
+        let capitalized = sentence.replace(/\b\w/g, (char: any) => {
+            return char.toUpperCase();
+        });
+
+        // Remove trailing whitespace
+        capitalized = capitalized.trim();
+        return capitalized;
     }
 
     async multiLanguageFieledsManage(sourceId: string, languageValues: any) {
