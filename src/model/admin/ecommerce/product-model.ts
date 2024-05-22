@@ -43,7 +43,7 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     longDescription: {
         type: String,
-        required: true,
+        required: false,
         minlength: [7, 'Long description must be at least 7 characters long']
     },
     brand: {
@@ -83,7 +83,7 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     sku: {
         type: String,
-        required: [true, 'SKU is required'],
+        required: false,
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
