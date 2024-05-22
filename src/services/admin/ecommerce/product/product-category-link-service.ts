@@ -159,19 +159,20 @@ class ProductCategoryLinkService {
     async categoryLinkService(productId: string | null, productCategoryDetails: any): Promise<ProductCategoryLinkProps[]> {
         try {
             if (productId) {
-
+                console.log("productCategoryDetails:", productCategoryDetails);
+                const productCategory = productCategoryDetails.split(',')
                 const existingEntries = await ProductCategoryLinkModel.find({ productId: productId });
                 if (existingEntries) {
 
                     const productCategoryIDsToRemove = existingEntries
-                        .filter(entry => !productCategoryDetails?.some((data: any) => data?._id?.toString() === entry._id.toString()))
+                        .filter(entry => !productCategory?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                         .map(entry => entry._id);
                     await ProductCategoryLinkModel.deleteMany({ productId: productId, _id: { $in: productCategoryIDsToRemove } });
                 }
                 // console.log("existingEntry", productCategoryDetails);
                 if (productCategoryDetails) {
 
-                    const categoryLinkPromises = await Promise.all(productCategoryDetails.map(async (data: any) => {
+                    const categoryLinkPromises = await Promise.all(productCategory.map(async (data: any) => {
 
                         const existingEntry = await ProductCategoryLinkModel.findOne({ _id: data._id });
 

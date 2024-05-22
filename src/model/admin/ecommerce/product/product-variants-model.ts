@@ -2,14 +2,14 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ProductVariantsProps extends Document {
     productId: Schema.Types.ObjectId;
-    slug:string;
+    slug: string;
     extraProductTitle: string;
     variantSku: string;
     countryId: Schema.Types.ObjectId;
     price: number;
     quantity: string;
     discountPrice: number;
-    isDefualt: Boolean,
+    isDefault: Boolean,
     hsn: string;
     mpn: string;
     barcode: string;
@@ -55,15 +55,6 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     variantSku: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('ProductVariants').countDocuments({ variantSku: value });
-                return count === 0;
-            },
-            message: 'variant Sku must be unique'
-        },
-        minlength: [3, 'variantSku must be at least 3 characters long']
     },
     price: {
         type: Number,
@@ -76,7 +67,7 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     discountPrice: {
         type: Number,
     },
-    isDefualt: {
+    isDefault: {
         type: Boolean,
         required: true,
         default: true

@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
-import categoryController from '../../../controllers/admin/ecommerce/category-controller';
+import GeneralService from '../../../services/admin/general-service';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { pipeline } from 'stream';
-import { slugify } from '../../../utils/helpers';
+import { handleFileUpload, slugify } from '../../../utils/helpers';
 
 
 class CategoryService {
@@ -241,9 +241,9 @@ class CategoryService {
                 const query = findCategories[i]._id
 
                 const categories: any = await this.update(query, data);
-                const result:any =await this.findSubCategory(categories)
+                const result: any = await this.findSubCategory(categories)
                 categoriesWithSubcategories.push(result);
-            }         
+            }
         }
     }
 
@@ -307,9 +307,67 @@ class CategoryService {
         }
     }
 
-    async findCategoryId(slug: string): Promise<CategoryProps | null> {
-        return CategoryModel.findOne({ slug: slug });
+    async findOneCategory(data: any): Promise<CategoryProps | null> {
+        return CategoryModel.findOne(data);
     }
+
+    // async findCategoryId(categoryTitle: string): Promise<void | null> {
+    //     const slug = slugify(categoryTitle)
+
+    //     const categoryResult: any = await this.findOneCategory({ slug: slug });
+    //     if (categoryResult) {
+    //         return categoryResult
+    //     }
+    //     else {
+    //         const catData = categoryTitle.split('-');
+    //         let slug: any
+    //         for (let data = 0; data < catData.length; data++) {
+    //             if (slug == undefined) {
+    //                 slug = catData[data]
+    //                 const categoryResult: any = await this.findOneCategory({ slug: slug });
+    //                 if (!categoryResult) {
+    //                     const categoryData = {
+    //                         categoryTitle: await GeneralService.capitalizeWords(categoryTitle),
+    //                         slug: slugify(categoryTitle),
+    //                         parentCategory: null,
+    //                         level: '0',
+    //                         isExcel: true
+    //                     }
+    //                     await this.create(categoryData);
+    //                 }
+    //             }
+    //             else {
+    //                 slug = slug + "-" + catData[data]
+    //                 const categoryResult: any = await this.findOneCategory({ slug: slug });
+    //                 if (categoryResult) {
+    //                 }
+    //                 else {
+    //                     var titleData = slug.split('-')
+    //                     const lastItem = titleData[titleData.length - 1];
+
+    //                     titleData.pop();
+
+    //                     const resultString = titleData.join('-');
+    //                     const result: any = await this.findOneCategory({ slug: resultString });
+
+    //                     const categoryData = {
+    //                         categoryTitle: await GeneralService.capitalizeWords(lastItem),
+    //                         slug: slugify(slug),
+    //                         parentCategory: result._id,
+    //                         level: titleData.length.toString(),
+    //                         isExcel: true
+    //                     }
+    //                     await this.create(categoryData);
+    //                 }
+    //             }
+    //             const categoryResult: any = await this.findOneCategory({ slug: slugify(categoryTitle) })
+    //             if (categoryResult) {
+    //                 return categoryResult
+    //             }
+    //         }
+    //     }
+
+    // }
 
 
 
@@ -317,6 +375,52 @@ class CategoryService {
     //     return CategoryModel.findById(categoryId);
 
     // }
+
+    async findCategoryId(categoryTitle: string): Promise<void | any> {
+        const slug = slugify(categoryTitle);
+
+        let categoryResult = await this.findOneCategory({ slug: slug });
+        if (categoryResult) {
+            
+            return categoryResult;
+        }
+        else {
+            const catData = categoryTitle.split('-');
+            let currentSlug = '';
+            for (const data of catData) {
+                if (currentSlug !== '') {
+                    currentSlug += '-';
+                }
+                currentSlug += data;
+
+                categoryResult = await this.findOneCategory({ slug: currentSlug });
+                // console.log("categoryResult::",categoryResult);
+
+                if (categoryResult == null) {
+                    const titleData = currentSlug.split('-');
+                    const lastItem = titleData[titleData.length - 1];
+                    titleData.pop();
+                    const parentSlug = titleData.join('-');
+
+                    const parentCategory = await this.findOneCategory({ slug: parentSlug });
+
+                    const categoryData = {
+                        categoryTitle: await GeneralService.capitalizeWords(lastItem),
+                        slug: slugify(currentSlug),
+                        parentCategory: parentCategory ? parentCategory._id : null,
+                        level: parentCategory ? titleData.length.toString() : '0',
+                        isExcel: true
+                    };
+
+                    await this.create(categoryData);
+                }
+            }
+            const result: any = await this.findOneCategory({ slug: slugify(categoryTitle) })
+            if (result) {
+                return result
+            }
+        }
+    }
 
     async findParentCategory(parentCategory: string): Promise<CategoryProps | null> {
         return CategoryModel.findOne({ _id: parentCategory });

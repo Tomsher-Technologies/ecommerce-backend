@@ -3,7 +3,7 @@ import { Document, Schema } from "mongoose";
 export interface ProductsProps extends Document {
     productTitle: string;
     slug: string;
-    isVariant: Boolean;
+    isVariant: number;
     description: string;
     productImageUrl: string;
     longDescription: string;
@@ -17,6 +17,7 @@ export interface ProductsProps extends Document {
     };
     tags: string;
     sku: string;
+    deliveryDays:number;
     newArrivalPriority: string;
     corporateGiftsPriority: string;
     completeTab: number;
@@ -40,4 +41,21 @@ export interface ProductsQueryParams {
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;
+}
+
+export interface ProductVariantsProps {
+    variantSku:string;
+    price:string;
+    discountPrice:string;
+    quantity:string;
+    isDefault :string;
+    variantDescription :string;
+    cartMinQuantity :string;
+    cartMaxQuantity :string;
+}
+export interface ProductVariantServiceCreateProps {
+    productId:string;
+    slug:string;
+    countryId:string;
+    productVariants:ProductVariantsProps;
 }

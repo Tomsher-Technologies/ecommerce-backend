@@ -1,13 +1,19 @@
 import { FilterOptionsProps, pagination } from '../../../../components/pagination';
 
+import { ProductVariantServiceCreateProps } from '../../../../utils/types/products';
+import { UserDataProps } from '../../../../utils/types/common';
+import { getCountryId, } from '../../../../utils/helpers';
+
 import ProductVariantModel, { ProductVariantsProps } from '../../../../model/admin/ecommerce/product/product-variants-model';
-import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
-import ProductSeoService from '../../seo-page-service';
+import ProductSpecificationModel from '../../../../model/admin/ecommerce/product/product-specification-model';
 import ProductSpecificationService from '../../../../services/admin/ecommerce/product/product-specification-service';
-import GeneralService from '../../general-service';
 import SeoPagesModel from '../../../../model/admin/seo-page-model';
 import ProductVariantAttributesModel from '../../../../model/admin/ecommerce/product/product-variant-attribute-model';
-import ProductSpecificationModel from '../../../../model/admin/ecommerce/product/product-specification-model';
+import AttributesModel from '../../../../model/admin/ecommerce/attribute-model';
+
+import GeneralService from '../../general-service';
+import ProductSeoService from '../../seo-page-service';
+import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
 
 class ProductVariantService {
 
@@ -82,21 +88,39 @@ class ProductVariantService {
         }
     }
 
-    async create(productId: string, productVariants: any) {
+    async checkDuplication(data: any) {
+        const condition1 = { variantSku: data.productVariants.variantSku };
+        const condition2 = { countryId: data.countryId };
 
-        
+        const query = {
+            $and: [
+                condition1,
+                condition2,
+            ]
+        };
+        const variantData = await ProductVariantModel.findOne(query)
+        if (variantData) {
+            return variantData
+        } else {
+            return null;
+        }
+    }
+
+    async create(productId: string, productVariants: ProductVariantsProps, userData: UserDataProps) {
+console.log("productVariants",productVariants);
+
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
-            countryId: productVariants.countryId,
-            variantSku: productVariants.productVariants.variantSku,
-            price: productVariants.productVariants.price,
-            discountPrice: productVariants.productVariants.discountPrice,
-            quantity: productVariants.productVariants.quantity,
-            isDefault: productVariants.productVariants.isDefault,
-            variantDescription: productVariants.productVariants.variantDescription,
-            cartMinQuantity: productVariants.productVariants.cartMinQuantity,
-            cartMaxQuantity: productVariants.productVariants.cartMaxQuantity,
+            countryId: productVariants.countryId || getCountryId(userData),
+            variantSku: productVariants.variantSku,
+            price: productVariants.price,
+            discountPrice: productVariants.discountPrice,
+            quantity: productVariants.quantity,
+            isDefault: productVariants.isDefault,
+            variantDescription: productVariants.variantDescription,
+            cartMinQuantity: productVariants.cartMinQuantity,
+            cartMaxQuantity: productVariants.cartMaxQuantity,
 
         }
 
@@ -181,6 +205,8 @@ class ProductVariantService {
 
     async variantService(productId: string | null, variantDetails: any): Promise<ProductVariantsProps[]> {
         try {
+            console.log("variantDetails",variantDetails);
+            
             if (productId) {
                 const existingEntries = await ProductVariantModel.find({ productId: productId });
                 if (existingEntries) {
@@ -189,11 +215,11 @@ class ProductVariantService {
                         .map(entry => entry._id);
 
                     const deleteVariant = await ProductVariantModel.deleteMany({ productId: productId, _id: { $in: variantIDsToRemove } });
-                    console.log("**************",deleteVariant);
-                    
-                    if(deleteVariant){
-                        console.log("test",variantIDsToRemove);
-                        
+                    console.log("**************", deleteVariant);
+
+                    if (deleteVariant) {
+                        console.log("test", variantIDsToRemove);
+
                         await GeneralService.deleteParentModel([
                             {
                                 variantId: variantIDsToRemove,
@@ -208,7 +234,7 @@ class ProductVariantService {
                                 model: ProductSpecificationModel
                             },
                         ]);
-        
+
                     }
                 }
                 if (variantDetails) {

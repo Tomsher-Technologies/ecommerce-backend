@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import path from 'path';
 
 import { deleteFile, formatZodError, getCountryId, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
-import { productStatusSchema, productFormSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
+import { productStatusSchema, productSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { multiLanguageSources } from '../../../constants/multi-languages';
@@ -27,6 +27,7 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fieleds-model';
 import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
 import ProductSpecificationModel, { ProductSpecificationProps } from '../../../model/admin/ecommerce/product/product-specification-model';
+import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 
 const controller = new BaseController();
 
@@ -129,13 +130,14 @@ class ProductsController extends BaseController {
 
     async create(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = productFormSchema.safeParse(req.body);
+            const validatedData = productSchema.safeParse(req.body);
             var newProduct: any
             var newCategory: any
+            const userData = await res.locals.user;
 
             if (validatedData.success) {
                 const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription,
-                    completeTab, productSpecification, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, variants, productCategory, languageValues } = validatedData.data;
+                    completeTab, productSpecification, pageTitle, deliveryDays, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const productImage = (req as any).files.find((file: any) => file.fieldname === 'productImage');
@@ -160,8 +162,9 @@ class ProductsController extends BaseController {
                         width?: string
                     },
                     sku,
-                    isVariant: Boolean(isVariant),
+                    isVariant: Number(isVariant),
                     pageTitle: pageTitle as string,
+                    deliveryDays,
                     status: '1', // active
                     statusAt: new Date(),
                     createdBy: user._id,
@@ -196,9 +199,9 @@ class ProductsController extends BaseController {
                         })
 
                     }
-
-                    if (productCategory && productCategory.length > 0) {
-                        await productCategory.map(async (item: any, index: number) => {
+                    const category = productCategory.split(',');
+                    if (category && category.length > 0) {
+                        await category.map(async (item: any, index: number) => {
                             newCategory = await ProductCategoryLinkService.create({
                                 productId: newProduct._id,
                                 categoryId: item.categoryId
@@ -209,84 +212,106 @@ class ProductsController extends BaseController {
                     if (galleryImages && galleryImages?.length > 0) {
                         uploadGallaryImages(req, newProduct._id, galleryImages);
                     }
-                    if (variants && variants?.length > 0) {
+                    if (variants && (variants as any).length > 0) {
 
                         var productVariantData
                         // await variants.map(async (variant: any, index: number) => {
-                        for (let i = 0; i < variants.length; i++) {
+                        for (let variantsIndex = 0; variantsIndex < variants.length; variantsIndex++) {
                             var slugData
-                            console.log("fdsfsdfsdfsd", variants[0].productVariants.variantSku);
-
-                            if (variants[i].productVariants.extraProductTitle) {
-                                slugData = newProduct?.slug + "-" + variants[i].productVariants.extraProductTitle + "-" + variants[i].productVariants.variantSku
-                            }
-                            else {
-                                slugData = newProduct?.slug + "-" + variants[i].productVariants.variantSku
-                            }
-                            if (((variants[i]) && (variants[i].productVariants))) {
-
-
-                                const userData = await res.locals.user;
+                            if (variants[variantsIndex].productVariants && variants[variantsIndex].productVariants.length) {
+                                for (let productVariantsIndex = 0; productVariantsIndex < variants[variantsIndex].productVariants.length; productVariantsIndex++) {
+                                    if (variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle) {
+                                        slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
+                                    }
+                                    else {
+                                        slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
+                                    }
+                                    if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
 
 
-                                productVariantData = await ProductVariantService.create(newProduct._id, {
-                                    slug: slugify(slugData),
-                                    countryId: variants[i].countryId || getCountryId(userData),
-                                    ...variants[i],
-                                })
+                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex])
 
-                                // console.log("------------",productVariantData);
-
-
-                                // const galleryImages = (req as any).files.filter((file: any) => file.fieldname === 'variants[' + i + '][productVariants]galleryImage[');
-                                const galleryImages = (req as any).files.filter((file: any) =>
-                                    file.fieldname &&
-                                    file.fieldname.startsWith('variants[' + i + '][productVariants][galleryImage][')
-                                );
-
-                                console.log("------------", galleryImages)
-                                if (galleryImages?.length > 0) {
-
-                                    uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
-                                }
-
-                                if (((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productVariantAtrributes) && (variants[i].productVariants.productVariantAtrributes.length > 0))) {
-                                    for (let j = 0; j < variants[i].productVariants.productVariantAtrributes.length; j++) {
-
-                                        const attributeData = {
-                                            productId: newProduct._id,
-                                            variantId: productVariantData._id,
-                                            attributeId: variants[i].productVariants.productVariantAtrributes[j].attributeId,
-                                            attributeDetailId: variants[i].productVariants.productVariantAtrributes[j].attributeDetailId
+                                        if (checkDuplication) {
+                                            await GeneralService.deleteParentModel([
+                                                {
+                                                    _id: newProduct._id,
+                                                    model: ProductsModel
+                                                },
+                                                {
+                                                    pageId: newProduct._id,
+                                                    model: SeoPageModel
+                                                },
+                                                {
+                                                    productId: newProduct._id,
+                                                    model: ProductSpecificationModel
+                                                },
+                                                {
+                                                    productId: newProduct._id,
+                                                    model: ProductCategoryLinkModel
+                                                },
+                                            ])
+                                            return controller.sendErrorResponse(res, 200, {
+                                                message: 'Validation error',
+                                                validation: 'The variant has already been added in this country'
+                                            }, req);
                                         }
 
-                                        await ProductVariantAttributeService.create(attributeData)
+                                        productVariantData = await ProductVariantService.create(newProduct._id, {
+                                            slug: slugify(slugData),
+                                            countryId:variants[variantsIndex].countryId,
+                                            ...variants[variantsIndex].productVariants[productVariantsIndex],
+                                        } as any, userData)
+
+                                        const galleryImages = (req as any).files.filter((file: any) =>
+                                            file.fieldname &&
+                                            file.fieldname.startsWith('variants[' + variantsIndex + '][productVariants][' + productVariantsIndex + '][galleryImage][')
+                                        );
+
+                                        if (galleryImages?.length > 0) {
+
+                                            uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
+                                        }
+
+                                        if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAtrributes?.length > 0))) {
+                                            for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
+                                                const attributeData = {
+                                                    productId: newProduct._id,
+                                                    variantId: productVariantData._id,
+                                                    attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeId,
+                                                    attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeDetailId
+                                                }
+
+                                                await ProductVariantAttributeService.create(attributeData)
+                                            }
+                                        }
+
+                                    }
+                                    if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSeo))) {
+                                        const seoData = {
+                                            pageId: newProduct._id,
+                                            pageReferenceId: productVariantData._id,
+                                            page: seoPage.ecommerce.products,
+                                            ...variants[variantsIndex].productVariants[productVariantsIndex].productSeo
+                                        }
+                                        await SeoPageService.create(seoData)
+                                    }
+
+                                    if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
+                                        for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
+
+                                            const specificationData = {
+                                                productId: newProduct._id,
+                                                variantId: productVariantData._id,
+                                                ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
+                                            }
+
+                                            await ProductSpecificationService.create(specificationData)
+                                        }
                                     }
                                 }
 
                             }
-                            if (((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productSeo))) {
-                                const seoData = {
-                                    pageId: newProduct._id,
-                                    pageReferenceId: productVariantData._id,
-                                    page: seoPage.ecommerce.products,
-                                    ...variants[i].productVariants.productSeo
-                                }
-                                await SeoPageService.create(seoData)
-                            }
 
-                            if ((variants[i]) && (variants[i].productVariants) && (variants[i].productVariants.productSpecification) && (variants[i].productVariants.productSpecification.length > 0)) {
-                                for (let j = 0; j < variants[i].productVariants.productVariantAtrributes.length; j++) {
-
-                                    const specificationData = {
-                                        productId: newProduct._id,
-                                        variantId: productVariantData._id,
-                                        ...variants[i].productVariants.productSpecification[j]
-                                    }
-
-                                    await ProductSpecificationService.create(specificationData)
-                                }
-                            }
                         }
 
                     }
@@ -381,6 +406,33 @@ class ProductsController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
+            console.log("error:", error);
+            await GeneralService.deleteParentModel([
+                {
+                    _id: newProduct._id,
+                    model: ProductsModel
+                },
+                {
+                    productId: newProduct._id,
+                    model: ProductVariantsModel
+                },
+                {
+                    pageId: newProduct._id,
+                    model: SeoPageModel
+                },
+                {
+                    productId: newProduct._id,
+                    model: ProductSpecificationModel
+                },
+                {
+                    sourceId: newProduct._id,
+                    model: MultiLanguageFieledsModel
+                },
+                {
+                    productId: newProduct._id,
+                    model: ProductCategoryLinkModel
+                },
+            ]);
 
             if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
@@ -390,7 +442,7 @@ class ProductsController extends BaseController {
                     }
                 }, req);
             }
-            if (error && error.errors && error.errors.variantSku && error.errors.variantSku.properties) {
+            if (error && error.errors && error.errors.slug && error.errors.slug.properties) {
                 await GeneralService.deleteParentModel([
                     {
                         _id: newProduct._id,
@@ -417,7 +469,7 @@ class ProductsController extends BaseController {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        variantSku: error.errors.variantSku.properties.message
+                        variantSku: error.errors.slug.properties.message
                     }
                 }, req);
             }
@@ -438,7 +490,6 @@ class ProductsController extends BaseController {
     }
 
     async importProductExcel(req: Request, res: Response): Promise<void> {
-        const fs = require('fs');
         const xlsx = require('xlsx');
 
         // Load the Excel file
@@ -452,15 +503,26 @@ class ProductsController extends BaseController {
         const jsonData = xlsx.utils.sheet_to_json(worksheet);
         await jsonData.map(async (data: any, index: number) => {
             const brandId = await BrandsService.findBrandId(data.Brand)
+            console.log("brandId:", brandId);
+
             const CategoryNames: any = [];
 
-            for (const columnName in data) {
-                if (columnName.startsWith('Category')) {
-                    CategoryNames.push(columnName);
-                }
-            }
-            await CategoryNames.map(async (category: any) => {
-                const categoryId = await CategoryService.findCategoryId(data[category])
+            // for (const columnName in data) {
+            //     if (columnName.startsWith('Category')) {
+            //         CategoryNames.push(columnName);
+            //     }
+            // }
+
+
+
+
+            const categoryData = data.Category.split(',');
+            // console.log("categoryData:", categoryData);
+            await categoryData.map(async (category: any) => {
+                // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
+
+                const categoryId = await CategoryService.findCategoryId(category)
+                console.log("categoryId:", categoryId);
             })
 
         })
@@ -504,12 +566,9 @@ class ProductsController extends BaseController {
 
     async update(req: Request, res: Response): Promise<void> {
         try {
-            // console.log('updatedProductData', req.body);
-            const validatedData = productFormSchema.safeParse(req.body);
+            const validatedData = productSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                // const inventryDetailsArray = Object.values(validatedData.data?.inventryDetails ?? {});
-
                 const productId = req.params.id;
                 if (productId) {
                     let updatedProductData = req.body;
@@ -531,16 +590,8 @@ class ProductsController extends BaseController {
                     const updatedProduct = await ProductsService.update(productId, updatedProductData);
                     if (updatedProduct) {
 
-                        // console.log(validatedData.data);
-                        //product category link update
-                        // if (validatedData.data.productCategory && validatedData.data.productCategory.length > 0) {
                         const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, validatedData.data.productCategory);
-                        // }
-                        // product variant update
-
-                        // if (validatedData.data.variants && validatedData.data.variants.length > 0) {
                         const newVariant = await ProductVariantService.variantService(updatedProduct._id, validatedData.data?.variants);
-                        // }
                         let newLanguageValues: any = []
 
                         const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
@@ -603,14 +654,8 @@ class ProductsController extends BaseController {
                                     });
                                     newLanguageValues.push(languageValues);
                                 }
-
-
                             }
-
                         }
-
-
-
 
                         if (updatedProductData?.removedGalleryImages) {
 

@@ -38,6 +38,7 @@ import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes'
 
 // frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes'
+import HomeRoutes from './routes/frontend/home-routes';
 
 
 const app = express();
@@ -68,9 +69,12 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
-mongoose.connect(process.env.MONGODB_URI as any).then((x) => {
+mongoose
+.connect(process.env.MONGODB_URI as any)
+.then((x) => {
    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
- }).catch((err) => {
+ })
+ .catch((err) => {
    console.error('Could not connect to the database', err)
  });
 
@@ -120,12 +124,10 @@ adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 // adminRouter.use(errorMiddleware);
 
 frontendRouter.use('/auth', GuestRoutes);
+frontendRouter.use('/home', HomeRoutes);
 
 
 app.use('/admin', adminRouter);
 app.use('/api', frontendRouter);
 
-
-
-
-
+//fontend routes

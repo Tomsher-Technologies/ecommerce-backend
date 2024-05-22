@@ -3,6 +3,7 @@ import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
+import { slugify } from '../../../utils/helpers';
 
 
 class BrandsService {
@@ -78,9 +79,9 @@ class BrandsService {
 
     async findOne(brandId: string): Promise<BrandProps | null> {
         if (brandId) {
-            const objectId = new mongoose.Types.ObjectId(brandId); 
+            const objectId = new mongoose.Types.ObjectId(brandId);
             const pipeline = [
-                { $match: { _id: objectId} },
+                { $match: { _id: objectId } },
                 this.lookup,
             ];
 
@@ -116,9 +117,29 @@ class BrandsService {
     async destroy(brandId: string): Promise<BrandProps | null> {
         return BrandsModel.findOneAndDelete({ _id: brandId });
     }
-    async findBrandId(brandTitle: string): Promise<BrandProps | null> {
-        return BrandsModel.findOne({ brandTitle: brandTitle });
+    async findBrand(data: any): Promise<BrandProps | null> {
+        return BrandsModel.findOne(data);
     }
+    async findBrandId(brandTitle: string): Promise<void | null> {
+
+
+        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle });
+        if (resultBrand) {
+            return resultBrand
+        } else {
+            const brandData = {
+                brandTitle: brandTitle,
+                slug: slugify(brandTitle),
+                isExcel: true
+            }
+
+            const brandResult: any = await this.create(brandData)
+            if (brandResult) {
+                return brandResult
+            }
+        }
+    }
+
 
     async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof BrandProps): Promise<void> {
         try {

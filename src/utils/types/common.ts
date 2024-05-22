@@ -7,3 +7,12 @@ export interface QueryParams {
     keyword?: string;
 }
 
+export interface UserDataProps {
+    _id: string;
+    userTypeID: string;
+    countryId: string;
+    firstName: string;
+    phone: string;
+    status: string;
+}
+

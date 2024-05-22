@@ -65,7 +65,6 @@ class SliderService {
             { $sort: finalSort },
 
             this.lookup,
-
             this.project
         ];
 
@@ -101,7 +100,7 @@ class SliderService {
 
     async findOne(sliderId: string): Promise<SliderProps | null> {
         if (sliderId) {
-            const objectId = new mongoose.Types.ObjectId(sliderId); 
+            const objectId = new mongoose.Types.ObjectId(sliderId);
             const pipeline = [
                 { $match: { _id: objectId } },
                 this.lookup,
@@ -144,4 +143,3 @@ class SliderService {
 }
 
 export default new SliderService();
-  

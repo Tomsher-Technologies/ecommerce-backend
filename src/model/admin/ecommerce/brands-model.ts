@@ -8,6 +8,7 @@ export interface BrandProps extends Document {
     corporateGiftsPriority: string;
     status: string;
     statusAt?: Date;
+    isExcel: Boolean;
     metaTitle?: string;
     metaDescription?: string;
     metaImageUrl?: string;
@@ -34,12 +35,19 @@ const brandSchema: Schema<BrandProps> = new Schema({
     },
     description: {
         type: String,
-        required: true,
-        minlength: 5
+        required: function () {
+            return !this.isExcel;
+        }
     },
     brandImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
     },
     corporateGiftsPriority: {
         type: String,
@@ -47,7 +55,8 @@ const brandSchema: Schema<BrandProps> = new Schema({
     },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     statusAt: {
         type: Date,
@@ -83,7 +92,10 @@ const brandSchema: Schema<BrandProps> = new Schema({
     },
     createdBy: {
         type: String,
-        required: true
+        required: function () {
+            return !this.isExcel;
+        }
+
     },
     createdAt: {
         type: Date,

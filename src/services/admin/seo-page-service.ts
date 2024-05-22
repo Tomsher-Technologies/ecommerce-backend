@@ -110,8 +110,6 @@ class SeoPageService {
 
                     if (isEmptyValue) {
 
-                        console.log("dfgdfg", seoPage);
-
                         const seoPageData = {
 
                             pageId: seoPage.pageId,
