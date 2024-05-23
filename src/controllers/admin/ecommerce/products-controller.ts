@@ -204,7 +204,7 @@ class ProductsController extends BaseController {
                         await category.map(async (item: any, index: number) => {
                             newCategory = await ProductCategoryLinkService.create({
                                 productId: newProduct._id,
-                                categoryId: item.categoryId
+                                categoryId: item
                             })
 
                         })
@@ -229,8 +229,7 @@ class ProductsController extends BaseController {
                                     if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
 
 
-                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex])
-
+                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex])
                                         if (checkDuplication) {
                                             await GeneralService.deleteParentModel([
                                                 {
@@ -255,57 +254,58 @@ class ProductsController extends BaseController {
                                                 validation: 'The variant has already been added in this country'
                                             }, req);
                                         }
+                                        else {
+                                            productVariantData = await ProductVariantService.create(newProduct._id, {
+                                                slug: slugify(slugData),
+                                                countryId: variants[variantsIndex].countryId,
+                                                ...variants[variantsIndex].productVariants[productVariantsIndex],
+                                            } as any, userData)
 
-                                        productVariantData = await ProductVariantService.create(newProduct._id, {
-                                            slug: slugify(slugData),
-                                            countryId:variants[variantsIndex].countryId,
-                                            ...variants[variantsIndex].productVariants[productVariantsIndex],
-                                        } as any, userData)
+                                            const galleryImages = (req as any).files.filter((file: any) =>
+                                                file.fieldname &&
+                                                file.fieldname.startsWith('variants[' + variantsIndex + '][productVariants][' + productVariantsIndex + '][galleryImage][')
+                                            );
 
-                                        const galleryImages = (req as any).files.filter((file: any) =>
-                                            file.fieldname &&
-                                            file.fieldname.startsWith('variants[' + variantsIndex + '][productVariants][' + productVariantsIndex + '][galleryImage][')
-                                        );
+                                            if (galleryImages?.length > 0) {
 
-                                        if (galleryImages?.length > 0) {
+                                                uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
+                                            }
 
-                                            uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
+                                            if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAtrributes?.length > 0))) {
+                                                for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
+                                                    const attributeData = {
+                                                        productId: newProduct._id,
+                                                        variantId: productVariantData._id,
+                                                        attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeId,
+                                                        attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeDetailId
+                                                    }
+
+                                                    await ProductVariantAttributeService.create(attributeData)
+                                                }
+                                            }
+
+                                        }
+                                        if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSeo))) {
+                                            const seoData = {
+                                                pageId: newProduct._id,
+                                                pageReferenceId: productVariantData._id,
+                                                page: seoPage.ecommerce.products,
+                                                ...variants[variantsIndex].productVariants[productVariantsIndex].productSeo
+                                            }
+                                            await SeoPageService.create(seoData)
                                         }
 
-                                        if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAtrributes?.length > 0))) {
+                                        if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
                                             for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
-                                                const attributeData = {
+
+                                                const specificationData = {
                                                     productId: newProduct._id,
                                                     variantId: productVariantData._id,
-                                                    attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeId,
-                                                    attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeDetailId
+                                                    ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
                                                 }
 
-                                                await ProductVariantAttributeService.create(attributeData)
+                                                await ProductSpecificationService.create(specificationData)
                                             }
-                                        }
-
-                                    }
-                                    if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSeo))) {
-                                        const seoData = {
-                                            pageId: newProduct._id,
-                                            pageReferenceId: productVariantData._id,
-                                            page: seoPage.ecommerce.products,
-                                            ...variants[variantsIndex].productVariants[productVariantsIndex].productSeo
-                                        }
-                                        await SeoPageService.create(seoData)
-                                    }
-
-                                    if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
-                                        for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
-
-                                            const specificationData = {
-                                                productId: newProduct._id,
-                                                variantId: productVariantData._id,
-                                                ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
-                                            }
-
-                                            await ProductSpecificationService.create(specificationData)
                                         }
                                     }
                                 }
@@ -318,66 +318,65 @@ class ProductsController extends BaseController {
 
 
 
-                    const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        file.fieldname &&
-                        file.fieldname.startsWith('languageValues[') &&
-                        file.fieldname.includes('[productImage]')
-                    );
-                    const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        file.fieldname &&
-                        file.fieldname.startsWith('languageValues[') &&
-                        file.fieldname.includes('[languageValues][galleryImage]')
-                    );
+                    // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
+                    //     file.fieldname &&
+                    //     file.fieldname.startsWith('languageValues[') &&
+                    //     file.fieldname.includes('[productImage]')
+                    // );
+                    // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
+                    //     file.fieldname &&
+                    //     file.fieldname.startsWith('languageValues[') &&
+                    //     file.fieldname.includes('[languageValues][galleryImage]')
+                    // );
 
 
                     if (languageValues && languageValues?.length > 0) {
                         await languageValues.map(async (languageValue: any, index: number) => {
 
-                            let productImageUrl = ''
-                            if (languageValuesImages?.length > 0) {
-                                productImageUrl = handleFileUpload(req
-                                    , null, languageValuesImages[index], `productImageUrl`, 'product');
-                            }
+                            // let productImageUrl = ''
+                            // if (languageValuesImages?.length > 0) {
+                            //     productImageUrl = handleFileUpload(req
+                            //         , null, languageValuesImages[index], `productImageUrl`, 'product');
+                            // }
 
-                            var galleryImages: any = [];
-                            var productGalleryImages: any = [];
+                            // var galleryImages: any = [];
+                            // var productGalleryImages: any = [];
                             if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
-                                await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
-                                    let variantImageUrl = ''
-                                    const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
-                                        file.fieldname &&
-                                        file.fieldname.startsWith('languageValues[') &&
-                                        file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
-                                    );
-                                    console.log("languageValuesVariantImages:", languageValuesVariantImages);
+                                // await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
+                                //     let variantImageUrl = ''
+                                // const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
+                                //     file.fieldname &&
+                                //     file.fieldname.startsWith('languageValues[') &&
+                                //     file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
+                                // );
+                                // console.log("languageValuesVariantImages:", languageValuesVariantImages);
 
-                                    if (languageValuesVariantImages?.length > 0) {
-                                        await languageValuesVariantImages.map((variantImage: any, index: number) => {
-                                            variantImageUrl = handleFileUpload(req
-                                                , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
-                                            galleryImages.push({ variantImageUrl: variantImageUrl })
-                                        })
-                                        languageValue.languageValues.variants[index].galleryImages = galleryImages
+                                // if (languageValuesVariantImages?.length > 0) {
+                                //     await languageValuesVariantImages.map((variantImage: any, index: number) => {
+                                //         variantImageUrl = handleFileUpload(req
+                                //             , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
+                                //         galleryImages.push({ variantImageUrl: variantImageUrl })
+                                //     })
+                                //     languageValue.languageValues.variants[index].galleryImages = galleryImages
 
 
-                                    }
-                                    if (languageValuesGalleryImages?.length > 0) {
-                                        productImageUrl = handleFileUpload(req
-                                            , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
-                                        productGalleryImages.push({ productImageUrl: productImageUrl })
+                                // }
+                                // if (languageValuesGalleryImages?.length > 0) {
+                                //     productImageUrl = handleFileUpload(req
+                                //         , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
+                                //     productGalleryImages.push({ productImageUrl: productImageUrl })
 
-                                    }
+                                // }
 
-                                    // languageValue.languageValues.variants[index].galleryImages = galleryImages
-                                    languageValue.languageValues.galleryImages = productGalleryImages
-                                })
+                                // languageValue.languageValues.galleryImages = productGalleryImages
+                                // })
 
                                 GeneralService.multiLanguageFieledsManage(newProduct._id, {
                                     ...languageValue,
                                     source: multiLanguageSources.ecommerce.products,
                                     languageValues: {
                                         ...languageValue.languageValues,
-                                        productImageUrl
+                                        // productImageUrl
                                     }
                                 })
                             }
@@ -406,15 +405,19 @@ class ProductsController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            console.log("error:", error);
+            if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties || error && error.errors && error.errors.slug && error.errors.slug.properties || error && error.errors && error.errors.sku && error.errors.sku.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        error: error.message
+                    }
+                }, req);
+            }
+            console.log("error1234:", error.message);
             await GeneralService.deleteParentModel([
                 {
                     _id: newProduct._id,
                     model: ProductsModel
-                },
-                {
-                    productId: newProduct._id,
-                    model: ProductVariantsModel
                 },
                 {
                     pageId: newProduct._id,
@@ -433,56 +436,6 @@ class ProductsController extends BaseController {
                     model: ProductCategoryLinkModel
                 },
             ]);
-
-            if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: {
-                        productTitle: error.errors.productTitle.properties.message
-                    }
-                }, req);
-            }
-            if (error && error.errors && error.errors.slug && error.errors.slug.properties) {
-                await GeneralService.deleteParentModel([
-                    {
-                        _id: newProduct._id,
-                        model: ProductsModel
-                    },
-                    {
-                        pageId: newProduct._id,
-                        model: SeoPageModel
-                    },
-                    {
-                        productId: newProduct._id,
-                        model: ProductSpecificationModel
-                    },
-                    {
-                        sourceId: newProduct._id,
-                        model: MultiLanguageFieledsModel
-                    },
-                    {
-                        productId: newProduct._id,
-                        model: ProductCategoryLinkModel
-                    },
-                ]);
-
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: {
-                        variantSku: error.errors.slug.properties.message
-                    }
-                }, req);
-            }
-            // await generalService.deleteParentModel([
-            //     {
-            //         _id: newProduct._id,
-            //         model: ProductsModel
-            //     },
-            //     {
-            //         productId: newProduct._id,
-            //         model: ProductCategoryLinkModel
-            //     },
-            // ]);
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating product',
             }, req);
@@ -567,6 +520,7 @@ class ProductsController extends BaseController {
     async update(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = productSchema.safeParse(req.body);
+            const userData = await res.locals.user;
 
             if (validatedData.success) {
                 const productId = req.params.id;
@@ -591,7 +545,9 @@ class ProductsController extends BaseController {
                     if (updatedProduct) {
 
                         const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, validatedData.data.productCategory);
-                        const newVariant = await ProductVariantService.variantService(updatedProduct._id, validatedData.data?.variants);
+                        console.log("validatedData.data?.variants", updatedProductData.variants);
+                        // if()
+                        const newVariant = await ProductVariantService.variantService(updatedProduct._id, validatedData.data?.variants, userData);
                         let newLanguageValues: any = []
 
                         const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>

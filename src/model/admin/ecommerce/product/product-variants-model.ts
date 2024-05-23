@@ -32,14 +32,6 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     slug: {
         type: String,
         required: [true, 'Slug is required'],
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Products').countDocuments({ slug: value });
-                return count === 0;
-            },
-            message: 'Slug must be unique'
-        }
     },
     extraProductTitle: {
         type: String,

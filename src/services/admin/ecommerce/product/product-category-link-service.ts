@@ -181,7 +181,7 @@ class ProductCategoryLinkService {
                             await ProductCategoryLinkModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                         } else {
                             // Create new document
-                            await ProductCategoryLinkModel.create({ ...data, productId: productId });
+                            await ProductCategoryLinkModel.create({ categoryId: new mongoose.Types.ObjectId(data), productId: productId });
                         }
                     }));
 

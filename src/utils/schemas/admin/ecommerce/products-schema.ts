@@ -36,7 +36,7 @@ export const productSchema = zod.object({
     productImageUrl: zod.string().optional(),
     removedGalleryImages: zod.any().optional(),
     completeTab: zod.any().optional(),
-    isVariant: zod.string(),
+    isVariant: zod.string({ required_error: 'Variant is required', }),
     deliveryDays: zod.string().optional(),
     attributes: zod.array(zod.unknown()).optional(),
     productSpecification: zod.array(
@@ -79,7 +79,7 @@ export const productSchema = zod.object({
                 twitterDescription: zod.string().optional(),
             }).optional(),
         }))
-        
+
     })),
 
     // .createIndex({ countryId: 1, variantSku: 1, {attributeId: 1,attributeDetailId: 1} }, { unique: true });,
@@ -97,7 +97,129 @@ export const productSchema = zod.object({
     languageValues: zod.any().optional(),
 
     // tags: zod.array(zod.string()).optional(),
-})
+}).superRefine((data, ctx) => {
+    const countryIdSet = new Set();
+    if (data.isVariant === "1") {
+        data.variants.forEach((variant, variantIndex) => {
+            let isDefaultCount = 0;
+            const variantSkuSet = new Set();
+
+            if (countryIdSet.has(variant.countryId)) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Country ID must be unique within variants",
+                    path: ["variants", variantIndex, "countryId"]
+                });
+            } else {
+                countryIdSet.add(variant.countryId);
+            }
+
+            variant.productVariants.forEach((productVariant, productVariantIndex) => {
+                // Check for unique variantSku within each variant
+                if (variantSkuSet.has(productVariant.variantSku)) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: "variantSku must be unique across all variants",
+                        path: ["variants", variantIndex, "productVariants", productVariantIndex, "variantSku"]
+                    });
+                } else {
+                    variantSkuSet.add(productVariant.variantSku);
+                }
+
+                if (!productVariant.variantSku) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: "Variant SKU is required",
+                        path: ["variants", variantIndex, "productVariants", productVariantIndex, "variantSku"]
+                    });
+                }
+                if (!productVariant.price) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: "Price is required",
+                        path: ["variants", variantIndex, "productVariants", productVariantIndex, "price"]
+                    });
+                }
+                if (!productVariant.quantity) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: "Quantity is required",
+                        path: ["variants", variantIndex, "productVariants", productVariantIndex, "quantity"]
+                    });
+                }
+
+                const attributeDetailIds = new Set();
+                if (productVariant.productVariantAtrributes) {
+                    productVariant.productVariantAtrributes.forEach((attribute, attributeIndex) => {
+                        if (!attribute.attributeId) {
+                            ctx.addIssue({
+                                code: "custom",
+                                message: "Attribute ID is required",
+                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAtrributes", attributeIndex, "attributeId"]
+                            });
+                        }
+                        if (!attribute.attributeDetailId) {
+                            ctx.addIssue({
+                                code: "custom",
+                                message: "Attribute Detail ID is required",
+                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+                            });
+                        } else {
+                            if (attributeDetailIds.has(attribute.attributeDetailId)) {
+                                ctx.addIssue({
+                                    code: "custom",
+                                    message: "Attribute Detail ID must be unique within a product variant",
+                                    path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+                                });
+                            } else {
+                                attributeDetailIds.add(attribute.attributeDetailId);
+                            }
+                        }
+                    });
+                }
+                const specificationDetailIds = new Set();
+                if (productVariant.productSpecification) {
+                    productVariant.productSpecification.forEach((specification, specificationIndex) => {
+                        if (specificationDetailIds.has(specification.specificationDetailId)) {
+                            ctx.addIssue({
+                                code: "custom",
+                                message: "Specification Detail ID must be unique within a product variant",
+                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productSpecification", specificationIndex, "specificationDetailId"]
+                            });
+                        } else {
+                            specificationDetailIds.add(specification.specificationDetailId);
+                        }
+                    });
+                }
+                if (productVariant.isDefault === "1") {
+                    isDefaultCount++;
+                }
+            });
+
+            if (isDefaultCount > 1) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Only one product variant can be set as default",
+                    path: ["variants", variantIndex, "productVariants"]
+                });
+            }
+        });
+    } else {
+        data.variants.forEach((variant, variantIndex) => {
+            if (countryIdSet.has(variant.countryId)) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "countryId must be unique within variants",
+                    path: ["variants", variantIndex, "countryId"]
+                });
+            } else {
+                countryIdSet.add(variant.countryId);
+            }
+        });
+
+    }
+
+});
 // .superRefine((data, ctx) => {
 //     if (data.isVariant === "1") {
 //         data.variants.forEach((variant, variantIndex) => {

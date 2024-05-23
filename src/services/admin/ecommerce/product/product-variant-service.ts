@@ -88,9 +88,9 @@ class ProductVariantService {
         }
     }
 
-    async checkDuplication(data: any) {
-        const condition1 = { variantSku: data.productVariants.variantSku };
-        const condition2 = { countryId: data.countryId };
+    async checkDuplication(countryId: string, data: any) {
+        const condition1 = { variantSku: data.variantSku };
+        const condition2 = { countryId: countryId };
 
         const query = {
             $and: [
@@ -107,7 +107,6 @@ class ProductVariantService {
     }
 
     async create(productId: string, productVariants: ProductVariantsProps, userData: UserDataProps) {
-console.log("productVariants",productVariants);
 
         const productVariantData = {
             productId: productId,
@@ -203,19 +202,17 @@ console.log("productVariants",productVariants);
         return ProductVariantModel.findOneAndDelete({ _id: productVariantId });
     }
 
-    async variantService(productId: string | null, variantDetails: any): Promise<ProductVariantsProps[]> {
+    async variantService(productId: string | null, variantDetails: any, userData: UserDataProps): Promise<ProductVariantsProps[]> {
         try {
-            console.log("variantDetails",variantDetails);
-            
+
             if (productId) {
                 const existingEntries = await ProductVariantModel.find({ productId: productId });
                 if (existingEntries) {
                     const variantIDsToRemove = existingEntries
-                        .filter(entry => !variantDetails?.some((data: any) => data?._id?.toString() === entry._id.toString()))
+                        .filter(entry => !variantDetails.productVariants?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                         .map(entry => entry._id);
 
                     const deleteVariant = await ProductVariantModel.deleteMany({ productId: productId, _id: { $in: variantIDsToRemove } });
-                    console.log("**************", deleteVariant);
 
                     if (deleteVariant) {
                         console.log("test", variantIDsToRemove);
@@ -256,7 +253,7 @@ console.log("productVariants",productVariants);
                             }
                         } else {
                             // Create new document
-                            await ProductVariantModel.create({ ...data, productId: productId });
+                            await this.create(productId, { ...data }, userData);
                         }
                     }));
 
