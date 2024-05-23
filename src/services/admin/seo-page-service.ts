@@ -187,34 +187,11 @@ class SeoPageService {
     async seoPageService(pageId: string | null, seoDetails: any): Promise<SeoPageProps[]> {
         try {
             if (pageId) {
-                const existingEntries = await SeoPageModel.find({ pageId: pageId });
-                if (existingEntries) {
-                    const seoIDsToRemove = existingEntries
-                        .filter(entry => !seoDetails?.some((data: any) => data?._id?.toString() === entry._id.toString()))
-                        .map(entry => entry._id);
-
-                    await SeoPageModel.deleteMany({ pageId: pageId, _id: { $in: seoIDsToRemove } });
-                }
                 if (seoDetails) {
-                    const seoPagePromises = await Promise.all(seoDetails.map(async (data: any) => {
-                        const existingEntry = await SeoPageModel.findOne({ _id: data._id });
-                        if (existingEntry) {
-                            // Update existing document
-                            await SeoPageModel.findByIdAndUpdate(existingEntry._id, { ...data, pageId: pageId });
-
-                        } else {
-                            // Create new document
-                            await SeoPageModel.create({ ...data, pageId: pageId });
-                        }
-                    }));
-
-                    await Promise.all(seoPagePromises);
+                    await SeoPageModel.findByIdAndUpdate(seoDetails._id, { ...seoDetails, pageId: pageId });
                 }
-                return await SeoPageModel.find({ pageId: pageId });
-            } else {
-                throw 'Could not find seo Id';
             }
-
+            return await SeoPageModel.find({ pageId: pageId });
         } catch (error) {
             console.error('Error in seo service:', error);
             throw error;

@@ -447,38 +447,35 @@ class ProductsController extends BaseController {
 
         // Load the Excel file
         const workbook = xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/${req.file?.filename}`));
+        if (workbook) {
+            // Assume the first sheet is the one you want to convert
+            const sheetName = workbook.SheetNames[0];
+            if (workbook.SheetNames[0]) {
+                const worksheet = workbook.Sheets[sheetName];
+                // Convert the worksheet to JSON
+                if (worksheet) {
 
-        // Assume the first sheet is the one you want to convert
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+                    if (jsonData) {
+                        await jsonData.map(async (data: any, index: number) => {
+                            const brandId = await BrandsService.findBrandId(data.Brand)
+                            console.log("brandId:", brandId);
 
-        // Convert the worksheet to JSON
-        const jsonData = xlsx.utils.sheet_to_json(worksheet);
-        await jsonData.map(async (data: any, index: number) => {
-            const brandId = await BrandsService.findBrandId(data.Brand)
-            console.log("brandId:", brandId);
+                            const categoryData = data.Category.split(',');
+                            // console.log("categoryData:", categoryData);
+                            await categoryData.map(async (category: any) => {
+                                // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
 
-            const CategoryNames: any = [];
+                                const categoryId = await CategoryService.findCategoryId(category)
+                                console.log("categoryId:", categoryId);
+                            })
 
-            // for (const columnName in data) {
-            //     if (columnName.startsWith('Category')) {
-            //         CategoryNames.push(columnName);
-            //     }
-            // }
+                        })
+                    }
+                }
+            }
+        }
 
-
-
-
-            const categoryData = data.Category.split(',');
-            // console.log("categoryData:", categoryData);
-            await categoryData.map(async (category: any) => {
-                // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
-
-                const categoryId = await CategoryService.findCategoryId(category)
-                console.log("categoryId:", categoryId);
-            })
-
-        })
 
     }
 
@@ -544,10 +541,10 @@ class ProductsController extends BaseController {
                     const updatedProduct = await ProductsService.update(productId, updatedProductData);
                     if (updatedProduct) {
 
-                        const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, validatedData.data.productCategory);
-                        console.log("validatedData.data?.variants", updatedProductData.variants);
-                        // if()
-                        const newVariant = await ProductVariantService.variantService(updatedProduct._id, validatedData.data?.variants, userData);
+                        const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
+                        if (updatedProductData.variants) {
+                            const newVariant = await ProductVariantService.variantService(updatedProduct._id, updatedProductData.variants, userData);
+                        }
                         let newLanguageValues: any = []
 
                         const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
@@ -574,38 +571,38 @@ class ProductsController extends BaseController {
                                 var productGalleryImages: any = [];
 
                                 if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
-                                    await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
-                                        let variantImageUrl = ''
-                                        const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
-                                            file.fieldname &&
-                                            file.fieldname.startsWith('languageValues[') &&
-                                            file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
-                                        );
-                                        if (languageValuesVariantImages?.length > 0) {
-                                            await languageValuesVariantImages.map((variantImage: any, index: number) => {
+                                    // await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
+                                    // let variantImageUrl = ''
+                                    // const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
+                                    //     file.fieldname &&
+                                    //     file.fieldname.startsWith('languageValues[') &&
+                                    //     file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
+                                    // );
+                                    // if (languageValuesVariantImages?.length > 0) {
+                                    //     await languageValuesVariantImages.map((variantImage: any, index: number) => {
 
-                                                variantImageUrl = handleFileUpload(req
-                                                    , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
-                                                variantGalleryImages.push({ variantImageUrl: variantImageUrl })
-                                            })
-                                            languageValue.languageValues.variants[index].galleryImages = variantGalleryImages
+                                    //         variantImageUrl = handleFileUpload(req
+                                    //             , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
+                                    //         variantGalleryImages.push({ variantImageUrl: variantImageUrl })
+                                    //     })
+                                    //     languageValue.languageValues.variants[index].galleryImages = variantGalleryImages
 
-                                        }
-                                        if (languageValuesGalleryImages?.length > 0) {
-                                            productImageUrl = handleFileUpload(req
-                                                , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
-                                            productGalleryImages.push({ productImageUrl: productImageUrl })
+                                    // }
+                                    // if (languageValuesGalleryImages?.length > 0) {
+                                    //     productImageUrl = handleFileUpload(req
+                                    //         , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
+                                    //     productGalleryImages.push({ productImageUrl: productImageUrl })
 
-                                        }
+                                    // }
 
-                                        languageValue.languageValues.galleryImages = productGalleryImages
-                                    })
+                                    // languageValue.languageValues.galleryImages = productGalleryImages
+                                    // })
                                     const languageValues = await GeneralService.multiLanguageFieledsManage(updatedProduct._id, {
                                         ...languageValue,
                                         source: multiLanguageSources.ecommerce.products,
                                         languageValues: {
                                             ...languageValue.languageValues,
-                                            productImageUrl
+                                            // productImageUrl
                                         }
                                     });
                                     newLanguageValues.push(languageValues);
