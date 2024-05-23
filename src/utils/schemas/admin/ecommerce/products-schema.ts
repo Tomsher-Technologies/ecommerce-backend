@@ -19,7 +19,7 @@ export const fileSchema = zod.object({
 export const productSchema = zod.object({
     _id: zod.string().optional(),
     productTitle: zod.string().min(1, { message: 'Product name is required' }),
-    sku: zod.string().min(1, { message: 'SKU is required' }),
+    sku: zod.string().optional(),
     productCategory: zod.string(zod.unknown()),
     brand: zod.string().min(1, { message: 'Brand is required' }),
     measurements: zod.object({
