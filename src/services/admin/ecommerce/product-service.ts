@@ -341,6 +341,9 @@ class ProductsService {
                     this.brandLookup,
                     this.brandObject,
                     this.seoLookup,
+                    {
+                        $unwind: '$productSeo'
+                    },
                     this.multilanguageFieldsLookup,
                     this.specificationLookup
 
