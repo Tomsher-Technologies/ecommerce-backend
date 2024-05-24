@@ -306,36 +306,37 @@ class ProductsService {
         }
 
         let pipeline: any[] = [
-            {
-                $lookup: {
-                    from: 'brands',
-                    localField: 'brand',
-                    foreignField: '_id',
-                    as: 'brand'
-                }
-            },
-            {
-                $match: {
-                    'brand.brandTitle': query.brandTitle // Filter by the specified brand title
-                }
-            },
-            {
-                // $project: {
-                //     _id: 1,
-                //     productTitle: 1,
-                //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
-                // }
-            },
-            // { $match: query },
-            // { $skip: skip },
-            // { $limit: limit },
-            // { $sort: finalSort },
+            // {
+            //     $lookup: {
+            //         from: 'brands',
+            //         localField: 'brand',
+            //         foreignField: '_id',
+            //         as: 'brand'
+            //     }
+            // },
+            // {
+            //     $match: {
+            //         'brand.brandTitle': query.keyword // Filter by the specified brand title
+            //     }
+            // },
+            // {
+            //     // $project: {
+            //     //     _id: 1,
+            //     //     productTitle: 1,
+            //     //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
+            //     // }
+            // },
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
 
-            // this.categoryLookup,
+            this.categoryLookup,
             
-            // this.brandLookup,
-            // this.brandObject,
+            this.brandLookup,
+            this.brandObject,
         ];
+console.log("sdfsdfsf");
 
         return ProductsModel.aggregate(pipeline).exec();
     }
