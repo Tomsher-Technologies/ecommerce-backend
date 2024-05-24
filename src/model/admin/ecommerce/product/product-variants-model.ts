@@ -35,9 +35,31 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     },
     extraProductTitle: {
         type: String,
+        default: ''
     },
     variantDescription: {
         type: String,
+        default: ''
+    },
+    cartMinQuantity: {
+        type: String,
+        default: ''
+    },
+    cartMaxQuantity: {
+        type: String,
+        default: ''
+    },
+    hsn: {
+        type: String,
+        default: ''
+    },
+    mpn: {
+        type: String,
+        default: ''
+    },
+    barcode: {
+        type: String,
+        default: ''
     },
     countryId: {
         type: Schema.Types.ObjectId,
