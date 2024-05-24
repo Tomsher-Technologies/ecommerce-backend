@@ -305,7 +305,7 @@ class ProductsService {
             this.brandObject,
         ];
 
-        return ProductsModel.find(pipeline).exec();
+        return ProductsModel.aggregate(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
