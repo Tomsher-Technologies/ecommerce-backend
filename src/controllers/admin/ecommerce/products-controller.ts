@@ -28,6 +28,8 @@ import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fiele
 import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
 import ProductSpecificationModel, { ProductSpecificationProps } from '../../../model/admin/ecommerce/product/product-specification-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
+import AttributesService from '../../../services/admin/ecommerce/attributes-service';
+import AttributeDetailService from '../../../services/admin/ecommerce/attributes-service';
 
 const controller = new BaseController();
 
@@ -55,10 +57,12 @@ class ProductsController extends BaseController {
                     $or: [
                         { productTitle: keywordRegex },
                         { categoryTitle: keywordRegex },
-                        { brandTitle: keywordRegex },
+                        { 'brand.brandTitle': keywordRegex },
                     ],
                     ...query
                 } as any;
+                console.log("query:", query);
+
             }
 
             if (productId) {
@@ -69,7 +73,7 @@ class ProductsController extends BaseController {
 
             if (category) {
                 query = {
-                    ...query, category: category
+                    ...query, categoryTitle: category
                 } as any;
             }
 
@@ -145,7 +149,10 @@ class ProductsController extends BaseController {
                     file.fieldname &&
                     file.fieldname.startsWith('galleryImage[')
                 );
-
+                var productSKU
+                if (variants[0] && variants[0].productVariants[0] && variants[0].productVariants[0].variantSku) {
+                    productSKU = variants[0].productVariants[0].variantSku
+                }
                 const productData: Partial<ProductsProps> = {
                     productTitle,
                     slug: slugify(productTitle) as any,
@@ -161,7 +168,7 @@ class ProductsController extends BaseController {
                         length?: string,
                         width?: string
                     },
-                    sku,
+                    sku: productSKU,
                     isVariant: Number(isVariant),
                     pageTitle: pageTitle as string,
                     deliveryDays,
@@ -230,6 +237,8 @@ class ProductsController extends BaseController {
 
 
                                         const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex])
+                                        console.log("checkDuplication", checkDuplication);
+
                                         if (checkDuplication) {
                                             await GeneralService.deleteParentModel([
                                                 {
@@ -405,14 +414,29 @@ class ProductsController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties || error && error.errors && error.errors.slug && error.errors.slug.properties || error && error.errors && error.errors.sku && error.errors.sku.properties) {
+            if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        error: error.message
+                        error: error.errors.productTitle.properties.message
+                    }
+                }, req);
+            } else if (error && error.errors && error.errors.sku && error.errors.sku.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        error: error.errors.sku.properties.message
+                    }
+                }, req);
+            } else if (error && error.errors && error.errors.slug && error.errors.slug.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        error: error.errors.sku.slug.message
                     }
                 }, req);
             }
+
             console.log("error1234:", error.message);
             await GeneralService.deleteParentModel([
                 {
@@ -456,22 +480,69 @@ class ProductsController extends BaseController {
                 if (worksheet) {
 
                     const jsonData = xlsx.utils.sheet_to_json(worksheet);
-                    if (jsonData) {
-                        await jsonData.map(async (data: any, index: number) => {
-                            const brandId = await BrandsService.findBrandId(data.Brand)
-                            console.log("brandId:", brandId);
+                    // if (jsonData) {
+                    //     await jsonData.map(async (data: any, index: number) => {
+                    //         const brandId: any = await BrandsService.findBrandId(data.Brand)
+                    //         console.log("brandId:", brandId._id);
 
-                            const categoryData = data.Category.split(',');
-                            // console.log("categoryData:", categoryData);
-                            await categoryData.map(async (category: any) => {
-                                // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
+                    //         const categoryData = data.Category.split(',');
+                    //         // console.log("categoryData:", categoryData);
+                    //         await categoryData.map(async (category: any) => {
+                    //             // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
 
-                                const categoryId = await CategoryService.findCategoryId(category)
-                                console.log("categoryId:", categoryId);
-                            })
+                    //             const categoryId = await CategoryService.findCategoryId(category)
+                    //             console.log("categoryId:", categoryId._id);
+                    //         })
 
-                        })
-                    }
+                    //         // console.log("data:", data);
+
+                    //         const optionColumns: any = [];
+                    //         const valueColumns: any = [];
+
+
+                    //         for (const columnName in data) {
+                    //             if (columnName.startsWith('Option_')) {
+                    //                 optionColumns.push(columnName);
+                    //             }
+                    //         }
+
+                    //         for (const columnName in data) {
+                    //             if (columnName.startsWith('Value_')) {
+                    //                 valueColumns.push(columnName);
+                    //             }
+                    //         }
+
+
+                    //         console.log("optionColumns", optionColumns);
+                    //         console.log("valueColumns", valueColumns);
+                    //         const optionValue: any = [];
+                    //         await valueColumns.map(async (attributeDetail: any) => {
+                    //             // const attributeDetails = await AttributeDetailService.findOneAttributeDetail(data[attributeDetail], "")
+                    //             // console.log("attributes:", attributeDetails);
+                    //             optionValue.push(data[attributeDetail])
+                    //         })
+                    //         console.log("optionValue", optionValue);
+
+                    //         const combinedArray = optionColumns.map((option: any, index: number) => ({
+                    //             option,
+                    //             value: valueColumns[index]
+                    //         }));
+
+                    //         console.log(combinedArray);
+
+                    //         await optionColumns.map(async (attribute: any, index: number) => {
+                    //             const attributes = await AttributesService.findOneAttribute({ attribute: data[attribute], attributeDetail: optionValue[index] })
+                    //             console.log("attributes:", attributes);
+                    //         })
+
+                    //         // await valueColumns.map(async (attributeDetail: any) => {
+                    //         //     const attributeDetails = await AttributeDetailService.findOneAttributeDetail(data[attributeDetail], "")
+                    //         //     console.log("attributes:", attributeDetails);
+
+                    //         // })
+
+                    //     })
+                    // }
                 }
             }
         }
