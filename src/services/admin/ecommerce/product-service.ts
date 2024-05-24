@@ -16,6 +16,7 @@ class ProductsService {
     private brandLookup: any;
     private seoLookup: any;
     private brandObject: any;
+    private specificationLookup: any;
 
     private multilanguageFieldsLookup: any;
     private project: any;
@@ -221,6 +222,15 @@ class ProductsService {
             },
         };
 
+        this.specificationLookup = {
+            $lookup: {
+                from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+                localField: '_id',
+                foreignField: 'productId',
+                as: 'productSpecification',
+            },
+        };
+
         this.brandLookup = {
             $lookup: {
                 from: `${collections.ecommerce.brands}`,
@@ -282,6 +292,8 @@ class ProductsService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
+        console.log("query:",query);
+
         let pipeline: any[] = [
             { $match: query },
             { $skip: skip },
@@ -293,7 +305,7 @@ class ProductsService {
             this.brandObject,
         ];
 
-        return ProductsModel.aggregate(pipeline).exec();
+        return ProductsModel.find(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
@@ -324,6 +336,7 @@ class ProductsService {
                     this.brandObject,
                     this.seoLookup,
                     this.multilanguageFieldsLookup,
+                    this.specificationLookup
 
                     // this.project
                 ];
