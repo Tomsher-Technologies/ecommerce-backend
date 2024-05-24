@@ -78,7 +78,8 @@ class ProductsService {
                                     input: '$productVariantAttributes',
                                     in: {
                                         variantId: '$$this.variantId',
-                                        _id: '$$this.attribute._id',
+                                        _id: '$$this._id',
+                                        attributeId: '$$this.attribute._id',
                                         attributeTitle: '$$this.attribute.attributeTitle',
                                         slug: '$$this.attribute.slug',
                                         attributeType: '$$this.attribute.attributeType',
@@ -142,8 +143,8 @@ class ProductsService {
                                     input: '$productSpecification',
                                     in: {
                                         variantId: '$$this.variantId',
-
-                                        _id: '$$this.specification._id',
+                                        _id:'$$this._id',
+                                        specificationId: '$$this.specification._id',
                                         specificationTitle: '$$this.specification.specificationTitle',
                                         slug: '$$this.specification.slug',
                                         specificationDetail: {
@@ -165,6 +166,9 @@ class ProductsService {
                             foreignField: 'pageReferenceId',
                             as: 'productSeo',
                         },
+                    },
+                    {
+                        $unwind: "$productSeo"
                     },
                     {
                         $lookup: {
@@ -194,7 +198,8 @@ class ProductsService {
                 },
                 {
                     $unwind: "$category"
-                }, {
+                },
+                {
                     $project: {
                         _id: 1,
                         productId: 1,
@@ -301,14 +306,35 @@ class ProductsService {
         }
 
         let pipeline: any[] = [
-            { $match: query },
-            { $skip: skip },
-            { $limit: limit },
-            { $sort: finalSort },
+            {
+                $lookup: {
+                    from: 'brands',
+                    localField: 'brand',
+                    foreignField: '_id',
+                    as: 'brand'
+                }
+            },
+            {
+                $match: {
+                    'brand.brandTitle': query.brandTitle // Filter by the specified brand title
+                }
+            },
+            {
+                // $project: {
+                //     _id: 1,
+                //     productTitle: 1,
+                //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
+                // }
+            },
+            // { $match: query },
+            // { $skip: skip },
+            // { $limit: limit },
+            // { $sort: finalSort },
 
-            this.categoryLookup,
-            this.brandLookup,
-            this.brandObject,
+            // this.categoryLookup,
+            
+            // this.brandLookup,
+            // this.brandObject,
         ];
 
         return ProductsModel.aggregate(pipeline).exec();
