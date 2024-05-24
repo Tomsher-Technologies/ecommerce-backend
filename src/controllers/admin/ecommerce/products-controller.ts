@@ -489,7 +489,7 @@ class ProductsController extends BaseController {
 
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            product
+                            ...product
                             // ...product.toObject(),
                             // category: productCategoryData,
                             // imageGallery: imageGallery ? imageGallery.map(image => ({

@@ -21,7 +21,7 @@ class ProductsService {
     private project: any;
 
     constructor() {
-       this.variantLookup = {
+        this.variantLookup = {
             $lookup: {
                 from: `${collections.ecommerce.products.productvariants.productvariants}`,
                 localField: '_id',
@@ -276,18 +276,24 @@ class ProductsService {
     }
     async findAll(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        let queryBuilder = ProductsModel.find(query)
-            .populate('category', 'categoryTitle') // Populate category details
-            .populate('brand', 'brandTitle') // Populate brand details
-            .skip(skip)
-            .limit(limit)
-            .lean();
-
-        if (sort) {
-            queryBuilder = queryBuilder.sort(sort);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
         }
+        let pipeline: any[] = [
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
 
-        return queryBuilder;
+            this.categoryLookup,
+            this.brandLookup,
+            this.brandObject,
+        ];
+
+        return ProductsModel.aggregate(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
