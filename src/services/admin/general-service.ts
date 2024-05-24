@@ -180,7 +180,7 @@ class GeneralService {
         }
     }
     async deleteParentModel(deleteModel: any) {
-        if ((deleteModel) && (deleteModel.length > 0)) {
+        if ((deleteModel) && (deleteModel?.length > 0)) {
             for (const deleteKey of deleteModel) {
                 const { model, ...deleteKeyIds } = deleteKey;
 

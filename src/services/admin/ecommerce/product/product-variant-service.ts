@@ -120,6 +120,9 @@ class ProductVariantService {
             variantDescription: productVariants.variantDescription,
             cartMinQuantity: productVariants.cartMinQuantity,
             cartMaxQuantity: productVariants.cartMaxQuantity,
+            hsn: productVariants.hsn,
+            mpn: productVariants.mpn,
+            barcode: productVariants.barcode,
 
         }
 
@@ -207,13 +210,18 @@ class ProductVariantService {
             if (productId) {
                 const existingEntries = await ProductVariantModel.find({ productId: productId });
                 await variantDetails.map(async (variantDetail: any) => {
+                      console.log("existingEntries:",existingEntries);
 
                     if (existingEntries) {
                         const variantIDsToRemove = existingEntries
                             .filter(entry => !variantDetail.productVariants?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                             .map(entry => entry._id);
+                            console.log("existingEntries:",variantDetail.productVariants);
 
                         const deleteVariant = await ProductVariantModel.deleteMany({ productId: productId, _id: { $in: variantIDsToRemove } });
+                        console.log("deleteVariant:",deleteVariant);
+
+                        
                         if (deleteVariant) {
                             await GeneralService.deleteParentModel([
                                 {
@@ -241,8 +249,8 @@ class ProductVariantService {
                                 // Update existing document
                                 const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                                 if (productVariantData) {
-                                    // if (data.productVariantAtrributes && data.productVariantAtrributes.length > 0) {
-                                    await ProductVariantAttributeService.variantAttributeService(productId, data.productVariantAtrributes)
+                                    // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+                                    await ProductVariantAttributeService.variantAttributeService(productId, data.productVariantAttributes)
                                     // }
                                     // if (data.productSeo && data.productSeo.length > 0) {
                                     await SeoPageService.seoPageService(productId, data.productSeo)

@@ -61,7 +61,7 @@ export const productSchema = zod.object({
             hsn: zod.string().optional(),
             mpn: zod.string().optional(),
             barcode: zod.string().optional(),
-            productVariantAtrributes: zod.array(zod.object({
+            productVariantAttributes: zod.array(zod.object({
                 attributeId: zod.string().optional(),
                 attributeDetailId: zod.string().optional(),
             })).optional(),
@@ -149,27 +149,27 @@ export const productSchema = zod.object({
                 }
 
                 const attributeDetailIds = new Set();
-                if (productVariant.productVariantAtrributes) {
-                    productVariant.productVariantAtrributes.forEach((attribute, attributeIndex) => {
+                if (productVariant.productVariantAttributes) {
+                    productVariant.productVariantAttributes.forEach((attribute, attributeIndex) => {
                         if (!attribute.attributeId) {
                             ctx.addIssue({
                                 code: "custom",
                                 message: "Attribute ID is required",
-                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAtrributes", attributeIndex, "attributeId"]
+                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAttributes", attributeIndex, "attributeId"]
                             });
                         }
                         if (!attribute.attributeDetailId) {
                             ctx.addIssue({
                                 code: "custom",
                                 message: "Attribute Detail ID is required",
-                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+                                path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAttributes", attributeIndex, "attributeDetailId"]
                             });
                         } else {
                             if (attributeDetailIds.has(attribute.attributeDetailId)) {
                                 ctx.addIssue({
                                     code: "custom",
                                     message: "Attribute Detail ID must be unique within a product variant",
-                                    path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+                                    path: ["variants", variantIndex, "productVariants", productVariantIndex, "productVariantAttributes", attributeIndex, "attributeDetailId"]
                                 });
                             } else {
                                 attributeDetailIds.add(attribute.attributeDetailId);
@@ -247,20 +247,20 @@ export const productSchema = zod.object({
 //                     path: ["variants", variantIndex, "productVariants", "quantity"]
 //                 });
 //             }
-//             if (variant && variant.productVariants && variant.productVariants.productVariantAtrributes && variant.productVariants.productVariantAtrributes?.length > 0) {
-//                 variant.productVariants.productVariantAtrributes.forEach((attribute, attributeIndex) => {
+//             if (variant && variant.productVariants && variant.productVariants.productVariantAttributes && variant.productVariants.productVariantAttributes?.length > 0) {
+//                 variant.productVariants.productVariantAttributes.forEach((attribute, attributeIndex) => {
 //                     if (!attribute.attributeId) {
 //                         ctx.addIssue({
 //                             code: "custom",
 //                             message: "Attribute ID is required",
-//                             path: ["variants", variantIndex, "productVariants", "productVariantAtrributes", attributeIndex, "attributeId"]
+//                             path: ["variants", variantIndex, "productVariants", "productVariantAttributes", attributeIndex, "attributeId"]
 //                         });
 //                     }
 //                     if (!attribute.attributeDetailId) {
 //                         ctx.addIssue({
 //                             code: "custom",
 //                             message: "Attribute Detail ID is required",
-//                             path: ["variants", variantIndex, "productVariants", "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+//                             path: ["variants", variantIndex, "productVariants", "productVariantAttributes", attributeIndex, "attributeDetailId"]
 //                         });
 //                     } else {
 
@@ -268,7 +268,7 @@ export const productSchema = zod.object({
 //                             ctx.addIssue({
 //                                 code: "custom",
 //                                 message: "Attribute Detail value must be unique",
-//                                 path: ["variants", variantIndex, "productVariants", "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+//                                 path: ["variants", variantIndex, "productVariants", "productVariantAttributes", attributeIndex, "attributeDetailId"]
 //                             });
 //                         } else {
 //                             attributeDetailIds.add(attribute.attributeDetailId);
@@ -314,7 +314,7 @@ export const productVariantsSchema = zod.object({
             hsn: zod.string().optional(),
             mpn: zod.string().optional(),
             barcode: zod.string().optional(),
-            productVariantAtrributes: zod.array(zod.object({
+            productVariantAttributes: zod.array(zod.object({
                 attributeId: zod.string().optional(),
                 attributeDetailId: zod.string().optional(),
             })),
@@ -360,19 +360,19 @@ export const productVariantsSchema = zod.object({
                     path: ["variants", variantIndex, "productVariants", "quantity"]
                 });
             }
-            variant.productVariants.productVariantAtrributes.forEach((attribute, attributeIndex) => {
+            variant.productVariants.productVariantAttributes.forEach((attribute, attributeIndex) => {
                 if (!attribute.attributeId) {
                     ctx.addIssue({
                         code: "custom",
                         message: "Attribute ID is required",
-                        path: ["variants", variantIndex, "productVariants", "productVariantAtrributes", attributeIndex, "attributeId"]
+                        path: ["variants", variantIndex, "productVariants", "productVariantAttributes", attributeIndex, "attributeId"]
                     });
                 }
                 if (!attribute.attributeDetailId) {
                     ctx.addIssue({
                         code: "custom",
                         message: "Attribute Detail ID is required",
-                        path: ["variants", variantIndex, "productVariants", "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+                        path: ["variants", variantIndex, "productVariants", "productVariantAttributes", attributeIndex, "attributeDetailId"]
                     });
                 } else {
 
@@ -380,7 +380,7 @@ export const productVariantsSchema = zod.object({
                         ctx.addIssue({
                             code: "custom",
                             message: "Attribute Detail value must be unique",
-                            path: ["variants", variantIndex, "productVariants", "productVariantAtrributes", attributeIndex, "attributeDetailId"]
+                            path: ["variants", variantIndex, "productVariants", "productVariantAttributes", attributeIndex, "attributeDetailId"]
                         });
                     } else {
                         attributeDetailIds.add(attribute.attributeDetailId);
