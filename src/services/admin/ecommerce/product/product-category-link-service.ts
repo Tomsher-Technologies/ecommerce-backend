@@ -159,7 +159,6 @@ class ProductCategoryLinkService {
     async categoryLinkService(productId: string | null, productCategoryDetails: any): Promise<ProductCategoryLinkProps[]> {
         try {
             if (productId) {
-                console.log("productCategoryDetails:", productCategoryDetails);
                 const productCategory = productCategoryDetails.split(',')
                 const existingEntries = await ProductCategoryLinkModel.find({ productId: productId });
                 if (existingEntries) {

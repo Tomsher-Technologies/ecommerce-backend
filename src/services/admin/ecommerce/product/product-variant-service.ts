@@ -12,7 +12,7 @@ import ProductVariantAttributesModel from '../../../../model/admin/ecommerce/pro
 import AttributesModel from '../../../../model/admin/ecommerce/attribute-model';
 
 import GeneralService from '../../general-service';
-import ProductSeoService from '../../seo-page-service';
+import SeoPageService from '../../seo-page-service';
 import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
 
 class ProductVariantService {
@@ -204,61 +204,62 @@ class ProductVariantService {
 
     async variantService(productId: string | null, variantDetails: any, userData: UserDataProps): Promise<ProductVariantsProps[]> {
         try {
-
             if (productId) {
                 const existingEntries = await ProductVariantModel.find({ productId: productId });
-                if (existingEntries) {
-                    const variantIDsToRemove = existingEntries
-                        .filter(entry => !variantDetails.productVariants?.some((data: any) => data?._id?.toString() === entry._id.toString()))
-                        .map(entry => entry._id);
+                await variantDetails.map(async (variantDetail: any) => {
 
-                    const deleteVariant = await ProductVariantModel.deleteMany({ productId: productId, _id: { $in: variantIDsToRemove } });
+                    if (existingEntries) {
+                        const variantIDsToRemove = existingEntries
+                            .filter(entry => !variantDetail.productVariants?.some((data: any) => data?._id?.toString() === entry._id.toString()))
+                            .map(entry => entry._id);
 
-                    if (deleteVariant) {
-                        console.log("test", variantIDsToRemove);
+                        const deleteVariant = await ProductVariantModel.deleteMany({ productId: productId, _id: { $in: variantIDsToRemove } });
+                        if (deleteVariant) {
+                            await GeneralService.deleteParentModel([
+                                {
+                                    variantId: variantIDsToRemove,
+                                    model: ProductVariantAttributesModel
+                                },
+                                {
+                                    variantId: variantIDsToRemove,
+                                    model: SeoPagesModel
+                                },
+                                {
+                                    variantId: variantIDsToRemove,
+                                    model: ProductSpecificationModel
+                                },
+                            ]);
 
-                        await GeneralService.deleteParentModel([
-                            {
-                                variantId: variantIDsToRemove,
-                                model: ProductVariantAttributesModel
-                            },
-                            {
-                                variantId: variantIDsToRemove,
-                                model: SeoPagesModel
-                            },
-                            {
-                                variantId: variantIDsToRemove,
-                                model: ProductSpecificationModel
-                            },
-                        ]);
+                        }
+                        // })
 
                     }
-                }
-                if (variantDetails) {
-                    const variantPromises = await Promise.all(variantDetails.map(async (data: any) => {
-                        const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
-                        if (existingEntry) {
-                            // Update existing document
-                            const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
-                            if (productVariantData) {
-                                // if (data.productVariantAtrributes && data.productVariantAtrributes.length > 0) {
-                                await ProductVariantAttributeService.variantAttributeService(productId, { ...data.productVariantAtrributes })
-                                // }
-                                // if (data.productSeo && data.productSeo.length > 0) {
-                                await ProductSeoService.seoPageService(productId, { ...data.productSeo })
-                                // }
-                                // if (data.productSpecification && data.productSpecification.length > 0) {
-                                await ProductSpecificationService.productSpecificationService(productId, { ...data.productSpecification })
-                                // }
+                    if (variantDetail.productVariants) {
+                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any) => {
+                            const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
+                            if (existingEntry) {
+                                // Update existing document
+                                const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
+                                if (productVariantData) {
+                                    // if (data.productVariantAtrributes && data.productVariantAtrributes.length > 0) {
+                                    await ProductVariantAttributeService.variantAttributeService(productId, data.productVariantAtrributes)
+                                    // }
+                                    // if (data.productSeo && data.productSeo.length > 0) {
+                                    await SeoPageService.seoPageService(productId, data.productSeo)
+                                    // }
+                                    // if (data.productSpecification && data.productSpecification.length > 0) {
+                                    await ProductSpecificationService.productSpecificationService(productId, data.productSpecification)
+                                    // }
+                                }
+                            } else {
+                                // Create new document
+                                await this.create(productId, { countryId: variantDetail.countryId, ...data }, userData);
                             }
-                        } else {
-                            // Create new document
-                            await this.create(productId, { ...data }, userData);
-                        }
-                    }));
+                        }));
 
-                    await Promise.all(variantPromises);
-                }
+                        await Promise.all(variantPromises);
+                    }
+                })
                 return await ProductVariantModel.find({ productId: productId });
             } else {
                 throw 'Could not find product Id';
