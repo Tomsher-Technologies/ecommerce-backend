@@ -319,13 +319,13 @@ class ProductsService {
                     'brand.brandTitle': query.brandTitle // Filter by the specified brand title
                 }
             },
-            {
-                // $project: {
-                //     _id: 1,
-                //     productTitle: 1,
-                //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
-                // }
-            },
+            // {
+            //     // $project: {
+            //     //     _id: 1,
+            //     //     productTitle: 1,
+            //     //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
+            //     // }
+            // },
             // { $match: query },
             // { $skip: skip },
             // { $limit: limit },
