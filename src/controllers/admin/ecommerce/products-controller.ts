@@ -57,12 +57,10 @@ class ProductsController extends BaseController {
                     $or: [
                         { productTitle: keywordRegex },
                         { categoryTitle: keywordRegex },
-                        { 'brand.brandTitle': keywordRegex },
+                        { brandTitle: keywordRegex }
                     ],
                     ...query
                 } as any;
-                console.log("query:", query);
-
             }
 
             if (productId) {
@@ -168,7 +166,7 @@ class ProductsController extends BaseController {
                         length?: string,
                         width?: string
                     },
-                    sku: productSKU,
+                    sku: productSKU || undefined,
                     isVariant: Number(isVariant),
                     pageTitle: pageTitle as string,
                     deliveryDays,
@@ -279,14 +277,13 @@ class ProductsController extends BaseController {
 
                                                 uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
                                             }
-
-                                            if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAtrributes?.length > 0))) {
-                                                for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
+                                            if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAttributes?.length > 0))) {
+                                                for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes.length; j++) {
                                                     const attributeData = {
                                                         productId: newProduct._id,
                                                         variantId: productVariantData._id,
-                                                        attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeId,
-                                                        attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes[j].attributeDetailId
+                                                        attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeId,
+                                                        attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeDetailId
                                                     }
 
                                                     await ProductVariantAttributeService.create(attributeData)
@@ -303,15 +300,17 @@ class ProductsController extends BaseController {
                                             }
                                             await SeoPageService.create(seoData)
                                         }
+                                        console.log("fdsfsdfsd",variants[variantsIndex].productVariants[productVariantsIndex].productSpecification?.length);
 
                                         if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
-                                            for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAtrributes.length; j++) {
+                                            for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length; j++) {
 
                                                 const specificationData = {
                                                     productId: newProduct._id,
                                                     variantId: productVariantData._id,
                                                     ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
                                                 }
+                                                console.log("specificationData123:",specificationData);
 
                                                 await ProductSpecificationService.create(specificationData)
                                             }
@@ -439,6 +438,7 @@ class ProductsController extends BaseController {
 
             console.log("error1234:", error.message);
             await GeneralService.deleteParentModel([
+                ...(newProduct?._id &&
                 {
                     _id: newProduct._id,
                     model: ProductsModel
@@ -455,10 +455,11 @@ class ProductsController extends BaseController {
                     sourceId: newProduct._id,
                     model: MultiLanguageFieledsModel
                 },
-                {
-                    productId: newProduct._id,
-                    model: ProductCategoryLinkModel
-                },
+                    {
+                        productId: newProduct._id,
+                        model: ProductCategoryLinkModel
+                    } as any
+                )
             ]);
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating product',
@@ -618,26 +619,26 @@ class ProductsController extends BaseController {
                         }
                         let newLanguageValues: any = []
 
-                        const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
-                            file.fieldname &&
-                            file.fieldname.startsWith('languageValues[') &&
-                            file.fieldname.includes('[productImage]')
-                        );
-                        const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
-                            file.fieldname &&
-                            file.fieldname.startsWith('languageValues[') &&
-                            file.fieldname.includes('[galleryImage]')
-                        );
+                        // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        //     file.fieldname &&
+                        //     file.fieldname.startsWith('languageValues[') &&
+                        //     file.fieldname.includes('[productImage]')
+                        // );
+                        // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        //     file.fieldname &&
+                        //     file.fieldname.startsWith('languageValues[') &&
+                        //     file.fieldname.includes('[galleryImage]')
+                        // );
 
                         if (updatedProductData.languageValues && updatedProductData.languageValues.length > 0) {
                             for (let i = 0; i < updatedProductData.languageValues.length; i++) {
 
                                 const languageValue = updatedProductData.languageValues[i];
                                 let productImageUrl = '';
-                                if (languageValuesImages?.length > 0) {
-                                    productImageUrl = handleFileUpload(req
-                                        , null, languageValuesImages[i], `productImageUrl`, 'product');
-                                }
+                                // if (languageValuesImages?.length > 0) {
+                                //     productImageUrl = handleFileUpload(req
+                                //         , null, languageValuesImages[i], `productImageUrl`, 'product');
+                                // }
                                 var variantGalleryImages: any = [];
                                 var productGalleryImages: any = [];
 
@@ -963,7 +964,7 @@ const countryWiseProducts = [
                 variantDescription: '',
                 cartMinQuantity: '',
                 cartMaxQuantity: '',
-                productVariantAtrributes: [{//variant details
+                productVariantAttributes: [{//variant details
                     productId: '',
                     variantProductId: '_id',
                     attributeId: '',
