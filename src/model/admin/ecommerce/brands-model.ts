@@ -1,15 +1,14 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface BrandProps extends Document {
-    categoryId:Schema.Types.ObjectId;
     brandTitle: string;
     slug: string;
     description: string;
     brandImageUrl: string;
     corporateGiftsPriority: string;
-    pageTitle?: string;
     status: string;
     statusAt?: Date;
+    isExcel: Boolean;
     metaTitle?: string;
     metaDescription?: string;
     metaImageUrl?: string;
@@ -23,10 +22,6 @@ export interface BrandProps extends Document {
 }
 
 const brandSchema: Schema<BrandProps> = new Schema({
-    categoryId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Category',
-    },
     brandTitle: {
         type: String,
         required: true,
@@ -40,24 +35,28 @@ const brandSchema: Schema<BrandProps> = new Schema({
     },
     description: {
         type: String,
-        required: true,
-        minlength: 5
+        required: function () {
+            return !this.isExcel;
+        }
     },
     brandImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
     },
     corporateGiftsPriority: {
         type: String,
         default: '0'
     },
-    pageTitle: {
-        type: String,
-        default: ''
-    },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     statusAt: {
         type: Date,
@@ -93,7 +92,10 @@ const brandSchema: Schema<BrandProps> = new Schema({
     },
     createdBy: {
         type: String,
-        required: true
+        required: function () {
+            return !this.isExcel;
+        }
+
     },
     createdAt: {
         type: Date,

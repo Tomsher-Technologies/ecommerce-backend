@@ -8,7 +8,8 @@ export interface CategoryProps extends Document {
     corporateGiftsPriority: string;
     type?: string;
     categoryImageUrl: string;
-    pageTitle?: string;
+    isExcel: Boolean;
+    level: string;
     status: string;
     statusAt: Date;
     createdBy?: string;
@@ -20,14 +21,6 @@ const categorySchema: Schema<CategoryProps> = new Schema({
     categoryTitle: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Category').countDocuments({ categoryTitle: value });
-                return count === 0;
-            },
-            message: 'Category title must be unique'
-        },
         minlength: [2, 'Category title must be at least 2 characters long']
     },
     slug: {
@@ -43,17 +36,31 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         }
     },
     parentCategory: {
-        type: Schema.Types.Mixed,
+        type: Schema.Types.ObjectId,
         ref: 'Category',
-        default: ''
+        default: null
     },
     description: {
         type: String,
-        required: true,
+        required: function () {
+            // Require description field if isExcel is not true
+            return !this.isExcel;
+        }
     },
     categoryImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            // Require categoryImageUrl field if isExcel is not true
+            return !this.isExcel;
+        }
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
+    level: {
+        type: String,
+        default: '0',
     },
     corporateGiftsPriority: {
         type: String,
@@ -63,13 +70,10 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         type: String,
         default: ''
     },
-    pageTitle: {
-        type: String,
-        default: ''
-    },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     statusAt: {
         type: Date,
@@ -77,16 +81,27 @@ const categorySchema: Schema<CategoryProps> = new Schema({
     },
     createdBy: {
         type: String,
-        required: true
+        required: function () {
+            return !this.isExcel;
+        }
     },
     createdAt: {
         type: Date,
     },
     updatedAt: {
         type: Date,
-        default: Date.now
     }
 });
+
+categorySchema.pre("save", function (next) {
+    const now = new Date();
+    if (!this.createdAt) {
+        this.createdAt = now;
+    }
+    this.updatedAt = now;
+    next();
+});
+
 
 const CategoryModel = mongoose.model<CategoryProps>('Category', categorySchema);
 

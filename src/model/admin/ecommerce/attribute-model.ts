@@ -3,8 +3,9 @@ import { AttributeDetailProps } from './attribute-detail-model';
 
 export interface AttributesProps extends Document {
     attributeTitle: string;
-    en_attributeLabel: string;
-    ar_attributeLabel: string;
+    attributeType: string;
+    slug: string;
+    status: string;
     createdAt?: Date;
 }
 
@@ -22,17 +23,37 @@ const attributeSchema: Schema<AttributesProps> = new Schema({
         },
         minlength: [2, 'Attribute title must be at least 2 characters long']
     },
-    en_attributeLabel: {
+    slug: {
         type: String,
-        required: true,
+        required: [true, 'Slug is required'],
+        unique: true,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                const count = await this.model('Attributes').countDocuments({ slug: value });
+                return count === 0;
+            },
+            message: 'Slug must be unique'
+        }
     },
-    ar_attributeLabel: {
+    attributeType: {
         type: String,
         required: true,
+        enum: ['text', 'hex', 'pattern'],
+        validate: {
+            validator: function (value: string): boolean {
+                return ['text', 'hex', 'pattern'].includes(value);
+            },
+            message: 'Attribute type only supports text, hex, or pattern'
+        }
+    },
+    status: {
+        type: String,
+        required: true,
+        default: "1"
     },
     createdAt: {
         type: Date,
-        default: Date.now 
+        default: Date.now
     }
 });
 

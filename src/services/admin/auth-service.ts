@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
-import UserModel, { UserProps } from '@model/admin/account/user-model';
-import AuthorisationModel from '@model/admin/authorisation-model';
+import UserModel, { UserProps } from '../../../src/model/admin/account/user-model';
+import AuthorisationModel from '../../../src/model/admin/authorisation-model';
 import PrivilagesService from './account/privilages-service';
 
 class AuthService {
@@ -26,24 +26,10 @@ class AuthService {
                         countryId: user.countryId,
                         email: user.email,
                         phone: user.phone
-                    }, 'your-secret-key', { expiresIn: '1h' });
-
-                    const existingUserAuth: any = await AuthorisationModel.findOne({ userID: user._id });
+                    }, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn: '8h' });
 
                     let insertedValues: any = {};
-                    if (existingUserAuth) {
-                        existingUserAuth.token = token;
-                        insertedValues = await existingUserAuth.save();
-                    } else {
-                        const authorisationValues = new AuthorisationModel({
-                            userID: user._id,
-                            userTypeId: user?.userTypeID,
-                            token,
-                            expiresIn: '1h',
-                            createdOn: new Date(),
-                        });
-                        insertedValues = await authorisationValues.save();
-                    }
+
                     if (insertedValues) {
                         const privilages = await PrivilagesService.findOne(user.userTypeID as any);
 
@@ -54,7 +40,7 @@ class AuthService {
                             firstName: user.firstName,
                             email: user.email,
                             phone: user.phone,
-                            token: insertedValues.token,
+                            token,
                             expiresIn: insertedValues.expiresIn,
                             privilages
                         }

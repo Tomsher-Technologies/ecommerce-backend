@@ -1,11 +1,13 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { logResponseStatus } from '@components/response-status';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import { configureMulter } from '@utils/file-uploads';
+import { logResponseStatus } from '../../../src/components/response-status';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { configureMulter } from '../../../src/utils/file-uploads';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import CollectionsProductsController from '@controllers/admin/website/collections-products-controller';
+import CollectionsProductsController from '../../../src/controllers/admin/website/collections-products-controller';
 
 const router: Router = express.Router();
 
@@ -13,11 +15,11 @@ const { upload } = configureMulter('collection', ['collectionImage',]);
 
 router.use(authMiddleware);
 
-router.get('/', logResponseStatus, CollectionsProductsController.findAll);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.website.collectionsProducts, readOnly: 1 }), CollectionsProductsController.findAll);
 router.get('/:id', CollectionsProductsController.findOne);
-router.post('/', upload.any(), logResponseStatus, CollectionsProductsController.create);
-router.post('/:id', upload.any(), logResponseStatus, CollectionsProductsController.update);
-router.delete('/:id', CollectionsProductsController.destroy);
+router.post('/', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.website.collectionsProducts, readOnly: 1 }), CollectionsProductsController.create);
+router.post('/:id', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.website.collectionsProducts, readOnly: 1 }), CollectionsProductsController.update);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.website.collectionsProducts }), CollectionsProductsController.destroy);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {

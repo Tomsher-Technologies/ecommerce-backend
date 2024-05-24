@@ -1,12 +1,18 @@
 import { Response } from 'express';
 import { unlink } from 'fs/promises';
 
+import GeneralService, { AdminTaskLogProps } from '../../services/admin/general-service';
+
 class BaseController {
 
-    sendSuccessResponse(res: Response, requestedData: any, status: number = 200): void {
+    async sendSuccessResponse(res: Response, requestedData: any, status: number = 200, taskLog?: AdminTaskLogProps): Promise<any> {
+        if (taskLog) {
+            const user = res.locals.user;
+            await GeneralService.taskLog({ ...taskLog, userId: user._id })
+        }
         res.status(status).json({
             ...requestedData,
-            status: true
+            status: true,
         });
     }
 
@@ -16,7 +22,7 @@ class BaseController {
                 await unlink(req.file.path);
             } else if ((req) && (req.files?.length > 0)) {
                 req.files.map(async (filePath: any) => {
-                    if(filePath.path){
+                    if (filePath.path) {
                         await unlink(filePath.path);
                     }
                 })

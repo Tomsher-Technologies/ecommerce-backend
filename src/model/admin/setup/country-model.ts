@@ -6,6 +6,7 @@ export interface CountryProps extends Document {
     countryCode: string;
     currencyCode: string;
     countryImageUrl: string;
+    isOrigin: Boolean;
     status: string;
     createdBy?: string;
     statusAt?: Date;
@@ -61,6 +62,11 @@ const countrySchema: Schema<CountryProps> = new Schema({
     countryImageUrl: {
         type: String,
         required: true,
+    },
+    isOrigin: {
+        type: Boolean,
+        required: false,
+        default: false
     },
     status: {
         type: String,

@@ -1,12 +1,18 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CouponProps extends Document {
-    couponType: string;
+    countryId: Schema.Types.ObjectId;
     couponCode: string;
-    couponUseType: string;
-    couponProducts?: any;
+    couponDescription?: string;
+    couponType: string;
+    couponApplyValues: any;
+    minPurchaseValue: string;
     discountType?: string;
-    discount?: string;
+    couponProducts?: any;
+    discountAmount?: string;
+    discountMaxRedeemAmount?: string;
+    couponUsage?: any;
+    enableFreeShipping?: boolean;
     discountDateRange?: any;
     status: string;
     createdBy?: string;
@@ -15,9 +21,10 @@ export interface CouponProps extends Document {
 }
 
 const couponSchema: Schema<CouponProps> = new Schema({
-    couponType: {
-        type: String,
+    countryId: {
+        type: Schema.Types.ObjectId,
         required: true,
+        ref: 'Countries',  
     },
     couponCode: {
         type: String,
@@ -32,20 +39,57 @@ const couponSchema: Schema<CouponProps> = new Schema({
         },
         minlength: [2, 'Coupon code must be at least 2 characters long']
     },
-    couponUseType: {
+    couponDescription: {
+        type: String,
+        default: ''
+    },
+    couponType: {
+        type: String,
+        enum: ['entire-orders', 'for-product', 'for-category', 'for-brand', 'cashback'],
+        validate: {
+            validator: function (value: string): boolean {
+                return ['entire-orders', 'for-product', 'for-category', 'for-brand', 'cashback'].includes(value);
+            },
+            message: 'Attribute type only supports entire-orders, for-product, for-category, for-brand or cashback'
+        },
+        required: true,
+    },
+    couponApplyValues: {
+        type: Schema.Types.Mixed,
+        default: [],
+    },
+    minPurchaseValue: {
+        type: String,
+        required: true,
+        minlength: [1, 'Coupon code must be at least 1 characters long']
+    },
+
+    discountType: {
         type: String,
         required: true,
     },
-    couponProducts: {
-        type: Schema.Types.Mixed,
-        default: ''
-    },
-    discountType: {
+    discountAmount: {
         type: String,
-        default: ''
+        required: true,
     },
-    discount: {
-        type: String
+    discountMaxRedeemAmount: {
+        type: String,
+        defulat: '',
+    },
+    couponUsage: {
+        type: {
+            mobileAppOnlyCoupon: Boolean,
+            onlyForNewUser: Boolean,
+            enableLimitPerUser: Boolean,
+            limitPerUser: String,
+            enableCouponUsageLimit: Boolean,
+            couponUsageLimit: String,
+        },
+        required: true,
+    },
+    enableFreeShipping: {
+        type: Boolean,
+        required: true,
     },
     discountDateRange: {
         type: Schema.Types.Mixed,

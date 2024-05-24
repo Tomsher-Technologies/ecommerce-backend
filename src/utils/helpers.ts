@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
@@ -5,14 +6,22 @@ import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
 
-
-import ProductsService from '@services/admin/ecommerce/products-service';
+import ProductsService from '../services/admin/ecommerce/product-service';
 
 type ZodValidationError = {
     path: (string | number)[];
     message: string;
 };
 
+
+export function getCountryId(userData: any): mongoose.Types.ObjectId | undefined {
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose.Types.ObjectId(userData.countryId);
+        }
+    }
+    return undefined;
+}
 
 export const formatZodError = (errors: ZodError['errors']): Record<string, string> => {
     const formattedErrors: Record<string, string> = {};
@@ -41,6 +50,8 @@ export const handleFileUpload = (req: any, data: any, file: any, fieldName: stri
             // console.log('file',file.filename);
             return `/public/uploads/${folderPath}/${file.filename}`; // Construct the URL using req.protocol and req.hostname
         } else {
+            console.log('herere', data);
+
             return null;
         }
     }
@@ -80,14 +91,23 @@ export const deleteFile = (filePath: string): Promise<void> => {
 };
 
 
-export const uploadGallaryImages = async (req: Request, productID: string, galleryImages: any[]): Promise<void> => {
+export const uploadGallaryImages = async (req: Request, Id: any, galleryImages: any[]): Promise<void> => {
     try {
         await Promise.all(galleryImages.map(async (galleryImage) => {
-            const galleryImageData = {
-                productID: productID,
-                galleryImageUrl: handleFileUpload(req, null, galleryImage, 'galleryImageUrl', 'product'),
-                status: '1'
-            };
+            var galleryImageData
+            if (Id.variantId) {
+                galleryImageData = {
+                    variantId: Id.variantId,
+                    galleryImageUrl: handleFileUpload(req, null, galleryImage, 'galleryImageUrl', 'product'),
+                    status: '1'
+                };
+            } else {
+                galleryImageData = {
+                    productID: Id,
+                    galleryImageUrl: handleFileUpload(req, null, galleryImage, 'galleryImageUrl', 'product'),
+                    status: '1'
+                };
+            }
             await ProductsService.createGalleryImages(galleryImageData);
         }));
     } catch (error) {
@@ -112,9 +132,9 @@ export const uploadGallaryImages = async (req: Request, productID: string, galle
 //     }
 // };
 
-export const slugify = (text: string): string => {
+export const slugify = (text: string, slugDiff = '-'): string => {
     return text.toLowerCase().replace(/[^\w\s-]/g, '') // Remove non-alphanumeric characters except spaces and hyphens
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/\s+/g, slugDiff) // Replace spaces with hyphens
         .replace(/-+/g, '-') // Replace multiple hyphens with a single hyphen
         .trim(); // Trim leading and trailing spaces
 };
@@ -134,3 +154,12 @@ export const stringToArray = (input: string): string[] => {
         return [];
     }
 };
+
+
+export const getIndexFromFieldName = (fieldname: string, keyValue: string): number => {
+    const match = fieldname?.match(new RegExp(`${keyValue}\\[(\\d+)\\]`));
+    if (match && match[1]) {
+        return parseInt(match[1], 10);
+    }
+    return -1;
+}

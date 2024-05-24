@@ -1,12 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, slugify } from '@utils/helpers';
-import { usertypeSchema } from '@utils/schemas/admin/account/user-type-schema';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, slugify } from '../../../../src/utils/helpers';
+import { usertypeSchema } from '../../../../src/utils/schemas/admin/account/user-type-schema';
+import { QueryParams } from '../../../../src/utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import UserTypeService from '@services/admin/account/user-type-service';
+import BaseController from '../../../../src/controllers/admin/base-controller';
+import UserTypeService from '../../../../src/services/admin/account/user-type-service';
 
 const controller = new BaseController();
 
@@ -43,13 +44,13 @@ class UserTypeController extends BaseController {
                 query,
                 sort
             });
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: usersTypes,
                 totalCount: await UserTypeService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching user types' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching user types' });
         }
     }
 
@@ -69,12 +70,17 @@ class UserTypeController extends BaseController {
                     createdAt: new Date()
                 };
                 const newUserType = await UserTypeService.create(userTypeData);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: newUserType,
                     message: 'User type created successfully!'
+                }, 200, { // task log
+                    sourceFromId: newUserType._id,
+                    sourceFrom: adminTaskLog.account.userTypes,
+                    activity: adminTaskLogActivity.create,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 });
@@ -88,7 +94,7 @@ class UserTypeController extends BaseController {
                     }
                 });
             }
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating user type',
             });
         }
@@ -100,17 +106,17 @@ class UserTypeController extends BaseController {
             const userTypeId = req.params.id;
             if (userTypeId) {
                 const userType = await UserTypeService.findOne(userTypeId);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: userType,
                     message: 'Success'
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'User type Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
@@ -123,28 +129,33 @@ class UserTypeController extends BaseController {
                     const updatedUserTypeData = req.body;
                     const updatedUserType = await UserTypeService.update(userTypeId, { ...updatedUserTypeData, updatedAt: new Date() });
                     if (updatedUserType) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedUserType,
                             message: 'User type updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedUserType._id,
+                            sourceFrom: adminTaskLog.account.userTypes,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'User type Id not found!',
                         });
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'User type Id not found! Please try again with User type id',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating user type'
             });
         }
@@ -156,20 +167,23 @@ class UserTypeController extends BaseController {
             if (userTypeId) {
                 const userType = await UserTypeService.findOne(userTypeId);
                 if (userType) {
-                    await UserTypeService.destroy(userTypeId);
-                    controller.sendSuccessResponse(res, { message: 'User type deleted successfully!' });
+                    // await UserTypeService.destroy(userTypeId);
+                    // return controller.sendSuccessResponse(res, { message: 'User type deleted successfully!' });
+                      return controller.sendErrorResponse(res, 200, {
+                        message: 'You cant delete this user type',
+                    });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This user type details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'User type id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting user type' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting user type' });
         }
     }
 

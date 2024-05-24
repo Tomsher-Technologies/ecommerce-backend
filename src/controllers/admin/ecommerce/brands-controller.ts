@@ -1,14 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { brandSchema, updateWebsitePrioritySchema } from '@utils/schemas/admin/ecommerce/brand-schema';
-import { QueryParams } from '@utils/types/common';
-import { BrandQueryParams } from '@utils/types/brands';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/brand-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { BrandQueryParams } from '../../../utils/types/brands';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import BrandsService from '@services/admin/ecommerce/brands-service'
-import BrandsModel, { BrandProps } from '@model/admin/ecommerce/brands-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import BrandsService from '../../../services/admin/ecommerce/brands-service'
+import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
+import GeneralService from '../../../services/admin/general-service';
 
 const controller = new BaseController();
 
@@ -16,7 +19,7 @@ class BrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit =  '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams; 
+            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -27,7 +30,7 @@ class BrandsController extends BaseController {
 
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
-                query = { 
+                query = {
                     $or: [
                         { brandTitle: keywordRegex }
                     ],
@@ -47,9 +50,9 @@ class BrandsController extends BaseController {
                 for (const key in filteredQuery) {
                     if (filteredQuery[key] === '> 0') {
                         filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
-                    } else if (filteredQuery[key]  === '0') {
+                    } else if (filteredQuery[key] === '0') {
                         filteredPriorityQuery[key] = 0; // Set query for key equal to 0
-                    } else if (filteredQuery[key]  === '< 0' || filteredQuery[key]  === null || filteredQuery[key]  === undefined) {
+                    } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
                         filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
                     }
                 }
@@ -62,20 +65,20 @@ class BrandsController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
 
-            const brands = await BrandsService.findAll({ 
-                page: parseInt(page_size as string), 
-                limit: parseInt(limit as string), 
+            const brands = await BrandsService.findAll({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
                 query,
                 sort
-             });
+            });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: brands,
                 totalCount: await BrandsService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching brands' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching brands' });
         }
     }
 
@@ -85,15 +88,16 @@ class BrandsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { brandTitle, slug, description, pageTitle, metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription } = validatedData.data;
+                const { brandTitle, slug, description,  metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues,status } = validatedData.data;
                 const user = res.locals.user;
+
+                const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
 
                 const brandData: Partial<BrandProps> = {
                     brandTitle,
                     slug: slug || slugify(brandTitle) as any,
-                    brandImageUrl: handleFileUpload(req, null, req.file, 'brandImageUrl', 'brand'),
+                    brandImageUrl: handleFileUpload(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
                     description,
-                    pageTitle: pageTitle as string,
                     metaTitle: metaTitle as string,
                     metaDescription: metaDescription as string,
                     ogTitle: ogTitle as string,
@@ -101,22 +105,56 @@ class BrandsController extends BaseController {
                     metaImageUrl: metaImage as string,
                     twitterTitle: twitterTitle as string,
                     twitterDescription: twitterDescription as string,
-                    status: '1', // active
+                    ['status' as string] : status || '1',
                     statusAt: new Date(),
                     createdBy: user._id,
                     createdAt: new Date(),
-                    updatedAt: new Date() 
+                    updatedAt: new Date()
                 };
-
 
                 const newBrand = await BrandsService.create(brandData);
                 // const fetchedBrand = await BrandsService.findOne(newBrand._id);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newBrand,
-                    message: 'Brand created successfully!'
-                });
+                if (newBrand) {
+                    const languageValuesImages = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[brandImage]')
+                    );
+
+                    if (languageValues && languageValues.length > 0) {
+                        await languageValues.map((languageValue: any, index: number) => {
+
+                            let brandImageUrl = ''
+                            if (languageValuesImages.length > 0) {
+                                brandImageUrl = handleFileUpload(req, null, languageValuesImages[index], `brandImageUrl`, 'brand');
+                            }
+
+                            GeneralService.multiLanguageFieledsManage(newBrand._id, {
+                                ...languageValue,
+                                languageValues: {
+                                    ...languageValue.languageValues,
+                                    brandImageUrl
+                                }
+                            })
+                        })
+                    }
+
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newBrand,
+                        message: 'Brand created successfully!'
+                    }, 200, { // task log
+                        sourceFromId: newBrand._id,
+                        sourceFrom: adminTaskLog.ecommerce.brands,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'Something went wrong! brand cant be inserted. please try again'
+                    }, req);
+                }
             } else {
-                console.log('res', (req as any).file);
 
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -144,17 +182,17 @@ class BrandsController extends BaseController {
             const brandId = req.params.id;
             if (brandId) {
                 const brand = await BrandsService.findOne(brandId);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: brandId,
                     message: 'Success'
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Brand Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
@@ -164,37 +202,127 @@ class BrandsController extends BaseController {
             if (validatedData.success) {
                 const brandId = req.params.id;
                 if (brandId) {
-                    let updatedbrandData = req.body;
-                    updatedbrandData = {
-                        ...updatedbrandData,
-                        brandImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), req.file, 'brandImageUrl', 'brand'),
+                    const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
+
+                    let updatedBrandData = req.body;
+                    updatedBrandData = {
+                        ...updatedBrandData,
+                        brandImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandImage), 'brandImageUrl', 'brand'),
                         updatedAt: new Date()
                     };
 
-                    const updatedBrand = await BrandsService.update(brandId, updatedbrandData);
+                    const updatedBrand: any = await BrandsService.update(brandId, updatedBrandData);
                     if (updatedBrand) {
-                        controller.sendSuccessResponse(res, {
-                            requestedData: updatedBrand,
+
+                        const languageValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[brandImage]')
+                        );
+
+                        let newLanguageValues: any = []
+                        if (updatedBrandData.languageValues && updatedBrandData.languageValues.length > 0) {
+                            for (let i = 0; i < updatedBrandData.languageValues.length; i++) {
+                                const languageValue = updatedBrandData.languageValues[i];
+                                let brandImageUrl = '';
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.brands, updatedBrand._id, languageValue.languageId);
+                                    brandImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `brandImageUrl`, 'brand');
+                                } else {
+                                    brandImageUrl = updatedBrandData.languageValues[i].languageValues?.brandImageUrl
+                                }
+
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBrand._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        brandImageUrl
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
+                            }
+                        }
+
+                        const updatedBrandMapped = Object.keys(updatedBrand).reduce((mapped: any, key: string) => {
+                            mapped[key] = updatedBrand[key];
+                            return mapped;
+                        }, {});
+
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: {
+                                ...updatedBrandMapped,
+                                languageValues: newLanguageValues
+                            },
                             message: 'Brand updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedBrandMapped._id,
+                            sourceFrom: adminTaskLog.ecommerce.brands,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Brand Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Brand Id not found! Please try again with brand id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while updating brand'
+            }, req);
+        }
+    }
+
+    async statusChange(req: Request, res: Response): Promise<void> {
+        try {
+            const validatedData = brandStatusSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const brandId = req.params.id;
+                if (brandId) {
+                    let { status } = req.body;
+                    const updatedBrandData = { status };
+
+                    const updatedBrand = await BrandsService.update(brandId, updatedBrandData);
+                    if (updatedBrand) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: updatedBrand,
+                            message: 'Brand status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: brandId,
+                            sourceFrom: adminTaskLog.ecommerce.brands,
+                            activity: adminTaskLogActivity.delete,
+                            activityStatus: adminTaskLogStatus.success
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Brand Id not found!',
+                        }, req);
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Brand Id not found! Please try again with brand id',
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating brand'
             }, req);
         }
@@ -206,20 +334,23 @@ class BrandsController extends BaseController {
             if (brandId) {
                 const brand = await BrandsService.findOne(brandId);
                 if (brandId) {
-                    await BrandsService.destroy(brandId);
-                    controller.sendSuccessResponse(res, { message: 'Brand deleted successfully!' });
+                    // await BrandsService.destroy(brandId);
+                    //  controller.sendSuccessResponse(res, { message: 'Brand deleted successfully!' });
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Cant to be delete brand!',
+                    });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This Brand details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Brand id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting brand' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting brand' });
         }
     }
 
@@ -242,6 +373,11 @@ class BrandsController extends BaseController {
                     return controller.sendSuccessResponse(res, {
                         requestedData: await BrandsModel.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' }),
                         message: 'Brand website priority updated successfully!'
+                    }, 200, { // task log
+                        sourceFromId: '',
+                        sourceFrom: adminTaskLog.ecommerce.brands,
+                        activity: adminTaskLogActivity.priorityUpdation,
+                        activityStatus: adminTaskLogStatus.success
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {

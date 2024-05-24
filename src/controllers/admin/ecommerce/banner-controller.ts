@@ -1,15 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '@utils/schemas/admin/ecommerce/banner-schema';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
+import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import BannerService from '@services/admin/ecommerce/banner-service'
-import GeneralService from '@services/admin/general-service';
-import BannerModel from '@model/admin/ecommerce/banner-model';
-import { multiLanguageSources } from '@constants/multi-languages';
+import BaseController from '../../../controllers/admin/base-controller';
+import BannerService from '../../../services/admin/ecommerce/banner-service'
+import GeneralService from '../../../services/admin/general-service';
+import BannerModel from '../../../model/admin/ecommerce/banner-model';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -19,6 +21,12 @@ class BannerController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+            const userData = await res.locals.user;
+
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -47,13 +55,13 @@ class BannerController extends BaseController {
                 sort
             });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: banners,
                 totalCount: await BannerService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching banners' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching banners' });
         }
     }
 
@@ -63,7 +71,7 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues } = validatedData.data;
+                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const mewBannerImages = (req as any).files.filter((file: any) =>
@@ -77,7 +85,7 @@ class BannerController extends BaseController {
                     bannerImages = await BannerService.setBannerBlocksImages(req, mewBannerImages);
 
                     const bannerData = {
-                        countryId,
+                        countryId: countryId || getCountryId(user),
                         bannerTitle,
                         slug: slug || slugify(bannerTitle),
                         page,
@@ -88,7 +96,7 @@ class BannerController extends BaseController {
                         bannerImages: bannerImages,
                         bannerImagesUrl: handleFileUpload(req, null, (req.file || mewBannerImages), 'bannerImagesUrl', 'banner'),
                         description,
-                        status: '1',
+                        status: status || '1',
                         createdBy: user._id,
                         createdAt: new Date()
                     };
@@ -104,12 +112,12 @@ class BannerController extends BaseController {
                             );
 
                             await languageValues.map(async (languageValue: any, index: number) => {
+                                const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${index}]`));
 
                                 let languageBannerImages = []
-                                if (languageValuesImages.length > 0) {
-                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages);
+                                if (Array.isArray(matchingImage) && matchingImage?.length > 0) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage);
                                 }
-                                console.log('languageBannerImages', languageBannerImages);
 
                                 GeneralService.multiLanguageFieledsManage(newBanner._id, {
                                     ...languageValue,
@@ -124,6 +132,11 @@ class BannerController extends BaseController {
                         return controller.sendSuccessResponse(res, {
                             requestedData: newBanner,
                             message: 'Banner created successfully!'
+                        }, 200, { // task log
+                            sourceFromId: newBanner._id,
+                            sourceFrom: adminTaskLog.ecommerce.banner,
+                            activity: adminTaskLogActivity.create,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
@@ -163,17 +176,17 @@ class BannerController extends BaseController {
             const bannerId = req.params.id;
             if (bannerId) {
                 const banner = await BannerService.findOne(bannerId);
-                controller.sendSuccessResponse(res, {
+                return controller.sendSuccessResponse(res, {
                     requestedData: banner,
                     message: 'Success'
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Banner Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
@@ -214,11 +227,13 @@ class BannerController extends BaseController {
 
                             for (let i = 0; i < updatedBannerData.languageValues.length; i++) {
                                 const languageValue = updatedBannerData.languageValues[i];
-                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, updatedBanner._id);
+                                const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, updatedBanner._id, languageValue.languageId);
+                                const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
                                 let languageBannerImages = existingLanguageValues.languageValues?.bannerImages;
 
-                                if (languageValuesImages.length > i && languageValuesImages[i]) {
-                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, languageValuesImages, languageBannerImages);
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    languageBannerImages = await BannerService.setBannerBlocksImages(req, matchingImage, languageBannerImages);
                                 }
 
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBanner._id, {
@@ -236,6 +251,7 @@ class BannerController extends BaseController {
                             mapped[key] = updatedBanner[key];
                             return mapped;
                         }, {});
+
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedBannerMapped,
@@ -277,28 +293,33 @@ class BannerController extends BaseController {
 
                     const updatedBanner = await BannerService.update(bannerId, updatedBannerData);
                     if (updatedBanner) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedBanner,
                             message: 'Banner status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedBanner._id,
+                            sourceFrom: adminTaskLog.ecommerce.banner,
+                            activity: adminTaskLogActivity.statusChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Banner Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Banner Id not found! Please try again with banner id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating banner'
             }, req);
         }
@@ -314,28 +335,33 @@ class BannerController extends BaseController {
 
                     const updatedBanner = await GeneralService.changePosition(BannerModel, bannerId, position);
                     if (updatedBanner) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedBanner,
                             message: 'Banner status updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedBanner._id,
+                            sourceFrom: adminTaskLog.ecommerce.banner,
+                            activity: adminTaskLogActivity.positionChange,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Banner Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Banner Id not found! Please try again with banner id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating banner'
             }, req);
         }
@@ -349,23 +375,30 @@ class BannerController extends BaseController {
                 if (banner) {
                     await BannerService.destroy(bannerId);
 
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.banner, bannerId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, bannerId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }
-                    controller.sendSuccessResponse(res, { message: 'Banner deleted successfully!' });
+                    return controller.sendSuccessResponse(res,
+                        { message: 'Banner deleted successfully!' },
+                        200, { // task log
+                        sourceFromId: bannerId,
+                        sourceFrom: adminTaskLog.ecommerce.banner,
+                        activity: adminTaskLogActivity.delete,
+                        activityStatus: adminTaskLogStatus.success
+                    });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'This banner details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Banner id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting banner' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting banner' });
         }
     }
 

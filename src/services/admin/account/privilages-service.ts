@@ -1,5 +1,5 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import PrivilagesModel, { PrivilagesProps } from '@model/admin/account/privilages-model';
+import { FilterOptionsProps, pagination } from '../../../../src/components/pagination';
+import PrivilagesModel, { PrivilagesProps } from '../../../../src/model/admin/account/privilages-model';
 
 
 class PrivilagesService {

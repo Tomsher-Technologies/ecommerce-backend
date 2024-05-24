@@ -1,15 +1,16 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { deleteFile, formatZodError, handleFileUpload, slugify, stringToArray } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
+import { deleteFile, formatZodError, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import CollectionsProductsService from '@services/admin/website/collections-products-service';
-import { collectionProductSchema } from '@utils/schemas/admin/website/collection-product-shema';
-import path from 'path';
-import GeneralService from '@services/admin/general-service';
-import { multiLanguageSources } from '@constants/multi-languages';
+import BaseController from '../../../controllers/admin/base-controller';
+import CollectionsProductsService from '../../../services/admin/website/collections-products-service';
+import { collectionProductSchema } from '../../../utils/schemas/admin/website/collection-product-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+
+import GeneralService from '../../../services/admin/general-service';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 const controller = new BaseController();
 
@@ -48,13 +49,13 @@ class CollectionsProductsController extends BaseController {
                 sort
             });
 
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: collections,
                 totalCount: await CollectionsProductsService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching collections' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching collections' });
         }
     }
 
@@ -108,6 +109,11 @@ class CollectionsProductsController extends BaseController {
                     return controller.sendSuccessResponse(res, {
                         requestedData: newCollection,
                         message: 'Collection created successfully!'
+                    }, 200, { // task log
+                        sourceFromId: newCollection._id,
+                        sourceFrom: adminTaskLog.website.collectionsProducts,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
@@ -146,7 +152,7 @@ class CollectionsProductsController extends BaseController {
                     const collectionProducts = await CollectionsProductsService.findCollectionProducts(collection.collectionsProducts);
                     // const unCollectionedProducts = await CollectionsProductsService.findUnCollectionedProducts(collection.collectionsProducts);
 
-                    controller.sendSuccessResponse(res, {
+                    return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: collection._id,
                             collectionTitle: collection.collectionTitle,
@@ -160,17 +166,17 @@ class CollectionsProductsController extends BaseController {
                         message: 'Success'
                     });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Collection not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Collection Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 
@@ -191,28 +197,33 @@ class CollectionsProductsController extends BaseController {
 
                     const updatedCollection = await CollectionsProductsService.update(collectionId, updatedCollectionData);
                     if (updatedCollection) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'
+                        }, 200, { // task log
+                            sourceFromId: updatedCollection._id,
+                            sourceFrom: adminTaskLog.website.collectionsProducts,
+                            activity: adminTaskLogActivity.update,
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Collection Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Collection Id not found! Please try again with collection id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating collection'
             }, req);
         }
@@ -225,31 +236,36 @@ class CollectionsProductsController extends BaseController {
                 const collection = await CollectionsProductsService.findOne(collectionId);
                 if (collection) {
                     await CollectionsProductsService.destroy(collectionId);
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.collectionsProducts, collectionId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.website.collectionsProducts, collectionId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }
 
                     // console.log('collectionData', path.join(__dirname, `../../../${collection.collectionImageUrl}`));
                     // deleteFile(path.join(__dirname, `../../../${collection.collectionImageUrl}`))
-                    controller.sendSuccessResponse(res, {
+                    return controller.sendSuccessResponse(res, {
                         message: 'Collection deleted successfully!',
                         requestedData: {
                             collectionId: collectionId
                         }
+                    }, 200, { // task log
+                        sourceFromId: collectionId,
+                        sourceFrom: adminTaskLog.website.collectionsProducts,
+                        activity: adminTaskLogActivity.delete,
+                        activityStatus: adminTaskLogStatus.success
                     });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This collection details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Collection id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting collection' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting collection' });
         }
     }
 

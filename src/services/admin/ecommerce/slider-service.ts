@@ -1,8 +1,9 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import mongoose from 'mongoose';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import { multiLanguageSources } from '@constants/multi-languages';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
-import SliderModel, { SliderProps } from '@model/admin/ecommerce/slider-model';
+import SliderModel, { SliderProps } from '../../../model/admin/ecommerce/slider-model';
 
 class SliderService {
 
@@ -19,7 +20,7 @@ class SliderService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$sliderId'] },
-                                    { $eq: ['$source', multiLanguageSources.sliders] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.sliders] },
                                 ],
                             },
                         },
@@ -64,7 +65,6 @@ class SliderService {
             { $sort: finalSort },
 
             this.lookup,
-
             this.project
         ];
 
@@ -99,11 +99,10 @@ class SliderService {
     }
 
     async findOne(sliderId: string): Promise<SliderProps | null> {
-        const sliderData = await SliderModel.findById(sliderId);
-
-        if (sliderData) {
+        if (sliderId) {
+            const objectId = new mongoose.Types.ObjectId(sliderId);
             const pipeline = [
-                { $match: { _id: sliderData._id } },
+                { $match: { _id: objectId } },
                 this.lookup,
                 this.project
             ];
@@ -144,4 +143,3 @@ class SliderService {
 }
 
 export default new SliderService();
-  

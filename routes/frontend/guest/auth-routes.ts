@@ -2,7 +2,7 @@ import 'module-alias/register';
 import express, { Request, Response, NextFunction, Router } from 'express';
 import helmet from 'helmet';
 
-import GuestController from '@controllers/frontend/guest/guest-controller';
+import GuestController from '../../../src/controllers/frontend/guest/guest-controller';
 
 const router: Router = express.Router();
 

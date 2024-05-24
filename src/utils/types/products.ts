@@ -1,34 +1,29 @@
 import { Document, Schema } from "mongoose";
 
 export interface ProductsProps extends Document {
-    en_productTitle: string;
-    ar_productTitle: string;
+    productTitle: string;
     slug: string;
+    isVariant: number;
     description: string;
-    longDescription: string;
     productImageUrl: string;
-    category: Schema.Types.ObjectId;
+    longDescription: string;
     brand: Schema.Types.ObjectId;
     unit: string;
-    cartMinQuantity: number;
-    cartMaxQuantity: number;
+    measurements: {
+        weight?: string;
+        hight?: string;
+        length?: string;
+        width?: string;
+    };
     tags: string;
-    inventryDetails: any;
     sku: string;
-    isVariant: string;
+    deliveryDays:string;
     newArrivalPriority: string;
     corporateGiftsPriority: string;
+    completeTab: number;
     pageTitle?: string;
     status: string;
     statusAt?: Date;
-    metaTitle?: string;
-    metaKeywords?: string;
-    metaDescription?: string;
-    metaImageUrl?: string;
-    ogTitle?: string;
-    ogDescription?: string;
-    twitterTitle?: string;
-    twitterDescription?: string;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -46,4 +41,21 @@ export interface ProductsQueryParams {
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;
+}
+
+export interface ProductVariantsProps {
+    variantSku:string;
+    price:string;
+    discountPrice:string;
+    quantity:string;
+    isDefault :string;
+    variantDescription :string;
+    cartMinQuantity :string;
+    cartMaxQuantity :string;
+}
+export interface ProductVariantServiceCreateProps {
+    productId:string;
+    slug:string;
+    countryId:string;
+    productVariants:ProductVariantsProps;
 }
