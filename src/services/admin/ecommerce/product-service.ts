@@ -162,7 +162,7 @@ class ProductsService {
                         $lookup: {
                             from: `${collections.ecommerce.seopages}`,
                             localField: '_id',
-                            foreignField: 'variantId',
+                            foreignField: 'pageReferenceId',
                             as: 'productSeo',
                         },
                     },
@@ -216,8 +216,15 @@ class ProductsService {
         this.seoLookup = {
             $lookup: {
                 from: `${collections.ecommerce.seopages}`,
-                localField: '_id',
-                foreignField: 'pageId',
+                let: { productId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$pageId', '$$productId'] },
+                            'pageReferenceId': null
+                        }
+                    }
+                ],
                 as: 'productSeo',
             },
         };
@@ -292,7 +299,6 @@ class ProductsService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        console.log("query:",query);
 
         let pipeline: any[] = [
             { $match: query },
@@ -305,7 +311,7 @@ class ProductsService {
             this.brandObject,
         ];
 
-        return ProductsModel.find(pipeline).exec();
+        return ProductsModel.aggregate(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
