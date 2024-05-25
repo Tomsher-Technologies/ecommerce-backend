@@ -17,6 +17,7 @@ class ProductsService {
     private seoLookup: any;
     private brandObject: any;
     private specificationLookup: any;
+    private seoObject: any;
 
     private multilanguageFieldsLookup: any;
     private project: any;
@@ -143,7 +144,7 @@ class ProductsService {
                                     input: '$productSpecification',
                                     in: {
                                         variantId: '$$this.variantId',
-                                        _id:'$$this._id',
+                                        _id: '$$this._id',
                                         specificationId: '$$this.specification._id',
                                         specificationTitle: '$$this.specification.specificationTitle',
                                         slug: '$$this.specification.slug',
@@ -232,6 +233,11 @@ class ProductsService {
                 ],
                 as: 'productSeo',
             },
+        };
+        this.seoObject = {
+            $addFields: {
+                productSeo: { $arrayElemAt: ['$productSeo', 0] }
+            }
         };
 
         this.specificationLookup = {
@@ -332,11 +338,9 @@ class ProductsService {
             { $sort: finalSort },
 
             this.categoryLookup,
-            
             this.brandLookup,
             this.brandObject,
         ];
-console.log("sdfsdfsf");
 
         return ProductsModel.aggregate(pipeline).exec();
     }
@@ -361,20 +365,15 @@ console.log("sdfsdfsf");
 
                 const pipeline = [
                     { $match: { _id: objectId } },
-                    // { $replaceRoot: this.project },
                     this.categoryLookup,
                     this.variantLookup,
                     this.imageLookup,
                     this.brandLookup,
                     this.brandObject,
                     this.seoLookup,
-                    {
-                        $unwind: '$productSeo'
-                    },
+                    this.seoObject,
                     this.multilanguageFieldsLookup,
                     this.specificationLookup
-
-                    // this.project
                 ];
 
                 const productDataWithValues = await ProductsModel.aggregate(pipeline);
