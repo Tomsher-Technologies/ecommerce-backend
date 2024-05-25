@@ -9,7 +9,7 @@ export interface ProductVariantsProps extends Document {
     price: number;
     quantity: string;
     discountPrice: number;
-    isDefault: Boolean,
+    isDefault: Number,
     hsn: string;
     mpn: string;
     barcode: string;
@@ -82,9 +82,9 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: Number,
     },
     isDefault: {
-        type: Boolean,
+        type: Number,
         required: true,
-        default: true
+        default: 0
     },
     status: {
         type: String,

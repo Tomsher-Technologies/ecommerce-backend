@@ -116,7 +116,7 @@ class ProductVariantService {
             price: productVariants.price,
             discountPrice: productVariants.discountPrice,
             quantity: productVariants.quantity,
-            isDefault: productVariants.isDefault,
+            isDefault: Number(productVariants.isDefault),
             variantDescription: productVariants.variantDescription,
             cartMinQuantity: productVariants.cartMinQuantity,
             cartMaxQuantity: productVariants.cartMaxQuantity,
