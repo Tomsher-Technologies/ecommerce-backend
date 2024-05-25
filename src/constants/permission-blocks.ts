@@ -13,11 +13,14 @@ export const permissionBlocks = {
     },
     website: {
         collectionsProducts: 'collectionsproducts',
-        navigationMenu: 'navigation menu',
+        navigationMenu: 'navigation-menu',
     },
     setup: {
         languages: 'languages',
         country: 'country',
+    },
+    stores: {
+        warehouse: 'warehouse',
     },
     account: {
         privilages: 'privilages',

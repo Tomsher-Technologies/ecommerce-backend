@@ -17,6 +17,7 @@ class ProductsService {
     private seoLookup: any;
     private brandObject: any;
     private specificationLookup: any;
+    private seoObject: any;
 
     private multilanguageFieldsLookup: any;
     private project: any;
@@ -78,7 +79,8 @@ class ProductsService {
                                     input: '$productVariantAttributes',
                                     in: {
                                         variantId: '$$this.variantId',
-                                        _id: '$$this.attribute._id',
+                                        _id: '$$this._id',
+                                        attributeId: '$$this.attribute._id',
                                         attributeTitle: '$$this.attribute.attributeTitle',
                                         slug: '$$this.attribute.slug',
                                         attributeType: '$$this.attribute.attributeType',
@@ -142,8 +144,8 @@ class ProductsService {
                                     input: '$productSpecification',
                                     in: {
                                         variantId: '$$this.variantId',
-
-                                        _id: '$$this.specification._id',
+                                        _id: '$$this._id',
+                                        specificationId: '$$this.specification._id',
                                         specificationTitle: '$$this.specification.specificationTitle',
                                         slug: '$$this.specification.slug',
                                         specificationDetail: {
@@ -162,9 +164,12 @@ class ProductsService {
                         $lookup: {
                             from: `${collections.ecommerce.seopages}`,
                             localField: '_id',
-                            foreignField: 'variantId',
+                            foreignField: 'pageReferenceId',
                             as: 'productSeo',
                         },
+                    },
+                    {
+                        $unwind: "$productSeo"
                     },
                     {
                         $lookup: {
@@ -194,7 +199,8 @@ class ProductsService {
                 },
                 {
                     $unwind: "$category"
-                }, {
+                },
+                {
                     $project: {
                         _id: 1,
                         productId: 1,
@@ -216,10 +222,22 @@ class ProductsService {
         this.seoLookup = {
             $lookup: {
                 from: `${collections.ecommerce.seopages}`,
-                localField: '_id',
-                foreignField: 'pageId',
+                let: { productId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$pageId', '$$productId'] },
+                            'pageReferenceId': null
+                        }
+                    }
+                ],
                 as: 'productSeo',
             },
+        };
+        this.seoObject = {
+            $addFields: {
+                productSeo: { $arrayElemAt: ['$productSeo', 0] }
+            }
         };
 
         this.specificationLookup = {
@@ -292,9 +310,28 @@ class ProductsService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        console.log("query:",query);
 
         let pipeline: any[] = [
+            // {
+            //     $lookup: {
+            //         from: 'brands',
+            //         localField: 'brand',
+            //         foreignField: '_id',
+            //         as: 'brand'
+            //     }
+            // },
+            // {
+            //     $match: {
+            //         'brand.brandTitle': query.keyword // Filter by the specified brand title
+            //     }
+            // },
+            // {
+            //     // $project: {
+            //     //     _id: 1,
+            //     //     productTitle: 1,
+            //     //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
+            //     // }
+            // },
             { $match: query },
             { $skip: skip },
             { $limit: limit },
@@ -305,7 +342,7 @@ class ProductsService {
             this.brandObject,
         ];
 
-        return ProductsModel.find(pipeline).exec();
+        return ProductsModel.aggregate(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
@@ -328,17 +365,15 @@ class ProductsService {
 
                 const pipeline = [
                     { $match: { _id: objectId } },
-                    // { $replaceRoot: this.project },
                     this.categoryLookup,
                     this.variantLookup,
                     this.imageLookup,
                     this.brandLookup,
                     this.brandObject,
                     this.seoLookup,
+                    this.seoObject,
                     this.multilanguageFieldsLookup,
                     this.specificationLookup
-
-                    // this.project
                 ];
 
                 const productDataWithValues = await ProductsModel.aggregate(pipeline);

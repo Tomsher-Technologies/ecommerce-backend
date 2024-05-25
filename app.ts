@@ -32,9 +32,11 @@ import OfferRoutes from './routes/admin/marketing/offer-routes';
 // admin setup
 import CountryRoutes from './routes/admin/setup/country-routes';
 import LanguagesRoutes from './routes/admin/setup/languages-routes';
+import CollectionProductRoutes from './routes/admin/website/collection-product-routes';
+import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes';
 
-import CollectionProductRoutes from './routes/admin/website/collection-product-routes'
-import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes'
+// store
+import WarehouseMenuRoutes from './routes/admin/stores/warehouse-routes';
 
 // frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes'
@@ -119,6 +121,8 @@ adminRouter.use('/setup/languages', LanguagesRoutes);
 adminRouter.use('/website/collection-products', CollectionProductRoutes);
 adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 
+// stores
+adminRouter.use('/stores/warehouse', WarehouseMenuRoutes);
 
 // adminRouter.use(logResponseStatus);
 // adminRouter.use(errorMiddleware);

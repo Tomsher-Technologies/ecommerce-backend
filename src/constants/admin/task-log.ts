@@ -27,6 +27,9 @@ export const adminTaskLog = {
         country: 'country',
         languages: 'languages',
     },
+    store: {
+        warehouse: 'warehouse',
+    },
 
 }
 export const adminTaskLogStatus = {
