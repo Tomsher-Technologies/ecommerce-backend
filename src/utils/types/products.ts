@@ -8,6 +8,7 @@ export interface ProductsProps extends Document {
     productImageUrl: string;
     longDescription: string;
     brand: Schema.Types.ObjectId;
+    warehouse: Schema.Types.ObjectId;
     unit: string;
     measurements: {
         weight?: string;
@@ -17,7 +18,7 @@ export interface ProductsProps extends Document {
     };
     tags: string;
     sku: string;
-    deliveryDays:string;
+    deliveryDays: string;
     newArrivalPriority: string;
     corporateGiftsPriority: string;
     completeTab: number;
@@ -44,18 +45,18 @@ export interface ProductsQueryParams {
 }
 
 export interface ProductVariantsProps {
-    variantSku:string;
-    price:string;
-    discountPrice:string;
-    quantity:string;
-    isDefault :string;
-    variantDescription :string;
-    cartMinQuantity :string;
-    cartMaxQuantity :string;
+    variantSku: string;
+    price: string;
+    discountPrice: string;
+    quantity: string;
+    isDefault: string;
+    variantDescription: string;
+    cartMinQuantity: string;
+    cartMaxQuantity: string;
 }
 export interface ProductVariantServiceCreateProps {
-    productId:string;
-    slug:string;
-    countryId:string;
-    productVariants:ProductVariantsProps;
+    productId: string;
+    slug: string;
+    countryId: string;
+    productVariants: ProductVariantsProps;
 }

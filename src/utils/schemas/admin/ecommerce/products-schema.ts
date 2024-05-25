@@ -28,12 +28,13 @@ export const productSchema = zod.object({
         length: zod.string().optional(),
         width: zod.string().optional(),
     }).optional(),
+    warehouse: zod.string().optional(),
     unit: zod.string().optional(),
     description: zod.string({ required_error: 'Description is required', }).min(17, 'Description is should be 10 chars minimum'),
     longDescription: zod.string().optional(),
-    productImage: zod.any(fileSchema).optional(),
+    productImage: zod.string().optional(),
     imageGallery: zod.any().optional(),
-    productImageUrl: zod.string().optional(),
+    productImageUrl: zod.any({ required_error: 'Product image is required' }).nullable(),
     removedGalleryImages: zod.any().optional(),
     completeTab: zod.any().optional(),
     isVariant: zod.string({ required_error: 'Variant is required', }),
@@ -45,6 +46,15 @@ export const productSchema = zod.object({
             specificationDetailId: zod.string().optional(),
         })
     ).optional(),
+    productSeo: zod.object({
+        metaTitle: zod.string().optional(),
+        metaKeywords: zod.string().optional(),
+        metaDescription: zod.string().optional(),
+        ogTitle: zod.string().optional(),
+        ogDescription: zod.string().optional(),
+        twitterTitle: zod.string().optional(),
+        twitterDescription: zod.string().optional(),
+    }).optional(),
     variants: zod.array(zod.object({
         _id: zod.string().optional(),
         countryId: zod.string({ required_error: 'Countryis required', }).min(2, 'Country is required'),
@@ -219,7 +229,7 @@ export const productSchema = zod.object({
 
     }
 
-});
+})
 // .superRefine((data, ctx) => {
 //     if (data.isVariant === "1") {
 //         data.variants.forEach((variant, variantIndex) => {

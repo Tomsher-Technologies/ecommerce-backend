@@ -189,7 +189,10 @@ class GeneralService {
                     const deletedKeyId = Object.values(deleteKeyIds)[0];
 
                     if ((deletedKeyValue) && (deletedKeyId)) {
-                        await model.deleteMany({ [deletedKeyValue]: deletedKeyId })
+                        const findDeletedData = await model.find({ [deletedKeyValue]: deletedKeyId })
+                        if(findDeletedData){
+                            await model.deleteMany({ [deletedKeyValue]: deletedKeyId })
+                        }
                     }
                 } catch (error) {
                     console.error(`Error deleting document from ${model.modelName}:`, error);

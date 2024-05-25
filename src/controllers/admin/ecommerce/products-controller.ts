@@ -139,7 +139,7 @@ class ProductsController extends BaseController {
 
             if (validatedData.success) {
                 const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription,
-                    completeTab, productSpecification, pageTitle, deliveryDays, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, variants, productCategory, languageValues } = validatedData.data;
+                    completeTab, warehouse, productSpecification, productSeo, pageTitle, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const productImage = (req as any).files.find((file: any) => file.fieldname === 'productImage');
@@ -159,6 +159,7 @@ class ProductsController extends BaseController {
                     longDescription,
                     completeTab,
                     productImageUrl: handleFileUpload(req, null, (req.file || productImage), 'productImageUrl', 'product'),
+                    warehouse: warehouse as any,
                     unit: unit as string,
                     measurements: measurements as {
                         weight?: string,
@@ -175,22 +176,14 @@ class ProductsController extends BaseController {
                     createdBy: user._id,
                 };
 
+
                 newProduct = await ProductsService.create(productData);
                 if (newProduct) {
-                    const seoData: Partial<SeoPageProps> = {
-                        metaTitle,
-                        metaKeywords,
-                        metaDescription,
-                        ogTitle,
-                        ogDescription,
-                        twitterTitle,
-                        twitterDescription
-                    }
-                    if (seoData.metaTitle || seoData.metaKeywords || seoData.metaDescription || seoData.ogTitle || seoData.ogDescription || seoData.twitterTitle || seoData.twitterDescription) {
+                    if (productSeo) {
                         const newSeo = await SeoPageService.create({
                             pageId: newProduct._id,
                             page: seoPage.ecommerce.products,
-                            ...seoData
+                            ...productSeo
                         })
                     }
 
@@ -234,7 +227,7 @@ class ProductsController extends BaseController {
                                     if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
 
 
-                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex])
+                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex], slugify(slugData))
                                         console.log("checkDuplication", checkDuplication);
 
                                         if (checkDuplication) {
@@ -300,7 +293,7 @@ class ProductsController extends BaseController {
                                             }
                                             await SeoPageService.create(seoData)
                                         }
-                                        console.log("fdsfsdfsd",variants[variantsIndex].productVariants[productVariantsIndex].productSpecification?.length);
+                                        console.log("fdsfsdfsd", variants[variantsIndex].productVariants[productVariantsIndex].productSpecification?.length);
 
                                         if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
                                             for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length; j++) {
@@ -310,7 +303,7 @@ class ProductsController extends BaseController {
                                                     variantId: productVariantData._id,
                                                     ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
                                                 }
-                                                console.log("specificationData123:",specificationData);
+                                                console.log("specificationData123:", specificationData);
 
                                                 await ProductSpecificationService.create(specificationData)
                                             }
@@ -437,30 +430,34 @@ class ProductsController extends BaseController {
             }
 
             console.log("error1234:", error.message);
-            await GeneralService.deleteParentModel([
-                ...(newProduct?._id &&
-                {
-                    _id: newProduct._id,
-                    model: ProductsModel
-                },
-                {
-                    pageId: newProduct._id,
-                    model: SeoPageModel
-                },
-                {
-                    productId: newProduct._id,
-                    model: ProductSpecificationModel
-                },
-                {
-                    sourceId: newProduct._id,
-                    model: MultiLanguageFieledsModel
-                },
+            if (newProduct && newProduct._id) {
+                await GeneralService.deleteParentModel([
+                    ...(newProduct?._id &&
+
+                    {
+                        _id: newProduct._id,
+                        model: ProductsModel
+                    },
+                    {
+                        pageId: newProduct._id,
+                        model: SeoPageModel
+                    },
                     {
                         productId: newProduct._id,
-                        model: ProductCategoryLinkModel
-                    } as any
-                )
-            ]);
+                        model: ProductSpecificationModel
+                    },
+                    {
+                        sourceId: newProduct._id,
+                        model: MultiLanguageFieledsModel
+                    },
+                        {
+                            productId: newProduct._id,
+                            model: ProductCategoryLinkModel
+                        } as any
+                    )
+                ]);
+            }
+
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating product',
             }, req);
@@ -609,13 +606,14 @@ class ProductsController extends BaseController {
                     };
 
                     var updatedCategory: any
-
                     const updatedProduct = await ProductsService.update(productId, updatedProductData);
-                    if (updatedProduct) {
 
-                        const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
+                    if (updatedProduct) {
+                        if (updatedProductData.productCategory) {
+                            const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
+                        }
                         if (updatedProductData.variants) {
-                            const newVariant = await ProductVariantService.variantService(updatedProduct._id, updatedProductData.variants, userData);
+                            const newVariant = await ProductVariantService.variantService(updatedProduct, updatedProductData.variants, userData);
                         }
                         let newLanguageValues: any = []
 
@@ -949,10 +947,11 @@ const category = [{
 
 const countryWiseProducts = [
     { // variant table
-        _id:'',
+        _id: '',
         countryId: '',
         productVariants: [
             {
+                _id: "",
                 extraProductTitle: '',
                 variantId: '',
                 slug: '',

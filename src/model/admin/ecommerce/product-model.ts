@@ -55,7 +55,10 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         type: String,
         default: ''
     },
-
+    warehouse: {
+        type: String,
+        default: ''
+    },
     measurements: {
         weight: {
             type: String,
@@ -74,7 +77,7 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             default: ''
         },
     },
-    deliveryDays:{
+    deliveryDays: {
         type: String
     },
     tags: {
