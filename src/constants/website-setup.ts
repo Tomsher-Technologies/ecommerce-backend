@@ -8,6 +8,9 @@ export const websiteSetup = {
 export const blockReferences = {
     desktopMenu: 'desktop-menu',
     mobileMenu: 'mobile-menu',
-    websiteSettings:'website-settings',
-    defualtSettings:'defualt-settings',
+    basicDetailsSettings: 'basic-details-settings',
+    websiteSettings: 'website-settings',
+    defualtSettings: 'defualt-settings',
+    shipmentSettings: 'shipment-settings',
+    enableFeatures: 'enable-features',
 }

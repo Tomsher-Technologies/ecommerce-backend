@@ -19,7 +19,7 @@ class BrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { _id, page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -88,7 +88,7 @@ class BrandsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { brandTitle, slug, description,  metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues,status } = validatedData.data;
+                const { brandTitle, slug, description, metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
@@ -105,7 +105,7 @@ class BrandsController extends BaseController {
                     metaImageUrl: metaImage as string,
                     twitterTitle: twitterTitle as string,
                     twitterDescription: twitterDescription as string,
-                    ['status' as string] : status || '1',
+                    ['status' as string]: status || '1',
                     statusAt: new Date(),
                     createdBy: user._id,
                     createdAt: new Date(),

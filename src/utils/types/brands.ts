@@ -1,4 +1,5 @@
-export interface BrandQueryParams {
+export type BrandQueryParams ={
+    _id: string;
     page_size?: string;
     limit?: string;
     status?: string;
