@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+import { blockReferences, websiteSetup } from '../../../constants/website-setup';
+
 export interface WebsiteSetupProps extends Document {
     countryId: Schema.Types.ObjectId;
     block: string;
@@ -16,15 +18,17 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',  
+        ref: 'Countries',
     },
     block: {
         type: String,
-        required: true
+        required: true,
+        enum: [websiteSetup.menu, websiteSetup.basicSettings],
     },
     blockReference: {
         type: String,
-        default: ''
+        default: '',
+        enum: [blockReferences.desktopMenu, blockReferences.websiteSettings, blockReferences.defualtSettings],
     },
     blockValues: {
         type: Schema.Types.Mixed,

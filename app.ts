@@ -32,6 +32,7 @@ import OfferRoutes from './routes/admin/marketing/offer-routes';
 // admin setup
 import CountryRoutes from './routes/admin/setup/country-routes';
 import LanguagesRoutes from './routes/admin/setup/languages-routes';
+import SetingsRoutes from './routes/admin/setup/settings-routes';
 import CollectionProductRoutes from './routes/admin/website/collection-product-routes';
 import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes';
 
@@ -116,6 +117,7 @@ adminRouter.use('/marketing/offers', OfferRoutes);
 // //admin setup
 adminRouter.use('/setup/country', CountryRoutes);
 adminRouter.use('/setup/languages', LanguagesRoutes);
+adminRouter.use('/setup/website-settings', SetingsRoutes);
 
 //admin website 
 adminRouter.use('/website/collection-products', CollectionProductRoutes);

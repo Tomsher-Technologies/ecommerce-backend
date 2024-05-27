@@ -26,6 +26,9 @@ export const adminTaskLog = {
     setup: {
         country: 'country',
         languages: 'languages',
+        settings: {
+            websitesettings: 'websitesettings'
+        },
     },
     store: {
         warehouse: 'warehouse',

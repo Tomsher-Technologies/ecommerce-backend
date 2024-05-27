@@ -131,7 +131,7 @@ class NavigationMenuController extends BaseController {
                     }, 200, { // task log
                         sourceFromId: newNavigationMenu._id,
                         sourceFrom: adminTaskLog.website.navigationMenu,
-                        activity: adminTaskLogActivity.create,
+                        activity: websiteSetupId ? adminTaskLogActivity.update : adminTaskLogActivity.create,
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

@@ -16,5 +16,6 @@ export const multiLanguageSources = {
     },
     setup:{
          websiteSetups: 'websitesetups',
+         basicSettings: 'basic-settings',
     }
 }

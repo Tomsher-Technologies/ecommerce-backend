@@ -35,6 +35,8 @@ export const formatZodError = (errors: ZodError['errors']): Record<string, strin
 
 
 export const handleFileUpload = (req: any, data: any, file: any, fieldName: string, folderPath: string) => {
+    console.log('req', file);
+
     if (data && data[fieldName]) {
         if (file) {
             deleteImage(data, fieldName);
@@ -163,3 +165,7 @@ export const getIndexFromFieldName = (fieldname: string, keyValue: string): numb
     }
     return -1;
 }
+
+export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): boolean => {
+    return Object.values(obj).includes(value);
+};

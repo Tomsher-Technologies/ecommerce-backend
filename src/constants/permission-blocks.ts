@@ -18,6 +18,7 @@ export const permissionBlocks = {
     setup: {
         languages: 'languages',
         country: 'country',
+        websitesetups: 'websitesetups',
     },
     stores: {
         warehouse: 'warehouse',

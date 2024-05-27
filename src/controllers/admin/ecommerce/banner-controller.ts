@@ -94,7 +94,7 @@ class BannerController extends BaseController {
                         position,
                         blocks,
                         bannerImages: bannerImages,
-                        bannerImagesUrl: handleFileUpload(req, null, (req.file || mewBannerImages), 'bannerImagesUrl', 'banner'),
+                        bannerImagesUrl: handleFileUpload(req, null, (mewBannerImages), 'bannerImagesUrl', 'banner'),
                         description,
                         status: status || '1',
                         createdBy: user._id,
