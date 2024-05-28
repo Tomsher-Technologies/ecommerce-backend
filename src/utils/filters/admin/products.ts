@@ -5,20 +5,19 @@ import { Request, Response } from 'express';
 import collectionsProductsService from "../../../services/admin/website/collections-products-service";
 import ProductsService from '../../../services/admin/ecommerce/product-service'
 
-export const filterProduct = async (req: Request) => {
-    const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '', startDate, endDate, productId, attributeId, attributeDetailId, specificationId, specificationDetailId, brandId, categoryId, unCollectionedProducts } = req.query as ProductsQueryParams;
+export const filterProduct = async (data: any) => {
     let query: any = { _id: { $exists: true } };
     let queryFilterIds: any;
     let queryDate: any;
 
-    if (status && status !== '') {
-        query.status = { $in: Array.isArray(status) ? status : [status] };
+    if (data.status && data.status !== '') {
+        query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };
     } else {
         query.status = '1';
     }
 
-    if (keyword) {
-        const keywordRegex = new RegExp(keyword, 'i');
+    if (data.keyword) {
+        const keywordRegex = new RegExp(data.keyword, 'i');
         query = {
             $or: [
                 { productTitle: keywordRegex },
@@ -32,58 +31,67 @@ export const filterProduct = async (req: Request) => {
         } as any;
     }
 
-
-    if (startDate && endDate) {
-        queryDate = {
-            ...queryDate,
-            createdAt: {
-                $gte: new Date(startDate),
-                $lte: dateConvertPm(endDate)
+    if (data.fromDate || data.endDate) {
+        if (data.fromDate) {
+            queryDate = {
+                ...queryDate,
+                createdAt: {
+                    $gte: new Date(data.fromDate)
+                }
             }
         }
+        if (data.endDate) {
+            queryDate = {
+                ...queryDate,
+                createdAt: {
+                    $lte: dateConvertPm(data.endDate)
+                }
+            }
+        }
+
     }
 
-    if (productId) {
+    if (data.productId) {
         query = {
-            ...query, _id: new mongoose.Types.ObjectId(productId)
+            ...query, _id: new mongoose.Types.ObjectId(data.productId)
         } as any;
     }
 
-    if (categoryId) {
+    if (data.categoryId) {
         queryFilterIds = {
             ...queryFilterIds,
-            'productCategory.category._id': new mongoose.Types.ObjectId(categoryId)
+            'productCategory.category._id': new mongoose.Types.ObjectId(data.categoryId)
         }
     }
 
-    if (brandId) {
+    if (data.brandId) {
         queryFilterIds = {
             ...queryFilterIds,
-            'brand._id': new mongoose.Types.ObjectId(brandId)
+            'brand._id': new mongoose.Types.ObjectId(data.brandId)
         }
     }
 
-    if (attributeId) {
+    if (data.attributeId) {
         queryFilterIds = {
             ...queryFilterIds,
-            'productVariants.productVariantAttributes.attributeId': new mongoose.Types.ObjectId(attributeId)
+            'productVariants.productVariantAttributes.attributeId': new mongoose.Types.ObjectId(data.attributeId)
         }
-        if (attributeDetailId) {
+        if (data.attributeDetailId) {
             queryFilterIds = {
                 ...queryFilterIds,
-                'productVariants.productVariantAttributes.attributeDetail._id': new mongoose.Types.ObjectId(attributeDetailId)
+                'productVariants.productVariantAttributes.attributeDetail._id': new mongoose.Types.ObjectId(data.attributeDetailId)
             }
         }
     }
-    if (specificationId) {
+    if (data.specificationId) {
         queryFilterIds = {
             ...queryFilterIds,
-            'productVariants.productVariantAttributes.specificationId': new mongoose.Types.ObjectId(specificationId)
+            'productVariants.productSpecification.specificationId': new mongoose.Types.ObjectId(data.specificationId)
         }
-        if (specificationDetailId) {
+        if (data.specificationDetailId) {
             queryFilterIds = {
                 ...queryFilterIds,
-                'productVariants.productSpecification.specificationDetail._id': new mongoose.Types.ObjectId(specificationDetailId)
+                'productVariants.productSpecification.specificationDetail._id': new mongoose.Types.ObjectId(data.specificationDetailId)
             }
         }
     }
@@ -101,8 +109,8 @@ export const filterProduct = async (req: Request) => {
     }
     const keysToCheck: (keyof ProductsProps)[] = ['newArrivalPriority', 'corporateGiftsPriority'];
     const filteredQuery = keysToCheck.reduce((result: any, key) => {
-        if (key in req.query) {
-            result[key] = req.query[key];
+        if (key in data) {
+            result[key] = data[key];
         }
         return result;
     }, {} as Partial<ProductsQueryParams>);
@@ -118,8 +126,8 @@ export const filterProduct = async (req: Request) => {
             }
         }
     }
-    if (unCollectionedProducts) {
-        const collection = await collectionsProductsService.findOne(unCollectionedProducts);
+    if (data.unCollectionedProducts) {
+        const collection = await collectionsProductsService.findOne(data.unCollectionedProducts);
         if (collection) {
             // const unCollectionedProductIds = unCollectionedProducts ? unCollectionedProducts.split(',').map((id: string) => id.trim()) : [];
             if (collection.collectionsProducts.length > 0) {
@@ -132,19 +140,11 @@ export const filterProduct = async (req: Request) => {
     query = { ...query, ...filteredPriorityQuery };
 
     const sort: any = {};
-    if (sortby && sortorder) {
-        sort[sortby] = sortorder === 'desc' ? -1 : 1;
+    if (data.sortby && data.sortorder) {
+        sort[data.sortby] = data.sortorder === 'desc' ? -1 : 1;
     }
-    const products = await ProductsService.findAll({
-        page: parseInt(page_size as string),
-        limit: parseInt(limit as string),
-        query,
-        sort
-    });
-
-    const count = await ProductsService.getTotalCount(query)
     return {
-        products,
-        count
+        query: query,
+        sort: sort
     }
 }

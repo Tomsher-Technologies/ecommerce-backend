@@ -136,13 +136,13 @@ class AttributesService {
 
         const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.attribute });
         if (resultAttribute) {
-            const attributeDetailResult = await this.findOneAttributeDetail(data.attributeDetail, resultAttribute._id)
-                console.log("attributeDetailResult:",attributeDetailResult);
-                
-                const result: any = {
-                    resultAttribute,
-                    attributeDetailResult
-                }
+            const attributeDetailResult = await this.findOneAttributeDetail(data, resultAttribute._id)
+            // console.log("attributeDetailResult:",attributeDetailResult);
+
+            const result: any = {
+                resultAttribute,
+                attributeDetailResult
+            }
             return result
         } else {
             const attributeData = {
@@ -151,12 +151,12 @@ class AttributesService {
                 slug: slugify(data.attribute)
 
             }
-            console.log("brandData:", attributeData);
+            // console.log("brandData:", attributeData);
             const attributeResult: any = await this.create(attributeData)
             if (attributeResult) {
-                const attributeDetailResult = await this.findOneAttributeDetail(data.attributeDetail, attributeResult[0]._id)
-                console.log("attributeDetailResult:",attributeDetailResult);
-                
+                const attributeDetailResult = await this.findOneAttributeDetail(data.attributeDetailName, attributeResult[0]._id)
+                // console.log("attributeDetailResult:",attributeDetailResult);
+
                 const result: any = {
                     attributeResult,
                     attributeDetailResult
@@ -167,18 +167,19 @@ class AttributesService {
     }
 
     async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
-console.log("data",data,attributeId);
+        // console.log("data",data,attributeId);
 
-        const resultBrand: any = await AttributeDetailModel.findOne({ itemName: data });
+        const resultBrand: any = await AttributeDetailModel.findOne({ itemName: data.attributeName });
         if (resultBrand) {
             return resultBrand
         } else {
             const brandData = {
                 attributeId: attributeId,
-                itemName: data,
+                itemName: data.attributeName,
+                itemValue: data.attributeValue,
 
             }
-            console.log("brandData:", data);
+            // console.log("brandData:", data);
             const brandResult: any = await AttributeDetailModel.create(brandData);
             if (brandResult) {
                 return brandResult

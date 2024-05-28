@@ -44,7 +44,7 @@ export interface ProductsQueryParams {
     specificationId?:string;
     specificationDetailId?:string;
     categoryId?: string;
-    startDate?:string;
+    fromDate?:string;
     endDate?:string;
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
