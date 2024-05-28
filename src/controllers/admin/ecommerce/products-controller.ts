@@ -40,11 +40,20 @@ class ProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const filterProducts = await filterProduct(req)
-            console.log("filterProducts:", filterProducts);
+            const { page_size = 1, limit = 10  } = req.query as ProductsQueryParams;
+            const filterProducts = await filterProduct(req.query as ProductsQueryParams)
+            const products = await ProductsService.findAll({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
+                query: filterProducts.query,
+                sort: filterProducts.sort
+            });
+
+            const count = await ProductsService.getTotalCount(filterProducts.query)
+
             controller.sendSuccessResponse(res, {
-                requestedData: filterProducts.products,
-                totalCount: filterProducts.count,
+                requestedData: products,
+                totalCount: count,
                 message: 'Success'
             }, 200);
         } catch (error: any) {
@@ -454,6 +463,8 @@ class ProductsController extends BaseController {
                                 }
 
                                 console.log("optionColumns", optionColumns);
+                                console.log("NameColumns", NameColumns);
+
                                 console.log("valueColumns", valueColumns);
                                 const optionValue: any = [];
                                 // await valueColumns.map(async (attributeDetail: any) => {
@@ -462,20 +473,31 @@ class ProductsController extends BaseController {
                                     // console.log("attributes:", attributeDetails);
                                     optionValue.push(data[attributeDetail])
                                 }
-                                console.log("optionValue", optionValue);
+                                // console.log("optionValue", optionValue);
 
                                 const combinedArray = [];
-                                for await (const [index, option] of optionColumns.entries()) {
-                                    const value = valueColumns[index];
-                                    combinedArray.push({ option, value });
-                                }
+                                // for await (const [index, option] of optionColumns.entries()) {
+                                //     const value = valueColumns[index];
+                                //     const name = NameColumns[index]
+                                //     combinedArray.push({ option, name,value });
+                                // }
 
+                                // console.log(combinedArray);
+
+
+                                for (let i = 0; i < optionColumns.length; i++) {
+                                    combinedArray.push({
+                                        data: data[optionColumns[i]],
+                                        name: data[NameColumns[i]],
+                                        value: data[valueColumns[i]]
+                                    });
+                                }
                                 console.log(combinedArray);
 
-                                await optionColumns.map(async (attribute: any, index: number) => {
+                                await combinedArray.map(async (value: any, index: number) => {
 
-                                    const attributes = await AttributesService.findOneAttribute({ attribute: data[attribute], attributeDetail: optionValue[index] })
-                                    console.log("attributes:", attributes);
+                                    const attributes = await AttributesService.findOneAttribute({ attribute: value.data, attributeDetailName: value.name, attributeDetailValue: value.value })
+                                    // console.log("attributes:", attributes);
                                 })
 
                                 // await valueColumns.map(async (attributeDetail: any) => {
