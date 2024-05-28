@@ -1,4 +1,5 @@
 export interface QueryParams {
+    _id?: string;
     page_size?: string;
     limit?: string;
     status?: string;

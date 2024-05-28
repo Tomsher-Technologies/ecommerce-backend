@@ -32,6 +32,7 @@ export const adminTaskLog = {
     },
     store: {
         warehouse: 'warehouse',
+        store: 'store',
     },
 
 }

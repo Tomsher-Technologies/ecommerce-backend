@@ -35,8 +35,10 @@ class SettingsController extends BaseController {
 
                     const newFavIcon = (req as any).files?.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[favIcon]') && file.fieldname.includes('blockValues[favIcon]'));
                     const newWebsiteLogo = (req as any).files?.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[websiteLogo]') && file.fieldname.includes('blockValues[websiteLogo]'));
-             
-                    delete blockValues.languageValues;
+
+                    if (blockReferences.basicDetailsSettings === blockReference) {
+                        delete blockValues.languageValues;
+                    }
 
                     const settingsData: Partial<any> = {
                         countryId: new mongoose.Types.ObjectId(countryId),
@@ -73,15 +75,13 @@ class SettingsController extends BaseController {
                     } else {
                         if (websiteSetupId) {
                             if (languageSources && languageValues) {
-                           
-
                                 const languageValuesData = await GeneralService.multiLanguageFieledsManage(websiteSetupId, {
                                     languageId,
                                     source: languageSources,
                                     sourceId: websiteSetupId,
                                     languageValues: languageValues
                                 });
-                       
+
                                 if (languageValuesData) {
                                     newBasicSettings = languageValuesData?.languageValues
                                 } else {
@@ -154,7 +154,9 @@ class SettingsController extends BaseController {
                     const websiteSettingData: any = await SettingsService.findOne({ countryId, block, blockReference });
 
                     if (languageId && languageSources && websiteSettingData) {
-                        const languageValues = await GeneralService.findOneLanguageValues(languageSources, websiteSettingData._id, languageId)
+                        const languageValues = await GeneralService.findOneLanguageValues(languageSources, websiteSettingData._id, languageId);
+                        console.log('languageValues', languageValues);
+
                         if (languageValues) {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: languageValues.languageValues,

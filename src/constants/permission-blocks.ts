@@ -22,6 +22,7 @@ export const permissionBlocks = {
     },
     stores: {
         warehouse: 'warehouse',
+        store: 'store',
     },
     account: {
         privilages: 'privilages',
