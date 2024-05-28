@@ -2,13 +2,13 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 
-import { formatZodError, slugify } from '../../../utils/helpers';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { QueryParams } from '../../../utils/types/common';
 import { storeSchema } from '../../../utils/schemas/admin/store/store-schema';
 
 import BaseController from '../../../controllers/admin/base-controller';
-import StoreService from '../../../services/admin/stores/sore-service';
+import StoreService from '../../../services/admin/stores/store-service';
 import { StoreProps } from '../../../model/admin/stores/store-model';
 
 const controller = new BaseController();
@@ -38,6 +38,9 @@ class StoreController extends BaseController {
                     $or: [
                         { storeTitle: keywordRegex },
                         { storePhone: keywordRegex },
+                        { storePhone2: keywordRegex },
+                        { storeEmail: keywordRegex },
+                        { storeAddress: keywordRegex },
                     ],
                     ...query
                 } as any;
@@ -81,7 +84,7 @@ class StoreController extends BaseController {
                     storeAddress,
                     storeWorkingHours,
                     storeEmail,
-                    storeImageUrl,
+                    storeImageUrl: handleFileUpload(req, null, req.file, 'storeImageUrl', 'store'),
                     latitude,
                     longitude,
                     status: '1', // active
