@@ -37,7 +37,8 @@ import CollectionProductRoutes from './routes/admin/website/collection-product-r
 import NavigationMenuRoutes from './routes/admin/website/navigation-menu-routes';
 
 // store
-import WarehouseMenuRoutes from './routes/admin/stores/warehouse-routes';
+import WarehouseRoutes from './routes/admin/stores/warehouse-routes';
+import StoreRoutes from './routes/admin/stores/store-routes';
 
 // frontend
 import GuestRoutes from './routes/frontend/guest/auth-routes'
@@ -124,7 +125,8 @@ adminRouter.use('/website/collection-products', CollectionProductRoutes);
 adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 
 // stores
-adminRouter.use('/stores/warehouse', WarehouseMenuRoutes);
+adminRouter.use('/stores/warehouse', WarehouseRoutes);
+adminRouter.use('/stores/store', StoreRoutes);
 
 // adminRouter.use(logResponseStatus);
 // adminRouter.use(errorMiddleware);
