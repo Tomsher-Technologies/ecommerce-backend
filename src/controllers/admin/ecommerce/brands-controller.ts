@@ -12,6 +12,7 @@ import BaseController from '../../../controllers/admin/base-controller';
 import BrandsService from '../../../services/admin/ecommerce/brands-service'
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 import GeneralService from '../../../services/admin/general-service';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -19,7 +20,7 @@ class BrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { _id, page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as BrandQueryParams;
+            const { _id, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -35,6 +36,12 @@ class BrandsController extends BaseController {
                         { brandTitle: keywordRegex }
                     ],
                     ...query
+                } as any;
+            }
+
+            if (_id) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(_id)
                 } as any;
             }
 

@@ -27,9 +27,8 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fieleds-model';
 import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
 import ProductSpecificationModel, { ProductSpecificationProps } from '../../../model/admin/ecommerce/product/product-specification-model';
-import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service';
-import AttributeDetailService from '../../../services/admin/ecommerce/attributes-service';
+import { filterProduct } from '../../../utils/filters/admin/products';
 
 const controller = new BaseController();
 
@@ -41,88 +40,11 @@ class ProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '', productId, category, unCollectionedProducts } = req.query as ProductsQueryParams;
-
-            let query: any = { _id: { $exists: true } };
-
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
-            } else {
-                query.status = '1';
-            }
-
-            if (keyword) {
-                const keywordRegex = new RegExp(keyword, 'i');
-                query = {
-                    $or: [
-                        { productTitle: keywordRegex },
-                        { categoryTitle: keywordRegex },
-                        { brandTitle: keywordRegex }
-                    ],
-                    ...query
-                } as any;
-            }
-
-            if (productId) {
-                query = {
-                    ...query, _id: productId
-                } as any;
-            }
-
-            if (category) {
-                query = {
-                    ...query, categoryTitle: category
-                } as any;
-            }
-
-
-            const keysToCheck: (keyof ProductsProps)[] = ['newArrivalPriority', 'corporateGiftsPriority'];
-            const filteredQuery = keysToCheck.reduce((result: any, key) => {
-                if (key in req.query) {
-                    result[key] = req.query[key];
-                }
-                return result;
-            }, {} as Partial<ProductsQueryParams>);
-            let filteredPriorityQuery: any = {};
-            if (Object.keys(filteredQuery).length > 0) {
-                for (const key in filteredQuery) {
-                    if (filteredQuery[key] === '> 0') {
-                        filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
-                    } else if (filteredQuery[key] === '0') {
-                        filteredPriorityQuery[key] = 0; // Set query for key equal to 0
-                    } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                        filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
-                    }
-                }
-            }
-            if (unCollectionedProducts) {
-                const collection = await collectionsProductsService.findOne(unCollectionedProducts);
-                if (collection) {
-                    // const unCollectionedProductIds = unCollectionedProducts ? unCollectionedProducts.split(',').map((id: string) => id.trim()) : [];
-                    if (collection.collectionsProducts.length > 0) {
-                        query._id = { $nin: collection.collectionsProducts };
-                        query.status = '1';
-                    }
-                }
-            }
-
-            query = { ...query, ...filteredPriorityQuery };
-
-            const sort: any = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
-
-            const products = await ProductsService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort
-            });
-
+            const filterProducts = await filterProduct(req)
+            console.log("filterProducts:", filterProducts);
             controller.sendSuccessResponse(res, {
-                requestedData: products,
-                totalCount: await ProductsService.getTotalCount(query),
+                requestedData: filterProducts.products,
+                totalCount: filterProducts.count,
                 message: 'Success'
             }, 200);
         } catch (error: any) {
@@ -139,7 +61,7 @@ class ProductsController extends BaseController {
 
             if (validatedData.success) {
                 const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription,
-                    completeTab, warehouse, productSpecification, productSeo, pageTitle, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
+                    completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const productImage = (req as any).files.find((file: any) => file.fieldname === 'productImage');
@@ -179,7 +101,16 @@ class ProductsController extends BaseController {
 
                 newProduct = await ProductsService.create(productData);
                 if (newProduct) {
-                    if (productSeo) {
+                    const productSeo = {
+                        metaTitle: metaTitle,
+                        metaDescription: metaDescription,
+                        metaKeywords: metaKeywords,
+                        ogTitle: ogTitle,
+                        ogDescription: ogDescription,
+                        twitterTitle: twitterTitle,
+                        twitterDescription: twitterDescription
+                    }
+                    if (metaTitle || metaDescription || metaKeywords || ogTitle || ogDescription || twitterTitle || twitterDescription) {
                         const newSeo = await SeoPageService.create({
                             pageId: newProduct._id,
                             page: seoPage.ecommerce.products,
@@ -204,16 +135,13 @@ class ProductsController extends BaseController {
                                 productId: newProduct._id,
                                 categoryId: item
                             })
-
                         })
                     }
                     if (galleryImages && galleryImages?.length > 0) {
                         uploadGallaryImages(req, newProduct._id, galleryImages);
                     }
                     if (variants && (variants as any).length > 0) {
-
                         var productVariantData
-                        // await variants.map(async (variant: any, index: number) => {
                         for (let variantsIndex = 0; variantsIndex < variants.length; variantsIndex++) {
                             var slugData
                             if (variants[variantsIndex].productVariants && variants[variantsIndex].productVariants.length) {
@@ -225,7 +153,6 @@ class ProductsController extends BaseController {
                                         slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
                                     }
                                     if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
-
 
                                         const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex], slugify(slugData))
                                         console.log("checkDuplication", checkDuplication);
@@ -267,7 +194,6 @@ class ProductsController extends BaseController {
                                             );
 
                                             if (galleryImages?.length > 0) {
-
                                                 uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
                                             }
                                             if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAttributes?.length > 0))) {
@@ -278,7 +204,6 @@ class ProductsController extends BaseController {
                                                         attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeId,
                                                         attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeDetailId
                                                     }
-
                                                     await ProductVariantAttributeService.create(attributeData)
                                                 }
                                             }
@@ -293,7 +218,6 @@ class ProductsController extends BaseController {
                                             }
                                             await SeoPageService.create(seoData)
                                         }
-                                        console.log("fdsfsdfsd", variants[variantsIndex].productVariants[productVariantsIndex].productSpecification?.length);
 
                                         if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
                                             for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length; j++) {
@@ -303,7 +227,6 @@ class ProductsController extends BaseController {
                                                     variantId: productVariantData._id,
                                                     ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
                                                 }
-                                                console.log("specificationData123:", specificationData);
 
                                                 await ProductSpecificationService.create(specificationData)
                                             }
@@ -465,84 +388,111 @@ class ProductsController extends BaseController {
     }
 
     async importProductExcel(req: Request, res: Response): Promise<void> {
-        const xlsx = require('xlsx');
+        try {
+            const xlsx = require('xlsx');
 
-        // Load the Excel file
-        const workbook = xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/${req.file?.filename}`));
-        if (workbook) {
-            // Assume the first sheet is the one you want to convert
-            const sheetName = workbook.SheetNames[0];
-            if (workbook.SheetNames[0]) {
-                const worksheet = workbook.Sheets[sheetName];
-                // Convert the worksheet to JSON
-                if (worksheet) {
+            // Load the Excel file
+            const workbook = xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/${req.file?.filename}`));
+            if (workbook) {
+                // Assume the first sheet is the one you want to convert
+                const sheetName = workbook.SheetNames[0];
+                if (workbook.SheetNames[0]) {
+                    const worksheet = workbook.Sheets[sheetName];
+                    // Convert the worksheet to JSON
+                    if (worksheet) {
 
-                    const jsonData = xlsx.utils.sheet_to_json(worksheet);
-                    // if (jsonData) {
-                    //     await jsonData.map(async (data: any, index: number) => {
-                    //         const brandId: any = await BrandsService.findBrandId(data.Brand)
-                    //         console.log("brandId:", brandId._id);
+                        const jsonData = xlsx.utils.sheet_to_json(worksheet);
+                        if (jsonData) {
 
-                    //         const categoryData = data.Category.split(',');
-                    //         // console.log("categoryData:", categoryData);
-                    //         await categoryData.map(async (category: any) => {
-                    //             // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
+                            // await jsonData.map(async (data: any, index: number) => {
+                            for await (let data of jsonData) {
 
-                    //             const categoryId = await CategoryService.findCategoryId(category)
-                    //             console.log("categoryId:", categoryId._id);
-                    //         })
+                                if (data.Brand) {
+                                    const brandId: any = await BrandsService.findBrandId(data.Brand)
+                                    if (brandId) {
+                                        console.log("brandId:", brandId._id);
+                                    }
 
-                    //         // console.log("data:", data);
+                                }
 
-                    //         const optionColumns: any = [];
-                    //         const valueColumns: any = [];
+                                if (data.Category) {
+                                    const categoryData = await data.Category.split(',');
+                                    // console.log("categoryData:", categoryData);
+                                    // await categoryData.map(async (category: any) => {
+                                    for await (let category of categoryData) {
+                                        // const categoryTitle:any=  await GeneralService.capitalizeWords(category)
+
+                                        const categoryId = await CategoryService.findCategoryId(category)
+                                        if (categoryId) {
+                                            console.log("categoryId:", categoryId._id);
+                                        }
+                                    }
+
+                                }
+                                // console.log("data:", data);
+
+                                const optionColumns: any = [];
+                                const valueColumns: any = [];
+                                const NameColumns: any = [];
 
 
-                    //         for (const columnName in data) {
-                    //             if (columnName.startsWith('Option_')) {
-                    //                 optionColumns.push(columnName);
-                    //             }
-                    //         }
+                                for (const columnName in data) {
+                                    if (columnName.startsWith('Attribute_Option')) {
+                                        optionColumns.push(columnName);
+                                    }
+                                }
 
-                    //         for (const columnName in data) {
-                    //             if (columnName.startsWith('Value_')) {
-                    //                 valueColumns.push(columnName);
-                    //             }
-                    //         }
+                                for (const columnName in data) {
+                                    if (columnName.startsWith('Attribute_Name')) {
+                                        NameColumns.push(columnName);
+                                    }
+                                }
+                                for (const columnName in data) {
+                                    if (columnName.startsWith('Attribute_Value')) {
+                                        valueColumns.push(columnName);
+                                    }
+                                }
 
+                                console.log("optionColumns", optionColumns);
+                                console.log("valueColumns", valueColumns);
+                                const optionValue: any = [];
+                                // await valueColumns.map(async (attributeDetail: any) => {
+                                for await (let attributeDetail of valueColumns) {
+                                    // const attributeDetails = await AttributeDetailService.findOneAttributeDetail(data[attributeDetail], "")
+                                    // console.log("attributes:", attributeDetails);
+                                    optionValue.push(data[attributeDetail])
+                                }
+                                console.log("optionValue", optionValue);
 
-                    //         console.log("optionColumns", optionColumns);
-                    //         console.log("valueColumns", valueColumns);
-                    //         const optionValue: any = [];
-                    //         await valueColumns.map(async (attributeDetail: any) => {
-                    //             // const attributeDetails = await AttributeDetailService.findOneAttributeDetail(data[attributeDetail], "")
-                    //             // console.log("attributes:", attributeDetails);
-                    //             optionValue.push(data[attributeDetail])
-                    //         })
-                    //         console.log("optionValue", optionValue);
+                                const combinedArray = [];
+                                for await (const [index, option] of optionColumns.entries()) {
+                                    const value = valueColumns[index];
+                                    combinedArray.push({ option, value });
+                                }
 
-                    //         const combinedArray = optionColumns.map((option: any, index: number) => ({
-                    //             option,
-                    //             value: valueColumns[index]
-                    //         }));
+                                console.log(combinedArray);
 
-                    //         console.log(combinedArray);
+                                await optionColumns.map(async (attribute: any, index: number) => {
 
-                    //         await optionColumns.map(async (attribute: any, index: number) => {
-                    //             const attributes = await AttributesService.findOneAttribute({ attribute: data[attribute], attributeDetail: optionValue[index] })
-                    //             console.log("attributes:", attributes);
-                    //         })
+                                    const attributes = await AttributesService.findOneAttribute({ attribute: data[attribute], attributeDetail: optionValue[index] })
+                                    console.log("attributes:", attributes);
+                                })
 
-                    //         // await valueColumns.map(async (attributeDetail: any) => {
-                    //         //     const attributeDetails = await AttributeDetailService.findOneAttributeDetail(data[attributeDetail], "")
-                    //         //     console.log("attributes:", attributeDetails);
+                                // await valueColumns.map(async (attributeDetail: any) => {
 
-                    //         // })
+                                //     const attributeDetails = await AttributesService.findOneAttributeDetail(data[attributeDetail], "")
+                                //     console.log("attributes:", attributeDetails);
 
-                    //     })
-                    // }
+                                // })
+
+                            }
+                        }
+                    }
                 }
             }
+        } catch (error) {
+            console.log("eeeerrrrorr:", error);
+
         }
 
 
@@ -708,6 +658,7 @@ class ProductsController extends BaseController {
                                 }
                             }
                         }
+
                         if (galleryImages?.length > 0) {
                             uploadGallaryImages(req, updatedProduct._id, galleryImages);
                         }

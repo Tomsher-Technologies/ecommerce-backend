@@ -11,6 +11,7 @@ import SpecificationService from '../../../services/admin/ecommerce/specificatio
 import GeneralService from '../../../services/admin/general-service';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -18,7 +19,7 @@ class SpecificationController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '', _id = '' } = req.query as QueryParams;
             let query = { _id: { $exists: true } };
 
             if (keyword) {
@@ -30,6 +31,13 @@ class SpecificationController extends BaseController {
                     ...query
                 } as any;
             }
+
+            if (_id) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
+            }
+
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;

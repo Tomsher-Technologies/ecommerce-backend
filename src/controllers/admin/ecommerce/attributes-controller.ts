@@ -10,6 +10,7 @@ import { AttributesProps } from '../../../model/admin/ecommerce/attribute-model'
 import BaseController from '../../../controllers/admin/base-controller';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service'
 import GeneralService from '../../../services/admin/general-service';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -17,7 +18,7 @@ class AttributesController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', _id = '' } = req.query as QueryParams;
             let query = { _id: { $exists: true } };
 
             if (keyword) {
@@ -31,6 +32,13 @@ class AttributesController extends BaseController {
                     ...query
                 } as any;
             }
+
+            if (_id) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
+            }
+
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
@@ -59,7 +67,7 @@ class AttributesController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { attributeTitle, attributeType, attributeValues, status,languageValues } = validatedData.data;
+                const { attributeTitle, attributeType, attributeValues, status, languageValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
                     attributeTitle,

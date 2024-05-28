@@ -121,8 +121,6 @@ class BrandsService {
         return BrandsModel.findOne(data);
     }
     async findBrandId(brandTitle: string): Promise<void | null> {
-
-
         const resultBrand: any = await this.findBrand({ brandTitle: brandTitle });
         if (resultBrand) {
             return resultBrand

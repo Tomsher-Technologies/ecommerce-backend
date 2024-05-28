@@ -11,6 +11,7 @@ import GeneralService from '../../../services/admin/general-service';
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import mongoose from 'mongoose';
 
 
 const controller = new BaseController();
@@ -19,7 +20,7 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as CategoryQueryParams;
+            const { page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', categoryId = '', parentCategory = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -37,6 +38,18 @@ class CategoryController extends BaseController {
                         { slug: keywordRegex },
                     ],
                     ...query
+                } as any;
+            }
+
+            if (categoryId) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(categoryId)
+                } as any;
+            }
+
+            if (parentCategory) {
+                query = {
+                    ...query, parentCategory: new mongoose.Types.ObjectId(parentCategory)
                 } as any;
             }
 

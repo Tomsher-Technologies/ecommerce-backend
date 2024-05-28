@@ -169,3 +169,7 @@ export const getIndexFromFieldName = (fieldname: string, keyValue: string): numb
 export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): boolean => {
     return Object.values(obj).includes(value);
 };
+
+export const dateConvertPm = (input: string): Date => {
+    return new Date(`${input}T23:59:59.999Z`)
+}; 

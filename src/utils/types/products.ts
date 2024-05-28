@@ -38,7 +38,14 @@ export interface ProductsQueryParams {
     sortorder?: string;
     keyword?: string;
     productId?: string;
-    category?: string;
+    brandId?:string;
+    attributeId?:string;
+    attributeDetailId?:string;
+    specificationId?:string;
+    specificationDetailId?:string;
+    categoryId?: string;
+    startDate?:string;
+    endDate?:string;
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;

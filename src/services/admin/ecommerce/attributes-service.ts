@@ -4,6 +4,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
 
 import AttributesModel, { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
+import { slugify } from '../../../utils/helpers';
 
 
 class AttributesService {
@@ -115,7 +116,7 @@ class AttributesService {
 
     async findOne(attributeId: string): Promise<AttributesProps | null> {
         if (attributeId) {
-            const objectId = new mongoose.Types.ObjectId(attributeId); 
+            const objectId = new mongoose.Types.ObjectId(attributeId);
             const pipeline = [
                 { $match: { _id: objectId } },
                 this.attributeDetailsLookup,
@@ -129,6 +130,59 @@ class AttributesService {
             return attributeDataWithValues[0];
         } else {
             return null;
+        }
+    }
+    async findOneAttribute(data: any): Promise<void | null> {
+
+        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.attribute });
+        if (resultAttribute) {
+            const attributeDetailResult = await this.findOneAttributeDetail(data.attributeDetail, resultAttribute._id)
+                console.log("attributeDetailResult:",attributeDetailResult);
+                
+                const result: any = {
+                    resultAttribute,
+                    attributeDetailResult
+                }
+            return result
+        } else {
+            const attributeData = {
+                attributeTitle: data.attribute,
+                isExcel: true,
+                slug: slugify(data.attribute)
+
+            }
+            console.log("brandData:", attributeData);
+            const attributeResult: any = await this.create(attributeData)
+            if (attributeResult) {
+                const attributeDetailResult = await this.findOneAttributeDetail(data.attributeDetail, attributeResult[0]._id)
+                console.log("attributeDetailResult:",attributeDetailResult);
+                
+                const result: any = {
+                    attributeResult,
+                    attributeDetailResult
+                }
+                return result
+            }
+        }
+    }
+
+    async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
+console.log("data",data,attributeId);
+
+        const resultBrand: any = await AttributeDetailModel.findOne({ itemName: data });
+        if (resultBrand) {
+            return resultBrand
+        } else {
+            const brandData = {
+                attributeId: attributeId,
+                itemName: data,
+
+            }
+            console.log("brandData:", data);
+            const brandResult: any = await AttributeDetailModel.create(brandData);
+            if (brandResult) {
+                return brandResult
+            }
         }
     }
 

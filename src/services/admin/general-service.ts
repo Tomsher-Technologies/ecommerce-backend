@@ -1,7 +1,7 @@
 import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
 import AdminTaskLogModel from "../../model/admin/task-log";
+import os from 'os';
 
-const os = require('os');
 // Get network interfaces
 const networkInterfaces = os.networkInterfaces();
 
@@ -37,9 +37,19 @@ class GeneralService {
 
     async getVisitorIP() {
         try {
-            const response = await fetch('https://api64.ipify.org?format=json');
-            const data = await response.json();
-            return data.ip;
+            // Get network interfaces
+            const networkInterfaces = os.networkInterfaces();
+            // Extract IPv4 address
+            const ipv4 = Object.values(networkInterfaces)
+                .flat()
+                .filter(iface => iface && iface.family === 'IPv4' && !iface.internal)
+                .map(iface => iface && iface.address);
+
+            console.log(ipv4);
+            //     const response = await fetch('https://api64.ipify.org?format=json');
+            //     const data = await response.json();
+            //     console.log("data:");
+            return ipv4[0];
         } catch (error) {
             console.error('Error fetching IP address:', error);
             return null;
@@ -190,7 +200,7 @@ class GeneralService {
 
                     if ((deletedKeyValue) && (deletedKeyId)) {
                         const findDeletedData = await model.find({ [deletedKeyValue]: deletedKeyId })
-                        if(findDeletedData){
+                        if (findDeletedData) {
                             await model.deleteMany({ [deletedKeyValue]: deletedKeyId })
                         }
                     }

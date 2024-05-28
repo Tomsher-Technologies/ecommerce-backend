@@ -381,11 +381,10 @@ class CategoryService {
 
         let categoryResult = await this.findOneCategory({ slug: slug });
         if (categoryResult) {
-            
             return categoryResult;
         }
         else {
-            const catData = categoryTitle.split('-');
+            const catData = slug.split('-');
             let currentSlug = '';
             for (const data of catData) {
                 if (currentSlug !== '') {
@@ -394,8 +393,6 @@ class CategoryService {
                 currentSlug += data;
 
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
-                // console.log("categoryResult::",categoryResult);
-
                 if (categoryResult == null) {
                     const titleData = currentSlug.split('-');
                     const lastItem = titleData[titleData.length - 1];

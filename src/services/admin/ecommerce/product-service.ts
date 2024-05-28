@@ -303,6 +303,7 @@ class ProductsService {
         };
     }
     async findAll(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
+
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -312,34 +313,19 @@ class ProductsService {
         }
 
         let pipeline: any[] = [
-            // {
-            //     $lookup: {
-            //         from: 'brands',
-            //         localField: 'brand',
-            //         foreignField: '_id',
-            //         as: 'brand'
-            //     }
-            // },
-            // {
-            //     $match: {
-            //         'brand.brandTitle': query.keyword // Filter by the specified brand title
-            //     }
-            // },
-            // {
-            //     // $project: {
-            //     //     _id: 1,
-            //     //     productTitle: 1,
-            //     //     // brand: { $arrayElemAt: ['$brand', 0] } // Extract the first element from the brandInfo array
-            //     // }
-            // },
+            this.categoryLookup,
+            this.variantLookup,
+            this.imageLookup,
+            this.brandLookup,
+            this.brandObject,
+            this.seoLookup,
+            this.seoObject,
+            this.multilanguageFieldsLookup,
+            this.specificationLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
-
-            this.categoryLookup,
-            this.brandLookup,
-            this.brandObject,
         ];
 
         return ProductsModel.aggregate(pipeline).exec();
@@ -347,8 +333,28 @@ class ProductsService {
 
     async getTotalCount(query: any = {}): Promise<number> {
         try {
-            const totalCount = await ProductsModel.countDocuments(query);
-            return totalCount;
+            let pipeline: any[] = [
+                this.categoryLookup,
+                this.variantLookup,
+                this.imageLookup,
+                this.brandLookup,
+                this.brandObject,
+                this.seoLookup,
+                this.seoObject,
+                this.multilanguageFieldsLookup,
+                this.specificationLookup,
+                {$match:query},
+                {
+                    $count: 'count'
+                }
+            ];
+            const data: any = await ProductsModel.aggregate(pipeline).exec();
+            console.log(data);
+
+            // const totalCount = await ProductsModel.countDocuments(query);
+            // console.log(totalCount);
+
+            return data[0].count;
         } catch (error) {
             throw new Error('Error fetching total count of products');
         }

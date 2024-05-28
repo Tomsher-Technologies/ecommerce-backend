@@ -267,7 +267,7 @@ class HomeController extends BaseController {
 
     async newArrivals(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '', productId, category, unCollectionedProducts } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '', productId, categoryId, unCollectionedProducts } = req.query as ProductsQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -295,9 +295,9 @@ class HomeController extends BaseController {
                 } as any;
             }
 
-            if (category) {
+            if (categoryId) {
                 query = {
-                    ...query, category: category
+                    ...query, category: categoryId
                 } as any;
             }
 
