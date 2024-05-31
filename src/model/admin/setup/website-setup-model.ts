@@ -28,7 +28,7 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
     blockReference: {
         type: String,
         default: '',
-        enum: [blockReferences.desktopMenu, blockReferences.basicDetailsSettings, blockReferences.websiteSettings, blockReferences.defualtSettings, blockReferences.shipmentSettings, blockReferences.enableFeatures],
+        enum: [blockReferences.desktopMenu, blockReferences.mobileMenu, blockReferences.basicDetailsSettings, blockReferences.websiteSettings, blockReferences.defualtSettings, blockReferences.shipmentSettings, blockReferences.enableFeatures],
     },
     blockValues: {
         type: Schema.Types.Mixed,
