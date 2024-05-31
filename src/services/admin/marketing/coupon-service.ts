@@ -26,7 +26,7 @@ class CouponService {
                                 else: {
                                     $cond: {
                                         if: { $eq: ["$couponType", "for-product"] },
-                                        then: collections.ecommerce.products,
+                                        then: collections.ecommerce.products.products,
                                         else: "defaultCollection",
                                     },
                                 },
@@ -79,7 +79,7 @@ class CouponService {
 
         this.productsLookup = {
             $lookup: {
-                from: collections.ecommerce.products,
+                from: collections.ecommerce.products.products,
                 let: { couponApplyValues: '$couponApplyValues' },
                 pipeline: [
                     { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$couponApplyValues"] } } },

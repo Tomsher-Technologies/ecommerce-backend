@@ -25,7 +25,7 @@ class OfferService {
                                 else: {
                                     $cond: {
                                         if: { $eq: ["$offersBy", "product"] },
-                                        then: collections.ecommerce.products,
+                                        then: collections.ecommerce.products.products,
                                         else: "defaultCollection",
                                     },
                                 },
@@ -78,7 +78,7 @@ class OfferService {
 
         this.productsLookup = {
             $lookup: {
-                from: collections.ecommerce.products,
+                from: collections.ecommerce.products.products,
                 let: { offerApplyValues: '$offerApplyValues' },
                 pipeline: [
                     { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$offerApplyValues"] } } },
