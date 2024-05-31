@@ -6,6 +6,8 @@ export interface CollectionsProductsProps extends Document {
     collectionSubTitle?: string;
     collectionImageUrl: string;
     collectionsProducts: any[];
+    countryId: Schema.Types.ObjectId;
+    page: string;
     status: string;
     createdBy?: string;
     createdAt?: Date;
@@ -52,6 +54,15 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
     collectionsProducts: {
         type: Schema.Types.Mixed,
         required: true,
+    },
+    countryId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Countries',
+    },
+    page: {
+        type: String,
+        required: true
     },
     status: {
         type: String,

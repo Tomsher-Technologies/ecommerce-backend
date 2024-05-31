@@ -10,6 +10,7 @@ export interface ProductsProps extends Document {
     brand: Schema.Types.ObjectId;
     warehouse: Schema.Types.ObjectId;
     unit: string;
+    isExcel:boolean;
     measurements: {
         weight?: string;
         hight?: string;

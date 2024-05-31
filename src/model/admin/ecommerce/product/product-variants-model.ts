@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { deleteFunction } from '../../../../utils/admin/products';
 
 export interface ProductVariantsProps extends Document {
     productId: Schema.Types.ObjectId;
@@ -13,6 +14,7 @@ export interface ProductVariantsProps extends Document {
     hsn: string;
     mpn: string;
     barcode: string;
+    isExcel: boolean;
     variantDescription: string;
     cartMinQuantity: string;
     cartMaxQuantity: string;
@@ -31,6 +33,14 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     },
     slug: {
         type: String,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                const count = await this.model('ProductVariants').countDocuments({ slug: value });
+                // await deleteFunction(this.productId)
+                return count === 0;
+            },
+            message: 'Slug must be unique'
+        },
         required: [true, 'Slug is required'],
     },
     extraProductTitle: {
@@ -70,16 +80,25 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: String,
         required: true,
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
     price: {
         type: Number,
-        required: true
+        required: function () {
+            return !this.isExcel;
+        }
     },
     quantity: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
     },
     discountPrice: {
         type: Number,
+        default: 0
     },
     isDefault: {
         type: Number,

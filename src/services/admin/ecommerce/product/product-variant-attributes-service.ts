@@ -187,7 +187,7 @@ class ProductVariantAttributeService {
         return ProductVariantAttributesModel.findOneAndDelete({ _id: productVariantAttributeId });
     }
 
-    async variantAttributeService(productId: string | null, variantDetails: any): Promise<ProductVariantAttributesProps[]> {
+    async variantAttributeService(productId: string | null, variantDetails: any, variantId: string): Promise<ProductVariantAttributesProps[]> {
         try {
             if (productId) {
                 const existingEntries = await ProductVariantAttributesModel.find({ productId: productId });
@@ -200,14 +200,17 @@ class ProductVariantAttributeService {
                 }
                 if (variantDetails) {
                     const variantAttributePromises = await Promise.all(variantDetails.map(async (data: any) => {
-                        const existingEntry = await ProductVariantAttributesModel.findOne({ _id: data._id });
-                        if (existingEntry) {
-                            // Update existing document
-                            await ProductVariantAttributesModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
+                       
+                        if (data._id != '') {
+                            const existingEntry = await ProductVariantAttributesModel.findOne({ _id: data._id });
+                            if (existingEntry) {
+                                // Update existing document
+                                await ProductVariantAttributesModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
 
+                            }
                         } else {
                             // Create new document
-                            await ProductVariantAttributesModel.create({ ...data, productId: productId });
+                            await ProductVariantAttributesModel.create({ attributeId: data.attributeId, attributeDetailId: data.attributeDetailId, productId: productId, variantId: variantId });
                         }
                     }));
 

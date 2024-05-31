@@ -1,15 +1,28 @@
-import mongoose from "mongoose";
-import { dateConvertPm } from "../../helpers";
-import { ProductsProps, ProductsQueryParams } from "../../types/products";
+import mongoose, { ObjectId } from "mongoose";
+import { dateConvertPm, getCountryId } from "../helpers";
+import { ProductsProps, ProductsQueryParams } from "../types/products";
 import { Request, Response } from 'express';
-import collectionsProductsService from "../../../services/admin/website/collections-products-service";
-import ProductsService from '../../../services/admin/ecommerce/product-service'
+import collectionsProductsService from "../../services/admin/website/collections-products-service";
+import GeneralService from '../../services/admin/general-service';
+import ProductCategoryLinkModel from "../../model/admin/ecommerce/product/product-category-link-model";
+import ProductsModel from "../../model/admin/ecommerce/product-model";
+import ProductSpecificationModel from "../../model/admin/ecommerce/product/product-specification-model";
+import ProductVariantsModel from "../../model/admin/ecommerce/product/product-variants-model";
+import MultiLanguageFieledsModel from "../../model/admin/multi-language-fieleds-model";
+import SeoPageModel from "../../model/admin/seo-page-model";
 
-export const filterProduct = async (data: any) => {
+export const filterProduct = async (data: any, countryId: import("mongoose").Types.ObjectId | undefined) => {
     let query: any = { _id: { $exists: true } };
     let queryFilterIds: any;
     let queryDate: any;
 
+    if (countryId) {
+        queryFilterIds = {
+            ...queryFilterIds,
+            'productVariants.countryId': countryId
+        }
+
+    }
     if (data.status && data.status !== '') {
         query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };
     } else {
@@ -74,7 +87,7 @@ export const filterProduct = async (data: any) => {
     if (data.attributeId) {
         queryFilterIds = {
             ...queryFilterIds,
-            'productVariants.productVariantAttributes.attributeId': new mongoose.Types.ObjectId(data.attributeId)
+            '.productVariantAttributes.attributeId': new mongoose.Types.ObjectId(data.attributeId)
         }
         if (data.attributeDetailId) {
             queryFilterIds = {
@@ -147,4 +160,77 @@ export const filterProduct = async (data: any) => {
         query: query,
         sort: sort
     }
+}
+
+export const defaultSkuSettings = async (variants: any) => {
+
+    const result = await variants.map(async ({ countryId, productVariants }: { countryId: string; productVariants: any[] }) => {
+        const defaultVariant = await productVariants.find(variant => variant.isDefault === '1');
+        if (defaultVariant) {
+            return defaultVariant.variantSku;
+        }
+    });
+    var isDefault
+    if (result) {
+        await result[0].then(async (data: any) => {
+            isDefault = await data
+        });
+    }
+    if (isDefault) {
+        return isDefault
+    } else {
+        const maxQuantities = await variants.map(async ({ countryId, productVariants }: { countryId: string; productVariants: any[] }) => {
+            const maxQuantityItem = await productVariants.reduce((max: any, current: any) => {
+                return max.quantity > current.quantity ? max : current;
+            });
+            if (maxQuantityItem) {
+                return maxQuantityItem.variantSku
+            }
+        });
+
+        console.log("maxQuantities,maxQuantities", maxQuantities);
+        if (maxQuantities) {
+            await maxQuantities[0].then(async (data: any) => {
+                isDefault = await data
+            });
+            if (isDefault) {
+                return isDefault
+            }
+        }
+
+    }
+
+
+}
+
+export const deleteFunction = async(productId:string)=>{
+    return await GeneralService.deleteParentModel([
+        // ...(newProduct?._id &&
+
+        {
+            _id: productId,
+            model: ProductsModel
+        },
+        {
+            productId: productId,
+            model: ProductVariantsModel
+        },
+        {
+            pageId: productId,
+            model: SeoPageModel
+        },
+        {
+            productId: productId,
+            model: ProductSpecificationModel
+        },
+        {
+            sourceId: productId,
+            model: MultiLanguageFieledsModel
+        },
+        {
+            productId: productId,
+            model: ProductCategoryLinkModel
+        } 
+        // )
+    ]);
 }

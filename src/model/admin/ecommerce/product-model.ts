@@ -114,14 +114,21 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     statusAt: {
         type: Date,
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
     createdBy: {
         type: String,
-        required: [true, 'Creator ID is required']
+        required: function () {
+            return !this.isExcel;
+        }
     },
     createdAt: {
         type: Date,

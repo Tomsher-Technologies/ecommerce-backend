@@ -35,7 +35,7 @@ class CountryService {
     }
 
     async findOneByCountryCode(countryCode: string): Promise<CountryProps | null> {
-        const result:any =await  CountryModel.findOne({ countryCode: countryCode });
+        const result: any = await CountryModel.findOne({ countryCode: countryCode });
         return result._id
     }
 
@@ -45,6 +45,17 @@ class CountryService {
 
     async destroy(countryId: string): Promise<CountryProps | null> {
         return CountryModel.findOneAndDelete({ _id: countryId });
+    }
+    async findCountry(data: any): Promise<CountryProps | null> {
+        return CountryModel.findOne(data);
+    }
+    async findCountryId(data: any): Promise<void | null> {
+        const resultCountry: any = await CountryModel.findOne(data);
+        if (resultCountry) {
+            console.log("resultCountry:",resultCountry);
+            
+            return resultCountry
+        }
     }
 }
 

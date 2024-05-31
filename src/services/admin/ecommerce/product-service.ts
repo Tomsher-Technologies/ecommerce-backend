@@ -169,7 +169,9 @@ class ProductsService {
                         },
                     },
                     {
-                        $unwind: "$productSeo"
+                        $addFields: {
+                            productSeo: { $arrayElemAt: ['$productSeo', 0] }
+                        }
                     },
                     {
                         $lookup: {
@@ -243,9 +245,17 @@ class ProductsService {
         this.specificationLookup = {
             $lookup: {
                 from: `${collections.ecommerce.products.productvariants.productspecifications}`,
-                localField: '_id',
-                foreignField: 'productId',
+                let: { productId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$productId', '$$productId'] },
+                            'variantId': null
+                        }
+                    }
+                ],
                 as: 'productSpecification',
+
             },
         };
 
@@ -343,21 +353,30 @@ class ProductsService {
                 this.seoObject,
                 this.multilanguageFieldsLookup,
                 this.specificationLookup,
-                {$match:query},
+                { $match: query },
                 {
                     $count: 'count'
                 }
             ];
             const data: any = await ProductsModel.aggregate(pipeline).exec();
-            console.log(data);
+            console.log("data,data:", data);
 
             // const totalCount = await ProductsModel.countDocuments(query);
             // console.log(totalCount);
+            if (data.length > 0) {
+                return data[0].count;
 
-            return data[0].count;
+            }
+            return 0;
         } catch (error) {
             throw new Error('Error fetching total count of products');
         }
+    }
+
+    async find(productData: any): Promise<ProductsProps | null> {
+        console.log("productData:", productData);
+
+        return ProductsModel.findOne(productData);
     }
 
     async create(productData: any): Promise<ProductsProps> {

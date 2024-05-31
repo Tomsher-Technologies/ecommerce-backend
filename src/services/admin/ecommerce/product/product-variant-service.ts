@@ -14,6 +14,7 @@ import AttributesModel from '../../../../model/admin/ecommerce/attribute-model';
 import GeneralService from '../../general-service';
 import SeoPageService from '../../seo-page-service';
 import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
+import { seoPage } from '../../../../constants/admin/seo-page';
 
 class ProductVariantService {
 
@@ -34,6 +35,7 @@ class ProductVariantService {
                 hsn: 1,
                 mpn: 1,
                 barcode: 1,
+                extraProductTitle: 1,
                 variantDescription: 1,
                 cartMinQuantity: 1,
                 cartMaxQuantity: 1,
@@ -64,9 +66,9 @@ class ProductVariantService {
 
         return ProductVariantModel.aggregate(pipeline).exec();
     }
-    async find(productId: string): Promise<ProductVariantsProps[]> {
+    async find(query: any): Promise<ProductVariantsProps[]> {
 
-        const variantData = await ProductVariantModel.find({ productId: productId })
+        const variantData = await ProductVariantModel.find(query)
         return variantData
     }
     async findVariant(productId: string, id: string): Promise<ProductVariantsProps[]> {
@@ -113,6 +115,7 @@ class ProductVariantService {
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
+            extraProductTitle: productVariants.extraProductTitle,
             countryId: productVariants.countryId || getCountryId(userData),
             variantSku: productVariants.variantSku,
             price: productVariants.price,
@@ -129,7 +132,6 @@ class ProductVariantService {
         }
 
         const createdProductVariant = await ProductVariantModel.create(productVariantData);
-
         if (createdProductVariant) {
             const pipeline = [
                 { $match: { _id: createdProductVariant._id } },
@@ -218,6 +220,7 @@ class ProductVariantService {
                             .map(entry => entry._id);
 
                         const deleteVariant = await ProductVariantModel.deleteMany({ productId: productdata._id, _id: { $in: variantIDsToRemove } });
+                        console.log("deleteVariant", deleteVariant);
 
                         if (deleteVariant) {
                             await GeneralService.deleteParentModel([
@@ -240,32 +243,69 @@ class ProductVariantService {
 
                     }
                     if (variantDetail.productVariants) {
-                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any) => {
-                            const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
-                            if (existingEntry) {
-                                // Update existing document
-                                const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
-                                if (productVariantData) {
-                                    // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                    await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes)
-                                    // }
-                                    // if (data.productSeo && data.productSeo.length > 0) {
-                                    await SeoPageService.seoPageService(productdata._id, data.productSeo)
-                                    // }
-                                    // if (data.productSpecification && data.productSpecification.length > 0) {
-                                    await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification)
-                                    // }
+                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any, index: number) => {
+                            if (data._id != '') {
+                                const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
+                                console.log("existingEntry", existingEntry);
+
+                                if (existingEntry) {
+                                    // Update existing document
+                                    const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
+                                    if (productVariantData && variantDetails.isVariant == 1) {
+                                        console.log("variantDetail.productVariants", variantDetail.productVariants[index]._id);
+
+                                        // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+                                        await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id)
+                                        // }
+                                        // if (data.productSeo && data.productSeo.length > 0) {
+                                        await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
+                                        // }
+                                        // if (data.productSpecification && data.productSpecification.length > 0) {
+                                        await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantDetail.productVariants[index]._id)
+                                        // }
+                                    }else{
+
+                                        await GeneralService.deleteParentModel([
+                                            {
+                                                variantId:  variantDetail.productVariants[index]._id,
+                                                model: ProductVariantAttributesModel
+                                            },
+                                            {
+                                                variantId:  variantDetail.productVariants[index]._id,
+                                                model: SeoPagesModel
+                                            },
+                                            {
+                                                variantId:  variantDetail.productVariants[index]._id,
+                                                model: ProductSpecificationModel
+                                            },
+                                        ]);
+                                    }
                                 }
                             } else {
                                 var slugData
                                 if (data.extraProductTitle) {
-                                    slugData = productdata.slug + "-" + data.extraProductTitle + "-" + data.variantSku
+                                    slugData = productdata.slug + "-" + data.extraProductTitle 
                                 }
                                 else {
-                                    slugData = productdata.slug + "-" + data.variantSku
+                                    slugData = productdata.slug 
                                 }
                                 // Create new document
-                                await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
+                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
+                                if (variantData) {
+                                    if (variantData) {
+                                        console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
+
+                                        // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+                                        await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantData._id)
+                                        // }
+                                        // if (data.productSeo && data.productSeo.length > 0) {
+                                        await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
+                                        // }
+                                        // if (data.productSpecification && data.productSpecification.length > 0) {
+                                        await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantData._id)
+                                        // }
+                                    }
+                                }
                             }
                         }));
 

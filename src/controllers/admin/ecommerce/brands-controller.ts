@@ -45,7 +45,7 @@ class BrandsController extends BaseController {
                 } as any;
             }
 
-            const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority'];
+            const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
             const filteredQuery = keysToCheck.reduce((result: any, key) => {
                 if (key in req.query) {
                     result[key] = req.query[key];
@@ -367,7 +367,7 @@ class BrandsController extends BaseController {
             const validatedData = updateWebsitePrioritySchema.safeParse(req.body);
             if (validatedData.success) {
                 const { keyColumn, root, container1 } = validatedData.data;
-                const validKeys: (keyof BrandProps)[] = ['corporateGiftsPriority'];
+                const validKeys: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
 
                 if (validKeys.includes(keyColumn as keyof BrandProps)) {
                     let updatedBrandData = req.body;

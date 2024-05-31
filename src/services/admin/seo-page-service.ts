@@ -77,7 +77,6 @@ class SeoPageService {
                         pageId: seoPage.pageId,
                         pageReferenceId: seoPage.pageReferenceId,
                         page: seoPage.page,
-
                     };
                     const update = {
                         $set: {
@@ -127,7 +126,7 @@ class SeoPageService {
 
                         seoValue = await SeoPageModel.create(seoPageData);
                     }
-                    return { ...seoValue }
+                    return seoValue 
 
 
                 }
@@ -184,11 +183,32 @@ class SeoPageService {
     async destroy(seoPageId: string): Promise<SeoPageProps | null> {
         return SeoPageModel.findOneAndDelete({ _id: seoPageId });
     }
-    async seoPageService(pageId: string | null, seoDetails: any): Promise<SeoPageProps[]> {
+    async seoPageService(pageId: string | null, seoDetails: any, page: string, pageReferenceId: string): Promise<SeoPageProps[]> {
         try {
+            console.log("seoDetails:", seoDetails, pageId);
+
             if (pageId) {
                 if (seoDetails) {
-                    await SeoPageModel.findByIdAndUpdate(seoDetails._id, { ...seoDetails, pageId: pageId });
+                    if (seoDetails._id != '') {
+                        await SeoPageModel.findByIdAndUpdate(seoDetails._id, { ...seoDetails, pageId: pageId });
+                    }
+                    else {
+                        console.log("seoDetailsseoDetailsseoDetails:", seoDetails);
+
+                        await this.create({
+                            metaTitle: seoDetails.metaTitle,
+                            metaKeywords: seoDetails.metaKeywords,
+                            metaDescription: seoDetails.metaDescription,
+                            ogTitle: seoDetails.ogTitle,
+                            ogDescription: seoDetails.ogDescription,
+                            twitterTitle: seoDetails.twitterTitle,
+                            twitterDescription: seoDetails.twitterDescription,
+                            pageReferenceId: pageReferenceId,
+                            pageId: pageId,
+                            page: page
+                        });
+
+                    }
                 }
             }
             return await SeoPageModel.find({ pageId: pageId });

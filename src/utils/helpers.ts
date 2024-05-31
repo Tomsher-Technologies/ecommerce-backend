@@ -35,7 +35,6 @@ export const formatZodError = (errors: ZodError['errors']): Record<string, strin
 
 
 export const handleFileUpload = (req: any, data: any, file: any, fieldName: string, folderPath: string) => {
-    console.log('req', file);
 
     if (data && data[fieldName]) {
         if (file) {
