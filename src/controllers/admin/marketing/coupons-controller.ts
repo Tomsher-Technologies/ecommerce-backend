@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, getCountryId } from '../../../utils/helpers';
+import { dateConvertPm, formatZodError, getCountryId } from '../../../utils/helpers';
 import { couponSchema, couponStatusSchema } from '../../../utils/schemas/admin/marketing/coupon-schema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { QueryParams } from '../../../utils/types/common';
@@ -15,9 +15,9 @@ class CouponsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
-
+            let queryDate: any;
             const userData = await res.locals.user;
             const countryId = getCountryId(userData);
             if (countryId) {
@@ -34,10 +34,32 @@ class CouponsController extends BaseController {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { couponType: keywordRegex }
+                        { couponType: keywordRegex },
+                        { couponCode: keywordRegex }
+
                     ],
                     ...query
                 } as any;
+            }
+
+            if (query.fromDate || query.endDate) {
+                if (query.fromDate) {
+                    queryDate = {
+                        ...queryDate,
+                        createdAt: {
+                            $gte: new Date(query.fromDate)
+                        }
+                    }
+                }
+                if (query.endDate) {
+                    queryDate = {
+                        ...queryDate,
+                        createdAt: {
+                            $lte: dateConvertPm(query.endDate)
+                        }
+                    }
+                }
+
             }
             const sort: any = {};
             if (sortby && sortorder) {

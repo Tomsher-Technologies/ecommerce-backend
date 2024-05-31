@@ -176,6 +176,13 @@ class BrandsController extends BaseController {
                         brandTitle: error.errors.brandTitle.properties.message
                     }
                 }, req);
+            } else if (error && error.errors && error.errors.brandImageUrl && error.errors.brandImageUrl.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        brandTitle: error.errors.brandImageUrl.properties.message
+                    }
+                }, req);
             }
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating brand',

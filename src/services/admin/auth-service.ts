@@ -6,11 +6,20 @@ import bcrypt from 'bcrypt';
 import UserModel, { UserProps } from '../../../src/model/admin/account/user-model';
 import AuthorisationModel from '../../../src/model/admin/authorisation-model';
 import PrivilagesService from './account/privilages-service';
+import UserTypeModel from '../../model/admin/account/user-type-model';
 
 class AuthService {
     async login(username: string, password: string): Promise<any> {
         try {
-            const user: UserProps | null = await UserModel.findOne({ email: username }).populate('userTypeID', ['userTypeName', 'slug']);
+            const user: UserProps | null | any = await UserModel.findOne({ $and: [{ email: username }, { status: '1' }] }).populate('userTypeID', ['userTypeName', 'slug']);
+            if (user.userTypeID.slug != "super-admin") {
+                const userType = await UserTypeModel.findOne({ $and: [{ slug: user.userTypeID.slug }, { status: '1' }] })
+                console.log(userType);
+
+                if (!userType) {
+                    throw new Error('User permission declined');
+                }
+            }
 
             if (user) {
                 const isPasswordValid = await bcrypt.compare(password, user.password);
