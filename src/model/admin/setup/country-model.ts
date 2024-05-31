@@ -7,6 +7,7 @@ export interface CountryProps extends Document {
     currencyCode: string;
     countryImageUrl: string;
     isOrigin: Boolean;
+    countryShortTitle: string;
     status: string;
     createdBy?: string;
     statusAt?: Date;
@@ -42,9 +43,9 @@ const countrySchema: Schema<CountryProps> = new Schema({
                 const count = await this.model('Countries').countDocuments({ countryCode: value });
                 return count === 0;
             },
-            message: 'Country title must be unique'
+            message: 'Country code must be unique'
         },
-        minlength: [2, 'Country title must be at least 3 characters long']
+        minlength: [2, 'Country code must be at least 3 characters long']
     },
     currencyCode: {
         type: String,
@@ -58,6 +59,19 @@ const countrySchema: Schema<CountryProps> = new Schema({
             message: 'Currency code must be unique'
         },
         minlength: [2, 'Currency code must be at least 3 characters long']
+    },
+    countryShortTitle: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                const count = await this.model('Countries').countDocuments({ countryShortTitle: value });
+                return count === 0;
+            },
+            message: 'Country Short Title must be unique'
+        },
+        minlength: [2, 'Short Title must be at least 3 characters long']
     },
     countryImageUrl: {
         type: String,

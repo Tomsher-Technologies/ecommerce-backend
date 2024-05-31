@@ -159,9 +159,9 @@ class ProductsController extends BaseController {
                             var slugData
                             if (variants[variantsIndex].productVariants && variants[variantsIndex].productVariants.length) {
                                 for (let productVariantsIndex = 0; productVariantsIndex < variants[variantsIndex].productVariants.length; productVariantsIndex++) {
-                                    var countryCode: any
+                                    var countryShortTitle: any
                                     if (variants[variantsIndex].countryId) {
-                                        countryCode = await CountryService.findCountryId({ _id: variants[variantsIndex].countryId })
+                                        countryShortTitle = await CountryService.findCountryId({ _id: variants[variantsIndex].countryId })
                                     }
                                     if (variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle) {
                                         slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
@@ -169,8 +169,8 @@ class ProductsController extends BaseController {
                                     else {
                                         slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
                                     }
-                                    if (countryCode) {
-                                        slugData = slugData + "-" + countryCode.countryCode
+                                    if (countryShortTitle) {
+                                        slugData = slugData + "-" + countryShortTitle.countryShortTitle
                                     }
 
                                     if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {

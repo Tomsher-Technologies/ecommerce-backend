@@ -32,6 +32,7 @@ class CountryController extends BaseController {
                         { countryTitle: keywordRegex },
                         { countryCode: keywordRegex },
                         { currencyCode: keywordRegex },
+                        { countryShortTitle: keywordRegex }
                     ],
                     ...query
                 } as any;
@@ -64,7 +65,7 @@ class CountryController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryTitle, slug, countryCode, currencyCode, isOrigin } = validatedData.data;
+                const { countryTitle, slug, countryCode, currencyCode, isOrigin, countryShortTitle } = validatedData.data;
                 const user = res.locals.user;
 
                 const countryData: Partial<CountryProps> = {
@@ -73,6 +74,7 @@ class CountryController extends BaseController {
                     countryImageUrl: handleFileUpload(req, null, req.file, 'countryImageUrl', 'country'),
                     countryCode,
                     currencyCode,
+                    countryShortTitle,
                     isOrigin,
                     status: '1', // active
                     statusAt: new Date(),
