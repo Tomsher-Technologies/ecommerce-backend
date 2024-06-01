@@ -39,6 +39,11 @@ const bannerSchema: Schema<BannerProps> = new Schema({
     },
     description: {
         type: String,
+        default: ''
+    },
+    pageReference: {
+        type: String,
+        required: true,
     },
     blocks: {
         type: Number,

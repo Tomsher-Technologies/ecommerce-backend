@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 
 import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
 import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
-import { QueryParams } from '../../../utils/types/common';
+import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
@@ -11,7 +11,6 @@ import BaseController from '../../../controllers/admin/base-controller';
 import BannerService from '../../../services/admin/ecommerce/banner-service'
 import GeneralService from '../../../services/admin/general-service';
 import BannerModel from '../../../model/admin/ecommerce/banner-model';
-import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -19,7 +18,7 @@ class BannerController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
 
@@ -38,9 +37,23 @@ class BannerController extends BaseController {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { bannerTitle: keywordRegex }
+                        { bannerTitle: keywordRegex },
+                        { page: keywordRegex },
+                        { pageReference: keywordRegex },
                     ],
                     ...query
+                } as any;
+            }
+
+            if (page) {
+                query = {
+                    ...query, page: page
+                } as any;
+            }
+
+            if (pageReference) {
+                query = {
+                    ...query, pageReference: pageReference
                 } as any;
             }
             const sort: any = {};
@@ -71,7 +84,7 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status } = validatedData.data;
+                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
                 const user = res.locals.user;
 
                 const mewBannerImages = (req as any).files.filter((file: any) =>
@@ -89,6 +102,7 @@ class BannerController extends BaseController {
                         bannerTitle,
                         slug: slug || slugify(bannerTitle),
                         page,
+                        pageReference,
                         linkType,
                         link,
                         position,
@@ -111,7 +125,7 @@ class BannerController extends BaseController {
                                 file.fieldname.includes('[bannerImage]')
                             );
 
-                            await languageValues?.map(async (languageValue: any, index: number) => {
+                            await languageValues.map(async (languageValue: any, index: number) => {
                                 const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${index}]`));
 
                                 let languageBannerImages = []

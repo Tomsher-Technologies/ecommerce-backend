@@ -200,7 +200,7 @@ class SpecificationController extends BaseController {
                                 requestedData: {
                                     _id: updatedSpecification._id,
                                     specificationTitle: updatedSpecification.specificationTitle,
-                                    specificationValue: newValue
+                                    specificationValues: newValue
                                 },
                                 message: 'Specification updated successfully!'
                             }, 200, {
