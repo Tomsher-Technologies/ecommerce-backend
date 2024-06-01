@@ -12,6 +12,7 @@ export const multiLanguageSources = {
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+        collectionsBrands: 'collectionsbrands',
        
     },
     setup:{

@@ -4,9 +4,9 @@ import { Request, Response } from 'express';
 import { deleteFile, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '../../../controllers/admin/base-controller';
-import CollectionsProductsService from '../../../services/admin/website/collections-products-service';
-import { collectionProductSchema } from '../../../utils/schemas/admin/website/collection-product-shema';
+import BaseController from '../base-controller';
+import CollectionsBrandsService from '../../../services/admin/website/collections-brands-service';
+import { collectionBrandSchema } from '../../../utils/schemas/admin/website/collection-brand-shema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 import GeneralService from '../../../services/admin/general-service';
@@ -14,7 +14,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 
 const controller = new BaseController();
 
-class CollectionsProductsController extends BaseController {
+class CollectionsBrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
@@ -42,7 +42,7 @@ class CollectionsProductsController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
 
-            const collections = await CollectionsProductsService.findAll({
+            const collections = await CollectionsBrandsService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
@@ -51,7 +51,7 @@ class CollectionsProductsController extends BaseController {
 
             return controller.sendSuccessResponse(res, {
                 requestedData: collections,
-                totalCount: await CollectionsProductsService.getTotalCount(query),
+                totalCount: await CollectionsBrandsService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
@@ -61,12 +61,12 @@ class CollectionsProductsController extends BaseController {
 
     async create(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = collectionProductSchema.safeParse(req.body);
+            const validatedData = collectionBrandSchema.safeParse(req.body);
 
             const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
 
             if (validatedData.success) {
-                const { countryId, collectionTitle, slug, collectionSubTitle, collectionsProducts, page, pageReference, languageValues } = validatedData.data;
+                const { countryId, collectionTitle, slug, collectionSubTitle, collectionsBrands, page, pageReference, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const collectionData = {
@@ -76,14 +76,14 @@ class CollectionsProductsController extends BaseController {
                     collectionSubTitle,
                     page,
                     pageReference,
-                    collectionsProducts: collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [],
+                    collectionsBrands: collectionsBrands ? collectionsBrands.split(',').map((id: string) => id.trim()) : [],
                     collectionImageUrl: handleFileUpload(req, null, (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                     status: '1',
                     createdBy: user._id,
                     createdAt: new Date()
                 };
 
-                const newCollection = await CollectionsProductsService.create(collectionData);
+                const newCollection = await CollectionsBrandsService.create(collectionData);
                 if (newCollection) {
                     const languageValuesImages = (req as any).files.filter((file: any) =>
                         file.fieldname &&
@@ -114,7 +114,7 @@ class CollectionsProductsController extends BaseController {
                         message: 'Collection created successfully!'
                     }, 200, { // task log
                         sourceFromId: newCollection._id,
-                        sourceFrom: adminTaskLog.website.collectionsProducts,
+                        sourceFrom: adminTaskLog.website.collectionsBrands,
                         activity: adminTaskLogActivity.create,
                         activityStatus: adminTaskLogStatus.success
                     });
@@ -149,10 +149,10 @@ class CollectionsProductsController extends BaseController {
         try {
             const collectionId = req.params.id;
             if (collectionId) {
-                const collection: any = await CollectionsProductsService.findOne(collectionId);
+                const collection: any = await CollectionsBrandsService.findOne(collectionId);
                 if (collection) {
-                    const collectionProducts = await CollectionsProductsService.findCollectionProducts(collection.collectionsProducts);
-                    // const unCollectionedProducts = await CollectionsProductsService.findUnCollectionedProducts(collection.collectionsProducts);
+                    const collectionBrands = await CollectionsBrandsService.findCollectionBrands(collection.collectionsBrands);
+                    // const unCollectionedBrands = await CollectionsBrandsService.findUnCollectionedBrands(collection.collectionsBrands);
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -165,9 +165,9 @@ class CollectionsProductsController extends BaseController {
                             slug: collection.slug,
                             collectionSubTitle: collection.collectionSubTitle,
                             collectionImageUrl: collection.collectionImageUrl,
-                            collectionsProducts: collectionProducts,
+                            collectionsBrands: collectionBrands,
                             languageValues: collection.languageValues,
-                            // unCollectionedProducts: unCollectionedProducts,
+                            // unCollectionedBrands: unCollectionedBrands,
                         },
                         message: 'Success'
                     });
@@ -188,27 +188,29 @@ class CollectionsProductsController extends BaseController {
 
     async update(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = collectionProductSchema.safeParse(req.body);
+            const validatedData = collectionBrandSchema.safeParse(req.body);
             if (validatedData.success) {
                 const collectionId = req.params.id;
                 if (collectionId) {
-                    const { collectionsProducts } = validatedData.data;
+                    const { collectionsBrands } = validatedData.data;
+
+                    console.log('collectionsBrands', collectionsBrands);
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
-                        collectionsProducts: collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [],
-                        collectionImageUrl: handleFileUpload(req, await CollectionsProductsService.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
+                        collectionsBrands: collectionsBrands ? collectionsBrands.split(',').map((id: string) => id.trim()) : [],
+                        collectionImageUrl: handleFileUpload(req, await CollectionsBrandsService.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };
 
-                    const updatedCollection = await CollectionsProductsService.update(collectionId, updatedCollectionData);
+                    const updatedCollection = await CollectionsBrandsService.update(collectionId, updatedCollectionData);
                     if (updatedCollection) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'
                         }, 200, { // task log
                             sourceFromId: updatedCollection._id,
-                            sourceFrom: adminTaskLog.website.collectionsProducts,
+                            sourceFrom: adminTaskLog.website.collectionsBrands,
                             activity: adminTaskLogActivity.update,
                             activityStatus: adminTaskLogStatus.success
                         });
@@ -239,10 +241,10 @@ class CollectionsProductsController extends BaseController {
         try {
             const collectionId = req.params.id;
             if (collectionId) {
-                const collection = await CollectionsProductsService.findOne(collectionId);
+                const collection = await CollectionsBrandsService.findOne(collectionId);
                 if (collection) {
-                    await CollectionsProductsService.destroy(collectionId);
-                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.website.collectionsProducts, collectionId);
+                    await CollectionsBrandsService.destroy(collectionId);
+                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.website.collectionsBrands, collectionId);
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }
@@ -256,7 +258,7 @@ class CollectionsProductsController extends BaseController {
                         }
                     }, 200, { // task log
                         sourceFromId: collectionId,
-                        sourceFrom: adminTaskLog.website.collectionsProducts,
+                        sourceFrom: adminTaskLog.website.collectionsBrands,
                         activity: adminTaskLogActivity.delete,
                         activityStatus: adminTaskLogStatus.success
                     });
@@ -277,4 +279,4 @@ class CollectionsProductsController extends BaseController {
 
 }
 
-export default new CollectionsProductsController();
+export default new CollectionsBrandsController();

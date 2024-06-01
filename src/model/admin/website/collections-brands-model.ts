@@ -1,11 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface CollectionsProductsProps extends Document {
+export interface CollectionsBrandsProps extends Document {
     collectionTitle?: string;
     slug?: string;
     collectionSubTitle?: string;
     collectionImageUrl: string;
-    collectionsProducts: any[];
+    collectionsBrands: any[];
     countryId: Schema.Types.ObjectId;
     page: string;
     pageReference: string;
@@ -15,19 +15,19 @@ export interface CollectionsProductsProps extends Document {
     updatedAt?: Date;
 }
 
-const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
+const collectionBrandschema: Schema<CollectionsBrandsProps> = new Schema({
     collectionTitle: {
         type: String,
         required: true,
         unique: false,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('CollectionsProducts').countDocuments({ collectionTitle: value });
+                const count = await this.model('CollectionsBrands').countDocuments({ collectionTitle: value });
                 return count === 0;
             },
-            message: 'Collections products code must be unique'
+            message: 'Collections brands code must be unique'
         },
-        minlength: [2, 'Collections products code must be at least 2 characters long'],
+        minlength: [2, 'Collections brands code must be at least 2 characters long'],
         index: true,
         sparse: true
 
@@ -38,7 +38,7 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('CollectionsProducts').countDocuments({ slug: value });
+                const count = await this.model('CollectionsBrands').countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -52,7 +52,7 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
         type: String,
         default: ''
     },
-    collectionsProducts: {
+    collectionsBrands: {
         type: Schema.Types.Mixed,
         required: true,
     },
@@ -86,6 +86,6 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
     }
 });
 
-const CollectionsProductsModel = mongoose.model<CollectionsProductsProps>('CollectionsProducts', collectionProductSchema);
+const CollectionsBrandsModel = mongoose.model<CollectionsBrandsProps>('CollectionsBrands', collectionBrandschema);
 
-export default CollectionsProductsModel;
+export default CollectionsBrandsModel;

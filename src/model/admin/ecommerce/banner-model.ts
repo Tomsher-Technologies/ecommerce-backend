@@ -41,10 +41,6 @@ const bannerSchema: Schema<BannerProps> = new Schema({
         type: String,
         default: ''
     },
-    pageReference: {
-        type: String,
-        required: true,
-    },
     blocks: {
         type: Number,
         required: true,
@@ -55,6 +51,10 @@ const bannerSchema: Schema<BannerProps> = new Schema({
         required: true,
     },
     page: {
+        type: String,
+        required: true,
+    },
+    pageReference: {
         type: String,
         required: true,
     },

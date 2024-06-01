@@ -1,8 +1,8 @@
-import mongoose, { ObjectId } from "mongoose";
+import mongoose, { ObjectId, Schema } from "mongoose";
 import { dateConvertPm, getCountryId } from "../helpers";
 import { ProductsProps, ProductsQueryParams } from "../types/products";
 import { Request, Response } from 'express';
-import collectionsProductsService from "../../services/admin/website/collections-products-service";
+import CollectionsProductsService from "../../services/admin/website/collections-products-service";
 import GeneralService from '../../services/admin/general-service';
 import ProductCategoryLinkModel from "../../model/admin/ecommerce/product/product-category-link-model";
 import ProductsModel from "../../model/admin/ecommerce/product-model";
@@ -140,14 +140,14 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
         }
     }
     if (data.unCollectionedProducts) {
-        const collection = await collectionsProductsService.findOne(data.unCollectionedProducts);
+        const collection = await CollectionsProductsService.findOne(data.unCollectionedProducts);
         if (collection) {
-            // const unCollectionedProductIds = unCollectionedProducts ? unCollectionedProducts.split(',').map((id: string) => id.trim()) : [];
-            if (collection.collectionsProducts.length > 0) {
-                query._id = { $nin: collection.collectionsProducts };
-                query.status = '1';
+            const unCollectionedProductIds = collection.collectionsProducts.map(id => new mongoose.Types.ObjectId(id));
+            if (unCollectionedProductIds.length > 0) {
+              query._id = { $nin: unCollectionedProductIds };
+              query.status = '1';
             }
-        }
+          }
     }
 
     query = { ...query, ...filteredPriorityQuery };

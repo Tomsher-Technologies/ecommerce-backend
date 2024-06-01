@@ -7,4 +7,5 @@ export type BrandQueryParams ={
     sortorder?: string;
     keyword?: string;
     corporateGiftsPriority?: any;
+    unCollectionedBrands?: any;
 }

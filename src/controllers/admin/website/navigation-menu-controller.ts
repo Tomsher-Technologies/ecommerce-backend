@@ -98,9 +98,13 @@ class NavigationMenuController extends BaseController {
                             if (navigationMenu) {
                                 newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
                             } else {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Menu  items not found',
-                                }, req);
+                                if (blockValues && (blockValues?.length > 0)) {
+                                    newNavigationMenu = await NavigationMenuService.create(menuData);
+                                } else {
+                                    return controller.sendErrorResponse(res, 200, {
+                                        message: 'Menu  items not found',
+                                    }, req);
+                                }
                             }
                         }
                     } else {

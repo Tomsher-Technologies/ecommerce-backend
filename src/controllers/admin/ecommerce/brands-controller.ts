@@ -13,6 +13,7 @@ import BrandsService from '../../../services/admin/ecommerce/brands-service'
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 import GeneralService from '../../../services/admin/general-service';
 import mongoose from 'mongoose';
+import CollectionsBrandsService from '../../../services/admin/website/collections-brands-service';
 
 const controller = new BaseController();
 
@@ -20,7 +21,7 @@ class BrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { _id, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -61,6 +62,19 @@ class BrandsController extends BaseController {
                         filteredPriorityQuery[key] = 0; // Set query for key equal to 0
                     } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
                         filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
+                    }
+                }
+            }
+
+            if (unCollectionedBrands) {
+                const collection = await CollectionsBrandsService.findOne(unCollectionedBrands);
+                // console.log('collection', collection, unCollectionedBrands);
+
+                if (collection) {
+                    const unCollectionedBrandIds = collection.collectionsBrands.map(id => new mongoose.Types.ObjectId(id));
+                    if (unCollectionedBrandIds.length > 0) {
+                        query._id = { $nin: unCollectionedBrandIds };
+                        query.status = '1';
                     }
                 }
             }
