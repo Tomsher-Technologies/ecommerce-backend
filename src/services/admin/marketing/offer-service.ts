@@ -56,6 +56,7 @@ class OfferService {
             }
         };
 
+
         this.categoriesLookup = {
             $lookup: {
                 from: collections.ecommerce.categories,
