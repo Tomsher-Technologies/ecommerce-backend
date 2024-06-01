@@ -17,7 +17,7 @@ class OffersController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
-            
+
             const userData = await res.locals.user;
             const countryId = getCountryId(userData);
             if (countryId) {
@@ -68,15 +68,21 @@ class OffersController extends BaseController {
 
 
             if (validatedData.success) {
-                const { countryId, offerTitle, slug, offerDescription, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
+                const { countryId, offerTitle, slug, offerDescription, offerIN, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const offerData = {
                     countryId: countryId || getCountryId(user),
-                    offerTitle, slug: slug || slugify(offerTitle), offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
-                    offerDescription, offersBy,
+                    offerTitle,
+                    slug: slug || slugify(offerTitle),
+                    offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
+                    offerDescription,
+                    offersBy,
+                    offerIN,
                     offerApplyValues: Array.isArray(offerApplyValues) ? offerApplyValues : stringToArray(offerApplyValues),
-                    offerType, buyQuantity, getQuantity,
+                    offerType,
+                    buyQuantity,
+                    getQuantity,
                     offerDateRange: Array.isArray(offerDateRange) ? offerDateRange : stringToArray(offerDateRange),
                     status: status || '1', createdBy: user._id, createdAt: new Date()
                 };
