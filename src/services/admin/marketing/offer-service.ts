@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { collections } from '../../../constants/collections';
 
@@ -145,11 +146,32 @@ class OfferService {
     }
 
     async findOne(offerId: string): Promise<OffersProps | null> {
-        return OffersModel.findById(offerId);
+
+        const pipeline = [
+            { $match: { _id: mongoose.Types.ObjectId.createFromHexString(offerId) } },
+            this.offerAddFields,
+            this.brandLookup,
+            this.categoriesLookup,
+            this.productsLookup,
+            { $replaceRoot: this.offerReplacedNewRoot }
+        ];
+
+        const result: any = await OffersModel.aggregate(pipeline).exec();
+        return result
     }
 
     async update(offerId: string, offerData: any): Promise<OffersProps | null> {
-        return OffersModel.findByIdAndUpdate(offerId, offerData, { new: true, useFindAndModify: false });
+        const update: any = await OffersModel.findByIdAndUpdate(offerId, offerData, { new: true, useFindAndModify: false });
+        const pipeline = [
+            { $match: { _id: new mongoose.Types.ObjectId(update._id) } },
+            this.offerAddFields,
+            this.brandLookup,
+            this.categoriesLookup,
+            this.productsLookup,
+            { $replaceRoot: this.offerReplacedNewRoot }
+        ];
+        const result: any = await OffersModel.aggregate(pipeline).exec();
+        return result
     }
 
     async destroy(offerId: string): Promise<OffersProps | null> {
