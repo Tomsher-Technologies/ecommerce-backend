@@ -82,7 +82,7 @@ class SpecificationController extends BaseController {
 
                     if (specificationDetailsValues && languageValues && languageValues.length > 0) {
 
-                        await languageValues.map(async (languageValue: any, index: number) => {
+                        await languageValues?.map(async (languageValue: any, index: number) => {
                             const setSpecificationDetailsValues = languageValue.languageValues.specificationValues.map((specificationLanguageValue: any, specificationIndex: number) => {
                                 return {
                                     ...specificationLanguageValue,

@@ -129,7 +129,7 @@ class BrandsController extends BaseController {
                     );
 
                     if (languageValues && languageValues.length > 0) {
-                        await languageValues.map((languageValue: any, index: number) => {
+                        await languageValues?.map((languageValue: any, index: number) => {
 
                             let brandImageUrl = ''
                             if (languageValuesImages.length > 0) {

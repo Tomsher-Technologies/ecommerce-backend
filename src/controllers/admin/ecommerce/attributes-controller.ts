@@ -99,7 +99,7 @@ class AttributesController extends BaseController {
 
                     if (languageValues && languageValues.length > 0) {
 
-                        await languageValues.map((languageValue: any, index: number) => {
+                        await languageValues?.map((languageValue: any, index: number) => {
                             if (attributeType === 'pattern') {
                                 GeneralService.multiLanguageFieledsManage(newAttribute._id, {
                                     languageId: languageValue.languageId,
@@ -284,7 +284,7 @@ class AttributesController extends BaseController {
                             }
 
                             if (updatedAttributeData.languageValues && updatedAttributeData.languageValues.length > 0) {
-                                await updatedAttributeData.languageValues.map((languageValue: any, index: number) => {
+                                await updatedAttributeData.languageValues?.map((languageValue: any, index: number) => {
                                     if (updatedAttributeData.attributeType === 'pattern') {
                                         GeneralService.multiLanguageFieledsManage(updatedAttribute._id, {
                                             languageId: languageValue.languageId,

@@ -89,7 +89,7 @@ class CollectionsProductsController extends BaseController {
                     );
 
                     if (languageValues && languageValues.length > 0) {
-                        await languageValues.map((languageValue: any, index: number) => {
+                        await languageValues?.map((languageValue: any, index: number) => {
 
                             let collectionImageUrl = ''
                             if (languageValuesImages.length > 0) {

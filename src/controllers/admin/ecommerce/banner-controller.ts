@@ -111,7 +111,7 @@ class BannerController extends BaseController {
                                 file.fieldname.includes('[bannerImage]')
                             );
 
-                            await languageValues.map(async (languageValue: any, index: number) => {
+                            await languageValues?.map(async (languageValue: any, index: number) => {
                                 const matchingImage = languageValuesImages.filter((image: any) => image.fieldname.includes(`languageValues[${index}]`));
 
                                 let languageBannerImages = []
