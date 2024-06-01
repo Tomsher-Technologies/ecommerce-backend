@@ -20,6 +20,9 @@ import ProductsRoutes from './routes/admin/ecommerce/products-routes';
 import AttributesRoutes from './routes/admin/ecommerce/attributes-routes';
 import SpecificationRoutes from './routes/admin/ecommerce/specification-route';
 
+// admin general
+import PageRoute from './routes/admin/general/page-routes';
+
 // admin account
 import UserRoute from './routes/admin/account/user-routes';
 import UserTypeRoute from './routes/admin/account/user-type-routes';
@@ -96,6 +99,9 @@ const frontendRouter = express.Router();
 // admin
 adminRouter.use('/auth', AuthRoute);
 // adminRouter.use(authMiddleware); // Apply authMiddleware only to the following routes
+
+// admin general
+adminRouter.use('/general/pages', PageRoute);
 
 //admin ecommerce 
 adminRouter.use('/account/user', UserRoute);

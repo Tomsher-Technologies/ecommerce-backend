@@ -1,5 +1,4 @@
-import { page } from "../../constants/page";
-import BaseController from "./base-controller";
+import BaseController from "../base-controller";
 
 const controller = new BaseController();
 
@@ -11,7 +10,6 @@ class GeneralController extends BaseController {
         try {
 
 
-            console.log(page.page);
 
 
             // return controller.sendSuccessResponse(res, {
