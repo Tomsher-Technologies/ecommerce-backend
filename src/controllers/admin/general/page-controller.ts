@@ -12,8 +12,10 @@ class PageController extends BaseController {
         try {
 
             return controller.sendSuccessResponse(res, {
-                page: page,
-                pageReference: pageReference,
+                requestedData: {
+                    page: page,
+                    pageReference: pageReference,
+                },
             }, 200);
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching countries' });
