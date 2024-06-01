@@ -8,6 +8,7 @@ export interface BannerProps extends Document {
     blocks: number
     bannerImages: Schema.Types.Mixed,
     page: string;
+    pageReference: string;
     linkType: string; // product, category, brand, custom
     link: string;
     position: number;
