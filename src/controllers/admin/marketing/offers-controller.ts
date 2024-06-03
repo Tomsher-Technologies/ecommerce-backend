@@ -66,7 +66,6 @@ class OffersController extends BaseController {
         try {
             const validatedData = offersSchema.safeParse(req.body);
 
-
             if (validatedData.success) {
                 const { countryId, offerTitle, slug, offerDescription, offerIN, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
                 const user = res.locals.user;
@@ -87,16 +86,23 @@ class OffersController extends BaseController {
                     status: status || '1', createdBy: user._id, createdAt: new Date()
                 };
 
-                const newOffer = await OfferService.create(offerData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newOffer,
-                    message: 'Offer created successfully!'
-                }, 200, { // task log
-                    sourceFromId: newOffer._id,
-                    sourceFrom: adminTaskLog.marketing.offers,
-                    activity: adminTaskLogActivity.create,
-                    activityStatus: adminTaskLogStatus.success
-                });
+                const newOffer: any = await OfferService.create(offerData);
+                if (newOffer) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newOffer?.length > 0 ? newOffer[0] : newOffer,
+                        message: 'Offer created successfully!'
+                    }, 200, { // task log
+                        sourceFromId: newOffer._id,
+                        sourceFrom: adminTaskLog.marketing.offers,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: 'something went wrong!'
+                    }, req);
+                }
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -153,10 +159,10 @@ class OffersController extends BaseController {
                         updatedAt: new Date()
                     };
 
-                    const updatedOffer = await OfferService.update(offerId, updatedofferData);
+                    const updatedOffer: any = await OfferService.update(offerId, updatedofferData);
                     if (updatedOffer) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedOffer,
+                            requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
                             message: 'Offer updated successfully!'
                         }, 200, { // task log
                             sourceFromId: updatedOffer._id,
