@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { QueryParams } from '../../../utils/types/common';
-import { storeSchema } from '../../../utils/schemas/admin/store/store-schema';
+import { storeSchema, storeStatusSchema } from '../../../utils/schemas/admin/store/store-schema';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import StoreService from '../../../services/admin/stores/store-service';
@@ -207,7 +207,7 @@ class StoreController extends BaseController {
 
     async statusChange(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = storeSchema.safeParse(req.body);
+            const validatedData = storeStatusSchema.safeParse(req.body);
             if (validatedData.success) {
                 const store = req.params.id;
                 if (store) {

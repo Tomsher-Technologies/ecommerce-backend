@@ -24,7 +24,7 @@ export const storeSchema = zod.object({
 });
 
 
-export const storeeStatusSchema = zod.object({
+export const storeStatusSchema = zod.object({
     status: zod.string()
         .min(1, { message: "Status is required" })
         .max(1, { message: "Status must be a single character" })

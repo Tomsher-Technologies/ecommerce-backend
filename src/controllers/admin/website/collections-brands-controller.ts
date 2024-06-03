@@ -138,6 +138,13 @@ class CollectionsBrandsController extends BaseController {
                         collectionTitle: error.errors.collectionTitle.properties.message
                     }
                 }, req);
+            } else if (error && error.errors && error.errors.collectionImageUrl && error.errors.collectionImageUrl.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        collectionImageUrl: error.errors.collectionImageUrl.properties.message
+                    }
+                }, req);
             }
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating collection',
