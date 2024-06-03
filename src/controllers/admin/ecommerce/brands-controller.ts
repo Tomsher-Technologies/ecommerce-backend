@@ -41,20 +41,10 @@ class BrandsController extends BaseController {
             }
 
             if (_id) {
-                if (_id.length > 0) {
-                    for (const arrayResult of _id) {
-                        query = {
-                            ...query, _id: new mongoose.Types.ObjectId(arrayResult)
-                        } as any;
-                    }
-                } else {
-                    query = {
-                        ...query, _id: new mongoose.Types.ObjectId(_id)
-                    } as any;
-                }
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
             }
-
-
 
             const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
             const filteredQuery = keysToCheck.reduce((result: any, key) => {
@@ -67,11 +57,11 @@ class BrandsController extends BaseController {
             if (Object.keys(filteredQuery).length > 0) {
                 for (const key in filteredQuery) {
                     if (filteredQuery[key] === '> 0') {
-                        filteredPriorityQuery[key] = { $gt: '0' }; // Set query for key greater than 0
+                        filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
                     } else if (filteredQuery[key] === '0') {
-                        filteredPriorityQuery[key] = '0'; // Set query for key equal to 0
+                        filteredPriorityQuery[key] = 0; // Set query for key equal to 0
                     } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                        filteredPriorityQuery[key] = { $lt: '0' }; // Set query for key less than 0
+                        filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
                     }
                 }
             }
