@@ -186,13 +186,13 @@ class ProductSpecificationService {
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data: any) => {
-                        if (data._id != '') {
+                        // if (data._id != '') {
                         const existingEntry = await ProductSpecificationModel.findOne({ _id: data._id });
                             if (existingEntry) {
                                 // Update existing document
                                 await ProductSpecificationModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                             }
-                        } else {
+                         else {
                             // Create new document
                             await ProductSpecificationModel.create({ specificationId: data.specificationId, specificationDetailId: data.specificationDetailId, productId: productId, variantId: variantId });
                         }

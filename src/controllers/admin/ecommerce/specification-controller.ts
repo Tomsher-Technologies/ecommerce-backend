@@ -92,7 +92,7 @@ class SpecificationController extends BaseController {
 
                             })
                             if (setSpecificationDetailsValues && setSpecificationDetailsValues.length > 0) {
-                                GeneralService.multiLanguageFieledsManage(newSpecification._id, {
+                                const languageValues = GeneralService.multiLanguageFieledsManage(newSpecification._id, {
                                     ...languageValue,
                                     source: multiLanguageSources.ecommerce.specifications,
                                     languageValues: {
@@ -107,7 +107,8 @@ class SpecificationController extends BaseController {
                         requestedData: {
                             _id: newSpecification._id,
                             specificationTitle: newSpecification.specificationTitle,
-                            specificationValues: specificationDetailsValues
+                            specificationValues: specificationDetailsValues,
+                            languageValues: languageValues
                         },
                         message: 'Specification created successfully!'
                     }, 200, {
@@ -200,7 +201,8 @@ class SpecificationController extends BaseController {
                                 requestedData: {
                                     _id: updatedSpecification._id,
                                     specificationTitle: updatedSpecification.specificationTitle,
-                                    specificationValues: newValue
+                                    specificationValues: newValue,
+                                    languageValues: newLanguageValues
                                 },
                                 message: 'Specification updated successfully!'
                             }, 200, {

@@ -115,19 +115,12 @@ class CouponService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.couponAddFields
-        ];
-
-        pipeline.push(
+            this.couponAddFields,
             this.brandLookup,
             this.categoriesLookup,
-            this.productsLookup
-
-        );
-
-        pipeline.push({
-            $replaceRoot: this.couponReplacedNewRoot
-        });
+            this.productsLookup,
+            { $replaceRoot: this.couponReplacedNewRoot }
+        ];
 
 
         return CouponModel.aggregate(pipeline).exec();

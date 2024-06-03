@@ -210,6 +210,8 @@ class ProductVariantService {
     }
 
     async variantService(productdata: ProductsProps, variantDetails: any, userData: UserDataProps): Promise<ProductVariantsProps[]> {
+        console.log("variantDetailsvariantDetailsvariantDetails",variantDetails);
+        
         try {
             if (productdata._id) {
                 const existingEntries = await ProductVariantModel.find({ productId: productdata._id });
@@ -244,14 +246,14 @@ class ProductVariantService {
                     }
                     if (variantDetail.productVariants) {
                         const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any, index: number) => {
-                            if (data._id != '') {
+                            // if (data._id != '') {
                                 const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
                                 console.log("existingEntry", existingEntry);
 
                                 if (existingEntry) {
                                     // Update existing document
                                     const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
-                                    if (productVariantData && variantDetails.isVariant == 1) {
+                                    if (productVariantData && productdata.isVariant === 1) {
                                         console.log("variantDetail.productVariants", variantDetail.productVariants[index]._id);
 
                                         // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
@@ -281,7 +283,9 @@ class ProductVariantService {
                                         ]);
                                     }
                                 }
-                            } else {
+                             else {
+                                console.log("haaai");
+                                
                                 var slugData
                                 if (data.extraProductTitle) {
                                     slugData = productdata.slug + "-" + data.extraProductTitle 
@@ -291,6 +295,8 @@ class ProductVariantService {
                                 }
                                 // Create new document
                                 const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
+                               console.log("variantData",variantData);
+                               
                                 if (variantData) {
                                     if (variantData) {
                                         console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
