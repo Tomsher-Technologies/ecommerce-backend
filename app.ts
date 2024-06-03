@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import helmet from 'helmet';
 import cors from "cors";
 
@@ -8,8 +7,9 @@ require('dotenv').config();
 import { url as dbUrl } from './config/database.config';
 import { allowedOrigins } from './config/allowed-origins';
 
-import adminRouter from'./routes/admin-routers'; 
-import frontendRouter from'./routes/frontend-router'; 
+import adminRouter from './routes/admin-routers';
+import frontendRouter from './routes/frontend-router';
+import databaseSwitcher from './middleware/databaseSwitcher';
 
 const app = express();
 const port = process.env.PORT;
@@ -38,15 +38,8 @@ const corsOptions: cors.CorsOptions = {
 };
 app.use(cors(corsOptions));
 
-mongoose.Promise = global.Promise;
-mongoose
-.connect(process.env.MONGODB_URI as any)
-.then((x) => {
-   console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
- })
- .catch((err) => {
-   console.error('Could not connect to the database', err)
- });
+
+app.use(databaseSwitcher); // ddatabase connection
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Ecommerce" });
@@ -55,10 +48,6 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log("Server is listening on port " + port);
 });
-
-// adminRouter.use(logResponseStatus);
-// adminRouter.use(errorMiddleware);
-
 
 app.use('/admin', adminRouter);
 app.use('/api', frontendRouter);
