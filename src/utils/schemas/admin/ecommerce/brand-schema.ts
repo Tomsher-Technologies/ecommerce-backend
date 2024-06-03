@@ -4,6 +4,7 @@ export const brandSchema = zod.object({
     brandTitle: zod.string({ required_error: 'Brand title is required', }).min(2, 'Brand title is should be 2 chars minimum'),
     description: zod.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     brandImageUrl: zod.string().optional(),
+    brandBannerImageUrl: zod.string().optional(),
     brandImage: zod.any({ required_error: 'Brand image is required' }).nullable(),
     languageValues: zod.any().optional(),
 }).nonstrict();

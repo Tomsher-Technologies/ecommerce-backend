@@ -1,21 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
-
-const dbConnections: { [key: string]: mongoose.Connection } = {};
+import { databases } from '../config/database.config';
 
 const connectToDatabase = async (dbName: string) => {
-
-    const dbUri = process.env[`${dbName.toUpperCase()}_MONGODB_URI`];
-
+    const dbUri = databases[dbName];
     if (!dbUri) {
         throw new Error(`No URI found for database ${dbName}`);
     }
-
-    if (!dbConnections[dbName]) {
-        return dbUri
-    }
-
-    return false;
+    return dbUri;
 };
 
 const databaseSwitcher = async (req: Request, res: Response, next: NextFunction) => {
@@ -26,17 +18,23 @@ const databaseSwitcher = async (req: Request, res: Response, next: NextFunction)
             return res.status(400).json({ message: 'Database header is required' });
         }
 
-        const connection: any = await connectToDatabase(dbName);
-        if (connection) {
+        const dbUri = await connectToDatabase(dbName);
+
+        if (dbUri) {
+            // Close the existing mongoose connection if it exists
+            if (mongoose.connection.readyState === 1) { // 1 means connected
+                await mongoose.connection.close();
+            }
+
             mongoose.Promise = global.Promise;
-            mongoose
-                .connect(connection)
-                .then((x) => {
-                    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
-                })
-                .catch((err) => {
-                    console.error('Could not connect to the database', err)
-                });
+            await mongoose.connect(dbUri, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 5000, // Adjust the timeout as needed
+                socketTimeoutMS: 45000, // Adjust the timeout as needed
+                connectTimeoutMS: 30000, // Adjust the timeout as needed
+            }as any);
+            console.log(`Connected to MongoDB: ${dbUri}`);
             next();
         }
     } catch (error) {
@@ -44,5 +42,6 @@ const databaseSwitcher = async (req: Request, res: Response, next: NextFunction)
         res.status(500).json({ message: 'Database connection error' });
     }
 };
+
 
 export default databaseSwitcher;

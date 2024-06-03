@@ -12,7 +12,7 @@ import BrandsController from '../../../src/controllers/admin/ecommerce/brands-co
 
 const router: Router = express.Router();
 
-const { upload } = configureMulter('brand', ['brandImage',]);
+const { upload } = configureMulter('brand', ['brandImage','brandBannerImage']);
 
 router.use(authMiddleware);
 

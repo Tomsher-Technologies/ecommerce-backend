@@ -121,11 +121,13 @@ class BrandsController extends BaseController {
                 const user = res.locals.user;
 
                 const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
+                const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
 
                 const brandData: Partial<BrandProps> = {
                     brandTitle,
                     slug: slug || slugify(brandTitle) as any,
                     brandImageUrl: handleFileUpload(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
+                    brandBannerImageUrl: handleFileUpload(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                     description,
                     metaTitle: metaTitle as string,
                     metaDescription: metaDescription as string,
@@ -149,6 +151,11 @@ class BrandsController extends BaseController {
                         file.fieldname.startsWith('languageValues[') &&
                         file.fieldname.includes('[brandImage]')
                     );
+                    const languageValuesBannerImages = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[brandBannerImage]')
+                    );
 
                     if (languageValues && languageValues.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
@@ -157,12 +164,17 @@ class BrandsController extends BaseController {
                             if (languageValuesImages.length > 0) {
                                 brandImageUrl = handleFileUpload(req, null, languageValuesImages[index], `brandImageUrl`, 'brand');
                             }
+                            let brandBannerImageUrl = ''
+                            if (languageValuesBannerImages.length > 0) {
+                                brandBannerImageUrl = handleFileUpload(req, null, languageValuesBannerImages[index], `brandBannerImageUrl`, 'brand');
+                            }
 
                             GeneralService.multiLanguageFieledsManage(newBrand._id, {
                                 ...languageValue,
                                 languageValues: {
                                     ...languageValue.languageValues,
-                                    brandImageUrl
+                                    brandImageUrl,
+                                    brandBannerImageUrl
                                 }
                             })
                         })
@@ -239,11 +251,13 @@ class BrandsController extends BaseController {
                 const brandId = req.params.id;
                 if (brandId) {
                     const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
+                    const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
 
                     let updatedBrandData = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
                         brandImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandImage), 'brandImageUrl', 'brand'),
+                        brandBannerImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                         updatedAt: new Date()
                     };
 
@@ -255,12 +269,18 @@ class BrandsController extends BaseController {
                             file.fieldname.startsWith('languageValues[') &&
                             file.fieldname.includes('[brandImage]')
                         );
+                        const languageValuesBannerImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[brandBannerImage]')
+                        );
 
                         let newLanguageValues: any = []
                         if (updatedBrandData.languageValues && updatedBrandData.languageValues.length > 0) {
                             for (let i = 0; i < updatedBrandData.languageValues.length; i++) {
                                 const languageValue = updatedBrandData.languageValues[i];
                                 let brandImageUrl = '';
+                                let brandBannerImageUrl = '';
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
                                 if (languageValuesImages.length > 0 && matchingImage) {
@@ -268,6 +288,14 @@ class BrandsController extends BaseController {
                                     brandImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `brandImageUrl`, 'brand');
                                 } else {
                                     brandImageUrl = updatedBrandData.languageValues[i].languageValues?.brandImageUrl
+                                }
+                                const matchingBannerImage = languageValuesBannerImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesBannerImages.length > 0 && matchingBannerImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.brands, updatedBrand._id, languageValue.languageId);
+                                    brandBannerImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingBannerImage, `brandBannerImageUrl`, 'brand');
+                                } else {
+                                    brandBannerImageUrl = updatedBrandData.languageValues[i].languageValues?.brandBannerImageUrl
                                 }
 
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBrand._id, {

@@ -42,30 +42,13 @@ class HomeController extends BaseController {
                 query.countryId = countryId;
             }
 
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
-            } else {
-                query.status = '1';
-            }
+            query.status = '1';
 
-            if (keyword) {
-                const keywordRegex = new RegExp(keyword, 'i');
-                query = {
-                    $or: [
-                        { sliderTitle: keywordRegex }
-                    ],
-                    ...query
-                } as any;
-            }
-            const sort: any = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
+
             const sliders = await SliderService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
-                sort
             });
             return controller.sendSuccessResponse(res, {
                 requestedData: sliders,

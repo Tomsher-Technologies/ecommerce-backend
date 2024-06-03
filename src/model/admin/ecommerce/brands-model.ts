@@ -5,6 +5,7 @@ export interface BrandProps extends Document {
     slug: string;
     description: string;
     brandImageUrl: string;
+    brandBannerImageUrl?: string;
     corporateGiftsPriority: string;
     brandListPriority: string;
     status: string;
@@ -45,6 +46,10 @@ const brandSchema: Schema<BrandProps> = new Schema({
         required: function () {
             return !this.isExcel;
         }
+    },
+    brandBannerImageUrl: {
+        type: String,
+        default:''
     },
     isExcel: {
         type: Boolean,
