@@ -11,7 +11,6 @@ import { seoPage } from '../../../constants/admin/seo-page';
 
 import BaseController from '../../../controllers/admin/base-controller';
 
-import collectionsProductsService from '../../../services/admin/website/collections-products-service';
 import ProductVariantService from '../../../services/admin/ecommerce/product/product-variant-service';
 import ProductVariantAttributeService from '../../../services/admin/ecommerce/product/product-variant-attributes-service';
 import ProductCategoryLinkService from '../../../services/admin/ecommerce/product/product-category-link-service';
@@ -27,7 +26,6 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service';
 import { filterProduct, defaultSkuSettings, deleteFunction } from '../../../utils/admin/products';
 import SpecificationService from '../../../services/admin/ecommerce/specification-service';
-import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 
 const controller = new BaseController();
 

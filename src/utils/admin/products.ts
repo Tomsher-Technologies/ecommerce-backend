@@ -1,7 +1,7 @@
-import mongoose, { ObjectId, Schema } from "mongoose";
-import { dateConvertPm, getCountryId } from "../helpers";
+import mongoose from "mongoose";
+import { dateConvertPm } from "../helpers";
 import { ProductsProps, ProductsQueryParams } from "../types/products";
-import { Request, Response } from 'express';
+
 import CollectionsProductsService from "../../services/admin/website/collections-products-service";
 import GeneralService from '../../services/admin/general-service';
 import ProductCategoryLinkModel from "../../model/admin/ecommerce/product/product-category-link-model";
@@ -131,11 +131,11 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
     if (Object.keys(filteredQuery).length > 0) {
         for (const key in filteredQuery) {
             if (filteredQuery[key] === '> 0') {
-                filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
+                filteredPriorityQuery[key] = { $gt: '0' }; // Set query for key greater than 0
             } else if (filteredQuery[key] === '0') {
-                filteredPriorityQuery[key] = 0; // Set query for key equal to 0
+                filteredPriorityQuery[key] = '0'; // Set query for key equal to 0
             } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
+                filteredPriorityQuery[key] = { $lt: '0' }; // Set query for key less than 0
             }
         }
     }
@@ -144,10 +144,10 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
         if (collection) {
             const unCollectionedProductIds = collection.collectionsProducts.map(id => new mongoose.Types.ObjectId(id));
             if (unCollectionedProductIds.length > 0) {
-              query._id = { $nin: unCollectionedProductIds };
-              query.status = '1';
+                query._id = { $nin: unCollectionedProductIds };
+                query.status = '1';
             }
-          }
+        }
     }
 
     query = { ...query, ...filteredPriorityQuery };
@@ -203,7 +203,7 @@ export const defaultSkuSettings = async (variants: any) => {
 
 }
 
-export const deleteFunction = async(productId:string)=>{
+export const deleteFunction = async (productId: string) => {
     return await GeneralService.deleteParentModel([
         // ...(newProduct?._id &&
 
@@ -230,7 +230,7 @@ export const deleteFunction = async(productId:string)=>{
         {
             productId: productId,
             model: ProductCategoryLinkModel
-        } 
+        }
         // )
     ]);
 }
