@@ -202,10 +202,10 @@ class OffersController extends BaseController {
                     let { status } = req.body;
                     const updatedOfferData = { status };
 
-                    const updatedOffer = await OfferService.update(offerId, updatedOfferData);
+                    const updatedOffer: any = await OfferService.update(offerId, updatedOfferData);
                     if (updatedOffer) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedOffer,
+                            requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
                             message: 'Offers status updated successfully!'
                         }, 200, { // task log
                             sourceFromId: updatedOffer._id,
