@@ -41,10 +41,20 @@ class BrandsController extends BaseController {
             }
 
             if (_id) {
-                query = {
-                    ...query, _id: new mongoose.Types.ObjectId(_id)
-                } as any;
+                if (_id.length > 0) {
+                    for (const arrayResult of _id) {
+                        query = {
+                            ...query, _id: new mongoose.Types.ObjectId(arrayResult)
+                        } as any;
+                    }
+                } else {
+                    query = {
+                        ...query, _id: new mongoose.Types.ObjectId(_id)
+                    } as any;
+                }
             }
+
+
 
             const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
             const filteredQuery = keysToCheck.reduce((result: any, key) => {
