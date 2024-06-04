@@ -44,11 +44,10 @@ class HomeController extends BaseController {
 
                     query.countryId = countryId;
                     query.status = '1';
-                    const languageCode = getLanguageValueFromSubdomain(req.get('host'));
                     const sliders = await CommonService.findAllSliders({
                         page: parseInt(page_size as string),
                         limit: 500,
-                        languageCode,
+                        hostName: req.get('host'),
                         query,
                     });
 

@@ -16,30 +16,23 @@ export const getValidSubdomain = (host?: string | null) => {
 };
 
 
-export function getLanguageValueFromSubdomain(host: string | null | undefined): string | null | undefined {
+const supportedLanguageCodes = ['ar', 'en', 'sp', 'hn'];
+
+export function getLanguageValueFromSubdomain(host: string | null | undefined, languageData: any[]): any {
   if (!host) {
     return null;
   }
 
   const parts = host.split('.');
   for (const part of parts) {
-    if (part === 'ar' || part.endsWith('-ar')) {
-      return 'ar';
+    for (const language of languageData) {
+      if (part === language.languageCode || part.endsWith(`-${language.languageCode}`)) {
+        return language._id;
+      }
     }
   }
-  return 'en';
+  return false; // Default to 'en' if no supported language code is found
 }
-
-export function getLanguageDirectionFromSubdomain(host: string | null): string {
-  const language = getLanguageValueFromSubdomain(host);
-  return language === 'ar' ? 'rtl' : 'ltr';
-}
-
-export function getLanguageDirectionChangeFromSubdomain(host: any): string {
-  const language = getLanguageValueFromSubdomain(host);
-  return language === 'ar' ? 'left' : 'right';
-}
-
 
 export function getCountryShortTitleFromHostname(hostname: string | null | undefined) {
   if (hostname) {
@@ -53,5 +46,5 @@ export function getCountryShortTitleFromHostname(hostname: string | null | undef
       }
     }
   }
-  return null; 
+  return null;
 }

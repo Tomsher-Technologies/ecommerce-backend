@@ -39,3 +39,9 @@ export const sliderProject = {
         languageValues: { $ifNull: ['$languageValues', []] }
     }
 };
+
+export const sliderFinalProject = {
+    $project: {
+        languageValues: 0
+    }
+};

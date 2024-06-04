@@ -1,10 +1,13 @@
 import { FilterOptionsProps, pagination } from "../../components/pagination";
 import { multiLanguageSources } from "../../constants/multi-languages";
+
+import { sliderFinalProject, sliderLookup, sliderProject } from "../../utils/config/slider-config";
+
+import { getCountryShortTitleFromHostname, getLanguageValueFromSubdomain } from "../../utils/frontend/sub-domain";
 import SliderModel, { SliderProps } from "../../model/admin/ecommerce/slider-model";
 import CountryModel, { CountryProps } from "../../model/admin/setup/country-model";
 import LanguagesModel from "../../model/admin/setup/language-model";
-import { sliderLookup, sliderProject } from "../../utils/config/sliderConfig";
-import { getCountryShortTitleFromHostname } from "../../utils/frontend/sub-domain";
+
 
 
 class CommonService {
@@ -36,7 +39,7 @@ class CommonService {
     }
 
     async findAllSliders(options: FilterOptionsProps = {}): Promise<SliderProps[]> {
-        const { query, skip, limit, sort, languageCode } = pagination(options.query || {}, options);
+        const { query, skip, limit, sort, hostName } = pagination(options.query || {}, options);
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -45,20 +48,20 @@ class CommonService {
             finalSort = defaultSort;
         }
 
-        // Construct the pipeline with conditionally added stages
         let pipeline: any[] = [
             { $match: query },
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort }
         ];
-
+        const languageData = await LanguagesModel.find().exec();
+        const languageId = getLanguageValueFromSubdomain(hostName, languageData);
        
-
         pipeline.push(sliderProject);
 
         return SliderModel.aggregate(pipeline).exec();
     }
+
 }
 
 export default new CommonService();
