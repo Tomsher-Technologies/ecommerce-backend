@@ -17,6 +17,9 @@ export const sliderSchema = zod.object({
     page: zod.string().refine((val) => val.trim().length > 0, {
         message: 'Page must not be empty'
     }),
+    pageReference: zod.string().refine((val) => val.trim().length > 0, {
+        message: 'Page reference must not be empty'
+    }),
     description: zod.string().optional(),
     linkType: zod.string().refine((val) => val.trim().length > 0, {
         message: 'Link type must not be empty'

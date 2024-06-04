@@ -36,6 +36,7 @@ class SliderService {
                 countryId: 1,
                 sliderTitle: 1,
                 page: 1,
+                pageReference: 1,
                 linkType: 1,
                 link: 1,
                 description: 1,

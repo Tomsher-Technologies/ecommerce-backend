@@ -169,7 +169,7 @@ class BrandsController extends BaseController {
                                 brandBannerImageUrl = handleFileUpload(req, null, languageValuesBannerImages[index], `brandBannerImageUrl`, 'brand');
                             }
 
-                            GeneralService.multiLanguageFieledsManage(newBrand._id, {
+                            const languageValues = GeneralService.multiLanguageFieledsManage(newBrand._id, {
                                 ...languageValue,
                                 languageValues: {
                                     ...languageValue.languageValues,
@@ -181,7 +181,10 @@ class BrandsController extends BaseController {
                     }
 
                     return controller.sendSuccessResponse(res, {
-                        requestedData: newBrand,
+                        requestedData: {
+                            ...newBrand,
+                            languageValues: languageValues
+                        },
                         message: 'Brand created successfully!'
                     }, 200, { // task log
                         sourceFromId: newBrand._id,

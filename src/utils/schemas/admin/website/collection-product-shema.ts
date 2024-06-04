@@ -9,7 +9,7 @@ export const collectionProductSchema = zod.object({
         message: 'Page must not be empty'
     }),
     pageReference: zod.string().refine((val) => val.trim().length > 0, {
-        message: 'Page must not be empty'
+        message: 'Page Reference must not be empty'
     }),
     languageValues: zod.any().optional(),
 }).nonstrict(); 

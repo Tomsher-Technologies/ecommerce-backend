@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
-import { QueryParams } from '../../../utils/types/common';
+import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
 import { sliderPositionSchema, sliderSchema, sliderStatusSchema } from '../../../utils/schemas/admin/ecommerce/slider-schema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
@@ -19,7 +19,7 @@ class SlidersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
 
@@ -41,6 +41,17 @@ class SlidersController extends BaseController {
                         { sliderTitle: keywordRegex }
                     ],
                     ...query
+                } as any;
+            }
+            if (page) {
+                query = {
+                    ...query, page: page
+                } as any;
+            }
+
+            if (pageReference) {
+                query = {
+                    ...query, pageReference: pageReference
                 } as any;
             }
             const sort: any = {};
@@ -70,7 +81,7 @@ class SlidersController extends BaseController {
             const validatedData = sliderSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { countryId, sliderTitle, slug, page, linkType, link, position, description, status, languageValues } = validatedData.data;
+                const { countryId, sliderTitle, slug, page, linkType, link, position, description, status, languageValues, pageReference } = validatedData.data;
                 const user = res.locals.user;
 
                 const sliderImage = (req as any).files.find((file: any) => file.fieldname === 'sliderImage');
@@ -80,6 +91,7 @@ class SlidersController extends BaseController {
                     sliderTitle,
                     slug: slug || slugify(sliderTitle),
                     page,
+                    pageReference,
                     linkType,
                     link,
                     position,
