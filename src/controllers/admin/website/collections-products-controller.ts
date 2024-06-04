@@ -2,12 +2,13 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 
 import { deleteFile, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
-import { QueryParams } from '../../../utils/types/common';
+import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import CollectionsProductsService from '../../../services/admin/website/collections-products-service';
 import { collectionProductSchema } from '../../../utils/schemas/admin/website/collection-product-shema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+
 
 import GeneralService from '../../../services/admin/general-service';
 import { multiLanguageSources } from '../../../constants/multi-languages';
@@ -18,7 +19,7 @@ class CollectionsProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -35,6 +36,17 @@ class CollectionsProductsController extends BaseController {
                         { linkType: keywordRegex },
                     ],
                     ...query
+                } as any;
+            }
+            if (page) {
+                query = {
+                    ...query, page: page
+                } as any;
+            }
+
+            if (pageReference) {
+                query = {
+                    ...query, pageReference: pageReference
                 } as any;
             }
             const sort: any = {};

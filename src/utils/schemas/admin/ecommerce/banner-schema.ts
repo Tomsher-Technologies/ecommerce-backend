@@ -18,7 +18,7 @@ export const bannerSchema = zod.object({
         message: 'Page must not be empty'
     }),
     pageReference: zod.string().refine((val) => val.trim().length > 0, {
-        message: 'Page must not be empty'
+        message: 'Page reference must not be empty'
     }),
     description: zod.string().optional(),
     linkType: zod.string().refine((val) => val.trim().length > 0, {

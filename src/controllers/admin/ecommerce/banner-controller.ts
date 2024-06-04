@@ -32,7 +32,6 @@ class BannerController extends BaseController {
             } else {
                 query.status = '1';
             }
-
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {

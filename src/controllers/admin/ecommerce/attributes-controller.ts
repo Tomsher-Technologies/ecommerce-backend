@@ -120,7 +120,7 @@ class AttributesController extends BaseController {
                                             }
                                         }
                                     })
-                                    GeneralService.multiLanguageFieledsManage(newAttribute._id, {
+                                    const languageValues = GeneralService.multiLanguageFieledsManage(newAttribute._id, {
                                         ...languageValue,
                                         languageValues: {
                                             ...languageValue.languageValues,
@@ -163,7 +163,8 @@ class AttributesController extends BaseController {
                         requestedData: {
                             _id: newAttribute._id,
                             attributeTitle: newAttribute.attributeTitle,
-                            attributeValues: attributeDetailsValue
+                            attributeValues: attributeDetailsValue,
+                            languageValues: languageValues
                         },
                         message: 'Attribute successfully created'
                     }, 200, {  // task log

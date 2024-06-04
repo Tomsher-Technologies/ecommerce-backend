@@ -5,6 +5,7 @@ export interface SliderProps extends Document {
     sliderTitle: string;
     slug: string;
     page: string;
+    pageReference: string;
     linkType: string; // product, category, brand, custom
     link: string;
     description: string;
@@ -53,7 +54,10 @@ const sliderSchema: Schema<SliderProps> = new Schema({
         type: String,
         required: true,
     },
-    linkType: {
+    pageReference: {
+        type: String,
+        required: true,
+    }, linkType: {
         type: String,
         required: true,
         validate: {
