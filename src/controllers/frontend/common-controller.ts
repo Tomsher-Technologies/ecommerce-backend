@@ -2,50 +2,81 @@ import 'module-alias/register';
 import { Request, Response, response } from 'express';
 const { ObjectId } = require('mongodb');
 
-import { getCountryId } from '../../utils/helpers';
-import { QueryParams } from '../../utils/types/common';
-
 import BaseController from '../admin/base-controller';
+import { websiteSetup as  allWebsiteSetup} from '../../constants/website-setup';
 
-import SliderService from '../../services/admin/ecommerce/slider-service';
-import BannerService from '../../services/admin/ecommerce/banner-service';
-import BrandsService from '../../services/admin/ecommerce/brands-service';
 import ProductsService from '../../services/admin/ecommerce/product-service';
-import CategoryService from '../../services/admin/ecommerce/category-service';
-
-import GeneralService from '../../services/admin/general-service';
-import CountryService from '../../services/admin/setup/country-service';
-import { BrandProps } from '../../model/admin/ecommerce/brands-model';
-import { BrandQueryParams } from '../../utils/types/brands';
 import { ProductsProps, ProductsQueryParams } from '../../utils/types/products';
 import collectionsProductsService from '../../services/admin/website/collections-products-service';
-import { CategoryProps } from '../../model/admin/ecommerce/category-model';
-import { CategoryQueryParams } from '../../utils/types/category';
 import { CommonQueryParams } from '../../utils/types/frontend/common';
-import { getCountryShortTitleFromHostname, getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
 import CommonService from '../../services/frontend/common-service';
 
 const controller = new BaseController();
 
 class HomeController extends BaseController {
 
+    async findWebsiteSetups(req: Request, res: Response): Promise<void> {
+        try {
+            const { block, blockReference } = req.query as CommonQueryParams;
+            let query: any = { _id: { $exists: true } };
+
+            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+
+            if (countryId) {
+                if (block && blockReference) {
+                    query = {
+                        ...query,
+                        countryId,
+                        block:  { $in: block.split(',') },
+                        blockReference: { $in: blockReference.split(',') },
+                        status: '1',
+                    } as any;
+                    console.log('navigationMenu', query);
+                    const websiteSetup = await CommonService.findWebsiteSetups({
+                        limit: 500,
+                        hostName: req.get('host'),
+                        query,
+                    });
+
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: websiteSetup,
+                        message: 'Success!'
+                    }, 200);
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'block and blockReference is missing! please check'
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'block and blockReference is missing! please check'
+                }, req);
+            }
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+
     async findAllSliders(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 10, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-
             const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
 
-            
             if (countryId) {
                 if (page && pageReference) {
                     query = {
-                        ...query, page: page, pageReference: pageReference
+                        ...query,
+                        countryId,
+                        page: page,
+                        pageReference: pageReference,
+                        status: '1',
                     } as any;
-                   
-                    query.countryId = countryId;
-                    query.status = '1';
+
                     const sliders = await CommonService.findAllSliders({
                         page: parseInt(page_size as string),
                         limit: 500,
@@ -55,21 +86,8 @@ class HomeController extends BaseController {
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: sliders,
-                        totalCount: await SliderService.getTotalCount(query),
                         message: 'Success!'
                     }, 200);
-                    // if ((languageCode !== 'en') && (sliders) && (sliders?.length > 0)) {
-                    //     const languagesValues = sliders.map((slider: any) => {
-                    //         const abcd = ''
-                    //     })
-                    // } else {
-
-                    //     return controller.sendSuccessResponse(res, {
-                    //         requestedData: sliders,
-                    //         totalCount: await SliderService.getTotalCount(query),
-                    //         message: 'Success!'
-                    //     }, 200);
-                    // }
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
@@ -91,187 +109,47 @@ class HomeController extends BaseController {
 
     async findAllBanners(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
-            const userData = await res.locals.user;
 
-            let countryId
-            if (userData) {
-                countryId = getCountryId(userData);
-            }
-            else {
-                countryId = req.params.countryId
-            }
+            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+
             if (countryId) {
-                query.countryId = countryId;
-            }
+                if (page && pageReference) {
+                    query = {
+                        ...query,
+                        countryId,
+                        page: page,
+                        pageReference: pageReference,
+                        status: '1',
+                    } as any;
 
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
+                    const banners = await CommonService.findAllBanners({
+                        page: parseInt(page_size as string),
+                        limit: 500,
+                        hostName: req.get('host'),
+                        query,
+                    });
+
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: banners,
+                        message: 'Success!'
+                    }, 200);
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'page and pageReference is missing! please check'
+                    }, req);
+                }
             } else {
-                query.status = '1';
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'page and pageReference is missing! please check'
+                }, req);
             }
 
-            if (keyword) {
-                const keywordRegex = new RegExp(keyword, 'i');
-                query = {
-                    $or: [
-                        { bannerTitle: keywordRegex }
-                    ],
-                    ...query
-                } as any;
-            }
-            const sort: any = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
-
-            const banners = await BannerService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort
-            });
-
-            return controller.sendSuccessResponse(res, {
-                requestedData: banners,
-                totalCount: await BannerService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching banners' });
-        }
-    }
-
-    async findAllBrands(req: Request, res: Response): Promise<void> {
-        try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
-            let query: any = { _id: { $exists: true } };
-
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
-            } else {
-                query.status = '1';
-            }
-
-            if (keyword) {
-                const keywordRegex = new RegExp(keyword, 'i');
-                query = {
-                    $or: [
-                        { brandTitle: keywordRegex }
-                    ],
-                    ...query
-                } as any;
-            }
-
-            const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority'];
-            const filteredQuery = keysToCheck.reduce((result: any, key) => {
-                if (key in req.query) {
-                    result[key] = req.query[key];
-                }
-                return result;
-            }, {} as Partial<BrandQueryParams>);
-            let filteredPriorityQuery: any = {};
-            if (Object.keys(filteredQuery).length > 0) {
-                for (const key in filteredQuery) {
-                    if (filteredQuery[key] === '> 0') {
-                        filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
-                    } else if (filteredQuery[key] === '0') {
-                        filteredPriorityQuery[key] = 0; // Set query for key equal to 0
-                    } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                        filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
-                    }
-                }
-            }
-
-            query = { ...query, ...filteredPriorityQuery };
-
-            const sort: any = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
-
-            const brands = await BrandsService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort
-            });
-
-            return controller.sendSuccessResponse(res, {
-                requestedData: brands,
-                totalCount: await BrandsService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
-        } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching brands' });
-        }
-    }
-
-    async findAllCategory(req: Request, res: Response): Promise<void> {
-        try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as CategoryQueryParams;
-
-            let query: any = { _id: { $exists: true } };
-
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
-            } else {
-                query.status = '1';
-            }
-
-            if (keyword) {
-                const keywordRegex = new RegExp(keyword, 'i');
-                query = {
-                    $or: [
-                        { categoryTitle: keywordRegex },
-                        { slug: keywordRegex },
-                    ],
-                    ...query
-                } as any;
-            }
-
-            const keysToCheck: (keyof CategoryProps)[] = ['corporateGiftsPriority'];
-            const filteredQuery = keysToCheck.reduce((result: any, key) => {
-                if (key in req.query) {
-                    result[key] = req.query[key];
-                }
-                return result;
-            }, {} as Partial<CategoryQueryParams>);
-            let filteredPriorityQuery: any = {};
-            if (Object.keys(filteredQuery).length > 0) {
-                for (const key in filteredQuery) {
-                    if (filteredQuery[key] === '> 0') {
-                        filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
-                    } else if (filteredQuery[key] === '0') {
-                        filteredPriorityQuery[key] = 0; // Set query for key equal to 0
-                    } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                        filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
-                    }
-                }
-            }
-
-            query = { ...query, ...filteredPriorityQuery };
-
-            const sort: any = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
-
-            const categories = await CategoryService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort
-            });
-
-            controller.sendSuccessResponse(res, {
-                requestedData: categories,
-                totalCount: await CategoryService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
-        } catch (error: any) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
         }
     }
 

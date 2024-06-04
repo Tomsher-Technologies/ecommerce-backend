@@ -7,9 +7,8 @@ import HomeController from '../../src/controllers/frontend/common-controller';
 
 const router: Router = express.Router();
 
-router.get('/slider', logResponseStatus, HomeController.findAllSliders);
-router.get('/banner', HomeController.findAllBanners);
-router.get('/brand', HomeController.findAllBrands);
+// router.get('/slider', logResponseStatus, HomeController.findAllSliders);
+// router.get('/banner', HomeController.findAllBanners);
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     // Check if the error is from multer

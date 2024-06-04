@@ -76,7 +76,6 @@ class NavigationMenuController extends BaseController {
                 if (countryId) {
                     const { languageId, websiteSetupId, status, blockValues, deviceType } = validatedData.data;
                     const user = res.locals.user;
-                    // const multiFiles: any = req.files
 
                     const menuData = {
                         countryId,
@@ -91,12 +90,12 @@ class NavigationMenuController extends BaseController {
 
                     let newNavigationMenu: any = [];
                     if (!languageId) {
-                        if (!websiteSetupId) {
-                            newNavigationMenu = await NavigationMenuService.create(menuData);
+                        const navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        if (navigationMenu) {
+                            newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
                         } else {
-                            const navigationMenu = await NavigationMenuService.findOne({ _id: websiteSetupId, countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
-                            if (navigationMenu) {
-                                newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
+                            if (!websiteSetupId) {
+                                newNavigationMenu = await NavigationMenuService.create(menuData);
                             } else {
                                 if (blockValues && (blockValues?.length > 0)) {
                                     newNavigationMenu = await NavigationMenuService.create(menuData);
@@ -107,6 +106,22 @@ class NavigationMenuController extends BaseController {
                                 }
                             }
                         }
+                        // if (!websiteSetupId) {
+                        //     newNavigationMenu = await NavigationMenuService.create(menuData);
+                        // } else {
+                        //     const navigationMenu = await NavigationMenuService.findOne({ _id: websiteSetupId, countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        //     if (navigationMenu) {
+                        //         newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
+                        //     } else {
+                        //         if (blockValues && (blockValues?.length > 0)) {
+                        //             newNavigationMenu = await NavigationMenuService.create(menuData);
+                        //         } else {
+                        //             return controller.sendErrorResponse(res, 200, {
+                        //                 message: 'Menu  items not found',
+                        //             }, req);
+                        //         }
+                        //     }
+                        // }
                     } else {
                         if (websiteSetupId) {
                             const languageValues = await GeneralService.multiLanguageFieledsManage(websiteSetupId, {

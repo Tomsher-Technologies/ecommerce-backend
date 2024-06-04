@@ -8,4 +8,6 @@ export interface CommonQueryParams {
     keyword?: string;
     page?:string;
     pageReference?:string;
+    block?:string;
+    blockReference?:string;
 }
