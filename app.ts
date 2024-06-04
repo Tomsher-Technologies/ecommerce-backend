@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import helmet from 'helmet';
 import cors from "cors";
 
@@ -7,9 +8,8 @@ require('dotenv').config();
 import { url as dbUrl } from './config/database.config';
 import { allowedOrigins } from './config/allowed-origins';
 
-import adminRouter from './routes/admin-routers';
-import frontendRouter from './routes/frontend-router';
-import databaseSwitcher from './middleware/databaseSwitcher';
+import adminRouter from'./routes/admin-routers'; 
+import frontendRouter from'./routes/frontend-router'; 
 
 const app = express();
 const port = process.env.PORT;
@@ -38,9 +38,33 @@ const corsOptions: cors.CorsOptions = {
 };
 app.use(cors(corsOptions));
 
+mongoose.Promise = global.Promise;
+// mongoose
+// .connect(process.env.TIMEHOUSE_MONGODB_URI as any)
+// .then((x) => {
+//    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
+//  })
+//  .catch((err) => {
+//    console.error('Could not connect to the database', err)
+//  });
+app.use((req, res, next) => {
+  const dbName = req.header('Database');
+  if (!dbName) {
+    return res.status(400).json({ error: 'Database header is missing' });
+  }
 
-app.use(databaseSwitcher); // ddatabase connection
-
+  mongoose
+    .connect(`mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/${dbName}`)
+    .then((x) => {
+      console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`);
+      next();
+    })
+    .catch((err) => {
+      console.error('Could not connect to the database', err);
+      return res.status(500).json({ error: 'Could not connect to the database' });
+    });
+});
+//  app.use(databaseSwitcher);
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Ecommerce" });
 });

@@ -21,6 +21,9 @@ import { ProductsProps, ProductsQueryParams } from '../../utils/types/products';
 import collectionsProductsService from '../../services/admin/website/collections-products-service';
 import { CategoryProps } from '../../model/admin/ecommerce/category-model';
 import { CategoryQueryParams } from '../../utils/types/category';
+import { CommonQueryParams } from '../../utils/types/frontend/common';
+import { getCountryShortTitleFromHostname, getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
+import CommonService from '../../services/frontend/common-service';
 
 const controller = new BaseController();
 
@@ -28,33 +31,42 @@ class HomeController extends BaseController {
 
     async findAllSliders(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
-            const userData = await res.locals.user;
-            let countryId
-            if (userData) {
-                countryId = getCountryId(userData);
-            }
-            else{
-                countryId = req.params.countryId
-            }
+
+            const languageCode = getLanguageValueFromSubdomain(req.get('host'))
+            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'))
             if (countryId) {
-                query.countryId = countryId;
+                if (page && pageReference) {
+                    query = {
+                        ...query, page: page, pageReference: pageReference
+                    } as any;
+
+                    query.countryId = countryId;
+                    query.status = '1';
+
+                    const sliders = await SliderService.findAll({
+                        page: parseInt(page_size as string),
+                        limit: 500,
+                        query,
+                    });
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: sliders,
+                        totalCount: await SliderService.getTotalCount(query),
+                        message: 'Success!'
+                    }, 200);
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'page and pageReference is missing! please check'
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'page and pageReference is missing! please check'
+                }, req);
             }
-
-            query.status = '1';
-
-
-            const sliders = await SliderService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-            });
-            return controller.sendSuccessResponse(res, {
-                requestedData: sliders,
-                totalCount: await SliderService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
 
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching sliders' });
@@ -72,7 +84,7 @@ class HomeController extends BaseController {
             if (userData) {
                 countryId = getCountryId(userData);
             }
-            else{
+            else {
                 countryId = req.params.countryId
             }
             if (countryId) {

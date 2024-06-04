@@ -16,7 +16,7 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
 
 
       if (checkToken) {
-        const user = await UserModel.findOne({ _id: checkToken.userId }).maxTimeMS(20000);
+        const user = await UserModel.findOne({ _id: checkToken.userId });
 
         const userData = {
           _id: user?._id,

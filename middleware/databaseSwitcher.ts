@@ -9,33 +9,44 @@ const connectToDatabase = async (dbName: string) => {
 
     if (!dbUri) {
         throw new Error(`No URI found for database ${dbName}`);
-    }else{
+    } else {
         return dbUri
     }
+};
 
+const dbUrls: { [key: string]: any } = {
+    timehouse: 'mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/',
+    smartbaby: 'mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/',
+    homestyle: 'mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/',
+    beyondfresh: 'mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/'
 };
 
 const databaseSwitcher = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const dbName = req.headers['database'] as string;
+        const serverSelectionTimeoutMS = 5000;
 
         if (!dbName) {
             return res.status(400).json({ message: 'Database header is required' });
         }
 
-        const connection: any = await connectToDatabase(dbName);
-        if (connection) {
-            mongoose.Promise = global.Promise;
-            mongoose
-                .connect(connection)
-                .then((x) => {
-                    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
-                })
-                .catch((err) => {
-                    console.error('Could not connect to the database', err)
-                });
-            next();
+        const dbUrl = dbUrls[dbName];
+
+        if (!dbUrl) {
+            return res.status(400).json({ message: 'Invalid database name in header' });
         }
+
+        mongoose.Promise = global.Promise;
+        console.log('dbUrl', dbName, dbUrl);
+        // Check if the connection is already established to avoid redundant connections
+        if (mongoose.connection.readyState !== 1) { // 1 means connected
+            await mongoose.disconnect();
+            mongoose.connect(dbUrls[dbName] + dbName)
+            // await mongoose.connect(dbUrl, { serverSelectionTimeoutMS }); // Specify the database name explicitly
+            console.log(`Connected to Mongo! Database name: "${dbName}"`);
+        }
+
+        next();
     } catch (error) {
         console.error('Database connection error:', error);
         res.status(500).json({ message: 'Database connection error' });
