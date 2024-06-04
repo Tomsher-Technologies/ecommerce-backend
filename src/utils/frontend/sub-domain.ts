@@ -15,18 +15,25 @@ export const getValidSubdomain = (host?: string | null) => {
   return subdomain;
 };
 
-
-const supportedLanguageCodes = ['ar', 'en', 'sp', 'hn'];
-
 export function getLanguageValueFromSubdomain(host: string | null | undefined, languageData: any[]): any {
   if (!host) {
     return null;
   }
 
+  let languageCode: string = '';
   const parts = host.split('.');
-  for (const part of parts) {
+
+  if (parts.length >= 2) {
+    const partsHyphen = parts[0]?.split('-');
+    if (partsHyphen.length >= 2) {
+      languageCode = partsHyphen[0];
+    } else {
+      languageCode = parts[0];
+    }
+  }
+  if (languageCode) {
     for (const language of languageData) {
-      if (part === language.languageCode || part.endsWith(`-${language.languageCode}`)) {
+      if (languageCode.toLowerCase() === language.languageCode.toLowerCase() || languageCode.toLowerCase().endsWith(`-${language.languageCode.toLowerCase()}`)) {
         return language._id;
       }
     }

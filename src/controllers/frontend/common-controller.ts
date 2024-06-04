@@ -35,13 +35,15 @@ class HomeController extends BaseController {
             let query: any = { _id: { $exists: true } };
 
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'))
+            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+
+            
             if (countryId) {
                 if (page && pageReference) {
                     query = {
                         ...query, page: page, pageReference: pageReference
                     } as any;
-
+                   
                     query.countryId = countryId;
                     query.status = '1';
                     const sliders = await CommonService.findAllSliders({

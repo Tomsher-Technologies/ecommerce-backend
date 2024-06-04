@@ -4,23 +4,24 @@ import { multiLanguageSources } from "../../constants/multi-languages";
 
 export const sliderLookup = {
     $lookup: {
-        from: 'multilanguagefieleds',
-        let: { sliderId: '$_id' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$sourceId', '$$sliderId'] },
-                            { $eq: ['$source', multiLanguageSources.ecommerce.sliders] },
-                        ],
-                    },
-                },
+      from: 'multilanguagefieleds',
+      let: { sliderId: '$_id' }, // Assuming _id refers to the slider document
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ['$sourceId', '$$sliderId'] }, // Solution 1 or 2
+                { $eq: ['$source', multiLanguageSources.ecommerce.sliders] },
+              ],
             },
-        ],
-        as: 'languageValues',
+          },
+        },
+      ],
+      as: 'languageValues',
     },
-};
+  };
+  
 
 export const sliderProject = {
     $project: {
