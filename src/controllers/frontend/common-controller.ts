@@ -34,7 +34,7 @@ class HomeController extends BaseController {
             const { page_size = 1, limit = 10, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const languageCode = getLanguageValueFromSubdomain(req.get('host'))
+
             const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'))
             if (countryId) {
                 if (page && pageReference) {
@@ -44,17 +44,31 @@ class HomeController extends BaseController {
 
                     query.countryId = countryId;
                     query.status = '1';
-
-                    const sliders = await SliderService.findAll({
+                    const languageCode = getLanguageValueFromSubdomain(req.get('host'));
+                    const sliders = await CommonService.findAllSliders({
                         page: parseInt(page_size as string),
                         limit: 500,
+                        languageCode,
                         query,
                     });
+
                     return controller.sendSuccessResponse(res, {
                         requestedData: sliders,
                         totalCount: await SliderService.getTotalCount(query),
                         message: 'Success!'
                     }, 200);
+                    // if ((languageCode !== 'en') && (sliders) && (sliders?.length > 0)) {
+                    //     const languagesValues = sliders.map((slider: any) => {
+                    //         const abcd = ''
+                    //     })
+                    // } else {
+
+                    //     return controller.sendSuccessResponse(res, {
+                    //         requestedData: sliders,
+                    //         totalCount: await SliderService.getTotalCount(query),
+                    //         message: 'Success!'
+                    //     }, 200);
+                    // }
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
