@@ -9,6 +9,7 @@ export interface CategoryQueryParams {
     unCollectionedCategories?: any;
     parentCategory?: string;
     categoryId?: any;
+    _id?: any;
     category?: any;
     slug?: any;
 }
