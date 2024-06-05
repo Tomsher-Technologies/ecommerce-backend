@@ -600,7 +600,6 @@ class ProductsController extends BaseController {
                                                                 }
                                                             }
                                                         }
-
                                                     }
                                                 }
 
@@ -677,13 +676,10 @@ class ProductsController extends BaseController {
                                                 }
                                             }
                                         }
-
-
-
                                     }
                                     controller.sendSuccessResponse(res, {
                                         validation,
-                                        message: 'Successfully upload'
+                                        message: 'Product excel upload successfully completed'
                                     }, 200);
                                 }
                             }

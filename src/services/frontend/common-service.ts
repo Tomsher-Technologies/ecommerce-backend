@@ -17,7 +17,11 @@ import CollectionsProductsModel from "../../model/admin/website/collections-prod
 import mongoose from "mongoose";
 import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../utils/config/product-config";
 import { collectionsProductFinalProject, collectionsProductLookup } from "../../utils/config/collections-product-config";
-import { bannerlanguageFieldsReplace, collectionProductlanguageFieldsReplace, sliderlanguageFieldsReplace } from "../../utils/config/common-config";
+import { bannerlanguageFieldsReplace, collectionCategorylanguageFieldsReplace, collectionProductlanguageFieldsReplace, sliderlanguageFieldsReplace } from "../../utils/config/common-config";
+import { collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../utils/config/collections-categories-config";
+import CategoryModel from "../../model/admin/ecommerce/category-model";
+import CollectionsCategoriesModel from "../../model/admin/website/collections-categories-model";
+import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../utils/config/category-config";
 
 class CommonService {
     constructor() { }
@@ -321,6 +325,104 @@ class CommonService {
         }
 
         return productCollectionData;
+    }
+    async findCollectionCategories(options: any) {
+        const { query, hostName } = options;
+
+        const languageId = getLanguageValueFromSubdomain(hostName, await LanguagesModel.find().exec());
+
+        let collectionCategoryPipeline: any = [
+            { $match: query },
+        ];
+
+        if (languageId) {
+            const collectionCategoryLookupWithLanguage = {
+                ...collectionsCategoryLookup,
+                $lookup: {
+                    ...collectionsCategoryLookup.$lookup,
+                    pipeline: collectionsCategoryLookup.$lookup.pipeline.map(stage => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] }
+                                        ]
+                                    }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+
+            collectionCategoryPipeline.push(collectionCategoryLookupWithLanguage);
+
+            collectionCategoryPipeline.push(collectionCategorylanguageFieldsReplace);
+        }
+
+        collectionCategoryPipeline.push(collectionsCategoryLookup);
+        collectionCategoryPipeline.push(collectionsCategoryFinalProject);
+
+        const categoryCollectionData = await CollectionsCategoriesModel.aggregate(collectionCategoryPipeline).exec();
+
+        for (const collection of categoryCollectionData) {
+            if (collection && collection.collectionsCategorys) {
+                let categoryPipeline: any = [
+                    {
+                        $match: {
+                            _id: { $in: collection.collectionsCategorys.map((id: any) => new mongoose.Types.ObjectId(id)) },
+                            status: '1',
+                        },
+                    },
+                ];
+
+                if (languageId) {
+                    const categoryLookupWithLanguage = {
+                        ...categoryLookup,
+                        $lookup: {
+                            ...categoryLookup.$lookup,
+                            pipeline: categoryLookup.$lookup.pipeline.map(stage => {
+                                if (stage.$match && stage.$match.$expr) {
+                                    return {
+                                        ...stage,
+                                        $match: {
+                                            ...stage.$match,
+                                            $expr: {
+                                                ...stage.$match.$expr,
+                                                $and: [
+                                                    ...stage.$match.$expr.$and,
+                                                    { $eq: ['$languageId', languageId] }
+                                                ]
+                                            }
+                                        }
+                                    };
+                                }
+                                return stage;
+                            })
+                        }
+                    };
+
+                    categoryPipeline.push(categoryLookupWithLanguage);
+
+                    categoryPipeline.push(categoryLanguageFieldsReplace);
+                }
+
+                categoryPipeline.push(categoryLookup);
+                categoryPipeline.push(categoryFinalProject);
+
+                const categoryData = await CategoryModel.aggregate(categoryPipeline).exec();
+
+                collection.collectionsCategorys = categoryData;
+            }
+        }
+
+        return categoryCollectionData;
     }
 }
 

@@ -239,6 +239,50 @@ class HomeController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching products' });
         }
     }
+
+    async findCollectionCategories(req: Request, res: Response): Promise<void> {
+        try {
+            const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
+            let query: any = { _id: { $exists: true } };
+
+            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+
+            if (countryId) {
+                if (page && pageReference) {
+                    query = {
+                        ...query,
+                        countryId,
+                        page: page,
+                        pageReference: pageReference,
+                        status: '1',
+                    } as any;
+
+                    const categories = await CommonService.findCollectionCategories({
+                        hostName: req.get('host'),
+                        query,
+                    });
+
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: categories,
+                        message: 'Success!'
+                    }, 200);
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'page and pageReference is missing! please check'
+                    }, req);
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'page and pageReference is missing! please check'
+                }, req);
+            }
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
+        }
+    }
 }
 
 export default new HomeController();
