@@ -8,8 +8,8 @@ export interface CategoryQueryParams {
     corporateGiftsPriority?: any;
     unCollectionedCategories?: any;
     parentCategory?: string;
+    category?: any;
     categoryId?: any;
     _id?: any;
-    category?: any;
     slug?: any;
 }

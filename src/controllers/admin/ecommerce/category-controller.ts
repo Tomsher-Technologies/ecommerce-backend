@@ -21,7 +21,7 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', categoryId = '', _id = '', parentCategory = '' } = req.query as CategoryQueryParams;
+            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', category = '',categoryId = '', _id = '', parentCategory = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -51,6 +51,11 @@ class CategoryController extends BaseController {
             if (_id) {
                 query = {
                     ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
+            }
+            if (category) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(category)
                 } as any;
             }
 
