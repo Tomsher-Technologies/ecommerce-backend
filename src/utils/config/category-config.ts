@@ -22,6 +22,55 @@ export const categoryLookup = {
     }
 }
 
+export const categoryLanguageFieldsReplace = {
+    $addFields: {
+        categoryTitle: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.categoryTitle", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryTitle", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryTitle", 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryTitle", 0] }, "undefined"] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryTitle", 0] }, undefined] }
+                    ]
+                },
+                then: "$categoryTitle",
+                else: { $arrayElemAt: ["$languageValues.languageValues.categoryTitle", 0] }
+            }
+        },
+        description: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, "undefined"] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, undefined] }
+                    ]
+                },
+                then: "$description",
+                else: { $arrayElemAt: ["$languageValues.languageValues.description", 0] }
+            }
+        },
+        categoryImageUrl: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryImageUrl", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryImageUrl", 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryImageUrl", 0] }, "undefined"] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categoryImageUrl", 0] }, undefined] }
+                    ]
+                },
+                then: "$categoryImageUrl",
+                else: { $arrayElemAt: ["$languageValues.languageValues.categoryImageUrl", 0] }
+            },
+        }
+    }
+}
+
 export const categoryProject = {
     $project: {
         _id: 1,
