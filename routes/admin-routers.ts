@@ -30,6 +30,7 @@ import LanguagesRoutes from './admin/setup/languages-routes';
 import SetingsRoutes from './admin/setup/settings-routes';
 import CollectionProductRoutes from './admin/website/collection-product-routes';
 import CollectionBrandRoutes from './admin/website/collection-brand-routes';
+import CollectionCartegoryRoutes from './admin/website/collection-category-routes';
 import NavigationMenuRoutes from './admin/website/navigation-menu-routes';
 
 // store
@@ -71,6 +72,7 @@ adminRouter.use('/setup/website-settings', SetingsRoutes);
 //admin website 
 adminRouter.use('/website/collection-products', CollectionProductRoutes);
 adminRouter.use('/website/collection-brands', CollectionBrandRoutes);
+adminRouter.use('/website/collection-categories', CollectionCartegoryRoutes);
 adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 
 // stores

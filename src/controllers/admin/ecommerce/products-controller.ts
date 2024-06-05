@@ -369,6 +369,7 @@ class ProductsController extends BaseController {
 
     async importProductExcel(req: Request, res: Response): Promise<void> {
         const errorArray: any = []
+console.log('hehe');
 
         try {
             const xlsx = require('xlsx');

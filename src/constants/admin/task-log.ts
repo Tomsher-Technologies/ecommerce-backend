@@ -13,6 +13,7 @@ export const adminTaskLog = {
     website: {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsbrands',
+        collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigationmenu',
     },
     marketing: {

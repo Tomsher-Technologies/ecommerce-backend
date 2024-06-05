@@ -14,6 +14,7 @@ export const permissionBlocks = {
     website: {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsbrands',
+        collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigation-menu',
     },
     setup: {

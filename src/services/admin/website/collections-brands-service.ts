@@ -2,31 +2,10 @@ import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import CollectionsBrandsModel, { CollectionsBrandsProps } from '../../../model/admin/website/collections-brands-model';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
-import { multiLanguageSources } from '../../../constants/multi-languages';
+import { collectionsBrandLookup } from '../../../utils/config/collections-brands-config';
 
 class CollectionsBrandsService {
-    private lookup: any;
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { collectionsBrandId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$collectionsBrandId'] },
-                                    { $eq: ['$source', multiLanguageSources.website.collectionsBrands] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-    }
+    constructor() { }
 
     async findAll(options: FilterOptionsProps = {}): Promise<CollectionsBrandsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
@@ -44,7 +23,7 @@ class CollectionsBrandsService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.lookup,
+            collectionsBrandLookup
 
         ];
 
@@ -92,7 +71,7 @@ class CollectionsBrandsService {
         if (createdCollections) {
             const pipeline = [
                 { $match: { _id: createdCollections._id } },
-                this.lookup,
+                collectionsBrandLookup
             ];
 
             const createdCollectionsWithValues = await CollectionsBrandsModel.aggregate(pipeline);
@@ -109,7 +88,7 @@ class CollectionsBrandsService {
         if (collectionsBrandData) {
             const pipeline = [
                 { $match: { _id: collectionsBrandData._id } },
-                this.lookup,
+                collectionsBrandLookup
             ];
 
             const collectionsBrandDataWithValues = await CollectionsBrandsModel.aggregate(pipeline);
@@ -129,7 +108,7 @@ class CollectionsBrandsService {
         if (updatedCollectionsBrand) {
             const pipeline = [
                 { $match: { _id: updatedCollectionsBrand._id } },
-                this.lookup,
+                collectionsBrandLookup
             ];
 
             const updatedCollectionsBrandWithValues = await CollectionsBrandsModel.aggregate(pipeline);

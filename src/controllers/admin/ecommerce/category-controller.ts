@@ -12,6 +12,7 @@ import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/cat
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import mongoose from 'mongoose';
+import CollectionsCategoriesService from '../../../services/admin/website/collections-categories-service';
 
 
 const controller = new BaseController();
@@ -20,7 +21,7 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', categoryId = '', parentCategory = '' } = req.query as CategoryQueryParams;
+            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', categoryId = '', parentCategory = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -69,6 +70,19 @@ class CategoryController extends BaseController {
                         filteredPriorityQuery[key] = '0'; // Set query for key equal to 0
                     } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
                         filteredPriorityQuery[key] = { $lt: '0' }; // Set query for key less than 0
+                    }
+                }
+            }
+
+            if (unCollectionedCategories) {
+                const collection = await CollectionsCategoriesService.findOne(unCollectionedCategories);
+                // console.log('collection', collection, unCollectionedCategories);
+
+                if (collection) {
+                    const unCollectionedBrandIds = collection.collectionsCategories.map(id => new mongoose.Types.ObjectId(id));
+                    if (unCollectionedBrandIds.length > 0) {
+                        query._id = { $nin: unCollectionedBrandIds };
+                        query.status = '1';
                     }
                 }
             }

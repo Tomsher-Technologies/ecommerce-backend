@@ -13,6 +13,7 @@ export const multiLanguageSources = {
     website: {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsbrands',
+        collectionsCategories: 'collectionscategories',
        
     },
     setup:{
