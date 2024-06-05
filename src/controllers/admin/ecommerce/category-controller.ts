@@ -245,7 +245,7 @@ class CategoryController extends BaseController {
                         file.fieldname.includes('[categoryImage]')
                     );
 
-                    if (languageValues && languageValues?.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
 
                             let categoryImageUrl = ''
