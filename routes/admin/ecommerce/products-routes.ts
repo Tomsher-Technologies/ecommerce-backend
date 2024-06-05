@@ -11,7 +11,7 @@ import ProductsController from '../../../src/controllers/admin/ecommerce/product
 
 const router: Router = express.Router();
 
-const { upload } = configureMulter('product', ['productImage',]);
+const { upload } = configureMulter('product/file', ['productImage',]);
 
 router.use(authMiddleware);
 
