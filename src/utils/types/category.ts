@@ -8,4 +8,6 @@ export interface CategoryQueryParams {
     corporateGiftsPriority?: any;
     parentCategory?: string;
     categoryId?: any;
+    category?: any;
+    slug?: any;
 }

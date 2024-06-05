@@ -1,5 +1,5 @@
 export type BrandQueryParams ={
-    _id: string;
+    _id: any;
     page_size?: string;
     limit?: string;
     status?: string;

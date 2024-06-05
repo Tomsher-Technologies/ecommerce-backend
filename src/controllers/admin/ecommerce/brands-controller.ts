@@ -23,7 +23,7 @@ class BrandsController extends BaseController {
         try {
             const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } };
-
+            let brandId: any
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
@@ -41,17 +41,22 @@ class BrandsController extends BaseController {
             }
 
             if (_id) {
-                if (_id.length > 0) {
-                    for (const arrayResult of _id) {
-                        query = {
-                            ...query, _id: new mongoose.Types.ObjectId(arrayResult)
-                        } as any;
-                    }
-                } else {
+                if (typeof _id === 'string') {
                     query = {
                         ...query, _id: new mongoose.Types.ObjectId(_id)
                     } as any;
+                } else {
+                    const brandIds = _id.map((id: any) => new mongoose.Types.ObjectId(id));
+                    brandId = {
+                        _id: { $in: brandIds }
+                    };
                 }
+            }
+
+            if (brandId && (Object.keys(brandId)).length > 0) {
+                query = {
+                    ...query, ...brandId
+                } as any;
             }
 
             const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
