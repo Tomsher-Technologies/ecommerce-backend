@@ -123,11 +123,12 @@ class NavigationMenuController extends BaseController {
                         //     }
                         // }
                     } else {
-                        if (websiteSetupId) {
-                            const languageValues = await GeneralService.multiLanguageFieledsManage(websiteSetupId, {
+                        const navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        if (navigationMenu) {
+                            const languageValues = await GeneralService.multiLanguageFieledsManage(navigationMenu._id, {
                                 languageId,
                                 source: multiLanguageSources.setup.websiteSetups,
-                                sourceId: websiteSetupId,
+                                sourceId: navigationMenu._id,
                                 languageValues: menuData
                             });
                             if (languageValues) {
@@ -192,7 +193,10 @@ class NavigationMenuController extends BaseController {
                     const languageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.setup.websiteSetups, navigationMenu._id, languageId)
                     if (languageValues) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: languageValues.languageValues,
+                            requestedData: {
+                                ...languageValues.languageValues,
+                                _id: navigationMenu._id
+                            },
                             message: 'Success'
                         });
                     } else {

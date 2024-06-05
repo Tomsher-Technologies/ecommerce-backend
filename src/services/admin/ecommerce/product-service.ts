@@ -359,8 +359,6 @@ class ProductsService {
                 }
             ];
             const data: any = await ProductsModel.aggregate(pipeline).exec();
-            console.log("data,data:", data);
-
             // const totalCount = await ProductsModel.countDocuments(query);
             // console.log(totalCount);
             if (data.length > 0) {

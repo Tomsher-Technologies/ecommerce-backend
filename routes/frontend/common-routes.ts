@@ -3,24 +3,17 @@ import multer from 'multer';
 
 import { logResponseStatus } from '../../src/components/response-status';
 
-import HomeController from '../../src/controllers/frontend/common-controller';
+import CommonController from '../../src/controllers/frontend/common-controller';
 
 const router: Router = express.Router();
 
-router.get('/slider', logResponseStatus, HomeController.findAllSliders);
-router.get('/banner', HomeController.findAllBanners);
-router.get('/website-setups', HomeController.findWebsiteSetups);
+router.get('/slider', logResponseStatus, CommonController.findAllSliders);
+router.get('/banner', CommonController.findAllBanners);
+router.get('/website-setups', CommonController.findWebsiteSetups);
+router.get('/website-setups', CommonController.findWebsiteSetups);
+router.get('/priority-product', CommonController.findPriorityProducts);
+router.get('/collection-products', CommonController.findCollectionProducts);
 
-router.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    // Check if the error is from multer
-    if (err instanceof multer.MulterError) {
-        console.error('Multer Error:', err);
-        res.status(400).send('File upload error: ' + err.message);
-    } else {
-        console.error(err.stack);
-        res.status(500).send('Something broke!');
-    }
-});
 
 
 export default router;

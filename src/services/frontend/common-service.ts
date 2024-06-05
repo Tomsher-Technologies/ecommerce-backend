@@ -10,15 +10,36 @@ import LanguagesModel from "../../model/admin/setup/language-model";
 import { bannerFinalProject, bannerLookup, bannerProject } from "../../utils/config/banner-config";
 import BannerModel from "../../model/admin/ecommerce/banner-model";
 import WebsiteSetupModel, { WebsiteSetupProps } from "../../model/admin/setup/website-setup-model";
+import GeneralService from "../admin/general-service";
+import { blockReferences, websiteSetup } from "../../constants/website-setup";
+import ProductsModel from "../../model/admin/ecommerce/product-model";
+import CollectionsProductsModel from "../../model/admin/website/collections-products-model";
+import mongoose from "mongoose";
+import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../utils/config/product-config";
+import { collectionsProductFinalProject, collectionsProductLookup } from "../../utils/config/collections-product-config";
+import { bannerlanguageFieldsReplace, collectionProductlanguageFieldsReplace, sliderlanguageFieldsReplace } from "../../utils/config/common-config";
 
 class CommonService {
     constructor() { }
 
     async findWebsiteSetups(options: FilterOptionsProps = {}): Promise<WebsiteSetupProps> {
-        const { query, sort, hostName } = options;
-        const navigationMenu: any = await WebsiteSetupModel.find(query);
-      
-        return navigationMenu;
+        const { query, sort, hostName, block, blockReference } = options;
+
+        let websiteSetupData: any = []
+        const languageData = await LanguagesModel.find().exec();
+        websiteSetupData = await WebsiteSetupModel.findOne(query);
+
+        if ((block === websiteSetup.menu || blockReference === blockReferences.basicDetailsSettings) && websiteSetupData) {
+            const languageId = getLanguageValueFromSubdomain(hostName, languageData);
+            if (languageId) {
+                const languageValues = await GeneralService.findOneLanguageValues(block === websiteSetup.menu ? multiLanguageSources.setup.websiteSetups : multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
+                if (languageValues) {
+                    websiteSetupData = languageValues.languageValues
+                }
+            }
+        }
+
+        return websiteSetupData;
     }
 
     async findOneCountryShortTitleWithId(hostname: string | null | undefined): Promise<any> {
@@ -28,6 +49,7 @@ class CommonService {
             if (allCountryData && allCountryData.length > 0) {
                 const normalizedHostname = countryShortTitle?.toLowerCase();
                 const regex = new RegExp(`^${normalizedHostname}$`, 'i');
+
                 const countryData: any = countryShortTitle && allCountryData.find((country: any) => regex.test(country?.countryShortTitle));
                 if (countryData) {
                     return countryData._id
@@ -90,31 +112,7 @@ class CommonService {
 
             pipeline.push(sliderLookupWithLanguage);
 
-            pipeline.push({
-                $addFields: {
-                    sliderTitle: {
-                        $cond: {
-                            if: { $eq: [{ $size: '$languageValues.languageValues.sliderTitle' }, 0] },
-                            then: '$sliderTitle',
-                            else: { $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }
-                        }
-                    },
-                    description: {
-                        $cond: {
-                            if: { $eq: [{ $size: '$languageValues.languageValues.description' }, 0] },
-                            then: '$description',
-                            else: { $arrayElemAt: ['$languageValues.languageValues.description', 0] }
-                        }
-                    },
-                    sliderImageUrl: {
-                        $cond: {
-                            if: { $eq: [{ $size: '$languageValues.languageValues.sliderImageUrl' }, 0] },
-                            then: '$sliderImageUrl',
-                            else: { $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }
-                        }
-                    },
-                }
-            });
+            pipeline.push(sliderlanguageFieldsReplace);
         }
 
         pipeline.push(sliderProject);
@@ -169,31 +167,7 @@ class CommonService {
 
             pipeline.push(bannerLookupWithLanguage);
 
-            pipeline.push({
-                $addFields: {
-                    bannerTitle: {
-                        $cond: {
-                            if: { $eq: [{ $size: '$languageValues.languageValues.bannerTitle' }, 0] },
-                            then: '$bannerTitle',
-                            else: { $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }
-                        }
-                    },
-                    description: {
-                        $cond: {
-                            if: { $eq: [{ $size: '$languageValues.languageValues.description' }, 0] },
-                            then: '$description',
-                            else: { $arrayElemAt: ['$languageValues.languageValues.description', 0] }
-                        }
-                    },
-                    bannerImages: {
-                        $cond: {
-                            if: { $eq: [{ $size: '$languageValues.languageValues.bannerImages' }, 0] },
-                            then: '$bannerImages',
-                            else: { $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }
-                        }
-                    },
-                }
-            });
+            pipeline.push(bannerlanguageFieldsReplace);
         }
 
         pipeline.push(bannerProject);
@@ -201,6 +175,152 @@ class CommonService {
         pipeline.push(bannerFinalProject);
 
         return BannerModel.aggregate(pipeline).exec();
+    }
+
+    async findPriorityProducts(options: any) {
+        const { query, hostName } = options;
+
+        const languageId = getLanguageValueFromSubdomain(hostName, await LanguagesModel.find().exec());
+        let productPipeline: any = [
+            {
+                $match: query,
+            },
+        ];
+
+        if (languageId) {
+            const productLookupWithLanguage = {
+                ...productMultilanguageFieldsLookup,
+                $lookup: {
+                    ...productMultilanguageFieldsLookup.$lookup,
+                    pipeline: productMultilanguageFieldsLookup.$lookup.pipeline.map(stage => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] }
+                                        ]
+                                    }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+
+            productPipeline.push(productLookupWithLanguage);
+
+            productPipeline.push(productlanguageFieldsReplace);
+        }
+
+        productPipeline.push(productMultilanguageFieldsLookup);
+        productPipeline.push(productFinalProject);
+
+        return await ProductsModel.aggregate(productPipeline).exec();
+    }
+
+    async findCollectionProducts(options: any) {
+        const { query, hostName } = options;
+
+        const languageId = getLanguageValueFromSubdomain(hostName, await LanguagesModel.find().exec());
+
+        let collectionProductPipeline: any = [
+            { $match: query },
+        ];
+
+        if (languageId) {
+            const collectionProductLookupWithLanguage = {
+                ...collectionsProductLookup,
+                $lookup: {
+                    ...collectionsProductLookup.$lookup,
+                    pipeline: collectionsProductLookup.$lookup.pipeline.map(stage => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] }
+                                        ]
+                                    }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+
+            collectionProductPipeline.push(collectionProductLookupWithLanguage);
+
+            collectionProductPipeline.push(collectionProductlanguageFieldsReplace);
+        }
+
+        collectionProductPipeline.push(collectionsProductLookup);
+        collectionProductPipeline.push(collectionsProductFinalProject);
+
+        const productCollectionData = await CollectionsProductsModel.aggregate(collectionProductPipeline).exec();
+
+        for (const collection of productCollectionData) {
+            if (collection && collection.collectionsProducts) {
+                let productPipeline: any = [
+                    {
+                        $match: {
+                            _id: { $in: collection.collectionsProducts.map((id: any) => new mongoose.Types.ObjectId(id)) },
+                            status: '1',
+                        },
+                    },
+                ];
+
+                if (languageId) {
+                    const productLookupWithLanguage = {
+                        ...productMultilanguageFieldsLookup,
+                        $lookup: {
+                            ...productMultilanguageFieldsLookup.$lookup,
+                            pipeline: productMultilanguageFieldsLookup.$lookup.pipeline.map(stage => {
+                                if (stage.$match && stage.$match.$expr) {
+                                    return {
+                                        ...stage,
+                                        $match: {
+                                            ...stage.$match,
+                                            $expr: {
+                                                ...stage.$match.$expr,
+                                                $and: [
+                                                    ...stage.$match.$expr.$and,
+                                                    { $eq: ['$languageId', languageId] }
+                                                ]
+                                            }
+                                        }
+                                    };
+                                }
+                                return stage;
+                            })
+                        }
+                    };
+
+                    productPipeline.push(productLookupWithLanguage);
+
+                    productPipeline.push(productlanguageFieldsReplace);
+                }
+
+                productPipeline.push(productMultilanguageFieldsLookup);
+                productPipeline.push(productFinalProject);
+
+                const productData = await ProductsModel.aggregate(productPipeline).exec();
+
+                collection.collectionsProducts = productData;
+            }
+        }
+
+        return productCollectionData;
     }
 }
 
