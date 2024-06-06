@@ -689,29 +689,27 @@ class ProductsController extends BaseController {
                                                                 }
                                                             }
                                                             else {
-                                                                validation.push({ productTitle: data.productTitle, SKU: data.sku, message: "Brand is missing, row :" + index })
+                                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Brand is missing, row :" + index })
                                                             }
                                                         }
                                                         else {
-                                                            validation.push({ productTitle: data.productTitle, SKU: data.sku, message: "Image is missing, row :" + index })
+                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image is missing, row :" + index })
                                                         }
                                                     }
                                                     else {
-                                                        validation.push({ productTitle: data.productTitle, SKU: data.sku, message: "Category is missing, row :" + index })
+                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Category is missing, row :" + index })
                                                     }
                                                 }
                                                 else {
-                                                    console.log("*****************",data);
-                                                    
-                                                    validation.push({ productTitle: data.productTitle, SKU: data.sku, message: "Item_Type is missing, row :" + index })
+                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Item_Type is missing, row :" + index })
                                                 }
                                             }
                                             else {
-                                                validation.push({ productTitle: data.productTitle, SKU: data.sku, message: "SKU is missing, row :" + index })
+                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "SKU is missing, row :" + index })
                                             }
                                         }
                                         else {
-                                            validation.push({ productTitle: data.productTitle, SKU: data.sku, message: "Product_Title is missing, row :" + index })
+                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Product_Title is missing, row :" + index })
                                         }
                                         index++
                                     }
