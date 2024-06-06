@@ -1,16 +1,16 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '@utils/schemas/admin/ecommerce/banner-schema';
-import { QueryParams } from '@utils/types/common';
-import { multiLanguageSources } from '@constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
+import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
+import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import BannerService from '@services/admin/ecommerce/banner-service'
-import GeneralService from '@services/admin/general-service';
-import BannerModel from '@model/admin/ecommerce/banner-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import BannerService from '../../../services/admin/ecommerce/banner-service'
+import GeneralService from '../../../services/admin/general-service';
+import BannerModel from '../../../model/admin/ecommerce/banner-model';
 
 const controller = new BaseController();
 
@@ -18,22 +18,41 @@ class BannerController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
+            const userData = await res.locals.user;
+
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
                 query.status = '1';
             }
-
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { bannerTitle: keywordRegex }
+                        { bannerTitle: keywordRegex },
+                        { page: keywordRegex },
+                        { pageReference: keywordRegex },
                     ],
                     ...query
+                } as any;
+            }
+
+            if (page) {
+                query = {
+                    ...query, page: page
+                } as any;
+            }
+
+            if (pageReference) {
+                query = {
+                    ...query, pageReference: pageReference
                 } as any;
             }
             const sort: any = {};
@@ -64,7 +83,7 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status } = validatedData.data;
+                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
                 const user = res.locals.user;
 
                 const mewBannerImages = (req as any).files.filter((file: any) =>
@@ -78,16 +97,17 @@ class BannerController extends BaseController {
                     bannerImages = await BannerService.setBannerBlocksImages(req, mewBannerImages);
 
                     const bannerData = {
-                        countryId,
+                        countryId: countryId || getCountryId(user),
                         bannerTitle,
                         slug: slug || slugify(bannerTitle),
                         page,
+                        pageReference,
                         linkType,
                         link,
                         position,
                         blocks,
                         bannerImages: bannerImages,
-                        bannerImagesUrl: handleFileUpload(req, null, (req.file || mewBannerImages), 'bannerImagesUrl', 'banner'),
+                        bannerImagesUrl: handleFileUpload(req, null, (mewBannerImages), 'bannerImagesUrl', 'banner'),
                         description,
                         status: status || '1',
                         createdBy: user._id,
@@ -96,7 +116,7 @@ class BannerController extends BaseController {
                     const newBanner = await BannerService.create(bannerData);
                     if (newBanner) {
 
-                        if (languageValues && languageValues.length > 0) {
+                        if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
                             const languageValuesImages = (req as any).files.filter((file: any) =>
                                 file.fieldname &&
@@ -210,7 +230,7 @@ class BannerController extends BaseController {
                     if (updatedBanner) {
 
                         let newLanguageValues: any = []
-                        if (updatedBannerData.languageValues && updatedBannerData.languageValues.length > 0) {
+                        if (updatedBannerData.languageValues && Array.isArray(updatedBannerData.languageValues) && updatedBannerData.languageValues.length > 0) {
 
                             const languageValuesImages = (req as any).files.filter((file: any) =>
                                 file.fieldname &&

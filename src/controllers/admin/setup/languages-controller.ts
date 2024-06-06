@@ -1,14 +1,14 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, slugify } from '@utils/helpers';
-import { languageSchema, languageStatusSchema } from '@utils/schemas/admin/setup/language-shema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, slugify } from '../../../utils/helpers';
+import { languageSchema, languageStatusSchema } from '../../../utils/schemas/admin/setup/language-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { QueryParams } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import LanguagesService from '@services/admin/setup/languages-service';
-import { LanguageProps } from '@model/admin/setup/language-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import LanguagesService from '../../../services/admin/setup/languages-service';
+import { LanguageProps } from '../../../model/admin/setup/language-model';
 
 const controller = new BaseController();
 
@@ -16,7 +16,7 @@ class LanguagesController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -95,11 +95,11 @@ class LanguagesController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.languageTitle) {
+            if (error && error.errors && (error.errors?.languageTitle) && (error.errors?.languageTitle?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        languageTitle: "Language name already exists"
+                        languageTitle: error.errors?.languageTitle?.properties.message
                     }
                 }, req);
             }

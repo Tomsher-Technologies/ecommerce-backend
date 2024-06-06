@@ -1,16 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { deleteFile, formatZodError, handleFileUpload, slugify, stringToArray } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
+import { deleteFile, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
 
-import BaseController from '@controllers/admin/base-controller';
-import CollectionsProductsService from '@services/admin/website/collections-products-service';
-import { collectionProductSchema } from '@utils/schemas/admin/website/collection-product-shema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import BaseController from '../../../controllers/admin/base-controller';
+import CollectionsProductsService from '../../../services/admin/website/collections-products-service';
+import { collectionProductSchema } from '../../../utils/schemas/admin/website/collection-product-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import GeneralService from '@services/admin/general-service';
-import { multiLanguageSources } from '@constants/multi-languages';
+
+import GeneralService from '../../../services/admin/general-service';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 const controller = new BaseController();
 
@@ -18,7 +19,7 @@ class CollectionsProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -35,6 +36,17 @@ class CollectionsProductsController extends BaseController {
                         { linkType: keywordRegex },
                     ],
                     ...query
+                } as any;
+            }
+            if (page) {
+                query = {
+                    ...query, page: page
+                } as any;
+            }
+
+            if (pageReference) {
+                query = {
+                    ...query, pageReference: pageReference
                 } as any;
             }
             const sort: any = {};
@@ -66,13 +78,16 @@ class CollectionsProductsController extends BaseController {
             const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
 
             if (validatedData.success) {
-                const { collectionTitle, slug, collectionSubTitle, collectionsProducts, languageValues } = validatedData.data;
+                const { countryId, collectionTitle, slug, collectionSubTitle, collectionsProducts, page, pageReference, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const collectionData = {
+                    countryId: countryId || getCountryId(user),
                     collectionTitle,
                     slug: slug || slugify(collectionTitle),
                     collectionSubTitle,
+                    page,
+                    pageReference,
                     collectionsProducts: collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [],
                     collectionImageUrl: handleFileUpload(req, null, (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                     status: '1',
@@ -88,8 +103,8 @@ class CollectionsProductsController extends BaseController {
                         file.fieldname.includes('[collectionImage]')
                     );
 
-                    if (languageValues && languageValues.length > 0) {
-                        await languageValues.map((languageValue: any, index: number) => {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
+                        await languageValues?.map((languageValue: any, index: number) => {
 
                             let collectionImageUrl = ''
                             if (languageValuesImages.length > 0) {
@@ -135,13 +150,19 @@ class CollectionsProductsController extends BaseController {
                         collectionTitle: error.errors.collectionTitle.properties.message
                     }
                 }, req);
+            } else if (error && error.errors && error.errors.collectionImageUrl && error.errors.collectionImageUrl.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        collectionImageUrl: error.errors.collectionImageUrl.properties.message
+                    }
+                }, req);
             }
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating collection',
             }, req);
         }
     }
-
 
     async findOne(req: Request, res: Response): Promise<void> {
         try {
@@ -155,7 +176,11 @@ class CollectionsProductsController extends BaseController {
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: collection._id,
+                            countryId: collection.countryId,
                             collectionTitle: collection.collectionTitle,
+                            page: collection.page,
+                            pageReference: collection.pageReference,
+                            status: collection.status,
                             slug: collection.slug,
                             collectionSubTitle: collection.collectionSubTitle,
                             collectionImageUrl: collection.collectionImageUrl,
@@ -197,6 +222,38 @@ class CollectionsProductsController extends BaseController {
 
                     const updatedCollection = await CollectionsProductsService.update(collectionId, updatedCollectionData);
                     if (updatedCollection) {
+                        const languageValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[collectionImage]')
+                        );
+
+                        let newLanguageValues: any = []
+                        if (updatedCollectionData.languageValues && Array.isArray(updatedCollectionData.languageValues) && updatedCollectionData.languageValues.length > 0) {
+
+                            for (let i = 0; i < updatedCollectionData.languageValues.length; i++) {
+                                const languageValue = updatedCollectionData.languageValues[i];
+                                let collectionImageUrl = '';
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, updatedCollection._id, languageValue.languageId);
+                                    collectionImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `collectionImageUrl`, 'collection');
+                                } else {
+                                    collectionImageUrl = updatedCollectionData.languageValues[i].languageValues?.collectionImageUrl
+                                }
+
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedCollection._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        collectionImageUrl
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
+                            }
+                        }
+
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'

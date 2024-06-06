@@ -1,8 +1,9 @@
 import { z as zod } from 'zod';
-import { isValidPriceFormat } from '@utils/helpers';
+import { isValidPriceFormat } from '../../../helpers';
 
 export const couponSchema = zod.object({
     _id: zod.string().optional(),
+    countryId: zod.string().optional(),
     couponCode: zod.string({ required_error: 'Coupon code is required' }).min(2, { message: 'Coupon code is should be 2 chars minimum' }),
     status: zod.string().optional(),
     couponDescription: zod.string().optional(),

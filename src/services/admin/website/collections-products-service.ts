@@ -1,32 +1,11 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { collectionsProductLookup } from '../../../utils/config/collections-product-config';
 
-import CollectionsProductsModel, { CollectionsProductsProps } from '@model/admin/website/collections-products-model';
-import ProductsModel from '@model/admin/ecommerce/products-model';
-import { multiLanguageSources } from '@constants/multi-languages';
+import CollectionsProductsModel, { CollectionsProductsProps } from '../../../model/admin/website/collections-products-model';
+import ProductsModel from '../../../model/admin/ecommerce/product-model';
 
 class CollectionsProductsService {
-    private lookup: any;
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { collectionsProductId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$collectionsProductId'] },
-                                    { $eq: ['$source', multiLanguageSources.website.collectionsProducts] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-    }
+    constructor() {}
 
     async findAll(options: FilterOptionsProps = {}): Promise<CollectionsProductsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
@@ -44,7 +23,7 @@ class CollectionsProductsService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.lookup,
+            collectionsProductLookup,
 
         ];
 
@@ -55,7 +34,7 @@ class CollectionsProductsService {
         try {
             const query = { _id: { $nin: productIds } };
 
-            const unCollectionedProducts = await ProductsModel.find(query).select('_id en_productTitle ar_productTitle slug description productImageUrl status');
+            const unCollectionedProducts = await ProductsModel.find(query).select('_id productTitle slug description productImageUrl status');
 
             return unCollectionedProducts;
         } catch (error) {
@@ -68,7 +47,7 @@ class CollectionsProductsService {
         try {
             const query = { _id: { $in: productIds } };
 
-            const products = await ProductsModel.find(query).select('_id en_productTitle ar_productTitle slug description productImageUrl status');
+            const products = await ProductsModel.find(query).select('_id productTitle slug description productImageUrl status');
 
             return products;
         } catch (error) {
@@ -92,7 +71,7 @@ class CollectionsProductsService {
         if (createdCollections) {
             const pipeline = [
                 { $match: { _id: createdCollections._id } },
-                this.lookup,
+                collectionsProductLookup,
             ];
 
             const createdCollectionsWithValues = await CollectionsProductsModel.aggregate(pipeline);
@@ -109,7 +88,7 @@ class CollectionsProductsService {
         if (collectionsProductData) {
             const pipeline = [
                 { $match: { _id: collectionsProductData._id } },
-                this.lookup,
+                collectionsProductLookup,
             ];
 
             const collectionsProductDataWithValues = await CollectionsProductsModel.aggregate(pipeline);
@@ -129,7 +108,7 @@ class CollectionsProductsService {
         if (updatedCollectionsProduct) {
             const pipeline = [
                 { $match: { _id: updatedCollectionsProduct._id } },
-                this.lookup,
+                collectionsProductLookup,
             ];
 
             const updatedCollectionsProductWithValues = await CollectionsProductsModel.aggregate(pipeline);

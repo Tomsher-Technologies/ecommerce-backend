@@ -1,33 +1,15 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
+import mongoose from 'mongoose';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
-import BrandsModel, { BrandProps } from '@model/admin/ecommerce/brands-model';
+import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
+import { slugify } from '../../../utils/helpers';
+import { brandLookup } from '../../../utils/config/brand-config';
 
 
 class BrandsService {
 
-    private lookup: any;
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { brandId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$brandId'] },
-                                    { $eq: ['$source', multiLanguageSources.ecommerce.brands] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-    }
+    constructor() { }
 
     async findAll(options: FilterOptionsProps = {}): Promise<BrandProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
@@ -44,7 +26,7 @@ class BrandsService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.lookup,
+          brandLookup,
         ];
 
         return BrandsModel.aggregate(pipeline).exec();
@@ -64,7 +46,7 @@ class BrandsService {
         if (createdBrand) {
             const pipeline = [
                 { $match: { _id: createdBrand._id } },
-                this.lookup,
+              brandLookup,
             ];
 
             const createdBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -77,9 +59,10 @@ class BrandsService {
 
     async findOne(brandId: string): Promise<BrandProps | null> {
         if (brandId) {
+            const objectId = new mongoose.Types.ObjectId(brandId);
             const pipeline = [
-                { $match: { _id: brandId} },
-                this.lookup,
+                { $match: { _id: objectId } },
+              brandLookup,
             ];
 
             const brandDataWithValues = await BrandsModel.aggregate(pipeline);
@@ -100,7 +83,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                this.lookup,
+              brandLookup,
             ];
 
             const updatedBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -114,6 +97,27 @@ class BrandsService {
     async destroy(brandId: string): Promise<BrandProps | null> {
         return BrandsModel.findOneAndDelete({ _id: brandId });
     }
+    async findBrand(data: any): Promise<BrandProps | null> {
+        return BrandsModel.findOne(data);
+    }
+    async findBrandId(brandTitle: string): Promise<void | null> {
+        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle });
+        if (resultBrand) {
+            return resultBrand
+        } else {
+            const brandData = {
+                brandTitle: brandTitle,
+                slug: slugify(brandTitle),
+                isExcel: true
+            }
+
+            const brandResult: any = await this.create(brandData)
+            if (brandResult) {
+                return brandResult
+            }
+        }
+    }
+
 
     async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof BrandProps): Promise<void> {
         try {

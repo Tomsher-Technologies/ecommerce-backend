@@ -6,10 +6,15 @@ export const adminTaskLog = {
         banner: 'banner',
         categories: 'categories',
         attributes: 'attributes',
+        products: 'products',
+        productVariants: 'productVariants',
         specifications: 'specifications'
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+        collectionsBrands: 'collectionsbrands',
+        collectionsCategories: 'collectionscategories',
+        navigationMenu: 'navigationmenu',
     },
     marketing: {
         coupons: 'coupons',
@@ -23,6 +28,13 @@ export const adminTaskLog = {
     setup: {
         country: 'country',
         languages: 'languages',
+        settings: {
+            websitesettings: 'websitesettings'
+        },
+    },
+    store: {
+        warehouse: 'warehouse',
+        store: 'store',
     },
 
 }

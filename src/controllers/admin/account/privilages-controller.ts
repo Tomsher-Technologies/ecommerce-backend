@@ -2,12 +2,12 @@
 import 'module-alias/register'
 import { Request, Response } from 'express';
 
-import { formatZodError } from '@utils/helpers';
+import { formatZodError } from '../../../../src/utils/helpers';
 
-import BaseController from '@controllers/admin/base-controller';
-import PrivilagesService from '@services/admin/account/privilages-service';
-import { privilageSchema } from '@utils/schemas/admin/account/privilage-shema';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import BaseController from '../../../../src/controllers/admin/base-controller';
+import PrivilagesService from '../../../../src/services/admin/account/privilages-service';
+import { privilageSchema } from '../../../../src/utils/schemas/admin/account/privilage-shema';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
 
 const controller = new BaseController();
 

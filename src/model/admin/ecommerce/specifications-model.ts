@@ -35,7 +35,8 @@ const specificationSchema: Schema<SpecificationProps> = new Schema({
     },    
     status: {
         type: String,
-        required: true
+        required: true,
+        default: "1"
     },
     createdAt: {
         type: Date,

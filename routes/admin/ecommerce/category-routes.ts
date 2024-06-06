@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { configureMulter } from '@utils/file-uploads';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { logResponseStatus } from '@components/response-status';
+import { configureMulter } from '../../../src/utils/file-uploads';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { logResponseStatus } from '../../../src/components/response-status';
 
-import CategoryController from '@controllers/admin/ecommerce/category-controller';
-import { permissionBlocks } from '@constants/permission-blocks';
+import CategoryController from '../../../src/controllers/admin/ecommerce/category-controller';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
 const router: Router = express.Router();
 
@@ -17,6 +17,7 @@ router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findAll);
 router.get('/parent-categories', logResponseStatus, CategoryController.findAllParentCategories);
+router.get('/chilled-categories', logResponseStatus, CategoryController.findAllChilledCategories);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.findOne);
 router.post('/', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, readOnly: 1 }), CategoryController.create);
 router.post('/:id', upload.any(), logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.categories, writeOnly: 1 }), CategoryController.update);

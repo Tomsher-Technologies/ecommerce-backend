@@ -3,21 +3,27 @@ import 'module-alias/register'
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 
-import { userSchema } from '@utils/schemas/admin/account/user-schema';
-import { formatZodError, handleFileUpload } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { userSchema } from '../../../../src/utils/schemas/admin/account/user-schema';
+import { formatZodError, getCountryId, handleFileUpload } from '../../../../src/utils/helpers';
+import { QueryParams } from '../../../../src/utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
 
-import UserService from '@services/admin/account/user-service';
-import BaseController from '@controllers/admin/base-controller';
+import UserService from '../../../services/admin/account/user-service';
+import BaseController from '../../../controllers/admin/base-controller';
 
 const controller = new BaseController();
 
 class UserController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+
+            const userData = await res.locals.user;
+            const countryId = getCountryId(userData);
+            if (countryId) {
+                query.countryId = countryId;
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -68,7 +74,7 @@ class UserController extends BaseController {
 
                 const userData = {
                     userTypeID,
-                    countryId,
+                    countryId: countryId || getCountryId(user),
                     email,
                     firstName,
                     lastName,

@@ -1,16 +1,17 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { QueryParams } from '@utils/types/common';
-import { specificationSchema, specificationStatusSchema } from '@utils/schemas/admin/ecommerce/specification-schema';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { QueryParams } from '../../../utils/types/common';
+import { specificationSchema, specificationStatusSchema } from '../../../utils/schemas/admin/ecommerce/specification-schema';
 
-import { SpecificationProps } from '@model/admin/ecommerce/specifications-model';
-import BaseController from '@controllers/admin/base-controller';
-import SpecificationService from '@services/admin/ecommerce/specification-service'
-import GeneralService from '@services/admin/general-service';
-import { multiLanguageSources } from '@constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { SpecificationProps } from '../../../model/admin/ecommerce/specifications-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import SpecificationService from '../../../services/admin/ecommerce/specification-service'
+import GeneralService from '../../../services/admin/general-service';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -18,7 +19,7 @@ class SpecificationController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '', _id = '' } = req.query as QueryParams;
             let query = { _id: { $exists: true } };
 
             if (keyword) {
@@ -30,6 +31,13 @@ class SpecificationController extends BaseController {
                     ...query
                 } as any;
             }
+
+            if (_id) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
+            }
+
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
@@ -72,9 +80,9 @@ class SpecificationController extends BaseController {
                     let specificationDetailsValues: any = []
                     specificationDetailsValues = await SpecificationService.specificationDetailsService(newSpecification._id, specificationValues);
 
-                    if (specificationDetailsValues && languageValues && languageValues.length > 0) {
+                    if (specificationDetailsValues && languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
-                        await languageValues.map(async (languageValue: any, index: number) => {
+                        await languageValues?.map(async (languageValue: any, index: number) => {
                             const setSpecificationDetailsValues = languageValue.languageValues.specificationValues.map((specificationLanguageValue: any, specificationIndex: number) => {
                                 return {
                                     ...specificationLanguageValue,
@@ -84,10 +92,11 @@ class SpecificationController extends BaseController {
 
                             })
                             if (setSpecificationDetailsValues && setSpecificationDetailsValues.length > 0) {
-                                GeneralService.multiLanguageFieledsManage(newSpecification._id, {
+                                const languageValues = GeneralService.multiLanguageFieledsManage(newSpecification._id, {
                                     ...languageValue,
                                     source: multiLanguageSources.ecommerce.specifications,
                                     languageValues: {
+                                        specificationTitle: languageValue.languageValues.specificationTitle,
                                         specificationValues: setSpecificationDetailsValues,
                                     }
                                 })
@@ -98,7 +107,8 @@ class SpecificationController extends BaseController {
                         requestedData: {
                             _id: newSpecification._id,
                             specificationTitle: newSpecification.specificationTitle,
-                            specificationValues: specificationDetailsValues
+                            specificationValues: specificationDetailsValues,
+                            languageValues: languageValues
                         },
                         message: 'Specification created successfully!'
                     }, 200, {
@@ -173,7 +183,7 @@ class SpecificationController extends BaseController {
                             const newValue = await SpecificationService.specificationDetailsService(updatedSpecification._id, validatedData.data.specificationValues);
                             let newLanguageValues: any = []
 
-                            if (updatedSpecificationData.languageValues && updatedSpecificationData.languageValues.length > 0) {
+                            if (updatedSpecificationData.languageValues && Array.isArray(updatedSpecificationData.languageValues) && updatedSpecificationData.languageValues.length > 0) {
                                 for (let i = 0; i < updatedSpecificationData.languageValues.length; i++) {
                                     const languageValue = updatedSpecificationData.languageValues[i];
 
@@ -191,7 +201,8 @@ class SpecificationController extends BaseController {
                                 requestedData: {
                                     _id: updatedSpecification._id,
                                     specificationTitle: updatedSpecification.specificationTitle,
-                                    specificationValue: newValue
+                                    specificationValues: newValue,
+                                    languageValues: newLanguageValues
                                 },
                                 message: 'Specification updated successfully!'
                             }, 200, {

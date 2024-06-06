@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { unlink } from 'fs/promises';
 
-import GeneralService, { AdminTaskLogProps } from '@services/admin/general-service';
+import GeneralService, { AdminTaskLogProps } from '../../services/admin/general-service';
 
 class BaseController {
 

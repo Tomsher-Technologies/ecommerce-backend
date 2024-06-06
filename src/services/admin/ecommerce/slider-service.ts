@@ -1,51 +1,12 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import mongoose from 'mongoose';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import { multiLanguageSources } from '@constants/multi-languages';
-
-import SliderModel, { SliderProps } from '@model/admin/ecommerce/slider-model';
+import SliderModel, { SliderProps } from '../../../model/admin/ecommerce/slider-model';
+import { sliderLookup, sliderProject } from '../../../utils/config/slider-config';
 
 class SliderService {
 
-    private lookup: any;
-    private project: any;
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { sliderId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$sliderId'] },
-                                    { $eq: ['$source', multiLanguageSources.ecommerce.sliders] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-
-        this.project = {
-            $project: {
-                _id: 1,
-                countryId: 1,
-                sliderTitle: 1,
-                page: 1,
-                linkType: 1,
-                link: 1,
-                description: 1,
-                sliderImageUrl: 1,
-                position: 1,
-                status: 1,
-                createdAt: 1,
-                languageValues: { $ifNull: ['$languageValues', []] }
-            }
-        }
-    }
+    constructor() { }
 
     async findAll(options: FilterOptionsProps = {}): Promise<SliderProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
@@ -63,9 +24,8 @@ class SliderService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.lookup,
-
-            this.project
+            sliderLookup,
+            sliderProject
         ];
 
         return SliderModel.aggregate(pipeline).exec();
@@ -86,8 +46,8 @@ class SliderService {
         if (createdSlider) {
             const pipeline = [
                 { $match: { _id: createdSlider._id } },
-                this.lookup,
-                this.project
+                sliderLookup,
+                sliderProject
             ];
 
             const createdSliderWithValues = await SliderModel.aggregate(pipeline);
@@ -100,10 +60,11 @@ class SliderService {
 
     async findOne(sliderId: string): Promise<SliderProps | null> {
         if (sliderId) {
+            const objectId = new mongoose.Types.ObjectId(sliderId);
             const pipeline = [
-                { $match: { _id: sliderId } },
-                this.lookup,
-                this.project
+                { $match: { _id: objectId } },
+                sliderLookup,
+                sliderProject
             ];
 
             const sliderDataWithValues = await SliderModel.aggregate(pipeline);
@@ -124,8 +85,8 @@ class SliderService {
         if (updatedSlider) {
             const pipeline = [
                 { $match: { _id: updatedSlider._id } },
-                this.lookup,
-                this.project
+                sliderLookup,
+                sliderProject
             ];
 
             const updatedSliderWithValues = await SliderModel.aggregate(pipeline);
@@ -142,4 +103,3 @@ class SliderService {
 }
 
 export default new SliderService();
-  

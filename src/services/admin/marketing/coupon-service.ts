@@ -1,6 +1,7 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { collections } from '../../../constants/collections';
 
-import CouponModel, { CouponProps } from '@model/admin/marketing/coupon-model';
+import CouponModel, { CouponProps } from '../../../model/admin/marketing/coupon-model';
 import mongoose from 'mongoose';
 
 
@@ -17,15 +18,15 @@ class CouponService {
                 collectionName: {
                     $cond: {
                         if: { $eq: ["$couponType", "for-brand"] },
-                        then: "brands",
+                        then: collections.ecommerce.brands,
                         else: {
                             $cond: {
                                 if: { $eq: ["$couponType", "for-category"] },
-                                then: "categories",
+                                then: collections.ecommerce.categories,
                                 else: {
                                     $cond: {
                                         if: { $eq: ["$couponType", "for-product"] },
-                                        then: "products",
+                                        then: collections.ecommerce.products.products,
                                         else: "defaultCollection",
                                     },
                                 },
@@ -38,7 +39,7 @@ class CouponService {
 
         this.brandLookup = {
             $lookup: {
-                from: "brands",
+                from: collections.ecommerce.brands,
                 let: { couponApplyValues: '$couponApplyValues' },
                 pipeline: [
                     { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$couponApplyValues"] } } },
@@ -58,7 +59,7 @@ class CouponService {
 
         this.categoriesLookup = {
             $lookup: {
-                from: "categories",
+                from: collections.ecommerce.categories,
                 let: { couponApplyValues: '$couponApplyValues' },
                 pipeline: [
                     { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$couponApplyValues"] } } },
@@ -78,7 +79,7 @@ class CouponService {
 
         this.productsLookup = {
             $lookup: {
-                from: "products",
+                from: collections.ecommerce.products.products,
                 let: { couponApplyValues: '$couponApplyValues' },
                 pipeline: [
                     { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$couponApplyValues"] } } },
@@ -114,19 +115,12 @@ class CouponService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.couponAddFields
-        ];
-
-        pipeline.push(
+            this.couponAddFields,
             this.brandLookup,
             this.categoriesLookup,
-            this.productsLookup
-
-        );
-
-        pipeline.push({
-            $replaceRoot: this.couponReplacedNewRoot
-        });
+            this.productsLookup,
+            { $replaceRoot: this.couponReplacedNewRoot }
+        ];
 
 
         return CouponModel.aggregate(pipeline).exec();
@@ -156,9 +150,9 @@ class CouponService {
             this.productsLookup,
             { $replaceRoot: this.couponReplacedNewRoot }
         ];
-    
+
         const result = await CouponModel.aggregate(pipeline).exec();
-        return result.length > 0 ? result[0] : null; 
+        return result.length > 0 ? result[0] : null;
     }
 
     async update(couponId: string, couponData: any): Promise<CouponProps | null> {

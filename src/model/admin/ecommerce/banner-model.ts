@@ -8,6 +8,7 @@ export interface BannerProps extends Document {
     blocks: number
     bannerImages: Schema.Types.Mixed,
     page: string;
+    pageReference: string;
     linkType: string; // product, category, brand, custom
     link: string;
     position: number;
@@ -38,6 +39,7 @@ const bannerSchema: Schema<BannerProps> = new Schema({
     },
     description: {
         type: String,
+        default: ''
     },
     blocks: {
         type: Number,
@@ -49,6 +51,10 @@ const bannerSchema: Schema<BannerProps> = new Schema({
         required: true,
     },
     page: {
+        type: String,
+        required: true,
+    },
+    pageReference: {
         type: String,
         required: true,
     },

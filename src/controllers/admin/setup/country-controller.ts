@@ -1,14 +1,14 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '@utils/helpers';
-import { countrySchema, countryStatusSchema } from '@utils/schemas/admin/setup/country-schema';
-import { QueryParams } from '@utils/types/common';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
+import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { countrySchema, countryStatusSchema } from '../../../utils/schemas/admin/setup/country-schema';
+import { QueryParams } from '../../../utils/types/common';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
-import BaseController from '@controllers/admin/base-controller';
-import CountryService from '@services/admin/setup/country-service'
-import { CountryProps } from '@model/admin/setup/country-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import CountryService from '../../../services/admin/setup/country-service'
+import { CountryProps } from '../../../model/admin/setup/country-model';
 
 const controller = new BaseController();
 
@@ -16,7 +16,7 @@ class CountryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
@@ -32,6 +32,7 @@ class CountryController extends BaseController {
                         { countryTitle: keywordRegex },
                         { countryCode: keywordRegex },
                         { currencyCode: keywordRegex },
+                        { countryShortTitle: keywordRegex }
                     ],
                     ...query
                 } as any;
@@ -64,7 +65,7 @@ class CountryController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryTitle, slug, countryCode, currencyCode } = validatedData.data;
+                const { countryTitle, slug, countryCode, currencyCode, isOrigin, countryShortTitle } = validatedData.data;
                 const user = res.locals.user;
 
                 const countryData: Partial<CountryProps> = {
@@ -73,6 +74,8 @@ class CountryController extends BaseController {
                     countryImageUrl: handleFileUpload(req, null, req.file, 'countryImageUrl', 'country'),
                     countryCode,
                     currencyCode,
+                    countryShortTitle,
+                    isOrigin,
                     status: '1', // active
                     statusAt: new Date(),
                     createdBy: user._id,
@@ -99,11 +102,11 @@ class CountryController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.countryTitle) {
+            if (error && error.errors && (error.errors?.countryTitle) && (error.errors?.countryTitle?.properties)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        countryTitle: "Country name already exists"
+                        countryTitle: error.errors?.countryTitle?.properties.message
                     }
                 }, req);
             }
@@ -222,7 +225,7 @@ class CountryController extends BaseController {
             }, req);
         }
     }
-    
+
     async destroy(req: Request, res: Response): Promise<void> {
         try {
             const countryId = req.params.id;
@@ -232,7 +235,7 @@ class CountryController extends BaseController {
                     // await CountryService.destroy(countryId);
                     // controller.sendSuccessResponse(res, { message: 'Country deleted successfully!' });
 
-                       controller.sendErrorResponse(res, 200, {
+                    controller.sendErrorResponse(res, 200, {
                         message: 'You cant delete this country!',
                     });
                 } else {

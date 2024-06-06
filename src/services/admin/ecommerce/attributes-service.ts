@@ -1,8 +1,10 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
-import { multiLanguageSources } from '@constants/multi-languages';
-import AttributeDetailModel from '@model/admin/ecommerce/attribute-detail-model';
+import mongoose from 'mongoose';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { multiLanguageSources } from '../../../constants/multi-languages';
+import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
 
-import AttributesModel, { AttributesProps } from '@model/admin/ecommerce/attribute-model';
+import AttributesModel, { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
+import { slugify } from '../../../utils/helpers';
 
 
 class AttributesService {
@@ -114,8 +116,9 @@ class AttributesService {
 
     async findOne(attributeId: string): Promise<AttributesProps | null> {
         if (attributeId) {
+            const objectId = new mongoose.Types.ObjectId(attributeId);
             const pipeline = [
-                { $match: { _id: attributeId } },
+                { $match: { _id: objectId } },
                 this.attributeDetailsLookup,
                 this.multilanguageFieldsLookup,
 
@@ -127,6 +130,54 @@ class AttributesService {
             return attributeDataWithValues[0];
         } else {
             return null;
+        }
+    }
+    async findOneAttribute(data: any): Promise<void | null> {
+
+        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.attributeTitle });
+        if (resultAttribute) {
+            const attributeDetailResult: any = await this.findOneAttributeDetail(data, resultAttribute._id)
+
+            const result: any = {
+                attributeId: resultAttribute._id,
+                attributeDetailId: attributeDetailResult._id
+            }
+            return result
+        } else {
+            const attributeData = {
+                attributeTitle: data.attributeTitle,
+                isExcel: true,
+                slug: slugify(data.attributeTitle)
+            }
+            const attributeResult: any = await this.create(attributeData)
+
+            if (attributeResult) {
+                const attributeDetailResult: any = await this.findOneAttributeDetail(data, attributeResult._id)
+
+                const result: any = {
+                    attributeId: attributeResult._id,
+                    attributeDetailId: attributeDetailResult._id
+                }
+                return result
+            }
+        }
+    }
+
+    async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
+        const resultBrand: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.itemName }, { attributeId: attributeId }] });
+        if (resultBrand) {
+            return resultBrand
+        } else {
+            const brandData = {
+                attributeId: attributeId,
+                itemName: data.itemName,
+                itemValue: data.itemValue,
+
+            }
+            const brandResult: any = await AttributeDetailModel.create(brandData);
+            if (brandResult) {
+                return brandResult
+            }
         }
     }
 

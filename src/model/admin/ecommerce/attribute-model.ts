@@ -5,6 +5,7 @@ export interface AttributesProps extends Document {
     attributeTitle: string;
     attributeType: string;
     slug: string;
+    isExcel: Boolean;
     status: string;
     createdAt?: Date;
 }
@@ -25,7 +26,9 @@ const attributeSchema: Schema<AttributesProps> = new Schema({
     },
     slug: {
         type: String,
-        required: [true, 'Slug is required'],
+        required: function () {
+            return !this.isExcel;
+        },
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
@@ -37,7 +40,9 @@ const attributeSchema: Schema<AttributesProps> = new Schema({
     },
     attributeType: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        },
         enum: ['text', 'hex', 'pattern'],
         validate: {
             validator: function (value: string): boolean {
@@ -45,6 +50,10 @@ const attributeSchema: Schema<AttributesProps> = new Schema({
             },
             message: 'Attribute type only supports text, hex, or pattern'
         }
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
     },
     status: {
         type: String,

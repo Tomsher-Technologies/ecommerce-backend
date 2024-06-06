@@ -1,8 +1,8 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 import AuthService from '../../services/admin/auth-service';
-import BaseController from '@controllers/admin/base-controller';
-import LanguagesService from '@services/admin/setup/languages-service';
+import BaseController from '../../../src/controllers/admin/base-controller';
+import LanguagesService from '../../../src/services/admin/setup/languages-service';
 
 class AuthController extends BaseController {
     constructor() {
@@ -38,6 +38,8 @@ class AuthController extends BaseController {
                 return this.sendErrorResponse(res, 401, { message: 'Authentication failed. User not found.' });
             } else if (error.message === 'Invalid password.') {
                 return this.sendErrorResponse(res, 401, { message: 'Authentication failed. Invalid password.' });
+            } else if (error.message === 'User permission declined') {
+                return this.sendErrorResponse(res, 401, { message: 'User permission declined' });
             } else {
                 // console.error("Error during login:", error);
                 return this.sendErrorResponse(res, 500, { message: 'Internal Server Error' });

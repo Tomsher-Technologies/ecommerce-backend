@@ -1,6 +1,6 @@
-import { FilterOptionsProps, pagination } from '@components/pagination';
+import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import UserTypeModel, { UserTypeProps } from '@model/admin/account/user-type-model';
+import UserTypeModel, { UserTypeProps } from '../../../model/admin/account/user-type-model';
 
 
 class UserTypeService {

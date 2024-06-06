@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { configureMulter } from '@utils/file-uploads';
-import { logResponseStatus } from '@components/response-status';
-import authMiddleware from '@middleware/admin/auth-middleware';
-import userPermissionMiddleware from '@middleware/admin/admin-user-permission-roll-middleware';
-import { permissionBlocks } from '@constants/permission-blocks';
+import { configureMulter } from '../../../src/utils/file-uploads';
+import { logResponseStatus } from '../../../src/components/response-status';
+import authMiddleware from '../../../middleware/admin/auth-middleware';
+import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
+import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import OffersController from '@controllers/admin/marketing/offers-controller';
+import OffersController from '../../../src/controllers/admin/marketing/offers-controller';
 
 const router: Router = express.Router();
 
@@ -19,7 +19,7 @@ router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: p
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, readOnly: 1 }), OffersController.findOne);
 router.post('/', upload.single('offerImage'), userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), logResponseStatus, OffersController.create);
 router.post('/:id', upload.single('offerImage'), userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), logResponseStatus, OffersController.update);
-router.post('/position-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), OffersController.statusChange);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers, writeOnly: 1 }), OffersController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.offers }), OffersController.destroy);
 
 

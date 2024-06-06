@@ -1,15 +1,16 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '@utils/helpers';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '@constants/admin/task-log';
-import { attributeSchema, attributeStatusSchema } from '@utils/schemas/admin/ecommerce/attribute-schema';
-import { QueryParams } from '@utils/types/common';
+import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '../../../utils/helpers';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { attributeSchema, attributeStatusSchema } from '../../../utils/schemas/admin/ecommerce/attribute-schema';
+import { QueryParams } from '../../../utils/types/common';
 
-import { AttributesProps } from '@model/admin/ecommerce/attribute-model';
-import BaseController from '@controllers/admin/base-controller';
-import AttributesService from '@services/admin/ecommerce/attributes-service'
-import GeneralService from '@services/admin/general-service';
+import { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
+import BaseController from '../../../controllers/admin/base-controller';
+import AttributesService from '../../../services/admin/ecommerce/attributes-service'
+import GeneralService from '../../../services/admin/general-service';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -17,7 +18,7 @@ class AttributesController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', _id = '' } = req.query as QueryParams;
             let query = { _id: { $exists: true } };
 
             if (keyword) {
@@ -31,6 +32,13 @@ class AttributesController extends BaseController {
                     ...query
                 } as any;
             }
+
+            if (_id) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
+            }
+
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
@@ -59,7 +67,7 @@ class AttributesController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { attributeTitle, attributeType, attributeValues, status,languageValues } = validatedData.data;
+                const { attributeTitle, attributeType, attributeValues, status, languageValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
                     attributeTitle,
@@ -89,9 +97,9 @@ class AttributesController extends BaseController {
                         attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     }
 
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
-                        await languageValues.map((languageValue: any, index: number) => {
+                        await languageValues?.map((languageValue: any, index: number) => {
                             if (attributeType === 'pattern') {
                                 GeneralService.multiLanguageFieledsManage(newAttribute._id, {
                                     languageId: languageValue.languageId,
@@ -112,7 +120,7 @@ class AttributesController extends BaseController {
                                             }
                                         }
                                     })
-                                    GeneralService.multiLanguageFieledsManage(newAttribute._id, {
+                                    const languageValues = GeneralService.multiLanguageFieledsManage(newAttribute._id, {
                                         ...languageValue,
                                         languageValues: {
                                             ...languageValue.languageValues,
@@ -155,7 +163,8 @@ class AttributesController extends BaseController {
                         requestedData: {
                             _id: newAttribute._id,
                             attributeTitle: newAttribute.attributeTitle,
-                            attributeValues: attributeDetailsValue
+                            attributeValues: attributeDetailsValue,
+                            languageValues: languageValues
                         },
                         message: 'Attribute successfully created'
                     }, 200, {  // task log
@@ -276,7 +285,7 @@ class AttributesController extends BaseController {
                             }
 
                             if (updatedAttributeData.languageValues && updatedAttributeData.languageValues.length > 0) {
-                                await updatedAttributeData.languageValues.map((languageValue: any, index: number) => {
+                                await updatedAttributeData.languageValues?.map((languageValue: any, index: number) => {
                                     if (updatedAttributeData.attributeType === 'pattern') {
                                         GeneralService.multiLanguageFieledsManage(updatedAttribute._id, {
                                             languageId: languageValue.languageId,
