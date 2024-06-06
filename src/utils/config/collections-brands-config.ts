@@ -20,6 +20,65 @@ export const collectionsBrandLookup = {
     },
 }
 
+export const collectionBrandlanguageFieldsReplace = {
+    $addFields: {
+        collectionTitle: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$collectionTitle',
+                else: { $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }
+            }
+        },
+        collectionSubTitle: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$collectionSubTitle',
+                else: { $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }
+            }
+        },
+        collectionImageUrl: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$collectionImageUrl',
+                else: { $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }
+            }
+        },
+    }
+}
+
 export const collectionsBrandFinalProject = {
     $project: {
         languageValues: 0

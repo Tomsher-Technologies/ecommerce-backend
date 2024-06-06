@@ -39,6 +39,65 @@ export const bannerProject = {
     }
 }
 
+export const bannerlanguageFieldsReplace = {
+    $addFields: {
+        bannerTitle: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$bannerTitle',
+                else: { $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }
+            }
+        },
+        description: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$description',
+                else: { $arrayElemAt: ['$languageValues.languageValues.description', 0] }
+            }
+        },
+        bannerImages: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$bannerImages',
+                else: { $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }
+            }
+        },
+    }
+}
+
 export const bannerFinalProject = {
     $project: {
         languageValues: 0
