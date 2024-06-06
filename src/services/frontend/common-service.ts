@@ -34,17 +34,24 @@ class CommonService {
 
         let websiteSetupData: any = []
         const languageData = await LanguagesModel.find().exec();
-        websiteSetupData = await WebsiteSetupModel.findOne(query);
-
-        if ((block === websiteSetup.menu || blockReference === blockReferences.basicDetailsSettings) && websiteSetupData) {
-            const languageId = getLanguageValueFromSubdomain(hostName, languageData);
-            if (languageId) {
-                const languageValues = await GeneralService.findOneLanguageValues(block === websiteSetup.menu ? multiLanguageSources.setup.websiteSetups : multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
-                if (languageValues) {
-                    websiteSetupData = languageValues.languageValues
+        
+        if ((block === websiteSetup.menu || blockReference === blockReferences.basicDetailsSettings)) {
+            websiteSetupData = await WebsiteSetupModel.findOne(query);
+            if (websiteSetupData) {
+                const languageId = getLanguageValueFromSubdomain(hostName, languageData);
+                if (languageId) {
+                    const languageValues = await GeneralService.findOneLanguageValues(block === websiteSetup.menu ? multiLanguageSources.setup.websiteSetups : multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
+                    if (languageValues && languageValues.languageValues) {
+                        const newWebsiteSetupData = {
+                            ...websiteSetupData,
+                            ...languageValues.languageValues
+                        }
+                        websiteSetupData = newWebsiteSetupData
+                    }
                 }
             }
         }
+
 
         return websiteSetupData;
     }
@@ -471,7 +478,7 @@ class CommonService {
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
         const brandCollectionData = await CollectionsBrandsModel.aggregate(collectionBrandPipeline).exec();
-console.log('brandCollectionData',brandCollectionData);
+        console.log('brandCollectionData', brandCollectionData);
 
         for (const collection of brandCollectionData) {
             if (collection && collection.collectionsBrands) {

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bannerFinalProject = exports.bannerProject = exports.bannerLookup = void 0;
+exports.bannerFinalProject = exports.bannerlanguageFieldsReplace = exports.bannerProject = exports.bannerLookup = void 0;
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.bannerLookup = {
     $lookup: {
@@ -37,6 +37,64 @@ exports.bannerProject = {
         status: 1,
         createdAt: 1,
         languageValues: { $ifNull: ['$languageValues', []] }
+    }
+};
+exports.bannerlanguageFieldsReplace = {
+    $addFields: {
+        bannerTitle: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$bannerTitle',
+                else: { $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }
+            }
+        },
+        description: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$description',
+                else: { $arrayElemAt: ['$languageValues.languageValues.description', 0] }
+            }
+        },
+        bannerImages: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$bannerImages',
+                else: { $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }
+            }
+        },
     }
 };
 exports.bannerFinalProject = {

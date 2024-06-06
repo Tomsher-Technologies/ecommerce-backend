@@ -105,16 +105,23 @@ class GuestController extends BaseController {
                                 phone: user.phone
                             }, `${process.env.CUSTOMER_AUTH_KEY}`);
 
-                            const websiteSettingData: any = await WebsiteSetupModel.findOne({ countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.shipmentSettings });
+                            const shipmentSettings: any = await WebsiteSetupModel.findOne({ countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.shipmentSettings });
+                            const defualtSettings: any = await WebsiteSetupModel.findOne({ countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.defualtSettings });
+                            const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.websiteSettings });
 
                             controller.sendSuccessResponse(res, {
                                 requestedData: {
-                                    token,
-                                    userID: user._id,
-                                    firstName: user.firstName,
-                                    email: user.email,
-                                    phone: user.phone,
-                                    activeStatus: user.activeStatus
+                                    userData: {
+                                        token,
+                                        userID: user._id,
+                                        firstName: user.firstName,
+                                        email: user.email,
+                                        phone: user.phone,
+                                        activeStatus: user.activeStatus
+                                    },
+                                    websiteSettings: websiteSettings && websiteSettings?.blockValues && websiteSettings.blockValues,
+                                    shipmentSettings: shipmentSettings && shipmentSettings?.blockValues && shipmentSettings.blockValues,
+                                    defualtSettings: defualtSettings && defualtSettings?.blockValues && defualtSettings.blockValues
                                 },
                                 message: 'Customer created successfully!'
                             });

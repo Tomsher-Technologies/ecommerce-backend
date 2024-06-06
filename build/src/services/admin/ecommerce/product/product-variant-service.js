@@ -124,9 +124,9 @@ class ProductVariantService {
             const createdProductVariantWithValues = await product_variants_model_1.default.aggregate(pipeline);
             return createdProductVariantWithValues[0];
         }
-        else {
-            return null;
-        }
+        // else {
+        //     return null;
+        // }
     }
     async findOne(productVariantId) {
         if (productVariantId) {

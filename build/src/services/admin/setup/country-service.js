@@ -48,7 +48,6 @@ class CountryService {
     async findCountryId(data) {
         const resultCountry = await country_model_1.default.findOne(data);
         if (resultCountry) {
-            console.log("resultCountry:", resultCountry);
             return resultCountry;
         }
     }

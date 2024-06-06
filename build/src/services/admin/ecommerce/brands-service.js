@@ -5,31 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
-const multi_languages_1 = require("../../../constants/multi-languages");
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const helpers_1 = require("../../../utils/helpers");
+const brand_config_1 = require("../../../utils/config/brand-config");
 class BrandsService {
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { brandId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$brandId'] },
-                                    { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.brands] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-    }
+    constructor() { }
     async findAll(options = {}) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
@@ -43,7 +23,7 @@ class BrandsService {
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
-            this.lookup,
+            brand_config_1.brandLookup,
         ];
         return brands_model_1.default.aggregate(pipeline).exec();
     }
@@ -61,7 +41,7 @@ class BrandsService {
         if (createdBrand) {
             const pipeline = [
                 { $match: { _id: createdBrand._id } },
-                this.lookup,
+                brand_config_1.brandLookup,
             ];
             const createdBrandWithValues = await brands_model_1.default.aggregate(pipeline);
             return createdBrandWithValues[0];
@@ -75,7 +55,7 @@ class BrandsService {
             const objectId = new mongoose_1.default.Types.ObjectId(brandId);
             const pipeline = [
                 { $match: { _id: objectId } },
-                this.lookup,
+                brand_config_1.brandLookup,
             ];
             const brandDataWithValues = await brands_model_1.default.aggregate(pipeline);
             return brandDataWithValues[0];
@@ -89,7 +69,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                this.lookup,
+                brand_config_1.brandLookup,
             ];
             const updatedBrandWithValues = await brands_model_1.default.aggregate(pipeline);
             return updatedBrandWithValues[0];

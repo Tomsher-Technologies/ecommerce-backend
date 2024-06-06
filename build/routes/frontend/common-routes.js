@@ -14,4 +14,5 @@ router.get('/website-setups', common_controller_1.default.findWebsiteSetups);
 router.get('/priority-product', common_controller_1.default.findPriorityProducts);
 router.get('/collection-products', common_controller_1.default.findCollectionProducts);
 router.get('/collection-categories', common_controller_1.default.findCollectionCategories);
+router.get('/collection-brands', common_controller_1.default.findCollectionBrands);
 exports.default = router;

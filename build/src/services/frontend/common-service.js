@@ -19,24 +19,33 @@ const collections_products_model_1 = __importDefault(require("../../model/admin/
 const mongoose_1 = __importDefault(require("mongoose"));
 const product_config_1 = require("../../utils/config/product-config");
 const collections_product_config_1 = require("../../utils/config/collections-product-config");
-const common_config_1 = require("../../utils/config/common-config");
 const collections_categories_config_1 = require("../../utils/config/collections-categories-config");
 const category_model_1 = __importDefault(require("../../model/admin/ecommerce/category-model"));
 const collections_categories_model_1 = __importDefault(require("../../model/admin/website/collections-categories-model"));
 const category_config_1 = require("../../utils/config/category-config");
+const brand_config_1 = require("../../utils/config/brand-config");
+const collections_brands_config_1 = require("../../utils/config/collections-brands-config");
+const brands_model_1 = __importDefault(require("../../model/admin/ecommerce/brands-model"));
+const collections_brands_model_1 = __importDefault(require("../../model/admin/website/collections-brands-model"));
 class CommonService {
     constructor() { }
     async findWebsiteSetups(options = {}) {
         const { query, sort, hostName, block, blockReference } = options;
         let websiteSetupData = [];
         const languageData = await language_model_1.default.find().exec();
-        websiteSetupData = await website_setup_model_1.default.findOne(query);
-        if ((block === website_setup_1.websiteSetup.menu || blockReference === website_setup_1.blockReferences.basicDetailsSettings) && websiteSetupData) {
-            const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-            if (languageId) {
-                const languageValues = await general_service_1.default.findOneLanguageValues(block === website_setup_1.websiteSetup.menu ? multi_languages_1.multiLanguageSources.setup.websiteSetups : multi_languages_1.multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
-                if (languageValues) {
-                    websiteSetupData = languageValues.languageValues;
+        if ((block === website_setup_1.websiteSetup.menu || blockReference === website_setup_1.blockReferences.basicDetailsSettings)) {
+            websiteSetupData = await website_setup_model_1.default.findOne(query);
+            if (websiteSetupData) {
+                const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+                if (languageId) {
+                    const languageValues = await general_service_1.default.findOneLanguageValues(block === website_setup_1.websiteSetup.menu ? multi_languages_1.multiLanguageSources.setup.websiteSetups : multi_languages_1.multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
+                    if (languageValues && languageValues.languageValues) {
+                        const newWebsiteSetupData = {
+                            ...websiteSetupData,
+                            ...languageValues.languageValues
+                        };
+                        websiteSetupData = newWebsiteSetupData;
+                    }
                 }
             }
         }
@@ -108,7 +117,7 @@ class CommonService {
                 }
             };
             pipeline.push(sliderLookupWithLanguage);
-            pipeline.push(common_config_1.sliderlanguageFieldsReplace);
+            pipeline.push(slider_config_1.sliderlanguageFieldsReplace);
         }
         pipeline.push(slider_config_1.sliderProject);
         pipeline.push(slider_config_1.sliderFinalProject);
@@ -153,7 +162,7 @@ class CommonService {
                 }
             };
             pipeline.push(bannerLookupWithLanguage);
-            pipeline.push(common_config_1.bannerlanguageFieldsReplace);
+            pipeline.push(banner_config_1.bannerlanguageFieldsReplace);
         }
         pipeline.push(banner_config_1.bannerProject);
         pipeline.push(banner_config_1.bannerFinalProject);
@@ -231,7 +240,7 @@ class CommonService {
                 }
             };
             collectionProductPipeline.push(collectionProductLookupWithLanguage);
-            collectionProductPipeline.push(common_config_1.collectionProductlanguageFieldsReplace);
+            collectionProductPipeline.push(collections_product_config_1.collectionProductlanguageFieldsReplace);
         }
         collectionProductPipeline.push(collections_product_config_1.collectionsProductLookup);
         collectionProductPipeline.push(collections_product_config_1.collectionsProductFinalProject);
@@ -314,7 +323,7 @@ class CommonService {
                 }
             };
             collectionCategoryPipeline.push(collectionCategoryLookupWithLanguage);
-            collectionCategoryPipeline.push(common_config_1.collectionCategorylanguageFieldsReplace);
+            collectionCategoryPipeline.push(collections_categories_config_1.collectionCategorylanguageFieldsReplace);
         }
         collectionCategoryPipeline.push(collections_categories_config_1.collectionsCategoryLookup);
         collectionCategoryPipeline.push(collections_categories_config_1.collectionsCategoryFinalProject);
@@ -364,6 +373,90 @@ class CommonService {
             }
         }
         return categoryCollectionData;
+    }
+    async findCollectionBrands(options) {
+        const { query, hostName } = options;
+        const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, await language_model_1.default.find().exec());
+        let collectionBrandPipeline = [
+            { $match: query },
+        ];
+        if (languageId) {
+            const collectionBrandLookupWithLanguage = {
+                ...collections_brands_config_1.collectionsBrandLookup,
+                $lookup: {
+                    ...collections_brands_config_1.collectionsBrandLookup.$lookup,
+                    pipeline: collections_brands_config_1.collectionsBrandLookup.$lookup.pipeline.map(stage => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] }
+                                        ]
+                                    }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+            collectionBrandPipeline.push(collectionBrandLookupWithLanguage);
+            collectionBrandPipeline.push(collections_brands_config_1.collectionBrandlanguageFieldsReplace);
+        }
+        collectionBrandPipeline.push(collections_brands_config_1.collectionsBrandLookup);
+        collectionBrandPipeline.push(collections_brands_config_1.collectionsBrandFinalProject);
+        const brandCollectionData = await collections_brands_model_1.default.aggregate(collectionBrandPipeline).exec();
+        console.log('brandCollectionData', brandCollectionData);
+        for (const collection of brandCollectionData) {
+            if (collection && collection.collectionsBrands) {
+                let brandPipeline = [
+                    {
+                        $match: {
+                            _id: { $in: collection.collectionsBrands.map((id) => new mongoose_1.default.Types.ObjectId(id)) },
+                            status: '1',
+                        },
+                    },
+                ];
+                if (languageId) {
+                    const brandLookupWithLanguage = {
+                        ...brand_config_1.brandLookup,
+                        $lookup: {
+                            ...brand_config_1.brandLookup.$lookup,
+                            pipeline: brand_config_1.brandLookup.$lookup.pipeline.map(stage => {
+                                if (stage.$match && stage.$match.$expr) {
+                                    return {
+                                        ...stage,
+                                        $match: {
+                                            ...stage.$match,
+                                            $expr: {
+                                                ...stage.$match.$expr,
+                                                $and: [
+                                                    ...stage.$match.$expr.$and,
+                                                    { $eq: ['$languageId', languageId] }
+                                                ]
+                                            }
+                                        }
+                                    };
+                                }
+                                return stage;
+                            })
+                        }
+                    };
+                    brandPipeline.push(brandLookupWithLanguage);
+                    brandPipeline.push(brand_config_1.brandLanguageFieldsReplace);
+                }
+                brandPipeline.push(collections_brands_config_1.collectionsBrandLookup);
+                brandPipeline.push(brand_config_1.brandFinalProject);
+                const brandData = await brands_model_1.default.aggregate(brandPipeline).exec();
+                collection.collectionsBrands = brandData;
+            }
+        }
+        return brandCollectionData;
     }
 }
 exports.default = new CommonService();

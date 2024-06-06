@@ -261,5 +261,46 @@ class HomeController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
         }
     }
+    async findCollectionBrands(req, res) {
+        try {
+            const { page, pageReference } = req.query;
+            let query = { _id: { $exists: true } };
+            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            if (countryId) {
+                if (page && pageReference) {
+                    query = {
+                        ...query,
+                        countryId,
+                        page: page,
+                        pageReference: pageReference,
+                        status: '1',
+                    };
+                    const brands = await common_service_1.default.findCollectionBrands({
+                        hostName: req.get('host'),
+                        query,
+                    });
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: brands,
+                        message: 'Success!'
+                    }, 200);
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'page and pageReference is missing! please check'
+                    }, req);
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'page and pageReference is missing! please check'
+                }, req);
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching brands' });
+        }
+    }
 }
 exports.default = new HomeController();
