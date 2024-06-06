@@ -149,7 +149,7 @@ class BrandsController extends base_controller_1.default {
                     const languageValuesBannerImages = req.files.filter((file) => file.fieldname &&
                         file.fieldname.startsWith('languageValues[') &&
                         file.fieldname.includes('[brandBannerImage]'));
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
                         await languageValues?.map((languageValue, index) => {
                             let brandImageUrl = '';
                             if (languageValuesImages.length > 0) {

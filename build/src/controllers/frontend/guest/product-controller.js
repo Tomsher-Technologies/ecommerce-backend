@@ -3,24 +3,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const product_service_1 = __importDefault(require("../../../services/frontend/guest/product-service"));
 const helpers_1 = require("../../../utils/helpers");
-const products_1 = require("../../../utils/admin/products");
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
         try {
-            const { keyword = '', specificationId = '', specificationDetailId = '', productId = '', categoryId = '', attributeId = '', attributeDetailId = '', brandId = '' } = req.query;
+            const { specification = '', specificationDetail = '', product = '', category = '', attribute = '', attributeDetail = '', brand = '' } = req.query;
             const userData = await res.locals.user;
             const countryId = (0, helpers_1.getCountryId)(userData);
-            const filterProducts = await (0, products_1.filterProduct)(req.query, countryId);
-            console.log(filterProducts.query);
-            filterProducts.query.status = '1';
+            let query = { _id: { $exists: true } };
+            query.status = '1';
+            if (category) {
+                const keywordRegex = new RegExp(category, 'i');
+                var condition;
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                if (isObjectId) {
+                    condition = { parentCategory: new mongoose_1.default.Types.ObjectId(category) };
+                }
+                else {
+                    condition = { slug: keywordRegex };
+                }
+                query = {
+                    $or: [
+                        condition
+                    ],
+                    ...query
+                };
+            }
             const products = await product_service_1.default.findAllAttributes({
                 hostName: req.get('host'),
-                query: filterProducts.query,
+                query,
             });
+            if (products) {
+            }
             return controller.sendSuccessResponse(res, {
                 requestedData: products,
                 message: 'Success!'

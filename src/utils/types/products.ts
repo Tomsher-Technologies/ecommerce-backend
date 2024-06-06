@@ -68,3 +68,24 @@ export interface ProductVariantServiceCreateProps {
     countryId: string;
     productVariants: ProductVariantsProps;
 }
+
+export interface ProductsFrontendQueryParams {
+    page_size?: string;
+    limit?: string;
+    status?: string;
+    sortby?: string;
+    sortorder?: string;
+    keyword?: string;
+    product?: string;
+    brand?:string;
+    attribute?:string;
+    attributeDetail?:string;
+    specification?:string;
+    specificationDetail?:string;
+    category?: string;
+    fromDate?:string;
+    endDate?:string;
+    newArrivalPriority?: any;
+    corporateGiftsPriority?: any;
+    unCollectionedProducts?: any;
+}

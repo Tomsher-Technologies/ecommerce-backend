@@ -15,20 +15,37 @@ class CategoryController extends BaseController {
 
             query.status = '1';
 
-            if (slug) {
-                const keywordRegex = new RegExp(slug, 'i');
-                query = {
-                    $or: [
-                        { slug: keywordRegex },
-                    ],
-                    ...query
-                } as any;
-            }
+            // if (slug) {
+            //     const keywordRegex = new RegExp(slug, 'i');
+            //     query = {
+            //         $or: [
+            //             { slug: keywordRegex },
+            //         ],
+            //         ...query
+            //     } as any;
+            // }
 
             if (category) {
+                const keywordRegex = new RegExp(category, 'i');
+                var condition
+
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                
+                if (isObjectId) {
+                    condition = { parentCategory: new mongoose.Types.ObjectId(category) }
+
+                } else {
+                    condition = { slug: keywordRegex }
+                }
+
                 query = {
-                    ...query, parentCategory: new mongoose.Types.ObjectId(category)
+                    $or: [
+                        condition
+                    ],
+                    ...query
+
                 } as any;
+
             } else
                 if (level) {
                     query = {
