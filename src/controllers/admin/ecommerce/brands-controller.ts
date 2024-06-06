@@ -21,9 +21,9 @@ class BrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as BrandQueryParams;
+            const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', brandId = '' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } };
-            let brandId: any
+            let brand: any
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
@@ -47,15 +47,20 @@ class BrandsController extends BaseController {
                     } as any;
                 } else {
                     const brandIds = _id.map((id: any) => new mongoose.Types.ObjectId(id));
-                    brandId = {
+                    brand = {
                         _id: { $in: brandIds }
                     };
                 }
             }
 
-            if (brandId && (Object.keys(brandId)).length > 0) {
+            if (brand && (Object.keys(brand)).length > 0) {
                 query = {
-                    ...query, ...brandId
+                    ...query, ...brand
+                } as any;
+            }
+            if (brandId) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(brandId)
                 } as any;
             }
 

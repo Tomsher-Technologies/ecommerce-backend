@@ -1,4 +1,4 @@
-export type BrandQueryParams ={
+export type BrandQueryParams = {
     _id: any;
     page_size?: string;
     limit?: string;
@@ -8,4 +8,5 @@ export type BrandQueryParams ={
     keyword?: string;
     corporateGiftsPriority?: any;
     unCollectionedBrands?: any;
+    brandId?: string;
 }
