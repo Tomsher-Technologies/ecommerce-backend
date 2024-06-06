@@ -8,10 +8,12 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const authSchema_1 = require("../../../utils/schemas/frontend/guest/authSchema");
 const helpers_1 = require("../../../utils/helpers");
+const website_setup_1 = require("../../../constants/website-setup");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
-const customer_authorisation_model_1 = __importDefault(require("../../../model/frontend/customer-authorisation-model"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
+const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
+const common_service_1 = __importDefault(require("../../../services/frontend/common-service"));
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
@@ -33,25 +35,18 @@ class GuestController extends base_controller_1.default {
                         userId: newCustomer._id,
                         email: newCustomer.email,
                         phone: newCustomer.phone
-                    }, 'your-secret-key', { expiresIn: '1h' });
-                    const authorisationValues = new customer_authorisation_model_1.default({
-                        userID: newCustomer._id,
-                        token,
-                        expiresIn: '1h',
-                        createdOn: new Date(),
+                    }, `${process.env.CUSTOMER_AUTH_KEY}`);
+                    controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            token,
+                            userID: newCustomer._id,
+                            firstName: newCustomer.firstName,
+                            email: newCustomer.email,
+                            phone: newCustomer.phone,
+                            activeStatus: newCustomer.activeStatus
+                        },
+                        message: 'Customer created successfully!'
                     });
-                    const insertedValues = await authorisationValues.save();
-                    if (insertedValues) {
-                        controller.sendSuccessResponse(res, {
-                            requestedData: newCustomer,
-                            message: 'Customer created successfully!'
-                        });
-                    }
-                    else {
-                        controller.sendErrorResponse(res, 200, {
-                            message: 'Something went wrong! Please try again',
-                        });
-                    }
                 }
                 else {
                     controller.sendErrorResponse(res, 200, {
@@ -90,65 +85,62 @@ class GuestController extends base_controller_1.default {
     }
     async login(req, res) {
         try {
-            const validatedData = authSchema_1.loginSchema.safeParse(req.body);
-            if (validatedData.success) {
-                const { email, password } = validatedData.data;
-                const user = await customers_model_1.default.findOne({ email: email });
-                if (user) {
-                    const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
-                    if (isPasswordValid) {
-                        const token = jsonwebtoken_1.default.sign({
-                            userId: user._id,
-                            email: user.email,
-                            phone: user.phone
-                        }, 'your-secret-key', { expiresIn: '1h' });
-                        const existingUserAuth = await customer_authorisation_model_1.default.findOne({ userID: user._id });
-                        let insertedValues = {};
-                        if (existingUserAuth) {
-                            existingUserAuth.token = token;
-                            existingUserAuth.loggedCounts += 1; // increment last loggedCounts + 1
-                            existingUserAuth.lastLoggedOn = new Date();
-                            insertedValues = await existingUserAuth.save();
+            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            if (countryId) {
+                const validatedData = authSchema_1.loginSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { email, password } = validatedData.data;
+                    const user = await customers_model_1.default.findOne({ email: email });
+                    if (user) {
+                        const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
+                        if (isPasswordValid) {
+                            const token = jsonwebtoken_1.default.sign({
+                                userId: user._id,
+                                email: user.email,
+                                phone: user.phone
+                            }, `${process.env.CUSTOMER_AUTH_KEY}`);
+                            const shipmentSettings = await website_setup_model_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.shipmentSettings });
+                            const defualtSettings = await website_setup_model_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.defualtSettings });
+                            const websiteSettings = await website_setup_model_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.websiteSettings });
+                            controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    userData: {
+                                        token,
+                                        userID: user._id,
+                                        firstName: user.firstName,
+                                        email: user.email,
+                                        phone: user.phone,
+                                        activeStatus: user.activeStatus
+                                    },
+                                    websiteSettings: websiteSettings && websiteSettings?.blockValues && websiteSettings.blockValues,
+                                    shipmentSettings: shipmentSettings && shipmentSettings?.blockValues && shipmentSettings.blockValues,
+                                    defualtSettings: defualtSettings && defualtSettings?.blockValues && defualtSettings.blockValues
+                                },
+                                message: 'Customer created successfully!'
+                            });
                         }
                         else {
-                            const authorisationValues = new customer_authorisation_model_1.default({
-                                userID: user._id,
-                                token,
-                                expiresIn: '1h',
-                                loggedCounts: 1,
-                                lastLoggedOn: new Date(),
-                                createdOn: new Date(),
+                            controller.sendErrorResponse(res, 200, {
+                                message: 'Invalid password.',
                             });
-                            insertedValues = await authorisationValues.save();
                         }
-                        controller.sendSuccessResponse(res, {
-                            requestedData: {
-                                token: insertedValues.token,
-                                userID: insertedValues.userID,
-                                firstName: user.firstName,
-                                email: user.email,
-                                phone: user.phone,
-                                activeStatus: user.activeStatus
-                            },
-                            message: 'Customer created successfully!'
-                        });
                     }
                     else {
                         controller.sendErrorResponse(res, 200, {
-                            message: 'Invalid password.',
+                            message: 'User not found',
                         });
                     }
                 }
                 else {
                     controller.sendErrorResponse(res, 200, {
-                        message: 'User not found',
+                        message: 'Validation error',
+                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
                     });
                 }
             }
             else {
-                controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
                 });
             }
         }

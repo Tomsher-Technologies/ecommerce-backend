@@ -1,7 +1,7 @@
 "use strict";
 // sliderConfig.ts
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sliderFinalProject = exports.sliderProject = exports.sliderLookup = void 0;
+exports.sliderFinalProject = exports.sliderlanguageFieldsReplace = exports.sliderProject = exports.sliderLookup = void 0;
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.sliderLookup = {
     $lookup: {
@@ -37,6 +37,64 @@ exports.sliderProject = {
         status: 1,
         createdAt: 1,
         languageValues: { $ifNull: ['$languageValues', []] }
+    }
+};
+exports.sliderlanguageFieldsReplace = {
+    $addFields: {
+        sliderTitle: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$sliderTitle',
+                else: { $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }
+            }
+        },
+        description: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$description',
+                else: { $arrayElemAt: ['$languageValues.languageValues.description', 0] }
+            }
+        },
+        sliderImageUrl: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, ''] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, "undefined"] },
+                    ]
+                },
+                then: '$sliderImageUrl',
+                else: { $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }
+            }
+        },
     }
 };
 exports.sliderFinalProject = {
