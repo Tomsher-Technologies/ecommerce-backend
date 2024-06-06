@@ -24,6 +24,7 @@ import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } f
 import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../utils/config/collections-brands-config";
 import BrandsModel from "../../model/admin/ecommerce/brands-model";
+import CollectionsBrandsModel from "../../model/admin/website/collections-brands-model";
 
 class CommonService {
     constructor() { }
@@ -469,14 +470,15 @@ class CommonService {
         collectionBrandPipeline.push(collectionsBrandLookup);
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
-        const brandCollectionData = await CollectionsCategoriesModel.aggregate(collectionBrandPipeline).exec();
+        const brandCollectionData = await CollectionsBrandsModel.aggregate(collectionBrandPipeline).exec();
+console.log('brandCollectionData',brandCollectionData);
 
         for (const collection of brandCollectionData) {
-            if (collection && collection.collectionsCategories) {
+            if (collection && collection.collectionsBrands) {
                 let brandPipeline: any = [
                     {
                         $match: {
-                            _id: { $in: collection.collectionsCategories.map((id: any) => new mongoose.Types.ObjectId(id)) },
+                            _id: { $in: collection.collectionsBrands.map((id: any) => new mongoose.Types.ObjectId(id)) },
                             status: '1',
                         },
                     },
@@ -518,7 +520,7 @@ class CommonService {
 
                 const brandData = await BrandsModel.aggregate(brandPipeline).exec();
 
-                collection.collectionsCategories = brandData;
+                collection.collectionsBrands = brandData;
             }
         }
 

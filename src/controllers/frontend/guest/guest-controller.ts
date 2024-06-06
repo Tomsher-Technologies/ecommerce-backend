@@ -6,11 +6,13 @@ import jwt from 'jsonwebtoken';
 
 import { loginSchema, registerSchema } from '../../../utils/schemas/frontend/guest/authSchema';
 import { formatZodError } from '../../../utils/helpers';
+import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import CustomerService from '../../../services/frontend/customer-service';
-import CustomerAuthorisationModel from '../../../model/frontend/customer-authorisation-model';
 import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
+import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
+import CommonService from '../../../services/frontend/common-service';
 
 
 const controller = new BaseController();
@@ -39,26 +41,20 @@ class GuestController extends BaseController {
                         userId: newCustomer._id,
                         email: newCustomer.email,
                         phone: newCustomer.phone
-                    }, 'your-secret-key', { expiresIn: '1h' });
+                    }, `${process.env.CUSTOMER_AUTH_KEY}`);
 
-                    const authorisationValues = new CustomerAuthorisationModel({
-                        userID: newCustomer._id,
-                        token,
-                        expiresIn: '1h',
-                        createdOn: new Date(),
+                    controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            token,
+                            userID: newCustomer._id,
+                            firstName: newCustomer.firstName,
+                            email: newCustomer.email,
+                            phone: newCustomer.phone,
+                            activeStatus: newCustomer.activeStatus
+                        },
+                        message: 'Customer created successfully!'
                     });
 
-                    const insertedValues = await authorisationValues.save();
-                    if (insertedValues) {
-                        controller.sendSuccessResponse(res, {
-                            requestedData: newCustomer,
-                            message: 'Customer created successfully!'
-                        });
-                    } else {
-                        controller.sendErrorResponse(res, 200, {
-                            message: 'Something went wrong! Please try again',
-                        });
-                    }
                 } else {
                     controller.sendErrorResponse(res, 200, {
                         message: 'This user cant register! Please try again',
@@ -94,63 +90,53 @@ class GuestController extends BaseController {
 
     async login(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = loginSchema.safeParse(req.body);
-            if (validatedData.success) {
-                const { email, password } = validatedData.data;
-                const user: CustomrProps | null = await CustomerModel.findOne({ email: email });
-                if (user) {
-                    const isPasswordValid = await bcrypt.compare(password, user.password);
-                    if (isPasswordValid) {
-                        const token: string = jwt.sign({
-                            userId: user._id,
-                            email: user.email,
-                            phone: user.phone
-                        }, 'your-secret-key', { expiresIn: '1h' });
-       
-                        const existingUserAuth: any = await CustomerAuthorisationModel.findOne({ userID: user._id });
-                        let insertedValues: any = {};
-                        if (existingUserAuth) {
-                            existingUserAuth.token = token;
-                            existingUserAuth.loggedCounts += 1; // increment last loggedCounts + 1
-                            existingUserAuth.lastLoggedOn = new Date()
-                            insertedValues = await existingUserAuth.save();
-                        } else {
-                            const authorisationValues = new CustomerAuthorisationModel({
-                                userID: user._id,
-                                token,
-                                expiresIn: '1h',
-                                loggedCounts: 1,
-                                lastLoggedOn: new Date(),
-                                createdOn: new Date(),
-                            });
-
-                            insertedValues = await authorisationValues.save();
-                        }
-                        controller.sendSuccessResponse(res, {
-                            requestedData: {
-                                token: insertedValues.token,
-                                userID: insertedValues.userID,
-                                firstName: user.firstName,
+            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            if (countryId) {
+                const validatedData = loginSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { email, password } = validatedData.data;
+                    const user: CustomrProps | null = await CustomerModel.findOne({ email: email });
+                    if (user) {
+                        const isPasswordValid = await bcrypt.compare(password, user.password);
+                        if (isPasswordValid) {
+                            const token: string = jwt.sign({
+                                userId: user._id,
                                 email: user.email,
-                                phone: user.phone,
-                                activeStatus: user.activeStatus
-                            },
-                            message: 'Customer created successfully!'
-                        });
+                                phone: user.phone
+                            }, `${process.env.CUSTOMER_AUTH_KEY}`);
+
+                            const websiteSettingData: any = await WebsiteSetupModel.findOne({ countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.shipmentSettings });
+
+                            controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    token,
+                                    userID: user._id,
+                                    firstName: user.firstName,
+                                    email: user.email,
+                                    phone: user.phone,
+                                    activeStatus: user.activeStatus
+                                },
+                                message: 'Customer created successfully!'
+                            });
+                        } else {
+                            controller.sendErrorResponse(res, 200, {
+                                message: 'Invalid password.',
+                            });
+                        }
                     } else {
                         controller.sendErrorResponse(res, 200, {
-                            message: 'Invalid password.',
+                            message: 'User not found',
                         });
                     }
                 } else {
                     controller.sendErrorResponse(res, 200, {
-                        message: 'User not found',
+                        message: 'Validation error',
+                        validation: formatZodError(validatedData.error.errors)
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: formatZodError(validatedData.error.errors)
+                controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
                 });
             }
         } catch (error: any) {
