@@ -39,31 +39,31 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise;
-// mongoose
-// .connect(process.env.TIMEHOUSE_MONGODB_URI as any)
-// .then((x) => {
-//    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
-//  })
-//  .catch((err) => {
-//    console.error('Could not connect to the database', err)
-//  });
-app.use((req, res, next) => {
-  const dbName = req.header('Database');
-  if (!dbName) {
-    return res.status(400).json({ error: 'Database header is missing' });
-  }
+mongoose
+.connect(process.env.MONGODB_URI as any)
+.then((x) => {
+   console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
+ })
+ .catch((err) => {
+   console.error('Could not connect to the database', err)
+ });
+// app.use((req, res, next) => {
+//   const dbName = req.header('Database');
+//   if (!dbName) {
+//     return res.status(400).json({ error: 'Database header is missing' });
+//   }
 
-  mongoose
-    .connect(`mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/${dbName}`)
-    .then((x) => {
-      console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`);
-      next();
-    })
-    .catch((err) => {
-      console.error('Could not connect to the database', err);
-      return res.status(500).json({ error: 'Could not connect to the database' });
-    });
-});
+//   mongoose
+//     .connect(`mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/${dbName}`)
+//     .then((x) => {
+//       console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`);
+//       next();
+//     })
+//     .catch((err) => {
+//       console.error('Could not connect to the database', err);
+//       return res.status(500).json({ error: 'Could not connect to the database' });
+//     });
+// });
 //  app.use(databaseSwitcher);
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Ecommerce" });
