@@ -4,7 +4,10 @@ export const sliderlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderTitle", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderTitle', 0] }, undefined] },
@@ -19,7 +22,10 @@ export const sliderlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, undefined] },
@@ -34,7 +40,10 @@ export const sliderlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.sliderImageUrl", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.sliderImageUrl', 0] }, undefined] },
@@ -54,7 +63,10 @@ export const bannerlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerTitle", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerTitle', 0] }, undefined] },
@@ -69,7 +81,10 @@ export const bannerlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.description", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.description', 0] }, undefined] },
@@ -84,7 +99,10 @@ export const bannerlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, undefined] },
@@ -104,7 +122,10 @@ export const collectionProductlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, undefined] },
@@ -119,7 +140,10 @@ export const collectionProductlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, undefined] },
@@ -134,7 +158,10 @@ export const collectionProductlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, undefined] },
@@ -154,7 +181,10 @@ export const collectionCategorylanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionTitle", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionTitle', 0] }, undefined] },
@@ -169,7 +199,10 @@ export const collectionCategorylanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionSubTitle", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionSubTitle', 0] }, undefined] },
@@ -184,7 +217,10 @@ export const collectionCategorylanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.collectionImageUrl", 0] }, undefined] }, undefined] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, ''] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, null] },
                         { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }, undefined] },

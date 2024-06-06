@@ -372,11 +372,11 @@ class CommonService {
         const categoryCollectionData = await CollectionsCategoriesModel.aggregate(collectionCategoryPipeline).exec();
 
         for (const collection of categoryCollectionData) {
-            if (collection && collection.collectionsCategorys) {
+            if (collection && collection.collectionsCategories) {
                 let categoryPipeline: any = [
                     {
                         $match: {
-                            _id: { $in: collection.collectionsCategorys.map((id: any) => new mongoose.Types.ObjectId(id)) },
+                            _id: { $in: collection.collectionsCategories.map((id: any) => new mongoose.Types.ObjectId(id)) },
                             status: '1',
                         },
                     },
@@ -418,7 +418,7 @@ class CommonService {
 
                 const categoryData = await CategoryModel.aggregate(categoryPipeline).exec();
 
-                collection.collectionsCategorys = categoryData;
+                collection.collectionsCategories = categoryData;
             }
         }
 

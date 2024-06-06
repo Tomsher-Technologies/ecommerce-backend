@@ -13,7 +13,7 @@ router.get('/website-setups', CommonController.findWebsiteSetups);
 router.get('/website-setups', CommonController.findWebsiteSetups);
 router.get('/priority-product', CommonController.findPriorityProducts);
 router.get('/collection-products', CommonController.findCollectionProducts);
-router.get('/collection-categories', CommonController.findCollectionProducts);
+router.get('/collection-categories', CommonController.findCollectionCategories);
 
 
 

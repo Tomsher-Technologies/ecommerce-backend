@@ -201,7 +201,6 @@ class CollectionsCategoriesController extends BaseController {
                 if (collectionId) {
                     const { collectionsCategories } = validatedData.data;
 
-                    console.log('collectionsCategories', collectionsCategories);
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
@@ -212,6 +211,39 @@ class CollectionsCategoriesController extends BaseController {
 
                     const updatedCollection = await CollectionsCategoriesService.update(collectionId, updatedCollectionData);
                     if (updatedCollection) {
+                        const languageValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[collectionImage]')
+                        );
+
+                        let newLanguageValues: any = []
+                        if (updatedCollectionData.languageValues && updatedCollectionData.languageValues.length > 0) {
+                            console.log('abcd', updatedCollectionData.languageValues);
+
+                            for (let i = 0; i < updatedCollectionData.languageValues.length; i++) {
+                                const languageValue = updatedCollectionData.languageValues[i];
+                                let collectionImageUrl = '';
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, updatedCollection._id, languageValue.languageId);
+                                    collectionImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `collectionImageUrl`, 'slider');
+                                } else {
+                                    collectionImageUrl = updatedCollectionData.languageValues[i].languageValues?.collectionImageUrl
+                                }
+
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedCollection._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        collectionImageUrl
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
+                            }
+                        }
+
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'
