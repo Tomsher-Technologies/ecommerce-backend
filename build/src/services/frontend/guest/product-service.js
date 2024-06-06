@@ -6,11 +6,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const collections_1 = require("../../../constants/collections");
 const multi_languages_1 = require("../../../constants/multi-languages");
+const attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/attribute-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 class ProductService {
     constructor() {
+        this.attributeDetailsLookup = {
+            $lookup: {
+                from: 'attributedetails', // Collection name of AttributeDetailModel
+                localField: '_id', // Field in AttributesModel
+                foreignField: 'attributeId', // Field in AttributeDetailModel
+                as: 'attributeValues'
+            }
+        };
         this.variantLookup = {
             $lookup: {
                 from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
@@ -317,6 +326,7 @@ class ProductService {
     async findAllAttributes(options = {}) {
         const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
         console.log("query", query);
+        var attributeDetail = [];
         let pipeline = [
             this.categoryLookup,
             this.variantLookup,
@@ -330,12 +340,31 @@ class ProductService {
             { $match: query }
         ];
         const productData = await product_model_1.default.aggregate(pipeline).exec();
+        const attributeArray = [];
         if (productData) {
-            console.log("hai");
+            for await (let product of productData) {
+                for await (let variant of product.productVariants) {
+                    for await (let attribute of variant.productVariantAttributes) {
+                        if (!attributeArray.includes(attribute.attributeId)) {
+                            attributeArray.push(attribute.attributeId);
+                        }
+                    }
+                }
+            }
+            for await (let attribute of attributeArray) {
+                const query = { _id: attribute };
+                let pipeline = [
+                    { $match: query },
+                    this.attributeDetailsLookup,
+                    this.project
+                ];
+                const data = await attribute_model_1.default.aggregate(pipeline).exec();
+                await attributeDetail.push(data[0]);
+            }
         }
         const languageData = await language_model_1.default.find().exec();
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        return productData;
+        return attributeDetail;
     }
 }
 exports.default = new ProductService();

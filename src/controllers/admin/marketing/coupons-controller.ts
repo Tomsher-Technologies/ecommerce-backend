@@ -17,7 +17,8 @@ class CouponsController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
-            let queryDate: any;
+            const { couponFromDate, couponEndDate }: any = req.query;
+
             const userData = await res.locals.user;
             const countryId = getCountryId(userData);
             if (countryId) {
@@ -41,30 +42,35 @@ class CouponsController extends BaseController {
                     ...query
                 } as any;
             }
+            console.log("---------------------------", couponFromDate);
+            const discountStartDate = new Date(couponFromDate);
+            const discountEndDate = new Date(couponEndDate);
 
-            if (query.fromDate || query.endDate) {
-                if (query.fromDate) {
-                    queryDate = {
-                        ...queryDate,
-                        createdAt: {
-                            $gte: new Date(query.fromDate)
+            if (couponFromDate || couponEndDate) {
+                if (couponFromDate) {
+                    query = {
+                        ...query,
+                        'discountDateRange.0': {
+                            $gte: discountStartDate,
+                            // $lte: discountEndDate
                         }
                     }
                 }
-                if (query.endDate) {
-                    queryDate = {
-                        ...queryDate,
-                        createdAt: {
-                            $lte: dateConvertPm(query.endDate)
-                        }
-                    }
-                }
-
+                // if (couponEndDate) {
+                //     query = {
+                //         ...query,
+                //         discountDateRange: {
+                //             $lte: dateConvertPm(discountEndDate)
+                //         }
+                //     }
+                // }
             }
+
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
+            console.log("************************", query);
 
             const coupons = await CouponService.findAll({
                 page: parseInt(page_size as string),

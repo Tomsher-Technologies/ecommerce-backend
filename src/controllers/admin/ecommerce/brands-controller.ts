@@ -167,7 +167,7 @@ class BrandsController extends BaseController {
                         file.fieldname.includes('[brandBannerImage]')
                     );
 
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
 
                             let brandImageUrl = ''

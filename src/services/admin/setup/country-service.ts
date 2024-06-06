@@ -52,8 +52,6 @@ class CountryService {
     async findCountryId(data: any): Promise<void | null> {
         const resultCountry: any = await CountryModel.findOne(data);
         if (resultCountry) {
-            console.log("resultCountry:",resultCountry);
-            
             return resultCountry
         }
     }

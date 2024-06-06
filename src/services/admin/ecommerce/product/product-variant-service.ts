@@ -142,9 +142,10 @@ class ProductVariantService {
             const createdProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
 
             return createdProductVariantWithValues[0];
-        } else {
-            return null;
-        }
+        } 
+        // else {
+        //     return null;
+        // }
     }
 
 

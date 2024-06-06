@@ -75,6 +75,24 @@ export const brandLanguageFieldsReplace = {
                 then: "$brandImageUrl",
                 else: { $arrayElemAt: ["$languageValues.languageValues.brandImageUrl", 0] }
             },
+        },
+        brandBannerImageUrl: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, "undefined"] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }, undefined] }
+                    ]
+                },
+                then: "$brandBannerImageUrl",
+                else: { $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }
+            }
         }
     }
 }   
