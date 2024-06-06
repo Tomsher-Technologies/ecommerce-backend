@@ -91,7 +91,7 @@ class CollectionsCategoriesController extends BaseController {
                         file.fieldname.includes('[collectionImage]')
                     );
 
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues  && Array.isArray(languageValues) && languageValues.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
 
                             let collectionImageUrl = ''
@@ -218,8 +218,7 @@ class CollectionsCategoriesController extends BaseController {
                         );
 
                         let newLanguageValues: any = []
-                        if (updatedCollectionData.languageValues && updatedCollectionData.languageValues.length > 0) {
-                            console.log('abcd', updatedCollectionData.languageValues);
+                        if (updatedCollectionData.languageValues  && Array.isArray(updatedCollectionData.languageValues) && updatedCollectionData.languageValues.length > 0) {
 
                             for (let i = 0; i < updatedCollectionData.languageValues.length; i++) {
                                 const languageValue = updatedCollectionData.languageValues[i];
@@ -228,7 +227,7 @@ class CollectionsCategoriesController extends BaseController {
 
                                 if (languageValuesImages.length > 0 && matchingImage) {
                                     const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, updatedCollection._id, languageValue.languageId);
-                                    collectionImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `collectionImageUrl`, 'slider');
+                                    collectionImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `collectionImageUrl`, 'collection');
                                 } else {
                                     collectionImageUrl = updatedCollectionData.languageValues[i].languageValues?.collectionImageUrl
                                 }

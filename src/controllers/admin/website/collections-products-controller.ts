@@ -103,7 +103,7 @@ class CollectionsProductsController extends BaseController {
                         file.fieldname.includes('[collectionImage]')
                     );
 
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
 
                             let collectionImageUrl = ''
@@ -222,6 +222,38 @@ class CollectionsProductsController extends BaseController {
 
                     const updatedCollection = await CollectionsProductsService.update(collectionId, updatedCollectionData);
                     if (updatedCollection) {
+                        const languageValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[collectionImage]')
+                        );
+
+                        let newLanguageValues: any = []
+                        if (updatedCollectionData.languageValues && Array.isArray(updatedCollectionData.languageValues) && updatedCollectionData.languageValues.length > 0) {
+
+                            for (let i = 0; i < updatedCollectionData.languageValues.length; i++) {
+                                const languageValue = updatedCollectionData.languageValues[i];
+                                let collectionImageUrl = '';
+                                const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesImages.length > 0 && matchingImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, updatedCollection._id, languageValue.languageId);
+                                    collectionImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `collectionImageUrl`, 'collection');
+                                } else {
+                                    collectionImageUrl = updatedCollectionData.languageValues[i].languageValues?.collectionImageUrl
+                                }
+
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedCollection._id, {
+                                    ...languageValue,
+                                    languageValues: {
+                                        ...languageValue.languageValues,
+                                        collectionImageUrl
+                                    }
+                                });
+                                newLanguageValues.push(languageValues);
+                            }
+                        }
+
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'

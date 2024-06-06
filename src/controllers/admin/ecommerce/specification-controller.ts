@@ -80,7 +80,7 @@ class SpecificationController extends BaseController {
                     let specificationDetailsValues: any = []
                     specificationDetailsValues = await SpecificationService.specificationDetailsService(newSpecification._id, specificationValues);
 
-                    if (specificationDetailsValues && languageValues && languageValues.length > 0) {
+                    if (specificationDetailsValues && languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
                         await languageValues?.map(async (languageValue: any, index: number) => {
                             const setSpecificationDetailsValues = languageValue.languageValues.specificationValues.map((specificationLanguageValue: any, specificationIndex: number) => {
@@ -183,7 +183,7 @@ class SpecificationController extends BaseController {
                             const newValue = await SpecificationService.specificationDetailsService(updatedSpecification._id, validatedData.data.specificationValues);
                             let newLanguageValues: any = []
 
-                            if (updatedSpecificationData.languageValues && updatedSpecificationData.languageValues.length > 0) {
+                            if (updatedSpecificationData.languageValues && Array.isArray(updatedSpecificationData.languageValues) && updatedSpecificationData.languageValues.length > 0) {
                                 for (let i = 0; i < updatedSpecificationData.languageValues.length; i++) {
                                     const languageValue = updatedSpecificationData.languageValues[i];
 

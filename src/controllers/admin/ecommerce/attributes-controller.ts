@@ -97,7 +97,7 @@ class AttributesController extends BaseController {
                         attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     }
 
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
                         await languageValues?.map((languageValue: any, index: number) => {
                             if (attributeType === 'pattern') {

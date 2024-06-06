@@ -116,7 +116,7 @@ class BannerController extends BaseController {
                     const newBanner = await BannerService.create(bannerData);
                     if (newBanner) {
 
-                        if (languageValues && languageValues.length > 0) {
+                        if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
                             const languageValuesImages = (req as any).files.filter((file: any) =>
                                 file.fieldname &&
@@ -230,7 +230,7 @@ class BannerController extends BaseController {
                     if (updatedBanner) {
 
                         let newLanguageValues: any = []
-                        if (updatedBannerData.languageValues && updatedBannerData.languageValues.length > 0) {
+                        if (updatedBannerData.languageValues && Array.isArray(updatedBannerData.languageValues) && updatedBannerData.languageValues.length > 0) {
 
                             const languageValuesImages = (req as any).files.filter((file: any) =>
                                 file.fieldname &&

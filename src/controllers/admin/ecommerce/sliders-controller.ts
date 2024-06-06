@@ -205,7 +205,7 @@ class SlidersController extends BaseController {
                         );
 
                         let newLanguageValues: any = []
-                        if (updatedSliderData.languageValues && updatedSliderData.languageValues.length > 0) {
+                        if (updatedSliderData.languageValues && Array.isArray(updatedSliderData.languageValues)  && updatedSliderData.languageValues.length > 0) {
                             for (let i = 0; i < updatedSliderData.languageValues.length; i++) {
                                 const languageValue = updatedSliderData.languageValues[i];
                                 let sliderImageUrl = '';

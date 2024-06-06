@@ -21,7 +21,7 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', category = '',categoryId = '', _id = '', parentCategory = '' } = req.query as CategoryQueryParams;
+            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', category = '', categoryId = '', _id = '', parentCategory = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
 
@@ -361,7 +361,7 @@ class CategoryController extends BaseController {
                         );
 
                         let newLanguageValues: any = []
-                        if (updatedCategoryData.languageValues && updatedCategoryData.languageValues.length > 0) {
+                        if (updatedCategoryData.languageValues && Array.isArray(updatedCategoryData.languageValues) && updatedCategoryData.languageValues.length > 0) {
                             for (let i = 0; i < updatedCategoryData.languageValues.length; i++) {
                                 const languageValue = updatedCategoryData.languageValues[i];
                                 let categoryImageUrl = '';
