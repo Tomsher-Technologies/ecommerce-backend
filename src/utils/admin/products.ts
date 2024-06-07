@@ -87,7 +87,7 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
     if (data.attributeId) {
         queryFilterIds = {
             ...queryFilterIds,
-            '.productVariantAttributes.attributeId': new mongoose.Types.ObjectId(data.attributeId)
+            'productVariants.productVariantAttributes.attributeId': new mongoose.Types.ObjectId(data.attributeId)
         }
         if (data.attributeDetailId) {
             queryFilterIds = {

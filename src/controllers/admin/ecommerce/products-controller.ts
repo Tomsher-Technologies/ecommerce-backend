@@ -41,7 +41,7 @@ class ProductsController extends BaseController {
             const { page_size = 1, limit = 10 } = req.query as ProductsQueryParams;
 
             const userData = await res.locals.user;
-            const countryId: any = getCountryId(userData);
+            const countryId = await getCountryId(userData);
 
 
             const filterProducts = await filterProduct(req.query, countryId)
@@ -384,7 +384,6 @@ class ProductsController extends BaseController {
 
                         const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
                         const missingColunm = await ProductsService.checkRequiredColumns(firstRow, products)
-                        console.log("missingColunm", missingColunm);
 
                         if (!missingColunm) {
 

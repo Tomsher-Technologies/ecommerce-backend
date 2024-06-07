@@ -14,14 +14,23 @@ type ZodValidationError = {
 };
 
 
-export async function getCountryId(userData: any): Promise<mongoose.Types.ObjectId | undefined> {
-    console.log("....................", userData);
+export function getCountryId(userData: any): mongoose.Types.ObjectId | undefined {
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose.Types.ObjectId(userData.countryId);
+        }
+    }
+    return undefined;
+}
+
+export async function getCountryIdWithSuperAdmin(userData: any): Promise<mongoose.Types.ObjectId | undefined> {
 
     if (userData && userData.userTypeID && userData.countryId) {
         if (userData.userTypeID.slug !== 'super-admin') {
             return new mongoose.Types.ObjectId(userData.countryId);
         } else if (userData.userTypeID.slug === 'super-admin') {
             const countryId: any = await CountryModel.findOne({ isOrigin: true })
+            
             return countryId._id
         }
     }
@@ -174,7 +183,7 @@ export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): b
 
 export const dateConvertPm = (input: string): Date => {
     return new Date(`${input}T23:59:59.999Z`)
-};
+}; 
 
 export function generateOTP(length: number): string {
     if (length <= 0) {

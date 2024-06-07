@@ -502,10 +502,8 @@ class ProductsService {
     }
     async checkRequiredColumns(worksheet: any, requiredColumns: any) {
 
-        console.log("requiredColumns",requiredColumns);
         
         for (let column of requiredColumns) {
-            console.log(".......0",column,!worksheet.includes(column));
             
             if (!worksheet.includes(column)) {
 
