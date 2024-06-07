@@ -17,6 +17,12 @@ exports.adminTaskLog = {
         collectionsBrands: 'collectionsbrands',
         collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigationmenu',
+        pages: {
+            home: 'home',
+            termsAndConditions: 'terms-and-conditions',
+            privacyAndPolicy: 'privacy-and-policy',
+            contactUs: 'contact-us',
+        },
     },
     marketing: {
         coupons: 'coupons',

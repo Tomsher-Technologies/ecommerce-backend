@@ -18,27 +18,36 @@ class ProductController extends base_controller_1.default {
             query.status = '1';
             if (category) {
                 const keywordRegex = new RegExp(category, 'i');
-                var condition;
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                 if (isObjectId) {
-                    condition = { parentCategory: new mongoose_1.default.Types.ObjectId(category) };
+                    query = {
+                        ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                    };
                 }
                 else {
-                    condition = { slug: keywordRegex };
+                    query = {
+                        ...query, "productCategory.category.slug": keywordRegex
+                    };
                 }
-                query = {
-                    $or: [
-                        condition
-                    ],
-                    ...query
-                };
+            }
+            if (brand) {
+                const keywordRegex = new RegExp(brand, 'i');
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                if (isObjectId) {
+                    query = {
+                        ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                    };
+                }
+                else {
+                    query = {
+                        ...query, "brand.slug": keywordRegex
+                    };
+                }
             }
             const products = await product_service_1.default.findAllAttributes({
                 hostName: req.get('host'),
                 query,
             });
-            if (products) {
-            }
             return controller.sendSuccessResponse(res, {
                 requestedData: products,
                 message: 'Success!'

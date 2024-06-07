@@ -41,7 +41,7 @@ class ProductsController extends BaseController {
             const { page_size = 1, limit = 10 } = req.query as ProductsQueryParams;
 
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
+            const countryId: any = getCountryId(userData);
 
 
             const filterProducts = await filterProduct(req.query, countryId)
@@ -383,7 +383,10 @@ class ProductsController extends BaseController {
                         const worksheet = workbook.Sheets[sheetName];
 
                         const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
-                        if (await ProductsService.checkRequiredColumns(firstRow, products)) {
+                        const missingColunm = await ProductsService.checkRequiredColumns(firstRow, products)
+                        console.log("missingColunm", missingColunm);
+
+                        if (!missingColunm) {
 
                             // Convert the worksheet to JSON
                             if (worksheet) {
@@ -394,24 +397,24 @@ class ProductsController extends BaseController {
                                     for await (let data of jsonData) {
 
                                         if (data.Product_Title) {
+                                            if (data.Description) {
 
-                                            if (data.SKU) {
+                                                if (data.SKU) {
 
-                                                if (data.Item_Type) {
+                                                    if (data.Item_Type) {
 
-                                                    if (data.Category) {
+                                                        if (data.Category) {
 
 
-                                                        if (data.Image) {
+                                                            if (data.Image) {
 
-                                                            if (data.Brand) {
+                                                                if (data.Brand) {
 
-                                                                const categoryArray = [];
-                                                                var brandId = {};
-                                                                var countryId = {};
-                                                                const specificationData = [];
-                                                                const attributeData = [];
-                                                                if (data) {
+                                                                    const categoryArray = [];
+                                                                    var brandId = {};
+                                                                    var countryId = {};
+                                                                    const specificationData = [];
+                                                                    const attributeData = [];
 
                                                                     if (data.Brand) {
                                                                         const brandData: any = await BrandsService.findBrandId(data.Brand)
@@ -537,7 +540,7 @@ class ProductsController extends BaseController {
                                                                     }
                                                                     const userData = res.locals.user
                                                                     var productVariants: any = {
-                                                                        countryId: countryId,
+                                                                        // countryId: countryId,
                                                                         extraProductTitle: data.Product_Title,
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
@@ -598,7 +601,7 @@ class ProductsController extends BaseController {
                                                                                     slug: slugify(data.Product_Title)
                                                                                 }
 
-                                                                                const createVariant = await ProductVariantService.create(createProduct._id, productVariants, productVariants.countryId)
+                                                                                const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
                                                                                 if (createVariant) {
                                                                                     if (attributeData && attributeData.length > 0) {
                                                                                         for await (const attribute of attributeData) {
@@ -619,93 +622,100 @@ class ProductsController extends BaseController {
                                                                             // throw new Error('')
                                                                         }
 
-                                                                    }
-                                                                    if (data.Item_Type == 'variant') {
-                                                                        if (data.Parent_SKU) {
-                                                                            const product: any = await ProductsService.find({ sku: data.Parent_SKU })
-                                                                            if (product) {
-                                                                                var slugData
-                                                                                if (data.Product_Title === product.productTitle) {
-                                                                                    slugData = product?.slug
+                                                                    } else
+                                                                        if (data.Item_Type == 'variant') {
+                                                                            if (data.Parent_SKU) {
+                                                                                const product: any = await ProductsService.find({ sku: data.Parent_SKU })
+                                                                                if (product) {
+                                                                                    var slugData
+                                                                                    if (data.Product_Title === product.productTitle) {
+                                                                                        slugData = product?.slug
+                                                                                    }
+                                                                                    else {
+                                                                                        slugData = product?.slug + "-" + data.Product_Title
+                                                                                    }
+                                                                                    productVariants = {
+                                                                                        ...productVariants,
+                                                                                        slug: slugData
+                                                                                    }
+
+                                                                                    const createVariant = await ProductVariantService.create(product._id, productVariants, userData)
+
+                                                                                    if (createVariant) {
+                                                                                        if (attributeData && attributeData.length > 0) {
+                                                                                            for await (const attribute of attributeData) {
+                                                                                                const attributeValues = {
+                                                                                                    variantId: createVariant._id,
+                                                                                                    productId: product._id,
+                                                                                                    ...attribute
+                                                                                                }
+                                                                                                const attributes = await ProductVariantAttributeService.create(attributeValues)
+                                                                                            }
+                                                                                        }
+                                                                                        if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                                            const newSeo = await SeoPageService.create({
+                                                                                                pageId: product._id,
+                                                                                                pageReferenceId: createVariant._id,
+                                                                                                page: seoPage.ecommerce.products,
+                                                                                                ...productSeo
+                                                                                            })
+                                                                                        }
+
+                                                                                        if (specificationData && specificationData.length > 0) {
+                                                                                            for await (const specification of specificationData) {
+                                                                                                const specificationValues = {
+                                                                                                    variantId: createVariant._id,
+                                                                                                    productId: product._id,
+                                                                                                    ...specification
+                                                                                                }
+                                                                                                const specifications = await ProductSpecificationService.create(specificationValues)
+                                                                                            }
+                                                                                        }
+
+                                                                                        if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                            for await (const galleryImage of galleryImageArray) {
+                                                                                                const galleryImageData = {
+                                                                                                    variantId: createVariant._id,
+                                                                                                    ...galleryImage
+                                                                                                }
+                                                                                                const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
+                                                                                            }
+                                                                                        }
+                                                                                    }
                                                                                 }
                                                                                 else {
-                                                                                    slugData = product?.slug + "-" + data.Product_Title
-                                                                                }
-                                                                                productVariants = {
-                                                                                    ...productVariants,
-                                                                                    slug: slugData
-                                                                                }
-
-                                                                                const createVariant = await ProductVariantService.create(product._id, productVariants, userData)
-
-                                                                                if (createVariant) {
-                                                                                    if (attributeData && attributeData.length > 0) {
-                                                                                        for await (const attribute of attributeData) {
-                                                                                            const attributeValues = {
-                                                                                                variantId: createVariant._id,
-                                                                                                productId: product._id,
-                                                                                                ...attribute
-                                                                                            }
-                                                                                            const attributes = await ProductVariantAttributeService.create(attributeValues)
-                                                                                        }
-                                                                                    }
-                                                                                    if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                        const newSeo = await SeoPageService.create({
-                                                                                            pageId: product._id,
-                                                                                            pageReferenceId: createVariant._id,
-                                                                                            page: seoPage.ecommerce.products,
-                                                                                            ...productSeo
-                                                                                        })
-                                                                                    }
-
-                                                                                    if (specificationData && specificationData.length > 0) {
-                                                                                        for await (const specification of specificationData) {
-                                                                                            const specificationValues = {
-                                                                                                variantId: createVariant._id,
-                                                                                                productId: product._id,
-                                                                                                ...specification
-                                                                                            }
-                                                                                            const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                        }
-                                                                                    }
-
-                                                                                    if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                        for await (const galleryImage of galleryImageArray) {
-                                                                                            const galleryImageData = {
-                                                                                                variantId: createVariant._id,
-                                                                                                ...galleryImage
-                                                                                            }
-                                                                                            const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-                                                                                        }
-                                                                                    }
+                                                                                    validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
+                                                                                    // throw new Error('not inserted')
                                                                                 }
                                                                             }
-                                                                            else {
-                                                                                validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
-                                                                                // throw new Error('not inserted')
-                                                                            }
+                                                                        } else {
+                                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Please choose proper Item_Type (config-item,simple-item,variant) , row :" + index })
+
                                                                         }
-                                                                    }
+
+                                                                }
+                                                                else {
+                                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Brand is missing, row :" + index })
                                                                 }
                                                             }
                                                             else {
-                                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Brand is missing, row :" + index })
+                                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image is missing, row :" + index })
                                                             }
                                                         }
                                                         else {
-                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image is missing, row :" + index })
+                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Category is missing, row :" + index })
                                                         }
                                                     }
                                                     else {
-                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Category is missing, row :" + index })
+                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Item_Type is missing, row :" + index })
                                                     }
                                                 }
                                                 else {
-                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Item_Type is missing, row :" + index })
+                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "SKU is missing, row :" + index })
                                                 }
-                                            }
-                                            else {
-                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "SKU is missing, row :" + index })
+                                            } else {
+                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Description is missing, row :" + index })
+
                                             }
                                         }
                                         else {
@@ -720,21 +730,31 @@ class ProductsController extends BaseController {
                                 }
                             }
                         } else {
-                            controller.sendErrorResponse(res, 200, { message: "Please upload proper Excel file" });
+                            controller.sendErrorResponse(res, 200, { message: missingColunm + " coloumn must be included in the excel file" });
                         }
+                    }
+                    else {
+                        controller.sendErrorResponse(res, 200, { message: "Please upload an Excel file with appropriate content." });
                     }
                 }
             } else {
                 controller.sendErrorResponse(res, 200, { message: "please upload file" });
             }
         } catch (error: any) {
+            console.log("errorerror", error);
+
             if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
                 validation.push(error.errors.slug.properties)
 
-            } else {
-                validation.push(error)
+            } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
+                validation.push(error.errors.countryId.properties)
 
             }
+            else {
+                validation.push(error.errors)
+
+            }
+
             controller.sendErrorResponse(res, 500, { message: validation });
 
         }

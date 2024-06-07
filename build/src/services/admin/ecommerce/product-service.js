@@ -456,12 +456,13 @@ class ProductsService {
         }
     }
     async checkRequiredColumns(worksheet, requiredColumns) {
+        console.log("requiredColumns", requiredColumns);
         for (let column of requiredColumns) {
+            console.log(".......0", column, !worksheet.includes(column));
             if (!worksheet.includes(column)) {
-                return false;
+                return column;
             }
         }
-        return true;
     }
 }
 exports.default = new ProductsService();

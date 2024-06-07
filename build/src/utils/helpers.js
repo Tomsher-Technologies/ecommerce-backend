@@ -3,16 +3,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryId = void 0;
+exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const fs_2 = __importDefault(require("fs"));
 const product_service_1 = __importDefault(require("../services/admin/ecommerce/product-service"));
-function getCountryId(userData) {
+const country_model_1 = __importDefault(require("../model/admin/setup/country-model"));
+async function getCountryId(userData) {
+    console.log("....................", userData);
     if (userData && userData.userTypeID && userData.countryId) {
         if (userData.userTypeID.slug !== 'super-admin') {
             return new mongoose_1.default.Types.ObjectId(userData.countryId);
+        }
+        else if (userData.userTypeID.slug === 'super-admin') {
+            const countryId = await country_model_1.default.findOne({ isOrigin: true });
+            return countryId._id;
         }
     }
     return undefined;
@@ -168,3 +174,15 @@ const dateConvertPm = (input) => {
     return new Date(`${input}T23:59:59.999Z`);
 };
 exports.dateConvertPm = dateConvertPm;
+function generateOTP(length) {
+    if (length <= 0) {
+        throw new Error('Length must be a positive integer.');
+    }
+    let otp = '';
+    for (let i = 0; i < length; i++) {
+        const digit = Math.floor(Math.random() * 10); // Generate a random digit between 0 and 9
+        otp += digit.toString();
+    }
+    return otp;
+}
+exports.generateOTP = generateOTP;

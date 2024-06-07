@@ -66,17 +66,21 @@ const customerSchema = new mongoose_1.Schema({
     },
     otp: {
         type: String,
-        default: ''
+        required: true,
     },
     otpExpiry: {
-        type: String,
-        default: ''
+        type: Date,
+        required: true, // Ensure otpExpiry is required
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     },
     activeStatus: {
         type: Number,
         default: 0
     },
-    failureAttempts: {
+    failureAttemptsCount: {
         type: Number,
         default: 0
     },

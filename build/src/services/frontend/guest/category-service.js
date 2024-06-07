@@ -8,6 +8,7 @@ const category_model_1 = __importDefault(require("../../../model/admin/ecommerce
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 const category_config_1 = require("../../../utils/config/category-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
+const product_service_1 = __importDefault(require("./product-service"));
 class CategoryService {
     constructor() { }
     async findAll(options = {}) {
@@ -15,6 +16,74 @@ class CategoryService {
         let pipeline = [
             { $match: query },
         ];
+        if (query.level == 0) {
+            const language = await this.language(hostName, pipeline);
+            const data = await category_model_1.default.aggregate(language).exec();
+            return data;
+        }
+        const productData = await product_service_1.default.findProducts(query);
+        var categoryDetail = [];
+        const categoryArray = [];
+        var i = 1;
+        if (productData) {
+            for await (let product of productData) {
+                for await (let category of product.productCategory) {
+                    const isPresent = categoryArray.some((objId) => objId.equals(category.category._id));
+                    if (!isPresent) {
+                        await categoryArray.push(category.category._id);
+                    }
+                }
+            }
+            for await (let category of categoryArray) {
+                const query = { parentCategory: category };
+                let pipeline = [
+                    { $match: query },
+                ];
+                const language = await this.language(hostName, pipeline);
+                const data = await category_model_1.default.aggregate(language).exec();
+                if (!categoryDetail.includes(data[0]._id)) {
+                    await categoryDetail.push(data[0]);
+                }
+            }
+        }
+        return categoryDetail;
+        // const languageData = await LanguagesModel.find().exec();
+        // const languageId = getLanguageValueFromSubdomain(hostName, languageData);
+        // if (languageId) {
+        //     if (languageId) {
+        //         const categoryLookupWithLanguage = {
+        //             ...categoryLookup,
+        //             $lookup: {
+        //                 ...categoryLookup.$lookup,
+        //                 pipeline: categoryLookup.$lookup.pipeline.map((stage: any) => {
+        //                     if (stage.$match && stage.$match.$expr) {
+        //                         return {
+        //                             ...stage,
+        //                             $match: {
+        //                                 ...stage.$match,
+        //                                 $expr: {
+        //                                     ...stage.$match.$expr,
+        //                                     $and: [
+        //                                         ...stage.$match.$expr.$and,
+        //                                         { $eq: ['$languageId', languageId] },
+        //                                     ]
+        //                                 }
+        //                             }
+        //                         };
+        //                     }
+        //                     return stage;
+        //                 })
+        //             }
+        //         };
+        //         pipeline.push(categoryLookupWithLanguage);
+        //         pipeline.push(categoryLanguageFieldsReplace);
+        //     }
+        // }
+        // pipeline.push(categoryProject);
+        // pipeline.push(categoryFinalProject);
+        // return CategoryModel.aggregate(pipeline).exec();
+    }
+    async language(hostName, pipeline) {
         const languageData = await language_model_1.default.find().exec();
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         if (languageId) {
@@ -49,7 +118,7 @@ class CategoryService {
         }
         pipeline.push(category_config_1.categoryProject);
         pipeline.push(category_config_1.categoryFinalProject);
-        return category_model_1.default.aggregate(pipeline).exec();
+        return pipeline;
     }
 }
 exports.default = new CategoryService();

@@ -12,4 +12,5 @@ export interface CategoryQueryParams {
     categoryId?: any;
     _id?: any;
     slug?: any;
+    brand?: any;
 }

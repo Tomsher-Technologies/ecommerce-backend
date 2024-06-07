@@ -8,11 +8,9 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const authSchema_1 = require("../../../utils/schemas/frontend/guest/authSchema");
 const helpers_1 = require("../../../utils/helpers");
-const website_setup_1 = require("../../../constants/website-setup");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
-const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/common-service"));
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
@@ -21,29 +19,26 @@ class GuestController extends base_controller_1.default {
             const validatedData = authSchema_1.registerSchema.safeParse(req.body);
             if (validatedData.success) {
                 const { email, firstName, phone, password } = validatedData.data;
+                const currentDate = new Date();
+                const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
                 const customerData = {
                     email,
                     firstName,
                     phone,
                     password: await bcrypt_1.default.hash(password, 10),
+                    otp: (0, helpers_1.generateOTP)(6),
+                    otpExpiry,
                     status: '1',
+                    failureAttemptsCount: 0,
                     createdAt: new Date()
                 };
                 const newCustomer = await customer_service_1.default.create(customerData);
                 if (newCustomer) {
-                    const token = jsonwebtoken_1.default.sign({
-                        userId: newCustomer._id,
-                        email: newCustomer.email,
-                        phone: newCustomer.phone
-                    }, `${process.env.CUSTOMER_AUTH_KEY}`);
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            token,
-                            userID: newCustomer._id,
-                            firstName: newCustomer.firstName,
+                            otp: newCustomer.otp,
                             email: newCustomer.email,
-                            phone: newCustomer.phone,
-                            activeStatus: newCustomer.activeStatus
+                            phone: newCustomer.phone
                         },
                         message: 'Customer created successfully!'
                     });
@@ -83,6 +78,146 @@ class GuestController extends base_controller_1.default {
             });
         }
     }
+    async forgotPassword(req, res) {
+        try {
+            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            if (countryId) {
+                const validatedData = authSchema_1.forgotPasswordSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { otpType, email, phone } = validatedData.data;
+                    const existingUser = await customer_service_1.default.findOne({
+                        ...(otpType === 'email' ? { email } : { phone })
+                    });
+                    if (existingUser) {
+                        const currentDate = new Date();
+                        const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
+                        const updateCustomerOtp = {
+                            otp: (0, helpers_1.generateOTP)(6),
+                            otpExpiry,
+                        };
+                        const updatedCustomer = await customer_service_1.default.update(existingUser?.id, updateCustomerOtp);
+                        if (updatedCustomer) {
+                            controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    otp: updatedCustomer.otp,
+                                    email: updatedCustomer.email,
+                                    phone: updatedCustomer.phone
+                                },
+                                message: `Otp successfully sended on ${otpType}`
+                            });
+                        }
+                        else {
+                            controller.sendErrorResponse(res, 200, {
+                                message: 'Something wrong on otp generating... please try again!',
+                            });
+                        }
+                    }
+                    else {
+                        controller.sendErrorResponse(res, 200, {
+                            message: `Invalid ${otpType} or user not found!`,
+                        });
+                    }
+                }
+                else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                    });
+                }
+            }
+            else {
+                controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
+            }
+        }
+        catch (error) {
+            controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while creating customer'
+            });
+        }
+    }
+    async verifyOtp(req, res) {
+        try {
+            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            if (countryId) {
+                const validatedData = authSchema_1.verifyOtpSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { otpType, otp, email, phone } = validatedData.data;
+                    const existingUser = await customer_service_1.default.findOne({
+                        ...(otpType === 'email' ? { email } : { phone })
+                    });
+                    if (existingUser) {
+                        const checkValidOtp = await customer_service_1.default.findOne({ _id: existingUser?.id, otp });
+                        if (checkValidOtp) {
+                            const currentTime = new Date();
+                            if (checkValidOtp.otpExpiry && currentTime <= checkValidOtp.otpExpiry) {
+                                const updatedCustomer = await customer_service_1.default.update(existingUser?.id, { isVerified: true, failureAttemptsCount: 0 });
+                                if (updatedCustomer) {
+                                    const token = jsonwebtoken_1.default.sign({
+                                        userId: updatedCustomer._id,
+                                        email: updatedCustomer.email,
+                                        phone: updatedCustomer.phone
+                                    }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
+                                    controller.sendSuccessResponse(res, {
+                                        requestedData: {
+                                            token,
+                                            userId: updatedCustomer._id,
+                                            firstName: updatedCustomer.firstName,
+                                            email: updatedCustomer.email,
+                                            phone: updatedCustomer.phone,
+                                            isVerified: updatedCustomer.isVerified,
+                                            activeStatus: updatedCustomer.activeStatus
+                                        },
+                                        message: 'Customer otp successfully verified'
+                                    });
+                                }
+                                else {
+                                    controller.sendErrorResponse(res, 200, {
+                                        message: 'Something wrong on otp verifying. please try again!',
+                                    });
+                                }
+                            }
+                            else {
+                                controller.sendErrorResponse(res, 200, {
+                                    message: 'OTP has expired',
+                                });
+                            }
+                        }
+                        else {
+                            await customer_service_1.default.update(existingUser.id, {
+                                failureAttemptsCount: (existingUser.failureAttemptsCount || 0) + 1
+                            });
+                            controller.sendErrorResponse(res, 200, {
+                                message: 'Invalid otp',
+                            });
+                        }
+                    }
+                    else {
+                        controller.sendErrorResponse(res, 200, {
+                            message: otpType + ' is not found!',
+                        });
+                    }
+                }
+                else {
+                    controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                    });
+                }
+            }
+            else {
+                controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
+            }
+        }
+        catch (error) {
+            controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while creating customer'
+            });
+        }
+    }
     async login(req, res) {
         try {
             const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
@@ -98,23 +233,15 @@ class GuestController extends base_controller_1.default {
                                 userId: user._id,
                                 email: user.email,
                                 phone: user.phone
-                            }, `${process.env.CUSTOMER_AUTH_KEY}`);
-                            const shipmentSettings = await website_setup_model_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.shipmentSettings });
-                            const defualtSettings = await website_setup_model_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.defualtSettings });
-                            const websiteSettings = await website_setup_model_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.websiteSettings });
+                            }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
                             controller.sendSuccessResponse(res, {
                                 requestedData: {
-                                    userData: {
-                                        token,
-                                        userID: user._id,
-                                        firstName: user.firstName,
-                                        email: user.email,
-                                        phone: user.phone,
-                                        activeStatus: user.activeStatus
-                                    },
-                                    websiteSettings: websiteSettings && websiteSettings?.blockValues && websiteSettings.blockValues,
-                                    shipmentSettings: shipmentSettings && shipmentSettings?.blockValues && shipmentSettings.blockValues,
-                                    defualtSettings: defualtSettings && defualtSettings?.blockValues && defualtSettings.blockValues
+                                    token,
+                                    userID: user._id,
+                                    firstName: user.firstName,
+                                    email: user.email,
+                                    phone: user.phone,
+                                    activeStatus: user.activeStatus
                                 },
                                 message: 'Customer created successfully!'
                             });

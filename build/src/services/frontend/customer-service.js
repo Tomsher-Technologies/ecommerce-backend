@@ -29,8 +29,8 @@ class CustomerService {
     async create(customerData) {
         return customers_model_1.default.create(customerData);
     }
-    async findOne(customerId) {
-        return customers_model_1.default.findById(customerId);
+    async findOne(query) {
+        return customers_model_1.default.findOne(query);
     }
     async update(customerId, customerData) {
         return customers_model_1.default.findByIdAndUpdate(customerId, customerData, { new: true, useFindAndModify: false });

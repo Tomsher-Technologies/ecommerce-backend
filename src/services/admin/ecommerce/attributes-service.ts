@@ -31,7 +31,7 @@ class AttributesService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$attributeId'] },
-                                    { $eq: ['$source', multiLanguageSources.ecommerce.attribute] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.attributes] },
                                 ],
                             },
                         },

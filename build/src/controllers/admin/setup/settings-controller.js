@@ -34,7 +34,7 @@ class SettingsController extends base_controller_1.default {
                     }
                     const settingsData = {
                         countryId: new mongoose_1.default.Types.ObjectId(countryId),
-                        block: website_setup_1.websiteSetup.basicSettings,
+                        block,
                         blockReference,
                         blockValues: {
                             ...(website_setup_1.blockReferences.websiteSettings === blockReference ? {
@@ -51,19 +51,12 @@ class SettingsController extends base_controller_1.default {
                     };
                     let newBasicSettings = [];
                     if (!languageId) {
-                        if (!websiteSetupId) {
+                        const websiteSettingResult = await settings_service_1.default.findOne({ countryId: countryId, block: block, blockReference: blockReference });
+                        if (!websiteSettingResult) {
                             newBasicSettings = await settings_service_1.default.create(settingsData);
                         }
                         else {
-                            const websiteSettingResult = await settings_service_1.default.findOne({ _id: websiteSetupId, countryId: countryId, block: block, blockReference: blockReference });
-                            if (websiteSettingResult) {
-                                newBasicSettings = await settings_service_1.default.update(websiteSettingResult._id, settingsData);
-                            }
-                            else {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Website setup not found',
-                                }, req);
-                            }
+                            newBasicSettings = await settings_service_1.default.update(websiteSettingResult._id, settingsData);
                         }
                     }
                     else {

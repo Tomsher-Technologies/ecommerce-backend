@@ -5,7 +5,6 @@ export const multiLanguageSources = {
         sliders: 'sliders',
         banner: 'banner',
         attributes: 'attributes',
-        attribute: 'attributes',
         categories:'categories',
         products:'products',
         specifications:'specifications'
@@ -14,12 +13,6 @@ export const multiLanguageSources = {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsbrands',
         collectionsCategories: 'collectionscategories',
-        pages:{
-            home: 'home',
-            termsAndConditions:'terms-and-conditions',
-            privacyAndPolicy: 'privacy-and-policy',
-            contactUs: 'contact-us',
-        }
        
     },
     setup:{

@@ -111,12 +111,13 @@ class ProductVariantService {
     }
 
     async create(productId: string, productVariants: ProductVariantsProps, userData: UserDataProps) {
+console.log("getCountryId(userData)",userData,"mmmmmmmmmm",await getCountryId(userData));
 
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
             extraProductTitle: productVariants.extraProductTitle,
-            countryId: productVariants.countryId || getCountryId(userData),
+            countryId: productVariants.countryId || await getCountryId(userData),
             variantSku: productVariants.variantSku,
             price: productVariants.price,
             discountPrice: productVariants.discountPrice,

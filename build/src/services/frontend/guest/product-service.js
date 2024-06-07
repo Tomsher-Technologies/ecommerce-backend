@@ -5,21 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const collections_1 = require("../../../constants/collections");
-const multi_languages_1 = require("../../../constants/multi-languages");
 const attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/attribute-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
+const product_config_1 = require("../../../utils/config/product-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 class ProductService {
     constructor() {
-        this.attributeDetailsLookup = {
-            $lookup: {
-                from: 'attributedetails', // Collection name of AttributeDetailModel
-                localField: '_id', // Field in AttributesModel
-                foreignField: 'attributeId', // Field in AttributeDetailModel
-                as: 'attributeValues'
-            }
-        };
         this.variantLookup = {
             $lookup: {
                 from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
@@ -287,46 +279,8 @@ class ProductService {
                 as: 'attributeValues'
             }
         };
-        this.multilanguageFieldsLookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { attributeId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$attributeId'] },
-                                    { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.attribute] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-        this.project = {
-            $project: {
-                _id: 1,
-                attributeTitle: 1,
-                slug: 1,
-                attributeType: 1,
-                status: 1,
-                createdAt: 1,
-                attributeValues: {
-                    $ifNull: ['$attributeValues', []]
-                },
-                languageValues: {
-                    $ifNull: ['$languageValues', []]
-                }
-            }
-        };
     }
-    async findAllAttributes(options = {}) {
-        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
-        console.log("query", query);
-        var attributeDetail = [];
+    async findProducts(query) {
         let pipeline = [
             this.categoryLookup,
             this.variantLookup,
@@ -335,11 +289,16 @@ class ProductService {
             this.brandObject,
             this.seoLookup,
             this.seoObject,
-            this.multilanguageFieldsLookup,
             this.specificationLookup,
             { $match: query }
         ];
         const productData = await product_model_1.default.aggregate(pipeline).exec();
+        return productData;
+    }
+    async findAllAttributes(options = {}) {
+        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
+        var attributeDetail = [];
+        const productData = await this.findProducts(query);
         const attributeArray = [];
         if (productData) {
             for await (let product of productData) {
@@ -356,15 +315,57 @@ class ProductService {
                 let pipeline = [
                     { $match: query },
                     this.attributeDetailsLookup,
-                    this.project
+                    product_config_1.attributeProject
                 ];
-                const data = await attribute_model_1.default.aggregate(pipeline).exec();
+                // pipeline.push(attributeProject)
+                const language = await this.language(hostName, pipeline);
+                // console.log("language",pipeline);
+                const data = await attribute_model_1.default.aggregate(language).exec();
+                console.log("datadatadata", data[0].attributeValues);
                 await attributeDetail.push(data[0]);
             }
         }
+        return attributeDetail;
+    }
+    async language(hostName, pipeline) {
         const languageData = await language_model_1.default.find().exec();
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        return attributeDetail;
+        if (languageId) {
+            if (languageId) {
+                const attributeLookupWithLanguage = {
+                    ...product_config_1.attributeLookup,
+                    $lookup: {
+                        ...product_config_1.attributeLookup.$lookup,
+                        pipeline: product_config_1.attributeLookup.$lookup.pipeline.map((stage) => {
+                            if (stage.$match && stage.$match.$expr) {
+                                return {
+                                    ...stage,
+                                    $match: {
+                                        ...stage.$match,
+                                        $expr: {
+                                            ...stage.$match.$expr,
+                                            $and: [
+                                                ...stage.$match.$expr.$and,
+                                                { $eq: ['$languageId', languageId] },
+                                            ]
+                                        }
+                                    }
+                                };
+                            }
+                            return stage;
+                        })
+                    }
+                };
+                pipeline.push(attributeLookupWithLanguage);
+                pipeline.push(product_config_1.attributeLanguageFieldsReplace);
+                pipeline.push(product_config_1.attributeDetailLanguageFieldsReplace);
+                console.log("attributeDetailLanguageFieldsReplace", product_config_1.attributeDetailLanguageFieldsReplace.$addFields.attributeValues.$map.in.$mergeObjects[0]);
+            }
+        }
+        console.log("pipeline123", pipeline);
+        pipeline.push(product_config_1.attributeProject);
+        pipeline.push(product_config_1.productFinalProject);
+        return pipeline;
     }
 }
 exports.default = new ProductService();

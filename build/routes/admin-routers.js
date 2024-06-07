@@ -31,6 +31,7 @@ const collection_product_routes_1 = __importDefault(require("./admin/website/col
 const collection_brand_routes_1 = __importDefault(require("./admin/website/collection-brand-routes"));
 const collection_category_routes_1 = __importDefault(require("./admin/website/collection-category-routes"));
 const navigation_menu_routes_1 = __importDefault(require("./admin/website/navigation-menu-routes"));
+const pages_routes_1 = __importDefault(require("./admin/website/pages-routes"));
 // store
 const warehouse_routes_1 = __importDefault(require("./admin/stores/warehouse-routes"));
 const store_routes_1 = __importDefault(require("./admin/stores/store-routes"));
@@ -64,6 +65,7 @@ adminRouter.use('/website/collection-products', collection_product_routes_1.defa
 adminRouter.use('/website/collection-brands', collection_brand_routes_1.default);
 adminRouter.use('/website/collection-categories', collection_category_routes_1.default);
 adminRouter.use('/website/navigation-menu', navigation_menu_routes_1.default);
+adminRouter.use('/website/pages', pages_routes_1.default);
 // stores
 adminRouter.use('/stores/warehouse', warehouse_routes_1.default);
 adminRouter.use('/stores/store', store_routes_1.default);
