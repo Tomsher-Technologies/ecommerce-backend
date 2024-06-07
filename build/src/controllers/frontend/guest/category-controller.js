@@ -10,7 +10,7 @@ const controller = new base_controller_1.default();
 class CategoryController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { slug = '', category = '' } = req.query;
+            const { slug = '', category = '', brand = '' } = req.query;
             const level = '0';
             let query = { _id: { $exists: true } };
             query.status = '1';
@@ -23,28 +23,59 @@ class CategoryController extends base_controller_1.default {
             //         ...query
             //     } as any;
             // }
+            // if (brand) {
+            //     const keywordRegex = new RegExp(brand, 'i');
+            //     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+            //     if (isObjectId) {
+            //         query = {
+            //             ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+            //         }
+            //     } else {
+            //         query = {
+            //             ...query, "brand.slug": keywordRegex
+            //         }
+            //     }
+            // }
             if (category) {
                 const keywordRegex = new RegExp(category, 'i');
-                var condition;
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                 if (isObjectId) {
-                    condition = { parentCategory: new mongoose_1.default.Types.ObjectId(category) };
+                    query = {
+                        ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                    };
                 }
                 else {
-                    condition = { slug: keywordRegex };
+                    query = {
+                        ...query, "productCategory.category.slug": keywordRegex
+                    };
                 }
-                query = {
-                    $or: [
-                        condition
-                    ],
-                    ...query
-                };
             }
-            else if (level) {
+            else {
                 query = {
                     ...query, level: level
                 };
             }
+            // if (category) {
+            //     const keywordRegex = new RegExp(category, 'i');
+            //     var condition
+            //     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+            //     if (isObjectId) {
+            //         condition = { parentCategory: new mongoose.Types.ObjectId(category) }
+            //     } else {
+            //         condition = { slug: keywordRegex }
+            //     }
+            //     query = {
+            //         $or: [
+            //             condition
+            //         ],
+            //         ...query
+            //     } as any;
+            // } else {
+            //     query = {
+            //         ...query, level: level
+            //     } as any;
+            // }
+            console.log("query............", query);
             const categories = await category_service_1.default.findAll({
                 hostName: req.get('host'),
                 query,

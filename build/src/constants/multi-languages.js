@@ -7,7 +7,6 @@ exports.multiLanguageSources = {
         sliders: 'sliders',
         banner: 'banner',
         attributes: 'attributes',
-        attribute: 'attributes',
         categories: 'categories',
         products: 'products',
         specifications: 'specifications'

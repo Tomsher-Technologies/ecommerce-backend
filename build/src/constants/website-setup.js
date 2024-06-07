@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.blockReferences = exports.websiteSetup = void 0;
 exports.websiteSetup = {
     menu: 'menu',
-    basicSettings: 'basic-settings'
+    basicSettings: 'basic-settings',
+    pages: 'pages'
 };
 exports.blockReferences = {
     desktopMenu: 'desktop-menu',
@@ -13,4 +14,8 @@ exports.blockReferences = {
     defualtSettings: 'defualt-settings',
     shipmentSettings: 'shipment-settings',
     enableFeatures: 'enable-features',
+    home: 'home',
+    termsAndConditions: 'terms-and-conditions',
+    privacyAndPolicy: 'privacy-and-policy',
+    contactUs: 'contact-us',
 };

@@ -2,7 +2,8 @@
 
 export const websiteSetup = {
     menu: 'menu',
-    basicSettings: 'basic-settings'
+    basicSettings: 'basic-settings',
+    pages:'pages'
 }
 
 export const blockReferences = {
@@ -13,4 +14,8 @@ export const blockReferences = {
     defualtSettings: 'defualt-settings',
     shipmentSettings: 'shipment-settings',
     enableFeatures: 'enable-features',
+    home: 'home',
+    termsAndConditions:'terms-and-conditions',
+    privacyAndPolicy: 'privacy-and-policy',
+    contactUs: 'contact-us',
 }

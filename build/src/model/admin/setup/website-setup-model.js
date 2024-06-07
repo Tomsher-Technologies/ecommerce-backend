@@ -34,12 +34,28 @@ const websiteSetupSchema = new mongoose_1.Schema({
     block: {
         type: String,
         required: true,
-        enum: [website_setup_1.websiteSetup.menu, website_setup_1.websiteSetup.basicSettings],
+        enum: [
+            website_setup_1.websiteSetup.menu,
+            website_setup_1.websiteSetup.basicSettings,
+            website_setup_1.websiteSetup.pages
+        ],
     },
     blockReference: {
         type: String,
         default: '',
-        enum: [website_setup_1.blockReferences.desktopMenu, website_setup_1.blockReferences.mobileMenu, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.websiteSettings, website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.shipmentSettings, website_setup_1.blockReferences.enableFeatures],
+        enum: [
+            website_setup_1.blockReferences.desktopMenu,
+            website_setup_1.blockReferences.mobileMenu,
+            website_setup_1.blockReferences.basicDetailsSettings,
+            website_setup_1.blockReferences.websiteSettings,
+            website_setup_1.blockReferences.defualtSettings,
+            website_setup_1.blockReferences.shipmentSettings,
+            website_setup_1.blockReferences.enableFeatures,
+            website_setup_1.blockReferences.home,
+            website_setup_1.blockReferences.termsAndConditions,
+            website_setup_1.blockReferences.privacyAndPolicy,
+            website_setup_1.blockReferences.contactUs
+        ],
     },
     blockValues: {
         type: mongoose_1.Schema.Types.Mixed,

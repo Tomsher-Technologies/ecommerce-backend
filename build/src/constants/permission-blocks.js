@@ -16,6 +16,7 @@ exports.permissionBlocks = {
         collectionsBrands: 'collectionsbrands',
         collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigation-menu',
+        pages: 'pages',
     },
     setup: {
         languages: 'languages',

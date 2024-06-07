@@ -1,7 +1,15 @@
-import { FilterOptionsProps, pagination } from "../../components/pagination";
-import { multiLanguageSources } from "../../constants/multi-languages";
+import mongoose from "mongoose";
 
+import { FilterOptionsProps, pagination } from "../../components/pagination";
+
+import { multiLanguageSources } from "../../constants/multi-languages";
 import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsReplace } from "../../utils/config/slider-config";
+import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../utils/config/category-config";
+import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../utils/config/brand-config";
+import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../utils/config/collections-brands-config";
+import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../utils/config/product-config";
+import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../utils/config/collections-product-config";
+import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../utils/config/collections-categories-config";
 
 import { getCountryShortTitleFromHostname, getLanguageValueFromSubdomain } from "../../utils/frontend/sub-domain";
 import SliderModel, { SliderProps } from "../../model/admin/ecommerce/slider-model";
@@ -14,15 +22,8 @@ import GeneralService from "../admin/general-service";
 import { blockReferences, websiteSetup } from "../../constants/website-setup";
 import ProductsModel from "../../model/admin/ecommerce/product-model";
 import CollectionsProductsModel from "../../model/admin/website/collections-products-model";
-import mongoose from "mongoose";
-import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../utils/config/product-config";
-import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../utils/config/collections-product-config";
-import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../utils/config/collections-categories-config";
 import CategoryModel from "../../model/admin/ecommerce/category-model";
 import CollectionsCategoriesModel from "../../model/admin/website/collections-categories-model";
-import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../utils/config/category-config";
-import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../utils/config/brand-config";
-import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../utils/config/collections-brands-config";
 import BrandsModel from "../../model/admin/ecommerce/brands-model";
 import CollectionsBrandsModel from "../../model/admin/website/collections-brands-model";
 
@@ -33,11 +34,11 @@ class CommonService {
         const { query, sort, hostName, block, blockReference } = options;
 
         let websiteSetupData: any = []
-        const languageData = await LanguagesModel.find().exec();
-        
+
         if ((block === websiteSetup.menu || blockReference === blockReferences.basicDetailsSettings)) {
             websiteSetupData = await WebsiteSetupModel.findOne(query);
             if (websiteSetupData) {
+                const languageData = await LanguagesModel.find().exec();
                 const languageId = getLanguageValueFromSubdomain(hostName, languageData);
                 if (languageId) {
                     const languageValues = await GeneralService.findOneLanguageValues(block === websiteSetup.menu ? multiLanguageSources.setup.websiteSetups : multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
@@ -50,6 +51,8 @@ class CommonService {
                     }
                 }
             }
+        } else {
+            websiteSetupData = await WebsiteSetupModel.find(query);
         }
 
 

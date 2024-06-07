@@ -12,6 +12,8 @@ router.use((0, helmet_1.default)());
 router.use(express_1.default.json());
 router.use(express_1.default.urlencoded({ extended: true }));
 router.post('/register', guest_controller_1.default.register);
+router.post('/verify-otp', guest_controller_1.default.verifyOtp);
+router.post('/forgot-password', guest_controller_1.default.forgotPassword);
 router.post('/login', guest_controller_1.default.login);
 router.use((err, req, res, next) => {
     console.error(err.stack);

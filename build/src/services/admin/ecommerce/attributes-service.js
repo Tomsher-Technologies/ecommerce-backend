@@ -29,7 +29,7 @@ class AttributesService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$attributeId'] },
-                                    { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.attribute] },
+                                    { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.attributes] },
                                 ],
                             },
                         },

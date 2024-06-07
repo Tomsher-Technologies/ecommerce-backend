@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
-import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
 
 import ProductsService from '../services/admin/ecommerce/product-service';
+import CountryModel from '../model/admin/setup/country-model';
 
 type ZodValidationError = {
     path: (string | number)[];
@@ -14,10 +14,15 @@ type ZodValidationError = {
 };
 
 
-export function getCountryId(userData: any): mongoose.Types.ObjectId | undefined {
+export async function getCountryId(userData: any): Promise<mongoose.Types.ObjectId | undefined> {
+    console.log("....................", userData);
+
     if (userData && userData.userTypeID && userData.countryId) {
         if (userData.userTypeID.slug !== 'super-admin') {
             return new mongoose.Types.ObjectId(userData.countryId);
+        } else if (userData.userTypeID.slug === 'super-admin') {
+            const countryId: any = await CountryModel.findOne({ isOrigin: true })
+            return countryId._id
         }
     }
     return undefined;
@@ -169,4 +174,18 @@ export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): b
 
 export const dateConvertPm = (input: string): Date => {
     return new Date(`${input}T23:59:59.999Z`)
-}; 
+};
+
+export function generateOTP(length: number): string {
+    if (length <= 0) {
+        throw new Error('Length must be a positive integer.');
+    }
+
+    let otp = '';
+    for (let i = 0; i < length; i++) {
+        const digit = Math.floor(Math.random() * 10); // Generate a random digit between 0 and 9
+        otp += digit.toString();
+    }
+
+    return otp;
+}

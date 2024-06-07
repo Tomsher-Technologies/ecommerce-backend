@@ -328,7 +328,9 @@ class ProductsController extends base_controller_1.default {
                     if (workbook.SheetNames[0]) {
                         const worksheet = workbook.Sheets[sheetName];
                         const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
-                        if (await product_service_1.default.checkRequiredColumns(firstRow, products_2.products)) {
+                        const missingColunm = await product_service_1.default.checkRequiredColumns(firstRow, products_2.products);
+                        console.log("missingColunm", missingColunm);
+                        if (!missingColunm) {
                             // Convert the worksheet to JSON
                             if (worksheet) {
                                 const jsonData = await xlsx.utils.sheet_to_json(worksheet);
@@ -337,17 +339,17 @@ class ProductsController extends base_controller_1.default {
                                     var index = 2;
                                     for await (let data of jsonData) {
                                         if (data.Product_Title) {
-                                            if (data.SKU) {
-                                                if (data.Item_Type) {
-                                                    if (data.Category) {
-                                                        if (data.Image) {
-                                                            if (data.Brand) {
-                                                                const categoryArray = [];
-                                                                var brandId = {};
-                                                                var countryId = {};
-                                                                const specificationData = [];
-                                                                const attributeData = [];
-                                                                if (data) {
+                                            if (data.Description) {
+                                                if (data.SKU) {
+                                                    if (data.Item_Type) {
+                                                        if (data.Category) {
+                                                            if (data.Image) {
+                                                                if (data.Brand) {
+                                                                    const categoryArray = [];
+                                                                    var brandId = {};
+                                                                    var countryId = {};
+                                                                    const specificationData = [];
+                                                                    const attributeData = [];
                                                                     if (data.Brand) {
                                                                         const brandData = await brands_service_1.default.findBrandId(data.Brand);
                                                                         if (brandData) {
@@ -463,8 +465,9 @@ class ProductsController extends base_controller_1.default {
                                                                         twitterDescription: data.Twitter_Description
                                                                     };
                                                                     const userData = res.locals.user;
+                                                                    console.log("userData", userData);
                                                                     var productVariants = {
-                                                                        countryId: countryId,
+                                                                        // countryId: countryId,
                                                                         extraProductTitle: data.Product_Title,
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
@@ -518,7 +521,7 @@ class ProductsController extends base_controller_1.default {
                                                                                     ...productVariants,
                                                                                     slug: (0, helpers_1.slugify)(data.Product_Title)
                                                                                 };
-                                                                                const createVariant = await product_variant_service_1.default.create(createProduct._id, productVariants, productVariants.countryId);
+                                                                                const createVariant = await product_variant_service_1.default.create(createProduct._id, productVariants, userData);
                                                                                 if (createVariant) {
                                                                                     if (attributeData && attributeData.length > 0) {
                                                                                         for await (const attribute of attributeData) {
@@ -538,7 +541,7 @@ class ProductsController extends base_controller_1.default {
                                                                             // throw new Error('')
                                                                         }
                                                                     }
-                                                                    if (data.Item_Type == 'variant') {
+                                                                    else if (data.Item_Type == 'variant') {
                                                                         if (data.Parent_SKU) {
                                                                             const product = await product_service_1.default.find({ sku: data.Parent_SKU });
                                                                             if (product) {
@@ -600,26 +603,32 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                         }
                                                                     }
+                                                                    else {
+                                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Please choose proper Item_Type (config-item,simple-item,variant) , row :" + index });
+                                                                    }
+                                                                }
+                                                                else {
+                                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Brand is missing, row :" + index });
                                                                 }
                                                             }
                                                             else {
-                                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Brand is missing, row :" + index });
+                                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image is missing, row :" + index });
                                                             }
                                                         }
                                                         else {
-                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image is missing, row :" + index });
+                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Category is missing, row :" + index });
                                                         }
                                                     }
                                                     else {
-                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Category is missing, row :" + index });
+                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Item_Type is missing, row :" + index });
                                                     }
                                                 }
                                                 else {
-                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Item_Type is missing, row :" + index });
+                                                    validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "SKU is missing, row :" + index });
                                                 }
                                             }
                                             else {
-                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "SKU is missing, row :" + index });
+                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Description is missing, row :" + index });
                                             }
                                         }
                                         else {
@@ -635,8 +644,11 @@ class ProductsController extends base_controller_1.default {
                             }
                         }
                         else {
-                            controller.sendErrorResponse(res, 200, { message: "Please upload proper Excel file" });
+                            controller.sendErrorResponse(res, 200, { message: missingColunm + " coloumn must be included in the excel file" });
                         }
+                    }
+                    else {
+                        controller.sendErrorResponse(res, 200, { message: "Please upload an Excel file with appropriate content." });
                     }
                 }
             }
@@ -645,11 +657,15 @@ class ProductsController extends base_controller_1.default {
             }
         }
         catch (error) {
+            console.log("errorerror", error);
             if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
                 validation.push(error.errors.slug.properties);
             }
+            if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
+                validation.push(error.errors.countryId.properties);
+            }
             else {
-                validation.push(error);
+                validation.push(error.errors);
             }
             controller.sendErrorResponse(res, 500, { message: validation });
         }

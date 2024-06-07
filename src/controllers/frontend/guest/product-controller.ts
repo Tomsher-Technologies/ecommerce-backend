@@ -13,7 +13,7 @@ const controller = new BaseController();
 class ProductController extends BaseController {
     async findAllAttributes(req: Request, res: Response): Promise<void> {
         try {
-            const {  specification = '', specificationDetail = '', product = '', category = '', attribute = '', attributeDetail = '', brand = '' } = req.query as ProductsFrontendQueryParams;
+            const { specification = '', specificationDetail = '', product = '', category = '', attribute = '', attributeDetail = '', brand = '' } = req.query as ProductsFrontendQueryParams;
             const userData = await res.locals.user;
             const countryId = getCountryId(userData);
             let query: any = { _id: { $exists: true } };
@@ -21,37 +21,46 @@ class ProductController extends BaseController {
             query.status = '1';
 
             if (category) {
+
                 const keywordRegex = new RegExp(category, 'i');
-                var condition
 
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                
+
                 if (isObjectId) {
-                    condition = { parentCategory: new mongoose.Types.ObjectId(category) }
+                    query = {
+                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                    }
 
                 } else {
-                    condition = { slug: keywordRegex }
+                    query = {
+                        ...query, "productCategory.category.slug": keywordRegex
+                    }
                 }
+            }
+            if (brand) {
 
-                query = {
-                    $or: [
-                        condition
-                    ],
-                    ...query
+                const keywordRegex = new RegExp(brand, 'i');
 
-                } as any;
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
 
-            }           
+                if (isObjectId) {
+                    query = {
+                        ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+                    }
+
+                } else {
+                    query = {
+                        ...query, "brand.slug": keywordRegex
+                    }
+                }              
+            }
 
             const products: any = await ProductService.findAllAttributes({
                 hostName: req.get('host'),
                 query,
             });
 
-            if (products) {
-               
 
-            }
 
             return controller.sendSuccessResponse(res, {
                 requestedData: products,

@@ -3,8 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
 const multi_languages_1 = require("../../constants/multi-languages");
 const slider_config_1 = require("../../utils/config/slider-config");
+const category_config_1 = require("../../utils/config/category-config");
+const brand_config_1 = require("../../utils/config/brand-config");
+const collections_brands_config_1 = require("../../utils/config/collections-brands-config");
+const product_config_1 = require("../../utils/config/product-config");
+const collections_product_config_1 = require("../../utils/config/collections-product-config");
+const collections_categories_config_1 = require("../../utils/config/collections-categories-config");
 const sub_domain_1 = require("../../utils/frontend/sub-domain");
 const slider_model_1 = __importDefault(require("../../model/admin/ecommerce/slider-model"));
 const country_model_1 = __importDefault(require("../../model/admin/setup/country-model"));
@@ -16,15 +23,8 @@ const general_service_1 = __importDefault(require("../admin/general-service"));
 const website_setup_1 = require("../../constants/website-setup");
 const product_model_1 = __importDefault(require("../../model/admin/ecommerce/product-model"));
 const collections_products_model_1 = __importDefault(require("../../model/admin/website/collections-products-model"));
-const mongoose_1 = __importDefault(require("mongoose"));
-const product_config_1 = require("../../utils/config/product-config");
-const collections_product_config_1 = require("../../utils/config/collections-product-config");
-const collections_categories_config_1 = require("../../utils/config/collections-categories-config");
 const category_model_1 = __importDefault(require("../../model/admin/ecommerce/category-model"));
 const collections_categories_model_1 = __importDefault(require("../../model/admin/website/collections-categories-model"));
-const category_config_1 = require("../../utils/config/category-config");
-const brand_config_1 = require("../../utils/config/brand-config");
-const collections_brands_config_1 = require("../../utils/config/collections-brands-config");
 const brands_model_1 = __importDefault(require("../../model/admin/ecommerce/brands-model"));
 const collections_brands_model_1 = __importDefault(require("../../model/admin/website/collections-brands-model"));
 class CommonService {
@@ -32,10 +32,10 @@ class CommonService {
     async findWebsiteSetups(options = {}) {
         const { query, sort, hostName, block, blockReference } = options;
         let websiteSetupData = [];
-        const languageData = await language_model_1.default.find().exec();
         if ((block === website_setup_1.websiteSetup.menu || blockReference === website_setup_1.blockReferences.basicDetailsSettings)) {
             websiteSetupData = await website_setup_model_1.default.findOne(query);
             if (websiteSetupData) {
+                const languageData = await language_model_1.default.find().exec();
                 const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
                 if (languageId) {
                     const languageValues = await general_service_1.default.findOneLanguageValues(block === website_setup_1.websiteSetup.menu ? multi_languages_1.multiLanguageSources.setup.websiteSetups : multi_languages_1.multiLanguageSources.settings.basicDetailsSettings, websiteSetupData._id, languageId);
@@ -48,6 +48,9 @@ class CommonService {
                     }
                 }
             }
+        }
+        else {
+            websiteSetupData = await website_setup_model_1.default.find(query);
         }
         return websiteSetupData;
     }
