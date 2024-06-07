@@ -3,15 +3,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryId = void 0;
+exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const fs_2 = __importDefault(require("fs"));
 const product_service_1 = __importDefault(require("../services/admin/ecommerce/product-service"));
 const country_model_1 = __importDefault(require("../model/admin/setup/country-model"));
-async function getCountryId(userData) {
-    console.log("....................", userData);
+function getCountryId(userData) {
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose_1.default.Types.ObjectId(userData.countryId);
+        }
+    }
+    return undefined;
+}
+exports.getCountryId = getCountryId;
+async function getCountryIdWithSuperAdmin(userData) {
     if (userData && userData.userTypeID && userData.countryId) {
         if (userData.userTypeID.slug !== 'super-admin') {
             return new mongoose_1.default.Types.ObjectId(userData.countryId);
@@ -23,7 +31,7 @@ async function getCountryId(userData) {
     }
     return undefined;
 }
-exports.getCountryId = getCountryId;
+exports.getCountryIdWithSuperAdmin = getCountryIdWithSuperAdmin;
 const formatZodError = (errors) => {
     const formattedErrors = {};
     errors.forEach((err) => {

@@ -75,7 +75,6 @@ class CategoryController extends base_controller_1.default {
             //         ...query, level: level
             //     } as any;
             // }
-            console.log("query............", query);
             const categories = await category_service_1.default.findAll({
                 hostName: req.get('host'),
                 query,

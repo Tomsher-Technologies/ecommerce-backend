@@ -37,7 +37,7 @@ class ProductsController extends base_controller_1.default {
         try {
             const { page_size = 1, limit = 10 } = req.query;
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
+            const countryId = await (0, helpers_1.getCountryId)(userData);
             const filterProducts = await (0, products_1.filterProduct)(req.query, countryId);
             console.log(filterProducts.query);
             const products = await product_service_1.default.findAll({
@@ -329,7 +329,6 @@ class ProductsController extends base_controller_1.default {
                         const worksheet = workbook.Sheets[sheetName];
                         const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
                         const missingColunm = await product_service_1.default.checkRequiredColumns(firstRow, products_2.products);
-                        console.log("missingColunm", missingColunm);
                         if (!missingColunm) {
                             // Convert the worksheet to JSON
                             if (worksheet) {
@@ -465,7 +464,6 @@ class ProductsController extends base_controller_1.default {
                                                                         twitterDescription: data.Twitter_Description
                                                                     };
                                                                     const userData = res.locals.user;
-                                                                    console.log("userData", userData);
                                                                     var productVariants = {
                                                                         // countryId: countryId,
                                                                         extraProductTitle: data.Product_Title,

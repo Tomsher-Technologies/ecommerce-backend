@@ -2,7 +2,7 @@ import { FilterOptionsProps, pagination } from '../../../../components/paginatio
 
 import { ProductsProps } from '../../../../utils/types/products';
 import { UserDataProps } from '../../../../utils/types/common';
-import { getCountryId, } from '../../../../utils/helpers';
+import { getCountryId, getCountryIdWithSuperAdmin, } from '../../../../utils/helpers';
 
 import ProductVariantModel, { ProductVariantsProps } from '../../../../model/admin/ecommerce/product/product-variants-model';
 import ProductSpecificationModel from '../../../../model/admin/ecommerce/product/product-specification-model';
@@ -111,13 +111,12 @@ class ProductVariantService {
     }
 
     async create(productId: string, productVariants: ProductVariantsProps, userData: UserDataProps) {
-console.log("getCountryId(userData)",userData,"mmmmmmmmmm",await getCountryId(userData));
 
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
             extraProductTitle: productVariants.extraProductTitle,
-            countryId: productVariants.countryId || await getCountryId(userData),
+            countryId: productVariants.countryId || await getCountryIdWithSuperAdmin(userData),
             variantSku: productVariants.variantSku,
             price: productVariants.price,
             discountPrice: productVariants.discountPrice,

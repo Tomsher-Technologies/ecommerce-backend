@@ -89,10 +89,7 @@ class CategoryController extends BaseController {
             //         ...query, level: level
             //     } as any;
             // }
-
-
-            console.log("query............",query);
-            
+           
             const categories = await CategoryService.findAll({
                 hostName: req.get('host'),
                 query,

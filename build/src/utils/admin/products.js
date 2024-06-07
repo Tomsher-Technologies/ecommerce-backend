@@ -82,7 +82,7 @@ const filterProduct = async (data, countryId) => {
     if (data.attributeId) {
         queryFilterIds = {
             ...queryFilterIds,
-            '.productVariantAttributes.attributeId': new mongoose_1.default.Types.ObjectId(data.attributeId)
+            'productVariants.productVariantAttributes.attributeId': new mongoose_1.default.Types.ObjectId(data.attributeId)
         };
         if (data.attributeDetailId) {
             queryFilterIds = {
