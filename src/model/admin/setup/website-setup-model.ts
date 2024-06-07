@@ -23,12 +23,28 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
     block: {
         type: String,
         required: true,
-        enum: [websiteSetup.menu, websiteSetup.basicSettings],
+        enum: [
+            websiteSetup.menu,
+            websiteSetup.basicSettings,
+            websiteSetup.pages
+        ],
     },
     blockReference: {
         type: String,
         default: '',
-        enum: [blockReferences.desktopMenu, blockReferences.mobileMenu, blockReferences.basicDetailsSettings, blockReferences.websiteSettings, blockReferences.defualtSettings, blockReferences.shipmentSettings, blockReferences.enableFeatures],
+        enum: [
+            blockReferences.desktopMenu,
+            blockReferences.mobileMenu,
+            blockReferences.basicDetailsSettings,
+            blockReferences.websiteSettings,
+            blockReferences.defualtSettings,
+            blockReferences.shipmentSettings,
+            blockReferences.enableFeatures,
+            blockReferences.home,
+            blockReferences.termsAndConditions,
+            blockReferences.privacyAndPolicy,
+            blockReferences.contactUs
+        ],
     },
     blockValues: {
         type: Schema.Types.Mixed,

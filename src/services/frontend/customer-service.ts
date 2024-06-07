@@ -30,8 +30,8 @@ class CustomerService {
         return CustomerModel.create(customerData);
     }
 
-    async findOne(customerId: string): Promise<CustomrProps | null> {
-        return CustomerModel.findById(customerId);
+    async findOne(query: any): Promise<CustomrProps | null> {
+        return CustomerModel.findOne(query);
     }
 
     async update(customerId: string, customerData: any): Promise<CustomrProps | null> {

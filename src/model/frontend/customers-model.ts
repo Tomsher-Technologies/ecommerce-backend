@@ -7,9 +7,10 @@ export interface CustomrProps extends Document {
     password: string;
     customerImageUrl: string;
     otp: string;
-    otpExpiry: string;
+    otpExpiry: Date;
+    isVerified: Boolean;
     activeStatus: number;
-    failureAttempts: number;
+    failureAttemptsCount: number;
     resetPasswordCount: number;
     status: string;
     createdAt?: Date;
@@ -58,17 +59,21 @@ const customerSchema: Schema<CustomrProps> = new Schema({
     },
     otp: {
         type: String,
-        default: ''
+        required: true,
     },
     otpExpiry: {
-        type: String,
-        default: ''
+        type: Date,
+        required: true, // Ensure otpExpiry is required
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
     },
     activeStatus: {
         type: Number,
         default: 0
     },
-    failureAttempts: {
+    failureAttemptsCount: {
         type: Number,
         default: 0
     },

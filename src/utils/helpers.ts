@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
-import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
 
@@ -170,3 +169,17 @@ export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): b
 export const dateConvertPm = (input: string): Date => {
     return new Date(`${input}T23:59:59.999Z`)
 }; 
+
+export function generateOTP(length: number): string {
+    if (length <= 0) {
+        throw new Error('Length must be a positive integer.');
+    }
+
+    let otp = '';
+    for (let i = 0; i < length; i++) {
+        const digit = Math.floor(Math.random() * 10); // Generate a random digit between 0 and 9
+        otp += digit.toString();
+    }
+
+    return otp;
+}

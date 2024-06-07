@@ -1,9 +1,8 @@
-import express, { Request, Response, NextFunction, Router } from 'express';
-import multer from 'multer';
+import express, {  Router } from 'express';
 
-import { logResponseStatus } from '../../src/components/response-status';
+import { logResponseStatus } from '../../../src/components/response-status';
 
-import CommonController from '../../src/controllers/frontend/common-controller';
+import CommonController from '../../../src/controllers/frontend/guest/common-controller';
 
 const router: Router = express.Router();
 

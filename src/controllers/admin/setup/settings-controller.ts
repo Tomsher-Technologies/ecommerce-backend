@@ -5,11 +5,9 @@ import { checkValueExists, formatZodError, getCountryId, handleFileUpload, slugi
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { settingsFormSchema } from '../../../utils/schemas/admin/setup/basic-settings';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
-import { multiLanguageSources } from '../../../constants/multi-languages';
 import { SettingFindOneWithCountryQueryParams, } from '../../../utils/types/settings';
 
 import BaseController from '../base-controller';
-import LanguagesService from '../../../services/admin/setup/languages-service';
 import SettingsService from '../../../services/admin/setup/settings-service';
 import GeneralService from '../../../services/admin/general-service';
 import mongoose from 'mongoose';
@@ -42,7 +40,7 @@ class SettingsController extends BaseController {
 
                     const settingsData: Partial<any> = {
                         countryId: new mongoose.Types.ObjectId(countryId),
-                        block: websiteSetup.basicSettings,
+                        block,
                         blockReference,
                         blockValues: {
                             ...(blockReferences.websiteSettings === blockReference ? {
@@ -60,17 +58,12 @@ class SettingsController extends BaseController {
 
                     let newBasicSettings: any = [];
                     if (!languageId) {
-                        if (!websiteSetupId) {
+                        const websiteSettingResult = await SettingsService.findOne({ countryId: countryId, block: block, blockReference: blockReference });
+
+                        if (!websiteSettingResult) {
                             newBasicSettings = await SettingsService.create(settingsData);
                         } else {
-                            const websiteSettingResult = await SettingsService.findOne({ _id: websiteSetupId, countryId: countryId, block: block, blockReference: blockReference });
-                            if (websiteSettingResult) {
-                                newBasicSettings = await SettingsService.update(websiteSettingResult._id, settingsData);
-                            } else {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Website setup not found',
-                                }, req);
-                            }
+                            newBasicSettings = await SettingsService.update(websiteSettingResult._id, settingsData);
                         }
                     } else {
                         if (websiteSetupId) {

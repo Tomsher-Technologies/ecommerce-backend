@@ -1,15 +1,11 @@
 import 'module-alias/register';
 import { Request, Response, response } from 'express';
-const { ObjectId } = require('mongodb');
 
-import BaseController from '../admin/base-controller';
-import { websiteSetup as allWebsiteSetup } from '../../constants/website-setup';
+import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 
-import ProductsService from '../../services/admin/ecommerce/product-service';
-import { ProductsProps, ProductsQueryParams } from '../../utils/types/products';
-import collectionsProductsService from '../../services/admin/website/collections-products-service';
-import { CommonQueryParams } from '../../utils/types/frontend/common';
-import CommonService from '../../services/frontend/common-service';
+import BaseController from '../../admin/base-controller';
+import { CommonQueryParams } from '../../../utils/types/frontend/common';
+import CommonService from '../../../services/frontend/common-service';
 
 const controller = new BaseController();
 

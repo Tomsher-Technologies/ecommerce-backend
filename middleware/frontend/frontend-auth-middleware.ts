@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt, { TokenExpiredError } from 'jsonwebtoken';
+
 import CustomerModel from '../../src/model/frontend/customers-model';
 
 interface CustomRequest extends Request {
@@ -9,32 +11,19 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
     try {
         const token = req.header('Authorization');
         if (token) {
-            // const existingUserAuth = await AuthorisationModel.findOne({ token: token });
-            // // console.log('existingUserAuth', existingUserAuth);
+            const checkToken = token.split(' ')[1];
+            const userData: any = jwt.verify(checkToken, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
+            if (userData) {
+                req.user = userData;
 
-            // if (existingUserAuth) {
-            //     const user = await CustomerModel.findOne({ _id: existingUserAuth.userID });
-            //     if (user) {
-            //         // await AuthorisationModel.findOneAndUpdate(
-            //         //     { _id: existingUserAuth._id }, 
-            //         //     { $inc: { loggedCounts: 1 }, lastLoggedOn: new Date() },  // increment last loggedCounts + 1
-            //         //     { new: true, useFindAndModify: false } 
-            //         // );
-            //         req.user = user;
-
-            //         res.locals.user = user;
-            //         next();
-            //     } else {
-            //         return res.status(201).json({ message: 'Inavlid user name or password!', status: false });
-            //     }
-            // } else {
-            //     return res.status(201).json({ message: 'Unauthorized - Invalid token', status: false });
-            // }
-
+                res.locals.user = userData;
+                next();
+            } else {
+                return res.status(201).json({ message: 'User data not dound!', status: false });
+            }
         } else {
             return res.status(201).json({ message: 'Unauthorized - Missing token', status: false });
         }
-
 
     } catch (error) {
         console.error(error);
