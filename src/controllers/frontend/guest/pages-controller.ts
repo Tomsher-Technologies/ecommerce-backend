@@ -1,9 +1,11 @@
 import { Request, Response, response } from 'express';
 import { CommonQueryParams } from '../../../utils/types/frontend/common';
+import { checkValueExists } from '../../../utils/helpers';
+import { blockReferences, websiteSetup as websiteSetupObjects } from '../../../constants/website-setup';
 
 import BaseController from "../../admin/base-controller";
-import CommonService from '../../../services/frontend/common-service';
-
+import CommonService from '../../../services/frontend/guest/common-service';
+import PagesService from '../../../services/frontend/guest/pages-service';
 
 const controller = new BaseController();
 
@@ -11,29 +13,26 @@ class PageController extends BaseController {
 
     async findPagesData(req: Request, res: Response): Promise<void> {
         try {
-            const pageSlug = req.params.slug 
-            console.log('pageSlug',pageSlug);
-            
-            const { block, blockReference } = req.query as CommonQueryParams;
-            let query: any = { _id: { $exists: true } };
-
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
-
-            if (countryId) {
-                if (block && blockReference) {
+            const pageSlug = req.params.slug
+            console.log('pageSlug', pageSlug);
+            if (checkValueExists(blockReferences, pageSlug)) {
+                const {  blockReference } = req.query as CommonQueryParams;
+                let query: any = { _id: { $exists: true } };
+                const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+                if (countryId) {
                     query = {
                         ...query,
                         countryId,
-                        block: { $in: block.split(',') },
-                        blockReference: { $in: blockReference.split(',') },
+                        block: websiteSetupObjects.pages,
+                        blockReference: pageSlug,
                         status: '1',
                     } as any;
 
-                    const websiteSetup = await CommonService.findWebsiteSetups({
+                    const websiteSetup = await PagesService.findPagesData({
                         limit: 500,
                         hostName: req.get('host'),
-                        block,
-                        blockReference,
+                        block: websiteSetupObjects.pages,
+                        blockReference: pageSlug,
                         query,
                     });
 
@@ -47,13 +46,13 @@ class PageController extends BaseController {
                         validation: 'block and blockReference is missing! please check'
                     }, req);
                 }
+
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
-                    validation: 'block and blockReference is missing! please check'
+                    validation: 'Invalid page'
                 }, req);
             }
-
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }

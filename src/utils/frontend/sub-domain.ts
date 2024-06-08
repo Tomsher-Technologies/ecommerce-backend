@@ -41,7 +41,7 @@ export function getLanguageValueFromSubdomain(host: string | null | undefined, l
   return false; // Default to 'en' if no supported language code is found
 }
 
-export function getCountryShortTitleFromHostname(hostname: string | null | undefined) {
+export function getCountrySubDomainFromHostname(hostname: string | null | undefined) {
   if (hostname) {
     const parts = hostname.split('.');
     if (parts.length >= 2) {

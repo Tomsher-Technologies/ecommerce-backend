@@ -8,7 +8,7 @@ export interface CountryProps extends Document {
     countryImageUrl: string;
     isOrigin: Boolean;
     countryShortTitle: string;
-    subDomain: string;
+    countrySubDomain: string;
     status: string;
     createdBy?: string;
     statusAt?: Date;
@@ -74,13 +74,13 @@ const countrySchema: Schema<CountryProps> = new Schema({
         },
         minlength: [2, 'Short Title must be at least 3 characters long']
     },
-    subDomain: {
+    countrySubDomain: {
         type: String,
         required: true,
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Countries').countDocuments({ subDomain: value });
+                const count = await this.model('Countries').countDocuments({ countrySubDomain: value });
                 return count === 0;
             },
             message: 'Sub Domain must be unique'

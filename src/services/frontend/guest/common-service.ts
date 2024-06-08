@@ -1,34 +1,42 @@
 import mongoose from "mongoose";
 
-import { FilterOptionsProps, pagination } from "../../components/pagination";
+import { FilterOptionsProps, pagination } from "../../../components/pagination";
 
-import { multiLanguageSources } from "../../constants/multi-languages";
-import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsReplace } from "../../utils/config/slider-config";
-import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../utils/config/category-config";
-import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../utils/config/brand-config";
-import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../utils/config/collections-brands-config";
-import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../utils/config/product-config";
-import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../utils/config/collections-product-config";
-import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../utils/config/collections-categories-config";
+import { multiLanguageSources } from "../../../constants/multi-languages";
+import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsReplace } from "../../../utils/config/slider-config";
+import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
+import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../../utils/config/brand-config";
+import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
+import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../../utils/config/product-config";
+import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
+import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 
-import { getCountryShortTitleFromHostname, getLanguageValueFromSubdomain } from "../../utils/frontend/sub-domain";
-import SliderModel, { SliderProps } from "../../model/admin/ecommerce/slider-model";
-import CountryModel, { CountryProps } from "../../model/admin/setup/country-model";
-import LanguagesModel from "../../model/admin/setup/language-model";
-import { bannerFinalProject, bannerLookup, bannerProject, bannerlanguageFieldsReplace } from "../../utils/config/banner-config";
-import BannerModel from "../../model/admin/ecommerce/banner-model";
-import WebsiteSetupModel, { WebsiteSetupProps } from "../../model/admin/setup/website-setup-model";
-import GeneralService from "../admin/general-service";
-import { blockReferences, websiteSetup } from "../../constants/website-setup";
-import ProductsModel from "../../model/admin/ecommerce/product-model";
-import CollectionsProductsModel from "../../model/admin/website/collections-products-model";
-import CategoryModel from "../../model/admin/ecommerce/category-model";
-import CollectionsCategoriesModel from "../../model/admin/website/collections-categories-model";
-import BrandsModel from "../../model/admin/ecommerce/brands-model";
-import CollectionsBrandsModel from "../../model/admin/website/collections-brands-model";
+import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
+import SliderModel, { SliderProps } from "../../../model/admin/ecommerce/slider-model";
+import CountryModel, { CountryProps } from "../../../model/admin/setup/country-model";
+import LanguagesModel from "../../../model/admin/setup/language-model";
+import { bannerFinalProject, bannerLookup, bannerProject, bannerlanguageFieldsReplace } from "../../../utils/config/banner-config";
+import BannerModel from "../../../model/admin/ecommerce/banner-model";
+import WebsiteSetupModel, { WebsiteSetupProps } from "../../../model/admin/setup/website-setup-model";
+import GeneralService from "../../admin/general-service";
+import { blockReferences, websiteSetup } from "../../../constants/website-setup";
+import ProductsModel from "../../../model/admin/ecommerce/product-model";
+import CollectionsProductsModel from "../../../model/admin/website/collections-products-model";
+import CategoryModel from "../../../model/admin/ecommerce/category-model";
+import CollectionsCategoriesModel from "../../../model/admin/website/collections-categories-model";
+import BrandsModel from "../../../model/admin/ecommerce/brands-model";
+import CollectionsBrandsModel from "../../../model/admin/website/collections-brands-model";
 
 class CommonService {
     constructor() { }
+
+    async findAllCountries(): Promise<any> {
+        try {
+            return await CountryModel.find();
+        } catch (error) {
+            throw new Error('Error fetching country');
+        }
+    }
 
     async findWebsiteSetups(options: FilterOptionsProps = {}): Promise<WebsiteSetupProps> {
         const { query, sort, hostName, block, blockReference } = options;
@@ -59,15 +67,15 @@ class CommonService {
         return websiteSetupData;
     }
 
-    async findOneCountryShortTitleWithId(hostname: string | null | undefined): Promise<any> {
+    async findOneCountrySubDomainWithId(hostname: string | null | undefined): Promise<any> {
         try {
-            const countryShortTitle = getCountryShortTitleFromHostname(hostname);
+            const countrySubDomain = getCountrySubDomainFromHostname(hostname);
             const allCountryData = await CountryModel.find();
             if (allCountryData && allCountryData.length > 0) {
-                const normalizedHostname = countryShortTitle?.toLowerCase();
+                const normalizedHostname = countrySubDomain?.toLowerCase();
                 const regex = new RegExp(`^${normalizedHostname}$`, 'i');
 
-                const countryData: any = countryShortTitle && allCountryData.find((country: any) => regex.test(country?.countryShortTitle));
+                const countryData: any = countrySubDomain && allCountryData.find((country: any) => regex.test(country?.countrySubDomain));
                 if (countryData) {
                     return countryData._id
                 } else {
@@ -81,7 +89,7 @@ class CommonService {
             }
             return false;
         } catch (error) {
-            throw new Error('Error fetching total count of Seo');
+            throw new Error('Error fetching countries');
         }
     }
 

@@ -6,6 +6,7 @@ import CommonController from '../../../src/controllers/frontend/guest/common-con
 
 const router: Router = express.Router();
 
+router.get('/countries', logResponseStatus, CommonController.findAllCountries);
 router.get('/slider', logResponseStatus, CommonController.findAllSliders);
 router.get('/banner', CommonController.findAllBanners);
 router.get('/website-setups', CommonController.findWebsiteSetups);

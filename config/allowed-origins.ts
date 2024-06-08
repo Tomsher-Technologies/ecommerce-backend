@@ -5,5 +5,6 @@ export const allowedOrigins: string[] = [
     'https://beyondfreshadmin.vercel.app',
     'https://homestyleadmin.vercel.app',
     'https://smartbabyadmin.vercel.app',
-    'http://localhost:3027'
+    'http://localhost:3027',
+    'http://localhost:3028',
   ];
