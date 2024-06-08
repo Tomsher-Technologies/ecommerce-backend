@@ -28,7 +28,8 @@ class CountryController extends base_controller_1.default {
                         { countryTitle: keywordRegex },
                         { countryCode: keywordRegex },
                         { currencyCode: keywordRegex },
-                        { countryShortTitle: keywordRegex }
+                        { countryShortTitle: keywordRegex },
+                        { countrySubDomain: keywordRegex }
                     ],
                     ...query
                 };
@@ -58,7 +59,7 @@ class CountryController extends base_controller_1.default {
             const validatedData = country_schema_1.countrySchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { countryTitle, slug, countryCode, currencyCode, isOrigin, countryShortTitle } = validatedData.data;
+                const { countryTitle, slug, countryCode, currencyCode, isOrigin, countryShortTitle, countrySubDomain } = validatedData.data;
                 const user = res.locals.user;
                 const countryData = {
                     countryTitle,
@@ -67,6 +68,7 @@ class CountryController extends base_controller_1.default {
                     countryCode,
                     currencyCode,
                     countryShortTitle,
+                    countrySubDomain,
                     isOrigin,
                     status: '1', // active
                     statusAt: new Date(),

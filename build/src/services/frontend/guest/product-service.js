@@ -318,51 +318,48 @@ class ProductService {
                     product_config_1.attributeProject
                 ];
                 // pipeline.push(attributeProject)
-                const language = await this.language(hostName, pipeline);
+                const language = await this.attributeLanguage(hostName, pipeline);
                 // console.log("language",pipeline);
                 const data = await attribute_model_1.default.aggregate(language).exec();
-                console.log("datadatadata", data[0].attributeValues);
+                console.log("111111111111111111111111111111", data[0].attributeValues);
+                // if(data[0].attributeValues)
                 await attributeDetail.push(data[0]);
             }
         }
         return attributeDetail;
     }
-    async language(hostName, pipeline) {
+    async attributeLanguage(hostName, pipeline) {
         const languageData = await language_model_1.default.find().exec();
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         if (languageId) {
-            if (languageId) {
-                const attributeLookupWithLanguage = {
-                    ...product_config_1.attributeLookup,
-                    $lookup: {
-                        ...product_config_1.attributeLookup.$lookup,
-                        pipeline: product_config_1.attributeLookup.$lookup.pipeline.map((stage) => {
-                            if (stage.$match && stage.$match.$expr) {
-                                return {
-                                    ...stage,
-                                    $match: {
-                                        ...stage.$match,
-                                        $expr: {
-                                            ...stage.$match.$expr,
-                                            $and: [
-                                                ...stage.$match.$expr.$and,
-                                                { $eq: ['$languageId', languageId] },
-                                            ]
-                                        }
+            const attributeLookupWithLanguage = {
+                ...product_config_1.attributeLookup,
+                $lookup: {
+                    ...product_config_1.attributeLookup.$lookup,
+                    pipeline: product_config_1.attributeLookup.$lookup.pipeline.map((stage) => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] },
+                                        ]
                                     }
-                                };
-                            }
-                            return stage;
-                        })
-                    }
-                };
-                pipeline.push(attributeLookupWithLanguage);
-                pipeline.push(product_config_1.attributeLanguageFieldsReplace);
-                pipeline.push(product_config_1.attributeDetailLanguageFieldsReplace);
-                console.log("attributeDetailLanguageFieldsReplace", product_config_1.attributeDetailLanguageFieldsReplace.$addFields.attributeValues.$map.in.$mergeObjects[0]);
-            }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+            pipeline.push(attributeLookupWithLanguage);
+            pipeline.push(product_config_1.attributeLanguageFieldsReplace);
+            // pipeline.push(attributeDetailLanguageFieldsReplace)
         }
-        console.log("pipeline123", pipeline);
         pipeline.push(product_config_1.attributeProject);
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;

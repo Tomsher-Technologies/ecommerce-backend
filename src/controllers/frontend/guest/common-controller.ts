@@ -5,18 +5,37 @@ import { ProductsProps, ProductsQueryParams } from '../../../utils/types/product
 
 import BaseController from '../../admin/base-controller';
 import { CommonQueryParams } from '../../../utils/types/frontend/common';
-import CommonService from '../../../services/frontend/common-service';
+import CommonService from '../../../services/frontend/guest/common-service';
 
 const controller = new BaseController();
 
 class HomeController extends BaseController {
 
+    async findAllCountries(req: Request, res: Response): Promise<void> {
+        try {
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            if (countryId) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: await CommonService.findAllCountries(),
+                    message: 'Success!'
+                }, 200);
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'block and blockReference is missing! please check'
+                }, req);
+            }
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
     async findWebsiteSetups(req: Request, res: Response): Promise<void> {
         try {
             const { block, blockReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
 
             if (countryId) {
                 if (block && blockReference) {
@@ -63,7 +82,7 @@ class HomeController extends BaseController {
             const { page_size = 1, limit = 10, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -110,7 +129,7 @@ class HomeController extends BaseController {
             const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -174,7 +193,7 @@ class HomeController extends BaseController {
                 }
             }
             query = { ...query, ...filteredPriorityQuery };
-            
+
             // Log the final query to ensure it's constructed correctly
             console.log('Final query:', query);
 
@@ -197,7 +216,7 @@ class HomeController extends BaseController {
             const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -241,7 +260,7 @@ class HomeController extends BaseController {
             const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -285,7 +304,7 @@ class HomeController extends BaseController {
             const { page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
 
             if (countryId) {
                 if (page && pageReference) {

@@ -7,7 +7,7 @@ import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import {  attributeDetailLanguageFieldsReplace, attributeLanguageFieldsReplace, attributeLookup, attributeProject, productFinalProject } from '../../../utils/config/product-config';
+import { attributeDetailLanguageFieldsReplace, attributeDetailLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject, productFinalProject } from '../../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 
 
@@ -25,7 +25,7 @@ class ProductService {
 
 
     constructor() {
-      
+
         this.variantLookup = {
             $lookup: {
                 from: `${collections.ecommerce.products.productvariants.productvariants}`,
@@ -324,7 +324,7 @@ class ProductService {
         ];
 
         const productData = await ProductsModel.aggregate(pipeline).exec();
-        
+
         return productData
     }
 
@@ -364,62 +364,61 @@ class ProductService {
 
                     attributeProject
                 ];
-// pipeline.push(attributeProject)
-                const language: any = await this.language(hostName, pipeline)
-// console.log("language",pipeline);
+                // pipeline.push(attributeProject)
+                const language: any = await this.attributeLanguage(hostName, pipeline)
+                // console.log("language",pipeline);
 
                 const data = await AttributesModel.aggregate(language).exec()
-                console.log("datadatadata",data[0].attributeValues);
+                console.log("111111111111111111111111111111", data[0].attributeValues);
+
+                // if(data[0].attributeValues)
 
                 await attributeDetail.push(data[0])
 
             }
         }
-      
+
 
         return attributeDetail
     }
 
 
-    async language(hostName: any, pipeline: any): Promise<void> {
+    async attributeLanguage(hostName: any, pipeline: any): Promise<void> {
         const languageData = await LanguagesModel.find().exec();
         const languageId = getLanguageValueFromSubdomain(hostName, languageData);
         if (languageId) {
-            if (languageId) {
-                const attributeLookupWithLanguage = {
-                    ...attributeLookup,
-                    $lookup: {
-                        ...attributeLookup.$lookup,
-                        pipeline: attributeLookup.$lookup.pipeline.map((stage: any) => {
-                            if (stage.$match && stage.$match.$expr) {
-                                return {
-                                    ...stage,
-                                    $match: {
-                                        ...stage.$match,
-                                        $expr: {
-                                            ...stage.$match.$expr,
-                                            $and: [
-                                                ...stage.$match.$expr.$and,
-                                                { $eq: ['$languageId', languageId] },
-                                            ]
-                                        }
+            const attributeLookupWithLanguage = {
+                ...attributeLookup,
+                $lookup: {
+                    ...attributeLookup.$lookup,
+                    pipeline: attributeLookup.$lookup.pipeline.map((stage: any) => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] },
+                                        ]
                                     }
-                                };
-                            }
-                            return stage;
-                        })
-                    }
-                };
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
 
-                pipeline.push(attributeLookupWithLanguage);
+            pipeline.push(attributeLookupWithLanguage);
 
-                pipeline.push(attributeLanguageFieldsReplace);
-                pipeline.push(attributeDetailLanguageFieldsReplace)
-                console.log("attributeDetailLanguageFieldsReplace",attributeDetailLanguageFieldsReplace.$addFields.attributeValues.$map.in.$mergeObjects[0]);
-                
-            }
+            pipeline.push(attributeLanguageFieldsReplace);
+
+            // pipeline.push(attributeDetailLanguageFieldsReplace)
+
         }
-console.log("pipeline123",pipeline);
 
         pipeline.push(attributeProject);
 

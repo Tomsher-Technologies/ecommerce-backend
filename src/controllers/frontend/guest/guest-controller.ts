@@ -10,7 +10,7 @@ import { formatZodError, generateOTP } from '../../../utils/helpers';
 import BaseController from '../../../controllers/admin/base-controller';
 import CustomerService from '../../../services/frontend/customer-service';
 import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
-import CommonService from '../../../services/frontend/common-service';
+import CommonService from '../../../services/frontend/guest/common-service';
 
 
 const controller = new BaseController();
@@ -83,7 +83,7 @@ class GuestController extends BaseController {
 
     async forgotPassword(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
             if (countryId) {
                 const validatedData = forgotPasswordSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -141,7 +141,7 @@ class GuestController extends BaseController {
 
     async verifyOtp(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
             if (countryId) {
                 const validatedData = verifyOtpSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -219,7 +219,7 @@ class GuestController extends BaseController {
 
     async login(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
             if (countryId) {
                 const validatedData = loginSchema.safeParse(req.body);
                 if (validatedData.success) {
