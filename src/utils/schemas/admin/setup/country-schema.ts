@@ -5,6 +5,7 @@ export const countrySchema = zod.object({
     countryCode: zod.string({ required_error: 'Country code is required', }).min(2, 'Country code is should be 2 chars minimum'),
     currencyCode: zod.string({ required_error: 'Currency code is required', }).min(2, 'Currency code is should be 2 chars minimum'),
     countryShortTitle: zod.string({ required_error: 'Country Short title is required', }).min(2, 'Currency code is should be 2 chars minimum'),
+    subDomain: zod.string({ required_error: 'Sub Domain is required', }).min(2, 'Sub Domain is should be 2 chars minimum').max(3, 'Sub Domain is should be 3 chars maximum'),
     isOrigin: zod.boolean().optional()
 }).nonstrict();
 

@@ -32,7 +32,8 @@ class CountryController extends BaseController {
                         { countryTitle: keywordRegex },
                         { countryCode: keywordRegex },
                         { currencyCode: keywordRegex },
-                        { countryShortTitle: keywordRegex }
+                        { countryShortTitle: keywordRegex },
+                        { subDomain: keywordRegex }
                     ],
                     ...query
                 } as any;
@@ -65,7 +66,7 @@ class CountryController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryTitle, slug, countryCode, currencyCode, isOrigin, countryShortTitle } = validatedData.data;
+                const { countryTitle, slug, countryCode, currencyCode, isOrigin, countryShortTitle, subDomain } = validatedData.data;
                 const user = res.locals.user;
 
                 const countryData: Partial<CountryProps> = {
@@ -75,6 +76,7 @@ class CountryController extends BaseController {
                     countryCode,
                     currencyCode,
                     countryShortTitle,
+                    subDomain,
                     isOrigin,
                     status: '1', // active
                     statusAt: new Date(),
