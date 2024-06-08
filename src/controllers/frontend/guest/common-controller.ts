@@ -13,7 +13,7 @@ class HomeController extends BaseController {
 
     async findAllCountries(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: await CommonService.findAllCountries(),
@@ -35,7 +35,7 @@ class HomeController extends BaseController {
             const { block, blockReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
                 if (block && blockReference) {
@@ -49,7 +49,7 @@ class HomeController extends BaseController {
 
                     const websiteSetup = await CommonService.findWebsiteSetups({
                         limit: 500,
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         block,
                         blockReference,
                         query,
@@ -82,7 +82,7 @@ class HomeController extends BaseController {
             const { page_size = 1, limit = 10, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -97,7 +97,7 @@ class HomeController extends BaseController {
                     const sliders = await CommonService.findAllSliders({
                         page: parseInt(page_size as string),
                         limit: 500,
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         query,
                     });
 
@@ -129,7 +129,7 @@ class HomeController extends BaseController {
             const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -144,7 +144,7 @@ class HomeController extends BaseController {
                     const banners = await CommonService.findAllBanners({
                         page: parseInt(page_size as string),
                         limit: 500,
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         query,
                     });
 
@@ -198,7 +198,7 @@ class HomeController extends BaseController {
             console.log('Final query:', query);
 
             const products = await CommonService.findPriorityProducts({
-                hostName: req.get('host'),
+                hostName: req.get('origin'),
                 query,
             });
 
@@ -216,7 +216,7 @@ class HomeController extends BaseController {
             const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -229,7 +229,7 @@ class HomeController extends BaseController {
                     } as any;
 
                     const products = await CommonService.findCollectionProducts({
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         query,
                     });
 
@@ -260,7 +260,7 @@ class HomeController extends BaseController {
             const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -273,7 +273,7 @@ class HomeController extends BaseController {
                     } as any;
 
                     const categories = await CommonService.findCollectionCategories({
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         query,
                     });
 
@@ -304,7 +304,7 @@ class HomeController extends BaseController {
             const { page, pageReference } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
                 if (page && pageReference) {
@@ -317,7 +317,7 @@ class HomeController extends BaseController {
                     } as any;
 
                     const brands = await CommonService.findCollectionBrands({
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         query,
                     });
 
