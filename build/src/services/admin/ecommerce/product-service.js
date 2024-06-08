@@ -349,8 +349,13 @@ class ProductsService {
         return product_model_1.default.findOne(productData);
     }
     async create(productData) {
-        console.log(productData);
-        return product_model_1.default.create(productData);
+        const data = product_model_1.default.create(productData);
+        if (data) {
+            return data;
+        }
+        else {
+            return null;
+        }
     }
     async findOne(productId) {
         try {

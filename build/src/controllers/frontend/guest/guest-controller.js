@@ -11,7 +11,7 @@ const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
-const common_service_1 = __importDefault(require("../../../services/frontend/common-service"));
+const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
@@ -80,7 +80,7 @@ class GuestController extends base_controller_1.default {
     }
     async forgotPassword(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
             if (countryId) {
                 const validatedData = authSchema_1.forgotPasswordSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -139,7 +139,7 @@ class GuestController extends base_controller_1.default {
     }
     async verifyOtp(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
             if (countryId) {
                 const validatedData = authSchema_1.verifyOtpSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -220,7 +220,7 @@ class GuestController extends base_controller_1.default {
     }
     async login(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountryShortTitleWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
             if (countryId) {
                 const validatedData = authSchema_1.loginSchema.safeParse(req.body);
                 if (validatedData.success) {

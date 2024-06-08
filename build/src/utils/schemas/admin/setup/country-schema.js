@@ -7,6 +7,7 @@ exports.countrySchema = zod_1.z.object({
     countryCode: zod_1.z.string({ required_error: 'Country code is required', }).min(2, 'Country code is should be 2 chars minimum'),
     currencyCode: zod_1.z.string({ required_error: 'Currency code is required', }).min(2, 'Currency code is should be 2 chars minimum'),
     countryShortTitle: zod_1.z.string({ required_error: 'Country Short title is required', }).min(2, 'Currency code is should be 2 chars minimum'),
+    countrySubDomain: zod_1.z.string({ required_error: 'Sub Domain is required', }).min(2, 'Sub Domain is should be 2 chars minimum').max(3, 'Sub Domain is should be 3 chars maximum'),
     isOrigin: zod_1.z.boolean().optional()
 }).nonstrict();
 exports.countryStatusSchema = zod_1.z.object({

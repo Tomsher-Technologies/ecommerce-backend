@@ -82,6 +82,20 @@ const countrySchema = new mongoose_1.Schema({
         },
         minlength: [2, 'Short Title must be at least 3 characters long']
     },
+    countrySubDomain: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: async function (value) {
+                const count = await this.model('Countries').countDocuments({ countrySubDomain: value });
+                return count === 0;
+            },
+            message: 'Sub Domain must be unique'
+        },
+        minlength: [2, 'Sub Domain must be at least 2 characters long'],
+        maxlength: [3, 'The sub domain must be at most 3 characters long']
+    },
     countryImageUrl: {
         type: String,
         required: true,

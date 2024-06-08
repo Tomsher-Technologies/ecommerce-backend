@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.attributeProject = exports.attributeDetailLanguageFieldsReplace = exports.attributeLanguageFieldsReplace = exports.attributeLookup = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = void 0;
+exports.attributeProject = exports.attributeDetailLanguageFieldsReplace = exports.attributeLanguageFieldsReplace = exports.attributeDetailLookup = exports.attributeLookup = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = void 0;
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productMultilanguageFieldsLookup = {
     $lookup: {
@@ -109,6 +109,25 @@ exports.attributeLookup = {
         as: 'languageValues',
     }
 };
+exports.attributeDetailLookup = {
+    $lookup: {
+        from: 'multilanguagefieleds', // Ensure 'from' field is included
+        let: { attributeDetailId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $eq: ['$sourceId', '$$attributeDetailId'] },
+                            { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.attributedetails] },
+                        ],
+                    },
+                },
+            },
+        ],
+        as: 'languageValues',
+    }
+};
 exports.attributeLanguageFieldsReplace = {
     $addFields: {
         attributeTitle: {
@@ -128,42 +147,49 @@ exports.attributeLanguageFieldsReplace = {
                 then: "$attributeTitle",
                 else: { $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }
             }
-        }
-    }
-};
-exports.attributeDetailLanguageFieldsReplace = {
-    $addFields: {
+        },
         'attributeValues': {
             $map: {
-                input: '$attributeValues',
-                as: 'value',
+                input: "$attributeValues",
+                as: "attrValue",
                 in: {
                     $mergeObjects: [
-                        '$$value',
+                        "$$attrValue",
                         {
                             itemName: {
                                 $cond: {
-                                    if: {
-                                        $or: [
-                                            { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, null] }, null] },
-                                            { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, ""] }, ""] },
-                                            { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, "undefined"] }, "undefined"] },
-                                            { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, undefined] }, undefined] },
-                                            { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, ""] },
-                                            { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, null] },
-                                            { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, "undefined"] },
-                                            { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, undefined] }
-                                        ]
-                                    },
-                                    then: '$$value.itemName', // Use Arabic itemName
-                                    else: '$$value.attributeTitle' // Use English itemName
+                                    if: { $isArray: "$$attrValue.itemName" },
+                                    then: { $arrayElemAt: ["$$attrValue.itemName", "$$index"] },
+                                    else: "$$attrValue.itemName"
                                 }
                             }
                         }
                     ]
                 }
             }
-        },
+        }
+    }
+};
+exports.attributeDetailLanguageFieldsReplace = {
+    $addFields: {
+        'attributeValues.itemName': {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, "undefined"] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, undefined] }
+                    ]
+                },
+                then: "$attributeValues.itemName",
+                else: { $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }
+            }
+        }
     }
 };
 exports.attributeProject = {
