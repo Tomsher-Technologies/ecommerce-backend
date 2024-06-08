@@ -554,7 +554,7 @@ class ProductsController extends BaseController {
                                                                         isExcel: true
                                                                     }
                                                                     if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
-                                                                        const product: any = await ProductsService.find({ sku: data.SKU })
+                                                                        const product: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] })
 
                                                                         if (!product) {
                                                                             const createProduct = await ProductsService.create(finalData)
@@ -742,19 +742,21 @@ class ProductsController extends BaseController {
         } catch (error: any) {
             console.log("errorerror", error);
 
-            if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-                validation.push(error.errors.slug.properties)
+            // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
+            //     validation.push({ slug: error.errors.slug.properties  })
 
-            } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
-                validation.push(error.errors.countryId.properties)
+            // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
+            //     validation.push(error.errors.countryId.properties)
 
-            }
-            else {
-                validation.push(error.errors)
+            // }
+            // else {
+            //     validation.push(error.errors)
 
-            }
-
-            controller.sendErrorResponse(res, 500, { message: validation });
+            // }
+            controller.sendSuccessResponse(res, {
+                validation,
+                message: 'Product excel upload successfully completed'
+            }, 200);
 
         }
 

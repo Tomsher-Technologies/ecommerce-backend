@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCountryShortTitleFromHostname = exports.getLanguageValueFromSubdomain = exports.getValidSubdomain = void 0;
+exports.getCountrySubDomainFromHostname = exports.getLanguageValueFromSubdomain = exports.getValidSubdomain = void 0;
 const getValidSubdomain = (host) => {
     let subdomain = null;
     if (!host && typeof window !== 'undefined') {
@@ -42,7 +42,7 @@ function getLanguageValueFromSubdomain(host, languageData) {
     return false; // Default to 'en' if no supported language code is found
 }
 exports.getLanguageValueFromSubdomain = getLanguageValueFromSubdomain;
-function getCountryShortTitleFromHostname(hostname) {
+function getCountrySubDomainFromHostname(hostname) {
     if (hostname) {
         const parts = hostname.split('.');
         if (parts.length >= 2) {
@@ -57,4 +57,4 @@ function getCountryShortTitleFromHostname(hostname) {
     }
     return null;
 }
-exports.getCountryShortTitleFromHostname = getCountryShortTitleFromHostname;
+exports.getCountrySubDomainFromHostname = getCountrySubDomainFromHostname;

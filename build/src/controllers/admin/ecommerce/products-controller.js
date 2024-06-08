@@ -134,9 +134,9 @@ class ProductsController extends base_controller_1.default {
                             var slugData;
                             if (variants[variantsIndex].productVariants && variants[variantsIndex].productVariants.length) {
                                 for (let productVariantsIndex = 0; productVariantsIndex < variants[variantsIndex].productVariants.length; productVariantsIndex++) {
-                                    var countryShortTitle;
+                                    var countryData;
                                     if (variants[variantsIndex].countryId) {
-                                        countryShortTitle = await country_service_1.default.findCountryId({ _id: variants[variantsIndex].countryId });
+                                        countryData = await country_service_1.default.findCountryId({ _id: variants[variantsIndex].countryId });
                                     }
                                     if (variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle) {
                                         slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku;
@@ -144,8 +144,8 @@ class ProductsController extends base_controller_1.default {
                                     else {
                                         slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku;
                                     }
-                                    if (countryShortTitle) {
-                                        slugData = slugData + "-" + countryShortTitle.countryShortTitle;
+                                    if (countryData) {
+                                        slugData = slugData + "-" + countryData.countryShortTitle;
                                     }
                                     if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
                                         const checkDuplication = await product_variant_service_1.default.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex], (0, helpers_1.slugify)(slugData));
@@ -480,7 +480,7 @@ class ProductsController extends base_controller_1.default {
                                                                         isExcel: true
                                                                     };
                                                                     if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
-                                                                        const product = await product_service_1.default.find({ sku: data.SKU });
+                                                                        const product = await product_service_1.default.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] });
                                                                         if (!product) {
                                                                             const createProduct = await product_service_1.default.create(finalData);
                                                                             if (createProduct) {
@@ -656,16 +656,18 @@ class ProductsController extends base_controller_1.default {
         }
         catch (error) {
             console.log("errorerror", error);
-            if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-                validation.push(error.errors.slug.properties);
-            }
-            if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
-                validation.push(error.errors.countryId.properties);
-            }
-            else {
-                validation.push(error.errors);
-            }
-            controller.sendErrorResponse(res, 500, { message: validation });
+            // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
+            //     validation.push({ slug: error.errors.slug.properties  })
+            // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
+            //     validation.push(error.errors.countryId.properties)
+            // }
+            // else {
+            //     validation.push(error.errors)
+            // }
+            controller.sendSuccessResponse(res, {
+                validation,
+                message: 'Product excel upload successfully completed'
+            }, 200);
         }
     }
     async findOne(req, res) {

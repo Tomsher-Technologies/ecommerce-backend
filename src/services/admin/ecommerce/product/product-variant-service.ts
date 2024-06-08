@@ -111,6 +111,7 @@ class ProductVariantService {
     }
 
     async create(productId: string, productVariants: ProductVariantsProps, userData: UserDataProps) {
+console.log("123456789",productVariants.slug);
 
         const productVariantData = {
             productId: productId,

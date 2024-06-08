@@ -375,10 +375,15 @@ class ProductsService {
         return ProductsModel.findOne(productData);
     }
 
-    async create(productData: any): Promise<ProductsProps> {
-        console.log(productData);
-        
-        return ProductsModel.create(productData);
+    async create(productData: any): Promise<ProductsProps | null> {
+
+        const data = ProductsModel.create(productData);
+        if (data) {
+
+            return data
+        } else {
+            return null
+        }
     }
 
     async findOne(productId: string): Promise<ProductsProps | null> {
@@ -502,9 +507,9 @@ class ProductsService {
     }
     async checkRequiredColumns(worksheet: any, requiredColumns: any) {
 
-        
+
         for (let column of requiredColumns) {
-            
+
             if (!worksheet.includes(column)) {
 
                 return column;
