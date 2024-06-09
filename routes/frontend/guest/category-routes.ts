@@ -6,6 +6,6 @@ import CategoryController from '../../../src/controllers/frontend/guest/category
 
 const router: Router = express.Router();
 
-router.get('/', logResponseStatus, CategoryController.findAll);
+// router.get('/', logResponseStatus, CategoryController.findAll);
 
 export default router;

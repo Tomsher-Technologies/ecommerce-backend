@@ -7,7 +7,7 @@ import { CategoryQueryParams } from '../../../utils/types/category';
 const controller = new BaseController();
 
 class CategoryController extends BaseController {
-    async findAll(req: Request, res: Response): Promise<void> {
+    async findAllCategory(req: Request, res: Response): Promise<void> {
         try {
             const { slug = '', category = '', brand = '' } = req.query as CategoryQueryParams;
             const level = '0';

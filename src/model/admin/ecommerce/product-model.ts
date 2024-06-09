@@ -39,12 +39,11 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     description: {
         type: String,
         required: true,
-        minlength: [5, 'Description must be at least 5 characters long']
+        minlength: [10, 'Description must be at least 10 characters long']
     },
     longDescription: {
         type: String,
-        required: false,
-        minlength: [7, 'Long description must be at least 7 characters long']
+        // minlength: [7, 'Long description must be at least 7 characters long']
     },
     brand: {
         type: Schema.Types.ObjectId,

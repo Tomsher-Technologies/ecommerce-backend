@@ -96,6 +96,20 @@ export const brandLanguageFieldsReplace = {
         }
     }
 }   
+export const brandProject = {
+    $project: {
+        _id: 1,
+        brandTitle: 1,
+        slug: 1,
+        level: 1,
+        status: 1,
+        description: 1,
+        brandImageUrl: 1,
+        corporateGiftsPriority: 1,
+        type: 1,
+        languageValues: { $ifNull: ['$languageValues', []] },
+    }
+}
 
 export const brandFinalProject = {
     $project: {
