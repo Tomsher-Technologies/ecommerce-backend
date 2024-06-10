@@ -11,7 +11,6 @@ router.get('/countries', response_status_1.logResponseStatus, common_controller_
 router.get('/slider', response_status_1.logResponseStatus, common_controller_1.default.findAllSliders);
 router.get('/banner', common_controller_1.default.findAllBanners);
 router.get('/website-setups', common_controller_1.default.findWebsiteSetups);
-router.get('/website-setups', common_controller_1.default.findWebsiteSetups);
 router.get('/priority-product', common_controller_1.default.findPriorityProducts);
 router.get('/collection-products', common_controller_1.default.findCollectionProducts);
 router.get('/collection-categories', common_controller_1.default.findCollectionCategories);

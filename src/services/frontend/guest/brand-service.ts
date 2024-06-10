@@ -59,7 +59,7 @@ class BrandService {
         }
 
         else {
-            productData = await ProductService.findProducts(query)
+            productData = await ProductService.findProductList({query})
         }
 
         const brandArray: any = []
@@ -68,14 +68,11 @@ class BrandService {
         if (productData) {
             for await (let product of productData) {
 
-                //                 for await (let brand of product.brand) {
                 const isPresent = await brandArray.some((objId: any) => objId.equals(product.brand._id));
-                // console.log("................",isPresent);
 
                 if (!isPresent) {
                     await brandArray.push(product.brand._id);
                 }
-                //     }
             }
 
             for await (let brand of brandArray) {

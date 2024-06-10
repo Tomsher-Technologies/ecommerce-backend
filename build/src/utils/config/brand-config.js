@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.brandFinalProject = exports.brandLanguageFieldsReplace = exports.brandLookup = void 0;
+exports.brandFinalProject = exports.brandProject = exports.brandLanguageFieldsReplace = exports.brandLookup = void 0;
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.brandLookup = {
     $lookup: {
@@ -95,6 +95,20 @@ exports.brandLanguageFieldsReplace = {
                 else: { $arrayElemAt: ["$languageValues.languageValues.brandBannerImageUrl", 0] }
             }
         }
+    }
+};
+exports.brandProject = {
+    $project: {
+        _id: 1,
+        brandTitle: 1,
+        slug: 1,
+        level: 1,
+        status: 1,
+        description: 1,
+        brandImageUrl: 1,
+        corporateGiftsPriority: 1,
+        type: 1,
+        languageValues: { $ifNull: ['$languageValues', []] },
     }
 };
 exports.brandFinalProject = {

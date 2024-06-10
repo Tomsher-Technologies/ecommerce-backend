@@ -274,6 +274,9 @@ export const brandLookup = {
             },
         ],
     },
+    // $addFields: {
+    //     brand: { $arrayElemAt: ['$brand', 0] }
+    // }
 };
 export const brandObject = {
     $addFields: {

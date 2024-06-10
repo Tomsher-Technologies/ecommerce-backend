@@ -266,34 +266,16 @@ class CommonService {
                         },
                     },
                 ];
-                if (languageId) {
-                    const productLookupWithLanguage = {
-                        ...product_config_1.productMultilanguageFieldsLookup,
-                        $lookup: {
-                            ...product_config_1.productMultilanguageFieldsLookup.$lookup,
-                            pipeline: product_config_1.productMultilanguageFieldsLookup.$lookup.pipeline.map(stage => {
-                                if (stage.$match && stage.$match.$expr) {
-                                    return {
-                                        ...stage,
-                                        $match: {
-                                            ...stage.$match,
-                                            $expr: {
-                                                ...stage.$match.$expr,
-                                                $and: [
-                                                    ...stage.$match.$expr.$and,
-                                                    { $eq: ['$languageId', languageId] }
-                                                ]
-                                            }
-                                        }
-                                    };
-                                }
-                                return stage;
-                            })
-                        }
-                    };
-                    productPipeline.push(productLookupWithLanguage);
-                    productPipeline.push(product_config_1.productlanguageFieldsReplace);
-                }
+                const modifiedPipeline = {
+                    $lookup: {
+                        ...product_config_1.variantLookup.$lookup,
+                        pipeline: [
+                            ...product_config_1.productVariantAttributesLookup,
+                            product_config_1.addFieldsProductVariantAttributes,
+                        ]
+                    }
+                };
+                productPipeline.push(modifiedPipeline);
                 productPipeline.push(product_config_1.productMultilanguageFieldsLookup);
                 productPipeline.push(product_config_1.productFinalProject);
                 const productData = await product_model_1.default.aggregate(productPipeline).exec();

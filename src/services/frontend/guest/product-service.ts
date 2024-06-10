@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, specificationLookup, variantLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, specificationLookup, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import mongoose from 'mongoose';
@@ -18,6 +18,8 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import BrandService from './brand-service';
+import { CountryProps } from '../../../model/admin/setup/country-model';
+import CommonService from '../../../services/frontend/guest/common-service';
 
 
 class ProductService {
@@ -27,25 +29,48 @@ class ProductService {
     constructor() {
     }
 
-    async findProducts(productOption: any): Promise<CategoryProps[]> {
-        const query = productOption.query;
-        const products = productOption.products
+    async findProductList(productOption: any): Promise<ProductsProps[]> {
+        var { query, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName } = productOption;
+
+        const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
+        if (countryId) {
+            query = {
+                ...query,
+                'productVariants.countryId': countryId
+
+            } as any;
+        }
+
+
+        const modifiedPipeline = {
+            $lookup: {
+                ...variantLookup.$lookup,
+                pipeline: [
+                    ...(getAttribute === '1' ? [...productVariantAttributesLookup] : []),
+                    ...(getAttribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                    ...(getSpecification === '1' ? [...productSpecificationLookup] : []),
+                    ...(getSpecification === '1' ? [addFieldsProductSpecification] : []),
+                    ...(getSeo === '1' ? [productSeoLookup] : []),
+                    ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                    ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
+
+                ]
+            }
+        };
+
         let pipeline: any[] = [
-            productCategoryLookup,
-            variantLookup,
-            imageLookup,
-            brandLookup,
-            brandObject,
-            seoLookup,
-            seoObject,
-            specificationLookup,
+            ...((getAttribute || getSpecification) ? [modifiedPipeline] : []),
+            // modifiedPipeline,
+            ...(getCategory === '1' ? [productCategoryLookup] : []),
+            ...(getImageGallery === '1' ? [imageLookup] : []),
+            ...(getBrand === '1' ? [brandLookup] : []),
+            ...(getBrand === '1' ? [brandObject] : []),
+            ...(getSpecification === '1' ? [specificationLookup] : []),
             { $match: query }
 
         ];
-        var productData: any = []
-        var collections: any
-        // var collectionProducts: any
-        var brandDetail: any = []
+
+        let productData: any = [];
 
         const collection: any = await this.collection(products)
 
@@ -53,40 +78,30 @@ class ProductService {
             productData = collection.productData
         }
         else if (collection && collection.collectionsBrands) {
-            console.log("lllllllllllllllllllll", collection.collectionsBrands);
 
             for await (let data of collection.collectionsBrands) {
-                console.log("data", data);
-
                 const result = await ProductsModel.find({ brand: new mongoose.Types.ObjectId(data) })
-                console.log("result", result);
                 if (result && result.length > 0) {
                     productData.push(result[0])
                 }
             }
-
         }
-
-
         else {
+            const language: any = await this.productLanguage(hostName, pipeline)
+console.log("vbvcbvcbvcb",language);
 
-            productData = await ProductsModel.aggregate(pipeline).exec();
-
+            productData = await ProductsModel.aggregate(language).exec();
         }
-
-        console.log("...........", productData);
-
         return productData
     }
 
-
-    async findAllAttributes(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
+    async findAllAttributes(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
 
         const { query, hostName } = pagination(options.query || {}, options);
         var attributeDetail: any = []
 
 
-        const productData: any = await this.findProducts(query)
+        const productData: any = await this.findProductList({ query, getCategory: '1', getBrand: '1', getAttribute: '1', getSpecification: '1' })
         const attributeArray: any = []
 
         if (productData) {
@@ -186,13 +201,13 @@ class ProductService {
     }
 
 
-    async findAllSpecifications(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
+    async findAllSpecifications(options: FilterOptionsProps = {}): Promise<void | null> {
 
         const { query, hostName } = pagination(options.query || {}, options);
         var specificationDetail: any = []
 
+        const productData: any = await this.findProductList({ query, getCategory: '1', getBrand: '1', getAttribute: '1', getSpecification: '1' })
 
-        const productData: any = await this.findProducts(query)
         const specificationArray: any = []
 
         if (productData) {

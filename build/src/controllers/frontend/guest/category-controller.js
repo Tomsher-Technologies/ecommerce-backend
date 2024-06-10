@@ -8,7 +8,7 @@ const base_controller_1 = __importDefault(require("../../../controllers/admin/ba
 const category_service_1 = __importDefault(require("../../../services/frontend/guest/category-service"));
 const controller = new base_controller_1.default();
 class CategoryController extends base_controller_1.default {
-    async findAll(req, res) {
+    async findAllCategory(req, res) {
         try {
             const { slug = '', category = '', brand = '' } = req.query;
             const level = '0';
@@ -36,17 +36,44 @@ class CategoryController extends base_controller_1.default {
             //         }
             //     }
             // }
+            /*  if (category) {
+  
+                  const keywordRegex = new RegExp(category, 'i');
+  
+                  const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+  
+                  if (isObjectId) {
+                      
+                      query = {
+                          ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                      }
+  
+                  } else {
+                      console.log("keywordRegex,keywordRegex",keywordRegex);
+  
+                      query = {
+  
+                          ...query, "productCategory.category.slug": keywordRegex
+                      }
+                  }
+              }
+              else {
+                  query = {
+                      ...query, level: level
+                  } as any;
+              }
+  */
             if (category) {
                 const keywordRegex = new RegExp(category, 'i');
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                 if (isObjectId) {
                     query = {
-                        ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                        ...query, _id: new mongoose_1.default.Types.ObjectId(category)
                     };
                 }
                 else {
                     query = {
-                        ...query, "productCategory.category.slug": keywordRegex
+                        ...query, slug: category
                     };
                 }
             }
@@ -76,7 +103,7 @@ class CategoryController extends base_controller_1.default {
             //     } as any;
             // }
             const categories = await category_service_1.default.findAll({
-                hostName: req.get('host'),
+                hostName: req.get('origin'),
                 query,
             });
             return controller.sendSuccessResponse(res, {
