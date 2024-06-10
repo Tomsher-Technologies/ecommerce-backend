@@ -2,6 +2,165 @@ import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
 
 
+export const productVariantAttributesLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productvariants.productvariantattributes}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productVariantAttributes',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.attributedetails}`,
+                        localField: 'attributeDetailId',
+                        foreignField: '_id',
+                        as: 'attributeDetail'
+                    }
+                },
+                {
+                    $unwind: "$attributeDetail"
+                },
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.attributes}`,
+                        localField: 'attributeId',
+                        foreignField: '_id',
+                        as: 'attribute'
+                    }
+                },
+                {
+                    $unwind: "$attribute"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        attribute: '$attribute',
+                        attributeDetail: '$attributeDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+
+export const addFieldsProductVariantAttributes = {
+    $addFields: {
+        productVariantAttributes: {
+            $map: {
+                input: '$productVariantAttributes',
+                in: {
+                    variantId: '$$this.variantId',
+                    _id: '$$this._id',
+                    attributeId: '$$this.attribute._id',
+                    attributeTitle: '$$this.attribute.attributeTitle',
+                    slug: '$$this.attribute.slug',
+                    attributeType: '$$this.attribute.attributeType',
+                    attributeDetail: {
+                        _id: '$$this.attributeDetail._id',
+                        attributeId: '$$this.attributeDetail.attributeId',
+                        itemName: '$$this.attributeDetail.itemName',
+                        itemValue: '$$this.attributeDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+};
+
+export const productSpecificationLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productSpecification',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.specifications}`,
+                        localField: 'specificationId',
+                        foreignField: '_id',
+                        as: 'specification'
+                    }
+                },
+                {
+                    $unwind: "$specification"
+                },
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.specificationdetails}`,
+                        localField: 'specificationDetailId',
+                        foreignField: '_id',
+                        as: 'specificationDetail'
+                    }
+                },
+                {
+                    $unwind: "$specificationDetail"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        specification: '$specification',
+                        specificationDetail: '$specificationDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+
+export const addFieldsProductSpecification = {
+    $addFields: {
+        productSpecification: {
+            $map: {
+                input: '$productSpecification',
+                in: {
+                    variantId: '$$this.variantId',
+                    _id: '$$this._id',
+                    specificationId: '$$this.specification._id',
+                    specificationTitle: '$$this.specification.specificationTitle',
+                    slug: '$$this.specification.slug',
+                    specificationDetail: {
+                        _id: '$$this.specificationDetail._id',
+                        specificationId: '$$this.specificationDetail.specificationId',
+                        itemName: '$$this.specificationDetail.itemName',
+                        itemValue: '$$this.specificationDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+};
+
+export const productSeoLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.seopages}`,
+        localField: '_id',
+        foreignField: 'pageReferenceId',
+        as: 'productSeo'
+    }
+};
+
+export const addFieldsProductSeo = {
+    $addFields: {
+        productSeo: { $arrayElemAt: ['$productSeo', 0] }
+    }
+};
+
+export const variantImageGalleryLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.products.productgallaryimages}`,
+        localField: '_id',
+        foreignField: 'variantId',
+        as: 'variantImageGallery'
+    }
+};
+
 export const variantLookup = {
     $lookup: {
         from: `${collections.ecommerce.products.productvariants.productvariants}`,
@@ -9,158 +168,14 @@ export const variantLookup = {
         foreignField: 'productId',
         as: 'productVariants',
         pipeline: [
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.productvariants.productvariantattributes}`,
-                    localField: '_id',
-                    foreignField: 'variantId',
-                    as: 'productVariantAttributes',
-                    pipeline: [
-                        {
-                            $lookup: {
-                                from: `${collections.ecommerce.attributedetails}`,
-                                localField: 'attributeDetailId',
-                                foreignField: '_id',
-                                as: 'attributeDetail'
-                            }
-                        },
-                        {
-                            $unwind: "$attributeDetail"
-                        },
-                        {
-                            $lookup: {
-                                from: `${collections.ecommerce.attributes}`,
-                                localField: 'attributeId',
-                                foreignField: '_id',
-                                as: 'attribute'
-                            }
-                        },
-                        {
-                            $unwind: "$attribute"
-                        },
-                        {
-                            $project: {
-                                _id: 1,
-                                variantId: 1,
-                                productId: 1,
-                                attribute: '$attribute',
-                                attributeDetail: '$attributeDetail',
-
-                            }
-                        },
-                    ]
-                },
-            },
-            {
-                $addFields: {
-                    productVariantAttributes: {
-                        $map: {
-                            input: '$productVariantAttributes',
-                            in: {
-                                variantId: '$$this.variantId',
-                                _id: '$$this._id',
-                                attributeId: '$$this.attribute._id',
-                                attributeTitle: '$$this.attribute.attributeTitle',
-                                slug: '$$this.attribute.slug',
-                                attributeType: '$$this.attribute.attributeType',
-                                attributeDetail: {
-                                    _id: '$$this.attributeDetail._id',
-                                    attributeId: '$$this.attributeDetail.attributeId',
-                                    itemName: '$$this.attributeDetail.itemName',
-                                    itemValue: '$$this.attributeDetail.itemValue'
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.productvariants.productspecifications}`,
-                    localField: '_id',
-                    foreignField: 'variantId',
-                    as: 'productSpecification',
-                    pipeline: [
-                        {
-                            $lookup: {
-                                from: `${collections.ecommerce.specifications}`,
-                                localField: 'specificationId',
-                                foreignField: '_id',
-                                as: 'specification',
-                            },
-                        },
-                        {
-                            $unwind: "$specification"
-                        },
-                        {
-                            $lookup: {
-                                from: `${collections.ecommerce.specificationdetails}`,
-                                localField: 'specificationDetailId',
-                                foreignField: '_id',
-                                as: 'specificationDetail',
-                            },
-                        },
-                        {
-                            $unwind: "$specificationDetail"
-                        },
-                        {
-                            $project: {
-                                _id: 1,
-                                variantId: 1,
-                                productId: 1,
-                                specification: '$specification',
-                                specificationDetail: '$specificationDetail',
-                            }
-                        },
-                    ]
-                },
-            },
-            {
-                $addFields: {
-                    productSpecification: {
-                        $map: {
-                            input: '$productSpecification',
-                            in: {
-                                variantId: '$$this.variantId',
-                                _id: '$$this._id',
-                                specificationId: '$$this.specification._id',
-                                specificationTitle: '$$this.specification.specificationTitle',
-                                slug: '$$this.specification.slug',
-                                specificationDetail: {
-                                    _id: '$$this.specificationDetail._id',
-                                    specificationId: '$$this.specificationDetail.specificationId',
-                                    itemName: '$$this.specificationDetail.itemName',
-                                    itemValue: '$$this.specificationDetail.itemValue'
-                                }
-
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.seopages}`,
-                    localField: '_id',
-                    foreignField: 'pageReferenceId',
-                    as: 'productSeo',
-                },
-            },
-            {
-                $addFields: {
-                    productSeo: { $arrayElemAt: ['$productSeo', 0] }
-                }
-            },
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.productgallaryimages}`,
-                    localField: '_id',
-                    foreignField: 'variantId',
-                    as: 'variantImageGallery',
-                },
-            }
-        ],
+            ...productVariantAttributesLookup,
+            addFieldsProductVariantAttributes,
+            ...productSpecificationLookup,
+            addFieldsProductSpecification,
+            productSeoLookup,
+            addFieldsProductSeo,
+            variantImageGalleryLookup
+        ]
     }
 };
 

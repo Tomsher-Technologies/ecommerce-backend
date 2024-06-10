@@ -7,7 +7,7 @@ import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsRe
 import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
 import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
-import { productFinalProject, productMultilanguageFieldsLookup, productlanguageFieldsReplace } from "../../../utils/config/product-config";
+import { addFieldsProductVariantAttributes, productFinalProject, productMultilanguageFieldsLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 
@@ -304,37 +304,17 @@ class CommonService {
                         },
                     },
                 ];
+                const modifiedPipeline = {
+                    $lookup: {
+                        ...variantLookup.$lookup,
+                        pipeline: [
+                            ...productVariantAttributesLookup,
+                            addFieldsProductVariantAttributes,
+                        ]
+                    }
+                };
 
-                if (languageId) {
-                    const productLookupWithLanguage = {
-                        ...productMultilanguageFieldsLookup,
-                        $lookup: {
-                            ...productMultilanguageFieldsLookup.$lookup,
-                            pipeline: productMultilanguageFieldsLookup.$lookup.pipeline.map(stage => {
-                                if (stage.$match && stage.$match.$expr) {
-                                    return {
-                                        ...stage,
-                                        $match: {
-                                            ...stage.$match,
-                                            $expr: {
-                                                ...stage.$match.$expr,
-                                                $and: [
-                                                    ...stage.$match.$expr.$and,
-                                                    { $eq: ['$languageId', languageId] }
-                                                ]
-                                            }
-                                        }
-                                    };
-                                }
-                                return stage;
-                            })
-                        }
-                    };
-
-                    productPipeline.push(productLookupWithLanguage);
-
-                    productPipeline.push(productlanguageFieldsReplace);
-                }
+                productPipeline.push(modifiedPipeline);
 
                 productPipeline.push(productMultilanguageFieldsLookup);
                 productPipeline.push(productFinalProject);

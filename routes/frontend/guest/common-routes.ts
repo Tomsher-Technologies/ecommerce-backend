@@ -10,7 +10,6 @@ router.get('/countries', logResponseStatus, CommonController.findAllCountries);
 router.get('/slider', logResponseStatus, CommonController.findAllSliders);
 router.get('/banner', CommonController.findAllBanners);
 router.get('/website-setups', CommonController.findWebsiteSetups);
-router.get('/website-setups', CommonController.findWebsiteSetups);
 router.get('/priority-product', CommonController.findPriorityProducts);
 router.get('/collection-products', CommonController.findCollectionProducts);
 router.get('/collection-categories', CommonController.findCollectionCategories);
