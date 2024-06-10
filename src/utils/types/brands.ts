@@ -11,4 +11,8 @@ export type BrandQueryParams = {
     brandId?: string;
     brand?:any;
     category?:any;
+    collectionproduct?:any;
+    collectionbrand?:any;
+    collectioncategory?:any
+
 }

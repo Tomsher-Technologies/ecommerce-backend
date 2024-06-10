@@ -110,7 +110,7 @@ class ProductController extends BaseController {
             }
 
             const specifications: any = await ProductService.findAllSpecifications({
-                hostName: req.get('host'),
+                hostName: req.get('origin'),
                 query,
             });
 
@@ -154,6 +154,84 @@ class ProductController extends BaseController {
             controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
+
+    async findAllProducts(req: Request, res: Response): Promise<void> {
+        try {
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as ProductsFrontendQueryParams;
+
+            let query: any = { _id: { $exists: true } };
+            let products: any
+
+            query.status = '1';
+
+            if (category) {
+
+                const keywordRegex = new RegExp(category, 'i');
+
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+
+                if (isObjectId) {
+                    query = {
+                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                    }
+
+                } else {
+                    query = {
+                        ...query, "productCategory.category.slug": keywordRegex
+                    }
+                }
+            }
+            if (brand) {
+
+                const keywordRegex = new RegExp(brand, 'i');
+
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+
+                if (isObjectId) {
+                    query = {
+                        ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+                    }
+
+                } else {
+                    query = {
+                        ...query, "brand.slug": keywordRegex
+                    }
+                }
+            }
+            if (collectionproduct) {
+                products = {
+                    ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                }
+            }
+            if (collectionbrand) {
+                products = {
+                    ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                }
+            }
+            if (collectioncategory) {
+                products = {
+                    ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                }
+            }
+
+            console.log("products", products);
+
+            const productData: any = await ProductService.findProducts(
+
+                { query, products ,hostName: req.get('origin'),}
+            );
+
+            return controller.sendSuccessResponse(res, {
+                requestedData: productData,
+                message: 'Success!'
+            }, 200);
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
+        }
+    }
+
+
+
 
 }
 export default new ProductController();

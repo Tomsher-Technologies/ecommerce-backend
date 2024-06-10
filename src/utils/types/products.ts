@@ -88,4 +88,8 @@ export interface ProductsFrontendQueryParams {
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;
+    collectionproduct?:any;
+    collectionbrand?:any;
+    collectioncategory?:any
+
 }

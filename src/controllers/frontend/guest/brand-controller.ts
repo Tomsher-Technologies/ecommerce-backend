@@ -9,31 +9,49 @@ const controller = new BaseController();
 class BrandController extends BaseController {
     async findAllBrand(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '' } = req.query as BrandQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } };
 
             query.status = '1';
-            if (category) {
+            let products: any
 
-                const keywordRegex = new RegExp(category, 'i');
+            if (!brand) {
 
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                if (category) {
 
-                if (isObjectId) {
-                    query = {
-                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
-                    }
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
-                } else {
-                    query = {
-                        ...query, "productCategory.category.slug": keywordRegex
+                    if (isObjectId) {
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                        }
+
+                    } else {
+                        query = {
+                            ...query, "productCategory.category.slug": category
+                        }
                     }
                 }
-            }
-           
-            if (brand) {
+                if (collectionproduct) {
+                    products = {
+                        ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    }
+                }
+                if (collectionbrand) {
+                    products = {
+                        ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    }
+                }
+                if (collectioncategory) {
+                    products = {
+                        ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    }
+                }
+                
 
-                const keywordRegex = new RegExp(brand, 'i');
+            }
+
+            if (brand) {
 
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
 
@@ -44,15 +62,16 @@ class BrandController extends BaseController {
 
                 } else {
                     query = {
-                        ...query, "brand.slug": keywordRegex
+                        ...query, "brand.slug": brand
                     }
                 }
             }
             const brands = await BrandService.findAll({
-                hostName: req.get('host'),
-                query,
-            });
-console.log(query);
+                hostName: req.get('origin'),
+                query
+
+            }, products);
+            console.log(query);
 
             return controller.sendSuccessResponse(res, {
                 requestedData: brands,

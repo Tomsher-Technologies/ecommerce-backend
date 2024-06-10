@@ -12,6 +12,12 @@ import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domai
 import mongoose from 'mongoose';
 import { ProductsProps } from '../../../utils/types/products';
 import CategoryService from './category-service';
+import CollectionsProductsModel from '../../../model/admin/website/collections-products-model';
+import CollectionsBrandsModel from '../../../model/admin/website/collections-brands-model';
+import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
+import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
+import BrandsModel from '../../../model/admin/ecommerce/brands-model';
+import BrandService from './brand-service';
 
 
 class ProductService {
@@ -21,8 +27,9 @@ class ProductService {
     constructor() {
     }
 
-    async findProducts(query: any): Promise<CategoryProps[]> {
-
+    async findProducts(productOption: any): Promise<CategoryProps[]> {
+        const query = productOption.query;
+        const products = productOption.products
         let pipeline: any[] = [
             categoryLookup,
             variantLookup,
@@ -35,8 +42,39 @@ class ProductService {
             { $match: query }
 
         ];
+        var productData: any = []
+        var collections: any
+        // var collectionProducts: any
+        var brandDetail: any = []
 
-        const productData = await ProductsModel.aggregate(pipeline).exec();
+        const collection: any = await this.collection(products)
+
+        if (collection && collection.productData) {
+            productData = collection.productData
+        }
+        else if (collection && collection.collectionsBrands) {
+            console.log("lllllllllllllllllllll", collection.collectionsBrands);
+
+            for await (let data of collection.collectionsBrands) {
+                console.log("data", data);
+
+                const result = await ProductsModel.find({ brand: new mongoose.Types.ObjectId(data) })
+                console.log("result", result);
+                if (result && result.length > 0) {
+                    productData.push(result[0])
+                }
+            }
+
+        }
+
+
+        else {
+            
+            productData = await ProductsModel.aggregate(pipeline).exec();
+
+        }
+
+        console.log("...........", productData);
 
         return productData
     }
@@ -344,6 +382,65 @@ class ProductService {
         pipeline.push(productFinalProject);
 
         return pipeline
+    }
+
+    async collection(products: any): Promise<void | any> {
+        var collections: any
+        // var collectionProducts: any
+        var productData: any = []
+
+        if (products && products.collectioncategory) {
+
+            collections = await CollectionsCategoriesModel.findOne({ _id: products.collectioncategory })
+            if (collections && collections.collectionsCategories) {
+
+                if (collections.collectionsCategories.length > 0) {
+                    for await (let data of collections.collectionsCategories) {
+
+                        const results: any = await ProductCategoryLinkModel.find({ categoryId: new mongoose.Types.ObjectId(data) })
+
+                        if (results && results.length > 0) {
+                            for await (let result of results) {
+
+                                const productResult = await ProductsModel.find({ _id: new mongoose.Types.ObjectId(result.productId) })
+                                if (productResult) {
+                                    productData.push(productResult[0])
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return { productData: productData }
+
+        }
+        else if (products && products.collectionbrand) {
+            console.log(products.collectionbrand);
+
+            collections = await CollectionsBrandsModel.findOne({ _id: products.collectionbrand })
+
+            if (collections && collections.collectionsBrands) {
+                return { collectionsBrands: collections.collectionsBrands }
+            }
+
+        }
+        else if (products && products.collectionproduct) {
+            collections = await CollectionsProductsModel.findOne({ _id: products.collectionproduct })
+
+
+            if (collections && collections.collectionsProducts) {
+                if (collections.collectionsProducts.length > 0) {
+                    for await (let data of collections.collectionsProducts) {
+
+                        const result = await ProductsModel.find({ _id: new mongoose.Types.ObjectId(data) })
+
+                        productData.push(result[0])
+                    }
+                }
+            }
+            return { productData: productData }
+
+        }
     }
 
 }

@@ -16,50 +16,78 @@ class CategoryService {
         let pipeline: any[] = [
             { $match: query },
         ];
-
         if (query.level == 0) {
             const language: any = await this.categoryLanguage(hostName, pipeline)
             const data: any = await CategoryModel.aggregate(language).exec();
 
             return data
         }
+        // if (slug) {
+        const data: any = await CategoryModel.aggregate(pipeline).exec();
 
-        const productData: any = await ProductService.findProducts(query)
-        var categoryDetail: any = []
+        var categoryArray: any
 
-        const categoryArray: any = []
-        var i = 1;
 
-        if (productData) {
-            for await (let product of productData) {
-                for await (let category of product.productCategory) {
-                    const isPresent = categoryArray.some((objId: any) => objId.equals(category.category._id));
+        // for await (let category of data) {
+        pipeline = pipeline.filter(stage => !stage['$match'] || !stage['$match']._id);
 
-                    if (!isPresent) {
-                        await categoryArray.push(category.category._id);
-                    }
-                }
-            }
+        // Add the new $match stage
+        pipeline.push({ '$match': { parentCategory: data[0].parentCategory } });
+        console.log("pipelinepipeline", pipeline);
+        const language: any = await this.categoryLanguage(hostName, pipeline)
+        console.log("pipelinepipeline123", language);
 
-            for await (let category of categoryArray) {
-                const query = { parentCategory: category }
-                let pipeline: any[] = [
-                    { $match: query },
-                ];
+        categoryArray = await CategoryModel.aggregate(language).exec();
+        // console.log("result",result);
 
-                const language: any = await this.categoryLanguage(hostName, pipeline)
-                const data: any = await CategoryModel.aggregate(language).exec();
-                if (!categoryDetail.includes(data[0]._id)) {
-                    await categoryDetail.push(data[0])
-                }
-            }
+        // categoryArray.push(result)
+        // }
 
-        }
-        return categoryDetail
+
+        // const result = await CategoryModel.aggregate(language).exec();
+        // console.log("datadatadata", result);
+
+        return categoryArray
+        // }
+
+        // const productData: any = await ProductService.findProducts(query)
+        // var categoryDetail: any = []
+
+        // const categoryArray: any = []
+        // var i = 1;
+
+        // if (productData) {
+        //     for await (let product of productData) {
+        //         for await (let category of product.productCategory) {
+        //             const isPresent = categoryArray.some((objId: any) => objId.equals(category.category._id));
+
+        //             if (!isPresent) {
+        //                 await categoryArray.push(category.category._id);
+        //             }
+        //         }
+        //     }
+
+        //     for await (let category of categoryArray) {
+        //         const query = { parentCategory: category }
+        //         let pipeline: any[] = [
+        //             { $match: query },
+        //         ];
+
+        //         const language: any = await this.categoryLanguage(hostName, pipeline)
+        //         const data: any = await CategoryModel.aggregate(language).exec();
+        //         if (!categoryDetail.includes(data[0]._id)) {
+        //             await categoryDetail.push(data[0])
+        //         }
+        //     }
+
+        // }
+        // return categoryDetail
 
     }
 
     async categoryLanguage(hostName: any, pipeline: any): Promise<void> {
+        console.log("pipeline:1234", pipeline);
+
         const languageData = await LanguagesModel.find().exec();
         const languageId = getLanguageValueFromSubdomain(hostName, languageData);
         if (languageId) {
@@ -97,7 +125,6 @@ class CategoryService {
         pipeline.push(categoryProject);
 
         pipeline.push(categoryFinalProject);
-console.log("pipelinepipelinepipeline",pipeline);
 
         return pipeline
     }
