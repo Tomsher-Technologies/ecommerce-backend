@@ -179,7 +179,7 @@ export const variantLookup = {
     }
 };
 
-export const categoryLookup = {
+export const productCategoryLookup = {
     $lookup: {
         from: `${collections.ecommerce.products.productcategorylinks}`,
         localField: '_id',

@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, categoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, specificationLookup, variantLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, specificationLookup, variantLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import mongoose from 'mongoose';
@@ -31,7 +31,7 @@ class ProductService {
         const query = productOption.query;
         const products = productOption.products
         let pipeline: any[] = [
-            categoryLookup,
+            productCategoryLookup,
             variantLookup,
             imageLookup,
             brandLookup,
@@ -69,7 +69,7 @@ class ProductService {
 
 
         else {
-            
+
             productData = await ProductsModel.aggregate(pipeline).exec();
 
         }
@@ -300,7 +300,7 @@ class ProductService {
 
                 const pipeline = [
                     { $match: { _id: objectId } },
-                    categoryLookup,
+                    productCategoryLookup,
                     variantLookup,
                     imageLookup,
                     brandLookup,
