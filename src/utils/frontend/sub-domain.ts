@@ -1,17 +1,26 @@
 
-export const getValidSubdomain = (host?: string | null) => {
+const removeProtocol = (url: string): string => {
+  return url.replace(/(^\w+:|^)\/\//, '');
+};
+
+export const getValidSubdomain = (host?: string | null): string | null => {
   let subdomain: string | null = null;
+
   if (!host && typeof window !== 'undefined') {
-    // On client side, get the host from window
     host = window.location.host;
   }
-  if (host && host.includes('.')) {
-    const candidate = host.split('.')[0];
-    if (candidate && !candidate.includes('localhost')) {
-      // Valid candidate
-      subdomain = candidate;
+
+  if (host) {
+    host = removeProtocol(host);
+    
+    if (host.includes('.')) {
+      const candidate = host.split('.')[0];
+      if (candidate && !candidate.includes('localhost')) {
+        subdomain = candidate;
+      }
     }
   }
+  
   return subdomain;
 };
 
@@ -19,6 +28,8 @@ export function getLanguageValueFromSubdomain(host: string | null | undefined, l
   if (!host) {
     return null;
   }
+
+  host = removeProtocol(host);
 
   let languageCode: string = '';
   const parts = host.split('.');
@@ -31,18 +42,26 @@ export function getLanguageValueFromSubdomain(host: string | null | undefined, l
       languageCode = parts[0];
     }
   }
+
   if (languageCode) {
     for (const language of languageData) {
-      if (languageCode.toLowerCase() === language.languageCode.toLowerCase() || languageCode.toLowerCase().endsWith(`-${language.languageCode.toLowerCase()}`)) {
+      if (
+        languageCode.toLowerCase() === language.languageCode.toLowerCase() || 
+        languageCode.toLowerCase().endsWith(`-${language.languageCode.toLowerCase()}`)
+      ) {
         return language._id;
       }
     }
   }
-  return false; // Default to 'en' if no supported language code is found
+
+  return false; // Default to false if no supported language code is found
 }
 
-export function getCountrySubDomainFromHostname(hostname: string | null | undefined) {
+export function getCountrySubDomainFromHostname(hostname: string | null | undefined): string | null {
   if (hostname) {
+    // Remove protocol if present
+    hostname = removeProtocol(hostname);
+    
     const parts = hostname.split('.');
     if (parts.length >= 2) {
       const partsHyphen = parts[0]?.split('-');

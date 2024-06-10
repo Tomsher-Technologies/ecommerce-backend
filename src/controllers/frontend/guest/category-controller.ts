@@ -7,7 +7,7 @@ import { CategoryQueryParams } from '../../../utils/types/category';
 const controller = new BaseController();
 
 class CategoryController extends BaseController {
-    async findAll(req: Request, res: Response): Promise<void> {
+    async findAllCategory(req: Request, res: Response): Promise<void> {
         try {
             const { slug = '', category = '', brand = '' } = req.query as CategoryQueryParams;
             const level = '0';
@@ -41,6 +41,33 @@ class CategoryController extends BaseController {
             //         }
             //     }
             // }
+          /*  if (category) {
+
+                const keywordRegex = new RegExp(category, 'i');
+
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+
+                if (isObjectId) {
+                    
+                    query = {
+                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                    }
+
+                } else {
+                    console.log("keywordRegex,keywordRegex",keywordRegex);
+
+                    query = {
+
+                        ...query, "productCategory.category.slug": keywordRegex
+                    }
+                }
+            }
+            else {
+                query = {
+                    ...query, level: level
+                } as any;
+            }
+*/
             if (category) {
 
                 const keywordRegex = new RegExp(category, 'i');
@@ -48,13 +75,16 @@ class CategoryController extends BaseController {
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                 if (isObjectId) {
+                    
                     query = {
-                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                        ...query, _id: new mongoose.Types.ObjectId(category)
                     }
 
                 } else {
+
                     query = {
-                        ...query, "productCategory.category.slug": keywordRegex
+
+                        ...query, slug: category
                     }
                 }
             }
@@ -91,7 +121,7 @@ class CategoryController extends BaseController {
             // }
            
             const categories = await CategoryService.findAll({
-                hostName: req.get('host'),
+                hostName: req.get('origin'),
                 query,
             });
 

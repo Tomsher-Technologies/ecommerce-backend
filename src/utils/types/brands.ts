@@ -9,4 +9,10 @@ export type BrandQueryParams = {
     corporateGiftsPriority?: any;
     unCollectionedBrands?: any;
     brandId?: string;
+    brand?:any;
+    category?:any;
+    collectionproduct?:any;
+    collectionbrand?:any;
+    collectioncategory?:any
+
 }

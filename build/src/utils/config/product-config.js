@@ -1,7 +1,285 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.attributeProject = exports.attributeDetailLanguageFieldsReplace = exports.attributeLanguageFieldsReplace = exports.attributeDetailLookup = exports.attributeLookup = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.specificationLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = void 0;
+const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
+exports.productVariantAttributesLookup = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productvariants.productvariantattributes}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productVariantAttributes',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.attributedetails}`,
+                        localField: 'attributeDetailId',
+                        foreignField: '_id',
+                        as: 'attributeDetail'
+                    }
+                },
+                {
+                    $unwind: "$attributeDetail"
+                },
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.attributes}`,
+                        localField: 'attributeId',
+                        foreignField: '_id',
+                        as: 'attribute'
+                    }
+                },
+                {
+                    $unwind: "$attribute"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        attribute: '$attribute',
+                        attributeDetail: '$attributeDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+exports.addFieldsProductVariantAttributes = {
+    $addFields: {
+        productVariantAttributes: {
+            $map: {
+                input: '$productVariantAttributes',
+                in: {
+                    variantId: '$$this.variantId',
+                    _id: '$$this._id',
+                    attributeId: '$$this.attribute._id',
+                    attributeTitle: '$$this.attribute.attributeTitle',
+                    slug: '$$this.attribute.slug',
+                    attributeType: '$$this.attribute.attributeType',
+                    attributeDetail: {
+                        _id: '$$this.attributeDetail._id',
+                        attributeId: '$$this.attributeDetail.attributeId',
+                        itemName: '$$this.attributeDetail.itemName',
+                        itemValue: '$$this.attributeDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+};
+exports.productSpecificationLookup = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productvariants.productspecifications}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productSpecification',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.specifications}`,
+                        localField: 'specificationId',
+                        foreignField: '_id',
+                        as: 'specification'
+                    }
+                },
+                {
+                    $unwind: "$specification"
+                },
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.specificationdetails}`,
+                        localField: 'specificationDetailId',
+                        foreignField: '_id',
+                        as: 'specificationDetail'
+                    }
+                },
+                {
+                    $unwind: "$specificationDetail"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        specification: '$specification',
+                        specificationDetail: '$specificationDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+exports.addFieldsProductSpecification = {
+    $addFields: {
+        productSpecification: {
+            $map: {
+                input: '$productSpecification',
+                in: {
+                    variantId: '$$this.variantId',
+                    _id: '$$this._id',
+                    specificationId: '$$this.specification._id',
+                    specificationTitle: '$$this.specification.specificationTitle',
+                    slug: '$$this.specification.slug',
+                    specificationDetail: {
+                        _id: '$$this.specificationDetail._id',
+                        specificationId: '$$this.specificationDetail.specificationId',
+                        itemName: '$$this.specificationDetail.itemName',
+                        itemValue: '$$this.specificationDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+};
+exports.productSeoLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.seopages}`,
+        localField: '_id',
+        foreignField: 'pageReferenceId',
+        as: 'productSeo'
+    }
+};
+exports.addFieldsProductSeo = {
+    $addFields: {
+        productSeo: { $arrayElemAt: ['$productSeo', 0] }
+    }
+};
+exports.variantImageGalleryLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.products.productgallaryimages}`,
+        localField: '_id',
+        foreignField: 'variantId',
+        as: 'variantImageGallery'
+    }
+};
+exports.variantLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+        localField: '_id',
+        foreignField: 'productId',
+        as: 'productVariants',
+        pipeline: [
+            ...exports.productVariantAttributesLookup,
+            exports.addFieldsProductVariantAttributes,
+            ...exports.productSpecificationLookup,
+            exports.addFieldsProductSpecification,
+            exports.productSeoLookup,
+            exports.addFieldsProductSeo,
+            exports.variantImageGalleryLookup
+        ]
+    }
+};
+exports.productCategoryLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
+        localField: '_id',
+        foreignField: 'productId',
+        as: 'productCategory',
+        pipeline: [{
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.categories}`,
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'category',
+                },
+            },
+            {
+                $unwind: "$category"
+            },
+            {
+                $project: {
+                    _id: 1,
+                    productId: 1,
+                    category: {
+                        _id: 1,
+                        categoryTitle: 1,
+                        slug: 1,
+                        parentCategory: 1,
+                        level: 1,
+                        categoryImageUrl: 1,
+                        status: 1,
+                    }
+                }
+            }]
+    }
+};
+exports.seoLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.seopages}`,
+        let: { productId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: { $eq: ['$pageId', '$$productId'] },
+                    'pageReferenceId': null
+                }
+            }
+        ],
+        as: 'productSeo',
+    },
+};
+exports.seoObject = {
+    $addFields: {
+        productSeo: { $arrayElemAt: ['$productSeo', 0] }
+    }
+};
+exports.specificationLookup = {
+    $lookup: {
+        from: 'multilanguagefieleds', // Ensure 'from' field is included
+        let: { specificationId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $eq: ['$sourceId', '$$specificationId'] },
+                            { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.specifications] },
+                        ],
+                    },
+                },
+            },
+        ],
+        as: 'languageValues',
+    }
+};
+exports.brandLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.brands}`,
+        localField: 'brand',
+        foreignField: '_id',
+        as: 'brand',
+        pipeline: [
+            {
+                $project: {
+                    _id: 1,
+                    brandTitle: 1,
+                    slug: 1,
+                    brandImageUrl: 1,
+                    status: 1,
+                }
+            },
+        ],
+    },
+    // $addFields: {
+    //     brand: { $arrayElemAt: ['$brand', 0] }
+    // }
+};
+exports.brandObject = {
+    $addFields: {
+        brand: { $arrayElemAt: ['$brand', 0] }
+    }
+};
+exports.imageLookup = {
+    $lookup: {
+        from: collections_1.collections.ecommerce.products.productgallaryimages,
+        localField: '_id',
+        foreignField: 'productID',
+        as: 'imageGallery',
+    }
+};
 exports.productMultilanguageFieldsLookup = {
     $lookup: {
         from: 'multilanguagefieleds', // Ensure 'from' field is included
@@ -90,118 +368,27 @@ exports.productFinalProject = {
         languageValues: 0
     }
 };
-exports.attributeLookup = {
-    $lookup: {
-        from: 'multilanguagefieleds', // Ensure 'from' field is included
-        let: { attributeId: '$_id' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$sourceId', '$$attributeId'] },
-                            { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.attributes] },
-                        ],
-                    },
-                },
-            },
-        ],
-        as: 'languageValues',
-    }
-};
-exports.attributeDetailLookup = {
-    $lookup: {
-        from: 'multilanguagefieleds', // Ensure 'from' field is included
-        let: { attributeDetailId: '$_id' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$sourceId', '$$attributeDetailId'] },
-                            { $eq: ['$source', multi_languages_1.multiLanguageSources.ecommerce.attributedetails] },
-                        ],
-                    },
-                },
-            },
-        ],
-        as: 'languageValues',
-    }
-};
-exports.attributeLanguageFieldsReplace = {
-    $addFields: {
-        attributeTitle: {
-            $cond: {
-                if: {
-                    $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, null] }, null] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, ""] }, ""] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, "undefined"] }, "undefined"] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, undefined] }, undefined] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, ""] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, null] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, "undefined"] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }, undefined] }
-                    ]
-                },
-                then: "$attributeTitle",
-                else: { $arrayElemAt: ["$languageValues.languageValues.attributeTitle", 0] }
-            }
-        },
-        'attributeValues': {
-            $map: {
-                input: "$attributeValues",
-                as: "attrValue",
-                in: {
-                    $mergeObjects: [
-                        "$$attrValue",
-                        {
-                            itemName: {
-                                $cond: {
-                                    if: { $isArray: "$$attrValue.itemName" },
-                                    then: { $arrayElemAt: ["$$attrValue.itemName", "$$index"] },
-                                    else: "$$attrValue.itemName"
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-    }
-};
-exports.attributeDetailLanguageFieldsReplace = {
-    $addFields: {
-        'attributeValues.itemName': {
-            $cond: {
-                if: {
-                    $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, null] }, null] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, ""] }, ""] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, "undefined"] }, "undefined"] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, undefined] }, undefined] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, ""] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, null] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, "undefined"] },
-                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }, undefined] }
-                    ]
-                },
-                then: "$attributeValues.itemName",
-                else: { $arrayElemAt: ["$languageValues.languageValues.attributeValues.itemName", 0] }
-            }
-        }
-    }
-};
-exports.attributeProject = {
+exports.productProject = {
     $project: {
         _id: 1,
-        attributeTitle: 1,
+        productTitle: 1,
         slug: 1,
-        attributeType: 1,
+        productImageUrl: 1,
+        description: 1,
+        longDescription: 1,
+        brand: 1,
+        unit: 1,
+        warehouse: 1,
+        measurements: 1,
+        tags: 1,
+        sku: 1,
         status: 1,
         createdAt: 1,
-        attributeValues: {
-            $ifNull: ['$attributeValues', []]
+        productCategory: {
+            $ifNull: ['$productCategory', []]
+        },
+        productVariants: {
+            $ifNull: ['$productVariants', []]
         },
         languageValues: {
             $ifNull: ['$languageValues', []]

@@ -110,7 +110,7 @@ class SlidersController extends BaseController {
                         file.fieldname.includes('[sliderImage]')
                     );
 
-                    if (languageValues && languageValues.length > 0) {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
 
                             let sliderImageUrl = ''
@@ -205,7 +205,7 @@ class SlidersController extends BaseController {
                         );
 
                         let newLanguageValues: any = []
-                        if (updatedSliderData.languageValues && Array.isArray(updatedSliderData.languageValues)  && updatedSliderData.languageValues.length > 0) {
+                        if (updatedSliderData.languageValues && Array.isArray(updatedSliderData.languageValues) && updatedSliderData.languageValues.length > 0) {
                             for (let i = 0; i < updatedSliderData.languageValues.length; i++) {
                                 const languageValue = updatedSliderData.languageValues[i];
                                 let sliderImageUrl = '';

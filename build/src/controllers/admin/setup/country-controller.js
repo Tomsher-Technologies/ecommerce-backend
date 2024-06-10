@@ -95,17 +95,55 @@ class CountryController extends base_controller_1.default {
             }
         }
         catch (error) {
-            if (error && error.errors && (error.errors?.countryTitle) && (error.errors?.countryTitle?.properties)) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: {
-                        countryTitle: error.errors?.countryTitle?.properties.message
-                    }
+            if (error && error.errors) {
+                let validationError = '';
+                if (error.errors.countryTitle && error.errors.countryTitle.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countryTitle: error.errors.countryTitle.properties.message
+                        }
+                    };
+                }
+                else if (error.errors.countryCode && error.errors.countryCode.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countryCode: error.errors.countryCode.properties.message
+                        }
+                    };
+                }
+                if (error.errors.currencyCode && error.errors.currencyCode.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            currencyCode: error.errors.currencyCode.properties.message
+                        }
+                    };
+                }
+                if (error.errors.countryShortTitle && error.errors.countryShortTitle.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countryShortTitle: error.errors.countryShortTitle.properties.message
+                        }
+                    };
+                }
+                if (error.errors.countrySubDomain && error.errors.countrySubDomain.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countrySubDomain: error.errors.countrySubDomain.properties.message
+                        }
+                    };
+                }
+                return controller.sendErrorResponse(res, 200, validationError, req);
+            }
+            else {
+                controller.sendErrorResponse(res, 500, {
+                    message: error.message || 'Some error occurred while updating country'
                 }, req);
             }
-            return controller.sendErrorResponse(res, 500, {
-                message: error.message || 'Some error occurred while creating country',
-            }, req);
         }
     }
     async findOne(req, res) {
@@ -172,9 +210,55 @@ class CountryController extends base_controller_1.default {
             }
         }
         catch (error) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
-                message: error.message || 'Some error occurred while updating country'
-            }, req);
+            if (error && error.errors) {
+                let validationError = '';
+                if (error.errors.countryTitle && error.errors.countryTitle.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countryTitle: error.errors.countryTitle.properties.message
+                        }
+                    };
+                }
+                else if (error.errors.countryCode && error.errors.countryCode.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countryCode: error.errors.countryCode.properties.message
+                        }
+                    };
+                }
+                if (error.errors.currencyCode && error.errors.currencyCode.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            currencyCode: error.errors.currencyCode.properties.message
+                        }
+                    };
+                }
+                if (error.errors.countryShortTitle && error.errors.countryShortTitle.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countryShortTitle: error.errors.countryShortTitle.properties.message
+                        }
+                    };
+                }
+                if (error.errors.countrySubDomain && error.errors.countrySubDomain.properties) {
+                    validationError = {
+                        message: 'Validation error',
+                        validation: {
+                            countrySubDomain: error.errors.countrySubDomain.properties.message
+                        }
+                    };
+                }
+                return controller.sendErrorResponse(res, 200, validationError, req);
+            }
+            else {
+                controller.sendErrorResponse(res, 500, {
+                    message: error.message || 'Some error occurred while updating country'
+                }, req);
+            }
         }
     }
     async statusChange(req, res) {
