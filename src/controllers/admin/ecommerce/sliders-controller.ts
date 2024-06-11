@@ -104,13 +104,14 @@ class SlidersController extends BaseController {
 
                 const newSlider = await SliderService.create(sliderData);
                 if (newSlider) {
-                    const languageValuesImages = (req as any).files.filter((file: any) =>
-                        file.fieldname &&
-                        file.fieldname.startsWith('languageValues[') &&
-                        file.fieldname.includes('[sliderImage]')
-                    );
+
 
                     if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
+                        const languageValuesImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[sliderImage]')
+                        );
                         await languageValues?.map((languageValue: any, index: number) => {
 
                             let sliderImageUrl = ''
