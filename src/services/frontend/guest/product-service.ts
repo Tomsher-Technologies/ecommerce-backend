@@ -6,8 +6,8 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, specificationLookup, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup } from '../../../utils/config/product-config';
-import { specificationDetailLanguageFieldsReplace, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup } from '../../../utils/config/product-config';
+import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import mongoose from 'mongoose';
 import { ProductsProps } from '../../../utils/types/products';
@@ -65,7 +65,7 @@ class ProductService {
             ...(getImageGallery === '1' ? [imageLookup] : []),
             ...(getBrand === '1' ? [brandLookup] : []),
             ...(getBrand === '1' ? [brandObject] : []),
-            ...(getSpecification === '1' ? [specificationLookup] : []),
+            ...(getSpecification === '1' ? [specificationsLookup] : []),
             { $match: query }
 
         ];
@@ -268,10 +268,10 @@ class ProductService {
             console.log("fghfghfghgfhfg", languageId);
 
             const specificationLookupWithLanguage = {
-                ...specificationLookup,
+                ...specificationLanguageLookup,
                 $lookup: {
-                    ...specificationLookup.$lookup,
-                    pipeline: specificationLookup.$lookup.pipeline.map((stage: any) => {
+                    ...specificationLanguageLookup.$lookup,
+                    pipeline: specificationLanguageLookup.$lookup.pipeline.map((stage: any) => {
                         if (stage.$match && stage.$match.$expr) {
                             return {
                                 ...stage,
@@ -322,7 +322,7 @@ class ProductService {
                     seoLookup,
                     seoObject,
                     productMultilanguageFieldsLookup,
-                    specificationLookup
+                    specificationsLookup
                 ];
                 // let pipeline1: any[] = [
                 //     { $match: query },

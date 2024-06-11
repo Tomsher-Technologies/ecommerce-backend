@@ -236,25 +236,42 @@ export const seoObject = {
     }
 };
 
-export const specificationLookup = {
+
+export const specificationsLookup = {
     $lookup: {
-        from: 'multilanguagefieleds', // Ensure 'from' field is included
-        let: { specificationId: '$_id' },
+        from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+        let: { productId: '$_id' },
         pipeline: [
             {
                 $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$sourceId', '$$specificationId'] },
-                            { $eq: ['$source', multiLanguageSources.ecommerce.specifications] },
-                        ],
-                    },
-                },
-            },
+                    $expr: { $eq: ['$productId', '$$productId'] },
+                    'variantId': null
+                }
+            }
         ],
-        as: 'languageValues',
-    }
+        as: 'productSpecification',
+
+    },
 };
+// export const specificationLookup = {
+//     $lookup: {
+//         from: 'multilanguagefieleds', // Ensure 'from' field is included
+//         let: { specificationId: '$_id' },
+//         pipeline: [
+//             {
+//                 $match: {
+//                     $expr: {
+//                         $and: [
+//                             { $eq: ['$sourceId', '$$specificationId'] },
+//                             { $eq: ['$source', multiLanguageSources.ecommerce.specifications] },
+//                         ],
+//                     },
+//                 },
+//             },
+//         ],
+//         as: 'languageValues',
+//     }
+// };
 
 export const brandLookup = {
     $lookup: {
