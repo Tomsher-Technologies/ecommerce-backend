@@ -141,7 +141,6 @@ class ProductController extends base_controller_1.default {
             query.status = '1';
             if (categories) {
                 const categoryArray = categories.split(',');
-                console.log("categoryArray", categoryArray);
                 const orConditions = [];
                 for await (let category of categoryArray) {
                     const keywordRegex = new RegExp(category, 'i');
@@ -162,7 +161,6 @@ class ProductController extends base_controller_1.default {
             }
             if (brands) {
                 const brandArray = brands.split(',');
-                console.log("brandArray", brandArray);
                 const orConditions = [];
                 for await (let brand of brandArray) {
                     const keywordRegex = new RegExp(brand, 'i');
@@ -181,7 +179,6 @@ class ProductController extends base_controller_1.default {
                     }
                 }
             }
-            console.log(query);
             if (category) {
                 const keywordRegex = new RegExp(category, 'i');
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
