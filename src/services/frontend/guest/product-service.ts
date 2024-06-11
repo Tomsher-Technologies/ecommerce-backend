@@ -88,7 +88,6 @@ class ProductService {
         }
         else {
             const language: any = await this.productLanguage(hostName, pipeline)
-console.log("vbvcbvcbvcb",language);
 
             productData = await ProductsModel.aggregate(language).exec();
         }
@@ -351,13 +350,10 @@ console.log("vbvcbvcbvcb",language);
     async productLanguage(hostName: any, pipeline: any): Promise<void> {
 
         const languageData = await LanguagesModel.find().exec();
-        console.log("languageDatalanguageData123", hostName, languageData);
 
         const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
-        console.log("languageId", languageId);
 
         if (languageId) {
-            console.log("fghfghfghgfhfg", languageId);
 
             const productLookupWithLanguage = {
                 ...productMultilanguageFieldsLookup,

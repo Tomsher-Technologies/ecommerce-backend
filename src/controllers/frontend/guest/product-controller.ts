@@ -5,6 +5,7 @@ import BaseController from '../../admin/base-controller';
 import ProductService from '../../../services/frontend/guest/product-service'
 import { ProductsFrontendQueryParams, ProductsQueryParams } from '../../../utils/types/products';
 const controller = new BaseController();
+import CommonService from '../../../services/frontend/guest/common-service';
 
 class ProductController extends BaseController {
     async findAllAttributes(req: Request, res: Response): Promise<void> {
@@ -157,7 +158,7 @@ class ProductController extends BaseController {
 
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, getAttribute = 0, categories = '', brands = '' } = req.query as ProductsFrontendQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, getAttribute = 0, categories = '', brands = '', offer = '' } = req.query as ProductsFrontendQueryParams;
             let getSpecification = '1'
             let getSeo = '1'
             let getBrand = '1'
@@ -166,6 +167,16 @@ class ProductController extends BaseController {
             let products: any
 
             query.status = '1';
+
+            if (offer) {
+                const offerData  =await CommonService.findOffers(offer)
+
+                console.log("offerData", offerData);
+
+            }
+
+            console.log("qquery", query);
+
 
             if (categories) {
                 const categoryArray = categories.split(',')
