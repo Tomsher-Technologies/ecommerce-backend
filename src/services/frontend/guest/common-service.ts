@@ -7,7 +7,7 @@ import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsRe
 import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
 import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
-import { addFieldsProductVariantAttributes, productFinalProject, productMultilanguageFieldsLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
+import { addFieldsProductVariantAttributes, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 
@@ -314,6 +314,7 @@ class CommonService {
                     }
                 };
 
+                productPipeline.push(productCategoryLookup);
                 productPipeline.push(modifiedPipeline);
 
                 productPipeline.push(productMultilanguageFieldsLookup);
