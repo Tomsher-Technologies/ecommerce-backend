@@ -15,6 +15,7 @@ const isNonNegativeInteger = (val) => {
 exports.bannerSchema = zod_1.z.object({
     countryId: zod_1.z.string().optional(),
     bannerTitle: zod_1.z.string({ required_error: 'Banner title is required', }).min(2, 'Banner title is should be 2 chars minimum'),
+    bannerSubTitle: zod_1.z.string().optional(),
     slug: zod_1.z.any().optional(),
     page: zod_1.z.string().refine((val) => val.trim().length > 0, {
         message: 'Page must not be empty'

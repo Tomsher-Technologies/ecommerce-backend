@@ -75,7 +75,7 @@ class BannerController extends base_controller_1.default {
             const validatedData = banner_schema_1.bannerSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
+                const { countryId, bannerTitle, bannerSubTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
                 const user = res.locals.user;
                 const mewBannerImages = req.files.filter((file) => file.fieldname &&
                     file.fieldname.startsWith('bannerImages[') &&
@@ -86,6 +86,7 @@ class BannerController extends base_controller_1.default {
                     const bannerData = {
                         countryId: countryId || (0, helpers_1.getCountryId)(user),
                         bannerTitle,
+                        bannerSubTitle,
                         slug: slug || (0, helpers_1.slugify)(bannerTitle),
                         page,
                         pageReference,

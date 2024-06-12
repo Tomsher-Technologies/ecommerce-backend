@@ -30,6 +30,7 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
 const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
 const product_service_1 = __importDefault(require("./product-service"));
+const collections_1 = require("../../../constants/collections");
 class CommonService {
     constructor() { }
     async findAllCountries() {
@@ -455,49 +456,102 @@ class CommonService {
         }
         return brandCollectionData;
     }
-    async findOffers(options) {
+    async findOffers(offer, hostName) {
+        let getOfferList;
+        let offerApplied = {
+            brand: {
+                offerId: new Set(),
+                brands: new Set(),
+            },
+            category: {
+                offerId: new Set(),
+                categories: new Set(),
+            },
+            product: {
+                offerId: new Set(),
+                products: new Set(),
+            },
+        };
+        const pipeline = [];
         const currentDate = new Date();
-        const offerData = await offers_model_1.default.find({
+        const query = {
             $and: [
+                ...(offer ? [offer] : []),
                 { "offerDateRange.0": { $lte: currentDate } },
-                { "offerDateRange.1": { $gte: currentDate } }
+                { "offerDateRange.1": { $gte: currentDate } },
             ]
-        });
-        const productData = [];
-        console.log("offersoffers", offerData);
-        for await (let offer of offerData) {
-            if (offer.offersBy == offers_1.offers.brand) {
-                for await (let offerApplyValue of offer.offerApplyValues) {
-                    const brandData = await brands_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(offerApplyValue) }, '_id');
-                    if (brandData) {
-                        const products = await product_model_1.default.find({ brand: brandData._id });
-                        if (products.length > 0) {
-                            productData.push(...products);
+        };
+        getOfferList = await offers_model_1.default.find(query);
+        if (getOfferList && getOfferList.length > 0) {
+            for await (const offerDetail of getOfferList) {
+                if (offerDetail.offerApplyValues && offerDetail.offerApplyValues.length > 0) {
+                    if (offerDetail.offersBy === offers_1.offers.brand) {
+                        if (offer) {
+                            pipeline.push({ $match: { brand: { $in: offerDetail.offerApplyValues } } });
+                        }
+                        else {
+                            offerApplied.brand.offerId.add(offerDetail._id);
+                            offerDetail.offerApplyValues.forEach((value) => offerApplied.brand.brands.add(value));
                         }
                     }
-                }
-            }
-            if (offer.offersBy == offers_1.offers.category) {
-                for await (let offerApplyValue of offer.offerApplyValues) {
-                    const categoryData = await category_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(offerApplyValue) }, '_id');
-                    if (categoryData) {
-                        const products = await product_model_1.default.find({ brand: categoryData._id });
-                        if (products.length > 0) {
-                            productData.push(...products);
+                    else if (offerDetail.offersBy === offers_1.offers.category) {
+                        if (offer) {
+                            pipeline.push({ $match: { 'productCategory.category._id': { $in: offerDetail.offerApplyValues } } });
+                        }
+                        else {
+                            offerApplied.category.offerId.add(offerDetail._id);
+                            offerDetail.offerApplyValues.forEach((value) => offerApplied.category.categories.add(value));
                         }
                     }
-                }
-            }
-            if (offer.offersBy == offers_1.offers.product) {
-                for await (let offerApplyValue of offer.offerApplyValues) {
-                    const products = await product_model_1.default.find({ brand: offerApplyValue });
-                    if (products.length > 0) {
-                        productData.push(...products);
+                    else if (offerDetail.offersBy === offers_1.offers.product) {
+                        if (offer) {
+                            pipeline.push({ $match: { _id: { $in: offerDetail.offerApplyValues } } });
+                        }
+                        else {
+                            offerApplied.product.offerId.add(offerDetail._id);
+                            offerDetail.offerApplyValues.forEach((value) => offerApplied.product.products.add(value));
+                        }
                     }
                 }
             }
         }
-        return productData;
+        // Convert Sets back to arrays
+        offerApplied.brand.offerId = Array.from(offerApplied.brand.offerId);
+        offerApplied.brand.brands = Array.from(offerApplied.brand.brands);
+        offerApplied.category.offerId = Array.from(offerApplied.category.offerId);
+        offerApplied.category.categories = Array.from(offerApplied.category.categories);
+        offerApplied.product.offerId = Array.from(offerApplied.product.offerId);
+        offerApplied.product.products = Array.from(offerApplied.product.products);
+        if (offerApplied.brand.brands) {
+            pipeline.push({
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.brands}`,
+                    localField: 'brand',
+                    foreignField: '_id',
+                    as: 'brand',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                brandTitle: 1,
+                                slug: 1,
+                                brandImageUrl: 1,
+                                status: 1,
+                            }
+                        },
+                    ],
+                },
+            }, {
+                $addFields: {
+                    brand: { $arrayElemAt: ['$brand', 0] }
+                }
+            }, {
+                $addFields: {
+                    offer: { $cond: { if: { $gt: [{ $size: '$brand' }, 0] }, then: offerApplied.brand.brands, else: [] } }
+                }
+            });
+        }
+        return { pipeline, getOfferList, offerApplied };
     }
 }
 exports.default = new CommonService();

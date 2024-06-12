@@ -83,7 +83,7 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
+                const { countryId, bannerTitle, bannerSubTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
                 const user = res.locals.user;
 
                 const mewBannerImages = (req as any).files.filter((file: any) =>
@@ -99,6 +99,7 @@ class BannerController extends BaseController {
                     const bannerData = {
                         countryId: countryId || getCountryId(user),
                         bannerTitle,
+                        bannerSubTitle,
                         slug: slug || slugify(bannerTitle),
                         page,
                         pageReference,
