@@ -43,6 +43,9 @@ const bannerSchema = new mongoose_1.Schema({
         },
         minlength: [2, 'Banner title must be at least 2 characters long']
     },
+    bannerSubTitle: {
+        type: String
+    },
     description: {
         type: String,
         default: ''

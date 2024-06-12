@@ -57,10 +57,11 @@ class ProductService {
             { $match: query }
         ];
         var offerDetails;
-        // const offerData: any = await CommonService.findOffers(offers, hostName)
-        // if (offerData) {
-        //     pipeline.push(offerData.pipeline[0])
-        // }
+        const { pipeline: offerPipeline, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
+        console.log('offerPipeline', offerPipeline);
+        if (offerPipeline && offerPipeline.length > 0) {
+            pipeline.push(offerPipeline);
+        }
         // console.log("offerDataofferDataofferDataofferData", offerData);
         let productData = [];
         const collection = await this.collection(products, hostName);

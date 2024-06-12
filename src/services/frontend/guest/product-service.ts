@@ -73,12 +73,13 @@ class ProductService {
 
         var offerDetails: any
 
-        // const offerData: any = await CommonService.findOffers(offers, hostName)
+        const { pipeline: offerPipeline, offerApplied } = await CommonService.findOffers(offers, hostName)
+        console.log('offerPipeline', offerPipeline);
 
-        
-        // if (offerData) {
-        //     pipeline.push(offerData.pipeline[0])
-        // }
+
+        if (offerPipeline && offerPipeline.length > 0) {
+            pipeline.push(offerPipeline)
+        }
         // console.log("offerDataofferDataofferDataofferData", offerData);
 
         let productData: any = [];
@@ -99,8 +100,7 @@ class ProductService {
                     productData.push(result[0])
                 }
             }
-        }
-        else {
+        } else {
             const language: any = await this.productLanguage(hostName, pipeline)
 
             productData = await ProductsModel.aggregate(language).exec();

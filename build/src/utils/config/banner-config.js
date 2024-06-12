@@ -26,6 +26,7 @@ exports.bannerProject = {
         _id: 1,
         countryId: 1,
         bannerTitle: 1,
+        bannerSubTitle: 1,
         page: 1,
         pageReference: 1,
         linkType: 1,
