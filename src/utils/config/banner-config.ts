@@ -81,20 +81,59 @@ export const bannerlanguageFieldsReplace = {
             $cond: {
                 if: {
                     $or: [
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, null] }, null] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, ""] }, ""] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, "undefined"] }, "undefined"] },
-                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, undefined] }, undefined] },
-                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, ''] },
-                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, null] },
-                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, undefined] },
-                        { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, "undefined"] },
+                        { $eq: ['$languageValues.languageValues.bannerImages', null] },
+                        { $eq: ['$languageValues.languageValues.bannerImages', []] },
+                        {
+                            $and: [
+                                { $isArray: '$languageValues.languageValues.bannerImages' },
+                                { $eq: [{ $size: '$languageValues.languageValues.bannerImages' }, 1] },
+                                { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, []] }
+                            ]
+                        }
                     ]
                 },
                 then: '$bannerImages',
-                else: { $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }
+                else: {
+                    $reduce: {
+                        input: '$languageValues.languageValues.bannerImages',
+                        initialValue: [],
+                        in: {
+                            $concatArrays: [
+                                '$$value',
+                                {
+                                    $cond: {
+                                        if: { $eq: ['$$this.bannerImageUrl', ''] },
+                                        then: {
+                                            bannerImageUrl: { $arrayElemAt: ['$bannerImages.bannerImageUrl', 0] },
+                                            bannerImage: '$$this.bannerImage'
+                                        },
+                                        else: '$$this'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
-        },
+        }
+        // bannerImages: {
+        //     $cond: {
+        //         if: {
+        //             $or: [
+        //                 { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, null] }, null] },
+        //                 { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, ""] }, ""] },
+        //                 { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, "undefined"] }, "undefined"] },
+        //                 { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.bannerImages", 0] }, undefined] }, undefined] },
+        //                 { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, ''] },
+        //                 { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, null] },
+        //                 { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, undefined] },
+        //                 { $eq: [{ $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }, "undefined"] },
+        //             ]
+        //         },
+        //         then: '$bannerImages',
+        //         else: { $arrayElemAt: ['$languageValues.languageValues.bannerImages', 0] }
+        //     }
+        // },
     }
 }
 

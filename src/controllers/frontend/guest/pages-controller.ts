@@ -14,9 +14,8 @@ class PageController extends BaseController {
     async findPagesData(req: Request, res: Response): Promise<void> {
         try {
             const pageSlug = req.params.slug
-            console.log('pageSlug', pageSlug);
             if (checkValueExists(blockReferences, pageSlug)) {
-                const {  blockReference } = req.query as CommonQueryParams;
+
                 let query: any = { _id: { $exists: true } };
                 const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
                 if (countryId) {

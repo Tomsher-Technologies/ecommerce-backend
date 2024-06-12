@@ -1,5 +1,6 @@
 import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
+import ProductsModel from "../../model/admin/ecommerce/product-model";
 
 
 export const productVariantAttributesLookup = [
@@ -179,6 +180,50 @@ export const variantLookup = {
     }
 };
 
+export const offerProductLookup = [
+    {
+        $lookup: {
+            from: 'offers',
+            localField: '_id',
+            foreignField: 'offerApplyValues',
+            let: {
+                currentDate: new Date(),
+                productId:'_id',
+                
+            },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $lte: ['$$currentDate', '$offerDateRange.1'] },
+                                { $gte: ['$$currentDate', '$offerDateRange.0'] },
+                                {
+                                    $or: [
+                                        {if: {
+                                            $and: [
+                                                { $eq: ['$offersBy', 'product'] },
+                                                // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
+                                            ]
+                                        },
+                                        then: '$offerProducts',
+                                           
+                                        },
+                                      
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ],
+            as: 'offerProducts'
+        }
+    },
+    
+
+];
+
 export const productCategoryLookup = {
     $lookup: {
         from: `${collections.ecommerce.products.productcategorylinks}`,
@@ -236,25 +281,42 @@ export const seoObject = {
     }
 };
 
-export const specificationLookup = {
+
+export const specificationsLookup = {
     $lookup: {
-        from: 'multilanguagefieleds', // Ensure 'from' field is included
-        let: { specificationId: '$_id' },
+        from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+        let: { productId: '$_id' },
         pipeline: [
             {
                 $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$sourceId', '$$specificationId'] },
-                            { $eq: ['$source', multiLanguageSources.ecommerce.specifications] },
-                        ],
-                    },
-                },
-            },
+                    $expr: { $eq: ['$productId', '$$productId'] },
+                    'variantId': null
+                }
+            }
         ],
-        as: 'languageValues',
-    }
+        as: 'productSpecification',
+
+    },
 };
+// export const specificationLookup = {
+//     $lookup: {
+//         from: 'multilanguagefieleds', // Ensure 'from' field is included
+//         let: { specificationId: '$_id' },
+//         pipeline: [
+//             {
+//                 $match: {
+//                     $expr: {
+//                         $and: [
+//                             { $eq: ['$sourceId', '$$specificationId'] },
+//                             { $eq: ['$source', multiLanguageSources.ecommerce.specifications] },
+//                         ],
+//                     },
+//                 },
+//             },
+//         ],
+//         as: 'languageValues',
+//     }
+// };
 
 export const brandLookup = {
     $lookup: {

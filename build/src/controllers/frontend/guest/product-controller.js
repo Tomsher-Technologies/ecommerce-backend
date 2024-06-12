@@ -131,14 +131,25 @@ class ProductController extends base_controller_1.default {
     }
     async findAllProducts(req, res) {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, getAttribute = 0, categories = '', brands = '' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, getAttribute = 0, categories = '', brands = '', offer = '' } = req.query;
             let getSpecification = '1';
             let getSeo = '1';
             let getBrand = '1';
             let getCategory = '1';
             let query = { _id: { $exists: true } };
             let products;
+            let offers;
             query.status = '1';
+            if (offer) {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
+                if (isObjectId) {
+                    offers = { _id: new mongoose_1.default.Types.ObjectId(offer) };
+                }
+                else {
+                    const keywordRegex = new RegExp(offer, 'i');
+                    offers = { slug: keywordRegex };
+                }
+            }
             if (categories) {
                 const categoryArray = categories.split(',');
                 const orConditions = [];
@@ -225,6 +236,7 @@ class ProductController extends base_controller_1.default {
             const productData = await product_service_1.default.findProductList({
                 query,
                 products,
+                offers,
                 getImageGallery,
                 getAttribute,
                 getSpecification,

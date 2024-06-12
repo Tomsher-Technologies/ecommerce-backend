@@ -10,7 +10,7 @@ export const specificationDetailsLookup = {
 };
 
 
-export const specificationLookup = {
+export const specificationLanguageLookup = {
     $lookup: {
         from: 'multilanguagefieleds', // Ensure 'from' field is included
         let: { specificationId: '$_id' },

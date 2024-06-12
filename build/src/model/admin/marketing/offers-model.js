@@ -90,7 +90,7 @@ const offersSchema = new mongoose_1.Schema({
         default: '',
     },
     offerDateRange: {
-        type: mongoose_1.Schema.Types.Mixed,
+        type: [Date],
         required: true,
     },
     status: {

@@ -26,7 +26,7 @@ class BrandService {
         var collections;
         // var collectionProducts: any
         var brandDetail = [];
-        const collection = await product_service_1.default.collection(products);
+        const collection = await product_service_1.default.collection(products, hostName);
         if (collection && collection.productData) {
             productData = collection.productData;
         }

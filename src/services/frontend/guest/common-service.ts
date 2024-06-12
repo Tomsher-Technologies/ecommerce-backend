@@ -7,9 +7,10 @@ import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsRe
 import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
 import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
-import { addFieldsProductVariantAttributes, productFinalProject, productMultilanguageFieldsLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
+import { addFieldsProductVariantAttributes, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
+import { offers } from '../../../constants/offers';
 
 import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
 import SliderModel, { SliderProps } from "../../../model/admin/ecommerce/slider-model";
@@ -26,6 +27,8 @@ import CategoryModel from "../../../model/admin/ecommerce/category-model";
 import CollectionsCategoriesModel from "../../../model/admin/website/collections-categories-model";
 import BrandsModel from "../../../model/admin/ecommerce/brands-model";
 import CollectionsBrandsModel from "../../../model/admin/website/collections-brands-model";
+import OffersModel from "../../../model/admin/marketing/offers-model";
+import ProductService from "./product-service";
 
 class CommonService {
     constructor() { }
@@ -314,12 +317,14 @@ class CommonService {
                     }
                 };
 
+                productPipeline.push(productCategoryLookup);
                 productPipeline.push(modifiedPipeline);
 
                 productPipeline.push(productMultilanguageFieldsLookup);
                 productPipeline.push(productFinalProject);
+                const language: any = await ProductService.productLanguage(hostName, productPipeline)
 
-                const productData = await ProductsModel.aggregate(productPipeline).exec();
+                const productData = await ProductsModel.aggregate(language).exec();
 
                 collection.collectionsProducts = productData;
             }
@@ -469,7 +474,6 @@ class CommonService {
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
         const brandCollectionData = await CollectionsBrandsModel.aggregate(collectionBrandPipeline).exec();
-        console.log('brandCollectionData', brandCollectionData);
 
         for (const collection of brandCollectionData) {
             if (collection && collection.collectionsBrands) {
@@ -523,6 +527,63 @@ class CommonService {
         }
 
         return brandCollectionData;
+    }
+    async findOffers(options: any) {
+        const currentDate = new Date();
+        const offerData = await OffersModel.find({
+            $and: [
+                { "offerDateRange.0": { $lte: currentDate } },
+                { "offerDateRange.1": { $gte: currentDate } }
+            ]
+        })
+
+        const productData: any = []
+        console.log("offersoffers", offerData);
+        for await (let offer of offerData) {
+            if (offer.offersBy == offers.brand) {
+                for await (let offerApplyValue of offer.offerApplyValues) {
+
+                    const brandData: any = await BrandsModel.findOne({ _id: new mongoose.Types.ObjectId(offerApplyValue) }, '_id')
+                    if (brandData) {
+
+                        const products = await ProductsModel.find({ brand: brandData._id })
+
+                        if (products.length > 0) {
+                            productData.push(...products)
+                        }
+                    }
+                }
+            }
+            if (offer.offersBy == offers.category) {
+                for await (let offerApplyValue of offer.offerApplyValues) {
+
+                    const categoryData: any = await CategoryModel.findOne({ _id: new mongoose.Types.ObjectId(offerApplyValue) }, '_id')
+                    if (categoryData) {
+
+                        const products = await ProductsModel.find({ brand: categoryData._id })
+
+                        if (products.length > 0) {
+                            productData.push(...products)
+                        }
+                    }
+                }
+            }
+            if (offer.offersBy == offers.product) {
+                for await (let offerApplyValue of offer.offerApplyValues) {
+
+
+
+                    const products = await ProductsModel.find({ brand: offerApplyValue })
+
+                    if (products.length > 0) {
+                        productData.push(...products)
+                    }
+                }
+            }
+        }
+
+        return productData
+
     }
 }
 

@@ -34,9 +34,9 @@ const collectionCategorySchema = new mongoose_1.Schema({
                 const count = await this.model('CollectionsCategories').countDocuments({ collectionTitle: value });
                 return count === 0;
             },
-            message: 'Collections categories code must be unique'
+            message: 'Collections categories title must be unique'
         },
-        minlength: [2, 'Collections categories code must be at least 2 characters long'],
+        minlength: [2, 'Collections categories title must be at least 2 characters long'],
         index: true,
         sparse: true
     },

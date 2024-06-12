@@ -45,7 +45,7 @@ class SettingsController extends BaseController {
                         blockValues: {
                             ...(blockReferences.websiteSettings === blockReference ? {
                                 primaryColor: blockValues.primaryColor,
-                                secondaryColor: blockValues.primaryColor,
+                                secondaryColor: blockValues.secondaryColor,
                                 websiteLogoUrl: (newWebsiteLogo && newWebsiteLogo.length > 0 ? true : false) ? handleFileUpload(req, null, newWebsiteLogo[0], 'websiteLogoUrl', 'basicsettings') : blockValues.favIconUrl,
                                 favIconUrl: (newFavIcon && newFavIcon.length > 0 ? true : false) ? handleFileUpload(req, null, newFavIcon[0], 'favIconUrl', 'basicsettings') : blockValues.websiteLogoUrl,
                             } : blockValues)

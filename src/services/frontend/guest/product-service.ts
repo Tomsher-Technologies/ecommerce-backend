@@ -6,8 +6,8 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, specificationLookup, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup } from '../../../utils/config/product-config';
-import { specificationDetailLanguageFieldsReplace, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup, offerProductLookup } from '../../../utils/config/product-config';
+import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import mongoose from 'mongoose';
 import { ProductsProps } from '../../../utils/types/products';
@@ -20,6 +20,7 @@ import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import BrandService from './brand-service';
 import { CountryProps } from '../../../model/admin/setup/country-model';
 import CommonService from '../../../services/frontend/guest/common-service';
+import OffersModel from '../../../model/admin/marketing/offers-model';
 
 
 class ProductService {
@@ -30,7 +31,7 @@ class ProductService {
     }
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName } = productOption;
+        var { query, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
 
         const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
         if (countryId) {
@@ -40,6 +41,7 @@ class ProductService {
 
             } as any;
         }
+
 
 
         const modifiedPipeline = {
@@ -65,14 +67,23 @@ class ProductService {
             ...(getImageGallery === '1' ? [imageLookup] : []),
             ...(getBrand === '1' ? [brandLookup] : []),
             ...(getBrand === '1' ? [brandObject] : []),
-            ...(getSpecification === '1' ? [specificationLookup] : []),
+            ...(getSpecification === '1' ? [specificationsLookup] : []),
             { $match: query }
-
         ];
+
+        var offerDetails: any
+
+        // const offerData: any = await CommonService.findOffers(offers, hostName)
+
+        
+        // if (offerData) {
+        //     pipeline.push(offerData.pipeline[0])
+        // }
+        // console.log("offerDataofferDataofferDataofferData", offerData);
 
         let productData: any = [];
 
-        const collection: any = await this.collection(products)
+        const collection: any = await this.collection(products, hostName)
 
         if (collection && collection.productData) {
             productData = collection.productData
@@ -80,7 +91,10 @@ class ProductService {
         else if (collection && collection.collectionsBrands) {
 
             for await (let data of collection.collectionsBrands) {
-                const result = await ProductsModel.find({ brand: new mongoose.Types.ObjectId(data) })
+                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await ProductsModel.aggregate(language).exec();
                 if (result && result.length > 0) {
                     productData.push(result[0])
                 }
@@ -88,7 +102,6 @@ class ProductService {
         }
         else {
             const language: any = await this.productLanguage(hostName, pipeline)
-console.log("vbvcbvcbvcb",language);
 
             productData = await ProductsModel.aggregate(language).exec();
         }
@@ -233,10 +246,8 @@ console.log("vbvcbvcbvcb",language);
                 const specificationData = await SpecificationModel.aggregate(pipeline).exec()
 
                 const language: any = await this.specificationLanguage(hostName, pipeline)
-                console.log("languagelanguage", language);
 
                 const data = await SpecificationModel.aggregate(language).exec()
-                // console.log("data,data",data);
 
                 for (let j = 0; j < data[0].specificationValues.length; j++) {
                     if (Array.isArray(data[0].specificationValues[j].itemName) && data[0].specificationValues[j].itemName.length > 1) {
@@ -262,17 +273,15 @@ console.log("vbvcbvcbvcb",language);
 
     async specificationLanguage(hostName: any, pipeline: any): Promise<void> {
         const languageData = await LanguagesModel.find().exec();
-        console.log("languageDatalanguageData123", hostName, languageData);
 
         const languageId = getLanguageValueFromSubdomain(hostName, languageData);
         if (languageId) {
-            console.log("fghfghfghgfhfg", languageId);
 
             const specificationLookupWithLanguage = {
-                ...specificationLookup,
+                ...specificationLanguageLookup,
                 $lookup: {
-                    ...specificationLookup.$lookup,
-                    pipeline: specificationLookup.$lookup.pipeline.map((stage: any) => {
+                    ...specificationLanguageLookup.$lookup,
+                    pipeline: specificationLanguageLookup.$lookup.pipeline.map((stage: any) => {
                         if (stage.$match && stage.$match.$expr) {
                             return {
                                 ...stage,
@@ -323,7 +332,7 @@ console.log("vbvcbvcbvcb",language);
                     seoLookup,
                     seoObject,
                     productMultilanguageFieldsLookup,
-                    specificationLookup
+                    specificationsLookup
                 ];
                 // let pipeline1: any[] = [
                 //     { $match: query },
@@ -335,7 +344,6 @@ console.log("vbvcbvcbvcb",language);
                 const categoryData: any = await CategoryModel.aggregate(categorylanguage).exec();
 
                 // pipeline.push(categorylanguage)
-                console.log("language,language124", categoryData);
 
                 const productDataWithValues = await ProductsModel.aggregate(language);
 
@@ -351,13 +359,10 @@ console.log("vbvcbvcbvcb",language);
     async productLanguage(hostName: any, pipeline: any): Promise<void> {
 
         const languageData = await LanguagesModel.find().exec();
-        console.log("languageDatalanguageData123", hostName, languageData);
 
         const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
-        console.log("languageId", languageId);
 
         if (languageId) {
-            console.log("fghfghfghgfhfg", languageId);
 
             const productLookupWithLanguage = {
                 ...productMultilanguageFieldsLookup,
@@ -399,7 +404,7 @@ console.log("vbvcbvcbvcb",language);
         return pipeline
     }
 
-    async collection(products: any): Promise<void | any> {
+    async collection(products: any, hostName: any): Promise<void | any> {
         var collections: any
         // var collectionProducts: any
         var productData: any = []
@@ -416,8 +421,9 @@ console.log("vbvcbvcbvcb",language);
 
                         if (results && results.length > 0) {
                             for await (let result of results) {
+                                const language: any = await this.productLanguage(hostName, { _id: new mongoose.Types.ObjectId(result.productId) })
 
-                                const productResult = await ProductsModel.find({ _id: new mongoose.Types.ObjectId(result.productId) })
+                                const productResult = await ProductsModel.aggregate(language)
                                 if (productResult) {
                                     productData.push(productResult[0])
                                 }
@@ -430,7 +436,6 @@ console.log("vbvcbvcbvcb",language);
 
         }
         else if (products && products.collectionbrand) {
-            console.log(products.collectionbrand);
 
             collections = await CollectionsBrandsModel.findOne({ _id: products.collectionbrand })
 
@@ -446,8 +451,9 @@ console.log("vbvcbvcbvcb",language);
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
+                        const language: any = await this.productLanguage(hostName, { _id: new mongoose.Types.ObjectId(data) })
 
-                        const result = await ProductsModel.find({ _id: new mongoose.Types.ObjectId(data) })
+                        const result = await ProductsModel.aggregate(language)
 
                         productData.push(result[0])
                     }

@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
 import mongoose from 'mongoose';
-import { brandLookup, brandObject, imageLookup, productCategoryLookup, seoLookup, seoObject, specificationLookup, variantLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, imageLookup, productCategoryLookup, seoLookup, seoObject, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
 class ProductsService {
@@ -53,7 +53,7 @@ class ProductsService {
             seoLookup,
             seoObject,
             this.multilanguageFieldsLookup,
-            specificationLookup,
+            specificationsLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
@@ -74,7 +74,7 @@ class ProductsService {
                 seoLookup,
                 seoObject,
                 this.multilanguageFieldsLookup,
-                specificationLookup,
+                specificationsLookup,
                 { $match: query },
                 {
                     $count: 'count'
@@ -123,7 +123,7 @@ class ProductsService {
                     seoLookup,
                     seoObject,
                     this.multilanguageFieldsLookup,
-                    specificationLookup
+                    specificationsLookup
                 ];
 
                 const productDataWithValues = await ProductsModel.aggregate(pipeline);

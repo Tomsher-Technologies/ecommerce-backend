@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.specificationProject = exports.specificationDetailLanguageFieldsReplace = exports.specificationLanguageFieldsReplace = exports.specificationLookup = exports.specificationDetailsLookup = void 0;
+exports.specificationProject = exports.specificationDetailLanguageFieldsReplace = exports.specificationLanguageFieldsReplace = exports.specificationLanguageLookup = exports.specificationDetailsLookup = void 0;
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.specificationDetailsLookup = {
     $lookup: {
@@ -10,7 +10,7 @@ exports.specificationDetailsLookup = {
         as: 'specificationValues'
     }
 };
-exports.specificationLookup = {
+exports.specificationLanguageLookup = {
     $lookup: {
         from: 'multilanguagefieleds', // Ensure 'from' field is included
         let: { specificationId: '$_id' },

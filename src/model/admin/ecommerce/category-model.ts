@@ -10,6 +10,13 @@ export interface CategoryProps extends Document {
     categoryImageUrl: string;
     isExcel: Boolean;
     level: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    metaImageUrl?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    twitterTitle?: string;
+    twitterDescription?: string;
     status: string;
     statusAt: Date;
     createdBy?: string;
@@ -67,6 +74,34 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         default: '0'
     },
     type: {
+        type: String,
+        default: ''
+    },
+    metaTitle: {
+        type: String,
+        default: ''
+    },
+    metaImageUrl: {
+        type: String,
+        default: ''
+    },
+    metaDescription: {
+        type: String,
+        default: ''
+    },
+    ogTitle: {
+        type: String,
+        default: ''
+    },
+    ogDescription: {
+        type: String,
+        default: ''
+    },
+    twitterTitle: {
+        type: String,
+        default: ''
+    },
+    twitterDescription: {
         type: String,
         default: ''
     },

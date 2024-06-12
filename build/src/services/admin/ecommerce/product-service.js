@@ -49,7 +49,7 @@ class ProductsService {
             product_config_1.seoLookup,
             product_config_1.seoObject,
             this.multilanguageFieldsLookup,
-            product_config_1.specificationLookup,
+            product_config_1.specificationsLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
@@ -68,7 +68,7 @@ class ProductsService {
                 product_config_1.seoLookup,
                 product_config_1.seoObject,
                 this.multilanguageFieldsLookup,
-                product_config_1.specificationLookup,
+                product_config_1.specificationsLookup,
                 { $match: query },
                 {
                     $count: 'count'
@@ -112,7 +112,7 @@ class ProductsService {
                     product_config_1.seoLookup,
                     product_config_1.seoObject,
                     this.multilanguageFieldsLookup,
-                    product_config_1.specificationLookup
+                    product_config_1.specificationsLookup
                 ];
                 const productDataWithValues = await product_model_1.default.aggregate(pipeline);
                 return productDataWithValues[0] || null;

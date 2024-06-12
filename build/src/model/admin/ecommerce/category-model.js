@@ -77,6 +77,34 @@ const categorySchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
+    metaTitle: {
+        type: String,
+        default: ''
+    },
+    metaImageUrl: {
+        type: String,
+        default: ''
+    },
+    metaDescription: {
+        type: String,
+        default: ''
+    },
+    ogTitle: {
+        type: String,
+        default: ''
+    },
+    ogDescription: {
+        type: String,
+        default: ''
+    },
+    twitterTitle: {
+        type: String,
+        default: ''
+    },
+    twitterDescription: {
+        type: String,
+        default: ''
+    },
     status: {
         type: String,
         required: true,

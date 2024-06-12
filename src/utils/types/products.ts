@@ -95,4 +95,5 @@ export interface ProductsFrontendQueryParams {
     getAttribute?: number;
     categories?: any;
     brands?: any;
+    offer?:any;
 }

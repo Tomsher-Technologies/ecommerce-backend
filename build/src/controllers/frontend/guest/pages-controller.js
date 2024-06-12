@@ -13,9 +13,7 @@ class PageController extends base_controller_1.default {
     async findPagesData(req, res) {
         try {
             const pageSlug = req.params.slug;
-            console.log('pageSlug', pageSlug);
             if ((0, helpers_1.checkValueExists)(website_setup_1.blockReferences, pageSlug)) {
-                const { blockReference } = req.query;
                 let query = { _id: { $exists: true } };
                 const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
                 if (countryId) {

@@ -24,7 +24,7 @@ class ProductService {
     constructor() {
     }
     async findProductList(productOption) {
-        var { query, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName } = productOption;
+        var { query, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
         const countryId = await common_service_1.default.findOneCountrySubDomainWithId(hostName);
         if (countryId) {
             query = {
@@ -53,17 +53,25 @@ class ProductService {
             ...(getImageGallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getBrand === '1' ? [product_config_1.brandLookup] : []),
             ...(getBrand === '1' ? [product_config_1.brandObject] : []),
-            ...(getSpecification === '1' ? [product_config_1.specificationLookup] : []),
+            ...(getSpecification === '1' ? [product_config_1.specificationsLookup] : []),
             { $match: query }
         ];
+        var offerDetails;
+        // const offerData: any = await CommonService.findOffers(offers, hostName)
+        // if (offerData) {
+        //     pipeline.push(offerData.pipeline[0])
+        // }
+        // console.log("offerDataofferDataofferDataofferData", offerData);
         let productData = [];
-        const collection = await this.collection(products);
+        const collection = await this.collection(products, hostName);
         if (collection && collection.productData) {
             productData = collection.productData;
         }
         else if (collection && collection.collectionsBrands) {
             for await (let data of collection.collectionsBrands) {
-                const result = await product_model_1.default.find({ brand: new mongoose_1.default.Types.ObjectId(data) });
+                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await product_model_1.default.aggregate(language).exec();
                 if (result && result.length > 0) {
                     productData.push(result[0]);
                 }
@@ -71,7 +79,6 @@ class ProductService {
         }
         else {
             const language = await this.productLanguage(hostName, pipeline);
-            console.log("vbvcbvcbvcb", language);
             productData = await product_model_1.default.aggregate(language).exec();
         }
         return productData;
@@ -182,9 +189,7 @@ class ProductService {
                 ];
                 const specificationData = await specifications_model_1.default.aggregate(pipeline).exec();
                 const language = await this.specificationLanguage(hostName, pipeline);
-                console.log("languagelanguage", language);
                 const data = await specifications_model_1.default.aggregate(language).exec();
-                // console.log("data,data",data);
                 for (let j = 0; j < data[0].specificationValues.length; j++) {
                     if (Array.isArray(data[0].specificationValues[j].itemName) && data[0].specificationValues[j].itemName.length > 1) {
                         if (data[0].specificationValues[j].itemName[j] == undefined) {
@@ -208,15 +213,13 @@ class ProductService {
     }
     async specificationLanguage(hostName, pipeline) {
         const languageData = await language_model_1.default.find().exec();
-        console.log("languageDatalanguageData123", hostName, languageData);
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         if (languageId) {
-            console.log("fghfghfghgfhfg", languageId);
             const specificationLookupWithLanguage = {
-                ...product_config_1.specificationLookup,
+                ...specification_config_1.specificationLanguageLookup,
                 $lookup: {
-                    ...product_config_1.specificationLookup.$lookup,
-                    pipeline: product_config_1.specificationLookup.$lookup.pipeline.map((stage) => {
+                    ...specification_config_1.specificationLanguageLookup.$lookup,
+                    pipeline: specification_config_1.specificationLanguageLookup.$lookup.pipeline.map((stage) => {
                         if (stage.$match && stage.$match.$expr) {
                             return {
                                 ...stage,
@@ -258,7 +261,7 @@ class ProductService {
                     product_config_1.seoLookup,
                     product_config_1.seoObject,
                     product_config_1.productMultilanguageFieldsLookup,
-                    product_config_1.specificationLookup
+                    product_config_1.specificationsLookup
                 ];
                 // let pipeline1: any[] = [
                 //     { $match: query },
@@ -267,7 +270,6 @@ class ProductService {
                 const categorylanguage = await category_service_1.default.categoryLanguage(hostName.hostName, pipeline);
                 const categoryData = await category_model_1.default.aggregate(categorylanguage).exec();
                 // pipeline.push(categorylanguage)
-                console.log("language,language124", categoryData);
                 const productDataWithValues = await product_model_1.default.aggregate(language);
                 return productDataWithValues[0] || null;
             }
@@ -281,11 +283,8 @@ class ProductService {
     }
     async productLanguage(hostName, pipeline) {
         const languageData = await language_model_1.default.find().exec();
-        console.log("languageDatalanguageData123", hostName, languageData);
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        console.log("languageId", languageId);
         if (languageId) {
-            console.log("fghfghfghgfhfg", languageId);
             const productLookupWithLanguage = {
                 ...product_config_1.productMultilanguageFieldsLookup,
                 $lookup: {
@@ -318,7 +317,7 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async collection(products) {
+    async collection(products, hostName) {
         var collections;
         // var collectionProducts: any
         var productData = [];
@@ -330,7 +329,8 @@ class ProductService {
                         const results = await product_category_link_model_1.default.find({ categoryId: new mongoose_1.default.Types.ObjectId(data) });
                         if (results && results.length > 0) {
                             for await (let result of results) {
-                                const productResult = await product_model_1.default.find({ _id: new mongoose_1.default.Types.ObjectId(result.productId) });
+                                const language = await this.productLanguage(hostName, { _id: new mongoose_1.default.Types.ObjectId(result.productId) });
+                                const productResult = await product_model_1.default.aggregate(language);
                                 if (productResult) {
                                     productData.push(productResult[0]);
                                 }
@@ -342,7 +342,6 @@ class ProductService {
             return { productData: productData };
         }
         else if (products && products.collectionbrand) {
-            console.log(products.collectionbrand);
             collections = await collections_brands_model_1.default.findOne({ _id: products.collectionbrand });
             if (collections && collections.collectionsBrands) {
                 return { collectionsBrands: collections.collectionsBrands };
@@ -353,7 +352,8 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
-                        const result = await product_model_1.default.find({ _id: new mongoose_1.default.Types.ObjectId(data) });
+                        const language = await this.productLanguage(hostName, { _id: new mongoose_1.default.Types.ObjectId(data) });
+                        const result = await product_model_1.default.aggregate(language);
                         productData.push(result[0]);
                     }
                 }
