@@ -86,7 +86,8 @@ class GuestController extends base_controller_1.default {
                 if (validatedData.success) {
                     const { otpType, email, phone } = validatedData.data;
                     const existingUser = await customer_service_1.default.findOne({
-                        ...(otpType === 'email' ? { email } : { phone })
+                        ...(otpType === 'email' ? { email } : { phone }),
+                        status: '1'
                     });
                     if (existingUser) {
                         const currentDate = new Date();
@@ -145,7 +146,8 @@ class GuestController extends base_controller_1.default {
                 if (validatedData.success) {
                     const { otpType, otp, email, phone } = validatedData.data;
                     const existingUser = await customer_service_1.default.findOne({
-                        ...(otpType === 'email' ? { email } : { phone })
+                        ...(otpType === 'email' ? { email } : { phone }),
+                        status: '1'
                     });
                     if (existingUser) {
                         const checkValidOtp = await customer_service_1.default.findOne({ _id: existingUser?.id, otp });
@@ -167,7 +169,7 @@ class GuestController extends base_controller_1.default {
                                             email: updatedCustomer.email,
                                             phone: updatedCustomer.phone,
                                             isVerified: updatedCustomer.isVerified,
-                                            activeStatus: updatedCustomer.activeStatus
+                                            status: updatedCustomer.status
                                         },
                                         message: 'Customer otp successfully verified'
                                     });
@@ -225,7 +227,7 @@ class GuestController extends base_controller_1.default {
                 const validatedData = authSchema_1.loginSchema.safeParse(req.body);
                 if (validatedData.success) {
                     const { email, password } = validatedData.data;
-                    const user = await customers_model_1.default.findOne({ email: email });
+                    const user = await customers_model_1.default.findOne({ email: email, status: '1' });
                     if (user) {
                         const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
                         if (isPasswordValid) {
@@ -241,9 +243,10 @@ class GuestController extends base_controller_1.default {
                                     firstName: user.firstName,
                                     email: user.email,
                                     phone: user.phone,
-                                    activeStatus: user.activeStatus
+                                    status: user.status,
+                                    isVerified: user.isVerified
                                 },
-                                message: 'Customer created successfully!'
+                                message: 'Customer login successfully!'
                             });
                         }
                         else {

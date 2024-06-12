@@ -34,13 +34,13 @@ class BrandService {
         var collections: any
         // var collectionProducts: any
         var brandDetail: any = []
-        const collection: any = await ProductService.collection(products)
+        const collection: any = await ProductService.collection(products, hostName)
 
         if (collection && collection.productData) {
             productData = collection.productData
         }
         else if (collection && collection.collectionsBrands) {
-            
+
             for await (let brand of collection.collectionsBrands) {
                 pipeline = pipeline.filter(stage => !stage['$match'] || !stage['$match']._id);
 
@@ -59,7 +59,7 @@ class BrandService {
         }
 
         else {
-            productData = await ProductService.findProductList({query})
+            productData = await ProductService.findProductList({ query })
         }
 
         const brandArray: any = []

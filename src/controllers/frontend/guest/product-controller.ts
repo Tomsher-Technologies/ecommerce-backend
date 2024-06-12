@@ -165,17 +165,22 @@ class ProductController extends BaseController {
             let getCategory = '1'
             let query: any = { _id: { $exists: true } };
             let products: any
+            let offers: any;
 
             query.status = '1';
 
             if (offer) {
-                const offerData  =await CommonService.findOffers(offer)
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
 
-                console.log("offerData", offerData);
+                if (isObjectId) {
+                    offers = { _id: new mongoose.Types.ObjectId(offer) };
+                } else {
+                    const keywordRegex = new RegExp(offer, 'i');
+                    offers = { slug: keywordRegex };
+                }
 
             }
 
-            console.log("qquery", query);
 
 
             if (categories) {
@@ -279,6 +284,7 @@ class ProductController extends BaseController {
             const productData: any = await ProductService.findProductList({
                 query,
                 products,
+                offers,
                 getImageGallery,
                 getAttribute,
                 getSpecification,

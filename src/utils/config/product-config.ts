@@ -1,5 +1,6 @@
 import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
+import ProductsModel from "../../model/admin/ecommerce/product-model";
 
 
 export const productVariantAttributesLookup = [
@@ -178,6 +179,50 @@ export const variantLookup = {
         ]
     }
 };
+
+export const offerProductLookup = [
+    {
+        $lookup: {
+            from: 'offers',
+            localField: '_id',
+            foreignField: 'offerApplyValues',
+            let: {
+                currentDate: new Date(),
+                productId:'_id',
+                
+            },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $lte: ['$$currentDate', '$offerDateRange.1'] },
+                                { $gte: ['$$currentDate', '$offerDateRange.0'] },
+                                {
+                                    $or: [
+                                        {if: {
+                                            $and: [
+                                                { $eq: ['$offersBy', 'product'] },
+                                                // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
+                                            ]
+                                        },
+                                        then: '$offerProducts',
+                                           
+                                        },
+                                      
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ],
+            as: 'offerProducts'
+        }
+    },
+    
+
+];
 
 export const productCategoryLookup = {
     $lookup: {

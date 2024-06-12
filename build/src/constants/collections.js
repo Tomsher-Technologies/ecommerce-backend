@@ -21,6 +21,7 @@ exports.collections = {
         specifications: 'specifications',
         seopages: 'seopages',
         attributedetails: 'attributedetails',
-        specificationdetails: 'specificationdetails'
+        specificationdetails: 'specificationdetails',
+        offers: 'offers',
     },
 };

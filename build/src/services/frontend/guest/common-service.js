@@ -12,6 +12,7 @@ const collections_brands_config_1 = require("../../../utils/config/collections-b
 const product_config_1 = require("../../../utils/config/product-config");
 const collections_product_config_1 = require("../../../utils/config/collections-product-config");
 const collections_categories_config_1 = require("../../../utils/config/collections-categories-config");
+const offers_1 = require("../../../constants/offers");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const slider_model_1 = __importDefault(require("../../../model/admin/ecommerce/slider-model"));
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
@@ -27,6 +28,8 @@ const category_model_1 = __importDefault(require("../../../model/admin/ecommerce
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
+const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
+const product_service_1 = __importDefault(require("./product-service"));
 class CommonService {
     constructor() { }
     async findAllCountries() {
@@ -275,10 +278,12 @@ class CommonService {
                         ]
                     }
                 };
+                productPipeline.push(product_config_1.productCategoryLookup);
                 productPipeline.push(modifiedPipeline);
                 productPipeline.push(product_config_1.productMultilanguageFieldsLookup);
                 productPipeline.push(product_config_1.productFinalProject);
-                const productData = await product_model_1.default.aggregate(productPipeline).exec();
+                const language = await product_service_1.default.productLanguage(hostName, productPipeline);
+                const productData = await product_model_1.default.aggregate(language).exec();
                 collection.collectionsProducts = productData;
             }
         }
@@ -404,7 +409,6 @@ class CommonService {
         collectionBrandPipeline.push(collections_brands_config_1.collectionsBrandLookup);
         collectionBrandPipeline.push(collections_brands_config_1.collectionsBrandFinalProject);
         const brandCollectionData = await collections_brands_model_1.default.aggregate(collectionBrandPipeline).exec();
-        console.log('brandCollectionData', brandCollectionData);
         for (const collection of brandCollectionData) {
             if (collection && collection.collectionsBrands) {
                 let brandPipeline = [
@@ -450,6 +454,50 @@ class CommonService {
             }
         }
         return brandCollectionData;
+    }
+    async findOffers(options) {
+        const currentDate = new Date();
+        const offerData = await offers_model_1.default.find({
+            $and: [
+                { "offerDateRange.0": { $lte: currentDate } },
+                { "offerDateRange.1": { $gte: currentDate } }
+            ]
+        });
+        const productData = [];
+        console.log("offersoffers", offerData);
+        for await (let offer of offerData) {
+            if (offer.offersBy == offers_1.offers.brand) {
+                for await (let offerApplyValue of offer.offerApplyValues) {
+                    const brandData = await brands_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(offerApplyValue) }, '_id');
+                    if (brandData) {
+                        const products = await product_model_1.default.find({ brand: brandData._id });
+                        if (products.length > 0) {
+                            productData.push(...products);
+                        }
+                    }
+                }
+            }
+            if (offer.offersBy == offers_1.offers.category) {
+                for await (let offerApplyValue of offer.offerApplyValues) {
+                    const categoryData = await category_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(offerApplyValue) }, '_id');
+                    if (categoryData) {
+                        const products = await product_model_1.default.find({ brand: categoryData._id });
+                        if (products.length > 0) {
+                            productData.push(...products);
+                        }
+                    }
+                }
+            }
+            if (offer.offersBy == offers_1.offers.product) {
+                for await (let offerApplyValue of offer.offerApplyValues) {
+                    const products = await product_model_1.default.find({ brand: offerApplyValue });
+                    if (products.length > 0) {
+                        productData.push(...products);
+                    }
+                }
+            }
+        }
+        return productData;
     }
 }
 exports.default = new CommonService();

@@ -16,10 +16,15 @@ const port = process.env.PORT;
 app.use((0, helmet_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
-app.use("/public", express_1.default.static('public'));
+// app.use(cors()); // Enable CORS for all routes
+const path = require('path');
+app.use('/public', express_1.default.static(path.join(__dirname, 'public')));
 app.use(function (request, response, next) {
     response.header("Access-Control-Allow-Origin", "*");
     response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE');
+    response.setHeader('Access-Control-Allow-Methods', 'Content-Type');
     next();
 });
 const corsOptions = {
@@ -35,6 +40,16 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use((0, cors_1.default)(corsOptions));
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ['*'],
+            scriptSrc: ["* data: 'unsafe-eval' 'unsafe-inline' blob:"]
+        }
+    }
+}));
 mongoose_1.default.Promise = global.Promise;
 mongoose_1.default
     .connect(process.env.MONGODB_URI)
@@ -44,23 +59,6 @@ mongoose_1.default
     .catch((err) => {
     console.error('Could not connect to the database', err);
 });
-// app.use((req, res, next) => {
-//   const dbName = req.header('Database');
-//   if (!dbName) {
-//     return res.status(400).json({ error: 'Database header is missing' });
-//   }
-//   mongoose
-//     .connect(`mongodb+srv://support:eHzPLIVbpfzIfqJV@cluster0.rlxsskd.mongodb.net/${dbName}`)
-//     .then((x) => {
-//       console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`);
-//       next();
-//     })
-//     .catch((err) => {
-//       console.error('Could not connect to the database', err);
-//       return res.status(500).json({ error: 'Could not connect to the database' });
-//     });
-// });
-//  app.use(databaseSwitcher);
 app.get('/', (req, res) => {
     res.json({ message: "Ecommerce" });
 });
