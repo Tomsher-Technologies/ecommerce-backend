@@ -90,7 +90,8 @@ class GuestController extends BaseController {
                     const { otpType, email, phone } = validatedData.data;
 
                     const existingUser = await CustomerService.findOne({
-                        ...(otpType === 'email' ? { email } : { phone })
+                        ...(otpType === 'email' ? { email } : { phone }),
+                        status: '1'
                     });
 
                     if (existingUser) {
@@ -109,7 +110,7 @@ class GuestController extends BaseController {
                                     email: updatedCustomer.email,
                                     phone: updatedCustomer.phone
                                 },
-                                message:`Otp successfully sended on ${otpType}`
+                                message: `Otp successfully sended on ${otpType}`
                             });
                         } else {
                             controller.sendErrorResponse(res, 200, {
@@ -148,7 +149,8 @@ class GuestController extends BaseController {
                     const { otpType, otp, email, phone } = validatedData.data;
 
                     const existingUser = await CustomerService.findOne({
-                        ...(otpType === 'email' ? { email } : { phone })
+                        ...(otpType === 'email' ? { email } : { phone }),
+                        status: '1'
                     });
 
                     if (existingUser) {
@@ -172,7 +174,7 @@ class GuestController extends BaseController {
                                             email: updatedCustomer.email,
                                             phone: updatedCustomer.phone,
                                             isVerified: updatedCustomer.isVerified,
-                                            activeStatus: updatedCustomer.activeStatus
+                                            status: updatedCustomer.status
                                         },
                                         message: 'Customer otp successfully verified'
                                     });
@@ -224,7 +226,7 @@ class GuestController extends BaseController {
                 const validatedData = loginSchema.safeParse(req.body);
                 if (validatedData.success) {
                     const { email, password } = validatedData.data;
-                    const user: CustomrProps | null = await CustomerModel.findOne({ email: email });
+                    const user: CustomrProps | null = await CustomerModel.findOne({ email: email, status: '1' });
                     if (user) {
                         const isPasswordValid = await bcrypt.compare(password, user.password);
                         if (isPasswordValid) {
@@ -241,9 +243,10 @@ class GuestController extends BaseController {
                                     firstName: user.firstName,
                                     email: user.email,
                                     phone: user.phone,
-                                    activeStatus: user.activeStatus
+                                    status: user.status,
+                                    isVerified: user.isVerified
                                 },
-                                message: 'Customer created successfully!'
+                                message: 'Customer login successfully!'
                             });
                         } else {
                             controller.sendErrorResponse(res, 200, {

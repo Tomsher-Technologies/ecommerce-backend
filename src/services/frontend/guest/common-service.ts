@@ -474,7 +474,6 @@ class CommonService {
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
         const brandCollectionData = await CollectionsBrandsModel.aggregate(collectionBrandPipeline).exec();
-        console.log('brandCollectionData', brandCollectionData);
 
         for (const collection of brandCollectionData) {
             if (collection && collection.collectionsBrands) {
