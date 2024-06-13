@@ -4,13 +4,14 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { forgotPasswordSchema, loginSchema, registerSchema, verifyOtpSchema } from '../../../utils/schemas/frontend/guest/authSchema';
+import { forgotPasswordSchema, loginSchema, registerSchema, resendOtpSchema, verifyOtpSchema } from '../../../utils/schemas/frontend/guest/authSchema';
 import { formatZodError, generateOTP } from '../../../utils/helpers';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import CustomerService from '../../../services/frontend/customer-service';
 import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
 import CommonService from '../../../services/frontend/guest/common-service';
+import CustomerWalletTransactionsModel from '../../../model/frontend/customer-wallet-transaction-model'
 
 
 const controller = new BaseController();
@@ -22,10 +23,21 @@ class GuestController extends BaseController {
             const validatedData = registerSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { email, firstName, phone, password } = validatedData.data;
+                const { email, firstName, phone, password, referralCode } = validatedData.data;
+                let referralCodeWithCustomerData: any = null;
+
+                if (referralCode) {
+                    referralCodeWithCustomerData = await CustomerService.findOne({ referralCode: referralCode, status: '1' });
+                    if (!referralCodeWithCustomerData) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Invalid referral code! Please try again',
+                        });
+                    }
+                }
 
                 const currentDate = new Date();
                 const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
+                const generatedReferralCode = await CustomerService.generateReferralCode(firstName);
 
                 const customerData = {
                     email,
@@ -34,27 +46,39 @@ class GuestController extends BaseController {
                     password: await bcrypt.hash(password, 10),
                     otp: generateOTP(6),
                     otpExpiry,
+                    referralCode: generatedReferralCode,
                     status: '1',
                     failureAttemptsCount: 0,
                     createdAt: new Date()
                 };
                 const newCustomer = await CustomerService.create(customerData);
                 if (newCustomer) {
-                    controller.sendSuccessResponse(res, {
+                    if (referralCodeWithCustomerData) {
+                        await CustomerWalletTransactionsModel.create({
+                            customerId: referralCodeWithCustomerData._id,
+                            referrerCustomerId: newCustomer._id,
+                            referredCode: referralCode,
+                            walletAmount: 0,
+                            status: '0'
+                        });
+                    }
+                    return controller.sendSuccessResponse(res, {
                         requestedData: {
+                            userId: newCustomer._id,
                             otp: newCustomer.otp,
                             email: newCustomer.email,
-                            phone: newCustomer.phone
+                            phone: newCustomer.phone,
+                            referralCode
                         },
                         message: 'Customer created successfully!'
                     });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This user cant register! Please try again',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 });
@@ -75,7 +99,7 @@ class GuestController extends BaseController {
                     }
                 });
             }
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating customer'
             });
         }
@@ -104,7 +128,7 @@ class GuestController extends BaseController {
                         };
                         const updatedCustomer = await CustomerService.update(existingUser?.id, updateCustomerOtp);
                         if (updatedCustomer) {
-                            controller.sendSuccessResponse(res, {
+                            return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     otp: updatedCustomer.otp,
                                     email: updatedCustomer.email,
@@ -113,28 +137,82 @@ class GuestController extends BaseController {
                                 message: `Otp successfully sended on ${otpType}`
                             });
                         } else {
-                            controller.sendErrorResponse(res, 200, {
+                            return controller.sendErrorResponse(res, 200, {
                                 message: 'Something wrong on otp generating... please try again!',
                             });
                         }
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: `Invalid ${otpType} or user not found!`,
                         });
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
                         validation: formatZodError(validatedData.error.errors)
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 500, {
                     message: 'Country is missing'
                 });
             }
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while creating customer'
+            });
+        }
+    }
+
+    async resendOtp(req: Request, res: Response): Promise<void> {
+        try {
+            const { userId } = req.body;
+            const validatedData = resendOtpSchema.safeParse(req.body);
+            if (userId) {
+                if (validatedData.success) {
+                    const customerData = await CustomerService.findOne({ _id: userId, status: '1' });
+                    if (customerData) {
+                        const currentDate = new Date();
+                        const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
+
+                        const optUpdatedCustomer = await CustomerService.update(customerData._id, {
+                            otp: generateOTP(6),
+                            otpExpiry,
+                        });
+                        if (optUpdatedCustomer) {
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    userId: optUpdatedCustomer._id,
+                                    otp: optUpdatedCustomer.otp,
+                                    email: optUpdatedCustomer.email,
+                                    phone: optUpdatedCustomer.phone,
+                                },
+                                message: 'Otp successfully sent'
+                            });
+                        } else {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Something went wrong otp resend!'
+                            });
+                        }
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Customer not found!'
+                        });
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: formatZodError(validatedData.error.errors)
+                    });
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'User id is required'
+                });
+            }
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating customer'
             });
         }
@@ -160,13 +238,26 @@ class GuestController extends BaseController {
                             if (checkValidOtp.otpExpiry && currentTime <= checkValidOtp.otpExpiry) {
                                 const updatedCustomer = await CustomerService.update(existingUser?.id, { isVerified: true, failureAttemptsCount: 0 });
                                 if (updatedCustomer) {
+                                    const checkReferredCode = await CustomerWalletTransactionsModel.findOne({
+                                        referrerCustomerId: updatedCustomer._id,
+                                        status: '0',
+                                        referralCode: { $ne: '' }
+                                    });
+
+                                    if (checkReferredCode) {
+                                        await CustomerWalletTransactionsModel.findByIdAndUpdate(checkReferredCode._id, {
+                                            walletAmount: 10,
+                                            status: '1'
+                                        });
+                                    }
+
                                     const token: string = jwt.sign({
                                         userId: updatedCustomer._id,
                                         email: updatedCustomer.email,
                                         phone: updatedCustomer.phone
                                     }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
 
-                                    controller.sendSuccessResponse(res, {
+                                    return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
                                             userId: updatedCustomer._id,
@@ -174,17 +265,18 @@ class GuestController extends BaseController {
                                             email: updatedCustomer.email,
                                             phone: updatedCustomer.phone,
                                             isVerified: updatedCustomer.isVerified,
+                                            referralCode: updatedCustomer.referralCode,
                                             status: updatedCustomer.status
                                         },
                                         message: 'Customer otp successfully verified'
                                     });
                                 } else {
-                                    controller.sendErrorResponse(res, 200, {
+                                    return controller.sendErrorResponse(res, 200, {
                                         message: 'Something wrong on otp verifying. please try again!',
                                     });
                                 }
                             } else {
-                                controller.sendErrorResponse(res, 200, {
+                                return controller.sendErrorResponse(res, 200, {
                                     message: 'OTP has expired',
                                 });
                             }
@@ -192,28 +284,28 @@ class GuestController extends BaseController {
                             await CustomerService.update(existingUser.id, {
                                 failureAttemptsCount: (existingUser.failureAttemptsCount || 0) + 1
                             });
-                            controller.sendErrorResponse(res, 200, {
+                            return controller.sendErrorResponse(res, 200, {
                                 message: 'Invalid otp',
                             });
                         }
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: otpType + ' is not found!',
                         });
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
                         validation: formatZodError(validatedData.error.errors)
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 500, {
                     message: 'Country is missing'
                 });
             }
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating customer'
             });
         }
@@ -236,7 +328,8 @@ class GuestController extends BaseController {
                                 phone: user.phone
                             }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
 
-                            controller.sendSuccessResponse(res, {
+
+                            return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     token,
                                     userID: user._id,
@@ -244,33 +337,34 @@ class GuestController extends BaseController {
                                     email: user.email,
                                     phone: user.phone,
                                     status: user.status,
-                                    isVerified: user.isVerified
+                                    isVerified: user.isVerified,
+                                    otpType: 'phone'
                                 },
                                 message: 'Customer login successfully!'
                             });
                         } else {
-                            controller.sendErrorResponse(res, 200, {
+                            return controller.sendErrorResponse(res, 200, {
                                 message: 'Invalid password.',
                             });
                         }
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'User not found',
                         });
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
                         validation: formatZodError(validatedData.error.errors)
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 500, {
                     message: 'Country is missing'
                 });
             }
         } catch (error: any) {
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating customer'
             });
         }

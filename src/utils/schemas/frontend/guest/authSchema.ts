@@ -9,8 +9,9 @@ export const registerSchema = zod.object({
     }),
     password: zod.string({ required_error: 'password is required' }).min(6, 'Password too short - should be 6 chars minimum'),
     confirmPassword: zod.string({ required_error: 'Confirm password is required' }).min(6, 'Password too short - should be 6 chars minimum'),
-    // otp: zod.string().min(4, 'OTP is should be 3 chars minimum').max(6, 'OTP is should be 3 chars minimum').optional(),
-    // otpExpiry: zod.any().optional(),
+    referralCode: zod.string().optional(),
+    aggreeWithTermsAndCondions: zod.boolean().refine(value => value === true, { message: 'You must agree with the terms and conditions' }), // Make it required
+
 }).superRefine(({ password, confirmPassword }, ctx) => {
     if (password !== confirmPassword) {
         ctx.addIssue({
@@ -32,6 +33,35 @@ export const verifyOtpSchema = zod.object({
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
     otp: zod.string({ required_error: 'Otp  is required' }).min(6, 'Otp  should be 6 chars minimum').max(6, 'Otp  should be 6 chars maximum'),
+    email: zod.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
+    phone: zod.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
+        message: 'Phone number should contain only numbers and be at least 9 digits long',
+        path: ['phone']
+    }).optional(),
+}).superRefine(({ otpType, email, phone }, ctx) => {
+    if (otpType === 'email') {
+        if (!email) {
+            ctx.addIssue({
+                code: zod.ZodIssueCode.custom,
+                message: 'Email is required when otpType is email',
+                path: ['email'],
+            });
+        }
+    } else if (otpType === 'phone') {
+        if (!phone) {
+            ctx.addIssue({
+                code: zod.ZodIssueCode.custom,
+                message: 'Phone number is required when otpType is phone',
+                path: ['phone'],
+            });
+        }
+    }
+});
+export const resendOtpSchema = zod.object({
+    otpType: zod.enum(['phone', 'email'], {
+        required_error: 'Otp type is required',
+        invalid_type_error: 'Otp type must be either "phone" or "email"',
+    }),
     email: zod.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
     phone: zod.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
         message: 'Phone number should contain only numbers and be at least 9 digits long',

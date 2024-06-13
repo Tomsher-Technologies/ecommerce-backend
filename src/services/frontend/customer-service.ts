@@ -26,6 +26,24 @@ class CustomerService {
         }
     }
 
+    async generateReferralCode(firstName: string): Promise<string> {
+        const namePart = firstName.slice(0, 3).toUpperCase();
+        const lastCustomer = await CustomerModel.findOne({ referralCode: new RegExp(`^${namePart}`) })
+            .sort({ referralCode: -1 })
+            .exec();
+
+        let sequenceNumber = 1;
+        if (lastCustomer) {
+            const lastSequence = parseInt(lastCustomer.referralCode.slice(3), 10);
+            if (!isNaN(lastSequence)) {
+                sequenceNumber = lastSequence + 1;
+            }
+        }
+
+        const sequencePart = sequenceNumber.toString().padStart(4, '0');
+        return `${namePart}${sequencePart}`;
+    }
+
     async create(customerData: any): Promise<CustomrProps> {
         return CustomerModel.create(customerData);
     }
