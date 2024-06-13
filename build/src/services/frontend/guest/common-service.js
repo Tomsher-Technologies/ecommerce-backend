@@ -30,7 +30,6 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
 const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
 const product_service_1 = __importDefault(require("./product-service"));
-const collections_1 = require("../../../constants/collections");
 class CommonService {
     constructor() { }
     async findAllCountries() {
@@ -491,7 +490,7 @@ class CommonService {
                         }
                         else {
                             offerApplied.brand.offerId.add(offerDetail._id);
-                            offerDetail.offerApplyValues.forEach((value) => offerApplied.brand.brands.add(value));
+                            offerDetail.offerApplyValues.forEach((value) => offerApplied.brand.brands.add(new mongoose_1.default.Types.ObjectId(value)));
                         }
                     }
                     else if (offerDetail.offersBy === offers_1.offers.category) {
@@ -500,7 +499,7 @@ class CommonService {
                         }
                         else {
                             offerApplied.category.offerId.add(offerDetail._id);
-                            offerDetail.offerApplyValues.forEach((value) => offerApplied.category.categories.add(value));
+                            offerDetail.offerApplyValues.forEach((value) => offerApplied.category.categories.add(new mongoose_1.default.Types.ObjectId(value)));
                         }
                     }
                     else if (offerDetail.offersBy === offers_1.offers.product) {
@@ -509,7 +508,7 @@ class CommonService {
                         }
                         else {
                             offerApplied.product.offerId.add(offerDetail._id);
-                            offerDetail.offerApplyValues.forEach((value) => offerApplied.product.products.add(value));
+                            offerDetail.offerApplyValues.forEach((value) => offerApplied.product.products.add(new mongoose_1.default.Types.ObjectId(value)));
                         }
                     }
                 }
@@ -522,35 +521,8 @@ class CommonService {
         offerApplied.category.categories = Array.from(offerApplied.category.categories);
         offerApplied.product.offerId = Array.from(offerApplied.product.offerId);
         offerApplied.product.products = Array.from(offerApplied.product.products);
-        if (offerApplied.brand.brands) {
-            pipeline.push({
-                $lookup: {
-                    from: `${collections_1.collections.ecommerce.brands}`,
-                    localField: 'brand',
-                    foreignField: '_id',
-                    as: 'brand',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                brandTitle: 1,
-                                slug: 1,
-                                brandImageUrl: 1,
-                                status: 1,
-                            }
-                        },
-                    ],
-                },
-            }, {
-                $addFields: {
-                    brand: { $arrayElemAt: ['$brand', 0] }
-                }
-            }, {
-                $addFields: {
-                    offer: { $cond: { if: { $gt: [{ $size: '$brand' }, 0] }, then: offerApplied.brand.brands, else: [] } }
-                }
-            });
-        }
+        // console.log("offerApplied", offerApplied);
+        // console.log("pipelinepipeline", pipeline[0].$addFields.offer.$cond.if);
         return { pipeline, getOfferList, offerApplied };
     }
 }

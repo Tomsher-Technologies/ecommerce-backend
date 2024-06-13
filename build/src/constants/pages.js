@@ -33,7 +33,7 @@ exports.pageReference = [
     { value: 'middle-left', label: "Middle Left" },
     { value: 'middle-right', label: "Middle Right" },
     { value: 'middle-center', label: "Middle Center" },
-    { value: 'middle-bottom', label: "Middle Gap" },
+    { value: 'middle-gap', label: "Middle Gap" },
     { value: 'middle-bottom', label: "Middle Bottom" },
     { value: 'bottom', label: "Bottom" },
     { value: 'bottom-top', label: "Bottom Top" },
