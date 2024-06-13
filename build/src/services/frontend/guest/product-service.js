@@ -57,10 +57,162 @@ class ProductService {
             { $match: query }
         ];
         var offerDetails;
-        const { pipeline: offerPipeline, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
-        console.log('offerPipeline', offerPipeline);
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
+        // if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+        //     // for (let i = 0; i < offerApplied.brand.brands.length; i++) {
+        //     //     for (let j = 0; j < offerApplied.brand.offerId.length; j++) {
+        //     //         console.log("offerApplied.brand.brands[i]", offerApplied.brand.brands[i], offerApplied.brand.offerId[j]);
+        //     //         pipeline.push({
+        //     //             $addFields: {
+        //     //                 offer: {
+        //     //                     $cond: {
+        //     //                         if: {
+        //     //                             $and: [
+        //     //                                 { $eq: ['$brand._id', offerApplied.brand.brands[i]] }, // Check if brands match
+        //     //                                 // { $eq: [offerApplied.brand.offerId[j], getOfferList[i]._id] } // Check if offer IDs match
+        //     //                             ]
+        //     //                         },
+        //     //                         then: getOfferList[i], // If conditions met, set the offer
+        //     //                         else: null // Otherwise, set offer to null or omit this line if you prefer to keep the field absent
+        //     //                     }
+        //     //                 }
+        //     //             }
+        //     //         })
+        //     //     }
+        //     // }
+        //     pipeline.push({
+        //         $addFields: {
+        //             offer: {
+        //                 $arrayElemAt: [
+        //                     {
+        //                         $filter: {
+        //                             input: getOfferList,
+        //                             as: "offer",
+        //                             cond: {
+        //                                 $and: [
+        //                                     {
+        //                                         $in: ["$$offer._id", offerApplied.brand.offerId]
+        //                                     },
+        //                                     {
+        //                                         $in: ["$brand._id", offerApplied.brand.brands]
+        //                                     }
+        //                                 ]
+        //                             }
+        //                         }
+        //                     },
+        //                     0
+        //                 ]
+        //             }
+        //         }
+        //     });
+        //     console.log("fgdfgdfhdf",pipeline);
+        // }
+        // if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+        //     pipeline.push({
+        //         $addFields: {
+        //             offer: {
+        //                 $arrayElemAt: [
+        //                     {
+        //                         $filter: {
+        //                             input: getOfferList,
+        //                             as: "offer",
+        //                             cond: {
+        //                                 $and: [
+        //                                     {
+        //                                         $in: ["$$offer._id", offerApplied.product.offerId]
+        //                                     },
+        //                                     {
+        //                                         $in: ["$_id", offerApplied.product.products]
+        //                                     }
+        //                                 ]
+        //                             }
+        //                         }
+        //                     },
+        //                     0
+        //                 ]
+        //             }
+        //         }
+        //     });
+        //     console.log("11111111111",pipeline);
+        // }
+        // Add the stages for brand-specific offers
+        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+            pipeline.push({
+                $addFields: {
+                    brandOffers: {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.brand.offerId] }, // Match offer ID
+                                    { $in: ["$brand._id", offerApplied.brand.brands] } // Match brand ID
+                                ]
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        // Add the stages for product-specific offers
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            pipeline.push({
+                $addFields: {
+                    productOffers: {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.product.offerId] }, // Match offer ID
+                                    { $in: ["$_id", offerApplied.product.products] } // Match product ID
+                                ]
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+            pipeline.push({
+                $addFields: {
+                    categoryOffers: {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.category.offerId] }, // Match offer ID
+                                    { $in: ["$productCategory.category._id", offerApplied.category.categories] } // Match category ID within productCategory array
+                                ]
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        console.log("offerApplied.category.categories.length", offerApplied.category);
+        // Combine brand and product offers into a single array field 'offer'
+        pipeline.push({
+            $addFields: {
+                offer: {
+                    $cond: {
+                        if: { $gt: [{ $size: "$productOffers" }, 0] }, // Check if productOffers array is not empty
+                        then: "$productOffers",
+                        else: {
+                            $cond: {
+                                if: { $gt: [{ $size: "$brandOffers" }, 0] }, // Check if categoryOffers array is not empty
+                                then: "$brandOffers",
+                                else: "$categoryOffers" // Default to brandOffers if no product or category offers
+                            }
+                        }
+                    }
+                }
+            }
+        });
         if (offerPipeline && offerPipeline.length > 0) {
-            pipeline.push(offerPipeline);
+            pipeline.push(offerPipeline[0]);
+            console.log("pipeline", pipeline);
         }
         // console.log("offerDataofferDataofferDataofferData", offerData);
         let productData = [];

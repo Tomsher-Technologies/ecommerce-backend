@@ -14,6 +14,7 @@ router.use(express.urlencoded({ extended: true }));
 
 
 router.post('/register', GuestController.register);
+router.post('/resend-otp', GuestController.resendOtp);
 router.post('/verify-otp', GuestController.verifyOtp);
 router.post('/forgot-password', GuestController.forgotPassword);
 router.post('/login', GuestController.login);

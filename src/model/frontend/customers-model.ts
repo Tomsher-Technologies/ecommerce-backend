@@ -6,10 +6,11 @@ export interface CustomrProps extends Document {
     phone: string;
     password: string;
     customerImageUrl: string;
+    referralCode: string;
     otp: string;
     otpExpiry: Date;
     isVerified: Boolean;
-    activeStatus: number;
+    rewardPoint: number;
     failureAttemptsCount: number;
     resetPasswordCount: number;
     status: string;
@@ -57,19 +58,31 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         type: String,
         default: ''
     },
+    referralCode: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                const count = await this.model('Customer').countDocuments({ referralCode: value });
+                return count === 0;
+            },
+            message: 'Referral code already exists'
+        },
+    },
     otp: {
         type: String,
         required: true,
     },
     otpExpiry: {
         type: Date,
-        required: true, // Ensure otpExpiry is required
+        required: true,
     },
     isVerified: {
         type: Boolean,
         default: false
     },
-    activeStatus: {
+    rewardPoint: {
         type: Number,
         default: 0
     },
