@@ -337,6 +337,7 @@ class CategoryController extends BaseController {
 
                     updatedCategoryData = {
                         ...updatedCategoryData,
+                        categoryTitle: await GeneralService.capitalizeWords(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
                         level: updatedCategoryData.level,
                         slug: updatedCategoryData.slug,

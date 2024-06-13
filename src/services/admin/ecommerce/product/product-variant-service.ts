@@ -131,6 +131,7 @@ console.log("123456789",productVariants.slug);
             barcode: productVariants.barcode,
 
         }
+console.log(productVariantData);
 
         const createdProductVariant = await ProductVariantModel.create(productVariantData);
         if (createdProductVariant) {

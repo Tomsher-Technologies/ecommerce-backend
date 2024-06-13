@@ -60,7 +60,7 @@ class AttributesController extends base_controller_1.default {
             if (validatedData.success) {
                 const { attributeTitle, attributeType, attributeValues, status, languageValues } = validatedData.data;
                 const attributeData = {
-                    attributeTitle,
+                    attributeTitle: await general_service_1.default.capitalizeWords(attributeTitle),
                     slug: (0, helpers_1.slugify)(attributeTitle),
                     attributeType,
                     status: status || '1',
@@ -220,6 +220,7 @@ class AttributesController extends base_controller_1.default {
                     let updatedAttributeData = req.body;
                     updatedAttributeData = {
                         ...updatedAttributeData,
+                        attributeTitle: await general_service_1.default.capitalizeWords(updatedAttributeData.attributeTitle),
                         updatedAt: new Date()
                     };
                     const updatedAttribute = await attributes_service_1.default.update(attributeId, updatedAttributeData);
