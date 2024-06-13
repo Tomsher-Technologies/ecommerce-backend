@@ -8,6 +8,7 @@ const pagination_1 = require("../../../components/pagination");
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const helpers_1 = require("../../../utils/helpers");
 const brand_config_1 = require("../../../utils/config/brand-config");
+const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 class BrandsService {
     constructor() { }
     async findAll(options = {}) {
@@ -85,13 +86,14 @@ class BrandsService {
         return brands_model_1.default.findOne(data);
     }
     async findBrandId(brandTitle) {
-        const resultBrand = await this.findBrand({ brandTitle: brandTitle });
+        const slug = (0, helpers_1.slugify)(brandTitle);
+        const resultBrand = await this.findBrand({ slug: slug });
         if (resultBrand) {
             return resultBrand;
         }
         else {
             const brandData = {
-                brandTitle: brandTitle,
+                brandTitle: await general_service_1.default.capitalizeWords(brandTitle),
                 slug: (0, helpers_1.slugify)(brandTitle),
                 isExcel: true
             };

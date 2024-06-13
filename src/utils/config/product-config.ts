@@ -464,6 +464,9 @@ export const productProject = {
         sku: 1,
         status: 1,
         createdAt: 1,
+        offer: {
+            $ifNull: ['$offer', {}]
+        },
         productCategory: {
             $ifNull: ['$productCategory', []]
         },

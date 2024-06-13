@@ -134,7 +134,7 @@ class BrandsController extends BaseController {
                 const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
 
                 const brandData: Partial<BrandProps> = {
-                    brandTitle,
+                    brandTitle: await GeneralService.capitalizeWords(brandTitle),
                     slug: slug || slugify(brandTitle) as any,
                     brandImageUrl: handleFileUpload(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
                     brandBannerImageUrl: handleFileUpload(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
@@ -269,6 +269,7 @@ class BrandsController extends BaseController {
                     let updatedBrandData = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
+                        brandTitle: await GeneralService.capitalizeWords(updatedBrandData.brandTitle),
                         brandImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandImage), 'brandImageUrl', 'brand'),
                         brandBannerImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                         updatedAt: new Date()

@@ -299,6 +299,7 @@ class CategoryController extends base_controller_1.default {
                     const updatedCategory = await category_service_1.default.findOne(categoryId);
                     updatedCategoryData = {
                         ...updatedCategoryData,
+                        categoryTitle: await general_service_1.default.capitalizeWords(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
                         level: updatedCategoryData.level,
                         slug: updatedCategoryData.slug,

@@ -70,7 +70,7 @@ class AttributesController extends BaseController {
                 const { attributeTitle, attributeType, attributeValues, status, languageValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
-                    attributeTitle,
+                    attributeTitle: await GeneralService.capitalizeWords(attributeTitle),
                     slug: slugify(attributeTitle),
                     attributeType,
                     status: status || '1',
@@ -235,6 +235,7 @@ class AttributesController extends BaseController {
                     let updatedAttributeData = req.body;
                     updatedAttributeData = {
                         ...updatedAttributeData,
+                        attributeTitle: await GeneralService.capitalizeWords(updatedAttributeData.attributeTitle),
                         updatedAt: new Date()
                     };
 

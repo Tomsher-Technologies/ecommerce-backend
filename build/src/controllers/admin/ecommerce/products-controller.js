@@ -71,7 +71,7 @@ class ProductsController extends base_controller_1.default {
                     file.fieldname.startsWith('galleryImage['));
                 const skuData = await (0, products_1.defaultSkuSettings)(variants);
                 const productData = {
-                    productTitle,
+                    productTitle: await general_service_1.default.capitalizeWords(productTitle),
                     slug: (0, helpers_1.slugify)(productTitle),
                     brand: brand,
                     description,
@@ -434,7 +434,7 @@ class ProductsController extends base_controller_1.default {
                                                                         });
                                                                     }
                                                                     var finalData = {
-                                                                        productTitle: data.Product_Title,
+                                                                        productTitle: await general_service_1.default.capitalizeWords(data.Product_Title),
                                                                         slug: (0, helpers_1.slugify)(data.Product_Title),
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
@@ -465,8 +465,8 @@ class ProductsController extends base_controller_1.default {
                                                                     };
                                                                     const userData = res.locals.user;
                                                                     var productVariants = {
-                                                                        // countryId: countryId,
-                                                                        extraProductTitle: data.Product_Title,
+                                                                        countryId: data.country ? countryId : await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
+                                                                        extraProductTitle: await general_service_1.default.capitalizeWords(data.Product_Title),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         price: data.Price,
@@ -718,6 +718,7 @@ class ProductsController extends base_controller_1.default {
                         file.fieldname.startsWith('galleryImage['));
                     updatedProductData = {
                         ...updatedProductData,
+                        productTitle: await general_service_1.default.capitalizeWords(updatedProductData.productTitle),
                         productImageUrl: (0, helpers_1.handleFileUpload)(req, await product_service_1.default.findOne(productId), (req.file || productImage), 'productImageUrl', 'product'),
                         updatedAt: new Date()
                     };

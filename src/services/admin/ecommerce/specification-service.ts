@@ -4,6 +4,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import SpecificationModel, { SpecificationProps } from '../../../model/admin/ecommerce/specifications-model';
 import { slugify } from '../../../utils/helpers';
+import GeneralService from '../../../services/admin/general-service';
 
 
 class SpecificationService {
@@ -158,10 +159,10 @@ class SpecificationService {
                     const existingEntry = await SpecificationDetailModel.findOne({ _id: data._id });
                     if (existingEntry) {
                         // Update existing document
-                        await SpecificationDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, specificationId: specificationId });
+                        await SpecificationDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, specificationId: specificationId, specificationTitle: await GeneralService.capitalizeWords(data.specificationTitle) });
                     } else {
                         // Create new document
-                        await SpecificationDetailModel.create({ ...data, specificationId: specificationId });
+                        await SpecificationDetailModel.create({ ...data, specificationId: specificationId, specificationTitle: await GeneralService.capitalizeWords(data.specificationTitle) });
                     }
                 }));
 
@@ -196,7 +197,7 @@ class SpecificationService {
             return result
         } else {
             const specificationData = {
-                specificationTitle: data.specificationTitle,
+                specificationTitle: await GeneralService.capitalizeWords(data.specificationTitle),
                 isExcel: true,
                 slug: slugify(data.specificationTitle)
 

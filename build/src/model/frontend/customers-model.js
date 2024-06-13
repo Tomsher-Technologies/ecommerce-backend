@@ -64,19 +64,31 @@ const customerSchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
+    referralCode: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: async function (value) {
+                const count = await this.model('Customer').countDocuments({ referralCode: value });
+                return count === 0;
+            },
+            message: 'Referral code already exists'
+        },
+    },
     otp: {
         type: String,
         required: true,
     },
     otpExpiry: {
         type: Date,
-        required: true, // Ensure otpExpiry is required
+        required: true,
     },
     isVerified: {
         type: Boolean,
         default: false
     },
-    activeStatus: {
+    rewardPoint: {
         type: Number,
         default: 0
     },

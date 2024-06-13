@@ -69,7 +69,7 @@ class SpecificationController extends BaseController {
                 const { specificationTitle, specificationValues, languageValues } = validatedData.data;
 
                 const specificationData: Partial<SpecificationProps> = {
-                    specificationTitle,
+                    specificationTitle: await GeneralService.capitalizeWords(specificationTitle),
                     status: '1',
                     slug: slugify(specificationTitle),
                     createdAt: new Date(),
@@ -173,6 +173,7 @@ class SpecificationController extends BaseController {
                     let updatedSpecificationData = req.body;
                     updatedSpecificationData = {
                         ...updatedSpecificationData,
+                        specificationTitle: await GeneralService.capitalizeWords(updatedSpecificationData.specificationTitle),
                         updatedAt: new Date()
                     };
 

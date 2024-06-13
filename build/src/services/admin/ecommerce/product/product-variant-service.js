@@ -115,6 +115,7 @@ class ProductVariantService {
             mpn: productVariants.mpn,
             barcode: productVariants.barcode,
         };
+        console.log(productVariantData);
         const createdProductVariant = await product_variants_model_1.default.create(productVariantData);
         if (createdProductVariant) {
             const pipeline = [
