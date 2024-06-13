@@ -5,6 +5,7 @@ import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detai
 
 import AttributesModel, { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
 import { slugify } from '../../../utils/helpers';
+import GeneralService from '../../../services/admin/general-service';
 
 
 class AttributesService {
@@ -145,7 +146,7 @@ class AttributesService {
             return result
         } else {
             const attributeData = {
-                attributeTitle: data.attributeTitle,
+                attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle),
                 isExcel: true,
                 slug: slugify(data.attributeTitle)
             }
@@ -164,19 +165,19 @@ class AttributesService {
     }
 
     async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
-        const resultBrand: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.itemName }, { attributeId: attributeId }] });
-        if (resultBrand) {
-            return resultBrand
+        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.itemName }, { attributeId: attributeId }] });
+        if (resultAttribute) {
+            return resultAttribute
         } else {
-            const brandData = {
+            const attributeData = {
                 attributeId: attributeId,
                 itemName: data.itemName,
                 itemValue: data.itemValue,
 
             }
-            const brandResult: any = await AttributeDetailModel.create(brandData);
-            if (brandResult) {
-                return brandResult
+            const attributeResult: any = await AttributeDetailModel.create(attributeData);
+            if (attributeResult) {
+                return attributeResult
             }
         }
     }
@@ -219,10 +220,10 @@ class AttributesService {
                     const existingEntry = await AttributeDetailModel.findOne({ _id: data._id });
                     if (existingEntry) {
                         // Update existing document
-                        await AttributeDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, attributeId: attributeId });
+                        await AttributeDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, attributeId: attributeId, attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle) });
                     } else {
                         // Create new document
-                        await AttributeDetailModel.create({ ...data, attributeId: attributeId });
+                        await AttributeDetailModel.create({ ...data, attributeId: attributeId, attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle) });
                     }
                 }));
 

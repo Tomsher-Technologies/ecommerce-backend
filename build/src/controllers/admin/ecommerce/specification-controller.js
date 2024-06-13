@@ -59,7 +59,7 @@ class SpecificationController extends base_controller_1.default {
             if (validatedData.success) {
                 const { specificationTitle, specificationValues, languageValues } = validatedData.data;
                 const specificationData = {
-                    specificationTitle,
+                    specificationTitle: await general_service_1.default.capitalizeWords(specificationTitle),
                     status: '1',
                     slug: (0, helpers_1.slugify)(specificationTitle),
                     createdAt: new Date(),
@@ -160,6 +160,7 @@ class SpecificationController extends base_controller_1.default {
                     let updatedSpecificationData = req.body;
                     updatedSpecificationData = {
                         ...updatedSpecificationData,
+                        specificationTitle: await general_service_1.default.capitalizeWords(updatedSpecificationData.specificationTitle),
                         updatedAt: new Date()
                     };
                     const updatedSpecification = await specification_service_1.default.update(specificationId, updatedSpecificationData);

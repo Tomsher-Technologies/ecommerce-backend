@@ -135,6 +135,25 @@ class ProductService {
         //     });
         //     console.log("11111111111",pipeline);
         // }
+        // Add the stages for product-specific offers
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            pipeline.push({
+                $addFields: {
+                    productOffers: {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.product.offerId] }, // Match offer ID
+                                    { $in: ["$_id", offerApplied.product.products] } // Match product ID
+                                ]
+                            }
+                        }
+                    }
+                }
+            });
+        }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             pipeline.push({
@@ -155,24 +174,6 @@ class ProductService {
             });
         }
         // Add the stages for product-specific offers
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            pipeline.push({
-                $addFields: {
-                    productOffers: {
-                        $filter: {
-                            input: getOfferList,
-                            as: "offer",
-                            cond: {
-                                $and: [
-                                    { $in: ["$$offer._id", offerApplied.product.offerId] }, // Match offer ID
-                                    { $in: ["$_id", offerApplied.product.products] } // Match product ID
-                                ]
-                            }
-                        }
-                    }
-                }
-            });
-        }
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             pipeline.push({
                 $addFields: {
@@ -191,25 +192,20 @@ class ProductService {
                 }
             });
         }
-        console.log("offerApplied.category.categories.length", offerApplied.category);
         // Combine brand and product offers into a single array field 'offer'
         pipeline.push({
             $addFields: {
                 offer: {
                     $cond: {
                         if: { $gt: [{ $size: "$productOffers" }, 0] }, // Check if productOffers array is not empty
-                        then: "$productOffers",
-                        else: {
-                            $cond: {
-                                if: { $gt: [{ $size: "$brandOffers" }, 0] }, // Check if categoryOffers array is not empty
-                                then: "$brandOffers",
-                                else: "$categoryOffers" // Default to brandOffers if no product or category offers
-                            }
-                        }
+                        then: "$categoryOffers",
+                        else: "$categoryOffers"
                     }
                 }
             }
         });
+        console.log("offerApplied.category.categories.length", offerApplied.category);
+        console.log("offerApplied.category.categories.length", offerApplied.product);
         if (offerPipeline && offerPipeline.length > 0) {
             pipeline.push(offerPipeline[0]);
             console.log("pipeline", pipeline);

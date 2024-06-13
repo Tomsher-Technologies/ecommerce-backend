@@ -9,6 +9,7 @@ const multi_languages_1 = require("../../../constants/multi-languages");
 const attribute_detail_model_1 = __importDefault(require("../../../model/admin/ecommerce/attribute-detail-model"));
 const attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/attribute-model"));
 const helpers_1 = require("../../../utils/helpers");
+const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 class AttributesService {
     constructor() {
         this.attributeDetailsLookup = {
@@ -127,7 +128,7 @@ class AttributesService {
         }
         else {
             const attributeData = {
-                attributeTitle: data.attributeTitle,
+                attributeTitle: await general_service_1.default.capitalizeWords(data.attributeTitle),
                 isExcel: true,
                 slug: (0, helpers_1.slugify)(data.attributeTitle)
             };
@@ -143,19 +144,19 @@ class AttributesService {
         }
     }
     async findOneAttributeDetail(data, attributeId) {
-        const resultBrand = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: data.itemName }, { attributeId: attributeId }] });
-        if (resultBrand) {
-            return resultBrand;
+        const resultAttribute = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: data.itemName }, { attributeId: attributeId }] });
+        if (resultAttribute) {
+            return resultAttribute;
         }
         else {
-            const brandData = {
+            const attributeData = {
                 attributeId: attributeId,
                 itemName: data.itemName,
                 itemValue: data.itemValue,
             };
-            const brandResult = await attribute_detail_model_1.default.create(brandData);
-            if (brandResult) {
-                return brandResult;
+            const attributeResult = await attribute_detail_model_1.default.create(attributeData);
+            if (attributeResult) {
+                return attributeResult;
             }
         }
     }
@@ -189,11 +190,11 @@ class AttributesService {
                     const existingEntry = await attribute_detail_model_1.default.findOne({ _id: data._id });
                     if (existingEntry) {
                         // Update existing document
-                        await attribute_detail_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, attributeId: attributeId });
+                        await attribute_detail_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, attributeId: attributeId, attributeTitle: await general_service_1.default.capitalizeWords(data.attributeTitle) });
                     }
                     else {
                         // Create new document
-                        await attribute_detail_model_1.default.create({ ...data, attributeId: attributeId });
+                        await attribute_detail_model_1.default.create({ ...data, attributeId: attributeId, attributeTitle: await general_service_1.default.capitalizeWords(data.attributeTitle) });
                     }
                 }));
                 await Promise.all(inventryPricingPromises);

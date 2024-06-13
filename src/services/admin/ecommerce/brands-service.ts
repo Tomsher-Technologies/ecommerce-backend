@@ -5,6 +5,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 import { slugify } from '../../../utils/helpers';
 import { brandLookup } from '../../../utils/config/brand-config';
+import GeneralService from '../../../services/admin/general-service';
 
 
 class BrandsService {
@@ -101,12 +102,14 @@ class BrandsService {
         return BrandsModel.findOne(data);
     }
     async findBrandId(brandTitle: string): Promise<void | null> {
-        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle });
+        const slug = slugify(brandTitle);
+
+        const resultBrand: any = await this.findBrand({ slug: slug });
         if (resultBrand) {
             return resultBrand
         } else {
             const brandData = {
-                brandTitle: brandTitle,
+                brandTitle: await GeneralService.capitalizeWords(brandTitle),
                 slug: slugify(brandTitle),
                 isExcel: true
             }
