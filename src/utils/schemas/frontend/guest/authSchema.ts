@@ -2,6 +2,10 @@ import { z as zod } from 'zod';
 
 export const registerSchema = zod.object({
     email: zod.string({ required_error: 'Email is required', }).email('Please provide a valid email address'),
+    otpType: zod.enum(['phone', 'email'], {
+        required_error: 'Otp type is required',
+        invalid_type_error: 'Otp type must be either "phone" or "email"',
+    }),
     firstName: zod.string({ required_error: 'First name is required', }).min(3, 'First name is should be 3 chars minimum'),
     phone: zod.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
         message: 'Phone number should contain only numbers and be at least 9 digits long',
@@ -114,5 +118,20 @@ export const forgotPasswordSchema = zod.object({
                 path: ['phone'],
             });
         }
+    }
+});
+
+export const resetPasswordFormSchema = zod.object({
+    email: zod.string().email({ message: 'Invalid email address' }).min(5, { message: 'Email address must be at least 5 characters long' }).max(255).refine(value => value.trim() !== '', { message: 'Email address cannot be empty' }),
+    otp: zod.string().min(6, { message: 'Otp must be at least 6 characters long' }).max(6).refine(value => value.trim() !== '', { message: 'Otp address cannot be empty' }),
+    password: zod.string().min(6, { message: 'Password must be at least 6 characters long' }),
+    confirmPassword: zod.string().min(6, { message: 'Confirm password must be at least 6 characters long' }),
+}).superRefine(({ confirmPassword, password }, ctx) => {
+    if (confirmPassword !== password) {
+        ctx.addIssue({
+            code: "custom",
+            message: "Password and confirm password must be the same",
+            path: ["confirmPassword"]
+        });
     }
 });

@@ -1,9 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+import { earnTypes } from '../../constants/wallet';
+
 export interface CustomerWalletTransactionsProps extends Document {
     customerId: mongoose.Schema.Types.ObjectId; // Foreign key reference to Customer
+    referredCustomerId: mongoose.Schema.Types.ObjectId; // Foreign key reference to Customer
     referrerCustomerId: mongoose.Schema.Types.ObjectId; // Foreign key reference to Customer
     orderId: mongoose.Schema.Types.ObjectId; // Foreign key reference to Order
+    earnType: string;
     walletAmount: number;
     walletPoints: number;
     referredCode: string;
@@ -18,12 +22,20 @@ const customerWalletTransactionsSchema: Schema<CustomerWalletTransactionsProps> 
         ref: 'Customer',
         required: true
     },
+    referredCustomerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Customer',
+        // required: function(this: CustomerWalletTransactionsProps): boolean {
+        //     return this.referredCode !== '';
+        // },
+        default: null
+    },
     referrerCustomerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',
-        required: function(this: CustomerWalletTransactionsProps): boolean {
-            return this.referredCode !== '';
-        },
+        // required: function(this: CustomerWalletTransactionsProps): boolean {
+        //     return this.referredCode !== '';
+        // },
         default: null
     },
     orderId: {
@@ -33,6 +45,15 @@ const customerWalletTransactionsSchema: Schema<CustomerWalletTransactionsProps> 
             return this.referredCode === '';
         },
         default: null 
+    },
+    earnType: {
+        type: String,
+        required: true,
+        enum: [
+            earnTypes.order,
+            earnTypes.referrer,
+            earnTypes.referred,
+        ],
     },
     referredCode: {
         type: String,
@@ -76,12 +97,12 @@ customerWalletTransactionsSchema.path('orderId').validate(function(value) {
     return true;
 }, 'Either orderId or referredCode must be provided');
 
-customerWalletTransactionsSchema.path('referrerCustomerId').validate(function(value) {
+customerWalletTransactionsSchema.path('referredCustomerId').validate(function(value) {
     if (!value && !this.referredCode) {
-        throw new Error('Either referrerCustomerId or referredCode must be provided');
+        throw new Error('Either referredCustomerId or referredCode must be provided');
     }
     return true;
-}, 'Either referrerCustomerId or referredCode must be provided');
+}, 'Either referredCustomerId or referredCode must be provided');
 
 const CustomerWalletTransactionsModel = mongoose.model<CustomerWalletTransactionsProps>('CustomerWalletTransactions', customerWalletTransactionsSchema);
 

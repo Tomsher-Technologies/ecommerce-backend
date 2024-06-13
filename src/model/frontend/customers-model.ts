@@ -10,7 +10,8 @@ export interface CustomrProps extends Document {
     otp: string;
     otpExpiry: Date;
     isVerified: Boolean;
-    rewardPoint: number;
+    totalRewardPoint: number;
+    totalWalletAmount: number;
     failureAttemptsCount: number;
     resetPasswordCount: number;
     status: string;
@@ -82,7 +83,11 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         type: Boolean,
         default: false
     },
-    rewardPoint: {
+    totalWalletAmount: {
+        type: Number,
+        default: 0
+    },
+    totalRewardPoint: {
         type: Number,
         default: 0
     },

@@ -30,7 +30,7 @@ export async function getCountryIdWithSuperAdmin(userData: any): Promise<mongoos
             return new mongoose.Types.ObjectId(userData.countryId);
         } else if (userData.userTypeID.slug === 'super-admin') {
             const countryId: any = await CountryModel.findOne({ isOrigin: true })
-            
+
             return countryId._id
         }
     }
@@ -183,7 +183,7 @@ export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): b
 
 export const dateConvertPm = (input: string): Date => {
     return new Date(`${input}T23:59:59.999Z`)
-}; 
+};
 
 export function generateOTP(length: number): string {
     if (length <= 0) {
@@ -197,4 +197,14 @@ export function generateOTP(length: number): string {
     }
 
     return otp;
+}
+
+export function calculateWalletAmount(earnPoints: number, referAndEarn: any) {
+    const earnAmount = parseFloat(referAndEarn.earnAmount);
+    const earnPointsForAmount = parseFloat(referAndEarn.earnPoints);
+
+    // Calculate the walletAmount
+    const walletAmount = (earnPoints / earnPointsForAmount) * earnAmount;
+
+    return walletAmount;
 }
