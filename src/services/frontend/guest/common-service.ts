@@ -429,6 +429,20 @@ class CommonService {
             }
         }
 
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.category)
+        console.log("categoryCollectionData", categoryCollectionData);
+
+        const firstCategoryCollection = categoryCollectionData[0];
+        const firstOfferList = getOfferList[0];
+
+        firstCategoryCollection.collectionsCategories = firstCategoryCollection.collectionsCategories.map((category: any) => {
+            const matchingOffer = firstOfferList.offerApplyValues.find((offer: any) => offer === category._id.toString());
+            return {
+                ...category,
+                offer: matchingOffer ? firstOfferList : {}
+            };
+        });
+
         return categoryCollectionData;
     }
     async findCollectionBrands(options: any) {
@@ -476,6 +490,7 @@ class CommonService {
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
         const brandCollectionData = await CollectionsBrandsModel.aggregate(collectionBrandPipeline).exec();
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
 
         for (const collection of brandCollectionData) {
             if (collection && collection.collectionsBrands) {
@@ -519,41 +534,6 @@ class CommonService {
                     brandPipeline.push(brandLanguageFieldsReplace);
                 }
 
-                // console.log("offerApplied.brand", getOfferList);
-
-                // const offerBrand = {
-                //     $addFields: {
-                //         'collectionsBrands': {
-                //             $map: {
-                //                 input: '$collectionsBrands',
-                //                 as: 'brand',
-                //                 in: {
-                //                     $mergeObjects: [
-                //                         '$$brand',
-                //                         {
-                //                             $arrayElemAt: [
-                //                                 {
-                //                                     $filter: {
-                //                                         input: '$offers',
-                //                                         cond: {
-                //                                             $eq: ['$$brand._id', '$$this.offerApplyValues']
-                //                                         }
-                //                                     }
-                //                                 },
-                //                                 0
-                //                             ]
-                //                         }
-                //                     ]
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
-
-
-
-                    // brandPipeline.push(offerBrand);
-
                 brandPipeline.push(collectionsBrandLookup);
                 brandPipeline.push(brandFinalProject);
 
@@ -562,26 +542,18 @@ class CommonService {
                 collection.collectionsBrands = brandData;
             }
         }
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
+        // const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
 
-        for (let i = 0; i < brandCollectionData[0].collectionsBrands.length; i++) {
-            let brand = brandCollectionData[0].collectionsBrands[i];
-            brand.offer = []; // Initialize offer as null by default
-        
-            // Iterate over each offer in getOfferList
-            for (let j = 0; j < getOfferList[0].offerApplyValue.length; j++) {
-                let offer = getOfferList[0].offerApplyValues[j];
-        console.log("offeroffer",offer.offerApplyValues);
-        console.log("brand._idbrand._id",brand._id);
-        
-                // Check if offerApplyValues array of the offer includes the current brand's _id
-                if (new mongoose.Types.ObjectId(offer)==brand._id) {
-                    // If match found, assign the offer object to the brand's offer property
-                    brand.offer = offer;
-                    break; // Exit the loop once a match is found
-                }
-            }
-        }
+        const firstBrandCollection = brandCollectionData[0];
+        const firstOfferList = getOfferList[0];
+
+        firstBrandCollection.collectionsBrands = firstBrandCollection.collectionsBrands.map((brand: any) => {
+            const matchingOffer = firstOfferList.offerApplyValues.find((offer: any) => offer === brand._id.toString());
+            return {
+                ...brand,
+                offer: matchingOffer ? firstOfferList : {}
+            };
+        });
 
 
         return brandCollectionData;
