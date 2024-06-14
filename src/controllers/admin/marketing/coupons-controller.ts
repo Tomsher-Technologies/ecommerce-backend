@@ -50,10 +50,8 @@ class CouponsController extends BaseController {
                 if (couponFromDate) {
                     query = {
                         ...query,
-                        'discountDateRange.0': {
-                            $gte: discountStartDate,
-                            // $lte: discountEndDate
-                        }
+                        'discountDateRange.0': {$lte: discountStartDate},
+                        'discountDateRange.1': {$gte: discountEndDate}   
                     }
                 }
                 // if (couponEndDate) {

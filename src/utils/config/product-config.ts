@@ -180,49 +180,49 @@ export const variantLookup = {
     }
 };
 
-export const offerProductLookup = [
-    {
-        $lookup: {
-            from: 'offers',
-            localField: '_id',
-            foreignField: 'offerApplyValues',
-            let: {
-                currentDate: new Date(),
-                productId:'_id',
+// export const offerProductLookup = [
+//     {
+//         $lookup: {
+//             from: 'offers',
+//             localField: '_id',
+//             foreignField: 'offerApplyValues',
+//             let: {
+//                 currentDate: new Date(),
+//                 productId:'_id',
                 
-            },
-            pipeline: [
-                {
-                    $match: {
-                        $expr: {
-                            $and: [
-                                { $lte: ['$$currentDate', '$offerDateRange.1'] },
-                                { $gte: ['$$currentDate', '$offerDateRange.0'] },
-                                {
-                                    $or: [
-                                        {if: {
-                                            $and: [
-                                                { $eq: ['$offersBy', 'product'] },
-                                                // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
-                                            ]
-                                        },
-                                        then: '$offerProducts',
+//             },
+//             pipeline: [
+//                 {
+//                     $match: {
+//                         $expr: {
+//                             $and: [
+//                                 { $lte: ['$$currentDate', '$offerDateRange.1'] },
+//                                 { $gte: ['$$currentDate', '$offerDateRange.0'] },
+//                                 {
+//                                     $or: [
+//                                         {if: {
+//                                             $and: [
+//                                                 { $eq: ['$offersBy', 'product'] },
+//                                                 // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
+//                                             ]
+//                                         },
+//                                         then: '$offerProducts',
                                            
-                                        },
+//                                         },
                                       
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
-            ],
-            as: 'offerProducts'
-        }
-    },
+//                                     ]
+//                                 }
+//                             ]
+//                         }
+//                     }
+//                 }
+//             ],
+//             as: 'offerProducts'
+//         }
+//     },
     
 
-];
+// ];
 
 export const productCategoryLookup = {
     $lookup: {

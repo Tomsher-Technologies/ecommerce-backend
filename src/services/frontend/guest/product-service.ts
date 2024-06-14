@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup, offerProductLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import mongoose from 'mongoose';
@@ -99,13 +99,13 @@ class ProductService {
             $addFields: {
                 offer: {
                     $cond: {
-                        if: { $gt: [{ $size: "$categoryOffers" }, 0] }, // Check if categoryOffers array is not empty
-                        then: "$categoryOffers",
+                        if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
+                        then: { $arrayElemAt: ["$categoryOffers", 0] },
                         else: {
                             $cond: {
-                                if: { $gt: [{ $size: "$brandOffers" }, 0] }, // Check if brandOffers array is not empty
-                                then: "$brandOffers",
-                                else: "$productOffers" // Default to productOffers if no category or brand offers
+                                if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
+                                then: { $arrayElemAt: ["$brandOffers", 0] },
+                                else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
                             }
                         }
                     }

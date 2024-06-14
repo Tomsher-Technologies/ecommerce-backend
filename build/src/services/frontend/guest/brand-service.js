@@ -17,13 +17,12 @@ class BrandService {
         let pipeline = [
             { $match: query },
         ];
-        if (query.brand) {
+        if (query._id) {
             const language = await this.brandLanguage(hostName, pipeline);
             const data = await brands_model_1.default.aggregate(language).exec();
             return data;
         }
         var productData = [];
-        var collections;
         // var collectionProducts: any
         var brandDetail = [];
         const collection = await product_service_1.default.collection(products, hostName);

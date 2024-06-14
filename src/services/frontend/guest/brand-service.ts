@@ -23,7 +23,7 @@ class BrandService {
             { $match: query },
         ];
 
-        if (query.brand) {
+        if (query._id) {
             const language: any = await this.brandLanguage(hostName, pipeline)
             const data: any = await BrandModel.aggregate(language).exec();
 
@@ -31,7 +31,6 @@ class BrandService {
         }
 
         var productData: any = []
-        var collections: any
         // var collectionProducts: any
         var brandDetail: any = []
         const collection: any = await ProductService.collection(products, hostName)
