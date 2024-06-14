@@ -231,7 +231,7 @@ class HomeController extends base_controller_1.default {
             else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
-                    validation: 'page and pageReference is missing! please check'
+                    validation: 'Country is missing'
                 }, req);
             }
         }

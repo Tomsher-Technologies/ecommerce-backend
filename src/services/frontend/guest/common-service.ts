@@ -323,6 +323,44 @@ class CommonService {
 
                 productPipeline.push(productMultilanguageFieldsLookup);
                 productPipeline.push(productFinalProject);
+                const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName)
+
+                // Add the stages for product-specific offers
+                if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                    const offerProduct = await this.offerProduct(getOfferList, offerApplied.product)
+                    productPipeline.push(offerProduct)
+                }
+                // Add the stages for brand-specific offers
+                if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                    const offerBrand = await this.offerBrand(getOfferList, offerApplied.brand)
+                    productPipeline.push(offerBrand);
+                }
+                // Add the stages for category-specific offers
+                if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+                    const offerCategory = await this.offerCategory(getOfferList, offerApplied.category)
+                    productPipeline.push(offerCategory);
+                }
+
+
+                // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
+                productPipeline.push({
+                    $addFields: {
+                        offer: {
+                            $cond: {
+                                if: { $gt: [{ $size: "$categoryOffers" }, 0] }, // Check if categoryOffers array is not empty
+                                then: "$categoryOffers",
+                                else: {
+                                    $cond: {
+                                        if: { $gt: [{ $size: "$brandOffers" }, 0] }, // Check if brandOffers array is not empty
+                                        then: "$brandOffers",
+                                        else: "$productOffers" // Default to productOffers if no category or brand offers
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
                 const language: any = await ProductService.productLanguage(hostName, productPipeline)
 
                 const productData = await ProductsModel.aggregate(language).exec();
@@ -376,7 +414,7 @@ class CommonService {
         collectionCategoryPipeline.push(collectionsCategoryLookup);
         collectionCategoryPipeline.push(collectionsCategoryFinalProject);
 
-        const categoryCollectionData = await CollectionsCategoriesModel.aggregate(collectionCategoryPipeline).exec();
+        const categoryCollectionData: any = await CollectionsCategoriesModel.aggregate(collectionCategoryPipeline).exec();
 
         for (const collection of categoryCollectionData) {
             if (collection && collection.collectionsCategories) {
@@ -429,6 +467,20 @@ class CommonService {
             }
         }
 
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.category)
+        const firstCategoryCollection = categoryCollectionData[0];
+
+        getOfferList.forEach((offerItem: any) => {
+            firstCategoryCollection.collectionsCategories.map((category: any) => {
+                const matchingOffer = offerItem.offerApplyValues.includes(category._id.toString());
+                if (matchingOffer) {
+                    category.offer = offerItem;
+                } else {
+                    category.offer = {};
+                }
+            });
+        })
+
         return categoryCollectionData;
     }
     async findCollectionBrands(options: any) {
@@ -476,6 +528,7 @@ class CommonService {
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
         const brandCollectionData = await CollectionsBrandsModel.aggregate(collectionBrandPipeline).exec();
+        // const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
 
         for (const collection of brandCollectionData) {
             if (collection && collection.collectionsBrands) {
@@ -488,72 +541,33 @@ class CommonService {
                     },
                 ];
 
-                if (languageId) {
-                    const brandLookupWithLanguage = {
-                        ...brandLookup,
-                        $lookup: {
-                            ...brandLookup.$lookup,
-                            pipeline: brandLookup.$lookup.pipeline.map(stage => {
-                                if (stage.$match && stage.$match.$expr) {
-                                    return {
-                                        ...stage,
-                                        $match: {
-                                            ...stage.$match,
-                                            $expr: {
-                                                ...stage.$match.$expr,
-                                                $and: [
-                                                    ...stage.$match.$expr.$and,
-                                                    { $eq: ['$languageId', languageId] }
-                                                ]
-                                            }
-                                        }
-                                    };
-                                }
-                                return stage;
-                            })
-                        }
-                    };
 
-                    brandPipeline.push(brandLookupWithLanguage);
-
-                    brandPipeline.push(brandLanguageFieldsReplace);
-                }
-
-                // console.log("offerApplied.brand", getOfferList);
-
-                // const offerBrand = {
+                // const offerPipeline =   {
                 //     $addFields: {
-                //         'collectionsBrands': {
+                //         offer: {
                 //             $map: {
-                //                 input: '$collectionsBrands',
-                //                 as: 'brand',
+                //                 input: getOfferList,
+                //                 as: "offerItem",
                 //                 in: {
-                //                     $mergeObjects: [
-                //                         '$$brand',
-                //                         {
-                //                             $arrayElemAt: [
-                //                                 {
-                //                                     $filter: {
-                //                                         input: '$offers',
-                //                                         cond: {
-                //                                             $eq: ['$$brand._id', '$$this.offerApplyValues']
-                //                                         }
-                //                                     }
-                //                                 },
-                //                                 0
+                //                     $cond: {
+                //                         if: {
+                //                             $eq: [
+                //                                 { $setIntersection: [
+                //                                        getOfferList.offerApplyValuess.map((id:any) => id.toString()),
+                //                                        getOfferList.offerApplyValuess.map((id:any) => id.toString())
+                //                                 ] },
+                //                                    getOfferList.offerApplyValuess.map((id:any) => id.toString())
                 //                             ]
-                //                         }
-                //                     ]
+                //                         },
+                //                         then: "$$offerItem",
+                //                         else: null
+                //                     }
                 //                 }
                 //             }
                 //         }
                 //     }
                 // }
-
-
-
-                    // brandPipeline.push(offerBrand);
-
+                // brandPipeline.push(offerPipeline)
                 brandPipeline.push(collectionsBrandLookup);
                 brandPipeline.push(brandFinalProject);
 
@@ -564,25 +578,18 @@ class CommonService {
         }
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
 
-        for (let i = 0; i < brandCollectionData[0].collectionsBrands.length; i++) {
-            let brand = brandCollectionData[0].collectionsBrands[i];
-            brand.offer = []; // Initialize offer as null by default
-        
-            // Iterate over each offer in getOfferList
-            for (let j = 0; j < getOfferList[0].offerApplyValue.length; j++) {
-                let offer = getOfferList[0].offerApplyValues[j];
-        console.log("offeroffer",offer.offerApplyValues);
-        console.log("brand._idbrand._id",brand._id);
-        
-                // Check if offerApplyValues array of the offer includes the current brand's _id
-                if (new mongoose.Types.ObjectId(offer)==brand._id) {
-                    // If match found, assign the offer object to the brand's offer property
-                    brand.offer = offer;
-                    break; // Exit the loop once a match is found
-                }
-            }
-        }
+        const firstBrandCollection = brandCollectionData[0];
 
+        getOfferList.forEach((offerItem: any) => {
+            firstBrandCollection.collectionsBrands.forEach((brand: any) => {
+                const matchingOffer = offerItem.offerApplyValues.includes(brand._id.toString());
+                if (matchingOffer) {
+                    brand.offer = offerItem;
+                } else {
+                    brand.offer = {}; // Ensure brand.offer is defined, even if no matching offer
+                }
+            });
+        })
 
         return brandCollectionData;
     }
@@ -610,13 +617,13 @@ class CommonService {
                 ...(offer ? [offer] : []),
                 { "offerDateRange.0": { $lte: currentDate } },
                 { "offerDateRange.1": { $gte: currentDate } },
+                // { "countryId": new mongoose.Types.ObjectId('663209ff5ded1a6bb444797a') }
             ],
             ...(offersBy && { offersBy: offersBy })
         };
 
         getOfferList = await OffersModel.find(query);
 
-        console.log("getOfferList", getOfferList);
 
         if (getOfferList && getOfferList.length > 0) {
             for await (const offerDetail of getOfferList) {
@@ -654,10 +661,6 @@ class CommonService {
         offerApplied.category.categories = Array.from(offerApplied.category.categories);
         offerApplied.product.offerId = Array.from(offerApplied.product.offerId);
         offerApplied.product.products = Array.from(offerApplied.product.products);
-        // console.log("offerApplied", offerApplied);
-
-        // console.log("pipelinepipeline", pipeline[0].$addFields.offer.$cond.if);
-
 
         return { pipeline, getOfferList, offerApplied };
     }

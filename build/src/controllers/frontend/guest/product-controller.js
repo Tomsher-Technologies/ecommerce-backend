@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const product_service_1 = __importDefault(require("../../../services/frontend/guest/product-service"));
+const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
@@ -141,157 +142,166 @@ class ProductController extends base_controller_1.default {
             let products;
             let offers;
             query.status = '1';
-            const sort = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
-            if (keyword) {
-                const keywordRegex = new RegExp(keyword, 'i');
-                query = {
-                    $or: [
-                        { productTitle: keywordRegex },
-                        { slug: keywordRegex },
-                        { 'productCategory.category.categoryTitle': keywordRegex },
-                        { 'brand.brandTitle': keywordRegex },
-                        { 'productCategory.category.slug': keywordRegex },
-                        { sku: keywordRegex },
-                        { 'productVariants.slug': keywordRegex },
-                        { 'productVariants.extraProductTitle': keywordRegex },
-                        { 'productVariants.variantSku': keywordRegex },
-                        { 'productVariants.productSpecification.specificationTitle': keywordRegex },
-                        { 'productVariants.productSpecification.slug': keywordRegex },
-                        { 'productVariants.productSpecification.specificationDetail.itemName': keywordRegex },
-                        { 'productVariants.productSpecification.specificationDetail.itemValue': keywordRegex },
-                        { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
-                        { 'productVariants.productVariantAttributes.slug': keywordRegex },
-                        { 'productVariants.productVariantAttributes.attributeDetail.itemName': keywordRegex },
-                        { 'productVariants.productVariantAttributes.attributeDetail.itemValue': keywordRegex }
-                    ],
-                    ...query
-                };
-            }
-            if (offer) {
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
-                if (isObjectId) {
-                    offers = { _id: new mongoose_1.default.Types.ObjectId(offer) };
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                const sort = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
-                else {
-                    const keywordRegex = new RegExp(offer, 'i');
-                    offers = { slug: keywordRegex };
+                if (keyword) {
+                    const keywordRegex = new RegExp(keyword, 'i');
+                    query = {
+                        $or: [
+                            { productTitle: keywordRegex },
+                            { slug: keywordRegex },
+                            { 'productCategory.category.categoryTitle': keywordRegex },
+                            { 'brand.brandTitle': keywordRegex },
+                            { 'productCategory.category.slug': keywordRegex },
+                            { sku: keywordRegex },
+                            { 'productVariants.slug': keywordRegex },
+                            { 'productVariants.extraProductTitle': keywordRegex },
+                            { 'productVariants.variantSku': keywordRegex },
+                            { 'productVariants.productSpecification.specificationTitle': keywordRegex },
+                            { 'productVariants.productSpecification.slug': keywordRegex },
+                            { 'productVariants.productSpecification.specificationDetail.itemName': keywordRegex },
+                            { 'productVariants.productSpecification.specificationDetail.itemValue': keywordRegex },
+                            { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
+                            { 'productVariants.productVariantAttributes.slug': keywordRegex },
+                            { 'productVariants.productVariantAttributes.attributeDetail.itemName': keywordRegex },
+                            { 'productVariants.productVariantAttributes.attributeDetail.itemValue': keywordRegex }
+                        ],
+                        ...query
+                    };
                 }
-            }
-            if (categories) {
-                const categoryArray = categories.split(',');
-                const orConditions = [];
-                for await (let category of categoryArray) {
+                if (offer) {
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
+                    if (isObjectId) {
+                        offers = { _id: new mongoose_1.default.Types.ObjectId(offer) };
+                    }
+                    else {
+                        const keywordRegex = new RegExp(offer, 'i');
+                        offers = { slug: keywordRegex };
+                    }
+                }
+                if (categories) {
+                    const categoryArray = categories.split(',');
+                    const orConditions = [];
+                    for await (let category of categoryArray) {
+                        const keywordRegex = new RegExp(category, 'i');
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                        if (isObjectId) {
+                            orConditions.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
+                        }
+                        else {
+                            orConditions.push({ "productCategory.category.slug": keywordRegex });
+                        }
+                        if (orConditions.length > 0) {
+                            query = {
+                                ...query,
+                                $or: orConditions
+                            };
+                        }
+                    }
+                }
+                if (brands) {
+                    const brandArray = brands.split(',');
+                    const orConditions = [];
+                    for await (let brand of brandArray) {
+                        const keywordRegex = new RegExp(brand, 'i');
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                        if (isObjectId) {
+                            orConditions.push({ "brand._id": new mongoose_1.default.Types.ObjectId(brand) });
+                        }
+                        else {
+                            orConditions.push({ "brand.slug": keywordRegex });
+                        }
+                        if (orConditions.length > 0) {
+                            query = {
+                                ...query,
+                                $or: orConditions
+                            };
+                        }
+                    }
+                }
+                if (category) {
                     const keywordRegex = new RegExp(category, 'i');
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
-                        orConditions.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                        };
                     }
                     else {
-                        orConditions.push({ "productCategory.category.slug": keywordRegex });
-                    }
-                    if (orConditions.length > 0) {
                         query = {
-                            ...query,
-                            $or: orConditions
+                            ...query, "productCategory.category.slug": keywordRegex
                         };
                     }
                 }
-            }
-            if (brands) {
-                const brandArray = brands.split(',');
-                const orConditions = [];
-                for await (let brand of brandArray) {
+                if (brand) {
                     const keywordRegex = new RegExp(brand, 'i');
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
                     if (isObjectId) {
-                        orConditions.push({ "brand._id": new mongoose_1.default.Types.ObjectId(brand) });
+                        query = {
+                            ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                        };
                     }
                     else {
-                        orConditions.push({ "brand.slug": keywordRegex });
-                    }
-                    if (orConditions.length > 0) {
                         query = {
-                            ...query,
-                            $or: orConditions
+                            ...query, "brand.slug": keywordRegex
                         };
                     }
                 }
-            }
-            if (category) {
-                const keywordRegex = new RegExp(category, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                if (isObjectId) {
-                    query = {
-                        ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                if (collectionproduct) {
+                    products = {
+                        ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
                     };
                 }
-                else {
-                    query = {
-                        ...query, "productCategory.category.slug": keywordRegex
+                if (collectionbrand) {
+                    products = {
+                        ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
                     };
                 }
-            }
-            if (brand) {
-                const keywordRegex = new RegExp(brand, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                if (isObjectId) {
-                    query = {
-                        ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                if (collectioncategory) {
+                    products = {
+                        ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
                     };
                 }
-                else {
-                    query = {
-                        ...query, "brand.slug": keywordRegex
-                    };
-                }
-            }
-            if (collectionproduct) {
-                products = {
-                    ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
-                };
-            }
-            if (collectionbrand) {
-                products = {
-                    ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
-                };
-            }
-            if (collectioncategory) {
-                products = {
-                    ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
-                };
-            }
-            const productData = await product_service_1.default.findProductList({
-                query,
-                sort,
-                products,
-                offers,
-                getImageGallery,
-                getAttribute,
-                getSpecification,
-                getSeo,
-                getCategory,
-                getBrand,
-                hostName: req.get('host'),
-            });
-            if (sortby && sortorder) {
-                productData.sort((a, b) => {
-                    const aPrice = a.productVariants[0]?.[sortby] || 0;
-                    const bPrice = b.productVariants[0]?.[sortby] || 0;
-                    if (sortorder === 'asc') {
-                        return aPrice - bPrice;
-                    }
-                    else {
-                        return bPrice - aPrice;
-                    }
+                const productData = await product_service_1.default.findProductList({
+                    query,
+                    sort,
+                    products,
+                    offers,
+                    getImageGallery,
+                    getAttribute,
+                    getSpecification,
+                    getSeo,
+                    getCategory,
+                    getBrand,
+                    hostName: req.get('host'),
                 });
+                if (sortby && sortorder) {
+                    productData.sort((a, b) => {
+                        const aPrice = a.productVariants[0]?.[sortby] || 0;
+                        const bPrice = b.productVariants[0]?.[sortby] || 0;
+                        if (sortorder === 'asc') {
+                            return aPrice - bPrice;
+                        }
+                        else {
+                            return bPrice - aPrice;
+                        }
+                    });
+                }
+                return controller.sendSuccessResponse(res, {
+                    requestedData: productData,
+                    message: 'Success!'
+                }, 200);
             }
-            return controller.sendSuccessResponse(res, {
-                requestedData: productData,
-                message: 'Success!'
-            }, 200);
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing'
+                }, req);
+            }
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
