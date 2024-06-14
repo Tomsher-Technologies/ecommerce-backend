@@ -185,7 +185,7 @@ class SeoPageService {
     }
     async seoPageService(pageId: string | null, seoDetails: any, page: string, pageReferenceId: string): Promise<SeoPageProps[]> {
         try {
-            console.log("seoDetails:", seoDetails, pageId);
+            // console.log("seoDetails:", seoDetails, pageId);
 
             if (pageId) {
                 if (seoDetails) {

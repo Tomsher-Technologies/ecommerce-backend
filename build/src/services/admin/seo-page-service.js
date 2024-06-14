@@ -156,7 +156,7 @@ class SeoPageService {
     }
     async seoPageService(pageId, seoDetails, page, pageReferenceId) {
         try {
-            console.log("seoDetails:", seoDetails, pageId);
+            // console.log("seoDetails:", seoDetails, pageId);
             if (pageId) {
                 if (seoDetails) {
                     if (seoDetails._id != '') {

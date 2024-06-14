@@ -111,7 +111,6 @@ class ProductVariantService {
     }
 
     async create(productId: string, productVariants: ProductVariantsProps, userData: UserDataProps) {
-console.log("123456789",productVariants.slug);
 
         const productVariantData = {
             productId: productId,
@@ -120,7 +119,7 @@ console.log("123456789",productVariants.slug);
             countryId: productVariants.countryId || await getCountryIdWithSuperAdmin(userData),
             variantSku: productVariants.variantSku,
             price: productVariants.price,
-            discountPrice: productVariants.discountPrice,
+            discountPrice: ((productVariants.discountPrice === null || (productVariants as any).discountPrice === 'null') ? 0 : Number(productVariants.discountPrice)),
             quantity: productVariants.quantity,
             isDefault: Number(productVariants.isDefault),
             variantDescription: productVariants.variantDescription,
@@ -131,7 +130,7 @@ console.log("123456789",productVariants.slug);
             barcode: productVariants.barcode,
 
         }
-console.log(productVariantData);
+        console.log(productVariantData);
 
         const createdProductVariant = await ProductVariantModel.create(productVariantData);
         if (createdProductVariant) {
@@ -144,7 +143,7 @@ console.log(productVariantData);
             const createdProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
 
             return createdProductVariantWithValues[0];
-        } 
+        }
         // else {
         //     return null;
         // }
@@ -213,8 +212,6 @@ console.log(productVariantData);
     }
 
     async variantService(productdata: ProductsProps, variantDetails: any, userData: UserDataProps): Promise<ProductVariantsProps[]> {
-        console.log("variantDetailsvariantDetailsvariantDetails",variantDetails);
-        
         try {
             if (productdata._id) {
                 const existingEntries = await ProductVariantModel.find({ productId: productdata._id });
@@ -225,8 +222,6 @@ console.log(productVariantData);
                             .map(entry => entry._id);
 
                         const deleteVariant = await ProductVariantModel.deleteMany({ productId: productdata._id, _id: { $in: variantIDsToRemove } });
-                        console.log("deleteVariant", deleteVariant);
-
                         if (deleteVariant) {
                             await GeneralService.deleteParentModel([
                                 {
@@ -250,59 +245,57 @@ console.log(productVariantData);
                     if (variantDetail.productVariants) {
                         const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any, index: number) => {
                             // if (data._id != '') {
-                                const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
-                                console.log("existingEntry", existingEntry);
+                            const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
 
-                                if (existingEntry) {
-                                    // Update existing document
-                                    const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
-                                    if (productVariantData && productdata.isVariant === 1) {
-                                        console.log("variantDetail.productVariants", variantDetail.productVariants[index]._id);
+                            if (existingEntry) {
+                                // Update existing document
+                                const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
+                                if (productVariantData && productdata.isVariant === 1) {
 
-                                        // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                        await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id)
-                                        // }
-                                        // if (data.productSeo && data.productSeo.length > 0) {
-                                        await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
-                                        // }
-                                        // if (data.productSpecification && data.productSpecification.length > 0) {
-                                        await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantDetail.productVariants[index]._id)
-                                        // }
-                                    }else{
+                                    // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+                                    await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id)
+                                    // }
+                                    // if (data.productSeo && data.productSeo.length > 0) {
+                                    await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
+                                    // }
+                                    // if (data.productSpecification && data.productSpecification.length > 0) {
+                                    await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantDetail.productVariants[index]._id)
+                                    // }
+                                } else {
 
-                                        await GeneralService.deleteParentModel([
-                                            {
-                                                variantId:  variantDetail.productVariants[index]._id,
-                                                model: ProductVariantAttributesModel
-                                            },
-                                            {
-                                                variantId:  variantDetail.productVariants[index]._id,
-                                                model: SeoPagesModel
-                                            },
-                                            {
-                                                variantId:  variantDetail.productVariants[index]._id,
-                                                model: ProductSpecificationModel
-                                            },
-                                        ]);
-                                    }
+                                    await GeneralService.deleteParentModel([
+                                        {
+                                            variantId: variantDetail.productVariants[index]._id,
+                                            model: ProductVariantAttributesModel
+                                        },
+                                        {
+                                            variantId: variantDetail.productVariants[index]._id,
+                                            model: SeoPagesModel
+                                        },
+                                        {
+                                            variantId: variantDetail.productVariants[index]._id,
+                                            model: ProductSpecificationModel
+                                        },
+                                    ]);
                                 }
-                             else {
+                            }
+                            else {
                                 console.log("haaai");
-                                
+
                                 var slugData
                                 if (data.extraProductTitle) {
-                                    slugData = productdata.slug + "-" + data.extraProductTitle 
+                                    slugData = productdata.slug + "-" + data.extraProductTitle
                                 }
                                 else {
-                                    slugData = productdata.slug 
+                                    slugData = productdata.slug
                                 }
                                 // Create new document
                                 const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
-                               console.log("variantData",variantData);
-                               
+                                // console.log("variantData", variantData);
+
                                 if (variantData) {
                                     if (variantData) {
-                                        console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
+                                        // console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
 
                                         // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
                                         await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantData._id)
