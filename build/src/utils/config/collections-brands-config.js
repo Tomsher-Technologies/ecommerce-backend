@@ -77,6 +77,9 @@ exports.collectionBrandlanguageFieldsReplace = {
                 else: { $arrayElemAt: ['$languageValues.languageValues.collectionImageUrl', 0] }
             }
         },
+        offer: {
+            $ifNull: ['$offer', []]
+        },
     }
 };
 exports.collectionsBrandFinalProject = {

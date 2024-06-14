@@ -15,6 +15,7 @@ router.post('/register', guest_controller_1.default.register);
 router.post('/resend-otp', guest_controller_1.default.resendOtp);
 router.post('/verify-otp', guest_controller_1.default.verifyOtp);
 router.post('/forgot-password', guest_controller_1.default.forgotPassword);
+router.post('/reset-password', guest_controller_1.default.resetPassword);
 router.post('/login', guest_controller_1.default.login);
 router.use((err, req, res, next) => {
     console.error(err.stack);

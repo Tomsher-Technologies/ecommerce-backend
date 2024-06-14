@@ -471,6 +471,7 @@ class CommonService {
             collectionBrandPipeline.push(collectionBrandlanguageFieldsReplace);
         }
 
+
         collectionBrandPipeline.push(collectionsBrandLookup);
         collectionBrandPipeline.push(collectionsBrandFinalProject);
 
@@ -518,6 +519,41 @@ class CommonService {
                     brandPipeline.push(brandLanguageFieldsReplace);
                 }
 
+                // console.log("offerApplied.brand", getOfferList);
+
+                // const offerBrand = {
+                //     $addFields: {
+                //         'collectionsBrands': {
+                //             $map: {
+                //                 input: '$collectionsBrands',
+                //                 as: 'brand',
+                //                 in: {
+                //                     $mergeObjects: [
+                //                         '$$brand',
+                //                         {
+                //                             $arrayElemAt: [
+                //                                 {
+                //                                     $filter: {
+                //                                         input: '$offers',
+                //                                         cond: {
+                //                                             $eq: ['$$brand._id', '$$this.offerApplyValues']
+                //                                         }
+                //                                     }
+                //                                 },
+                //                                 0
+                //                             ]
+                //                         }
+                //                     ]
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
+
+
+
+                    // brandPipeline.push(offerBrand);
+
                 brandPipeline.push(collectionsBrandLookup);
                 brandPipeline.push(brandFinalProject);
 
@@ -526,10 +562,31 @@ class CommonService {
                 collection.collectionsBrands = brandData;
             }
         }
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
+
+        for (let i = 0; i < brandCollectionData[0].collectionsBrands.length; i++) {
+            let brand = brandCollectionData[0].collectionsBrands[i];
+            brand.offer = []; // Initialize offer as null by default
+        
+            // Iterate over each offer in getOfferList
+            for (let j = 0; j < getOfferList[0].offerApplyValue.length; j++) {
+                let offer = getOfferList[0].offerApplyValues[j];
+        console.log("offeroffer",offer.offerApplyValues);
+        console.log("brand._idbrand._id",brand._id);
+        
+                // Check if offerApplyValues array of the offer includes the current brand's _id
+                if (new mongoose.Types.ObjectId(offer)==brand._id) {
+                    // If match found, assign the offer object to the brand's offer property
+                    brand.offer = offer;
+                    break; // Exit the loop once a match is found
+                }
+            }
+        }
+
 
         return brandCollectionData;
     }
-    async findOffers(offer: any, hostName: any) {
+    async findOffers(offer: any, hostName: any, offersBy?: string) {
         let getOfferList: any;
         let offerApplied: any = {
             brand: {
@@ -553,10 +610,13 @@ class CommonService {
                 ...(offer ? [offer] : []),
                 { "offerDateRange.0": { $lte: currentDate } },
                 { "offerDateRange.1": { $gte: currentDate } },
-            ]
+            ],
+            ...(offersBy && { offersBy: offersBy })
         };
 
         getOfferList = await OffersModel.find(query);
+
+        console.log("getOfferList", getOfferList);
 
         if (getOfferList && getOfferList.length > 0) {
             for await (const offerDetail of getOfferList) {
@@ -600,6 +660,81 @@ class CommonService {
 
 
         return { pipeline, getOfferList, offerApplied };
+    }
+
+    async offerProduct(getOfferList: any, offerApplied: any) {
+        let pipeline = {
+            $addFields: {
+                productOffers: {
+                    $filter: {
+                        input: getOfferList,
+                        as: "offer",
+                        cond: {
+                            $and: [
+                                { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                { $in: ["$_id", offerApplied.products] } // Match product ID
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        return pipeline
+    }
+
+    async offerCategory(getOfferList: any, offerApplied: any) {
+        let pipeline = {
+            $addFields: {
+                categoryOffers: {
+                    $filter: {
+                        input: getOfferList,
+                        as: "offer",
+                        cond: {
+                            $and: [
+                                { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                {
+                                    $gt: [
+                                        {
+                                            $size: {
+                                                $filter: {
+                                                    input: "$productCategory.category",
+                                                    as: "cat",
+                                                    cond: {
+                                                        $in: ["$$cat._id", offerApplied.categories]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                } // Match category ID within productCategory array
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        return pipeline
+    }
+
+    async offerBrand(getOfferList: any, offerApplied: any) {
+        let pipeline = {
+            $addFields: {
+                brandOffers: {
+                    $filter: {
+                        input: getOfferList,
+                        as: "offer",
+                        cond: {
+                            $and: [
+                                { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        return pipeline
     }
 }
 

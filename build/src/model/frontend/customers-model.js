@@ -88,7 +88,11 @@ const customerSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false
     },
-    rewardPoint: {
+    totalWalletAmount: {
+        type: Number,
+        default: 0
+    },
+    totalRewardPoint: {
         type: Number,
         default: 0
     },

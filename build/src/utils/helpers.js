@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -194,3 +194,11 @@ function generateOTP(length) {
     return otp;
 }
 exports.generateOTP = generateOTP;
+function calculateWalletAmount(earnPoints, referAndEarn) {
+    const earnAmount = parseFloat(referAndEarn.earnAmount);
+    const earnPointsForAmount = parseFloat(referAndEarn.earnPoints);
+    // Calculate the walletAmount
+    const walletAmount = (earnPoints / earnPointsForAmount) * earnAmount;
+    return walletAmount;
+}
+exports.calculateWalletAmount = calculateWalletAmount;

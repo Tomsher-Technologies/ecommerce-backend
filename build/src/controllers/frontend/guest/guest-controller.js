@@ -8,21 +8,24 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const authSchema_1 = require("../../../utils/schemas/frontend/guest/authSchema");
 const helpers_1 = require("../../../utils/helpers");
+const website_setup_1 = require("../../../constants/website-setup");
+const wallet_1 = require("../../../constants/wallet");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const customer_wallet_transaction_model_1 = __importDefault(require("../../../model/frontend/customer-wallet-transaction-model"));
+const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
         try {
             const validatedData = authSchema_1.registerSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { email, firstName, phone, password, referralCode } = validatedData.data;
+                const { email, firstName, phone, password, referralCode, otpType } = validatedData.data;
                 let referralCodeWithCustomerData = null;
                 if (referralCode) {
-                    referralCodeWithCustomerData = await customer_service_1.default.findOne({ referralCode: referralCode, status: '1' });
+                    referralCodeWithCustomerData = await customer_service_1.default.findOne({ referralCode: referralCode, status: '1' }); //referrer
                     if (!referralCodeWithCustomerData) {
                         return controller.sendErrorResponse(res, 200, {
                             message: 'Invalid referral code! Please try again',
@@ -47,13 +50,34 @@ class GuestController extends base_controller_1.default {
                 const newCustomer = await customer_service_1.default.create(customerData);
                 if (newCustomer) {
                     if (referralCodeWithCustomerData) {
-                        await customer_wallet_transaction_model_1.default.create({
-                            customerId: referralCodeWithCustomerData._id,
-                            referrerCustomerId: newCustomer._id,
-                            referredCode: referralCode,
-                            walletAmount: 0,
-                            status: '0'
-                        });
+                        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                        const referAndEarn = await settings_service_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.referAndEarn });
+                        if ((referAndEarn) && (referAndEarn.blockValues) && (referAndEarn.blockValues.enableReferAndEarn) && (Number(referAndEarn.blockValues.maxEarnAmount) > 0 || Number(referAndEarn.blockValues.maxEarnPoints) > 0)) {
+                            if ((Number(referAndEarn.blockValues.earnPoints) > 0) && (Number(referAndEarn.blockValues.earnAmount) > 0)) {
+                                if (Number(referAndEarn.blockValues.rewardToReferrer) > 0) {
+                                    await customer_wallet_transaction_model_1.default.create({
+                                        customerId: referralCodeWithCustomerData._id,
+                                        referredCustomerId: newCustomer._id, //referrer
+                                        earnType: wallet_1.earnTypes.referrer,
+                                        referredCode: referralCode,
+                                        walletAmount: (0, helpers_1.calculateWalletAmount)(referAndEarn.blockValues.rewardToReferrer, referAndEarn.blockValues),
+                                        walletPoints: referAndEarn.blockValues.rewardToReferrer,
+                                        status: '0'
+                                    });
+                                }
+                                if (Number(referAndEarn.blockValues.rewardToReferred) > 0) {
+                                    await customer_wallet_transaction_model_1.default.create({
+                                        customerId: newCustomer._id,
+                                        referrerCustomerId: referralCodeWithCustomerData._id, //rewardToReferred
+                                        earnType: wallet_1.earnTypes.referred,
+                                        referredCode: referralCode,
+                                        walletAmount: (0, helpers_1.calculateWalletAmount)(referAndEarn.blockValues.rewardToReferred, referAndEarn.blockValues),
+                                        walletPoints: referAndEarn.blockValues.rewardToReferred,
+                                        status: '0'
+                                    });
+                                }
+                            }
+                        }
                     }
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -123,9 +147,11 @@ class GuestController extends base_controller_1.default {
                         if (updatedCustomer) {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
+                                    userId: updatedCustomer._id,
                                     otp: updatedCustomer.otp,
                                     email: updatedCustomer.email,
-                                    phone: updatedCustomer.phone
+                                    phone: updatedCustomer.phone,
+                                    otpType
                                 },
                                 message: `Otp successfully sended on ${otpType}`
                             });
@@ -139,6 +165,73 @@ class GuestController extends base_controller_1.default {
                     else {
                         return controller.sendErrorResponse(res, 200, {
                             message: `Invalid ${otpType} or user not found!`,
+                        });
+                    }
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                    });
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while creating customer'
+            });
+        }
+    }
+    async resetPassword(req, res) {
+        try {
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
+            if (countryId) {
+                const validatedData = authSchema_1.resetPasswordFormSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { password, confirmPassword, otp, email } = validatedData.data;
+                    const checkValidOtp = await customer_service_1.default.findOne({ email: email, otp });
+                    if (checkValidOtp) {
+                        const currentTime = new Date();
+                        if (checkValidOtp.otpExpiry && currentTime <= checkValidOtp.otpExpiry) {
+                            const updatedCustomer = await customer_service_1.default.update(checkValidOtp?.id, {
+                                password: await bcrypt_1.default.hash(password, 10),
+                                failureAttemptsCount: 0,
+                                resetPasswordCount: (checkValidOtp.resetPasswordCount + 1)
+                            });
+                            if (updatedCustomer) {
+                                return controller.sendSuccessResponse(res, {
+                                    requestedData: {
+                                        userId: updatedCustomer._id,
+                                        firstName: updatedCustomer.firstName,
+                                        email: updatedCustomer.email,
+                                        phone: updatedCustomer.phone,
+                                        isVerified: updatedCustomer.isVerified,
+                                        referralCode: updatedCustomer.referralCode,
+                                        status: updatedCustomer.status
+                                    },
+                                    message: 'Customer password rest successfully. Please realogin with new password'
+                                });
+                            }
+                            else {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Something wrong on otp verifying. please try again!',
+                                });
+                            }
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'OTP has expired',
+                            });
+                        }
+                    }
+                    else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: email + ' is not found!',
                         });
                     }
                 }
@@ -236,15 +329,34 @@ class GuestController extends base_controller_1.default {
                                 const updatedCustomer = await customer_service_1.default.update(existingUser?.id, { isVerified: true, failureAttemptsCount: 0 });
                                 if (updatedCustomer) {
                                     const checkReferredCode = await customer_wallet_transaction_model_1.default.findOne({
-                                        referrerCustomerId: updatedCustomer._id,
+                                        referredCustomerId: updatedCustomer._id,
                                         status: '0',
                                         referralCode: { $ne: '' }
                                     });
                                     if (checkReferredCode) {
-                                        await customer_wallet_transaction_model_1.default.findByIdAndUpdate(checkReferredCode._id, {
-                                            walletAmount: 10,
+                                        const referrerCustomer = await customer_wallet_transaction_model_1.default.findByIdAndUpdate(checkReferredCode._id, {
                                             status: '1'
                                         });
+                                        const referredCustomer = await customer_wallet_transaction_model_1.default.findOne({
+                                            referrerCustomerId: checkReferredCode.customerId,
+                                            status: '0',
+                                            referralCode: { $ne: '' }
+                                        });
+                                        if (referrerCustomer) {
+                                            const referrerCustomerData = await customer_service_1.default.findOne({ _id: referrerCustomer?.customerId });
+                                            if (referrerCustomerData) {
+                                                await customer_service_1.default.update(referrerCustomerData?._id, { totalRewardPoint: (referrerCustomerData.totalRewardPoint + referrerCustomer.walletPoints), totalWalletAmount: (referrerCustomerData.totalWalletAmount + referrerCustomer.walletAmount) });
+                                            }
+                                        }
+                                        if (referredCustomer) {
+                                            await customer_wallet_transaction_model_1.default.findByIdAndUpdate(referredCustomer._id, {
+                                                status: '1'
+                                            });
+                                            const referredCustomerData = await customer_service_1.default.findOne({ _id: referredCustomer?.customerId });
+                                            if (referredCustomerData) {
+                                                await customer_service_1.default.update(referredCustomerData?._id, { totalRewardPoint: (referredCustomerData.totalRewardPoint + referredCustomer.walletPoints), totalWalletAmount: (referredCustomerData.totalWalletAmount + referredCustomer.walletAmount) });
+                                            }
+                                        }
                                     }
                                     const token = jsonwebtoken_1.default.sign({
                                         userId: updatedCustomer._id,
