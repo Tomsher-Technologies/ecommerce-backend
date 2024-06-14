@@ -43,6 +43,7 @@ export const pageReference = [
     { value: 'bottom-gap', label: "Bottom Gap" },
     { value: 'footer', label: "Footer" },
     { value: 'footer-top', label: "Footer Top" },
+    { value: 'footer-top-center', label: "Footer Top Center" },
     { value: 'footer-left', label: "Footer Left" },
     { value: 'footer-right', label: "Footer Right" },
     { value: 'footer-center', label: "Footer Center" },
