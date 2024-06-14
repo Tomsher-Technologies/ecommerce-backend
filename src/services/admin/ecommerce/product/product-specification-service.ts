@@ -114,7 +114,7 @@ class ProductSpecificationService {
                         specificationValue = await ProductSpecificationModel.create(productSpecificationData);
 
                     }
-                    return specificationValue 
+                    return specificationValue
 
 
                 }
@@ -125,7 +125,7 @@ class ProductSpecificationService {
             }
         } catch {
             console.log("error");
-            
+
             return null
         }
     }
@@ -175,26 +175,32 @@ class ProductSpecificationService {
 
     async productSpecificationService(productId: string | null, specificationDetails: any, variantId: string): Promise<ProductSpecificationProps[]> {
         try {
+            console.log("specificationDetails,specificationDetails", specificationDetails);
+
             if (productId) {
+                console.log("productId");
+
                 const existingEntries = await ProductSpecificationModel.find({ productId: productId });
                 if (existingEntries) {
                     const specificationIDsToRemove = existingEntries
                         .filter(entry => !specificationDetails?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                         .map(entry => entry._id);
-
                     await ProductSpecificationModel.deleteMany({ productId: productId, _id: { $in: specificationIDsToRemove } });
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data: any) => {
-                        // if (data._id != '') {
-                        const existingEntry = await ProductSpecificationModel.findOne({ _id: data._id });
+                        if (data.specificationId != ''&& data.specificationDetailId != ''&& data._id != '') {
+                            console.log("product34Id", data);
+
+                            const existingEntry = await ProductSpecificationModel.findOne({ _id: data._id });
                             if (existingEntry) {
                                 // Update existing document
                                 await ProductSpecificationModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                             }
-                         else {
-                            // Create new document
-                            await ProductSpecificationModel.create({ specificationId: data.specificationId, specificationDetailId: data.specificationDetailId, productId: productId, variantId: variantId });
+                            else {
+                                // Create new document
+                                await ProductSpecificationModel.create({ specificationId: data.specificationId, specificationDetailId: data.specificationDetailId, productId: productId, variantId: variantId });
+                            }
                         }
                     }));
 

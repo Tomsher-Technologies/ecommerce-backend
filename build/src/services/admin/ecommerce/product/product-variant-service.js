@@ -97,7 +97,6 @@ class ProductVariantService {
         }
     }
     async create(productId, productVariants, userData) {
-        console.log("123456789", productVariants.slug);
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
@@ -105,7 +104,7 @@ class ProductVariantService {
             countryId: productVariants.countryId || await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
             variantSku: productVariants.variantSku,
             price: productVariants.price,
-            discountPrice: productVariants.discountPrice,
+            discountPrice: ((productVariants.discountPrice === null || productVariants.discountPrice === 'null') ? 0 : Number(productVariants.discountPrice)),
             quantity: productVariants.quantity,
             isDefault: Number(productVariants.isDefault),
             variantDescription: productVariants.variantDescription,
@@ -177,7 +176,6 @@ class ProductVariantService {
         return product_variants_model_1.default.findOneAndDelete({ _id: productVariantId });
     }
     async variantService(productdata, variantDetails, userData) {
-        console.log("variantDetailsvariantDetailsvariantDetails", variantDetails);
         try {
             if (productdata._id) {
                 const existingEntries = await product_variants_model_1.default.find({ productId: productdata._id });
@@ -187,7 +185,6 @@ class ProductVariantService {
                             .filter(entry => !variantDetail.productVariants?.some((data) => data?._id?.toString() === entry._id.toString()))
                             .map(entry => entry._id);
                         const deleteVariant = await product_variants_model_1.default.deleteMany({ productId: productdata._id, _id: { $in: variantIDsToRemove } });
-                        console.log("deleteVariant", deleteVariant);
                         if (deleteVariant) {
                             await general_service_1.default.deleteParentModel([
                                 {
@@ -210,12 +207,10 @@ class ProductVariantService {
                         const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data, index) => {
                             // if (data._id != '') {
                             const existingEntry = await product_variants_model_1.default.findOne({ _id: data._id });
-                            console.log("existingEntry", existingEntry);
                             if (existingEntry) {
                                 // Update existing document
                                 const productVariantData = await product_variants_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
                                 if (productVariantData && productdata.isVariant === 1) {
-                                    console.log("variantDetail.productVariants", variantDetail.productVariants[index]._id);
                                     // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
                                     await product_variant_attributes_service_1.default.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id);
                                     // }
@@ -254,10 +249,10 @@ class ProductVariantService {
                                 }
                                 // Create new document
                                 const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
-                                console.log("variantData", variantData);
+                                // console.log("variantData", variantData);
                                 if (variantData) {
                                     if (variantData) {
-                                        console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
+                                        // console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
                                         // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
                                         await product_variant_attributes_service_1.default.variantAttributeService(productdata._id, data.productVariantAttributes, variantData._id);
                                         // }
