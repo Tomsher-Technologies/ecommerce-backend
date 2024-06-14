@@ -95,7 +95,7 @@ const couponSchema = new mongoose_1.Schema({
         required: true,
     },
     discountDateRange: {
-        type: mongoose_1.Schema.Types.Mixed,
+        type: [Date],
         required: true,
     },
     status: {

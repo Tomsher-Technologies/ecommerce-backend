@@ -55,17 +55,18 @@ class BrandController extends BaseController {
                 }
 
                 if (brand) {
+                    console.log("jkkjkjkjkkjkjkj",brand);
 
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
 
                     if (isObjectId) {
                         query = {
-                            ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+                            ...query, _id: new mongoose.Types.ObjectId(brand)
                         }
 
                     } else {
                         query = {
-                            ...query, "brand.slug": brand
+                            ...query, slug: brand
                         }
                     }
                 }

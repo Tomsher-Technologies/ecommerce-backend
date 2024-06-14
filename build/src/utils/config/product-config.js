@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.offerProductLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productVariantAttributesLookup = [
@@ -172,44 +172,44 @@ exports.variantLookup = {
         ]
     }
 };
-exports.offerProductLookup = [
-    {
-        $lookup: {
-            from: 'offers',
-            localField: '_id',
-            foreignField: 'offerApplyValues',
-            let: {
-                currentDate: new Date(),
-                productId: '_id',
-            },
-            pipeline: [
-                {
-                    $match: {
-                        $expr: {
-                            $and: [
-                                { $lte: ['$$currentDate', '$offerDateRange.1'] },
-                                { $gte: ['$$currentDate', '$offerDateRange.0'] },
-                                {
-                                    $or: [
-                                        { if: {
-                                                $and: [
-                                                    { $eq: ['$offersBy', 'product'] },
-                                                    // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
-                                                ]
-                                            },
-                                            then: '$offerProducts',
-                                        },
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
-            ],
-            as: 'offerProducts'
-        }
-    },
-];
+// export const offerProductLookup = [
+//     {
+//         $lookup: {
+//             from: 'offers',
+//             localField: '_id',
+//             foreignField: 'offerApplyValues',
+//             let: {
+//                 currentDate: new Date(),
+//                 productId:'_id',
+//             },
+//             pipeline: [
+//                 {
+//                     $match: {
+//                         $expr: {
+//                             $and: [
+//                                 { $lte: ['$$currentDate', '$offerDateRange.1'] },
+//                                 { $gte: ['$$currentDate', '$offerDateRange.0'] },
+//                                 {
+//                                     $or: [
+//                                         {if: {
+//                                             $and: [
+//                                                 { $eq: ['$offersBy', 'product'] },
+//                                                 // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
+//                                             ]
+//                                         },
+//                                         then: '$offerProducts',
+//                                         },
+//                                     ]
+//                                 }
+//                             ]
+//                         }
+//                     }
+//                 }
+//             ],
+//             as: 'offerProducts'
+//         }
+//     },
+// ];
 exports.productCategoryLookup = {
     $lookup: {
         from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,

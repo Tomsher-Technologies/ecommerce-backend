@@ -347,13 +347,13 @@ class CommonService {
                     $addFields: {
                         offer: {
                             $cond: {
-                                if: { $gt: [{ $size: "$categoryOffers" }, 0] }, // Check if categoryOffers array is not empty
-                                then: "$categoryOffers",
+                                if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
+                                then: { $arrayElemAt: ["$categoryOffers", 0] },
                                 else: {
                                     $cond: {
-                                        if: { $gt: [{ $size: "$brandOffers" }, 0] }, // Check if brandOffers array is not empty
-                                        then: "$brandOffers",
-                                        else: "$productOffers" // Default to productOffers if no category or brand offers
+                                        if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
+                                        then: { $arrayElemAt: ["$brandOffers", 0] },
+                                        else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
                                     }
                                 }
                             }
