@@ -158,8 +158,9 @@ class ProductController extends BaseController {
 
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, getAttribute = 0, categories = '', brands = '', offer = '' } = req.query as ProductsFrontendQueryParams;
+            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', offer = '', sortby = '', sortorder = '' } = req.query as ProductsFrontendQueryParams;
             let getSpecification = '1'
+            let getAttribute = '1'
             let getSeo = '1'
             let getBrand = '1'
             let getCategory = '1'
@@ -168,7 +169,36 @@ class ProductController extends BaseController {
             let offers: any;
 
             query.status = '1';
+            const sort: any = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { productTitle: keywordRegex },
+                        { slug: keywordRegex },
+                        { 'productCategory.category.categoryTitle': keywordRegex },
+                        { 'brand.brandTitle': keywordRegex },
+                        { 'productCategory.category.slug': keywordRegex },
+                        { sku: keywordRegex },
+                        { 'productVariants.slug': keywordRegex },
+                        { 'productVariants.extraProductTitle': keywordRegex },
+                        { 'productVariants.variantSku': keywordRegex },
+                        { 'productVariants.productSpecification.specificationTitle': keywordRegex },
+                        { 'productVariants.productSpecification.slug': keywordRegex },
+                        { 'productVariants.productSpecification.specificationDetail.itemName': keywordRegex },
+                        { 'productVariants.productSpecification.specificationDetail.itemValue': keywordRegex },
+                        { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
+                        { 'productVariants.productVariantAttributes.slug': keywordRegex },
+                        { 'productVariants.productVariantAttributes.attributeDetail.itemName': keywordRegex },
+                        { 'productVariants.productVariantAttributes.attributeDetail.itemValue': keywordRegex }
 
+                    ],
+                    ...query
+                } as any;
+            }
             if (offer) {
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
 
@@ -283,6 +313,7 @@ class ProductController extends BaseController {
 
             const productData: any = await ProductService.findProductList({
                 query,
+                sort,
                 products,
                 offers,
                 getImageGallery,
@@ -293,6 +324,19 @@ class ProductController extends BaseController {
                 getBrand,
                 hostName: req.get('host'),
             });
+
+            if (sortby && sortorder) {
+                productData.sort((a: any, b: any) => {
+                    const aPrice = a.productVariants[0]?.[sortby] || 0;
+                    const bPrice = b.productVariants[0]?.[sortby] || 0;
+
+                    if (sortorder === 'asc') {
+                        return aPrice - bPrice;
+                    } else {
+                        return bPrice - aPrice;
+                    }
+                });
+            }
 
             return controller.sendSuccessResponse(res, {
                 requestedData: productData,

@@ -24,7 +24,13 @@ class ProductService {
     constructor() {
     }
     async findProductList(productOption) {
-        var { query, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         const countryId = await common_service_1.default.findOneCountrySubDomainWithId(hostName);
         if (countryId) {
             query = {
@@ -47,6 +53,7 @@ class ProductService {
             }
         };
         let pipeline = [
+            { $sort: finalSort },
             ...((getAttribute || getSpecification) ? [modifiedPipeline] : []),
             // modifiedPipeline,
             ...(getCategory === '1' ? [product_config_1.productCategoryLookup] : []),
@@ -58,157 +65,41 @@ class ProductService {
         ];
         var offerDetails;
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
-        // if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-        //     // for (let i = 0; i < offerApplied.brand.brands.length; i++) {
-        //     //     for (let j = 0; j < offerApplied.brand.offerId.length; j++) {
-        //     //         console.log("offerApplied.brand.brands[i]", offerApplied.brand.brands[i], offerApplied.brand.offerId[j]);
-        //     //         pipeline.push({
-        //     //             $addFields: {
-        //     //                 offer: {
-        //     //                     $cond: {
-        //     //                         if: {
-        //     //                             $and: [
-        //     //                                 { $eq: ['$brand._id', offerApplied.brand.brands[i]] }, // Check if brands match
-        //     //                                 // { $eq: [offerApplied.brand.offerId[j], getOfferList[i]._id] } // Check if offer IDs match
-        //     //                             ]
-        //     //                         },
-        //     //                         then: getOfferList[i], // If conditions met, set the offer
-        //     //                         else: null // Otherwise, set offer to null or omit this line if you prefer to keep the field absent
-        //     //                     }
-        //     //                 }
-        //     //             }
-        //     //         })
-        //     //     }
-        //     // }
-        //     pipeline.push({
-        //         $addFields: {
-        //             offer: {
-        //                 $arrayElemAt: [
-        //                     {
-        //                         $filter: {
-        //                             input: getOfferList,
-        //                             as: "offer",
-        //                             cond: {
-        //                                 $and: [
-        //                                     {
-        //                                         $in: ["$$offer._id", offerApplied.brand.offerId]
-        //                                     },
-        //                                     {
-        //                                         $in: ["$brand._id", offerApplied.brand.brands]
-        //                                     }
-        //                                 ]
-        //                             }
-        //                         }
-        //                     },
-        //                     0
-        //                 ]
-        //             }
-        //         }
-        //     });
-        //     console.log("fgdfgdfhdf",pipeline);
-        // }
-        // if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-        //     pipeline.push({
-        //         $addFields: {
-        //             offer: {
-        //                 $arrayElemAt: [
-        //                     {
-        //                         $filter: {
-        //                             input: getOfferList,
-        //                             as: "offer",
-        //                             cond: {
-        //                                 $and: [
-        //                                     {
-        //                                         $in: ["$$offer._id", offerApplied.product.offerId]
-        //                                     },
-        //                                     {
-        //                                         $in: ["$_id", offerApplied.product.products]
-        //                                     }
-        //                                 ]
-        //                             }
-        //                         }
-        //                     },
-        //                     0
-        //                 ]
-        //             }
-        //         }
-        //     });
-        //     console.log("11111111111",pipeline);
-        // }
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            pipeline.push({
-                $addFields: {
-                    productOffers: {
-                        $filter: {
-                            input: getOfferList,
-                            as: "offer",
-                            cond: {
-                                $and: [
-                                    { $in: ["$$offer._id", offerApplied.product.offerId] }, // Match offer ID
-                                    { $in: ["$_id", offerApplied.product.products] } // Match product ID
-                                ]
-                            }
-                        }
-                    }
-                }
-            });
+            const offerProduct = await common_service_1.default.offerProduct(getOfferList, offerApplied.product);
+            pipeline.push(offerProduct);
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            pipeline.push({
-                $addFields: {
-                    brandOffers: {
-                        $filter: {
-                            input: getOfferList,
-                            as: "offer",
-                            cond: {
-                                $and: [
-                                    { $in: ["$$offer._id", offerApplied.brand.offerId] }, // Match offer ID
-                                    { $in: ["$brand._id", offerApplied.brand.brands] } // Match brand ID
-                                ]
-                            }
-                        }
-                    }
-                }
-            });
+            const offerBrand = await common_service_1.default.offerBrand(getOfferList, offerApplied.brand);
+            pipeline.push(offerBrand);
         }
-        // Add the stages for product-specific offers
+        // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            pipeline.push({
-                $addFields: {
-                    categoryOffers: {
-                        $filter: {
-                            input: getOfferList,
-                            as: "offer",
-                            cond: {
-                                $and: [
-                                    { $in: ["$$offer._id", offerApplied.category.offerId] }, // Match offer ID
-                                    { $in: ["$productCategory.category._id", offerApplied.category.categories] } // Match category ID within productCategory array
-                                ]
-                            }
-                        }
-                    }
-                }
-            });
+            const offerCategory = await common_service_1.default.offerCategory(getOfferList, offerApplied.category);
+            pipeline.push(offerCategory);
         }
-        // Combine brand and product offers into a single array field 'offer'
+        // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
         pipeline.push({
             $addFields: {
                 offer: {
                     $cond: {
-                        if: { $gt: [{ $size: "$productOffers" }, 0] }, // Check if productOffers array is not empty
+                        if: { $gt: [{ $size: "$categoryOffers" }, 0] }, // Check if categoryOffers array is not empty
                         then: "$categoryOffers",
-                        else: "$categoryOffers"
+                        else: {
+                            $cond: {
+                                if: { $gt: [{ $size: "$brandOffers" }, 0] }, // Check if brandOffers array is not empty
+                                then: "$brandOffers",
+                                else: "$productOffers" // Default to productOffers if no category or brand offers
+                            }
+                        }
                     }
                 }
             }
         });
-        console.log("offerApplied.category.categories.length", offerApplied.category);
-        console.log("offerApplied.category.categories.length", offerApplied.product);
         if (offerPipeline && offerPipeline.length > 0) {
             pipeline.push(offerPipeline[0]);
-            console.log("pipeline", pipeline);
         }
         // console.log("offerDataofferDataofferDataofferData", offerData);
         let productData = [];

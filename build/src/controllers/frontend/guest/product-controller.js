@@ -131,8 +131,9 @@ class ProductController extends base_controller_1.default {
     }
     async findAllProducts(req, res) {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, getAttribute = 0, categories = '', brands = '', offer = '' } = req.query;
+            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', offer = '', sortby = '', sortorder = '' } = req.query;
             let getSpecification = '1';
+            let getAttribute = '1';
             let getSeo = '1';
             let getBrand = '1';
             let getCategory = '1';
@@ -140,6 +141,35 @@ class ProductController extends base_controller_1.default {
             let products;
             let offers;
             query.status = '1';
+            const sort = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { productTitle: keywordRegex },
+                        { slug: keywordRegex },
+                        { 'productCategory.category.categoryTitle': keywordRegex },
+                        { 'brand.brandTitle': keywordRegex },
+                        { 'productCategory.category.slug': keywordRegex },
+                        { sku: keywordRegex },
+                        { 'productVariants.slug': keywordRegex },
+                        { 'productVariants.extraProductTitle': keywordRegex },
+                        { 'productVariants.variantSku': keywordRegex },
+                        { 'productVariants.productSpecification.specificationTitle': keywordRegex },
+                        { 'productVariants.productSpecification.slug': keywordRegex },
+                        { 'productVariants.productSpecification.specificationDetail.itemName': keywordRegex },
+                        { 'productVariants.productSpecification.specificationDetail.itemValue': keywordRegex },
+                        { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
+                        { 'productVariants.productVariantAttributes.slug': keywordRegex },
+                        { 'productVariants.productVariantAttributes.attributeDetail.itemName': keywordRegex },
+                        { 'productVariants.productVariantAttributes.attributeDetail.itemValue': keywordRegex }
+                    ],
+                    ...query
+                };
+            }
             if (offer) {
                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
                 if (isObjectId) {
@@ -235,6 +265,7 @@ class ProductController extends base_controller_1.default {
             }
             const productData = await product_service_1.default.findProductList({
                 query,
+                sort,
                 products,
                 offers,
                 getImageGallery,
@@ -245,6 +276,18 @@ class ProductController extends base_controller_1.default {
                 getBrand,
                 hostName: req.get('host'),
             });
+            if (sortby && sortorder) {
+                productData.sort((a, b) => {
+                    const aPrice = a.productVariants[0]?.[sortby] || 0;
+                    const bPrice = b.productVariants[0]?.[sortby] || 0;
+                    if (sortorder === 'asc') {
+                        return aPrice - bPrice;
+                    }
+                    else {
+                        return bPrice - aPrice;
+                    }
+                });
+            }
             return controller.sendSuccessResponse(res, {
                 requestedData: productData,
                 message: 'Success!'

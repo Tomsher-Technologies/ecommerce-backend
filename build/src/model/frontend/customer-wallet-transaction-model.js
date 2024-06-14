@@ -24,18 +24,27 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const wallet_1 = require("../../constants/wallet");
 const customerWalletTransactionsSchema = new mongoose_1.Schema({
     customerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'Customer',
         required: true
     },
+    referredCustomerId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Customer',
+        // required: function(this: CustomerWalletTransactionsProps): boolean {
+        //     return this.referredCode !== '';
+        // },
+        default: null
+    },
     referrerCustomerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'Customer',
-        required: function () {
-            return this.referredCode !== '';
-        },
+        // required: function(this: CustomerWalletTransactionsProps): boolean {
+        //     return this.referredCode !== '';
+        // },
         default: null
     },
     orderId: {
@@ -45,6 +54,15 @@ const customerWalletTransactionsSchema = new mongoose_1.Schema({
             return this.referredCode === '';
         },
         default: null
+    },
+    earnType: {
+        type: String,
+        required: true,
+        enum: [
+            wallet_1.earnTypes.order,
+            wallet_1.earnTypes.referrer,
+            wallet_1.earnTypes.referred,
+        ],
     },
     referredCode: {
         type: String,
@@ -85,11 +103,11 @@ customerWalletTransactionsSchema.path('orderId').validate(function (value) {
     }
     return true;
 }, 'Either orderId or referredCode must be provided');
-customerWalletTransactionsSchema.path('referrerCustomerId').validate(function (value) {
+customerWalletTransactionsSchema.path('referredCustomerId').validate(function (value) {
     if (!value && !this.referredCode) {
-        throw new Error('Either referrerCustomerId or referredCode must be provided');
+        throw new Error('Either referredCustomerId or referredCode must be provided');
     }
     return true;
-}, 'Either referrerCustomerId or referredCode must be provided');
+}, 'Either referredCustomerId or referredCode must be provided');
 const CustomerWalletTransactionsModel = mongoose_1.default.model('CustomerWalletTransactions', customerWalletTransactionsSchema);
 exports.default = CustomerWalletTransactionsModel;

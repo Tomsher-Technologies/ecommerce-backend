@@ -20,6 +20,7 @@ class CategoryController extends base_controller_1.default {
         try {
             const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', category = '', categoryId = '', _id = '', parentCategory = '' } = req.query;
             let query = { _id: { $exists: true } };
+            let categoryIdCheck;
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             }
@@ -42,8 +43,21 @@ class CategoryController extends base_controller_1.default {
                 };
             }
             if (_id) {
+                if (typeof _id === 'string') {
+                    query = {
+                        ...query, _id: new mongoose_1.default.Types.ObjectId(_id)
+                    };
+                }
+                else {
+                    const categoryIds = _id.map((id) => new mongoose_1.default.Types.ObjectId(id));
+                    categoryIdCheck = {
+                        _id: { $in: categoryIds }
+                    };
+                }
+            }
+            if (categoryIdCheck && (Object.keys(categoryIdCheck)).length > 0) {
                 query = {
-                    ...query, _id: new mongoose_1.default.Types.ObjectId(_id)
+                    ...query, ...categoryIdCheck
                 };
             }
             if (category) {

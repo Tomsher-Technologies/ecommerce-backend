@@ -24,6 +24,7 @@ class CategoryController extends BaseController {
             const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', category = '', categoryId = '', _id = '', parentCategory = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
+            let categoryIdCheck: any
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -49,8 +50,20 @@ class CategoryController extends BaseController {
             }
 
             if (_id) {
+                if (typeof _id === 'string') {
+                    query = {
+                        ...query, _id: new mongoose.Types.ObjectId(_id)
+                    } as any;
+                } else {
+                    const categoryIds = _id.map((id: any) => new mongoose.Types.ObjectId(id));
+                    categoryIdCheck = {
+                        _id: { $in: categoryIds }
+                    };
+                }
+            }
+            if (categoryIdCheck && (Object.keys(categoryIdCheck)).length > 0) {
                 query = {
-                    ...query, _id: new mongoose.Types.ObjectId(_id)
+                    ...query, ...categoryIdCheck
                 } as any;
             }
             if (category) {
