@@ -158,7 +158,7 @@ class ProductController extends BaseController {
 
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', offer = '', sortby = '', sortorder = '' } = req.query as ProductsFrontendQueryParams;
+            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '' } = req.query as ProductsFrontendQueryParams;
             let getSpecification = '1'
             let getAttribute = '1'
             let getSeo = '1'
@@ -167,6 +167,10 @@ class ProductController extends BaseController {
             let query: any = { _id: { $exists: true } };
             let products: any
             let offers: any;
+            const orConditionsForAttributes: any = [];
+            const orConditionsForBrands: any = [];
+            const orConditionsForcategories: any = [];
+            const orConditionsForSpecification: any = [];
 
             query.status = '1';
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -218,7 +222,6 @@ class ProductController extends BaseController {
 
                 if (categories) {
                     const categoryArray = categories.split(',')
-                    const orConditions: any[] = [];
 
                     for await (let category of categoryArray) {
                         const keywordRegex = new RegExp(category, 'i');
@@ -226,23 +229,37 @@ class ProductController extends BaseController {
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                         if (isObjectId) {
-                            orConditions.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
+                            orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
                         } else {
-                            orConditions.push({ "productCategory.category.slug": keywordRegex });
+                            orConditionsForcategories.push({ "productCategory.category.slug": keywordRegex });
                         }
 
-                        if (orConditions.length > 0) {
-                            query = {
-                                ...query,
-                                $or: orConditions
-                            };
-                        }
+
+                    }
+                }
+
+                if (attribute) {
+                    const attributeArray = attribute.split(',')
+
+                    for await (let attribute of attributeArray) {
+
+                        console.log("attribute,attribute", attributeArray);
+
+                        orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail._id": new mongoose.Types.ObjectId(attribute) })
+
+                    }
+                }
+
+                if (specification) {
+                    const specificationArray = specification.split(',')
+
+                    for await (let specification of specificationArray) {
+                        orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail._id": new mongoose.Types.ObjectId(specification) })
                     }
                 }
 
                 if (brands) {
                     const brandArray = brands.split(',')
-                    const orConditions: any[] = [];
 
                     for await (let brand of brandArray) {
                         const keywordRegex = new RegExp(brand, 'i');
@@ -250,17 +267,12 @@ class ProductController extends BaseController {
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
 
                         if (isObjectId) {
-                            orConditions.push({ "brand._id": new mongoose.Types.ObjectId(brand) });
+                            orConditionsForBrands.push({ "brand._id": new mongoose.Types.ObjectId(brand) });
                         } else {
-                            orConditions.push({ "brand.slug": keywordRegex });
+                            orConditionsForBrands.push({ "brand.slug": keywordRegex });
                         }
 
-                        if (orConditions.length > 0) {
-                            query = {
-                                ...query,
-                                $or: orConditions
-                            };
-                        }
+
                     }
                 }
 
@@ -313,6 +325,34 @@ class ProductController extends BaseController {
                         ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
                     }
                 }
+                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategories.length > 0) {
+                    query.$and = [];
+
+                    if (orConditionsForAttributes.length > 0) {
+                        query.$and.push({
+                            $or: orConditionsForAttributes
+                        });
+                    }
+
+                    if (orConditionsForSpecification.length > 0) {
+                        query.$and.push({
+                            $or: orConditionsForSpecification
+                        });
+                    }
+
+                    if (orConditionsForBrands.length > 0) {
+                        query.$and.push({
+                            $or: orConditionsForBrands
+                        });
+                    }
+
+                    if (orConditionsForcategories.length > 0) {
+                        query.$and.push({
+                            $or: orConditionsForcategories
+                        });
+                    }
+                }
+                console.log("query,query", query);
 
                 const productData: any = await ProductService.findProductList({
                     query,
