@@ -8,7 +8,6 @@ const specifications_detail_model_1 = __importDefault(require("../../../model/ad
 const multi_languages_1 = require("../../../constants/multi-languages");
 const specifications_model_1 = __importDefault(require("../../../model/admin/ecommerce/specifications-model"));
 const helpers_1 = require("../../../utils/helpers");
-const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 class SpecificationService {
     constructor() {
         this.lookup = {
@@ -144,11 +143,11 @@ class SpecificationService {
                     const existingEntry = await specifications_detail_model_1.default.findOne({ _id: data._id });
                     if (existingEntry) {
                         // Update existing document
-                        await specifications_detail_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, specificationId: specificationId, specificationTitle: await general_service_1.default.capitalizeWords(data.specificationTitle) });
+                        await specifications_detail_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, specificationId: specificationId });
                     }
                     else {
                         // Create new document
-                        await specifications_detail_model_1.default.create({ ...data, specificationId: specificationId, specificationTitle: await general_service_1.default.capitalizeWords(data.specificationTitle) });
+                        await specifications_detail_model_1.default.create({ ...data, specificationId: specificationId });
                     }
                 }));
                 await Promise.all(inventryPricingPromises);
@@ -178,7 +177,7 @@ class SpecificationService {
         }
         else {
             const specificationData = {
-                specificationTitle: await general_service_1.default.capitalizeWords(data.specificationTitle),
+                specificationTitle: (0, helpers_1.capitalizeWords)(data.specificationTitle),
                 isExcel: true,
                 slug: (0, helpers_1.slugify)(data.specificationTitle)
             };

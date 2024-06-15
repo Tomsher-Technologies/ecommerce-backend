@@ -3,7 +3,7 @@ import SpecificationDetailModel from '../../../model/admin/ecommerce/specificati
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import SpecificationModel, { SpecificationProps } from '../../../model/admin/ecommerce/specifications-model';
-import { slugify } from '../../../utils/helpers';
+import { capitalizeWords, slugify } from '../../../utils/helpers';
 import GeneralService from '../../../services/admin/general-service';
 
 
@@ -159,10 +159,10 @@ class SpecificationService {
                     const existingEntry = await SpecificationDetailModel.findOne({ _id: data._id });
                     if (existingEntry) {
                         // Update existing document
-                        await SpecificationDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, specificationId: specificationId, specificationTitle: await GeneralService.capitalizeWords(data.specificationTitle) });
+                        await SpecificationDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, specificationId: specificationId });
                     } else {
                         // Create new document
-                        await SpecificationDetailModel.create({ ...data, specificationId: specificationId, specificationTitle: await GeneralService.capitalizeWords(data.specificationTitle) });
+                        await SpecificationDetailModel.create({ ...data, specificationId: specificationId });
                     }
                 }));
 
@@ -197,7 +197,7 @@ class SpecificationService {
             return result
         } else {
             const specificationData = {
-                specificationTitle: await GeneralService.capitalizeWords(data.specificationTitle),
+                specificationTitle: capitalizeWords(data.specificationTitle),
                 isExcel: true,
                 slug: slugify(data.specificationTitle)
 

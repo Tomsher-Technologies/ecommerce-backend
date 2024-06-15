@@ -6,6 +6,7 @@ import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-m
 import { capitalizeWords, slugify } from '../../../utils/helpers';
 import { brandLookup } from '../../../utils/config/brand-config';
 import GeneralService from '../../../services/admin/general-service';
+import CartsModel from '../../../model/frontend/cart-model';
 
 
 class BrandsService {
@@ -27,7 +28,7 @@ class BrandsService {
             { $limit: limit },
             { $sort: finalSort },
 
-          brandLookup,
+            brandLookup,
         ];
 
         return BrandsModel.aggregate(pipeline).exec();
@@ -41,18 +42,17 @@ class BrandsService {
         }
     }
 
-    async create(brandData: any): Promise<BrandProps | null> {
-        const createdBrand = await BrandsModel.create(brandData);
+    async create(cartData: any): Promise<BrandProps | null> {
+        const createdCart = await CartsModel.create(cartData);
 
-        if (createdBrand) {
+        if (createdCart) {
             const pipeline = [
-                { $match: { _id: createdBrand._id } },
-              brandLookup,
+                { $match: { _id: createdCart._id } },
             ];
 
-            const createdBrandWithValues = await BrandsModel.aggregate(pipeline);
+            const createdCartWithValues = await CartsModel.aggregate(pipeline);
 
-            return createdBrandWithValues[0];
+            return createdCartWithValues[0];
         } else {
             return null;
         }
@@ -63,7 +63,7 @@ class BrandsService {
             const objectId = new mongoose.Types.ObjectId(brandId);
             const pipeline = [
                 { $match: { _id: objectId } },
-              brandLookup,
+                brandLookup,
             ];
 
             const brandDataWithValues = await BrandsModel.aggregate(pipeline);
@@ -84,7 +84,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-              brandLookup,
+                brandLookup,
             ];
 
             const updatedBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -118,28 +118,6 @@ class BrandsService {
             if (brandResult) {
                 return brandResult
             }
-        }
-    }
-
-
-    async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof BrandProps): Promise<void> {
-        try {
-            // Set columnKey to '0' for all documents initially
-            await BrandsModel.updateMany({ [columnKey]: { $gt: '0' } }, { [columnKey]: '0' });
-
-            if (container1 && container1.length > 0) {
-                // Loop through container1 and update [mode] for each corresponding document
-                for (let i = 0; i < container1.length; i++) {
-                    const brandId = container1[i];
-                    const brand = await BrandsModel.findById(brandId);
-                    if (brand) {
-                        (brand as any)[columnKey] = (i + 1).toString();
-                        await brand.save({ validateBeforeSave: false });
-                    }
-                }
-            }
-        } catch (error) {
-            throw new Error(error + 'Failed to update ' + columnKey);
         }
     }
 }

@@ -215,7 +215,7 @@ class CategoryController extends base_controller_1.default {
                 slugData = (0, helpers_1.slugify)(data, '_');
                 const categoryImage = (req?.file) || req.files.find((file) => file.fieldname === 'categoryImage');
                 const categoryData = {
-                    categoryTitle: await general_service_1.default.capitalizeWords(categoryTitle),
+                    categoryTitle: (0, helpers_1.capitalizeWords)(categoryTitle),
                     slug: slugData || slug,
                     categoryImageUrl: (0, helpers_1.handleFileUpload)(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
@@ -313,7 +313,7 @@ class CategoryController extends base_controller_1.default {
                     const updatedCategory = await category_service_1.default.findOne(categoryId);
                     updatedCategoryData = {
                         ...updatedCategoryData,
-                        categoryTitle: await general_service_1.default.capitalizeWords(updatedCategoryData.categoryTitle),
+                        categoryTitle: (0, helpers_1.capitalizeWords)(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
                         level: updatedCategoryData.level,
                         slug: updatedCategoryData.slug,

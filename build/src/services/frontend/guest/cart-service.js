@@ -8,6 +8,7 @@ const pagination_1 = require("../../../components/pagination");
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const helpers_1 = require("../../../utils/helpers");
 const brand_config_1 = require("../../../utils/config/brand-config");
+const cart_model_1 = __importDefault(require("../../../model/frontend/cart-model"));
 class BrandsService {
     constructor() { }
     async findAll(options = {}) {
@@ -36,15 +37,14 @@ class BrandsService {
             throw new Error('Error fetching total count of brands');
         }
     }
-    async create(brandData) {
-        const createdBrand = await brands_model_1.default.create(brandData);
-        if (createdBrand) {
+    async create(cartData) {
+        const createdCart = await cart_model_1.default.create(cartData);
+        if (createdCart) {
             const pipeline = [
-                { $match: { _id: createdBrand._id } },
-                brand_config_1.brandLookup,
+                { $match: { _id: createdCart._id } },
             ];
-            const createdBrandWithValues = await brands_model_1.default.aggregate(pipeline);
-            return createdBrandWithValues[0];
+            const createdCartWithValues = await cart_model_1.default.aggregate(pipeline);
+            return createdCartWithValues[0];
         }
         else {
             return null;
@@ -100,26 +100,6 @@ class BrandsService {
             if (brandResult) {
                 return brandResult;
             }
-        }
-    }
-    async updateWebsitePriority(container1, columnKey) {
-        try {
-            // Set columnKey to '0' for all documents initially
-            await brands_model_1.default.updateMany({ [columnKey]: { $gt: '0' } }, { [columnKey]: '0' });
-            if (container1 && container1.length > 0) {
-                // Loop through container1 and update [mode] for each corresponding document
-                for (let i = 0; i < container1.length; i++) {
-                    const brandId = container1[i];
-                    const brand = await brands_model_1.default.findById(brandId);
-                    if (brand) {
-                        brand[columnKey] = (i + 1).toString();
-                        await brand.save({ validateBeforeSave: false });
-                    }
-                }
-            }
-        }
-        catch (error) {
-            throw new Error(error + 'Failed to update ' + columnKey);
         }
     }
 }

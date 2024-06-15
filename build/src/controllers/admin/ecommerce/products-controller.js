@@ -71,7 +71,7 @@ class ProductsController extends base_controller_1.default {
                     file.fieldname.startsWith('galleryImage['));
                 const skuData = await (0, products_1.defaultSkuSettings)(variants);
                 const productData = {
-                    productTitle: await general_service_1.default.capitalizeWords(productTitle),
+                    productTitle: (0, helpers_1.capitalizeWords)(productTitle),
                     slug: (0, helpers_1.slugify)(productTitle),
                     brand: brand,
                     description,
@@ -373,6 +373,7 @@ class ProductsController extends base_controller_1.default {
                                                                     }
                                                                     const optionColumns = [];
                                                                     const valueColumns = [];
+                                                                    const typeColumn = [];
                                                                     const NameColumns = [];
                                                                     const combinedArray = [];
                                                                     const specificationOption = [];
@@ -385,6 +386,9 @@ class ProductsController extends base_controller_1.default {
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Name')) {
                                                                             NameColumns.push(columnName);
+                                                                        }
+                                                                        if (columnName.startsWith('Attribute_Type')) {
+                                                                            typeColumn.push(columnName);
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Value')) {
                                                                             valueColumns.push(columnName);
@@ -405,13 +409,14 @@ class ProductsController extends base_controller_1.default {
                                                                     for (let i = 0; i < optionColumns.length; i++) {
                                                                         combinedArray.push({
                                                                             data: data[optionColumns[i]],
+                                                                            type: data[typeColumn[i]],
                                                                             name: data[NameColumns[i]],
                                                                             value: data[valueColumns[i]]
                                                                         });
                                                                     }
                                                                     // await combinedArray.map(async (value: any, index: number) => {
                                                                     for await (let value of combinedArray) {
-                                                                        const attributes = await attributes_service_1.default.findOneAttribute({ attributeTitle: value.data, itemName: value.name, itemValue: value.value });
+                                                                        const attributes = await attributes_service_1.default.findOneAttribute({ attributeTitle: value.data, attributeType: value.type });
                                                                         attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId });
                                                                     }
                                                                     const specificationCombinedArray = [];
@@ -434,7 +439,7 @@ class ProductsController extends base_controller_1.default {
                                                                         });
                                                                     }
                                                                     var finalData = {
-                                                                        productTitle: await general_service_1.default.capitalizeWords(data.Product_Title),
+                                                                        productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                         slug: (0, helpers_1.slugify)(data.Product_Title),
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
@@ -466,7 +471,7 @@ class ProductsController extends base_controller_1.default {
                                                                     const userData = res.locals.user;
                                                                     var productVariants = {
                                                                         countryId: data.country ? countryId : await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
-                                                                        extraProductTitle: await general_service_1.default.capitalizeWords(data.Product_Title),
+                                                                        extraProductTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         price: data.Price,
@@ -718,7 +723,7 @@ class ProductsController extends base_controller_1.default {
                         file.fieldname.startsWith('galleryImage['));
                     updatedProductData = {
                         ...updatedProductData,
-                        productTitle: await general_service_1.default.capitalizeWords(updatedProductData.productTitle),
+                        productTitle: (0, helpers_1.capitalizeWords)(updatedProductData.productTitle),
                         productImageUrl: (0, helpers_1.handleFileUpload)(req, await product_service_1.default.findOne(productId), (req.file || productImage), 'productImageUrl', 'product'),
                         updatedAt: new Date()
                     };

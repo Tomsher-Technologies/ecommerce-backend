@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 const xlsx = require('xlsx');
-import { deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { capitalizeWords, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
 import { productStatusSchema, productSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -86,7 +86,7 @@ class ProductsController extends BaseController {
                 const skuData = await defaultSkuSettings(variants)
 
                 const productData: Partial<ProductsProps> = {
-                    productTitle: await GeneralService.capitalizeWords(productTitle),
+                    productTitle: capitalizeWords(productTitle),
                     slug: slugify(productTitle) as any,
                     brand: brand as any,
                     description,
@@ -512,7 +512,7 @@ class ProductsController extends BaseController {
                                                                         });
                                                                     }
                                                                     var finalData: Partial<ProductsProps> = {
-                                                                        productTitle: await GeneralService.capitalizeWords(data.Product_Title),
+                                                                        productTitle: capitalizeWords(data.Product_Title),
                                                                         slug: slugify(data.Product_Title),
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
@@ -546,7 +546,7 @@ class ProductsController extends BaseController {
 
                                                                     var productVariants: any = {
                                                                         countryId: data.country ? countryId : await getCountryIdWithSuperAdmin(userData),
-                                                                        extraProductTitle: await GeneralService.capitalizeWords(data.Product_Title),
+                                                                        extraProductTitle: capitalizeWords(data.Product_Title),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         price: data.Price,
@@ -822,7 +822,7 @@ class ProductsController extends BaseController {
 
                     updatedProductData = {
                         ...updatedProductData,
-                        productTitle: await GeneralService.capitalizeWords(updatedProductData.productTitle),
+                        productTitle: capitalizeWords(updatedProductData.productTitle),
                         productImageUrl: handleFileUpload(req, await ProductsService.findOne(productId), (req.file || productImage), 'productImageUrl', 'product'),
                         updatedAt: new Date()
                     };

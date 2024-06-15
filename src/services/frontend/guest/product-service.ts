@@ -28,7 +28,7 @@ class ProductService {
     }
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, products, discount, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -43,6 +43,19 @@ class ProductService {
                 'productVariants.countryId': countryId
 
             } as any;
+        }
+
+        if (discount) {
+            const discountArray: any = await discount.split(",")
+            console.log("discount", discountArray);
+            for await(let discount of discountArray){
+                // const discountSplitArray: any = await discount.split("=")
+                // console.log("discountSplitArray", discountSplitArray);
+                // const discountOffer = await CommonService.findOffers(offers, hostName)
+
+            }
+         
+
         }
 
         const modifiedPipeline = {
@@ -266,6 +279,7 @@ class ProductService {
                         if (!specificationArray.map((spec: any) => spec.toString()).includes(specification.specificationId.toString())) {
                             specificationArray.push(specification.specificationId);
                         }
+
                     }
                 }
             }

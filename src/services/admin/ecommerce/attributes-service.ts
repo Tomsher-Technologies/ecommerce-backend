@@ -4,7 +4,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
 
 import AttributesModel, { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
-import { slugify } from '../../../utils/helpers';
+import { capitalizeWords, slugify } from '../../../utils/helpers';
 import GeneralService from '../../../services/admin/general-service';
 
 
@@ -146,7 +146,7 @@ class AttributesService {
             return result
         } else {
             const attributeData = {
-                attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle),
+                attributeTitle: capitalizeWords(data.attributeTitle),
                 attributeType: data.attributeType,
                 isExcel: true,
                 slug: slugify(data.attributeTitle)
@@ -217,14 +217,16 @@ class AttributesService {
                         .map(entry => entry._id);
                     await AttributeDetailModel.deleteMany({ attributeId: attributeId, _id: { $in: attributeDetailIDsToRemove } });
                 }
+                console.log("attributeDetails", attributeDetails);
+
                 const inventryPricingPromises = await Promise.all(attributeDetails.map(async (data: any) => {
                     const existingEntry = await AttributeDetailModel.findOne({ _id: data._id });
                     if (existingEntry) {
                         // Update existing document
-                        await AttributeDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, attributeId: attributeId, attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle) });
+                        await AttributeDetailModel.findByIdAndUpdate(existingEntry._id, { ...data, attributeId: attributeId });
                     } else {
                         // Create new document
-                        await AttributeDetailModel.create({ ...data, attributeId: attributeId, attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle) });
+                        await AttributeDetailModel.create({ ...data, attributeId: attributeId });
                     }
                 }));
 

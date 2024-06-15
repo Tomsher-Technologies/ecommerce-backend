@@ -87,16 +87,6 @@ class GeneralService {
         }
     }
 
-    async capitalizeWords(sentence: any) {
-        let capitalized = sentence.replace(/\b\w/g, (char: any) => {
-            return char.toUpperCase();
-        });
-
-        // Remove trailing whitespace
-        capitalized = capitalized.trim();
-        return capitalized;
-    }
-
     async multiLanguageFieledsManage(sourceId: string, languageValues: any) {
         if (sourceId && languageValues.languageId && languageValues.source) {
 

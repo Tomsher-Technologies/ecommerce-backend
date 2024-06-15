@@ -122,7 +122,7 @@ class BrandsController extends base_controller_1.default {
                 const brandImage = req.files.find((file) => file.fieldname === 'brandImage');
                 const brandBannerImage = req.files.find((file) => file.fieldname === 'brandBannerImage');
                 const brandData = {
-                    brandTitle: await general_service_1.default.capitalizeWords(brandTitle),
+                    brandTitle: (0, helpers_1.capitalizeWords)(brandTitle),
                     slug: slug || (0, helpers_1.slugify)(brandTitle),
                     brandImageUrl: (0, helpers_1.handleFileUpload)(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
                     brandBannerImageUrl: (0, helpers_1.handleFileUpload)(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
@@ -249,7 +249,7 @@ class BrandsController extends base_controller_1.default {
                     let updatedBrandData = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
-                        brandTitle: await general_service_1.default.capitalizeWords(updatedBrandData.brandTitle),
+                        brandTitle: await (0, helpers_1.capitalizeWords)(updatedBrandData.brandTitle),
                         brandImageUrl: (0, helpers_1.handleFileUpload)(req, await brands_service_1.default.findOne(brandId), (req.file || brandImage), 'brandImageUrl', 'brand'),
                         brandBannerImageUrl: (0, helpers_1.handleFileUpload)(req, await brands_service_1.default.findOne(brandId), (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                         updatedAt: new Date()

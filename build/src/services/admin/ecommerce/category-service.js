@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
 const multi_languages_1 = require("../../../constants/multi-languages");
-const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const helpers_1 = require("../../../utils/helpers");
 class CategoryService {
@@ -288,7 +287,7 @@ class CategoryService {
     //                 const categoryResult: any = await this.findOneCategory({ slug: slug });
     //                 if (!categoryResult) {
     //                     const categoryData = {
-    //                         categoryTitle: await GeneralService.capitalizeWords(categoryTitle),
+    //                         categoryTitle:capitalizeWords(categoryTitle),
     //                         slug: slugify(categoryTitle),
     //                         parentCategory: null,
     //                         level: '0',
@@ -309,7 +308,7 @@ class CategoryService {
     //                     const resultString = titleData.join('-');
     //                     const result: any = await this.findOneCategory({ slug: resultString });
     //                     const categoryData = {
-    //                         categoryTitle: await GeneralService.capitalizeWords(lastItem),
+    //                         categoryTitle:capitalizeWords(lastItem),
     //                         slug: slugify(slug),
     //                         parentCategory: result._id,
     //                         level: titleData.length.toString(),
@@ -350,7 +349,7 @@ class CategoryService {
                     const parentSlug = titleData.join('-');
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
                     const categoryData = {
-                        categoryTitle: await general_service_1.default.capitalizeWords(lastItem),
+                        categoryTitle: (0, helpers_1.capitalizeWords)(lastItem),
                         slug: (0, helpers_1.slugify)(currentSlug),
                         parentCategory: parentCategory ? parentCategory._id : null,
                         level: parentCategory ? titleData.length.toString() : '0',
