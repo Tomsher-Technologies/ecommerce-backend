@@ -24,7 +24,7 @@ class ProductService {
     constructor() {
     }
     async findProductList(productOption) {
-        var { query, sort, products, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, products, discount, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -37,6 +37,15 @@ class ProductService {
                 ...query,
                 'productVariants.countryId': countryId
             };
+        }
+        if (discount) {
+            const discountArray = await discount.split(",");
+            console.log("discount", discountArray);
+            for await (let discount of discountArray) {
+                // const discountSplitArray: any = await discount.split("=")
+                // console.log("discountSplitArray", discountSplitArray);
+                // const discountOffer = await CommonService.findOffers(offers, hostName)
+            }
         }
         const modifiedPipeline = {
             $lookup: {
@@ -132,7 +141,7 @@ class ProductService {
             for await (let product of productData) {
                 for await (let variant of product.productVariants) {
                     for await (let attribute of variant.productVariantAttributes) {
-                        if (!attributeArray.includes(attribute.attributeId)) {
+                        if (!attributeArray.map((attr) => attr.toString()).includes(attribute.attributeId.toString())) {
                             attributeArray.push(attribute.attributeId);
                         }
                     }
@@ -214,7 +223,7 @@ class ProductService {
             for await (let product of productData) {
                 for await (let variant of product.productVariants) {
                     for await (let specification of variant.productSpecification) {
-                        if (!specificationArray.includes(specification.specificationId)) {
+                        if (!specificationArray.map((spec) => spec.toString()).includes(specification.specificationId.toString())) {
                             specificationArray.push(specification.specificationId);
                         }
                     }

@@ -45,7 +45,7 @@ class CouponsController extends base_controller_1.default {
                     query = {
                         ...query,
                         'discountDateRange.0': { $lte: discountStartDate },
-                        'discountDateRange.1': { $gte: discountStartDate }
+                        'discountDateRange.1': { $gte: discountEndDate }
                     };
                 }
                 // if (couponEndDate) {

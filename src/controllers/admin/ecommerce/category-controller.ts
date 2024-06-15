@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import 'module-alias/register';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
 import { CategoryQueryParams } from '../../../utils/types/category';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -238,7 +238,7 @@ class CategoryController extends BaseController {
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
-                    categoryTitle: await GeneralService.capitalizeWords(categoryTitle),
+                    categoryTitle: capitalizeWords(categoryTitle),
                     slug: slugData || slug,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
@@ -350,7 +350,7 @@ class CategoryController extends BaseController {
 
                     updatedCategoryData = {
                         ...updatedCategoryData,
-                        categoryTitle: await GeneralService.capitalizeWords(updatedCategoryData.categoryTitle),
+                        categoryTitle: capitalizeWords(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
                         level: updatedCategoryData.level,
                         slug: updatedCategoryData.slug,

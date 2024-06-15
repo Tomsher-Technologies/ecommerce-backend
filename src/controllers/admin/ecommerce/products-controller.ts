@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 const xlsx = require('xlsx');
-import { deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { capitalizeWords, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
 import { productStatusSchema, productSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -86,7 +86,7 @@ class ProductsController extends BaseController {
                 const skuData = await defaultSkuSettings(variants)
 
                 const productData: Partial<ProductsProps> = {
-                    productTitle: await GeneralService.capitalizeWords(productTitle),
+                    productTitle: capitalizeWords(productTitle),
                     slug: slugify(productTitle) as any,
                     brand: brand as any,
                     description,
@@ -440,6 +440,7 @@ class ProductsController extends BaseController {
 
                                                                     const optionColumns: any = [];
                                                                     const valueColumns: any = [];
+                                                                    const typeColumn: any = []
                                                                     const NameColumns: any = [];
                                                                     const combinedArray: any = [];
 
@@ -453,6 +454,9 @@ class ProductsController extends BaseController {
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Name')) {
                                                                             NameColumns.push(columnName);
+                                                                        }
+                                                                        if (columnName.startsWith('Attribute_Type')) {
+                                                                            typeColumn.push(columnName);
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Value')) {
                                                                             valueColumns.push(columnName);
@@ -474,6 +478,7 @@ class ProductsController extends BaseController {
                                                                     for (let i = 0; i < optionColumns.length; i++) {
                                                                         combinedArray.push({
                                                                             data: data[optionColumns[i]],
+                                                                            type: data[typeColumn[i]],
                                                                             name: data[NameColumns[i]],
                                                                             value: data[valueColumns[i]]
                                                                         });
@@ -481,7 +486,7 @@ class ProductsController extends BaseController {
 
                                                                     // await combinedArray.map(async (value: any, index: number) => {
                                                                     for await (let value of combinedArray) {
-                                                                        const attributes: any = await AttributesService.findOneAttribute({ attributeTitle: value.data, itemName: value.name, itemValue: value.value })
+                                                                        const attributes: any = await AttributesService.findOneAttribute({ attributeTitle: value.data, attributeType: value.type })
                                                                         attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                     }
 
@@ -507,7 +512,7 @@ class ProductsController extends BaseController {
                                                                         });
                                                                     }
                                                                     var finalData: Partial<ProductsProps> = {
-                                                                        productTitle: await GeneralService.capitalizeWords(data.Product_Title),
+                                                                        productTitle: capitalizeWords(data.Product_Title),
                                                                         slug: slugify(data.Product_Title),
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
@@ -541,7 +546,7 @@ class ProductsController extends BaseController {
 
                                                                     var productVariants: any = {
                                                                         countryId: data.country ? countryId : await getCountryIdWithSuperAdmin(userData),
-                                                                        extraProductTitle: await GeneralService.capitalizeWords(data.Product_Title),
+                                                                        extraProductTitle: capitalizeWords(data.Product_Title),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         price: data.Price,
@@ -817,7 +822,7 @@ class ProductsController extends BaseController {
 
                     updatedProductData = {
                         ...updatedProductData,
-                        productTitle: await GeneralService.capitalizeWords(updatedProductData.productTitle),
+                        productTitle: capitalizeWords(updatedProductData.productTitle),
                         productImageUrl: handleFileUpload(req, await ProductsService.findOne(productId), (req.file || productImage), 'productImageUrl', 'product'),
                         updatedAt: new Date()
                     };

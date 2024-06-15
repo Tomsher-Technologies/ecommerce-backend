@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, formatZodError, getIndexFromFieldName, handleFileUpload, slugify } from '../../../utils/helpers';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { attributeSchema, attributeStatusSchema } from '../../../utils/schemas/admin/ecommerce/attribute-schema';
 import { QueryParams } from '../../../utils/types/common';
@@ -70,7 +70,7 @@ class AttributesController extends BaseController {
                 const { attributeTitle, attributeType, attributeValues, status, languageValues } = validatedData.data;
 
                 const attributeData: Partial<AttributesProps> = {
-                    attributeTitle: await GeneralService.capitalizeWords(attributeTitle),
+                    attributeTitle: capitalizeWords(attributeTitle),
                     slug: slugify(attributeTitle),
                     attributeType,
                     status: status || '1',
@@ -94,6 +94,8 @@ class AttributesController extends BaseController {
                             attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, itemName);
                         }
                     } else {
+                        console.log("gfdgdfdfhdf`",attributeValues);
+                        
                         attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     }
 
@@ -235,7 +237,7 @@ class AttributesController extends BaseController {
                     let updatedAttributeData = req.body;
                     updatedAttributeData = {
                         ...updatedAttributeData,
-                        attributeTitle: await GeneralService.capitalizeWords(updatedAttributeData.attributeTitle),
+                        attributeTitle: await capitalizeWords(updatedAttributeData.attributeTitle),
                         updatedAt: new Date()
                     };
 

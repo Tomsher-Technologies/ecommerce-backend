@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { QueryParams } from '../../../utils/types/common';
 import { specificationSchema, specificationStatusSchema } from '../../../utils/schemas/admin/ecommerce/specification-schema';
 
@@ -69,7 +69,7 @@ class SpecificationController extends BaseController {
                 const { specificationTitle, specificationValues, languageValues } = validatedData.data;
 
                 const specificationData: Partial<SpecificationProps> = {
-                    specificationTitle: await GeneralService.capitalizeWords(specificationTitle),
+                    specificationTitle: capitalizeWords(specificationTitle),
                     status: '1',
                     slug: slugify(specificationTitle),
                     createdAt: new Date(),
@@ -173,7 +173,7 @@ class SpecificationController extends BaseController {
                     let updatedSpecificationData = req.body;
                     updatedSpecificationData = {
                         ...updatedSpecificationData,
-                        specificationTitle: await GeneralService.capitalizeWords(updatedSpecificationData.specificationTitle),
+                        specificationTitle: capitalizeWords(updatedSpecificationData.specificationTitle),
                         updatedAt: new Date()
                     };
 

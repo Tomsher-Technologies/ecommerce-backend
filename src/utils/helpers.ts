@@ -208,3 +208,14 @@ export function calculateWalletAmount(earnPoints: number, referAndEarn: any) {
 
     return walletAmount;
 }
+
+
+export const  capitalizeWords=(sentence: any)=> {
+    let capitalized = sentence?.replace(/\b\w/g, (char: any) => {
+        return char.toUpperCase();
+    });
+
+    // Remove trailing whitespace
+    capitalized = capitalized.trim();
+    return capitalized;
+}

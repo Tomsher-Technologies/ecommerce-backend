@@ -5,7 +5,7 @@ import GeneralService from '../../../services/admin/general-service';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { pipeline } from 'stream';
-import { handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, handleFileUpload, slugify } from '../../../utils/helpers';
 
 
 class CategoryService {
@@ -327,7 +327,7 @@ class CategoryService {
     //                 const categoryResult: any = await this.findOneCategory({ slug: slug });
     //                 if (!categoryResult) {
     //                     const categoryData = {
-    //                         categoryTitle: await GeneralService.capitalizeWords(categoryTitle),
+    //                         categoryTitle:capitalizeWords(categoryTitle),
     //                         slug: slugify(categoryTitle),
     //                         parentCategory: null,
     //                         level: '0',
@@ -351,7 +351,7 @@ class CategoryService {
     //                     const result: any = await this.findOneCategory({ slug: resultString });
 
     //                     const categoryData = {
-    //                         categoryTitle: await GeneralService.capitalizeWords(lastItem),
+    //                         categoryTitle:capitalizeWords(lastItem),
     //                         slug: slugify(slug),
     //                         parentCategory: result._id,
     //                         level: titleData.length.toString(),
@@ -402,7 +402,7 @@ class CategoryService {
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
 
                     const categoryData = {
-                        categoryTitle: await GeneralService.capitalizeWords(lastItem),
+                        categoryTitle: capitalizeWords(lastItem),
                         slug: slugify(currentSlug),
                         parentCategory: parentCategory ? parentCategory._id : null,
                         level: parentCategory ? titleData.length.toString() : '0',

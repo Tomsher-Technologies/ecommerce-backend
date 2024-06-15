@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/brand-schema';
 import { QueryParams } from '../../../utils/types/common';
 import { BrandQueryParams } from '../../../utils/types/brands';
@@ -134,7 +134,7 @@ class BrandsController extends BaseController {
                 const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
 
                 const brandData: Partial<BrandProps> = {
-                    brandTitle: await GeneralService.capitalizeWords(brandTitle),
+                    brandTitle: capitalizeWords(brandTitle),
                     slug: slug || slugify(brandTitle) as any,
                     brandImageUrl: handleFileUpload(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
                     brandBannerImageUrl: handleFileUpload(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
@@ -269,7 +269,7 @@ class BrandsController extends BaseController {
                     let updatedBrandData = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
-                        brandTitle: await GeneralService.capitalizeWords(updatedBrandData.brandTitle),
+                        brandTitle: await capitalizeWords(updatedBrandData.brandTitle),
                         brandImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandImage), 'brandImageUrl', 'brand'),
                         brandBannerImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                         updatedAt: new Date()
