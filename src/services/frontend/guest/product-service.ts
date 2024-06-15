@@ -157,8 +157,7 @@ class ProductService {
             for await (let product of productData) {
                 for await (let variant of product.productVariants) {
                     for await (let attribute of variant.productVariantAttributes) {
-
-                        if (!attributeArray.includes(attribute.attributeId)) {
+                        if (!attributeArray.map((attr: any) => attr.toString()).includes(attribute.attributeId.toString())) {
                             attributeArray.push(attribute.attributeId);
                         }
                     }
@@ -264,7 +263,7 @@ class ProductService {
                 for await (let variant of product.productVariants) {
                     for await (let specification of variant.productSpecification) {
 
-                        if (!specificationArray.includes(specification.specificationId)) {
+                        if (!specificationArray.map((spec: any) => spec.toString()).includes(specification.specificationId.toString())) {
                             specificationArray.push(specification.specificationId);
                         }
                     }

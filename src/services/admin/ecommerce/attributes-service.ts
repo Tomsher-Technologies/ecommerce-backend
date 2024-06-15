@@ -147,6 +147,7 @@ class AttributesService {
         } else {
             const attributeData = {
                 attributeTitle: await GeneralService.capitalizeWords(data.attributeTitle),
+                attributeType: data.attributeType,
                 isExcel: true,
                 slug: slugify(data.attributeTitle)
             }

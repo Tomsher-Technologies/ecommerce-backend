@@ -440,6 +440,7 @@ class ProductsController extends BaseController {
 
                                                                     const optionColumns: any = [];
                                                                     const valueColumns: any = [];
+                                                                    const typeColumn: any = []
                                                                     const NameColumns: any = [];
                                                                     const combinedArray: any = [];
 
@@ -453,6 +454,9 @@ class ProductsController extends BaseController {
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Name')) {
                                                                             NameColumns.push(columnName);
+                                                                        }
+                                                                        if (columnName.startsWith('Attribute_Type')) {
+                                                                            typeColumn.push(columnName);
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Value')) {
                                                                             valueColumns.push(columnName);
@@ -474,6 +478,7 @@ class ProductsController extends BaseController {
                                                                     for (let i = 0; i < optionColumns.length; i++) {
                                                                         combinedArray.push({
                                                                             data: data[optionColumns[i]],
+                                                                            type: data[typeColumn[i]],
                                                                             name: data[NameColumns[i]],
                                                                             value: data[valueColumns[i]]
                                                                         });
@@ -481,7 +486,7 @@ class ProductsController extends BaseController {
 
                                                                     // await combinedArray.map(async (value: any, index: number) => {
                                                                     for await (let value of combinedArray) {
-                                                                        const attributes: any = await AttributesService.findOneAttribute({ attributeTitle: value.data, itemName: value.name, itemValue: value.value })
+                                                                        const attributes: any = await AttributesService.findOneAttribute({ attributeTitle: value.data, attributeType: value.type })
                                                                         attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                     }
 
