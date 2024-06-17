@@ -7,6 +7,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const product_service_1 = __importDefault(require("../../../services/frontend/guest/product-service"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const product_service_2 = __importDefault(require("../../../services/admin/ecommerce/product-service"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
@@ -167,7 +168,7 @@ class ProductController extends base_controller_1.default {
     }
     async findAllProducts(req, res) {
         try {
-            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
+            const { page_size = 1, limit = 10, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
             // let getspecification = ''
             // let getattribute = ''
             let getSeo = '1';
@@ -364,8 +365,9 @@ class ProductController extends base_controller_1.default {
                         sort = { createdAt: 1 };
                     }
                 }
-                console.log("query,query", discount);
                 const productData = await product_service_1.default.findProductList({
+                    page: parseInt(page_size),
+                    limit: parseInt(limit),
                     query,
                     sort,
                     products,
@@ -391,8 +393,11 @@ class ProductController extends base_controller_1.default {
                         }
                     });
                 }
+                const count = await product_service_2.default.getTotalCount(query);
+                console.log("quesry", query);
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
+                    totalCount: count,
                     message: 'Success!'
                 }, 200);
             }

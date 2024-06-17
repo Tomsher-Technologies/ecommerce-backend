@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const pagination_1 = require("../../../components/pagination");
 const attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/attribute-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const specifications_model_1 = __importDefault(require("../../../model/admin/ecommerce/specifications-model"));
@@ -22,6 +23,7 @@ class ProductService {
     }
     async findProductList(productOption) {
         var { query, sort, products, discount, getImageGallery, getattribute, getBrand, getCategory, getspecification, getSeo, hostName, offers } = productOption;
+        const { skip, limit } = (0, pagination_1.pagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -60,14 +62,16 @@ class ProductService {
         };
         let pipeline = [
             { $sort: finalSort },
-            ...((getattribute || getspecification) ? [modifiedPipeline] : []),
-            // modifiedPipeline,
+            // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+            modifiedPipeline,
             ...(getCategory === '1' ? [product_config_1.productCategoryLookup] : []),
             ...(getImageGallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getBrand === '1' ? [product_config_1.brandLookup] : []),
             ...(getBrand === '1' ? [product_config_1.brandObject] : []),
             ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
-            { $match: query }
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
         ];
         var offerDetails;
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
@@ -125,7 +129,9 @@ class ProductService {
         }
         else {
             const language = await this.productLanguage(hostName, pipeline);
+            console.log("looip", language);
             productData = await product_model_1.default.aggregate(language).exec();
+            console.log("productData,productData", productData);
         }
         return productData;
     }

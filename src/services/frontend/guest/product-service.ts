@@ -30,6 +30,7 @@ class ProductService {
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
         var { query, sort, products, discount, getImageGallery, getattribute, getBrand, getCategory, getspecification, getSeo, hostName, offers } = productOption;
+        const { skip, limit } = pagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -77,14 +78,16 @@ class ProductService {
 
         let pipeline: any[] = [
             { $sort: finalSort },
-            ...((getattribute || getspecification) ? [modifiedPipeline] : []),
-            // modifiedPipeline,
+            // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+            modifiedPipeline,
             ...(getCategory === '1' ? [productCategoryLookup] : []),
             ...(getImageGallery === '1' ? [imageLookup] : []),
             ...(getBrand === '1' ? [brandLookup] : []),
             ...(getBrand === '1' ? [brandObject] : []),
             ...(getspecification === '1' ? [specificationsLookup] : []),
-            { $match: query }
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
         ];
 
         var offerDetails: any
@@ -152,9 +155,13 @@ class ProductService {
             }
         } else {
             const language: any = await this.productLanguage(hostName, pipeline)
+            console.log("looip", language);
 
             productData = await ProductsModel.aggregate(language).exec();
+            console.log("productData,productData", productData);
+
         }
+
         return productData
     }
 
