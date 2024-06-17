@@ -200,17 +200,18 @@ class ProductVariantAttributeService {
                 }
                 if (variantDetails) {
                     const variantAttributePromises = await Promise.all(variantDetails.map(async (data: any) => {
-                       
-                        // if (data._id != '') {
+
+                        if (data.attributeId != '' && data.attributeDetailId != '' && data._id != '' && data._id != undefined) {
                             const existingEntry = await ProductVariantAttributesModel.findOne({ _id: data._id });
                             if (existingEntry) {
                                 // Update existing document
                                 await ProductVariantAttributesModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
 
                             }
-                         else {
-                            // Create new document
-                            await ProductVariantAttributesModel.create({ attributeId: data.attributeId, attributeDetailId: data.attributeDetailId, productId: productId, variantId: variantId });
+                            else {
+                                // Create new document
+                                await ProductVariantAttributesModel.create({ attributeId: data.attributeId, attributeDetailId: data.attributeDetailId, productId: productId, variantId: variantId });
+                            }
                         }
                     }));
 

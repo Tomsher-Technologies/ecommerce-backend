@@ -320,12 +320,10 @@ class ProductService {
             productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
         }
         const specificationArray: any = []
-console.log("productDataproductData",productData[0].productVariants);
 
         if (productData) {
             for await (let product of productData) {
                 for await (let variant of product.productVariants) {
-                    console.log("productDataproducvarianttData",variant);
 
                     for await (let specification of variant.productSpecification) {
 
@@ -346,7 +344,6 @@ console.log("productDataproductData",productData[0].productVariants);
                     specificationProject
                 ];
                 const specificationData = await SpecificationModel.aggregate(pipeline).exec()
-console.log(specificationData),"specificationData";
 
                 const language: any = await this.specificationLanguage(hostName, pipeline)
 

@@ -262,11 +262,9 @@ class ProductService {
             productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
         }
         const specificationArray = [];
-        console.log("productDataproductData", productData[0].productVariants);
         if (productData) {
             for await (let product of productData) {
                 for await (let variant of product.productVariants) {
-                    console.log("productDataproducvarianttData", variant);
                     for await (let specification of variant.productSpecification) {
                         if (!specificationArray.map((spec) => spec.toString()).includes(specification.specificationId.toString())) {
                             specificationArray.push(specification.specificationId);
@@ -282,7 +280,6 @@ class ProductService {
                     specification_config_1.specificationProject
                 ];
                 const specificationData = await specifications_model_1.default.aggregate(pipeline).exec();
-                console.log(specificationData), "specificationData";
                 const language = await this.specificationLanguage(hostName, pipeline);
                 const data = await specifications_model_1.default.aggregate(language).exec();
                 if (data.length > 0) {
