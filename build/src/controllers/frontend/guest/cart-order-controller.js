@@ -6,7 +6,7 @@
 // import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 // import BaseController from '../../admin/base-controller';
 // import CartService from '../../../services/frontend/guest/cart-service'
-// import CartsModel, { CartProps } from '../../../model/frontend/cart-order-model';
+// import CartsOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 // import GeneralService from '../../../services/admin/general-service';
 // import mongoose from 'mongoose';
 // const controller = new BaseController();

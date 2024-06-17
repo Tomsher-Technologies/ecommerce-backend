@@ -17,6 +17,7 @@ class BrandService {
         let pipeline = [
             { $match: query },
         ];
+        console.log("queryquery", query);
         if (query._id) {
             const language = await this.brandLanguage(hostName, pipeline);
             const data = await brands_model_1.default.aggregate(language).exec();
@@ -42,10 +43,12 @@ class BrandService {
             }
         }
         else {
-            productData = await product_service_1.default.findProductList({ query });
+            productData = await product_service_1.default.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+            console.log("hjhgjghj", productData);
         }
         const brandArray = [];
         var i = 1;
+        console.log("dggdfgdfgdf", productData);
         if (productData) {
             for await (let product of productData) {
                 const isPresent = await brandArray.some((objId) => objId.equals(product.brand._id));

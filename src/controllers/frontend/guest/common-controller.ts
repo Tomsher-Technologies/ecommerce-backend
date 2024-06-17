@@ -213,7 +213,7 @@ class HomeController extends BaseController {
 
     async findCollectionProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
+            const { page_size = 1, page, pageReference, getspecification,getattribute } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -231,6 +231,8 @@ class HomeController extends BaseController {
                     const products = await CommonService.findCollectionProducts({
                         hostName: req.get('origin'),
                         query,
+                        getspecification,
+                        getattribute
                     });
 
                     return controller.sendSuccessResponse(res, {

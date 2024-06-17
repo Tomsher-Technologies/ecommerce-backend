@@ -20,10 +20,12 @@ class CategoryService {
             return data;
         }
         const data = await category_model_1.default.aggregate([matchPipeline]).exec();
-        var categoryArray;
-        pipeline.push({ '$match': { parentCategory: data[0].parentCategory } });
-        const language = await this.categoryLanguage(hostName, pipeline);
-        categoryArray = await category_model_1.default.aggregate(language).exec();
+        var categoryArray = [];
+        if (data.length > 0) {
+            pipeline.push({ '$match': { parentCategory: data[0]._id } });
+            const language = await this.categoryLanguage(hostName, pipeline);
+            categoryArray = await category_model_1.default.aggregate(language).exec();
+        }
         return categoryArray;
     }
     async categoryLanguage(hostName, pipeline) {

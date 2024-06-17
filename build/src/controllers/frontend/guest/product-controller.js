@@ -7,7 +7,6 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const product_service_1 = __importDefault(require("../../../services/frontend/guest/product-service"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
-const product_service_2 = __importDefault(require("../../../services/admin/ecommerce/product-service"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
@@ -139,7 +138,6 @@ class ProductController extends base_controller_1.default {
     async findProductDetail(req, res) {
         try {
             const productId = req.params.id;
-            console.log("product", productId);
             if (productId) {
                 const product = await product_service_1.default.findOne(productId, { hostName: req.get('origin') });
                 if (product) {
@@ -393,11 +391,9 @@ class ProductController extends base_controller_1.default {
                         }
                     });
                 }
-                const count = await product_service_2.default.getTotalCount(query);
-                console.log("quesry", query);
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: count,
+                    totalCount: productData.length,
                     message: 'Success!'
                 }, 200);
             }

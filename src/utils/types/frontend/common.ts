@@ -6,8 +6,10 @@ export interface CommonQueryParams {
     sortby?: string;
     sortorder?: string;
     keyword?: string;
-    page?:string;
-    pageReference?:string;
-    block?:string;
-    blockReference?:string;
+    page?: string;
+    pageReference?: string;
+    block?: string;
+    blockReference?: string;
+    getspecification?: string;
+    getattribute?: string;
 }

@@ -183,7 +183,7 @@ class CommonService {
         return banner_model_1.default.aggregate(pipeline).exec();
     }
     async findPriorityProducts(options) {
-        const { query, hostName } = options;
+        const { query, hostName, getspecification } = options;
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, await language_model_1.default.find().exec());
         let productPipeline = [
             {
@@ -223,7 +223,7 @@ class CommonService {
         return await product_model_1.default.aggregate(productPipeline).exec();
     }
     async findCollectionProducts(options) {
-        const { query, hostName } = options;
+        const { query, hostName, getspecification, getattribute } = options;
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, await language_model_1.default.find().exec());
         let collectionProductPipeline = [
             { $match: query },
@@ -273,8 +273,10 @@ class CommonService {
                     $lookup: {
                         ...product_config_1.variantLookup.$lookup,
                         pipeline: [
-                            ...product_config_1.productVariantAttributesLookup,
-                            product_config_1.addFieldsProductVariantAttributes,
+                            ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                            ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                            ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                            ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
                         ]
                     }
                 };

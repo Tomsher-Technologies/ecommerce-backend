@@ -7,7 +7,7 @@ import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsRe
 import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
 import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
-import { addFieldsProductVariantAttributes, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
+import { addFieldsProductSpecification, addFieldsProductVariantAttributes, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productSpecificationLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 import { offers } from '../../../constants/offers';
@@ -207,7 +207,7 @@ class CommonService {
     }
 
     async findPriorityProducts(options: any) {
-        const { query, hostName } = options;
+        const { query, hostName, getspecification } = options;
 
         const languageId = getLanguageValueFromSubdomain(hostName, await LanguagesModel.find().exec());
         let productPipeline: any = [
@@ -254,7 +254,7 @@ class CommonService {
     }
 
     async findCollectionProducts(options: any) {
-        const { query, hostName } = options;
+        const { query, hostName, getspecification ,getattribute} = options;
 
         const languageId = getLanguageValueFromSubdomain(hostName, await LanguagesModel.find().exec());
 
@@ -312,8 +312,10 @@ class CommonService {
                     $lookup: {
                         ...variantLookup.$lookup,
                         pipeline: [
-                            ...productVariantAttributesLookup,
-                            addFieldsProductVariantAttributes,
+                            ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                            ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                            ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
                         ]
                     }
                 };

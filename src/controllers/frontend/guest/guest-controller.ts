@@ -131,7 +131,7 @@ class GuestController extends BaseController {
 
     async forgotPassword(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = forgotPasswordSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -192,7 +192,7 @@ class GuestController extends BaseController {
 
     async resetPassword(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = resetPasswordFormSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -310,7 +310,7 @@ class GuestController extends BaseController {
 
     async verifyOtp(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = verifyOtpSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -424,7 +424,7 @@ class GuestController extends BaseController {
 
     async login(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = loginSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -443,7 +443,7 @@ class GuestController extends BaseController {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     token,
-                                    userID: user._id,
+                                    userId: user._id,
                                     firstName: user.firstName,
                                     email: user.email,
                                     phone: user.phone,

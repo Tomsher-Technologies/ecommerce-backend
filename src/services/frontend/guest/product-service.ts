@@ -155,10 +155,8 @@ class ProductService {
             }
         } else {
             const language: any = await this.productLanguage(hostName, pipeline)
-            console.log("looip", language);
 
             productData = await ProductsModel.aggregate(language).exec();
-            console.log("productData,productData", productData);
 
         }
 
@@ -322,10 +320,13 @@ class ProductService {
             productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
         }
         const specificationArray: any = []
+console.log("productDataproductData",productData[0].productVariants);
 
         if (productData) {
             for await (let product of productData) {
                 for await (let variant of product.productVariants) {
+                    console.log("productDataproducvarianttData",variant);
+
                     for await (let specification of variant.productSpecification) {
 
                         if (!specificationArray.map((spec: any) => spec.toString()).includes(specification.specificationId.toString())) {
@@ -345,27 +346,29 @@ class ProductService {
                     specificationProject
                 ];
                 const specificationData = await SpecificationModel.aggregate(pipeline).exec()
+console.log(specificationData),"specificationData";
 
                 const language: any = await this.specificationLanguage(hostName, pipeline)
 
                 const data = await SpecificationModel.aggregate(language).exec()
+                if (data.length > 0) {
+                    for (let j = 0; j < data[0].specificationValues.length; j++) {
+                        if (Array.isArray(data[0].specificationValues[j].itemName) && data[0].specificationValues[j].itemName.length > 1) {
+                            if (data[0].specificationValues[j].itemName[j] == undefined) {
+                                data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
+                            } else {
+                                data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName[j];
+                            }
 
-                for (let j = 0; j < data[0].specificationValues.length; j++) {
-                    if (Array.isArray(data[0].specificationValues[j].itemName) && data[0].specificationValues[j].itemName.length > 1) {
-                        if (data[0].specificationValues[j].itemName[j] == undefined) {
-                            data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
+
+                        } else if (data[0].specificationValues[j].itemName.length > 1) {
+                            data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName
                         } else {
-                            data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName[j];
+                            data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName
                         }
-
-
-                    } else if (data[0].specificationValues[j].itemName.length > 1) {
-                        data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName
-                    } else {
-                        data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName
                     }
+                    await specificationDetail.push(data[0])
                 }
-                await specificationDetail.push(data[0])
             }
         }
 
