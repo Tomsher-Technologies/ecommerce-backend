@@ -280,7 +280,6 @@ class ProductVariantService {
                                 }
                             }
                             else {
-                                console.log("haaai");
 
                                 var slugData
                                 if (data.extraProductTitle) {
