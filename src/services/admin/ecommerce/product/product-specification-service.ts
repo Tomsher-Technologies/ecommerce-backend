@@ -173,7 +173,7 @@ class ProductSpecificationService {
         return ProductSpecificationModel.findOneAndDelete({ _id: productSpecificationId });
     }
 
-    async productSpecificationService(productId: string | null, specificationDetails: any, variantId: string): Promise<ProductSpecificationProps[]> {
+    async productSpecificationService(productId: string | null, specificationDetails: any, variantId?: string): Promise<ProductSpecificationProps[]> {
         try {
             console.log("specificationDetails,specificationDetails", specificationDetails);
 
