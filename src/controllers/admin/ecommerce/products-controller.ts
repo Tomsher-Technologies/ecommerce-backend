@@ -840,7 +840,7 @@ class ProductsController extends BaseController {
                                     productId: updatedProduct._id,
                                     ...specification
                                 }
-                                await ProductSpecificationService.create(specificationData)
+                                await ProductSpecificationService.productSpecificationService(updatedProduct._id, specification)
                             })
                         }
                         if (updatedProductData.variants) {

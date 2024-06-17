@@ -739,7 +739,7 @@ class ProductsController extends base_controller_1.default {
                                     productId: updatedProduct._id,
                                     ...specification
                                 };
-                                await product_specification_service_1.default.create(specificationData);
+                                await product_specification_service_1.default.productSpecificationService(updatedProduct._id, specification);
                             });
                         }
                         if (updatedProductData.variants) {
