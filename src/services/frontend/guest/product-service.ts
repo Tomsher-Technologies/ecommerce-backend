@@ -155,10 +155,8 @@ class ProductService {
             }
         } else {
             const language: any = await this.productLanguage(hostName, pipeline)
-            console.log("looip", language);
 
             productData = await ProductsModel.aggregate(language).exec();
-            console.log("productData,productData", productData);
 
         }
 

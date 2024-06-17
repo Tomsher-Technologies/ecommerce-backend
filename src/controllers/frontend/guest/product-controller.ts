@@ -5,7 +5,6 @@ import BaseController from '../../admin/base-controller';
 import ProductService from '../../../services/frontend/guest/product-service'
 import { ProductsFrontendQueryParams, ProductsQueryParams } from '../../../utils/types/products';
 import CommonService from '../../../services/frontend/guest/common-service';
-import ProductsService from '../../../services/admin/ecommerce/product-service'
 const controller = new BaseController();
 
 class ProductController extends BaseController {
@@ -162,7 +161,6 @@ class ProductController extends BaseController {
     async findProductDetail(req: Request, res: Response): Promise<void> {
         try {
             const productId = req.params.id;
-            console.log("product", productId);
 
             if (productId) {
 
@@ -466,13 +464,11 @@ class ProductController extends BaseController {
                         }
                     });
                 }
-                const count = await ProductsService.getTotalCount(query)
-                console.log("quesry", query);
 
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: count,
+                    totalCount: productData.length,
                     message: 'Success!'
                 }, 200);
             } else {

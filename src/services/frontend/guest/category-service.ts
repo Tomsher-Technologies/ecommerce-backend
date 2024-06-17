@@ -19,18 +19,19 @@ class CategoryService {
         if (query.level == 0) {
             const language: any = await this.categoryLanguage(hostName, [matchPipeline])
             const data: any = await CategoryModel.aggregate(language).exec();
-
             return data
         }
         const data: any = await CategoryModel.aggregate([matchPipeline]).exec();
 
-        var categoryArray: any
+        var categoryArray: any = []
+        if (data.length > 0) {
 
-        pipeline.push({ '$match': { parentCategory: data[0].parentCategory } });
-        const language: any = await this.categoryLanguage(hostName, pipeline)
+            pipeline.push({ '$match': { parentCategory: data[0]._id } });
 
-        categoryArray = await CategoryModel.aggregate(language).exec();
+            const language: any = await this.categoryLanguage(hostName, pipeline)
 
+            categoryArray = await CategoryModel.aggregate(language).exec();
+        }
         return categoryArray
     }
 
