@@ -127,7 +127,7 @@ class GuestController extends base_controller_1.default {
     }
     async forgotPassword(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = authSchema_1.forgotPasswordSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -189,7 +189,7 @@ class GuestController extends base_controller_1.default {
     }
     async resetPassword(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = authSchema_1.resetPasswordFormSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -312,7 +312,7 @@ class GuestController extends base_controller_1.default {
     }
     async verifyOtp(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = authSchema_1.verifyOtpSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -425,7 +425,7 @@ class GuestController extends base_controller_1.default {
     }
     async login(req, res) {
         try {
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 const validatedData = authSchema_1.loginSchema.safeParse(req.body);
                 if (validatedData.success) {
@@ -442,7 +442,7 @@ class GuestController extends base_controller_1.default {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     token,
-                                    userID: user._id,
+                                    userId: user._id,
                                     firstName: user.firstName,
                                     email: user.email,
                                     phone: user.phone,
