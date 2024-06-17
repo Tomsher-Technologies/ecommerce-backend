@@ -11,8 +11,9 @@ const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
         try {
-            const { category = '', brand = '' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
             let query = { _id: { $exists: true } };
+            let products;
             query.status = '1';
             if (category) {
                 const keywordRegex = new RegExp(category, 'i');
@@ -42,9 +43,25 @@ class ProductController extends base_controller_1.default {
                     };
                 }
             }
+            if (collectionproduct) {
+                products = {
+                    ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                };
+            }
+            if (collectionbrand) {
+                products = {
+                    ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                };
+            }
+            if (collectioncategory) {
+                products = {
+                    ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                };
+            }
             const attributes = await product_service_1.default.findAllAttributes({
-                hostName: req.get('host'),
+                hostName: req.get('origin'),
                 query,
+                products,
             });
             return controller.sendSuccessResponse(res, {
                 requestedData: attributes,
@@ -57,8 +74,9 @@ class ProductController extends base_controller_1.default {
     }
     async findAllSpecifications(req, res) {
         try {
-            const { category = '', brand = '' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
             let query = { _id: { $exists: true } };
+            let products;
             query.status = '1';
             if (category) {
                 const keywordRegex = new RegExp(category, 'i');
@@ -88,9 +106,25 @@ class ProductController extends base_controller_1.default {
                     };
                 }
             }
+            if (collectionproduct) {
+                products = {
+                    ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                };
+            }
+            if (collectionbrand) {
+                products = {
+                    ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                };
+            }
+            if (collectioncategory) {
+                products = {
+                    ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                };
+            }
             const specifications = await product_service_1.default.findAllSpecifications({
                 hostName: req.get('origin'),
                 query,
+                products
             });
             return controller.sendSuccessResponse(res, {
                 requestedData: specifications,
@@ -104,8 +138,9 @@ class ProductController extends base_controller_1.default {
     async findProductDetail(req, res) {
         try {
             const productId = req.params.id;
+            console.log("product", productId);
             if (productId) {
-                const product = await product_service_1.default.findOne(productId, { hostName: req.get('host') });
+                const product = await product_service_1.default.findOne(productId, { hostName: req.get('origin') });
                 if (product) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -132,9 +167,9 @@ class ProductController extends base_controller_1.default {
     }
     async findAllProducts(req, res) {
         try {
-            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '' } = req.query;
-            let getSpecification = '1';
-            let getAttribute = '1';
+            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
+            // let getspecification = ''
+            // let getattribute = ''
             let getSeo = '1';
             let getBrand = '1';
             let getCategory = '1';
@@ -149,7 +184,7 @@ class ProductController extends base_controller_1.default {
             query.status = '1';
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const sort = {};
+                let sort = {};
                 if (sortby && sortorder) {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
@@ -321,6 +356,14 @@ class ProductController extends base_controller_1.default {
                         });
                     }
                 }
+                if (sortby == 'createdAt') {
+                    if (sortorder === 'asc') {
+                        sort = { createdAt: -1 };
+                    } // Sort by newest first by default
+                    else {
+                        sort = { createdAt: 1 };
+                    }
+                }
                 console.log("query,query", discount);
                 const productData = await product_service_1.default.findProductList({
                     query,
@@ -329,8 +372,8 @@ class ProductController extends base_controller_1.default {
                     discount,
                     offers,
                     getImageGallery,
-                    getAttribute,
-                    getSpecification,
+                    getattribute,
+                    getspecification,
                     getSeo,
                     getCategory,
                     getBrand,

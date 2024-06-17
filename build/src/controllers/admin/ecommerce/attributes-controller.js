@@ -265,7 +265,7 @@ class AttributesController extends base_controller_1.default {
                             else {
                                 attributeDetailsValue = await attributes_service_1.default.attributeDetailsService(updatedAttribute._id, updatedAttributeData.attributeValues);
                             }
-                            if (updatedAttributeData.languageValues && updatedAttributeData.languageValues.length > 0) {
+                            if (updatedAttributeData.languageValues && Array.isArray(updatedAttributeData.languageValues) && updatedAttributeData.languageValues.length > 0) {
                                 await updatedAttributeData.languageValues?.map((languageValue, index) => {
                                     if (updatedAttributeData.attributeType === 'pattern') {
                                         general_service_1.default.multiLanguageFieledsManage(updatedAttribute._id, {

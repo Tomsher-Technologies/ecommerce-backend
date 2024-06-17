@@ -8,7 +8,7 @@ const pagination_1 = require("../../../components/pagination");
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const helpers_1 = require("../../../utils/helpers");
 const brand_config_1 = require("../../../utils/config/brand-config");
-const cart_model_1 = __importDefault(require("../../../model/frontend/cart-model"));
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 class BrandsService {
     constructor() { }
     async findAll(options = {}) {
@@ -38,12 +38,12 @@ class BrandsService {
         }
     }
     async create(cartData) {
-        const createdCart = await cart_model_1.default.create(cartData);
+        const createdCart = await cart_order_model_1.default.create(cartData);
         if (createdCart) {
             const pipeline = [
                 { $match: { _id: createdCart._id } },
             ];
-            const createdCartWithValues = await cart_model_1.default.aggregate(pipeline);
+            const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
             return createdCartWithValues[0];
         }
         else {

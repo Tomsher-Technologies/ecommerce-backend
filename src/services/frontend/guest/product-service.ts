@@ -18,6 +18,7 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
 
 import CommonService from '../../../services/frontend/guest/common-service';
+import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 
 
 class ProductService {
@@ -28,7 +29,7 @@ class ProductService {
     }
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, products, discount, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, products, discount, getImageGallery, getattribute, getBrand, getCategory, getspecification, getSeo, hostName, offers } = productOption;
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -48,13 +49,13 @@ class ProductService {
         if (discount) {
             const discountArray: any = await discount.split(",")
             console.log("discount", discountArray);
-            for await(let discount of discountArray){
+            for await (let discount of discountArray) {
                 // const discountSplitArray: any = await discount.split("=")
                 // console.log("discountSplitArray", discountSplitArray);
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
 
             }
-         
+
 
         }
 
@@ -62,10 +63,10 @@ class ProductService {
             $lookup: {
                 ...variantLookup.$lookup,
                 pipeline: [
-                    ...(getAttribute === '1' ? [...productVariantAttributesLookup] : []),
-                    ...(getAttribute === '1' ? [addFieldsProductVariantAttributes] : []),
-                    ...(getSpecification === '1' ? [...productSpecificationLookup] : []),
-                    ...(getSpecification === '1' ? [addFieldsProductSpecification] : []),
+                    ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                    ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
                     ...(getSeo === '1' ? [productSeoLookup] : []),
                     ...(getSeo === '1' ? [addFieldsProductSeo] : []),
                     ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
@@ -76,13 +77,13 @@ class ProductService {
 
         let pipeline: any[] = [
             { $sort: finalSort },
-            ...((getAttribute || getSpecification) ? [modifiedPipeline] : []),
+            ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             // modifiedPipeline,
             ...(getCategory === '1' ? [productCategoryLookup] : []),
             ...(getImageGallery === '1' ? [imageLookup] : []),
             ...(getBrand === '1' ? [brandLookup] : []),
             ...(getBrand === '1' ? [brandObject] : []),
-            ...(getSpecification === '1' ? [specificationsLookup] : []),
+            ...(getspecification === '1' ? [specificationsLookup] : []),
             { $match: query }
         ];
 
@@ -157,13 +158,34 @@ class ProductService {
         return productData
     }
 
-    async findAllAttributes(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
+    async findAllAttributes(options: any): Promise<ProductsProps[]> {
 
-        const { query, hostName } = pagination(options.query || {}, options);
+        const { query, hostName, products } = options;
         var attributeDetail: any = []
+        let productData: any = [];
+        let collection: any
+        if (products) {
+            collection = await this.collection(products, hostName)
+        }
 
+        if (collection && collection.productData) {
+            productData = collection.productData
+        }
+        else if (collection && collection.collectionsBrands) {
 
-        const productData: any = await this.findProductList({ query, getCategory: '1', getBrand: '1', getAttribute: '1', getSpecification: '1' })
+            for await (let data of collection.collectionsBrands) {
+                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await ProductsModel.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0])
+                }
+            }
+        } else {
+            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+        }
+
         const attributeArray: any = []
 
         if (productData) {
@@ -193,23 +215,25 @@ class ProductService {
                 const language: any = await this.attributeLanguage(hostName, pipeline)
 
                 const data = await AttributesModel.aggregate(language).exec()
+                if (data.length > 0) {
 
-                for (let j = 0; j < data[0].attributeValues.length; j++) {
-                    if (Array.isArray(data[0].attributeValues[j].itemName) && data[0].attributeValues[j].itemName.length > 1) {
-                        if (data[0].attributeValues[j].itemName[j] == undefined) {
-                            data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
+                    for (let j = 0; j < data[0].attributeValues.length; j++) {
+                        if (Array.isArray(data[0].attributeValues[j].itemName) && data[0].attributeValues[j].itemName.length > 1) {
+                            if (data[0].attributeValues[j].itemName[j] == undefined) {
+                                data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
+                            } else {
+                                data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName[j];
+                            }
+
+
+                        } else if (data[0].attributeValues[j].itemName.length > 1) {
+                            data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName
                         } else {
-                            data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName[j];
+                            data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName
                         }
-
-
-                    } else if (data[0].attributeValues[j].itemName.length > 1) {
-                        data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName
-                    } else {
-                        data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName
                     }
+                    await attributeDetail.push(data[0])
                 }
-                await attributeDetail.push(data[0])
             }
         }
 
@@ -262,13 +286,34 @@ class ProductService {
     }
 
 
-    async findAllSpecifications(options: FilterOptionsProps = {}): Promise<void | null> {
+    async findAllSpecifications(options: any): Promise<void | null> {
 
-        const { query, hostName } = pagination(options.query || {}, options);
+        const { query, hostName, products } = options;
         var specificationDetail: any = []
+        let productData: any = [];
 
-        const productData: any = await this.findProductList({ query, getCategory: '1', getBrand: '1', getAttribute: '1', getSpecification: '1' })
+        let collection: any
+        if (products) {
+            collection = await this.collection(products, hostName)
+        }
 
+        if (collection && collection.productData) {
+            productData = collection.productData
+        }
+        else if (collection && collection.collectionsBrands) {
+
+            for await (let data of collection.collectionsBrands) {
+                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await ProductsModel.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0])
+                }
+            }
+        } else {
+            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+        }
         const specificationArray: any = []
 
         if (productData) {
@@ -366,42 +411,29 @@ class ProductService {
         return pipeline
     }
 
-    async findOne(productId: string, hostName: any): Promise<ProductsProps | null> {
-        try {
-            if (productId) {
-                const objectId = new mongoose.Types.ObjectId(productId);
+    async findOne(productId: string, hostName: any): Promise<void> {
 
-                const pipeline = [
-                    { $match: { _id: objectId } },
-                    productCategoryLookup,
-                    variantLookup,
-                    imageLookup,
-                    brandLookup,
-                    brandObject,
-                    seoLookup,
-                    seoObject,
-                    productMultilanguageFieldsLookup,
-                    specificationsLookup
-                ];
-                // let pipeline1: any[] = [
-                //     { $match: query },
-                // ];
+        if (productId) {
+            const objectId = new mongoose.Types.ObjectId(productId);
 
-                const language: any = await this.productLanguage(hostName.hostName, pipeline)
+            let pipeline: any[] = [
+                { $match: { _id: objectId } },
+                productCategoryLookup,
+                variantLookup,
+                imageLookup,
+                brandLookup,
+                brandObject,
+                seoLookup,
+                seoObject,
+                productMultilanguageFieldsLookup,
+                specificationsLookup
+            ];
 
-                const categorylanguage: any = await CategoryService.categoryLanguage(hostName.hostName, pipeline)
-                const categoryData: any = await CategoryModel.aggregate(categorylanguage).exec();
+            const language: any = await this.productLanguage(hostName.hostName, pipeline)
 
-                // pipeline.push(categorylanguage)
+            const productDataWithValues: any = await ProductsModel.aggregate(language);
 
-                const productDataWithValues = await ProductsModel.aggregate(language);
-
-                return productDataWithValues[0] || null;
-            } else {
-                return null;
-            }
-        } catch (error) {
-            return null;
+            return productDataWithValues;
         }
 
     }
@@ -470,9 +502,10 @@ class ProductService {
 
                         if (results && results.length > 0) {
                             for await (let result of results) {
-                                const language: any = await this.productLanguage(hostName, { _id: new mongoose.Types.ObjectId(result.productId) })
+                                const language: any = await this.productLanguage(hostName, [{ $match: { _id: new mongoose.Types.ObjectId(result.productId) } }])
 
-                                const productResult = await ProductsModel.aggregate(language)
+                                const productResult = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+
                                 if (productResult) {
                                     productData.push(productResult[0])
                                 }
@@ -500,9 +533,9 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
-                        const language: any = await this.productLanguage(hostName, { _id: new mongoose.Types.ObjectId(data) })
+                        const language: any = await this.productLanguage(hostName, [{ $match: { _id: new mongoose.Types.ObjectId(data) } }])
 
-                        const result = await ProductsModel.aggregate(language)
+                        const result = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
 
                         productData.push(result[0])
                     }
