@@ -734,13 +734,13 @@ class ProductsController extends base_controller_1.default {
                             const newCategory = await product_category_link_service_1.default.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
                         }
                         if (updatedProductData.productSpecification && updatedProductData.productSpecification.length > 0) {
-                            await updatedProductData.productSpecification.map(async (specification) => {
-                                const specificationData = {
-                                    productId: updatedProduct._id,
-                                    ...specification
-                                };
-                                await product_specification_service_1.default.productSpecificationService(updatedProduct._id, specification);
-                            });
+                            // await updatedProductData.productSpecification.map(async (specification: any) => {
+                            //     const specificationData = {
+                            //         ...specification
+                            //     }
+                            // console.log("specificationspecification", specification);
+                            await product_specification_service_1.default.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification);
+                            // })
                         }
                         if (updatedProductData.variants) {
                             const newVariant = await product_variant_service_1.default.variantService(updatedProduct, updatedProductData.variants, userData);

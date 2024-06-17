@@ -835,13 +835,15 @@ class ProductsController extends BaseController {
                             const newCategory = await ProductCategoryLinkService.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
                         }
                         if (updatedProductData.productSpecification && updatedProductData.productSpecification.length > 0) {
-                            await updatedProductData.productSpecification.map(async (specification: any) => {
-                                const specificationData = {
-                                    productId: updatedProduct._id,
-                                    ...specification
-                                }
-                                await ProductSpecificationService.productSpecificationService(updatedProduct._id, specification)
-                            })
+
+                            // await updatedProductData.productSpecification.map(async (specification: any) => {
+                            //     const specificationData = {
+                            //         ...specification
+                            //     }
+                            // console.log("specificationspecification", specification);
+
+                            await ProductSpecificationService.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification)
+                            // })
                         }
                         if (updatedProductData.variants) {
                             const newVariant = await ProductVariantService.variantService(updatedProduct, updatedProductData.variants, userData);
