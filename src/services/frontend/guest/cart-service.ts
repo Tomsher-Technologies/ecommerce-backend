@@ -6,7 +6,7 @@ import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-m
 import { capitalizeWords, slugify } from '../../../utils/helpers';
 import { brandLookup } from '../../../utils/config/brand-config';
 import GeneralService from '../../../services/admin/general-service';
-import CartsModel from '../../../model/frontend/cart-model';
+import CartsModel from '../../../model/frontend/cart-order-model';
 
 
 class BrandsService {

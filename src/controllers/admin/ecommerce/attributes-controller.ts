@@ -94,8 +94,8 @@ class AttributesController extends BaseController {
                             attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, itemName);
                         }
                     } else {
-                        console.log("gfdgdfdfhdf`",attributeValues);
-                        
+                        console.log("gfdgdfdfhdf`", attributeValues);
+
                         attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     }
 
@@ -287,7 +287,7 @@ class AttributesController extends BaseController {
                                 attributeDetailsValue = await AttributesService.attributeDetailsService(updatedAttribute._id, updatedAttributeData.attributeValues);
                             }
 
-                            if (updatedAttributeData.languageValues && updatedAttributeData.languageValues.length > 0) {
+                            if (updatedAttributeData.languageValues && Array.isArray(updatedAttributeData.languageValues) && updatedAttributeData.languageValues.length > 0) {
                                 await updatedAttributeData.languageValues?.map((languageValue: any, index: number) => {
                                     if (updatedAttributeData.attributeType === 'pattern') {
                                         GeneralService.multiLanguageFieledsManage(updatedAttribute._id, {

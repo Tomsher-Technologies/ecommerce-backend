@@ -92,7 +92,8 @@ export interface ProductsFrontendQueryParams {
     collectionbrand?: any;
     collectioncategory?: any;
     getImageGallery?: number;
-    getAttribute?: number;
+    getattribute?: number;
+    getspecification?: number;
     categories?: any;
     brands?: any;
     offer?: any;

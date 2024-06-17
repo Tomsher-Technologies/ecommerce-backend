@@ -1,28 +1,23 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface CartProps extends Document {
-    customerId: Schema.Types.ObjectId;
+export interface CartOrderProductProps extends Document {
+    cartId: Schema.Types.ObjectId;
     productId: Schema.Types.ObjectId;
     variantId: Schema.Types.ObjectId;
     quantity: number;
     sku: string;
     slug: string;
-    guestUserId: string;
-    status: string;
+    orderStatus: string;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
 
-const cartSchema: Schema<CartProps> = new Schema({
-    customerId: {
+const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
+    cartId: {
         type: Schema.Types.ObjectId,
         ref: 'Customer',
         default: null
-    },
-    guestUserId: {
-        type: String,
-        unique: true
     },
     slug: {
         type: String,
@@ -48,7 +43,7 @@ const cartSchema: Schema<CartProps> = new Schema({
         type: String,
         default: ''
     },
-    status: {
+    orderStatus: {
         type: String,
         required: true,
         default: '1'
@@ -63,6 +58,6 @@ const cartSchema: Schema<CartProps> = new Schema({
     }
 });
 
-const CartsModel = mongoose.model<CartProps>('Carts', cartSchema);
+const CartOrderProductsModel = mongoose.model<CartOrderProductProps>('CartOrderProducts', cartOrderProductSchema);
 
-export default CartsModel;
+export default CartOrderProductsModel;

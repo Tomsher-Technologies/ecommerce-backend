@@ -3,9 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const pagination_1 = require("../../../components/pagination");
 const attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/attribute-model"));
-const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const specifications_model_1 = __importDefault(require("../../../model/admin/ecommerce/specifications-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
@@ -14,7 +12,6 @@ const product_config_1 = require("../../../utils/config/product-config");
 const specification_config_1 = require("../../../utils/config/specification-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const mongoose_1 = __importDefault(require("mongoose"));
-const category_service_1 = __importDefault(require("./category-service"));
 const collections_products_model_1 = __importDefault(require("../../../model/admin/website/collections-products-model"));
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
@@ -24,7 +21,7 @@ class ProductService {
     constructor() {
     }
     async findProductList(productOption) {
-        var { query, sort, products, discount, getImageGallery, getAttribute, getBrand, getCategory, getSpecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, products, discount, getImageGallery, getattribute, getBrand, getCategory, getspecification, getSeo, hostName, offers } = productOption;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -51,10 +48,10 @@ class ProductService {
             $lookup: {
                 ...product_config_1.variantLookup.$lookup,
                 pipeline: [
-                    ...(getAttribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
-                    ...(getAttribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
-                    ...(getSpecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
-                    ...(getSpecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
+                    ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                    ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                    ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                    ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
                     ...(getSeo === '1' ? [product_config_1.productSeoLookup] : []),
                     ...(getSeo === '1' ? [product_config_1.addFieldsProductSeo] : []),
                     ...(getImageGallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
@@ -63,13 +60,13 @@ class ProductService {
         };
         let pipeline = [
             { $sort: finalSort },
-            ...((getAttribute || getSpecification) ? [modifiedPipeline] : []),
+            ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             // modifiedPipeline,
             ...(getCategory === '1' ? [product_config_1.productCategoryLookup] : []),
             ...(getImageGallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getBrand === '1' ? [product_config_1.brandLookup] : []),
             ...(getBrand === '1' ? [product_config_1.brandObject] : []),
-            ...(getSpecification === '1' ? [product_config_1.specificationsLookup] : []),
+            ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
             { $match: query }
         ];
         var offerDetails;
@@ -132,10 +129,30 @@ class ProductService {
         }
         return productData;
     }
-    async findAllAttributes(options = {}) {
-        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
+    async findAllAttributes(options) {
+        const { query, hostName, products } = options;
         var attributeDetail = [];
-        const productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getAttribute: '1', getSpecification: '1' });
+        let productData = [];
+        let collection;
+        if (products) {
+            collection = await this.collection(products, hostName);
+        }
+        if (collection && collection.productData) {
+            productData = collection.productData;
+        }
+        else if (collection && collection.collectionsBrands) {
+            for await (let data of collection.collectionsBrands) {
+                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await product_model_1.default.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0]);
+                }
+            }
+        }
+        else {
+            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+        }
         const attributeArray = [];
         if (productData) {
             for await (let product of productData) {
@@ -157,23 +174,25 @@ class ProductService {
                 const attributeData = await attribute_model_1.default.aggregate(pipeline).exec();
                 const language = await this.attributeLanguage(hostName, pipeline);
                 const data = await attribute_model_1.default.aggregate(language).exec();
-                for (let j = 0; j < data[0].attributeValues.length; j++) {
-                    if (Array.isArray(data[0].attributeValues[j].itemName) && data[0].attributeValues[j].itemName.length > 1) {
-                        if (data[0].attributeValues[j].itemName[j] == undefined) {
-                            data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
+                if (data.length > 0) {
+                    for (let j = 0; j < data[0].attributeValues.length; j++) {
+                        if (Array.isArray(data[0].attributeValues[j].itemName) && data[0].attributeValues[j].itemName.length > 1) {
+                            if (data[0].attributeValues[j].itemName[j] == undefined) {
+                                data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
+                            }
+                            else {
+                                data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName[j];
+                            }
+                        }
+                        else if (data[0].attributeValues[j].itemName.length > 1) {
+                            data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName;
                         }
                         else {
-                            data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName[j];
+                            data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
                         }
                     }
-                    else if (data[0].attributeValues[j].itemName.length > 1) {
-                        data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName;
-                    }
-                    else {
-                        data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
-                    }
+                    await attributeDetail.push(data[0]);
                 }
-                await attributeDetail.push(data[0]);
             }
         }
         return attributeDetail;
@@ -214,10 +233,30 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async findAllSpecifications(options = {}) {
-        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
+    async findAllSpecifications(options) {
+        const { query, hostName, products } = options;
         var specificationDetail = [];
-        const productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getAttribute: '1', getSpecification: '1' });
+        let productData = [];
+        let collection;
+        if (products) {
+            collection = await this.collection(products, hostName);
+        }
+        if (collection && collection.productData) {
+            productData = collection.productData;
+        }
+        else if (collection && collection.collectionsBrands) {
+            for await (let data of collection.collectionsBrands) {
+                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await product_model_1.default.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0]);
+                }
+            }
+        }
+        else {
+            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+        }
         const specificationArray = [];
         if (productData) {
             for await (let product of productData) {
@@ -297,37 +336,23 @@ class ProductService {
         return pipeline;
     }
     async findOne(productId, hostName) {
-        try {
-            if (productId) {
-                const objectId = new mongoose_1.default.Types.ObjectId(productId);
-                const pipeline = [
-                    { $match: { _id: objectId } },
-                    product_config_1.productCategoryLookup,
-                    product_config_1.variantLookup,
-                    product_config_1.imageLookup,
-                    product_config_1.brandLookup,
-                    product_config_1.brandObject,
-                    product_config_1.seoLookup,
-                    product_config_1.seoObject,
-                    product_config_1.productMultilanguageFieldsLookup,
-                    product_config_1.specificationsLookup
-                ];
-                // let pipeline1: any[] = [
-                //     { $match: query },
-                // ];
-                const language = await this.productLanguage(hostName.hostName, pipeline);
-                const categorylanguage = await category_service_1.default.categoryLanguage(hostName.hostName, pipeline);
-                const categoryData = await category_model_1.default.aggregate(categorylanguage).exec();
-                // pipeline.push(categorylanguage)
-                const productDataWithValues = await product_model_1.default.aggregate(language);
-                return productDataWithValues[0] || null;
-            }
-            else {
-                return null;
-            }
-        }
-        catch (error) {
-            return null;
+        if (productId) {
+            const objectId = new mongoose_1.default.Types.ObjectId(productId);
+            let pipeline = [
+                { $match: { _id: objectId } },
+                product_config_1.productCategoryLookup,
+                product_config_1.variantLookup,
+                product_config_1.imageLookup,
+                product_config_1.brandLookup,
+                product_config_1.brandObject,
+                product_config_1.seoLookup,
+                product_config_1.seoObject,
+                product_config_1.productMultilanguageFieldsLookup,
+                product_config_1.specificationsLookup
+            ];
+            const language = await this.productLanguage(hostName.hostName, pipeline);
+            const productDataWithValues = await product_model_1.default.aggregate(language);
+            return productDataWithValues;
         }
     }
     async productLanguage(hostName, pipeline) {
@@ -378,8 +403,8 @@ class ProductService {
                         const results = await product_category_link_model_1.default.find({ categoryId: new mongoose_1.default.Types.ObjectId(data) });
                         if (results && results.length > 0) {
                             for await (let result of results) {
-                                const language = await this.productLanguage(hostName, { _id: new mongoose_1.default.Types.ObjectId(result.productId) });
-                                const productResult = await product_model_1.default.aggregate(language);
+                                const language = await this.productLanguage(hostName, [{ $match: { _id: new mongoose_1.default.Types.ObjectId(result.productId) } }]);
+                                const productResult = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
                                 if (productResult) {
                                     productData.push(productResult[0]);
                                 }
@@ -401,8 +426,8 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
-                        const language = await this.productLanguage(hostName, { _id: new mongoose_1.default.Types.ObjectId(data) });
-                        const result = await product_model_1.default.aggregate(language);
+                        const language = await this.productLanguage(hostName, [{ $match: { _id: new mongoose_1.default.Types.ObjectId(data) } }]);
+                        const result = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
                         productData.push(result[0]);
                     }
                 }
