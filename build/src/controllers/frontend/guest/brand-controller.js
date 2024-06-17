@@ -12,7 +12,7 @@ class BrandController extends base_controller_1.default {
     async findAllBrand(req, res) {
         try {
             const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
-            let query = { _id: { $exists: true } };
+            let query = {};
             query.status = '1';
             let products;
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -65,7 +65,7 @@ class BrandController extends base_controller_1.default {
                     hostName: req.get('origin'),
                     query
                 }, products);
-                console.log(query);
+                // console.log(query);
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,
                     message: 'Success!'

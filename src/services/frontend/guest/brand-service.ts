@@ -22,6 +22,7 @@ class BrandService {
         let pipeline: any[] = [
             { $match: query },
         ];
+console.log("queryquery",query);
 
         if (query._id) {
             const language: any = await this.brandLanguage(hostName, pipeline)
@@ -58,11 +59,15 @@ class BrandService {
         }
 
         else {
-            productData = await ProductService.findProductList({ query })
+
+            productData = await ProductService.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+            console.log("hjhgjghj", productData);
+
         }
 
         const brandArray: any = []
         var i = 1;
+console.log("dggdfgdfgdf",productData);
 
         if (productData) {
             for await (let product of productData) {

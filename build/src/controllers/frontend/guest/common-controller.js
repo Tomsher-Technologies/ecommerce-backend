@@ -200,7 +200,7 @@ class HomeController extends base_controller_1.default {
     }
     async findCollectionProducts(req, res) {
         try {
-            const { page_size = 1, page, pageReference } = req.query;
+            const { page_size = 1, page, pageReference, getspecification, getattribute } = req.query;
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
@@ -215,6 +215,8 @@ class HomeController extends base_controller_1.default {
                     const products = await common_service_1.default.findCollectionProducts({
                         hostName: req.get('origin'),
                         query,
+                        getspecification,
+                        getattribute
                     });
                     return controller.sendSuccessResponse(res, {
                         requestedData: products,
