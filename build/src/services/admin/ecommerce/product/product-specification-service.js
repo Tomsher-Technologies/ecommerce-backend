@@ -151,7 +151,7 @@ class ProductSpecificationService {
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data) => {
-                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '') {
+                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '' && data._id != undefined) {
                             console.log("product34Id", data);
                             const existingEntry = await product_specification_model_1.default.findOne({ _id: data._id });
                             if (existingEntry) {
