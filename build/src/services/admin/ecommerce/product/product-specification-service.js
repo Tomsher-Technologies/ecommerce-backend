@@ -141,7 +141,6 @@ class ProductSpecificationService {
         try {
             console.log("specificationDetails,specificationDetails", specificationDetails);
             if (productId) {
-                console.log("productId");
                 const existingEntries = await product_specification_model_1.default.find({ productId: productId });
                 if (existingEntries) {
                     const specificationIDsToRemove = existingEntries
@@ -151,14 +150,16 @@ class ProductSpecificationService {
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data) => {
-                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '' && data._id != undefined) {
-                            console.log("product34Id", data);
+                        console.log("product34Id", data.specificationId != '', data.specificationDetailId != '', data._id != '', data._id != undefined);
+                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '') {
                             const existingEntry = await product_specification_model_1.default.findOne({ _id: data._id });
                             if (existingEntry) {
                                 // Update existing document
+                                console.log("dfgfdsgdf");
                                 await product_specification_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                             }
                             else {
+                                console.log("dddddd");
                                 // Create new document
                                 await product_specification_model_1.default.create({ specificationId: data.specificationId, specificationDetailId: data.specificationDetailId, productId: productId, variantId: variantId });
                             }

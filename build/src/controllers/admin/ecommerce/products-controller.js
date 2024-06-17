@@ -738,7 +738,7 @@ class ProductsController extends base_controller_1.default {
                             //     const specificationData = {
                             //         ...specification
                             //     }
-                            // console.log("specificationspecification", specification);
+                            console.log("specificationspecification", updatedProductData);
                             await product_specification_service_1.default.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification);
                             // })
                         }

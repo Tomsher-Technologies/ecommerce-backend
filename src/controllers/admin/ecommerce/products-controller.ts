@@ -836,11 +836,11 @@ class ProductsController extends BaseController {
                         }
                         if (updatedProductData.productSpecification && updatedProductData.productSpecification.length > 0) {
 
-                            // await updatedProductData.productSpecification.map(async (specification: any) => {
+                            // await updatedProductData.productSpecification.map(async (    specification: any) => {
                             //     const specificationData = {
                             //         ...specification
                             //     }
-                            // console.log("specificationspecification", specification);
+                            console.log("specificationspecification", updatedProductData);
 
                             await ProductSpecificationService.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification)
                             // })
