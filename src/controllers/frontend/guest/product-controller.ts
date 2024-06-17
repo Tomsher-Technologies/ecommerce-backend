@@ -260,16 +260,13 @@ class ProductController extends BaseController {
 
                 if (categories) {
                     const categoryArray = categories.split(',')
-
                     for await (let category of categoryArray) {
-                        const keywordRegex = new RegExp(category, 'i');
-
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                         if (isObjectId) {
                             orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
                         } else {
-                            orConditionsForcategories.push({ "productCategory.category.slug": keywordRegex });
+                            orConditionsForcategories.push({ "productCategory.category.slug": category });
                         }
 
 
@@ -280,18 +277,14 @@ class ProductController extends BaseController {
                     const attributeArray = attribute.split(',')
 
                     for await (let attribute of attributeArray) {
-                        const keywordRegex = new RegExp(attribute, 'i');
 
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
 
                         if (isObjectId) {
                             orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail._id": new mongoose.Types.ObjectId(attribute) })
                         } else {
-                            orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail.itemName": keywordRegex })
+                            orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail.itemName": attribute })
                         }
-                        console.log("attribute,attribute", attributeArray);
-
-
                     }
                 }
 
@@ -299,14 +292,13 @@ class ProductController extends BaseController {
                     const specificationArray = specification.split(',')
 
                     for await (let specification of specificationArray) {
-                        const keywordRegex = new RegExp(attribute, 'i');
 
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
 
                         if (isObjectId) {
                             orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail._id": new mongoose.Types.ObjectId(specification) })
                         } else {
-                            orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail.itemName": keywordRegex })
+                            orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail.itemName": specification })
                         }
                     }
                 }
@@ -315,14 +307,13 @@ class ProductController extends BaseController {
                     const brandArray = brands.split(',')
 
                     for await (let brand of brandArray) {
-                        const keywordRegex = new RegExp(brand, 'i');
 
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
 
                         if (isObjectId) {
                             orConditionsForBrands.push({ "brand._id": new mongoose.Types.ObjectId(brand) });
                         } else {
-                            orConditionsForBrands.push({ "brand.slug": keywordRegex });
+                            orConditionsForBrands.push({ "brand.slug": brand });
                         }
 
 
@@ -330,8 +321,6 @@ class ProductController extends BaseController {
                 }
 
                 if (category) {
-
-                    const keywordRegex = new RegExp(category, 'i');
 
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
@@ -342,16 +331,14 @@ class ProductController extends BaseController {
 
                     } else {
                         query = {
-                            ...query, "productCategory.category.slug": keywordRegex
+                            ...query, "productCategory.category.slug": category
                         }
                     }
                 }
 
                 if (brand) {
 
-                    const keywordRegex = new RegExp(brand, 'i');
-
-                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                     if (isObjectId) {
                         query = {
@@ -360,7 +347,7 @@ class ProductController extends BaseController {
 
                     } else {
                         query = {
-                            ...query, "brand.slug": keywordRegex
+                            ...query, "brand.slug": brand
                         }
                     }
                 }
