@@ -5,6 +5,7 @@ import BaseController from '../../admin/base-controller';
 import ProductService from '../../../services/frontend/guest/product-service'
 import { ProductsFrontendQueryParams, ProductsQueryParams } from '../../../utils/types/products';
 import CommonService from '../../../services/frontend/guest/common-service';
+import CategoryModel from '../../../model/admin/ecommerce/category-model';
 const controller = new BaseController();
 
 class ProductController extends BaseController {
@@ -325,15 +326,37 @@ class ProductController extends BaseController {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                     if (isObjectId) {
-                        query = {
-                            ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                        const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+                        if (findcategory && findcategory._id) {
+                            const categoriesData = await CategoryModel.find({ parentCategory: findcategory._id }, '_id');
+                            const categoryIds = categoriesData.map(category => category._id);
+                            for await (let id of categoryIds) {
+                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(id) });
+                            }
+                        } else {
+                            query = {
+                                ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                            }
                         }
 
                     } else {
-                        query = {
-                            ...query, "productCategory.category.slug": category
+
+                        const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+
+                        if (findcategory && findcategory._id) {
+                            const categoriesData = await CategoryModel.find({ parentCategory: findcategory._id }, '_id');
+                            const categoryIds = categoriesData.map(category => category._id);
+                            for await (let id of categoryIds) {
+                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(id) });
+                            }
+                        } else {
+                            query = {
+                                ...query, "productCategory.category.slug": category
+                            }
                         }
+
                     }
+
                 }
 
                 if (brand) {
