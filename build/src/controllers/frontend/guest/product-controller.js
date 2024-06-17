@@ -7,6 +7,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const product_service_1 = __importDefault(require("../../../services/frontend/guest/product-service"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
@@ -225,73 +226,86 @@ class ProductController extends base_controller_1.default {
                 if (categories) {
                     const categoryArray = categories.split(',');
                     for await (let category of categoryArray) {
-                        const keywordRegex = new RegExp(category, 'i');
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         if (isObjectId) {
                             orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
                         }
                         else {
-                            orConditionsForcategories.push({ "productCategory.category.slug": keywordRegex });
+                            orConditionsForcategories.push({ "productCategory.category.slug": category });
                         }
                     }
                 }
                 if (attribute) {
                     const attributeArray = attribute.split(',');
                     for await (let attribute of attributeArray) {
-                        const keywordRegex = new RegExp(attribute, 'i');
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
                         if (isObjectId) {
                             orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail._id": new mongoose_1.default.Types.ObjectId(attribute) });
                         }
                         else {
-                            orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail.itemName": keywordRegex });
+                            orConditionsForAttributes.push({ "productVariants.productVariantAttributes.attributeDetail.itemName": attribute });
                         }
-                        console.log("attribute,attribute", attributeArray);
                     }
                 }
                 if (specification) {
                     const specificationArray = specification.split(',');
                     for await (let specification of specificationArray) {
-                        const keywordRegex = new RegExp(attribute, 'i');
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
                         if (isObjectId) {
                             orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail._id": new mongoose_1.default.Types.ObjectId(specification) });
                         }
                         else {
-                            orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail.itemName": keywordRegex });
+                            orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail.itemName": specification });
                         }
                     }
                 }
                 if (brands) {
                     const brandArray = brands.split(',');
                     for await (let brand of brandArray) {
-                        const keywordRegex = new RegExp(brand, 'i');
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
                         if (isObjectId) {
                             orConditionsForBrands.push({ "brand._id": new mongoose_1.default.Types.ObjectId(brand) });
                         }
                         else {
-                            orConditionsForBrands.push({ "brand.slug": keywordRegex });
+                            orConditionsForBrands.push({ "brand.slug": brand });
                         }
                     }
                 }
                 if (category) {
-                    const keywordRegex = new RegExp(category, 'i');
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
-                        query = {
-                            ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
-                        };
+                        const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                        if (findcategory && findcategory._id) {
+                            const categoriesData = await category_model_1.default.find({ parentCategory: findcategory._id }, '_id');
+                            const categoryIds = categoriesData.map(category => category._id);
+                            for await (let id of categoryIds) {
+                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(id) });
+                            }
+                        }
+                        else {
+                            query = {
+                                ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                            };
+                        }
                     }
                     else {
-                        query = {
-                            ...query, "productCategory.category.slug": keywordRegex
-                        };
+                        const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                        if (findcategory && findcategory._id) {
+                            const categoriesData = await category_model_1.default.find({ parentCategory: findcategory._id }, '_id');
+                            const categoryIds = categoriesData.map(category => category._id);
+                            for await (let id of categoryIds) {
+                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(id) });
+                            }
+                        }
+                        else {
+                            query = {
+                                ...query, "productCategory.category.slug": category
+                            };
+                        }
                     }
                 }
                 if (brand) {
-                    const keywordRegex = new RegExp(brand, 'i');
-                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
                         query = {
                             ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
@@ -299,7 +313,7 @@ class ProductController extends base_controller_1.default {
                     }
                     else {
                         query = {
-                            ...query, "brand.slug": keywordRegex
+                            ...query, "brand.slug": brand
                         };
                     }
                 }
