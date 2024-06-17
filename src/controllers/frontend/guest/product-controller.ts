@@ -5,6 +5,7 @@ import BaseController from '../../admin/base-controller';
 import ProductService from '../../../services/frontend/guest/product-service'
 import { ProductsFrontendQueryParams, ProductsQueryParams } from '../../../utils/types/products';
 import CommonService from '../../../services/frontend/guest/common-service';
+import ProductsService from '../../../services/admin/ecommerce/product-service'
 const controller = new BaseController();
 
 class ProductController extends BaseController {
@@ -196,7 +197,7 @@ class ProductController extends BaseController {
 
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+            const { page_size = 1, limit = 10, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
             // let getspecification = ''
             // let getattribute = ''
             let getSeo = '1'
@@ -435,9 +436,10 @@ class ProductController extends BaseController {
                     }
                 }
 
-                console.log("query,query", discount);
 
                 const productData: any = await ProductService.findProductList({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
                     query,
                     sort,
                     products,
@@ -464,10 +466,13 @@ class ProductController extends BaseController {
                         }
                     });
                 }
+                const count = await ProductsService.getTotalCount(query)
+                console.log("quesry", query);
 
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
+                    totalCount: count,
                     message: 'Success!'
                 }, 200);
             } else {
