@@ -215,9 +215,9 @@ class ProductController extends BaseController {
             let offers: any;
             const orConditionsForAttributes: any = [];
             const orConditionsForBrands: any = [];
-            const orConditionsForcategories: any = [];
             const orConditionsForcategory: any = [];
             const orConditionsForSpecification: any = [];
+            const orConditionsForcategories: any = [];
 
             query.status = '1';
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -446,7 +446,7 @@ class ProductController extends BaseController {
                     }
                 }
 
-                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategories.length > 0) {
+                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategory.length > 0 || orConditionsForcategories.length > 0) {
                     query.$and = [];
 
                     if (orConditionsForAttributes.length > 0) {
@@ -466,12 +466,12 @@ class ProductController extends BaseController {
                             $or: orConditionsForBrands
                         });
                     }
-
                     if (orConditionsForcategories.length > 0) {
                         query.$and.push({
                             $or: orConditionsForcategories
                         });
                     }
+
                     if (orConditionsForcategory.length > 0) {
                         query.$and.push({
                             $or: orConditionsForcategory
