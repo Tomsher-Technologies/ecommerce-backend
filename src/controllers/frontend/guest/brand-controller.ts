@@ -11,7 +11,7 @@ class BrandController extends BaseController {
     async findAllBrand(req: Request, res: Response): Promise<void> {
         try {
             const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as BrandQueryParams;
-            let query: any = {};
+            let query: any = { _id: { $exists: true } }
 
             query.status = '1';
             let products: any
@@ -21,6 +21,7 @@ class BrandController extends BaseController {
                 if (!brand) {
 
                     if (category) {
+                        let query: any = {};
 
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 

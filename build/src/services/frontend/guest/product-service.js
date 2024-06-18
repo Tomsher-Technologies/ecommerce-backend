@@ -18,12 +18,13 @@ const collections_brands_model_1 = __importDefault(require("../../../model/admin
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 class ProductService {
     constructor() {
     }
     async findProductList(productOption) {
-        var { query, sort, products, discount, getImageGallery, getattribute, getBrand, getCategory, getspecification, getSeo, hostName, offers } = productOption;
-        const { skip, limit } = (0, pagination_1.pagination)(productOption.query || {}, productOption);
+        var { query, sort, products, discount, getImageGallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
+        const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -64,14 +65,14 @@ class ProductService {
             { $sort: finalSort },
             // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
-            ...(getCategory === '1' ? [product_config_1.productCategoryLookup] : []),
+            product_config_1.productCategoryLookup,
             ...(getImageGallery === '1' ? [product_config_1.imageLookup] : []),
-            ...(getBrand === '1' ? [product_config_1.brandLookup] : []),
-            ...(getBrand === '1' ? [product_config_1.brandObject] : []),
+            product_config_1.brandLookup,
+            product_config_1.brandObject,
             ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
+            ...(skip ? [{ $skip: skip }] : []),
+            ...(limit ? [{ $limit: limit }] : []),
         ];
         var offerDetails;
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
@@ -155,7 +156,7 @@ class ProductService {
             }
         }
         else {
-            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
         }
         const attributeArray = [];
         if (productData) {
@@ -259,7 +260,7 @@ class ProductService {
             }
         }
         else {
-            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
         }
         const specificationArray = [];
         if (productData) {
@@ -341,11 +342,23 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async findOne(productId, hostName) {
+    async findOne(productId, sku, hostName) {
+        let query = {};
         if (productId) {
-            const objectId = new mongoose_1.default.Types.ObjectId(productId);
+            const data = /^[0-9a-fA-F]{24}$/.test(productId);
+            if (data) {
+                query = {
+                    ...query, _id: new mongoose_1.default.Types.ObjectId(productId)
+                };
+            }
+            else {
+                query = {
+                    ...query, slug: productId
+                };
+            }
+            console.log(query);
             let pipeline = [
-                { $match: { _id: objectId } },
+                { $match: query },
                 product_config_1.productCategoryLookup,
                 product_config_1.variantLookup,
                 product_config_1.imageLookup,
@@ -357,7 +370,10 @@ class ProductService {
                 product_config_1.specificationsLookup
             ];
             const language = await this.productLanguage(hostName.hostName, pipeline);
+            const productVariantDataWithValues = await product_variants_model_1.default.aggregate([{ $match: { variantSku: sku } }]);
+            console.log("..........", productVariantDataWithValues);
             const productDataWithValues = await product_model_1.default.aggregate(language);
+            console.log("..........", productDataWithValues);
             return productDataWithValues;
         }
     }
@@ -410,7 +426,7 @@ class ProductService {
                         if (results && results.length > 0) {
                             for await (let result of results) {
                                 const language = await this.productLanguage(hostName, [{ $match: { _id: new mongoose_1.default.Types.ObjectId(result.productId) } }]);
-                                const productResult = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+                                const productResult = await this.findProductList({ language, getattribute: '1', getspecification: '1' });
                                 if (productResult) {
                                     productData.push(productResult[0]);
                                 }
@@ -433,12 +449,22 @@ class ProductService {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
                         const language = await this.productLanguage(hostName, [{ $match: { _id: new mongoose_1.default.Types.ObjectId(data) } }]);
-                        const result = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+                        const result = await this.findProductList({ language, getattribute: '1', getspecification: '1' });
                         productData.push(result[0]);
                     }
                 }
             }
             return { productData: productData };
+        }
+    }
+    async getTotalCount(query = {}) {
+        try {
+            console.log(query);
+            const totalCount = await product_model_1.default.countDocuments(query);
+            return totalCount;
+        }
+        catch (error) {
+            throw new Error('Error fetching total count of users');
         }
     }
 }

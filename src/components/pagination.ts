@@ -17,3 +17,14 @@ export const pagination = (query: any, options: FilterOptionsProps): { query: an
     const skip = (page - 1) * limit;
     return { query, skip, limit, sort, hostName, blockReference, block };
 };
+
+export const frontendPagination = (query: any, options: FilterOptionsProps): { query: any; skip: number; limit: number; sort?: any; blockReference?: string; block?: string; hostName?: string | undefined | null } => {
+    let { page = 1, limit , sort, hostName, blockReference, block } = options;
+
+    page = Number(page) || 1;
+    limit = Number(limit) ;
+
+    const skip = (page - 1) * limit;
+    return { query, skip, limit, sort, hostName, blockReference, block };
+};
+

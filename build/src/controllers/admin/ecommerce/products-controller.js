@@ -734,7 +734,7 @@ class ProductsController extends base_controller_1.default {
                             const newCategory = await product_category_link_service_1.default.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
                         }
                         if (updatedProductData.productSpecification && updatedProductData.productSpecification.length > 0) {
-                            // await updatedProductData.productSpecification.map(async (specification: any) => {
+                            // await updatedProductData.productSpecification.map(async (    specification: any) => {
                             //     const specificationData = {
                             //         ...specification
                             //     }

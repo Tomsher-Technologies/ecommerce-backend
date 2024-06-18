@@ -29,6 +29,7 @@ exports.productSchema = zod_1.z.object({
         length: zod_1.z.string().optional(),
         width: zod_1.z.string().optional(),
     }).optional(),
+    starRating: zod_1.z.number({ required_error: 'starRating is required', }).max(5, 'starRating is should be 5 chars minimum'),
     warehouse: zod_1.z.string().optional(),
     unit: zod_1.z.string().optional(),
     description: zod_1.z.string({ required_error: 'Description is required', }).min(17, 'Description is should be 10 chars minimum'),

@@ -28,6 +28,7 @@ export const productSchema = zod.object({
         length: zod.string().optional(),
         width: zod.string().optional(),
     }).optional(),
+    starRating: zod.number({ required_error: 'starRating is required', }).max(5, 'starRating is should be 5 chars minimum'),
     warehouse: zod.string().optional(),
     unit: zod.string().optional(),
     description: zod.string({ required_error: 'Description is required', }).min(17, 'Description is should be 10 chars minimum'),
