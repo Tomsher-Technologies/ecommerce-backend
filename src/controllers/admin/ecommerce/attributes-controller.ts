@@ -166,7 +166,8 @@ class AttributesController extends BaseController {
                             _id: newAttribute._id,
                             attributeTitle: newAttribute.attributeTitle,
                             attributeValues: attributeDetailsValue,
-                            languageValues: languageValues
+                            languageValues: languageValues,
+                            status: newAttribute.status,
                         },
                         message: 'Attribute successfully created'
                     }, 200, {  // task log
