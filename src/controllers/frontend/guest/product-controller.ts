@@ -273,9 +273,53 @@ class ProductController extends BaseController {
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                         if (isObjectId) {
+
                             orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
+                            const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId: any) {
+                                    const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategories.push({ "productCategory.category._id": childId });
+
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+
+                                // Push condition for the parent category itself
+                                orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
+                            }
                         } else {
                             orConditionsForcategories.push({ "productCategory.category.slug": category });
+                            const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId: any) {
+                                    const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategories.push({ "productCategory.category._id": childId });
+
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+
+                                // Push condition for the parent category itself
+                                orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
+                            }
                         }
 
 
