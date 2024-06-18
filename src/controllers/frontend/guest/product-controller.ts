@@ -326,7 +326,7 @@ class ProductController extends BaseController {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                     if (isObjectId) {
-                        const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+                        const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
                         if (findcategory && findcategory._id) {
                             const categoriesData = await CategoryModel.find({ parentCategory: findcategory._id }, '_id');
                             const categoryIds = categoriesData.map(category => category._id);
