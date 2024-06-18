@@ -94,7 +94,8 @@ class SpecificationController extends base_controller_1.default {
                             _id: newSpecification._id,
                             specificationTitle: newSpecification.specificationTitle,
                             specificationValues: specificationDetailsValues,
-                            languageValues: languageValues
+                            languageValues: languageValues,
+                            status: newSpecification.status
                         },
                         message: 'Specification created successfully!'
                     }, 200, {

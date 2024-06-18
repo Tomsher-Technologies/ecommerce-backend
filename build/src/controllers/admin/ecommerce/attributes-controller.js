@@ -147,7 +147,8 @@ class AttributesController extends base_controller_1.default {
                             _id: newAttribute._id,
                             attributeTitle: newAttribute.attributeTitle,
                             attributeValues: attributeDetailsValue,
-                            languageValues: languageValues
+                            languageValues: languageValues,
+                            status: newAttribute.status,
                         },
                         message: 'Attribute successfully created'
                     }, 200, {

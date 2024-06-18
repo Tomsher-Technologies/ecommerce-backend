@@ -13,11 +13,19 @@ const product_service_1 = __importDefault(require("./product-service"));
 class BrandService {
     constructor() { }
     async findAll(options = {}, products) {
-        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
+        const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        console.log(sort);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         let pipeline = [
             { $match: query },
+            { $sort: finalSort },
         ];
-        console.log("queryquery", query);
+        console.log(finalSort);
         if (query._id) {
             const language = await this.brandLanguage(hostName, pipeline);
             const data = await brands_model_1.default.aggregate(language).exec();
