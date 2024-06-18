@@ -473,7 +473,6 @@ class ProductController extends BaseController {
                         sort = { createdAt: 1 };
                     }
                 }
-                console.log("query", query.$and[0].$or);
 
 
                 const productData: any = await ProductService.findProductList({
