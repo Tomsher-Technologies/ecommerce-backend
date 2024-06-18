@@ -50,6 +50,11 @@ const productsSchema = new mongoose_1.Schema({
             message: 'Slug must be unique'
         }
     },
+    starRating: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     productImageUrl: {
         type: String,
         required: true,

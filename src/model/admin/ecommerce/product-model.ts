@@ -28,6 +28,11 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             message: 'Slug must be unique'
         }
     },
+    starRating: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     productImageUrl: {
         type: String,
         required: true,

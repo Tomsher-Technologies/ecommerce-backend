@@ -17,6 +17,7 @@ export interface ProductsProps extends Document {
         length?: string;
         width?: string;
     };
+    starRating: Number;
     tags: string;
     sku: string;
     deliveryDays: string;
