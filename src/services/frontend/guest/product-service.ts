@@ -88,6 +88,9 @@ class ProductService {
             { $match: query },
             { $skip: skip },
             { $limit: limit },
+            // {
+            //     $count: 'count'
+            // }
         ];
 
         var offerDetails: any
@@ -157,6 +160,7 @@ class ProductService {
             const language: any = await this.productLanguage(hostName, pipeline)
 
             productData = await ProductsModel.aggregate(language).exec();
+            // console.log("productData",productData``);
 
         }
 
@@ -419,12 +423,27 @@ class ProductService {
     }
 
     async findOne(productId: string, hostName: any): Promise<void> {
-
+        let query: any = {};
         if (productId) {
-            const objectId = new mongoose.Types.ObjectId(productId);
+
+            const data = /^[0-9a-fA-F]{24}$/.test(productId);
+
+            if (data) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(productId)
+
+                }
+
+            } else {
+                query = {
+                    ...query, slug: productId
+                }
+            }
+            console.log(query);
+
 
             let pipeline: any[] = [
-                { $match: { _id: objectId } },
+                { $match: query },
                 productCategoryLookup,
                 variantLookup,
                 imageLookup,

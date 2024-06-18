@@ -161,10 +161,9 @@ class ProductController extends BaseController {
     }
     async findProductDetail(req: Request, res: Response): Promise<void> {
         try {
-            const productId = req.params.id;
+            const productId: any = req.query.product;
 
             if (productId) {
-
                 const product: any = await ProductService.findOne(
                     productId,
                     { hostName: req.get('origin') }
