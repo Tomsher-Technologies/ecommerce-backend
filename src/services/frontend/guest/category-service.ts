@@ -11,8 +11,13 @@ class CategoryService {
 
     async findAll(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
 
-        const { query, hostName } = pagination(options.query || {}, options);
-
+        const { query, hostName, sort } = pagination(options.query || {}, options);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         const matchPipeline: any = { $match: query };
         let pipeline: any[] = [];
 

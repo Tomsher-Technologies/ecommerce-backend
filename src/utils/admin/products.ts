@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { dateConvertPm } from "../helpers";
+import { dateConvertPm, slugify } from "../helpers";
 import { ProductsProps, ProductsQueryParams } from "../types/products";
 
 import CollectionsProductsService from "../../services/admin/website/collections-products-service";
@@ -162,45 +162,33 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
     }
 }
 
-export const defaultSkuSettings = async (variants: any) => {
+export const defaultSLugAndSkuSettings = async (variants: any, allCountryData: any, productTitle: string) => {
+    let variantSkuData: any = {}
+    const result = variants.flatMap(({ countryId, productVariants }: { countryId: string; productVariants: any[] }, index: number) => {
+        const getCountryWithVariant = allCountryData.find((country: any) => String(country._id) === countryId);
 
-    const result = await variants.map(async ({ countryId, productVariants }: { countryId: string; productVariants: any[] }) => {
-        const defaultVariant = await productVariants.find(variant => variant.isDefault === '1');
+        const defaultVariant = productVariants.find(variant => variant.isDefault === '1');
+
         if (defaultVariant) {
-            return defaultVariant.variantSku;
-        }
-    });
-    var isDefault
-    if (result) {
-        await result[0].then(async (data: any) => {
-            isDefault = await data
-        });
-    }
-    if (isDefault) {
-        return isDefault
-    } else {
-        const maxQuantities = await variants.map(async ({ countryId, productVariants }: { countryId: string; productVariants: any[] }) => {
-            const maxQuantityItem = await productVariants.reduce((max: any, current: any) => {
+            variantSkuData = {
+                countryId,
+                variantSku: defaultVariant?.variantSku,
+                slug: slugify(productTitle + " " + getCountryWithVariant.countryShortTitle + '-' + (index + 1))
+            };
+        } else {
+            const maxQuantityItem = productVariants.reduce((max: any, current: any) => {
                 return max.quantity > current.quantity ? max : current;
             });
             if (maxQuantityItem) {
-                return maxQuantityItem.variantSku
-            }
-        });
-
-        console.log("maxQuantities,maxQuantities", maxQuantities);
-        if (maxQuantities) {
-            await maxQuantities[0].then(async (data: any) => {
-                isDefault = await data
-            });
-            if (isDefault) {
-                return isDefault
+                variantSkuData = {
+                    countryId,
+                    variantSku: maxQuantityItem?.variantSku,
+                    slug: slugify(productTitle + " " + getCountryWithVariant.countryShortTitle + '-' + (index + 1))
+                };
             }
         }
-
-    }
-
-
+    });
+    return variantSkuData
 }
 
 export const deleteFunction = async (productId: string) => {

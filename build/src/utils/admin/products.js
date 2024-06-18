@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFunction = exports.defaultSkuSettings = exports.filterProduct = void 0;
+exports.deleteFunction = exports.defaultSLugAndSkuSettings = exports.filterProduct = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const helpers_1 = require("../helpers");
 const collections_products_service_1 = __importDefault(require("../../services/admin/website/collections-products-service"));
@@ -155,43 +155,34 @@ const filterProduct = async (data, countryId) => {
     };
 };
 exports.filterProduct = filterProduct;
-const defaultSkuSettings = async (variants) => {
-    const result = await variants.map(async ({ countryId, productVariants }) => {
-        const defaultVariant = await productVariants.find(variant => variant.isDefault === '1');
+const defaultSLugAndSkuSettings = async (variants, allCountryData, productTitle) => {
+    let variantSkuData = {};
+    const result = variants.flatMap(({ countryId, productVariants }, index) => {
+        const getCountryWithVariant = allCountryData.find((country) => String(country._id) === countryId);
+        const defaultVariant = productVariants.find(variant => variant.isDefault === '1');
         if (defaultVariant) {
-            return defaultVariant.variantSku;
+            variantSkuData = {
+                countryId,
+                variantSku: defaultVariant?.variantSku,
+                slug: (0, helpers_1.slugify)(productTitle + " " + getCountryWithVariant.countryShortTitle + '-' + (index + 1))
+            };
         }
-    });
-    var isDefault;
-    if (result) {
-        await result[0].then(async (data) => {
-            isDefault = await data;
-        });
-    }
-    if (isDefault) {
-        return isDefault;
-    }
-    else {
-        const maxQuantities = await variants.map(async ({ countryId, productVariants }) => {
-            const maxQuantityItem = await productVariants.reduce((max, current) => {
+        else {
+            const maxQuantityItem = productVariants.reduce((max, current) => {
                 return max.quantity > current.quantity ? max : current;
             });
             if (maxQuantityItem) {
-                return maxQuantityItem.variantSku;
-            }
-        });
-        console.log("maxQuantities,maxQuantities", maxQuantities);
-        if (maxQuantities) {
-            await maxQuantities[0].then(async (data) => {
-                isDefault = await data;
-            });
-            if (isDefault) {
-                return isDefault;
+                variantSkuData = {
+                    countryId,
+                    variantSku: maxQuantityItem?.variantSku,
+                    slug: (0, helpers_1.slugify)(productTitle + " " + getCountryWithVariant.countryShortTitle + '-' + (index + 1))
+                };
             }
         }
-    }
+    });
+    return variantSkuData;
 };
-exports.defaultSkuSettings = defaultSkuSettings;
+exports.defaultSLugAndSkuSettings = defaultSLugAndSkuSettings;
 const deleteFunction = async (productId) => {
     return await general_service_1.default.deleteParentModel([
         // ...(newProduct?._id &&

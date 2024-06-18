@@ -18,7 +18,6 @@ const collections_brands_model_1 = __importDefault(require("../../../model/admin
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
-const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 class ProductService {
     constructor() {
     }
@@ -342,8 +341,9 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async findOne(productId, sku, hostName) {
-        let query = {};
+    async findOne(productOption) {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
+        let query = { variantSku: sku };
         if (productId) {
             const data = /^[0-9a-fA-F]{24}$/.test(productId);
             if (data) {
@@ -358,20 +358,21 @@ class ProductService {
             }
             console.log(query);
             let pipeline = [
-                { $match: query },
-                product_config_1.productCategoryLookup,
-                product_config_1.variantLookup,
+                ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
+                ...(getSeo === '1' ? [product_config_1.productSeoLookup] : []),
+                ...(getSeo === '1' ? [product_config_1.addFieldsProductSeo] : []),
+                ...(getImageGallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
                 product_config_1.imageLookup,
-                product_config_1.brandLookup,
-                product_config_1.brandObject,
-                product_config_1.seoLookup,
-                product_config_1.seoObject,
-                product_config_1.productMultilanguageFieldsLookup,
-                product_config_1.specificationsLookup
+                { $match: query },
             ];
-            const language = await this.productLanguage(hostName.hostName, pipeline);
-            const productVariantDataWithValues = await product_variants_model_1.default.aggregate([{ $match: { variantSku: sku } }]);
-            console.log("..........", productVariantDataWithValues);
+            // { variantSku: sku }
+            console.log("333", pipeline);
+            const language = await this.productLanguage(hostName, pipeline);
+            // console.log("......1234....", language);
+            // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
             const productDataWithValues = await product_model_1.default.aggregate(language);
             console.log("..........", productDataWithValues);
             return productDataWithValues;

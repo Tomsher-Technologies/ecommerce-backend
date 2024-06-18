@@ -106,6 +106,7 @@ exports.brandProject = {
         status: 1,
         description: 1,
         brandImageUrl: 1,
+        brandBannerImageUrl: 1,
         corporateGiftsPriority: 1,
         type: 1,
         languageValues: { $ifNull: ['$languageValues', []] },

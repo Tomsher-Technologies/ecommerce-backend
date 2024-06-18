@@ -18,11 +18,23 @@ class BrandService {
 
     async findAll(options: FilterOptionsProps = {}, products: any): Promise<BrandProps[]> {
 
-        const { query, hostName } = pagination(options.query || {}, options);
+        const { query, hostName, sort } = pagination(options.query || {}, options);
+        console.log(sort);
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         let pipeline: any[] = [
             { $match: query },
+            { $sort: finalSort },
+
         ];
-console.log("queryquery",query);
+
+
+        console.log(finalSort);
 
         if (query._id) {
             const language: any = await this.brandLanguage(hostName, pipeline)
@@ -67,7 +79,7 @@ console.log("queryquery",query);
 
         const brandArray: any = []
         var i = 1;
-console.log("dggdfgdfgdf",productData);
+        console.log("dggdfgdfgdf", productData);
 
         if (productData) {
             for await (let product of productData) {

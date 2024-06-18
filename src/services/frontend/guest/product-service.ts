@@ -1,4 +1,4 @@
-import { FilterOptionsProps, frontendPagination } from '../../../components/pagination';
+import { FilterOptionsProps, frontendPagination, pagination } from '../../../components/pagination';
 import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
@@ -89,7 +89,7 @@ class ProductService {
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
-       
+
         ];
 
         var offerDetails: any
@@ -167,7 +167,15 @@ class ProductService {
 
     async findAllAttributes(options: any): Promise<ProductsProps[]> {
 
-        const { query, hostName, products } = options;
+        const { query, hostName, sort } = pagination(options.query || {}, options);
+        const { products } = options
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         var attributeDetail: any = []
         let productData: any = [];
         let collection: any
@@ -214,9 +222,13 @@ class ProductService {
 
                 let pipeline: any[] = [
                     { $match: query },
+                    { $sort: finalSort },
+
                     attributeDetailsLookup,
-                    attributeProject
+                    attributeProject,
+
                 ];
+
                 const attributeData = await AttributesModel.aggregate(pipeline).exec()
 
                 const language: any = await this.attributeLanguage(hostName, pipeline)
@@ -295,7 +307,13 @@ class ProductService {
 
     async findAllSpecifications(options: any): Promise<void | null> {
 
-        const { query, hostName, products } = options;
+        const { query, hostName, products, sort } = options;
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         var specificationDetail: any = []
         let productData: any = [];
 
@@ -343,7 +361,9 @@ class ProductService {
                 let pipeline: any[] = [
                     { $match: query },
                     specificationDetailsLookup,
-                    specificationProject
+                    specificationProject,
+                    { $sort: finalSort },
+
                 ];
                 const specificationData = await SpecificationModel.aggregate(pipeline).exec()
 
@@ -420,8 +440,10 @@ class ProductService {
         return pipeline
     }
 
-    async findOne(productId: string, sku: string, hostName: any): Promise<void> {
-        let query: any = {};
+    async findOneProduct(productOption: any): Promise<void> {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
+        let query: any = { sku: sku };
+
         if (productId) {
 
             const data = /^[0-9a-fA-F]{24}$/.test(productId);
@@ -440,28 +462,115 @@ class ProductService {
             console.log(query);
 
 
+
+
+
+
+            const modifiedPipeline = {
+                $lookup: {
+                    ...variantLookup.$lookup,
+                    pipeline: [
+                        ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                        ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                        ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                        ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                        ...(getSeo === '1' ? [productSeoLookup] : []),
+                        ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                        ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
+
+                    ]
+                }
+            };
+
             let pipeline: any[] = [
-                { $match: query },
+                // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+                modifiedPipeline,
                 productCategoryLookup,
-                variantLookup,
-                imageLookup,
+                ...(getImageGallery === '1' ? [imageLookup] : []),
                 brandLookup,
                 brandObject,
-                seoLookup,
-                seoObject,
-                productMultilanguageFieldsLookup,
-                specificationsLookup
-            ];
+                ...(getspecification === '1' ? [specificationsLookup] : []),
+                { $match: query },
 
-            const language: any = await this.productLanguage(hostName.hostName, pipeline)
-            const productVariantDataWithValues: any = await ProductVariantsModel.aggregate([{ $match: { variantSku: sku } }]);
-            console.log("..........", productVariantDataWithValues);
+            ];
+            // { variantSku: sku }
+            console.log("333", pipeline);
+
+            const language: any = await this.productLanguage(hostName, pipeline)
+            // console.log("......1234....", language);
+
+            // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
 
 
             const productDataWithValues: any = await ProductsModel.aggregate(language);
-            console.log("..........", productDataWithValues);
+            console.log("..........", productDataWithValues[0]);
 
-            return productDataWithValues;
+            return productDataWithValues[0];
+        }
+
+    }
+
+    async findOne(productOption: any): Promise<void> {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
+        let query: any = { sku: sku };
+
+        if (productId) {
+
+            const data = /^[0-9a-fA-F]{24}$/.test(productId);
+
+            if (data) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(productId)
+
+                }
+
+            } else {
+                query = {
+                    ...query, slug: productId
+                }
+            }
+            console.log(query);
+
+            const modifiedPipeline = {
+                $lookup: {
+                    ...variantLookup.$lookup,
+                    pipeline: [
+                        ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                        ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                        ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                        ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                        ...(getSeo === '1' ? [productSeoLookup] : []),
+                        ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                        ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
+
+                    ]
+                }
+            };
+
+            let pipeline: any[] = [
+                // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+                modifiedPipeline,
+                productCategoryLookup,
+                ...(getImageGallery === '1' ? [imageLookup] : []),
+                brandLookup,
+                brandObject,
+                ...(getspecification === '1' ? [specificationsLookup] : []),
+                { $match: query },
+
+            ];
+            // { variantSku: sku }
+            console.log("333", pipeline);
+
+            const language: any = await this.productLanguage(hostName, pipeline)
+            // console.log("......1234....", language);
+
+            // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
+
+
+            const productDataWithValues: any = await ProductsModel.aggregate(language);
+            console.log("..........", productDataWithValues[0]);
+
+            return productDataWithValues[0];
         }
 
     }
