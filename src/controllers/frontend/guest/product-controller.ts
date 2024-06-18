@@ -215,14 +215,14 @@ class ProductController extends BaseController {
     async findProductDetail(req: Request, res: Response): Promise<void> {
         try {
             const productId: any = req.params.slug;
-            const sku: any = req.params.sku;
+            const variantSku: any = req.params.sku;
             const { getattribute = '', getspecification = '', getImageGallery = '' } = req.query as ProductsFrontendQueryParams;
 
             if (productId) {
                 const product: any = await ProductService.findOneProduct(
                     {
                         productId,
-                        sku,
+                        variantSku,
                         getImageGallery,
                         getattribute,
                         getspecification,
@@ -233,7 +233,10 @@ class ProductController extends BaseController {
                 if (product) {
 
                     controller.sendSuccessResponse(res, {
-                        requestedData: product,
+                        requestedData: {
+                            product,
+                            reviews: []
+                        },
                         message: 'Success'
                     });
                 } else {
@@ -594,8 +597,10 @@ class ProductController extends BaseController {
                     getattribute,
                     getspecification,
                     getSeo,
-                    hostName: req.get('origin'),
+                    hostName: req.get('host'),
                 });
+
+                
                 if (sortby == "price") {
                     productData.sort((a: any, b: any) => {
                         const aPrice = a.productVariants[0]?.[sortby] || 0;

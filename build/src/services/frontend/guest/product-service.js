@@ -18,6 +18,7 @@ const collections_brands_model_1 = __importDefault(require("../../../model/admin
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 class ProductService {
     constructor() {
     }
@@ -34,9 +35,12 @@ class ProductService {
         if (countryId) {
             query = {
                 ...query,
-                'productVariants.countryId': countryId
+                // $match: {
+                'productVariants.countryId': new mongoose_1.default.Types.ObjectId('663209ff5ded1a6bb444797a')
+                // }
             };
         }
+        console.log(query);
         if (discount) {
             const discountArray = await discount.split(",");
             console.log("discount", discountArray);
@@ -62,6 +66,27 @@ class ProductService {
         };
         let pipeline = [
             { $sort: finalSort },
+            {
+                $lookup: {
+                    from: 'productVariants', // Assuming 'productVariants' is the collection name
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'productVariants'
+                }
+            },
+            {
+                $addFields: {
+                    productVariants: {
+                        $filter: {
+                            input: '$productVariants',
+                            as: 'variant',
+                            cond: {
+                                $eq: ['$$variant.countryId', new mongoose_1.default.Types.ObjectId('663209ff5ded1a6bb444797a')]
+                            }
+                        }
+                    }
+                }
+            },
             // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
             product_config_1.productCategoryLookup,
@@ -73,6 +98,7 @@ class ProductService {
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
         ];
+        console.log(pipeline);
         var offerDetails;
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
         // Add the stages for product-specific offers
@@ -134,7 +160,14 @@ class ProductService {
         return productData;
     }
     async findAllAttributes(options) {
-        const { query, hostName, products } = options;
+        const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        const { products } = options;
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         var attributeDetail = [];
         let productData = [];
         let collection;
@@ -172,8 +205,9 @@ class ProductService {
                 const query = { _id: attribute };
                 let pipeline = [
                     { $match: query },
+                    { $sort: finalSort },
                     attribute_config_1.attributeDetailsLookup,
-                    attribute_config_1.attributeProject
+                    attribute_config_1.attributeProject,
                 ];
                 const attributeData = await attribute_model_1.default.aggregate(pipeline).exec();
                 const language = await this.attributeLanguage(hostName, pipeline);
@@ -238,7 +272,13 @@ class ProductService {
         return pipeline;
     }
     async findAllSpecifications(options) {
-        const { query, hostName, products } = options;
+        const { query, hostName, products, sort } = options;
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         var specificationDetail = [];
         let productData = [];
         let collection;
@@ -277,7 +317,8 @@ class ProductService {
                 let pipeline = [
                     { $match: query },
                     specification_config_1.specificationDetailsLookup,
-                    specification_config_1.specificationProject
+                    specification_config_1.specificationProject,
+                    { $sort: finalSort },
                 ];
                 const specificationData = await specifications_model_1.default.aggregate(pipeline).exec();
                 const language = await this.specificationLanguage(hostName, pipeline);
@@ -341,9 +382,9 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async findOne(productOption) {
-        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
-        let query = { variantSku: sku };
+    async findOneProduct(productOption) {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, variantSku } = productOption;
+        let query = { variantSku: variantSku };
         if (productId) {
             const data = /^[0-9a-fA-F]{24}$/.test(productId);
             if (data) {
@@ -357,6 +398,20 @@ class ProductService {
                 };
             }
             console.log(query);
+            const modifiedPipeline = {
+                $lookup: {
+                    ...product_config_1.variantLookup.$lookup,
+                    pipeline: [
+                        ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                        ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                        ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                        ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
+                        ...(getSeo === '1' ? [product_config_1.productSeoLookup] : []),
+                        ...(getSeo === '1' ? [product_config_1.addFieldsProductSeo] : []),
+                        ...(getImageGallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
+                    ]
+                }
+            };
             let pipeline = [
                 ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
                 ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
@@ -365,7 +420,57 @@ class ProductService {
                 ...(getSeo === '1' ? [product_config_1.productSeoLookup] : []),
                 ...(getSeo === '1' ? [product_config_1.addFieldsProductSeo] : []),
                 ...(getImageGallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
-                product_config_1.imageLookup,
+                ...(getImageGallery === '1' ? [product_config_1.imageLookup] : []),
+                { $match: query },
+            ];
+            // { variantSku: sku }
+            console.log("333", pipeline);
+            // const language: any = await this.productLanguage(hostName, pipeline)
+            // console.log("......1234....", language);
+            const productVariantDataWithValues = await product_variants_model_1.default.aggregate(pipeline);
+            const productDataWithValues = await product_model_1.default.aggregate(pipeline);
+            console.log("..........", productVariantDataWithValues[0]);
+            return productVariantDataWithValues[0];
+        }
+    }
+    async findOne(productOption) {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
+        let query = { sku: sku };
+        if (productId) {
+            const data = /^[0-9a-fA-F]{24}$/.test(productId);
+            if (data) {
+                query = {
+                    ...query, _id: new mongoose_1.default.Types.ObjectId(productId)
+                };
+            }
+            else {
+                query = {
+                    ...query, slug: productId
+                };
+            }
+            console.log(query);
+            const modifiedPipeline = {
+                $lookup: {
+                    ...product_config_1.variantLookup.$lookup,
+                    pipeline: [
+                        ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                        ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                        ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                        ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
+                        ...(getSeo === '1' ? [product_config_1.productSeoLookup] : []),
+                        ...(getSeo === '1' ? [product_config_1.addFieldsProductSeo] : []),
+                        ...(getImageGallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
+                    ]
+                }
+            };
+            let pipeline = [
+                // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+                modifiedPipeline,
+                product_config_1.productCategoryLookup,
+                ...(getImageGallery === '1' ? [product_config_1.imageLookup] : []),
+                product_config_1.brandLookup,
+                product_config_1.brandObject,
+                ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
                 { $match: query },
             ];
             // { variantSku: sku }
@@ -374,8 +479,8 @@ class ProductService {
             // console.log("......1234....", language);
             // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
             const productDataWithValues = await product_model_1.default.aggregate(language);
-            console.log("..........", productDataWithValues);
-            return productDataWithValues;
+            console.log("..........", productDataWithValues[0]);
+            return productDataWithValues[0];
         }
     }
     async productLanguage(hostName, pipeline) {
@@ -456,16 +561,6 @@ class ProductService {
                 }
             }
             return { productData: productData };
-        }
-    }
-    async getTotalCount(query = {}) {
-        try {
-            console.log(query);
-            const totalCount = await product_model_1.default.countDocuments(query);
-            return totalCount;
-        }
-        catch (error) {
-            throw new Error('Error fetching total count of users');
         }
     }
 }

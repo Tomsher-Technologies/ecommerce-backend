@@ -12,62 +12,87 @@ const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'attributeTitle', sortorder = 'asc' } = req.query;
             let query = { _id: { $exists: true } };
             let products;
             query.status = '1';
-            if (category) {
-                const keywordRegex = new RegExp(category, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                if (isObjectId) {
-                    query = {
-                        ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                const sort = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
+                }
+                if (category) {
+                    const keywordRegex = new RegExp(category, 'i');
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                    if (isObjectId) {
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                        };
+                    }
+                    else {
+                        query = {
+                            ...query, "productCategory.category.slug": keywordRegex
+                        };
+                    }
+                }
+                if (brand) {
+                    const keywordRegex = new RegExp(brand, 'i');
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    if (isObjectId) {
+                        query = {
+                            ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                        };
+                    }
+                    else {
+                        query = {
+                            ...query, "brand.slug": keywordRegex
+                        };
+                    }
+                }
+                if (collectionproduct) {
+                    products = {
+                        ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
                     };
                 }
-                else {
-                    query = {
-                        ...query, "productCategory.category.slug": keywordRegex
+                if (collectionbrand) {
+                    products = {
+                        ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
                     };
                 }
-            }
-            if (brand) {
-                const keywordRegex = new RegExp(brand, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                if (isObjectId) {
-                    query = {
-                        ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                if (collectioncategory) {
+                    products = {
+                        ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
                     };
                 }
-                else {
-                    query = {
-                        ...query, "brand.slug": keywordRegex
-                    };
-                }
+                const attributes = await product_service_1.default.findAllAttributes({
+                    hostName: req.get('origin'),
+                    query,
+                    products,
+                    sort
+                });
+                attributes.sort((a, b) => {
+                    const titleA = a.attributeTitle.toLowerCase();
+                    const titleB = b.attributeTitle.toLowerCase();
+                    if (titleA < titleB) {
+                        return -1;
+                    }
+                    if (titleA > titleB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: attributes,
+                    message: 'Success!'
+                }, 200);
             }
-            if (collectionproduct) {
-                products = {
-                    ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
-                };
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing'
+                }, req);
             }
-            if (collectionbrand) {
-                products = {
-                    ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
-                };
-            }
-            if (collectioncategory) {
-                products = {
-                    ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
-                };
-            }
-            const attributes = await product_service_1.default.findAllAttributes({
-                hostName: req.get('origin'),
-                query,
-                products,
-            });
-            return controller.sendSuccessResponse(res, {
-                requestedData: attributes,
-                message: 'Success!'
-            }, 200);
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching attributes' });
@@ -75,62 +100,87 @@ class ProductController extends base_controller_1.default {
     }
     async findAllSpecifications(req, res) {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'specificationTitle', sortorder = 'asc' } = req.query;
             let query = { _id: { $exists: true } };
             let products;
             query.status = '1';
-            if (category) {
-                const keywordRegex = new RegExp(category, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                if (isObjectId) {
-                    query = {
-                        ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                const sort = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
+                }
+                if (category) {
+                    const keywordRegex = new RegExp(category, 'i');
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                    if (isObjectId) {
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                        };
+                    }
+                    else {
+                        query = {
+                            ...query, "productCategory.category.slug": keywordRegex
+                        };
+                    }
+                }
+                if (brand) {
+                    const keywordRegex = new RegExp(brand, 'i');
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    if (isObjectId) {
+                        query = {
+                            ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                        };
+                    }
+                    else {
+                        query = {
+                            ...query, "brand.slug": keywordRegex
+                        };
+                    }
+                }
+                if (collectionproduct) {
+                    products = {
+                        ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
                     };
                 }
-                else {
-                    query = {
-                        ...query, "productCategory.category.slug": keywordRegex
+                if (collectionbrand) {
+                    products = {
+                        ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
                     };
                 }
-            }
-            if (brand) {
-                const keywordRegex = new RegExp(brand, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                if (isObjectId) {
-                    query = {
-                        ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
+                if (collectioncategory) {
+                    products = {
+                        ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
                     };
                 }
-                else {
-                    query = {
-                        ...query, "brand.slug": keywordRegex
-                    };
-                }
+                const specifications = await product_service_1.default.findAllSpecifications({
+                    hostName: req.get('origin'),
+                    query,
+                    products,
+                    sort
+                });
+                specifications.sort((a, b) => {
+                    const titleA = a.specificationTitle.toLowerCase();
+                    const titleB = b.specificationTitle.toLowerCase();
+                    if (titleA < titleB) {
+                        return -1;
+                    }
+                    if (titleA > titleB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: specifications,
+                    message: 'Success!'
+                }, 200);
             }
-            if (collectionproduct) {
-                products = {
-                    ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
-                };
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing'
+                }, req);
             }
-            if (collectionbrand) {
-                products = {
-                    ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
-                };
-            }
-            if (collectioncategory) {
-                products = {
-                    ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
-                };
-            }
-            const specifications = await product_service_1.default.findAllSpecifications({
-                hostName: req.get('origin'),
-                query,
-                products
-            });
-            return controller.sendSuccessResponse(res, {
-                requestedData: specifications,
-                message: 'Success!'
-            }, 200);
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
@@ -139,12 +189,12 @@ class ProductController extends base_controller_1.default {
     async findProductDetail(req, res) {
         try {
             const productId = req.params.slug;
-            const sku = req.params.sku;
+            const variantSku = req.params.sku;
             const { getattribute = '', getspecification = '', getImageGallery = '' } = req.query;
             if (productId) {
-                const product = await product_service_1.default.findOne({
+                const product = await product_service_1.default.findOneProduct({
                     productId,
-                    sku,
+                    variantSku,
                     getImageGallery,
                     getattribute,
                     getspecification,
@@ -153,7 +203,8 @@ class ProductController extends base_controller_1.default {
                 if (product) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            ...product
+                            product,
+                            reviews: []
                         },
                         message: 'Success'
                     });
@@ -188,9 +239,9 @@ class ProductController extends base_controller_1.default {
             let offers;
             const orConditionsForAttributes = [];
             const orConditionsForBrands = [];
-            const orConditionsForcategories = [];
             const orConditionsForcategory = [];
             const orConditionsForSpecification = [];
+            const orConditionsForcategories = [];
             query.status = '1';
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
@@ -239,9 +290,43 @@ class ProductController extends base_controller_1.default {
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         if (isObjectId) {
                             orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
+                            const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId) {
+                                    const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategories.push({ "productCategory.category._id": childId });
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+                                // Push condition for the parent category itself
+                                orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
+                            }
                         }
                         else {
                             orConditionsForcategories.push({ "productCategory.category.slug": category });
+                            const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId) {
+                                    const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategories.push({ "productCategory.category._id": childId });
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+                                // Push condition for the parent category itself
+                                orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
+                            }
                         }
                     }
                 }
@@ -378,7 +463,7 @@ class ProductController extends base_controller_1.default {
                         ...discount, discount: discount
                     };
                 }
-                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategories.length > 0) {
+                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategory.length > 0 || orConditionsForcategories.length > 0) {
                     query.$and = [];
                     if (orConditionsForAttributes.length > 0) {
                         query.$and.push({
@@ -426,7 +511,7 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     getSeo,
-                    hostName: req.get('origin'),
+                    hostName: req.get('host'),
                 });
                 if (sortby == "price") {
                     productData.sort((a, b) => {
