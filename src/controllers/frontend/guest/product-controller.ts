@@ -328,12 +328,26 @@ class ProductController extends BaseController {
                     if (isObjectId) {
                         orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
                         const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
+
                         if (findcategory && findcategory._id) {
-                            const categoriesData = await CategoryModel.find({ parentCategory: findcategory._id }, '_id');
-                            const categoryIds = categoriesData.map(category => category._id);
-                            for await (let id of categoryIds) {
-                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(id) });
+                            // Function to recursively fetch category IDs and their children
+                            async function fetchCategoryAndChildren(categoryId: any) {
+                                const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                                const categoryIds = categoriesData.map(category => category._id);
+
+                                for (let childId of categoryIds) {
+                                    orConditionsForcategories.push({ "productCategory.category._id": childId });
+
+                                    // Recursively fetch children of childId
+                                    await fetchCategoryAndChildren(childId);
+                                }
                             }
+
+                            // Start fetching categories recursively
+                            await fetchCategoryAndChildren(findcategory._id);
+
+                            // Push condition for the parent category itself
+                            orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
                         } else {
                             query = {
                                 ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
@@ -345,17 +359,32 @@ class ProductController extends BaseController {
                         const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
 
                         if (findcategory && findcategory._id) {
-                            const categoriesData = await CategoryModel.find({ parentCategory: findcategory._id }, '_id');
-                            const categoryIds = categoriesData.map(category => category._id);
-                            for await (let id of categoryIds) {
-                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose.Types.ObjectId(id) });
+                            // Function to recursively fetch category IDs and their children
+                            async function fetchCategoryAndChildren(categoryId: any) {
+                                const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                                const categoryIds = categoriesData.map(category => category._id);
+
+                                for (let childId of categoryIds) {
+                                    orConditionsForcategories.push({ "productCategory.category._id": childId });
+
+                                    // Recursively fetch children of childId
+                                    await fetchCategoryAndChildren(childId);
+                                }
                             }
+
+                            // Start fetching categories recursively
+                            await fetchCategoryAndChildren(findcategory._id);
+
+                            // Push condition for the parent category itself
+                            orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
                         } else {
+                            // If category not found, fallback to direct query by slug
                             query = {
                                 ...query, "productCategory.category.slug": category
-                            }
-                        }
+                            };
 
+                        }
+                        console.log("orConditionsForcategories", orConditionsForcategories);
                     }
 
                 }
@@ -444,6 +473,7 @@ class ProductController extends BaseController {
                         sort = { createdAt: 1 };
                     }
                 }
+                console.log("query", query.$and[0].$or);
 
 
                 const productData: any = await ProductService.findProductList({
