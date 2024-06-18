@@ -12,13 +12,14 @@ class BrandController extends base_controller_1.default {
     async findAllBrand(req, res) {
         try {
             const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
-            let query = {};
+            let query = { _id: { $exists: true } };
             query.status = '1';
             let products;
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 if (!brand) {
                     if (category) {
+                        let query = {};
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         if (isObjectId) {
                             query = {

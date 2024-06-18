@@ -138,9 +138,10 @@ class ProductController extends base_controller_1.default {
     }
     async findProductDetail(req, res) {
         try {
-            const productId = req.params.id;
+            const productId = req.params.slug;
+            const sku = req.params.sku;
             if (productId) {
-                const product = await product_service_1.default.findOne(productId, { hostName: req.get('origin') });
+                const product = await product_service_1.default.findOne(productId, sku, { hostName: req.get('origin') });
                 if (product) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -167,7 +168,7 @@ class ProductController extends base_controller_1.default {
     }
     async findAllProducts(req, res) {
         try {
-            const { page_size = 1, limit = 10, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
+            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
             // let getspecification = ''
             // let getattribute = ''
             let getSeo = '1';
@@ -274,13 +275,23 @@ class ProductController extends base_controller_1.default {
                 if (category) {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
-                        const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                        orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
+                        const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
                         if (findcategory && findcategory._id) {
-                            const categoriesData = await category_model_1.default.find({ parentCategory: findcategory._id }, '_id');
-                            const categoryIds = categoriesData.map(category => category._id);
-                            for await (let id of categoryIds) {
-                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(id) });
+                            // Function to recursively fetch category IDs and their children
+                            async function fetchCategoryAndChildren(categoryId) {
+                                const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
+                                const categoryIds = categoriesData.map(category => category._id);
+                                for (let childId of categoryIds) {
+                                    orConditionsForcategories.push({ "productCategory.category._id": childId });
+                                    // Recursively fetch children of childId
+                                    await fetchCategoryAndChildren(childId);
+                                }
                             }
+                            // Start fetching categories recursively
+                            await fetchCategoryAndChildren(findcategory._id);
+                            // Push condition for the parent category itself
+                            orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
                         }
                         else {
                             query = {
@@ -289,19 +300,31 @@ class ProductController extends base_controller_1.default {
                         }
                     }
                     else {
+                        orConditionsForcategories.push({ "productCategory.category.slug": category });
                         const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
                         if (findcategory && findcategory._id) {
-                            const categoriesData = await category_model_1.default.find({ parentCategory: findcategory._id }, '_id');
-                            const categoryIds = categoriesData.map(category => category._id);
-                            for await (let id of categoryIds) {
-                                orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(id) });
+                            // Function to recursively fetch category IDs and their children
+                            async function fetchCategoryAndChildren(categoryId) {
+                                const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
+                                const categoryIds = categoriesData.map(category => category._id);
+                                for (let childId of categoryIds) {
+                                    orConditionsForcategories.push({ "productCategory.category._id": childId });
+                                    // Recursively fetch children of childId
+                                    await fetchCategoryAndChildren(childId);
+                                }
                             }
+                            // Start fetching categories recursively
+                            await fetchCategoryAndChildren(findcategory._id);
+                            // Push condition for the parent category itself
+                            orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
                         }
                         else {
+                            // If category not found, fallback to direct query by slug
                             query = {
                                 ...query, "productCategory.category.slug": category
                             };
                         }
+                        console.log("orConditionsForcategories", orConditionsForcategories);
                     }
                 }
                 if (brand) {
@@ -389,8 +412,6 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     getSeo,
-                    getCategory,
-                    getBrand,
                     hostName: req.get('origin'),
                 });
                 if (sortby == "price") {
@@ -405,9 +426,16 @@ class ProductController extends base_controller_1.default {
                         }
                     });
                 }
+                const totalProductData = await product_service_1.default.findProductList({
+                    query,
+                    products,
+                    discount,
+                    offers,
+                    hostName: req.get('origin'),
+                });
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: productData.length,
+                    totalCount: totalProductData?.length || 0,
                     message: 'Success!'
                 }, 200);
             }
