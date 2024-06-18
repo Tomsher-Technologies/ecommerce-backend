@@ -24,7 +24,7 @@ import CountryService from '../../../services/admin/setup/country-service'
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service';
-import { filterProduct, defaultSkuSettings, deleteFunction } from '../../../utils/admin/products';
+import { filterProduct, defaultSLugAndSkuSettings, deleteFunction } from '../../../utils/admin/products';
 import SpecificationService from '../../../services/admin/ecommerce/specification-service';
 import { products } from "../../../constants/admin/excel/products";
 
@@ -83,245 +83,267 @@ class ProductsController extends BaseController {
                     file.fieldname &&
                     file.fieldname.startsWith('galleryImage[')
                 );
-                const skuData = await defaultSkuSettings(variants)
+                const allCountryData: any = await CountryService.findAll()
+                const slugAndSkuData = await defaultSLugAndSkuSettings(variants, allCountryData, productTitle)
+                console.log("slugAndSkuDataslugAndSkuData", slugAndSkuData);
 
-                const productData: Partial<ProductsProps> = {
-                    productTitle: capitalizeWords(productTitle),
-                    slug: slugify(productTitle) as any,
-                    brand: brand as any,
-                    description,
-                    longDescription,
-                    completeTab,
-                    productImageUrl: handleFileUpload(req, null, (req.file || productImage), 'productImageUrl', 'product'),
-                    warehouse: warehouse as any,
-                    unit: unit as string,
-                    measurements: measurements as {
-                        weight?: string,
-                        hight?: string,
-                        length?: string,
-                        width?: string
-                    },
-                    sku: skuData,
-                    isVariant: Number(isVariant),
-                    pageTitle: pageTitle as string,
-                    deliveryDays,
-                    status: '1', // active
-                    statusAt: new Date(),
-                    createdBy: user._id,
-                };
-
-
-                newProduct = await ProductsService.create(productData);
-                if (newProduct) {
-                    const productSeo = {
-                        metaTitle: metaTitle,
-                        metaDescription: metaDescription,
-                        metaKeywords: metaKeywords,
-                        ogTitle: ogTitle,
-                        ogDescription: ogDescription,
-                        twitterTitle: twitterTitle,
-                        twitterDescription: twitterDescription
-                    }
-                    if (metaTitle || metaDescription || metaKeywords || ogTitle || ogDescription || twitterTitle || twitterDescription) {
-                        const newSeo = await SeoPageService.create({
-                            pageId: newProduct._id,
-                            page: seoPage.ecommerce.products,
-                            ...productSeo
-                        })
-                    }
-
-                    if (productSpecification && productSpecification.length > 0) {
-                        await productSpecification.map(async (specification: any) => {
-                            const specificationData = {
-                                productId: newProduct._id,
-                                ...specification
-                            }
-                            await ProductSpecificationService.create(specificationData)
-                        })
-
-                    }
-                    const category = productCategory.split(',');
-                    if (category && category.length > 0) {
-                        await category.map(async (item: any, index: number) => {
-                            newCategory = await ProductCategoryLinkService.create({
-                                productId: newProduct._id,
-                                categoryId: item
+                if (slugAndSkuData && slugAndSkuData.slug && slugAndSkuData.variantSku) {
+                    const productData: Partial<ProductsProps> = {
+                        productTitle: capitalizeWords(productTitle),
+                        slug: slugAndSkuData.slug,
+                        brand: brand as any,
+                        description,
+                        longDescription,
+                        completeTab,
+                        productImageUrl: handleFileUpload(req, null, (req.file || productImage), 'productImageUrl', 'product'),
+                        warehouse: warehouse as any,
+                        unit: unit as string,
+                        measurements: measurements as {
+                            weight?: string,
+                            hight?: string,
+                            length?: string,
+                            width?: string
+                        },
+                        sku: slugAndSkuData.variantSku,
+                        isVariant: Number(isVariant),
+                        pageTitle: pageTitle as string,
+                        deliveryDays,
+                        status: '1', // active
+                        statusAt: new Date(),
+                        createdBy: user._id,
+                    };
+                    newProduct = await ProductsService.create(productData);
+                    if (newProduct) {
+                        const productSeo = {
+                            metaTitle: metaTitle,
+                            metaDescription: metaDescription,
+                            metaKeywords: metaKeywords,
+                            ogTitle: ogTitle,
+                            ogDescription: ogDescription,
+                            twitterTitle: twitterTitle,
+                            twitterDescription: twitterDescription
+                        }
+                        if (metaTitle || metaDescription || metaKeywords || ogTitle || ogDescription || twitterTitle || twitterDescription) {
+                            const newSeo = await SeoPageService.create({
+                                pageId: newProduct._id,
+                                page: seoPage.ecommerce.products,
+                                ...productSeo
                             })
-                        })
-                    }
-                    if (galleryImages && galleryImages?.length > 0) {
-                        uploadGallaryImages(req, newProduct._id, galleryImages);
-                    }
-                    if (variants && (variants as any).length > 0) {
-                        var productVariantData
-                        for (let variantsIndex = 0; variantsIndex < variants.length; variantsIndex++) {
-                            var slugData
-                            if (variants[variantsIndex].productVariants && variants[variantsIndex].productVariants.length) {
-                                for (let productVariantsIndex = 0; productVariantsIndex < variants[variantsIndex].productVariants.length; productVariantsIndex++) {
-                                    var countryData: any
-                                    if (variants[variantsIndex].countryId) {
-                                        countryData = await CountryService.findCountryId({ _id: variants[variantsIndex].countryId })
-                                    }
-                                    if (variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle) {
-                                        slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
-                                    }
-                                    else {
-                                        slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
-                                    }
-                                    if (countryData) {
-                                        slugData = slugData + "-" + countryData.countryShortTitle
-                                    }
+                        }
 
-                                    if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
+                        if (productSpecification && productSpecification.length > 0) {
+                            await productSpecification.map(async (specification: any) => {
+                                const specificationData = {
+                                    productId: newProduct._id,
+                                    ...specification
+                                }
+                                await ProductSpecificationService.create(specificationData)
+                            })
 
-                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex], slugify(slugData))
+                        }
+                        const category = productCategory.split(',');
+                        if (category && category.length > 0) {
+                            await category.map(async (item: any, index: number) => {
+                                newCategory = await ProductCategoryLinkService.create({
+                                    productId: newProduct._id,
+                                    categoryId: item
+                                })
+                            })
+                        }
+                        if (galleryImages && galleryImages?.length > 0) {
+                            uploadGallaryImages(req, newProduct._id, galleryImages);
+                        }
+                        if (variants && (variants as any).length > 0) {
+                            var productVariantData
+                            for (let variantsIndex = 0; variantsIndex < variants.length; variantsIndex++) {
+                                if (variants[variantsIndex].productVariants && variants[variantsIndex].productVariants.length) {
+                                    for (let productVariantsIndex = 0; productVariantsIndex < variants[variantsIndex].productVariants.length; productVariantsIndex++) {
+                                        if (variants[variantsIndex].countryId) {
+                                            const countryData: any = allCountryData.find((country: any) => String(country._id) === variants[variantsIndex].countryId);
+                                            // if (variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle) {
+                                            //     slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
+                                            // }
+                                            // else {
+                                            //     slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
+                                            // }
 
-                                        if (checkDuplication) {
-                                            await deleteFunction(newProduct._id)
-                                            return controller.sendErrorResponse(res, 200, {
-                                                message: 'Validation error',
-                                                validation: 'The variant has already been added in this country'
-                                            }, req);
-                                        }
-                                        else {
-                                            productVariantData = await ProductVariantService.create(newProduct._id, {
-                                                slug: slugify(slugData),
-                                                countryId: variants[variantsIndex].countryId,
-                                                ...variants[variantsIndex].productVariants[productVariantsIndex],
-                                            } as any, userData)
+                                            if (countryData) {
+                                                const slugData = newProduct?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1) // generate slug
+                                                if (slugData !== '') {
+                                                    if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
 
-                                            const galleryImages = (req as any).files.filter((file: any) =>
-                                                file.fieldname &&
-                                                file.fieldname.startsWith('variants[' + variantsIndex + '][productVariants][' + productVariantsIndex + '][galleryImage][')
-                                            );
+                                                        const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex], slugify(slugData))
 
-                                            if (galleryImages?.length > 0) {
-                                                uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
-                                            }
-                                            if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAttributes?.length > 0))) {
-                                                for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes.length; j++) {
-                                                    const attributeData = {
-                                                        productId: newProduct._id,
-                                                        variantId: productVariantData._id,
-                                                        attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeId,
-                                                        attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeDetailId
+                                                        if (checkDuplication) {
+                                                            await deleteFunction(newProduct._id)
+                                                            return controller.sendErrorResponse(res, 200, {
+                                                                message: 'Validation error',
+                                                                validation: 'The variant has already been added in this country'
+                                                            }, req);
+                                                        }
+                                                        else {
+                                                            productVariantData = await ProductVariantService.create(newProduct._id, {
+                                                                slug: slugify(slugData),
+                                                                countryId: variants[variantsIndex].countryId,
+                                                                ...variants[variantsIndex].productVariants[productVariantsIndex],
+                                                            } as any, userData)
+
+                                                            const galleryImages = (req as any).files.filter((file: any) =>
+                                                                file.fieldname &&
+                                                                file.fieldname.startsWith('variants[' + variantsIndex + '][productVariants][' + productVariantsIndex + '][galleryImage][')
+                                                            );
+
+                                                            if (galleryImages?.length > 0) {
+                                                                uploadGallaryImages(req, { variantId: productVariantData._id }, galleryImages);
+                                                            }
+                                                            if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes) && ((variants[variantsIndex] as any).productVariants[productVariantsIndex].productVariantAttributes?.length > 0))) {
+                                                                for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes.length; j++) {
+                                                                    const attributeData = {
+                                                                        productId: newProduct._id,
+                                                                        variantId: productVariantData._id,
+                                                                        attributeId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeId,
+                                                                        attributeDetailId: (variants as any)[variantsIndex].productVariants[productVariantsIndex].productVariantAttributes[j].attributeDetailId
+                                                                    }
+                                                                    await ProductVariantAttributeService.create(attributeData)
+                                                                }
+                                                            }
+
+                                                        }
+                                                        if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSeo))) {
+                                                            const seoData = {
+                                                                pageId: newProduct._id,
+                                                                pageReferenceId: productVariantData._id,
+                                                                page: seoPage.ecommerce.products,
+                                                                ...variants[variantsIndex].productVariants[productVariantsIndex].productSeo
+                                                            }
+                                                            await SeoPageService.create(seoData)
+                                                        }
+
+                                                        if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
+                                                            for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length; j++) {
+
+                                                                const specificationData = {
+                                                                    productId: newProduct._id,
+                                                                    variantId: productVariantData._id,
+                                                                    ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
+                                                                }
+
+                                                                await ProductSpecificationService.create(specificationData)
+                                                            }
+                                                        }
                                                     }
-                                                    await ProductVariantAttributeService.create(attributeData)
+                                                } else {
+                                                    await deleteFunction(newProduct._id)
+                                                    return controller.sendErrorResponse(res, 200, {
+                                                        message: 'Validation error',
+                                                        validation: 'slug went wrong'
+                                                    }, req);
                                                 }
+                                            } else {
+                                                await deleteFunction(newProduct._id)
+                                                return controller.sendErrorResponse(res, 200, {
+                                                    message: 'Validation error',
+                                                    validation: 'Country is required'
+                                                }, req);
                                             }
 
                                         }
-                                        if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSeo))) {
-                                            const seoData = {
-                                                pageId: newProduct._id,
-                                                pageReferenceId: productVariantData._id,
-                                                page: seoPage.ecommerce.products,
-                                                ...variants[variantsIndex].productVariants[productVariantsIndex].productSeo
-                                            }
-                                            await SeoPageService.create(seoData)
-                                        }
 
-                                        if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
-                                            for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length; j++) {
-
-                                                const specificationData = {
-                                                    productId: newProduct._id,
-                                                    variantId: productVariantData._id,
-                                                    ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
-                                                }
-
-                                                await ProductSpecificationService.create(specificationData)
-                                            }
-                                        }
                                     }
+
                                 }
 
                             }
 
                         }
 
-                    }
 
 
-
-                    // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
-                    //     file.fieldname &&
-                    //     file.fieldname.startsWith('languageValues[') &&
-                    //     file.fieldname.includes('[productImage]')
-                    // );
-                    // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
-                    //     file.fieldname &&
-                    //     file.fieldname.startsWith('languageValues[') &&
-                    //     file.fieldname.includes('[languageValues][galleryImage]')
-                    // );
-
-
-                    if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
-                        await languageValues?.map(async (languageValue: any, index: number) => {
-
-                            // let productImageUrl = ''
-                            // if (languageValuesImages?.length > 0) {
-                            //     productImageUrl = handleFileUpload(req
-                            //         , null, languageValuesImages[index], `productImageUrl`, 'product');
-                            // }
-
-                            // var galleryImages: any = [];
-                            // var productGalleryImages: any = [];
-                            if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
-                                // await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
-                                //     let variantImageUrl = ''
-                                // const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
-                                //     file.fieldname &&
-                                //     file.fieldname.startsWith('languageValues[') &&
-                                //     file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
-                                // );
-                                // console.log("languageValuesVariantImages:", languageValuesVariantImages);
-
-                                // if (languageValuesVariantImages?.length > 0) {
-                                //     await languageValuesVariantImages.map((variantImage: any, index: number) => {
-                                //         variantImageUrl = handleFileUpload(req
-                                //             , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
-                                //         galleryImages.push({ variantImageUrl: variantImageUrl })
-                                //     })
-                                //     languageValue.languageValues.variants[index].galleryImages = galleryImages
+                        // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        //     file.fieldname &&
+                        //     file.fieldname.startsWith('languageValues[') &&
+                        //     file.fieldname.includes('[productImage]')
+                        // );
+                        // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
+                        //     file.fieldname &&
+                        //     file.fieldname.startsWith('languageValues[') &&
+                        //     file.fieldname.includes('[languageValues][galleryImage]')
+                        // );
 
 
-                                // }
-                                // if (languageValuesGalleryImages?.length > 0) {
+                        if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
+                            await languageValues?.map(async (languageValue: any, index: number) => {
+
+                                // let productImageUrl = ''
+                                // if (languageValuesImages?.length > 0) {
                                 //     productImageUrl = handleFileUpload(req
-                                //         , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
-                                //     productGalleryImages.push({ productImageUrl: productImageUrl })
-
+                                //         , null, languageValuesImages[index], `productImageUrl`, 'product');
                                 // }
 
-                                // languageValue.languageValues.galleryImages = productGalleryImages
-                                // })
+                                // var galleryImages: any = [];
+                                // var productGalleryImages: any = [];
+                                if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
+                                    // await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
+                                    //     let variantImageUrl = ''
+                                    // const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
+                                    //     file.fieldname &&
+                                    //     file.fieldname.startsWith('languageValues[') &&
+                                    //     file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
+                                    // );
+                                    // console.log("languageValuesVariantImages:", languageValuesVariantImages);
 
-                                GeneralService.multiLanguageFieledsManage(newProduct._id, {
-                                    ...languageValue,
-                                    source: multiLanguageSources.ecommerce.products,
-                                    languageValues: {
-                                        ...languageValue.languageValues,
-                                        // productImageUrl
-                                    }
-                                })
-                            }
-                        })
+                                    // if (languageValuesVariantImages?.length > 0) {
+                                    //     await languageValuesVariantImages.map((variantImage: any, index: number) => {
+                                    //         variantImageUrl = handleFileUpload(req
+                                    //             , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
+                                    //         galleryImages.push({ variantImageUrl: variantImageUrl })
+                                    //     })
+                                    //     languageValue.languageValues.variants[index].galleryImages = galleryImages
+
+
+                                    // }
+                                    // if (languageValuesGalleryImages?.length > 0) {
+                                    //     productImageUrl = handleFileUpload(req
+                                    //         , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
+                                    //     productGalleryImages.push({ productImageUrl: productImageUrl })
+
+                                    // }
+
+                                    // languageValue.languageValues.galleryImages = productGalleryImages
+                                    // })
+
+                                    GeneralService.multiLanguageFieledsManage(newProduct._id, {
+                                        ...languageValue,
+                                        source: multiLanguageSources.ecommerce.products,
+                                        languageValues: {
+                                            ...languageValue.languageValues,
+                                            // productImageUrl
+                                        }
+                                    })
+                                }
+                            })
+                        }
+
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: newProduct,
+                            message: 'Product created successfully!'
+                        }, 200, {
+                            sourceFromId: newProduct._id,
+                            sourceFrom: adminTaskLog.ecommerce.products,
+                            activity: adminTaskLogActivity.create,
+                            activityStatus: adminTaskLogStatus.success
+                        });
+                    } else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Validation error',
+                            validation: "Product can't inserting. please try again!"
+                        }, req);
                     }
 
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: newProduct,
-                        message: 'Product created successfully!'
-                    }, 200, {
-                        sourceFromId: newProduct._id,
-                        sourceFrom: adminTaskLog.ecommerce.products,
-                        activity: adminTaskLogActivity.create,
-                        activityStatus: adminTaskLogStatus.success
-                    });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
-                        validation: "Product can't inserting. please try again!"
+                        validation: 'Slug and sku is missing'
                     }, req);
                 }
             } else {

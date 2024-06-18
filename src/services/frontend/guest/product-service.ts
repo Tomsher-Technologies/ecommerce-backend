@@ -89,7 +89,7 @@ class ProductService {
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
-       
+
         ];
 
         var offerDetails: any
@@ -420,8 +420,10 @@ class ProductService {
         return pipeline
     }
 
-    async findOne(productId: string, sku: string, hostName: any): Promise<void> {
-        let query: any = {};
+    async findOne(productOption: any): Promise<void> {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
+        let query: any = { variantSku: sku };
+
         if (productId) {
 
             const data = /^[0-9a-fA-F]{24}$/.test(productId);
@@ -440,22 +442,30 @@ class ProductService {
             console.log(query);
 
 
-            let pipeline: any[] = [
-                { $match: query },
-                productCategoryLookup,
-                variantLookup,
-                imageLookup,
-                brandLookup,
-                brandObject,
-                seoLookup,
-                seoObject,
-                productMultilanguageFieldsLookup,
-                specificationsLookup
-            ];
 
-            const language: any = await this.productLanguage(hostName.hostName, pipeline)
-            const productVariantDataWithValues: any = await ProductVariantsModel.aggregate([{ $match: { variantSku: sku } }]);
-            console.log("..........", productVariantDataWithValues);
+
+
+
+            let pipeline: any[] = [
+                ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                ...(getSeo === '1' ? [productSeoLookup] : []),
+                ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
+                imageLookup,
+
+                { $match: query },
+
+            ];
+            // { variantSku: sku }
+            console.log("333", pipeline);
+
+            const language: any = await this.productLanguage(hostName, pipeline)
+            // console.log("......1234....", language);
+
+            // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
 
 
             const productDataWithValues: any = await ProductsModel.aggregate(language);
