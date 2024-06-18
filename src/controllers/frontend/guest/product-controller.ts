@@ -161,11 +161,13 @@ class ProductController extends BaseController {
     }
     async findProductDetail(req: Request, res: Response): Promise<void> {
         try {
-            const productId: any = req.query.product;
+            const productId: any = req.params.slug;
+            const sku: any = req.params.sku;
 
             if (productId) {
                 const product: any = await ProductService.findOne(
                     productId,
+                    sku,
                     { hostName: req.get('origin') }
                 );
 
@@ -195,7 +197,7 @@ class ProductController extends BaseController {
 
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
             // let getspecification = ''
             // let getattribute = ''
             let getSeo = '1'
@@ -486,11 +488,8 @@ class ProductController extends BaseController {
                     getattribute,
                     getspecification,
                     getSeo,
-                    getCategory,
-                    getBrand,
                     hostName: req.get('origin'),
                 });
-
                 if (sortby == "price") {
                     productData.sort((a: any, b: any) => {
                         const aPrice = a.productVariants[0]?.[sortby] || 0;
@@ -503,11 +502,16 @@ class ProductController extends BaseController {
                         }
                     });
                 }
-
-
+                const totalProductData: any = await ProductService.findProductList({
+                    query,
+                    products,
+                    discount,
+                    offers,
+                    hostName: req.get('origin'),
+                });
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: productData.length,
+                    totalCount: totalProductData?.length || 0,
                     message: 'Success!'
                 }, 200);
             } else {

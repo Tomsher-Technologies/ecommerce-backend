@@ -1,4 +1,4 @@
-import { FilterOptionsProps, pagination } from '../../../components/pagination';
+import { FilterOptionsProps, frontendPagination } from '../../../components/pagination';
 import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
@@ -19,6 +19,7 @@ import CollectionsCategoriesModel from '../../../model/admin/website/collections
 
 import CommonService from '../../../services/frontend/guest/common-service';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
+import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 
 
 class ProductService {
@@ -29,8 +30,8 @@ class ProductService {
     }
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, products, discount, getImageGallery, getattribute, getBrand, getCategory, getspecification, getSeo, hostName, offers } = productOption;
-        const { skip, limit } = pagination(productOption.query || {}, productOption);
+        var { query, sort, products, discount, getImageGallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
+        const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -80,17 +81,15 @@ class ProductService {
             { $sort: finalSort },
             // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
-            ...(getCategory === '1' ? [productCategoryLookup] : []),
+            productCategoryLookup,
             ...(getImageGallery === '1' ? [imageLookup] : []),
-            ...(getBrand === '1' ? [brandLookup] : []),
-            ...(getBrand === '1' ? [brandObject] : []),
+            brandLookup,
+            brandObject,
             ...(getspecification === '1' ? [specificationsLookup] : []),
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
-            // {
-            //     $count: 'count'
-            // }
+            ...(skip ? [{ $skip: skip }] : []),
+            ...(limit ? [{ $limit: limit }] : []),
+       
         ];
 
         var offerDetails: any
@@ -160,7 +159,6 @@ class ProductService {
             const language: any = await this.productLanguage(hostName, pipeline)
 
             productData = await ProductsModel.aggregate(language).exec();
-            // console.log("productData",productData``);
 
         }
 
@@ -192,7 +190,7 @@ class ProductService {
                 }
             }
         } else {
-            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' })
         }
 
         const attributeArray: any = []
@@ -321,7 +319,7 @@ class ProductService {
                 }
             }
         } else {
-            productData = await this.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' })
         }
         const specificationArray: any = []
 
@@ -422,7 +420,7 @@ class ProductService {
         return pipeline
     }
 
-    async findOne(productId: string, hostName: any): Promise<void> {
+    async findOne(productId: string, sku: string, hostName: any): Promise<void> {
         let query: any = {};
         if (productId) {
 
@@ -456,8 +454,12 @@ class ProductService {
             ];
 
             const language: any = await this.productLanguage(hostName.hostName, pipeline)
+            const productVariantDataWithValues: any = await ProductVariantsModel.aggregate([{ $match: { variantSku: sku } }]);
+            console.log("..........", productVariantDataWithValues);
+
 
             const productDataWithValues: any = await ProductsModel.aggregate(language);
+            console.log("..........", productDataWithValues);
 
             return productDataWithValues;
         }
@@ -530,7 +532,7 @@ class ProductService {
                             for await (let result of results) {
                                 const language: any = await this.productLanguage(hostName, [{ $match: { _id: new mongoose.Types.ObjectId(result.productId) } }])
 
-                                const productResult = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+                                const productResult = await this.findProductList({ language, getattribute: '1', getspecification: '1' })
 
                                 if (productResult) {
                                     productData.push(productResult[0])
@@ -561,7 +563,7 @@ class ProductService {
                     for await (let data of collections.collectionsProducts) {
                         const language: any = await this.productLanguage(hostName, [{ $match: { _id: new mongoose.Types.ObjectId(data) } }])
 
-                        const result = await this.findProductList({ language, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+                        const result = await this.findProductList({ language, getattribute: '1', getspecification: '1' })
 
                         productData.push(result[0])
                     }
@@ -569,6 +571,16 @@ class ProductService {
             }
             return { productData: productData }
 
+        }
+    }
+    async getTotalCount(query: any = {}): Promise<number> {
+        try {
+            console.log(query);
+
+            const totalCount = await ProductsModel.countDocuments(query);
+            return totalCount;
+        } catch (error) {
+            throw new Error('Error fetching total count of users');
         }
     }
 
