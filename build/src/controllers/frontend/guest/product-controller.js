@@ -140,8 +140,16 @@ class ProductController extends base_controller_1.default {
         try {
             const productId = req.params.slug;
             const sku = req.params.sku;
+            const { getattribute = '', getspecification = '', getImageGallery = '' } = req.query;
             if (productId) {
-                const product = await product_service_1.default.findOne(productId, sku, { hostName: req.get('origin') });
+                const product = await product_service_1.default.findOne({
+                    productId,
+                    sku,
+                    getImageGallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('host')
+                });
                 if (product) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -181,6 +189,7 @@ class ProductController extends base_controller_1.default {
             const orConditionsForAttributes = [];
             const orConditionsForBrands = [];
             const orConditionsForcategories = [];
+            const orConditionsForcategory = [];
             const orConditionsForSpecification = [];
             query.status = '1';
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -275,7 +284,7 @@ class ProductController extends base_controller_1.default {
                 if (category) {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
-                        orConditionsForcategories.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
+                        orConditionsForcategory.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
                         const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
                         if (findcategory && findcategory._id) {
                             // Function to recursively fetch category IDs and their children
@@ -283,7 +292,7 @@ class ProductController extends base_controller_1.default {
                                 const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
                                 const categoryIds = categoriesData.map(category => category._id);
                                 for (let childId of categoryIds) {
-                                    orConditionsForcategories.push({ "productCategory.category._id": childId });
+                                    orConditionsForcategory.push({ "productCategory.category._id": childId });
                                     // Recursively fetch children of childId
                                     await fetchCategoryAndChildren(childId);
                                 }
@@ -291,7 +300,7 @@ class ProductController extends base_controller_1.default {
                             // Start fetching categories recursively
                             await fetchCategoryAndChildren(findcategory._id);
                             // Push condition for the parent category itself
-                            orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
+                            orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                         }
                         else {
                             query = {
@@ -300,7 +309,7 @@ class ProductController extends base_controller_1.default {
                         }
                     }
                     else {
-                        orConditionsForcategories.push({ "productCategory.category.slug": category });
+                        orConditionsForcategory.push({ "productCategory.category.slug": category });
                         const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
                         if (findcategory && findcategory._id) {
                             // Function to recursively fetch category IDs and their children
@@ -308,7 +317,7 @@ class ProductController extends base_controller_1.default {
                                 const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
                                 const categoryIds = categoriesData.map(category => category._id);
                                 for (let childId of categoryIds) {
-                                    orConditionsForcategories.push({ "productCategory.category._id": childId });
+                                    orConditionsForcategory.push({ "productCategory.category._id": childId });
                                     // Recursively fetch children of childId
                                     await fetchCategoryAndChildren(childId);
                                 }
@@ -316,7 +325,7 @@ class ProductController extends base_controller_1.default {
                             // Start fetching categories recursively
                             await fetchCategoryAndChildren(findcategory._id);
                             // Push condition for the parent category itself
-                            orConditionsForcategories.push({ "productCategory.category._id": findcategory._id });
+                            orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                         }
                         else {
                             // If category not found, fallback to direct query by slug
@@ -324,7 +333,7 @@ class ProductController extends base_controller_1.default {
                                 ...query, "productCategory.category.slug": category
                             };
                         }
-                        console.log("orConditionsForcategories", orConditionsForcategories);
+                        console.log("orConditionsForcategory", orConditionsForcategory);
                     }
                 }
                 if (brand) {
@@ -389,6 +398,11 @@ class ProductController extends base_controller_1.default {
                     if (orConditionsForcategories.length > 0) {
                         query.$and.push({
                             $or: orConditionsForcategories
+                        });
+                    }
+                    if (orConditionsForcategory.length > 0) {
+                        query.$and.push({
+                            $or: orConditionsForcategory
                         });
                     }
                 }

@@ -53,7 +53,8 @@ const productsSchema = new mongoose_1.Schema({
     starRating: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        maxlength: [5, 'starRating must be at most 5 characters long']
     },
     productImageUrl: {
         type: String,

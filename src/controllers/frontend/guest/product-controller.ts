@@ -472,6 +472,11 @@ class ProductController extends BaseController {
                             $or: orConditionsForcategories
                         });
                     }
+                    if (orConditionsForcategory.length > 0) {
+                        query.$and.push({
+                            $or: orConditionsForcategory
+                        });
+                    }
                 }
                 if (sortby == 'createdAt') {
                     if (sortorder === 'asc') {
