@@ -11,74 +11,100 @@ const controller = new BaseController();
 class ProductController extends BaseController {
     async findAllAttributes(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as ProductsFrontendQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'attributeTitle', sortorder = 'asc' } = req.query as ProductsFrontendQueryParams;
 
             let query: any = { _id: { $exists: true } };
             let products: any;
 
             query.status = '1';
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
 
-            if (category) {
 
-                const keywordRegex = new RegExp(category, 'i');
-
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-
-                if (isObjectId) {
-                    query = {
-                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
-                    }
-
-                } else {
-                    query = {
-                        ...query, "productCategory.category.slug": keywordRegex
-                    }
+                const sort: any = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
-            }
-            if (brand) {
-                const keywordRegex = new RegExp(brand, 'i');
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                if (isObjectId) {
-                    query = {
-                        ...query, "brand._id": new mongoose.Types.ObjectId(brand)
-                    }
-                } else {
-                    query = {
-                        ...query, "brand.slug": keywordRegex
+                if (category) {
+
+                    const keywordRegex = new RegExp(category, 'i');
+
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+
+                    if (isObjectId) {
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                        }
+
+                    } else {
+                        query = {
+                            ...query, "productCategory.category.slug": keywordRegex
+                        }
                     }
                 }
-            }
-
-            if (collectionproduct) {
-                products = {
-                    ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                if (brand) {
+                    const keywordRegex = new RegExp(brand, 'i');
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    if (isObjectId) {
+                        query = {
+                            ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+                        }
+                    } else {
+                        query = {
+                            ...query, "brand.slug": keywordRegex
+                        }
+                    }
                 }
-            }
 
-            if (collectionbrand) {
-                products = {
-                    ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                if (collectionproduct) {
+                    products = {
+                        ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    }
                 }
-            }
 
-            if (collectioncategory) {
-                products = {
-                    ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                if (collectionbrand) {
+                    products = {
+                        ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    }
                 }
+
+                if (collectioncategory) {
+                    products = {
+                        ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    }
+                }
+
+                const attributes: any = await ProductService.findAllAttributes({
+                    hostName: req.get('origin'),
+                    query,
+                    products,
+                    sort
+                });
+
+                attributes.sort((a: any, b: any) => {
+                    const titleA = a.attributeTitle.toLowerCase();
+                    const titleB = b.attributeTitle.toLowerCase();
+
+                    if (titleA < titleB) {
+                        return -1;
+                    }
+                    if (titleA > titleB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: attributes,
+                    message: 'Success!'
+                }, 200);
+
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing'
+                }, req);
             }
-
-            const attributes: any = await ProductService.findAllAttributes({
-                hostName: req.get('origin'),
-                query,
-                products,
-            });
-
-
-
-            return controller.sendSuccessResponse(res, {
-                requestedData: attributes,
-                message: 'Success!'
-            }, 200);
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching attributes' });
         }
@@ -86,75 +112,102 @@ class ProductController extends BaseController {
 
     async findAllSpecifications(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as ProductsFrontendQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'specificationTitle', sortorder = 'asc' } = req.query as ProductsFrontendQueryParams;
 
             let query: any = { _id: { $exists: true } };
             let products: any;
 
             query.status = '1';
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
-            if (category) {
-
-                const keywordRegex = new RegExp(category, 'i');
-
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-
-                if (isObjectId) {
-                    query = {
-                        ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
-                    }
-
-                } else {
-                    query = {
-                        ...query, "productCategory.category.slug": keywordRegex
-                    }
+            if (countryId) {
+                const sort: any = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
-            }
-            if (brand) {
+                if (category) {
 
-                const keywordRegex = new RegExp(brand, 'i');
+                    const keywordRegex = new RegExp(category, 'i');
 
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
-                if (isObjectId) {
-                    query = {
-                        ...query, "brand._id": new mongoose.Types.ObjectId(brand)
-                    }
+                    if (isObjectId) {
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                        }
 
-                } else {
-                    query = {
-                        ...query, "brand.slug": keywordRegex
+                    } else {
+                        query = {
+                            ...query, "productCategory.category.slug": keywordRegex
+                        }
                     }
                 }
-            }
+                if (brand) {
 
-            if (collectionproduct) {
-                products = {
-                    ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    const keywordRegex = new RegExp(brand, 'i');
+
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+
+                    if (isObjectId) {
+                        query = {
+                            ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+                        }
+
+                    } else {
+                        query = {
+                            ...query, "brand.slug": keywordRegex
+                        }
+                    }
                 }
-            }
 
-            if (collectionbrand) {
-                products = {
-                    ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                if (collectionproduct) {
+                    products = {
+                        ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    }
                 }
-            }
 
-            if (collectioncategory) {
-                products = {
-                    ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                if (collectionbrand) {
+                    products = {
+                        ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    }
                 }
-            }
-            const specifications: any = await ProductService.findAllSpecifications({
-                hostName: req.get('origin'),
-                query,
-                products
-            });
 
-            return controller.sendSuccessResponse(res, {
-                requestedData: specifications,
-                message: 'Success!'
-            }, 200);
+                if (collectioncategory) {
+                    products = {
+                        ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    }
+                }
+                const specifications: any = await ProductService.findAllSpecifications({
+                    hostName: req.get('origin'),
+                    query,
+                    products,
+                    sort
+                });
+
+                specifications.sort((a: any, b: any) => {
+                    const titleA = a.specificationTitle.toLowerCase();
+                    const titleB = b.specificationTitle.toLowerCase();
+
+                    if (titleA < titleB) {
+                        return -1;
+                    }
+                    if (titleA > titleB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: specifications,
+                    message: 'Success!'
+                }, 200);
+
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing'
+                }, req);
+            }
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
         }

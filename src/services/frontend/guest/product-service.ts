@@ -1,4 +1,4 @@
-import { FilterOptionsProps, frontendPagination } from '../../../components/pagination';
+import { FilterOptionsProps, frontendPagination, pagination } from '../../../components/pagination';
 import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
@@ -167,7 +167,15 @@ class ProductService {
 
     async findAllAttributes(options: any): Promise<ProductsProps[]> {
 
-        const { query, hostName, products } = options;
+        const { query, hostName, sort } = pagination(options.query || {}, options);
+        const { products } = options
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         var attributeDetail: any = []
         let productData: any = [];
         let collection: any
@@ -214,9 +222,13 @@ class ProductService {
 
                 let pipeline: any[] = [
                     { $match: query },
+                    { $sort: finalSort },
+
                     attributeDetailsLookup,
-                    attributeProject
+                    attributeProject,
+
                 ];
+
                 const attributeData = await AttributesModel.aggregate(pipeline).exec()
 
                 const language: any = await this.attributeLanguage(hostName, pipeline)
@@ -295,7 +307,13 @@ class ProductService {
 
     async findAllSpecifications(options: any): Promise<void | null> {
 
-        const { query, hostName, products } = options;
+        const { query, hostName, products, sort } = options;
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         var specificationDetail: any = []
         let productData: any = [];
 
@@ -343,7 +361,9 @@ class ProductService {
                 let pipeline: any[] = [
                     { $match: query },
                     specificationDetailsLookup,
-                    specificationProject
+                    specificationProject,
+                    { $sort: finalSort },
+
                 ];
                 const specificationData = await SpecificationModel.aggregate(pipeline).exec()
 

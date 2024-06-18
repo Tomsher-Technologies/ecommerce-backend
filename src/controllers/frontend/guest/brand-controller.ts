@@ -10,7 +10,7 @@ const controller = new BaseController();
 class BrandController extends BaseController {
     async findAllBrand(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as BrandQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'brandTitle', sortorder = 'asc' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } }
 
             query.status = '1';
@@ -18,6 +18,10 @@ class BrandController extends BaseController {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
+                const sort: any = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
+                }
                 if (!brand) {
 
                     if (category) {
@@ -73,7 +77,8 @@ class BrandController extends BaseController {
                 }
                 const brands = await BrandService.findAll({
                     hostName: req.get('origin'),
-                    query
+                    query,
+                    sort
 
                 }, products);
                 // console.log(query);
