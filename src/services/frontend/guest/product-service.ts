@@ -440,9 +440,9 @@ class ProductService {
         return pipeline
     }
 
-    async findOne(productOption: any): Promise<void> {
+    async findOneProduct(productOption: any): Promise<void> {
         var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
-        let query: any = { variantSku: sku };
+        let query: any = { sku: sku };
 
         if (productId) {
 
@@ -466,16 +466,30 @@ class ProductService {
 
 
 
-            let pipeline: any[] = [
-                ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
-                ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                ...(getSeo === '1' ? [productSeoLookup] : []),
-                ...(getSeo === '1' ? [addFieldsProductSeo] : []),
-                ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
-                imageLookup,
+            const modifiedPipeline = {
+                $lookup: {
+                    ...variantLookup.$lookup,
+                    pipeline: [
+                        ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                        ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                        ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                        ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                        ...(getSeo === '1' ? [productSeoLookup] : []),
+                        ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                        ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
 
+                    ]
+                }
+            };
+
+            let pipeline: any[] = [
+                // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+                modifiedPipeline,
+                productCategoryLookup,
+                ...(getImageGallery === '1' ? [imageLookup] : []),
+                brandLookup,
+                brandObject,
+                ...(getspecification === '1' ? [specificationsLookup] : []),
                 { $match: query },
 
             ];
@@ -489,9 +503,74 @@ class ProductService {
 
 
             const productDataWithValues: any = await ProductsModel.aggregate(language);
-            console.log("..........", productDataWithValues);
+            console.log("..........", productDataWithValues[0]);
 
-            return productDataWithValues;
+            return productDataWithValues[0];
+        }
+
+    }
+
+    async findOne(productOption: any): Promise<void> {
+        var { getImageGallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
+        let query: any = { sku: sku };
+
+        if (productId) {
+
+            const data = /^[0-9a-fA-F]{24}$/.test(productId);
+
+            if (data) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(productId)
+
+                }
+
+            } else {
+                query = {
+                    ...query, slug: productId
+                }
+            }
+            console.log(query);
+
+            const modifiedPipeline = {
+                $lookup: {
+                    ...variantLookup.$lookup,
+                    pipeline: [
+                        ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                        ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                        ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                        ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                        ...(getSeo === '1' ? [productSeoLookup] : []),
+                        ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                        ...(getImageGallery === '1' ? [variantImageGalleryLookup] : []),
+
+                    ]
+                }
+            };
+
+            let pipeline: any[] = [
+                // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
+                modifiedPipeline,
+                productCategoryLookup,
+                ...(getImageGallery === '1' ? [imageLookup] : []),
+                brandLookup,
+                brandObject,
+                ...(getspecification === '1' ? [specificationsLookup] : []),
+                { $match: query },
+
+            ];
+            // { variantSku: sku }
+            console.log("333", pipeline);
+
+            const language: any = await this.productLanguage(hostName, pipeline)
+            // console.log("......1234....", language);
+
+            // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
+
+
+            const productDataWithValues: any = await ProductsModel.aggregate(language);
+            console.log("..........", productDataWithValues[0]);
+
+            return productDataWithValues[0];
         }
 
     }

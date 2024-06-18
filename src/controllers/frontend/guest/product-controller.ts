@@ -219,7 +219,7 @@ class ProductController extends BaseController {
             const { getattribute = '', getspecification = '', getImageGallery = '' } = req.query as ProductsFrontendQueryParams;
 
             if (productId) {
-                const product: any = await ProductService.findOne(
+                const product: any = await ProductService.findOneProduct(
                     {
                         productId,
                         sku,
@@ -233,10 +233,7 @@ class ProductController extends BaseController {
                 if (product) {
 
                     controller.sendSuccessResponse(res, {
-                        requestedData: {
-                            ...product
-
-                        },
+                        requestedData: product,
                         message: 'Success'
                     });
                 } else {
