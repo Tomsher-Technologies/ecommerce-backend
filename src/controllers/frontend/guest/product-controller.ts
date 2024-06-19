@@ -243,8 +243,6 @@ class ProductController extends BaseController {
                         ...query, 'productVariants.slug': productId
                     }
                 }
-                console.log("qqq", query);
-
 
                 const product: any = await ProductService.findOneProduct(
                     {

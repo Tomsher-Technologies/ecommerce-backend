@@ -33,6 +33,7 @@ const authMiddleware = async (req, res, next) => {
         const token = req.header('Authorization')?.split(' ')[1];
         if (token) {
             const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+            console.log('checkToken', checkToken);
             if (checkToken) {
                 const user = await user_model_1.default.findOne({ _id: checkToken.userId });
                 const userData = {

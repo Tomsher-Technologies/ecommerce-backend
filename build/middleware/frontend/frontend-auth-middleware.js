@@ -4,28 +4,79 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authMiddleware = async (req, res, next) => {
+const customers_model_1 = __importDefault(require("../../src/model/frontend/customers-model"));
+const frontendAuthMiddleware = async (req, res, next) => {
     try {
-        const token = req.header('Authorization');
-        if (token) {
-            const checkToken = token.split(' ')[1];
-            const userData = jsonwebtoken_1.default.verify(checkToken, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
+        const authHeader = req.header('Authorization');
+        if (!authHeader) {
+            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
+        }
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+        }
+        const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+        if (checkToken?.userId) {
+            const userData = await customers_model_1.default.findOne({ _id: checkToken.userId });
             if (userData) {
                 req.user = userData;
                 res.locals.user = userData;
                 next();
             }
             else {
-                return res.status(201).json({ message: 'User data not dound!', status: false });
+                return res.status(404).json({ message: 'User data not found!', status: false });
             }
         }
         else {
-            return res.status(201).json({ message: 'Unauthorized - Missing token', status: false });
+            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
         }
     }
     catch (error) {
         console.error(error);
+        if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+            return res.status(400).json({ message: 'Invalid token', status: false });
+        }
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-exports.default = authMiddleware;
+const frontendAuthAndUnAuthMiddleware = async (req, res, next) => {
+    try {
+        const authHeader = req.header('Authorization');
+        const uuid = req.headers['uuid'];
+        if (!authHeader && !uuid) {
+            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
+        }
+        if (authHeader) {
+            const token = authHeader.split(' ')[1];
+            if (!token) {
+                return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+            }
+            const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+            if (checkToken?.userId) {
+                const userData = await customers_model_1.default.findOne({ _id: checkToken.userId });
+                if (userData) {
+                    res.locals.user = userData._id;
+                    next();
+                }
+                else {
+                    return res.status(404).json({ message: 'User data not found!', status: false });
+                }
+            }
+        }
+        else if (uuid) {
+            res.locals.user = uuid;
+            next();
+        }
+        else {
+            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
+        }
+    }
+    catch (error) {
+        console.error(error);
+        if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+            return res.status(400).json({ message: 'Invalid token', status: false });
+        }
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+exports.default = frontendAuthAndUnAuthMiddleware;

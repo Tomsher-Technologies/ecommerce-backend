@@ -22,7 +22,6 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     slug: {
         type: String,
         required: true,
-        unique: true
     },
     quantity: {
         type: Number,

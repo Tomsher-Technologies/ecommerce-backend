@@ -191,12 +191,21 @@ class ProductController extends base_controller_1.default {
             const productId = req.params.slug;
             const variantSku = req.params.sku;
             const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query;
+            let query = {};
             if (productId) {
-                let query = { 'productVariants.variantSku': variantSku };
+                if (variantSku) {
+                    query = {
+                        ...query, 'productVariants.variantSku': variantSku
+                    };
+                }
                 const data = /^[0-9a-fA-F]{24}$/.test(productId);
                 if (data) {
                     query = {
-                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
+                        ...query,
+                        $or: [
+                            { 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId) },
+                            { _id: new mongoose_1.default.Types.ObjectId(productId) }
+                        ]
                     };
                 }
                 else {

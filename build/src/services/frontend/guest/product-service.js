@@ -113,7 +113,6 @@ class ProductService {
         if (offerPipeline && offerPipeline.length > 0) {
             pipeline.push(offerPipeline[0]);
         }
-        // console.log("offerDataofferDataofferDataofferData", offerData);
         let productData = [];
         const collection = await this.collection(products, hostName);
         if (collection && collection.productData) {
@@ -376,15 +375,60 @@ class ProductService {
         };
         let pipeline = [
             modifiedPipeline,
+            product_config_1.productCategoryLookup,
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
             { $match: query },
         ];
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
+        // Add the stages for product-specific offers
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            const offerProduct = await common_service_1.default.offerProduct(getOfferList, offerApplied.product);
+            pipeline.push(offerProduct);
+            console.log("...........1");
+        }
+        // Add the stages for brand-specific offers
+        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+            const offerBrand = await common_service_1.default.offerBrand(getOfferList, offerApplied.brand);
+            pipeline.push(offerBrand);
+        }
+        // Add the stages for category-specific offers
+        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+            const offerCategory = await common_service_1.default.offerCategory(getOfferList, offerApplied.category);
+            pipeline.push(offerCategory);
+        }
+        console.log("11111111111");
+        // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
+        pipeline.push({
+            $addFields: {
+                offer: {
+                    $cond: {
+                        if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
+                        then: { $arrayElemAt: ["$categoryOffers", 0] },
+                        else: {
+                            $cond: {
+                                if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
+                                then: { $arrayElemAt: ["$brandOffers", 0] },
+                                else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        pipeline.push({
+            $project: {
+                brandOffers: 0,
+                productOffers: 0,
+                categoryOffers: 0
+            }
+        });
         // { variantSku: sku }
         // const language: any = await this.productLanguage(hostName, pipeline)
         // console.log("......1234....", language);
         // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
         const productDataWithValues = await product_model_1.default.aggregate(pipeline);
+        console.log("productDataWithValues", productDataWithValues);
         return productDataWithValues[0];
     }
     async findOne(productOption) {
