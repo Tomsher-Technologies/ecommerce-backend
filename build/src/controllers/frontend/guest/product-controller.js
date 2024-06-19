@@ -190,12 +190,23 @@ class ProductController extends base_controller_1.default {
         try {
             const productId = req.params.slug;
             const variantSku = req.params.sku;
-            const { getattribute = '', getspecification = '', getImageGallery = '' } = req.query;
+            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query;
             if (productId) {
+                let query = { 'productVariants.variantSku': variantSku };
+                const data = /^[0-9a-fA-F]{24}$/.test(productId);
+                if (data) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
+                    };
+                }
+                else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    };
+                }
                 const product = await product_service_1.default.findOneProduct({
-                    productId,
-                    variantSku,
-                    getImageGallery,
+                    query,
+                    getimagegallery,
                     getattribute,
                     getspecification,
                     hostName: req.get('host')
@@ -227,7 +238,7 @@ class ProductController extends base_controller_1.default {
     }
     async findAllProducts(req, res) {
         try {
-            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
+            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;
             // let getspecification = ''
             // let getattribute = ''
             let getSeo = '1';
@@ -418,7 +429,6 @@ class ProductController extends base_controller_1.default {
                                 ...query, "productCategory.category.slug": category
                             };
                         }
-                        console.log("orConditionsForcategory", orConditionsForcategory);
                     }
                 }
                 if (brand) {
@@ -507,7 +517,7 @@ class ProductController extends base_controller_1.default {
                     products,
                     discount,
                     offers,
-                    getImageGallery,
+                    getimagegallery,
                     getattribute,
                     getspecification,
                     getSeo,

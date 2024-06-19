@@ -216,14 +216,30 @@ class ProductController extends BaseController {
         try {
             const productId: any = req.params.slug;
             const variantSku: any = req.params.sku;
-            const { getattribute = '', getspecification = '', getImageGallery = '' } = req.query as ProductsFrontendQueryParams;
+            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
 
             if (productId) {
+                let query: any = { 'productVariants.variantSku': variantSku };
+
+                const data = /^[0-9a-fA-F]{24}$/.test(productId);
+
+                if (data) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
+
+                    }
+
+                } else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    }
+                }
+
+
                 const product: any = await ProductService.findOneProduct(
                     {
-                        productId,
-                        variantSku,
-                        getImageGallery,
+                        query,
+                        getimagegallery,
                         getattribute,
                         getspecification,
                         hostName: req.get('host')
@@ -256,7 +272,7 @@ class ProductController extends BaseController {
 
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getImageGallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
             // let getspecification = ''
             // let getattribute = ''
             let getSeo = '1'
@@ -489,7 +505,6 @@ class ProductController extends BaseController {
                             };
 
                         }
-                        console.log("orConditionsForcategory", orConditionsForcategory);
                     }
 
                 }
@@ -593,14 +608,14 @@ class ProductController extends BaseController {
                     products,
                     discount,
                     offers,
-                    getImageGallery,
+                    getimagegallery,
                     getattribute,
                     getspecification,
                     getSeo,
                     hostName: req.get('host'),
                 });
 
-                
+
                 if (sortby == "price") {
                     productData.sort((a: any, b: any) => {
                         const aPrice = a.productVariants[0]?.[sortby] || 0;
