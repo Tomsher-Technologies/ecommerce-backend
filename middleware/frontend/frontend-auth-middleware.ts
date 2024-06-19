@@ -84,5 +84,5 @@ const frontendAuthMiddleware = async (req: CustomRequest, res: Response, next: N
 //     }
 // };
 
- export default frontendAuthMiddleware;
+export default frontendAuthMiddleware;
 
