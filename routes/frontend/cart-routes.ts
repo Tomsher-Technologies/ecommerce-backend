@@ -1,14 +1,14 @@
 import express, { Router } from 'express';
 
 import { logResponseStatus } from '../../src/components/response-status';
-import frontendAuthAndUnAuthMiddleware from "../../middleware/frontend/frontend-auth-middleware"
-import cartOrderController from '../../src/controllers/frontend/cart-order-controller';
+// import frontendAuthAndUnAuthMiddleware from "../../middleware/frontend/frontend-auth-middleware"
+// import cartOrderController from '../../src/controllers/frontend/cart-order-controller';
 
 const router: Router = express.Router();
 
-router.use(frontendAuthAndUnAuthMiddleware);
+// router.use(frontendAuthAndUnAuthMiddleware);
 
-router.post('/create-cart', logResponseStatus, cartOrderController.createCartOrder);
+// router.post('/create-cart', logResponseStatus, cartOrderController.createCartOrder);
 
 
 
