@@ -20,7 +20,7 @@ export const frontendAuthMiddleware = async (req: CustomRequest, res: Response, 
         }
         const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
-        if (checkToken?.userId) {
+        if (checkToken && checkToken?.userId) {
             const userData = await CustomerModel.findOne({ _id: checkToken.userId });
             if (userData) {
                 req.user = userData;
