@@ -42,7 +42,7 @@ const cartOrderSchema = new mongoose_1.Schema({
     orderStatus: {
         type: String,
         required: true,
-        default: '1'
+        default: '0'
     },
     orderStatusAt: {
         type: Date,
@@ -53,7 +53,7 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     shipmentGatwayId: {
         type: String,
-        required: true,
+        default: '1'
     },
     paymentGatwayId: {
         type: String,

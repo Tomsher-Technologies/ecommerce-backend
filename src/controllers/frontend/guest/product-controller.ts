@@ -217,24 +217,32 @@ class ProductController extends BaseController {
             const productId: any = req.params.slug;
             const variantSku: any = req.params.sku;
             const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
-
+            let query: any = {}
             if (productId) {
-                let query: any = { 'productVariants.variantSku': variantSku };
+                if (variantSku) {
+                    query = {
+                        ...query, 'productVariants.variantSku': variantSku
+                    };
+                }
+
 
                 const data = /^[0-9a-fA-F]{24}$/.test(productId);
 
                 if (data) {
                     query = {
-                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
-
+                        ...query,
+                        $or: [
+                            { 'productVariants._id': new mongoose.Types.ObjectId(productId) },
+                            { _id: new mongoose.Types.ObjectId(productId) }
+                        ]
                     }
+
 
                 } else {
                     query = {
                         ...query, 'productVariants.slug': productId
                     }
                 }
-
 
                 const product: any = await ProductService.findOneProduct(
                     {

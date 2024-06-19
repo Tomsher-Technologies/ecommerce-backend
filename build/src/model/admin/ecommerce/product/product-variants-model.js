@@ -30,6 +30,15 @@ const productVariantsSchema = new mongoose_1.Schema({
         ref: 'Products',
         required: true,
     },
+    countryId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Countries',
+        required: true,
+    },
+    variantSku: {
+        type: String,
+        required: true,
+    },
     slug: {
         type: String,
         validate: {
@@ -69,15 +78,6 @@ const productVariantsSchema = new mongoose_1.Schema({
     barcode: {
         type: String,
         default: ''
-    },
-    countryId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Countries',
-        required: true,
-    },
-    variantSku: {
-        type: String,
-        required: true,
     },
     isExcel: {
         type: Boolean,

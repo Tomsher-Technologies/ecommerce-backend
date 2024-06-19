@@ -9,7 +9,7 @@ export const collections = {
             },
             productgallaryimages: 'productgallaryimages',
             productcategorylinks: 'productcategorylinks',
-           
+
 
         },
         categories: 'categories',
@@ -20,8 +20,8 @@ export const collections = {
         specifications: 'specifications',
         seopages: 'seopages',
         attributedetails: 'attributedetails',
-        specificationdetails:'specificationdetails',
+        specificationdetails: 'specificationdetails',
         offers: 'offers',
-
     },
+    multilanguagefieleds: 'multilanguagefieleds'
 }

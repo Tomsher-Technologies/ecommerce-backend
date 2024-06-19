@@ -5,14 +5,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const auth_routes_1 = __importDefault(require("./frontend/guest/auth-routes"));
-const category_routes_1 = __importDefault(require("./frontend/guest/category-routes"));
 const common_routes_1 = __importDefault(require("./frontend/guest/common-routes"));
 const product_routes_1 = __importDefault(require("./frontend/guest/product-routes"));
 const pages_controller_1 = __importDefault(require("../src/controllers/frontend/guest/pages-controller"));
+const wishlist_routes_1 = __importDefault(require("./frontend/auth/wishlist-routes"));
+const cart_routes_1 = __importDefault(require("./frontend/cart-routes"));
 const frontendRouter = express_1.default.Router();
 frontendRouter.use('/auth', auth_routes_1.default);
-frontendRouter.use('/category', category_routes_1.default);
 frontendRouter.use('/common', common_routes_1.default);
 frontendRouter.use('/product', product_routes_1.default);
+frontendRouter.use('/wishlist', wishlist_routes_1.default);
 frontendRouter.use('/pages/:slug', pages_controller_1.default.findPagesData);
+frontendRouter.use('/cart', cart_routes_1.default);
 exports.default = frontendRouter;

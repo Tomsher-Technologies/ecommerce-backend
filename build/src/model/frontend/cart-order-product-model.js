@@ -33,7 +33,6 @@ const cartOrderProductSchema = new mongoose_1.Schema({
     slug: {
         type: String,
         required: true,
-        unique: true
     },
     quantity: {
         type: Number,

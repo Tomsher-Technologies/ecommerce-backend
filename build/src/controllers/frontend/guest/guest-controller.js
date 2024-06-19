@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authSchema_1 = require("../../../utils/schemas/frontend/guest/authSchema");
+const auth_schema_1 = require("../../../utils/schemas/frontend/guest/auth-schema");
 const helpers_1 = require("../../../utils/helpers");
 const website_setup_1 = require("../../../constants/website-setup");
 const wallet_1 = require("../../../constants/wallet");
@@ -20,7 +20,7 @@ const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
         try {
-            const validatedData = authSchema_1.registerSchema.safeParse(req.body);
+            const validatedData = auth_schema_1.registerSchema.safeParse(req.body);
             if (validatedData.success) {
                 const { email, firstName, phone, password, referralCode, otpType } = validatedData.data;
                 let referralCodeWithCustomerData = null;
@@ -129,7 +129,7 @@ class GuestController extends base_controller_1.default {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const validatedData = authSchema_1.forgotPasswordSchema.safeParse(req.body);
+                const validatedData = auth_schema_1.forgotPasswordSchema.safeParse(req.body);
                 if (validatedData.success) {
                     const { otpType, email, phone } = validatedData.data;
                     const existingUser = await customer_service_1.default.findOne({
@@ -191,7 +191,7 @@ class GuestController extends base_controller_1.default {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const validatedData = authSchema_1.resetPasswordFormSchema.safeParse(req.body);
+                const validatedData = auth_schema_1.resetPasswordFormSchema.safeParse(req.body);
                 if (validatedData.success) {
                     const { password, confirmPassword, otp, email } = validatedData.data;
                     const checkValidOtp = await customer_service_1.default.findOne({ email: email, otp });
@@ -257,7 +257,7 @@ class GuestController extends base_controller_1.default {
     async resendOtp(req, res) {
         try {
             const { userId } = req.body;
-            const validatedData = authSchema_1.resendOtpSchema.safeParse(req.body);
+            const validatedData = auth_schema_1.resendOtpSchema.safeParse(req.body);
             if (userId) {
                 if (validatedData.success) {
                     const customerData = await customer_service_1.default.findOne({ _id: userId, status: '1' });
@@ -314,7 +314,7 @@ class GuestController extends base_controller_1.default {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const validatedData = authSchema_1.verifyOtpSchema.safeParse(req.body);
+                const validatedData = auth_schema_1.verifyOtpSchema.safeParse(req.body);
                 if (validatedData.success) {
                     const { otpType, otp, email, phone } = validatedData.data;
                     const existingUser = await customer_service_1.default.findOne({
@@ -361,8 +361,10 @@ class GuestController extends base_controller_1.default {
                                     const token = jsonwebtoken_1.default.sign({
                                         userId: updatedCustomer._id,
                                         email: updatedCustomer.email,
-                                        phone: updatedCustomer.phone
-                                    }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
+                                        phone: updatedCustomer.phone,
+                                        firstName: updatedCustomer.firstName,
+                                        totalWalletAmount: updatedCustomer.totalWalletAmount,
+                                    }, `${process.env.TOKEN_SECRET_KEY}`);
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
@@ -427,7 +429,7 @@ class GuestController extends base_controller_1.default {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const validatedData = authSchema_1.loginSchema.safeParse(req.body);
+                const validatedData = auth_schema_1.loginSchema.safeParse(req.body);
                 if (validatedData.success) {
                     const { email, password } = validatedData.data;
                     const user = await customers_model_1.default.findOne({ email: email, status: '1' });
@@ -437,8 +439,10 @@ class GuestController extends base_controller_1.default {
                             const token = jsonwebtoken_1.default.sign({
                                 userId: user._id,
                                 email: user.email,
-                                phone: user.phone
-                            }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
+                                phone: user.phone,
+                                firstName: user.firstName,
+                                totalWalletAmount: user.totalWalletAmount,
+                            }, `${process.env.TOKEN_SECRET_KEY}`);
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     token,

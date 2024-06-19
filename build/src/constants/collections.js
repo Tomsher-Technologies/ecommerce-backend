@@ -24,4 +24,5 @@ exports.collections = {
         specificationdetails: 'specificationdetails',
         offers: 'offers',
     },
+    multilanguagefieleds: 'multilanguagefieleds'
 };

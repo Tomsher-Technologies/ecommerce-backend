@@ -1,32 +1,28 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface CartOrderProductProps extends Document {
-    cartId: Schema.Types.ObjectId;
+export interface CustomerWishlistModelProps extends Document {
+    userId: Schema.Types.ObjectId;
+    countryId: Schema.Types.ObjectId;
     productId: Schema.Types.ObjectId;
     variantId: Schema.Types.ObjectId;
-    quantity: number;
-    sku: string;
+    variantSku: string;
     slug: string;
-    orderStatus: string;
+    status: string;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
 
-const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
-    cartId: {
+const wishlistSchema: Schema<CustomerWishlistModelProps> = new Schema({
+    countryId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Countries',
+        required: true,
+    },
+    userId: {
         type: Schema.Types.ObjectId,
         ref: 'Customer',
         default: null
-    },
-    slug: {
-        type: String,
-        required: true,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-        default: 1
     },
     productId: {
         type: Schema.Types.ObjectId,
@@ -38,11 +34,15 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         ref: 'ProductVariants',
         required: true
     },
-    sku: {
+    slug: {
+        type: String,
+        required: true,
+    },
+    variantSku: {
         type: String,
         default: ''
     },
-    orderStatus: {
+    status: {
         type: String,
         required: true,
         default: '1'
@@ -57,6 +57,6 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     }
 });
 
-const CartOrderProductsModel = mongoose.model<CartOrderProductProps>('CartOrderProducts', cartOrderProductSchema);
+const CustomerWishlistModel = mongoose.model<CustomerWishlistModelProps>('Wishlist', wishlistSchema);
 
-export default CartOrderProductsModel;
+export default CustomerWishlistModel;
