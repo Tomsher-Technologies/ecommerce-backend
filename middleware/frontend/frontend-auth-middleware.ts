@@ -7,7 +7,7 @@ interface CustomRequest extends Request {
     user?: any;
 }
 
-const frontendAuthMiddleware = async (req: CustomRequest, res: Response, next: NextFunction) => {
+export const frontendAuthMiddleware = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
         const authHeader = req.header('Authorization');
         if (!authHeader) {
@@ -41,4 +41,3 @@ const frontendAuthMiddleware = async (req: CustomRequest, res: Response, next: N
     }
 };
 
-export default frontendAuthMiddleware;
