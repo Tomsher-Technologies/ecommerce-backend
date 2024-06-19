@@ -30,7 +30,7 @@ class WishlistsController extends BaseController {
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
-                hostName: req.get('host'),
+                hostName: req.get('origin'),
                 sort
             });
 

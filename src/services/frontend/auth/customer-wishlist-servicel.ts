@@ -1,10 +1,10 @@
 import { FilterOptionsProps, frontendPagination } from '../../../components/pagination';
+import { collections } from '../../../constants/collections';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import CustomerWishlistModel, { CustomerWishlistModelProps } from '../../../model/frontend/customer-wishlist-model';
-import { productLookup, productMultilanguageFieldsLookup, variantLookup } from '../../../utils/config/product-config';
+import { productLookup } from '../../../utils/config/product-config';
+import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues } from '../../../utils/config/wishlist-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
-import ProductService from '../guest/product-service';
-
 
 
 class CustomerWishlistCountryService {
@@ -17,66 +17,23 @@ class CustomerWishlistCountryService {
             finalSort = defaultSort;
         }
 
+        const languageData = await LanguagesModel.find().exec();
+        const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
+
         let pipeline: any[] = [
             productLookup,
             { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: `productvariants`,
-                    let: { productId: "$productDetails._id", variantId: "$variantId" },
-                    pipeline: [
-                        { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
-                    ],
-                    as: "productDetails.variantDetails"
-                }
-            },
+            productVariantsLookupValues,
             { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+            multilanguageFieldsLookup(languageId),
+            { $unwind: { path: "$productDetails.languageValues", preserveNullAndEmptyArrays: true } },
+            replaceProductLookupValues,
+            { $unset: "productDetails.languageValues" },
             { $match: query },
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
         ];
-
-        const languageData = await LanguagesModel.find().exec();
-        const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
-        console.log(hostName, 'languageId', languageId);
-
-        if (languageId) {
-
-            const productLookupWithLanguage = {
-                ...productMultilanguageFieldsLookup,
-                $lookup: {
-                    ...productMultilanguageFieldsLookup.$lookup,
-                    pipeline: productMultilanguageFieldsLookup.$lookup.pipeline.map((stage: any) => {
-                        if (stage.$match && stage.$match.$expr) {
-                            return {
-                                ...stage,
-                                $match: {
-                                    ...stage.$match,
-                                    $expr: {
-                                        ...stage.$match.$expr,
-                                        $and: [
-                                            ...stage.$match.$expr.$and,
-                                            { $eq: ['$languageId', languageId] },
-                                        ]
-                                    }
-                                }
-                            };
-                        }
-                        return stage;
-                    })
-                }
-            };
-
-            pipeline.push(productLookupWithLanguage);
-
-            //     // pipeline.push(productlanguageFieldsReplace);
-
-            //     // pipeline.push(productDetailLanguageFieldsReplace)
-
-        }
-
-        // const language: any = await ProductService.productLanguage(hostName, pipeline)
 
         return CustomerWishlistModel.aggregate(pipeline).exec();
     }

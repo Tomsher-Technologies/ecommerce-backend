@@ -11,6 +11,7 @@ router.use(frontendAuthMiddleware);
 
 router.get('/', logResponseStatus, WishlistsController.findAllWishlists);
 router.post('/add-to-wishlist', logResponseStatus, WishlistsController.addToWishlist);
+router.post('/move-to-wishlist', logResponseStatus, WishlistsController.moveTCart);
 
 
 export default router;
