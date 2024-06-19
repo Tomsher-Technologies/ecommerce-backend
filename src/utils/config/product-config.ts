@@ -3,6 +3,14 @@ import { multiLanguageSources } from "../../constants/multi-languages";
 import ProductsModel from "../../model/admin/ecommerce/product-model";
 
 
+export const productLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.products.products}`,
+        localField: 'productId',
+        foreignField: '_id',
+        as: 'productDetails',
+    }
+};
 export const productVariantAttributesLookup = [
     {
         $lookup: {

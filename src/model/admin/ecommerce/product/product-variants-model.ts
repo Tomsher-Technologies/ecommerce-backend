@@ -31,6 +31,15 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         ref: 'Products',
         required: true,
     },
+    countryId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Countries',
+        required: true,
+    },
+    variantSku: {
+        type: String,
+        required: true,
+    },
     slug: {
         type: String,
         validate: {
@@ -70,15 +79,6 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     barcode: {
         type: String,
         default: ''
-    },
-    countryId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Countries',
-        required: true,
-    },
-    variantSku: {
-        type: String,
-        required: true,
     },
     isExcel: {
         type: Boolean,

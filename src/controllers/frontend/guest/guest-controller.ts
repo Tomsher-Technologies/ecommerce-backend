@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { forgotPasswordSchema, loginSchema, registerSchema, resendOtpSchema, resetPasswordFormSchema, verifyOtpSchema } from '../../../utils/schemas/frontend/guest/authSchema';
+import { forgotPasswordSchema, loginSchema, registerSchema, resendOtpSchema, resetPasswordFormSchema, verifyOtpSchema } from '../../../utils/schemas/frontend/guest/auth-schema';
 import { calculateWalletAmount, formatZodError, generateOTP } from '../../../utils/helpers';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 import { earnTypes } from '../../../constants/wallet';
@@ -365,8 +365,10 @@ class GuestController extends BaseController {
                                     const token: string = jwt.sign({
                                         userId: updatedCustomer._id,
                                         email: updatedCustomer.email,
-                                        phone: updatedCustomer.phone
-                                    }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
+                                        phone: updatedCustomer.phone,
+                                        firstName: updatedCustomer.firstName,
+                                        totalWalletAmount: updatedCustomer.totalWalletAmount,
+                                    }, `${process.env.TOKEN_SECRET_KEY}`);
 
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
@@ -436,10 +438,10 @@ class GuestController extends BaseController {
                             const token: string = jwt.sign({
                                 userId: user._id,
                                 email: user.email,
-                                phone: user.phone
-                            }, `${process.env.CUSTOMER_TOKEN_AUTH_KEY}`);
-
-
+                                phone: user.phone,
+                                firstName: user.firstName,
+                                totalWalletAmount: user.totalWalletAmount,
+                            }, `${process.env.TOKEN_SECRET_KEY}`);
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     token,
