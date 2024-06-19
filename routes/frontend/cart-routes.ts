@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 
 import { logResponseStatus } from '../../src/components/response-status';
-import frontendAuthAndUnAuthMiddleware from "../../middleware/frontend/frontend-auth-and-unauth-middleware"
+import { frontendAuthAndUnAuthMiddleware } from "../../middleware/frontend/frontend-auth-middleware"
 import cartOrderController from '../../src/controllers/frontend/cart-order-controller';
 
 const router: Router = express.Router();
