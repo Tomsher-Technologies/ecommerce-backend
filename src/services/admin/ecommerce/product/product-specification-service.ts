@@ -175,8 +175,6 @@ class ProductSpecificationService {
 
     async productSpecificationService(productId: string | null, specificationDetails: any, variantId?: string): Promise<ProductSpecificationProps[]> {
         try {
-            console.log("specificationDetails,specificationDetails", specificationDetails);
-
             if (productId) {
 
                 const existingEntries = await ProductSpecificationModel.find({ productId: productId });
@@ -188,20 +186,15 @@ class ProductSpecificationService {
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data: any) => {
-                        console.log("product34Id", data.specificationId != '' , data.specificationDetailId != '' , data._id != '' , data._id != undefined);
 
-                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '' ) {
+                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '' && data?._id != 'undefined') {
 
                             const existingEntry = await ProductSpecificationModel.findOne({ _id: data._id });
                             if (existingEntry) {
                                 // Update existing document
-                                console.log("dfgfdsgdf");
-                                
                                 await ProductSpecificationModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                             }
                             else {
-                                console.log("dddddd");
-                                
                                 // Create new document
                                 await ProductSpecificationModel.create({ specificationId: data.specificationId, specificationDetailId: data.specificationDetailId, productId: productId, variantId: variantId });
                             }

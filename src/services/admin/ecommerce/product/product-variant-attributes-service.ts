@@ -201,7 +201,7 @@ class ProductVariantAttributeService {
                 if (variantDetails) {
                     const variantAttributePromises = await Promise.all(variantDetails.map(async (data: any) => {
 
-                        if (data.attributeId != '' && data.attributeDetailId != '' && data._id != '' && data._id != undefined) {
+                        if (data.attributeId != '' && data.attributeDetailId != '' && data?._id != '' && data?._id != 'undefined') {
                             const existingEntry = await ProductVariantAttributesModel.findOne({ _id: data._id });
                             if (existingEntry) {
                                 // Update existing document
