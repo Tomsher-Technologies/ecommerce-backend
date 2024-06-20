@@ -188,49 +188,6 @@ export const variantLookup = {
     }
 };
 
-// export const offerProductLookup = [
-//     {
-//         $lookup: {
-//             from: 'offers',
-//             localField: '_id',
-//             foreignField: 'offerApplyValues',
-//             let: {
-//                 currentDate: new Date(),
-//                 productId:'_id',
-                
-//             },
-//             pipeline: [
-//                 {
-//                     $match: {
-//                         $expr: {
-//                             $and: [
-//                                 { $lte: ['$$currentDate', '$offerDateRange.1'] },
-//                                 { $gte: ['$$currentDate', '$offerDateRange.0'] },
-//                                 {
-//                                     $or: [
-//                                         {if: {
-//                                             $and: [
-//                                                 { $eq: ['$offersBy', 'product'] },
-//                                                 // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
-//                                             ]
-//                                         },
-//                                         then: '$offerProducts',
-                                           
-//                                         },
-                                      
-//                                     ]
-//                                 }
-//                             ]
-//                         }
-//                     }
-//                 }
-//             ],
-//             as: 'offerProducts'
-//         }
-//     },
-    
-
-// ];
 
 export const productCategoryLookup = {
     $lookup: {
@@ -300,12 +257,71 @@ export const specificationsLookup = {
                     $expr: { $eq: ['$productId', '$$productId'] },
                     'variantId': null
                 }
+            },
+            {
+                $lookup: {
+                    from: `${collections.ecommerce.specifications}`,
+                    localField: 'specificationId',
+                    foreignField: '_id',
+                    as: 'specification'
+                }
+            },
+            {
+                $unwind: "$specification"
+            },
+            {
+                $lookup: {
+                    from: `${collections.ecommerce.specificationdetails}`, // Adjust collection name as per your setup
+                    localField: 'specificationDetailId',
+                    foreignField: '_id',
+                    as: 'specificationDetail'
+                }
+            },
+            {
+                $unwind: "$specificationDetail" // Unwind to match each element
+            },
+            {
+                $project: {
+                    _id: 1,
+                    productId: 1,
+                    specification: '$specification',
+                    specificationDetail: '$specificationDetail'
+
+                }
             }
         ],
         as: 'productSpecification',
 
     },
 };
+
+export const specificationDetailLookup = {
+
+    $addFields: {
+        productSpecification: {
+            $map: {
+                input: '$productSpecification',
+                in: {
+                    _id: '$$this._id',
+                    productId: '$$this.productId',
+                    specificationId: '$$this.specificationId',
+                    specificationDetailId: '$$this.specificationDetailId',
+                    slug: '$$this.specification.slug',
+                    specificationDetail: {
+                        _id: '$$this.specificationDetail._id',
+                        specificationId: '$$this.specificationDetail.specificationId',
+                        itemName: '$$this.specificationDetail.itemName',
+                        itemValue: '$$this.specificationDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+
+
 // export const specificationLookup = {
 //     $lookup: {
 //         from: 'multilanguagefieleds', // Ensure 'from' field is included
