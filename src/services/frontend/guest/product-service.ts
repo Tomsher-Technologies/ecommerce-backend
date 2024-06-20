@@ -89,7 +89,7 @@ class ProductService {
             brandLookup,
             brandObject,
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
-            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),            
+            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
@@ -465,6 +465,8 @@ class ProductService {
         let pipeline: any[] = [
             modifiedPipeline,
             productCategoryLookup,
+            brandLookup,
+            brandObject,
             ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
