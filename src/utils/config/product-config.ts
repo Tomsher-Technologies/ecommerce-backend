@@ -258,6 +258,23 @@ export const specificationsLookup = {
                     $expr: { $eq: ['$productId', '$$productId'] },
                     'variantId': null
                 }
+            }
+        ],
+        as: 'productSpecification',
+
+    },
+};
+
+export const productSpecificationsLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+        let: { productId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: { $eq: ['$productId', '$$productId'] },
+                    'variantId': null
+                }
             },
             {
                 $lookup: {
@@ -296,33 +313,6 @@ export const specificationsLookup = {
 
     },
 };
-
-export const specificationDetailLookup = {
-
-    $addFields: {
-        productSpecification: {
-            $map: {
-                input: '$productSpecification',
-                in: {
-                    _id: '$$this._id',
-                    productId: '$$this.productId',
-                    specificationId: '$$this.specificationId',
-                    specificationDetailId: '$$this.specificationDetailId',
-                    slug: '$$this.specification.slug',
-                    specificationDetail: {
-                        _id: '$$this.specificationDetail._id',
-                        specificationId: '$$this.specificationDetail.specificationId',
-                        itemName: '$$this.specificationDetail.itemName',
-                        itemValue: '$$this.specificationDetail.itemValue'
-                    }
-                }
-            }
-        }
-    }
-
-
-}
-
 
 // export const specificationLookup = {
 //     $lookup: {
