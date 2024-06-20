@@ -130,6 +130,7 @@ exports.addFieldsProductSpecification = {
                     _id: '$$this._id',
                     specificationId: '$$this.specification._id',
                     specificationTitle: '$$this.specification.specificationTitle',
+                    enableTab: '$$this.specification.enableTab',
                     slug: '$$this.specification.slug',
                     specificationDetail: {
                         _id: '$$this.specificationDetail._id',
@@ -271,6 +272,7 @@ exports.specificationsLookup = {
                 $project: {
                     _id: 1,
                     productId: 1,
+                    enableTab: 1,
                     specification: '$specification',
                     specificationDetail: '$specificationDetail'
                 }
