@@ -182,7 +182,8 @@ class ProductSpecificationService {
                     const specificationIDsToRemove = existingEntries
                         .filter(entry => !specificationDetails?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                         .map(entry => entry._id);
-                    await ProductSpecificationModel.deleteMany({ productId: productId, _id: { $in: specificationIDsToRemove } });
+                    await ProductSpecificationModel.deleteMany({ productId: productId, variantId: variantId, _id: { $in: specificationIDsToRemove } });
+
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data: any) => {
