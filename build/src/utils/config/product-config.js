@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.specificationDetailLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productLookup = {
@@ -245,6 +245,21 @@ exports.specificationsLookup = {
                     $expr: { $eq: ['$productId', '$$productId'] },
                     'variantId': null
                 }
+            }
+        ],
+        as: 'productSpecification',
+    },
+};
+exports.productSpecificationsLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.products.productvariants.productspecifications}`,
+        let: { productId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: { $eq: ['$productId', '$$productId'] },
+                    'variantId': null
+                }
             },
             {
                 $lookup: {
@@ -280,28 +295,6 @@ exports.specificationsLookup = {
         ],
         as: 'productSpecification',
     },
-};
-exports.specificationDetailLookup = {
-    $addFields: {
-        productSpecification: {
-            $map: {
-                input: '$productSpecification',
-                in: {
-                    _id: '$$this._id',
-                    productId: '$$this.productId',
-                    specificationId: '$$this.specificationId',
-                    specificationDetailId: '$$this.specificationDetailId',
-                    slug: '$$this.specification.slug',
-                    specificationDetail: {
-                        _id: '$$this.specificationDetail._id',
-                        specificationId: '$$this.specificationDetail.specificationId',
-                        itemName: '$$this.specificationDetail.itemName',
-                        itemValue: '$$this.specificationDetail.itemValue'
-                    }
-                }
-            }
-        }
-    }
 };
 // export const specificationLookup = {
 //     $lookup: {

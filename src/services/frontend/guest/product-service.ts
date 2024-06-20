@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import mongoose from 'mongoose';
@@ -88,7 +88,7 @@ class ProductService {
             ...(getimagegallery === '1' ? [imageLookup] : []),
             brandLookup,
             brandObject,
-            ...(getspecification === '1' ? [specificationsLookup] : []),
+            ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [addFieldsProductSpecification] : []),            
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
@@ -466,7 +466,7 @@ class ProductService {
             modifiedPipeline,
             productCategoryLookup,
             ...(getimagegallery === '1' ? [imageLookup] : []),
-            ...(getspecification === '1' ? [specificationsLookup] : []),
+            ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
 

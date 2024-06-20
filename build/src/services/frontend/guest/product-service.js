@@ -70,7 +70,7 @@ class ProductService {
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             product_config_1.brandLookup,
             product_config_1.brandObject,
-            ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
+            ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
@@ -378,7 +378,7 @@ class ProductService {
             modifiedPipeline,
             product_config_1.productCategoryLookup,
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
-            ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
+            ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
         ];
