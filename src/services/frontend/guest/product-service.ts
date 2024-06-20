@@ -89,6 +89,7 @@ class ProductService {
             brandLookup,
             brandObject,
             ...(getspecification === '1' ? [specificationsLookup] : []),
+            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),            
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
@@ -466,6 +467,7 @@ class ProductService {
             productCategoryLookup,
             ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [specificationsLookup] : []),
+            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
 
         ];

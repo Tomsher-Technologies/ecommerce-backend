@@ -71,6 +71,7 @@ class ProductService {
             product_config_1.brandLookup,
             product_config_1.brandObject,
             ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
+            ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
@@ -378,6 +379,7 @@ class ProductService {
             product_config_1.productCategoryLookup,
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.specificationsLookup] : []),
+            ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
         ];
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);

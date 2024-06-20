@@ -50,6 +50,11 @@ const specificationSchema = new mongoose_1.Schema({
             message: 'Slug must be unique'
         }
     },
+    enableTab: {
+        type: String,
+        required: true,
+        default: "0"
+    },
     status: {
         type: String,
         required: true,

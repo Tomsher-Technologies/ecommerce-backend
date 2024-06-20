@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.specificationDetailLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productLookup = {
@@ -180,44 +180,6 @@ exports.variantLookup = {
         ]
     }
 };
-// export const offerProductLookup = [
-//     {
-//         $lookup: {
-//             from: 'offers',
-//             localField: '_id',
-//             foreignField: 'offerApplyValues',
-//             let: {
-//                 currentDate: new Date(),
-//                 productId:'_id',
-//             },
-//             pipeline: [
-//                 {
-//                     $match: {
-//                         $expr: {
-//                             $and: [
-//                                 { $lte: ['$$currentDate', '$offerDateRange.1'] },
-//                                 { $gte: ['$$currentDate', '$offerDateRange.0'] },
-//                                 {
-//                                     $or: [
-//                                         {if: {
-//                                             $and: [
-//                                                 { $eq: ['$offersBy', 'product'] },
-//                                                 // { $in: ['$_id', { $arrayElemAt: ['$offerApplyValues', 0] }] }
-//                                             ]
-//                                         },
-//                                         then: '$offerProducts',
-//                                         },
-//                                     ]
-//                                 }
-//                             ]
-//                         }
-//                     }
-//                 }
-//             ],
-//             as: 'offerProducts'
-//         }
-//     },
-// ];
 exports.productCategoryLookup = {
     $lookup: {
         from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
@@ -282,10 +244,62 @@ exports.specificationsLookup = {
                     $expr: { $eq: ['$productId', '$$productId'] },
                     'variantId': null
                 }
+            },
+            {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.specifications}`,
+                    localField: 'specificationId',
+                    foreignField: '_id',
+                    as: 'specification'
+                }
+            },
+            {
+                $unwind: "$specification"
+            },
+            {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.specificationdetails}`, // Adjust collection name as per your setup
+                    localField: 'specificationDetailId',
+                    foreignField: '_id',
+                    as: 'specificationDetail'
+                }
+            },
+            {
+                $unwind: "$specificationDetail" // Unwind to match each element
+            },
+            {
+                $project: {
+                    _id: 1,
+                    productId: 1,
+                    specification: '$specification',
+                    specificationDetail: '$specificationDetail'
+                }
             }
         ],
         as: 'productSpecification',
     },
+};
+exports.specificationDetailLookup = {
+    $addFields: {
+        productSpecification: {
+            $map: {
+                input: '$productSpecification',
+                in: {
+                    _id: '$$this._id',
+                    productId: '$$this.productId',
+                    specificationId: '$$this.specificationId',
+                    specificationDetailId: '$$this.specificationDetailId',
+                    slug: '$$this.specification.slug',
+                    specificationDetail: {
+                        _id: '$$this.specificationDetail._id',
+                        specificationId: '$$this.specificationDetail.specificationId',
+                        itemName: '$$this.specificationDetail.itemName',
+                        itemValue: '$$this.specificationDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
 };
 // export const specificationLookup = {
 //     $lookup: {
