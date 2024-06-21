@@ -9,7 +9,7 @@ class CartService {
     constructor() {
         this.cartLookup = {
             $lookup: {
-                from: 'CartOrderProducts', // Collection name of AttributeDetailModel
+                from: 'cartorderproducts', // Collection name of AttributeDetailModel
                 localField: '_id', // Field in AttributesModel
                 foreignField: 'cartId', // Field in AttributeDetailModel
                 as: 'products'
@@ -39,13 +39,25 @@ class CartService {
                 totalTaxAmount: 1,
                 totalAmount: 1,
                 products: {
-                    $ifNull: ['$attributeValues', []]
+                    $ifNull: ['$products', []]
                 },
             }
         };
     }
     async findCart(data) {
-        return cart_order_model_1.default.findOne(data);
+        const createdCartWithValues = await cart_order_model_1.default.find(data);
+        return createdCartWithValues[0];
+    }
+    async findCartPopulate(data) {
+        const pipeline = [
+            { $match: data },
+            this.cartLookup,
+            this.project
+        ];
+        const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
+        console.log(createdCartWithValues);
+        return createdCartWithValues[0];
+        // return CartOrderModel.findOne(data);
     }
     async create(data) {
         const cartData = await cart_order_model_1.default.create(data);
@@ -74,11 +86,8 @@ class CartService {
         }
     }
     async findCartProduct(data) {
-        const pipeline = [
-            { $match: data },
-        ];
-        const createdAttributeWithValues = await cart_order_product_model_1.default.aggregate(pipeline);
-        return createdAttributeWithValues[0];
+        const createdAttributeWithValues = await cart_order_product_model_1.default.findOne(data);
+        return createdAttributeWithValues;
     }
     async findAllCart(data) {
         return cart_order_product_model_1.default.find(data);
@@ -110,7 +119,7 @@ class CartService {
         }
     }
     async updateCartProductByCart(_id, cartData) {
-        const updatedCart = await cart_order_product_model_1.default.findOneAndUpdate({ cartId: _id }, cartData, { new: true, useFindAndModify: false });
+        const updatedCart = await cart_order_product_model_1.default.findOneAndUpdate(_id, cartData, { new: true, useFindAndModify: false });
         if (updatedCart) {
             const pipeline = [
                 { $match: { _id: updatedCart._id } },

@@ -14,6 +14,7 @@ const general_service_1 = __importDefault(require("../../general-service"));
 const seo_page_service_1 = __importDefault(require("../../seo-page-service"));
 const product_variant_attributes_service_1 = __importDefault(require("../../../../services/admin/ecommerce/product/product-variant-attributes-service"));
 const seo_page_1 = require("../../../../constants/admin/seo-page");
+const country_model_1 = __importDefault(require("../../../../model/admin/setup/country-model"));
 class ProductVariantService {
     constructor() {
         this.project = {
@@ -114,7 +115,7 @@ class ProductVariantService {
             mpn: productVariants.mpn,
             barcode: productVariants.barcode,
         };
-        console.log(productVariantData);
+        console.log("productVariantData", productVariantData);
         const createdProductVariant = await product_variants_model_1.default.create(productVariantData);
         if (createdProductVariant) {
             const pipeline = [
@@ -240,14 +241,16 @@ class ProductVariantService {
                             }
                             else {
                                 var slugData;
-                                if (data.extraProductTitle) {
-                                    slugData = productdata.slug + "-" + data.extraProductTitle;
-                                }
-                                else {
-                                    slugData = productdata.slug;
-                                }
+                                // if (data.extraProductTitle) {
+                                //     slugData = productdata.slug + "-" + data.extraProductTitle
+                                // }
+                                // else {
+                                //     slugData = productdata.slug
+                                // }
+                                const countryData = await country_model_1.default.findOne({ _id: variantDetail.countryId });
+                                slugData = productdata?.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1); // generate slug
                                 // Create new document
-                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
+                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: (0, helpers_1.slugify)(slugData) }, userData);
                                 // console.log("variantData", variantData);
                                 if (variantData) {
                                     if (variantData) {
