@@ -342,6 +342,7 @@ class ProductsController extends base_controller_1.default {
     }
     async importProductExcel(req, res) {
         const validation = [];
+        var index = 2;
         try {
             // Load the Excel file
             if (req && req.file && req.file?.filename) {
@@ -359,7 +360,6 @@ class ProductsController extends base_controller_1.default {
                                 const jsonData = await xlsx.utils.sheet_to_json(worksheet);
                                 if (jsonData) {
                                     var finalDataList = [];
-                                    var index = 2;
                                     for await (let data of jsonData) {
                                         if (data.Product_Title) {
                                             if (data.Description) {
@@ -440,7 +440,8 @@ class ProductsController extends base_controller_1.default {
                                                                     }
                                                                     // await combinedArray.map(async (value: any, index: number) => {
                                                                     for await (let value of combinedArray) {
-                                                                        const attributes = await attributes_service_1.default.findOneAttribute({ attributeTitle: value.data, attributeType: value.type });
+                                                                        console.log(value);
+                                                                        const attributes = await attributes_service_1.default.findOneAttribute({ value });
                                                                         attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId });
                                                                     }
                                                                     const specificationCombinedArray = [];
@@ -571,6 +572,7 @@ class ProductsController extends base_controller_1.default {
                                                                     else if (data.Item_Type == 'variant') {
                                                                         if (data.Parent_SKU) {
                                                                             const product = await product_service_1.default.find({ sku: data.Parent_SKU });
+                                                                            console.log("ppproduct", product);
                                                                             if (product) {
                                                                                 var slugData;
                                                                                 if (data.Product_Title === product.productTitle) {
@@ -684,9 +686,9 @@ class ProductsController extends base_controller_1.default {
             }
         }
         catch (error) {
-            console.log("errorerror", error);
+            console.log("errorerror", error, index);
             // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-            //     validation.push({ slug: error.errors.slug.properties  })
+            // validation.push({ itemName: error.errors.slug.properties  })
             // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
             //     validation.push(error.errors.countryId.properties)
             // }

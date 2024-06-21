@@ -8,10 +8,8 @@ exports.cartSchema = zod_1.z.object({
 }).nonstrict();
 exports.cartProductSchema = zod_1.z.object({
     customerId: zod_1.z.string().optional(),
-    productId: zod_1.z.string(),
     variantId: zod_1.z.string(),
     quantity: zod_1.z.string(),
-    sku: zod_1.z.string(),
     slug: zod_1.z.string(),
     guestUserId: zod_1.z.any().optional(),
 }).nonstrict();

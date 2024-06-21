@@ -2,12 +2,11 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CartOrderProductProps extends Document {
     cartId: Schema.Types.ObjectId;
-    productId: Schema.Types.ObjectId;
     variantId: Schema.Types.ObjectId;
     quantity: number;
-    sku: string;
     slug: string;
     orderStatus: string;
+    giftWrapAmount: number;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -21,27 +20,23 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     },
     slug: {
         type: String,
-        required: true,
+        required: false,
     },
     quantity: {
         type: Number,
         required: true,
         default: 1
     },
-    productId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Products',
-        required: true,
+    giftWrapAmount: {
+        type: Number,
+        default: 0
     },
     variantId: {
         type: Schema.Types.ObjectId,
         ref: 'ProductVariants',
-        required: true
+        required: false
     },
-    sku: {
-        type: String,
-        default: ''
-    },
+
     orderStatus: {
         type: String,
         required: true,

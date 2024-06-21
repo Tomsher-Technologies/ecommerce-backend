@@ -377,6 +377,8 @@ class ProductService {
         let pipeline = [
             modifiedPipeline,
             product_config_1.productCategoryLookup,
+            product_config_1.brandLookup,
+            product_config_1.brandObject,
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),

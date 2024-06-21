@@ -93,7 +93,8 @@ const productVariantsSchema = new mongoose_1.Schema({
         type: String,
         required: function () {
             return !this.isExcel;
-        }
+        },
+        default: '0'
     },
     discountPrice: {
         type: Number,

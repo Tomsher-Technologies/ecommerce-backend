@@ -62,6 +62,11 @@ const filterProduct = async (data, countryId) => {
             };
         }
     }
+    if (data.slug) {
+        query = {
+            ...query, slug: data.slug
+        };
+    }
     if (data.productId) {
         query = {
             ...query, _id: new mongoose_1.default.Types.ObjectId(data.productId)

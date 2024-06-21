@@ -15,13 +15,18 @@ export interface CartOrderProps extends Document {
     paymentMethod: string;
     paymentMethodCharge: string;
     rewardPoints: string;
-    totalReturnedProduct: string;
-    totalDiscountAmount: string;
-    totalShippingAmount: string;
-    totalCouponAmount: string;
-    totalWalletAmount: string;
-    totalTaxAmount: string;
-    totalOrderAmount: string;
+    totalProductAmount: number //productprice*quantity
+    totalReturnedProduct: number;
+    totalDiscountAmount: number;
+    totalShippingAmount: number;
+    totalCouponAmount: number;
+    totalWalletAmount: number;
+    totalTaxAmount: number;
+    couponId: Schema.Types.ObjectId;
+    couponAmount: number;
+    totalGiftWrapAmount: number;
+    totalAmount: number;
+
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -52,63 +57,80 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     shippingStatus: {
         type: String,
-        default: '1'
+        default: '0'
     },
     shipmentGatwayId: {
         type: String,
-        default: '1'
+        default: '0'
     },
     paymentGatwayId: {
         type: String,
-        default: '1'
+        default: '0'
     },
     pickupStoreId: {
         type: String,
-        default: '1'
+        default: '0'
     },
     orderComments: {
         type: String,
-        default: '1'
+        default: '0'
     },
     paymentMethod: {
         type: String,
-        default: '1'
+        default: '0'
     },
     paymentMethodCharge: {
         type: String,
-        default: '1'
+        default: '0'
     },
     rewardPoints: {
         type: String,
-        default: '1'
+        default: '0'
     },
     totalReturnedProduct: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalDiscountAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalShippingAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalCouponAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalWalletAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalTaxAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
-    totalOrderAmount: {
-        type: String,
-        default: '1'
+    totalProductAmount: {
+        type: Number,
+        default: 0
+    },
+    couponId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Customer',
+        default: null
+    },
+    couponAmount: {
+        type: Number,
+        default: 0
+    },
+    totalGiftWrapAmount: {
+        type: Number,
+        default: 0
+    },
+    totalAmount: {
+        type: Number,
+        default: 0
     },
 
     createdAt: {

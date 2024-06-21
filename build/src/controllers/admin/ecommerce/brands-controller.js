@@ -18,7 +18,7 @@ const controller = new base_controller_1.default();
 class BrandsController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', brandId = '' } = req.query;
+            const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], slug = '', sortby = '', sortorder = '', keyword = '', brandId = '' } = req.query;
             let query = { _id: { $exists: true } };
             let brand;
             if (status && status !== '') {
@@ -48,6 +48,11 @@ class BrandsController extends base_controller_1.default {
                         _id: { $in: brandIds }
                     };
                 }
+            }
+            if (slug) {
+                query = {
+                    ...query, slug: slug
+                };
             }
             if (brand && (Object.keys(brand)).length > 0) {
                 query = {
