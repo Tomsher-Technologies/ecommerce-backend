@@ -459,7 +459,8 @@ class ProductController extends base_controller_1.default {
                 if (specification) {
                     const specificationArray = specification.split(',');
                     for await (let specification of specificationArray) {
-                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(specification);
+                        console.log("..........123456........", new mongoose_1.default.Types.ObjectId(specification), isObjectId);
                         if (isObjectId) {
                             orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail._id": new mongoose_1.default.Types.ObjectId(specification) });
                         }
@@ -483,17 +484,19 @@ class ProductController extends base_controller_1.default {
                 if (category) {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
-                        orConditionsForcategory.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
-                        const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
+                        // orConditionsForcategory.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
+                        const findcategory = await category_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(category) }, '_id');
                         if (findcategory && findcategory._id) {
                             // Function to recursively fetch category IDs and their children
                             async function fetchCategoryAndChildren(categoryId) {
                                 const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
-                                const categoryIds = categoriesData.map(category => category._id);
-                                for (let childId of categoryIds) {
-                                    orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                    // Recursively fetch children of childId
-                                    await fetchCategoryAndChildren(childId);
+                                if (categoriesData && categoriesData.length > 0) {
+                                    const categoryIds = categoriesData.map(category => category._id);
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
                                 }
                             }
                             // Start fetching categories recursively
@@ -535,7 +538,7 @@ class ProductController extends base_controller_1.default {
                     }
                 }
                 if (brand) {
-                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
                     if (isObjectId) {
                         query = {
                             ...query, "brand._id": new mongoose_1.default.Types.ObjectId(brand)
@@ -576,7 +579,7 @@ class ProductController extends base_controller_1.default {
                         ...discount, discount: discount
                     };
                 }
-                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategory.length > 0 || orConditionsForcategories.length > 0) {
+                if (orConditionsForAttributes.length > 0 || orConditionsForSpecification.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategory.length > 0 || orConditionsForcategories.length > 0) {
                     query.$and = [];
                     if (orConditionsForAttributes.length > 0) {
                         query.$and.push({

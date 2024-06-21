@@ -15,6 +15,8 @@ const cart_order_product_model_1 = __importDefault(require("../../model/frontend
 const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-schema");
 const customer_wishlist_servicel_1 = __importDefault(require("../../services/frontend/auth/customer-wishlist-servicel"));
+const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
+const website_setup_1 = require("../../constants/website-setup");
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
     async createCartOrder(req, res) {
@@ -23,7 +25,7 @@ class CartController extends base_controller_1.default {
             const user = res.locals.user;
             const uuid = res.locals.uuid;
             if (validatedData.success) {
-                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount, totalTaxAmount, totalAmount } = validatedData.data;
+                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount, totalTaxAmount, totalAmount, codAmount } = validatedData.data;
                 const { variantId, quantity, slug, orderStatus } = req.body;
                 let customer, guestUser;
                 let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -32,9 +34,6 @@ class CartController extends base_controller_1.default {
                 customer = user;
                 guestUser = uuid;
                 if (customer && guestUser) {
-                    console.log("customer", customer);
-                    console.log("country", country);
-                    console.log("guestUser", guestUser);
                     const customerCart = await cart_service_1.default.findCart({
                         $and: [
                             { customerId: customer },
@@ -55,8 +54,6 @@ class CartController extends base_controller_1.default {
                     });
                     const combinedData = [];
                     const variantIdMap = {};
-                    console.log("cartProducts", guestUserCart);
-                    console.log("cartProducts", customerCart);
                     // Iterate through each object in data
                     cartProducts.forEach((item) => {
                         const variantId = item.variantId;
@@ -78,7 +75,6 @@ class CartController extends base_controller_1.default {
                     for (const key in variantIdMap) {
                         combinedData.push(variantIdMap[key]);
                     }
-                    console.log("combinedDatacombinedData", combinedData);
                     var updateCart;
                     for (let data of combinedData) {
                         updateCart = await cart_service_1.default.updateCartProductByCart({
@@ -87,14 +83,10 @@ class CartController extends base_controller_1.default {
                                 { variantId: data.variantId }
                             ]
                         }, data);
-                        console.log("updateCart", updateCart);
                     }
                     if (updateCart) {
-                        console.log("updateCartupdateCart", updateCart);
                         const deletedData = await cart_service_1.default.destroy(guestUserCart._id);
-                        console.log("deletedData", deletedData);
                         const deletedProductData = await cart_service_1.default.destroyCartProduct1({ cartId: guestUserCart._id });
-                        console.log("deletedDcccccccccata", customer, country);
                         const cart = await cart_service_1.default.findCartPopulate({
                             $and: [
                                 { customerId: customer },
@@ -169,7 +161,7 @@ class CartController extends base_controller_1.default {
                             }
                         }
                     }
-                    console.log("productVariantData", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
+                    console.log("productVariantData11", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
                     if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
                         if (Number(productVariantData.cartMinQuantity) >= quantityProduct ? 0 : quantity || Number(productVariantData.cartMaxQuantity) <= quantityProduct ? 0 : quantity) {
                             return controller.sendErrorResponse(res, 200, {
@@ -178,7 +170,9 @@ class CartController extends base_controller_1.default {
                             });
                         }
                     }
-                    // const shippingAmount = await 
+                    const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings });
+                    // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
+                    console.log("shippingAmount", shippingAmount.blockValues.shippingCharge);
                     const cartOrderData = {
                         customerId: customer,
                         guestUserId: guestUser,
@@ -196,9 +190,10 @@ class CartController extends base_controller_1.default {
                         totalProductAmount: totalAmountOfProduct,
                         totalReturnedProduct,
                         totalDiscountAmount: totalDiscountAmountOfProduct,
-                        totalShippingAmount,
+                        totalShippingAmount: Number(shippingAmount.blockValues.shippingCharge),
                         totalCouponAmount,
                         totalWalletAmount,
+                        codAmount,
                         totalTaxAmount,
                         totalAmount: totalAmountOfProduct - totalDiscountAmountOfProduct,
                     };
@@ -370,10 +365,43 @@ class CartController extends base_controller_1.default {
     }
     async addGiftWrap(req, res) {
         try {
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
+            let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            const cart = await cart_service_1.default.findCartPopulate({
+                $or: [
+                    { $and: [{ customerId: customer }, { countryId: country }] },
+                    { $and: [{ guestUserId: guestUser }, { countryId: country }] }
+                ]
+            });
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while add to gift wrap'
+            });
+        }
+    }
+    async findUserCart(req, res) {
+        try {
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
+            let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            const cart = await cart_service_1.default.findCartPopulate({
+                $or: [
+                    { $and: [{ customerId: customer }, { countryId: country }] },
+                    { $and: [{ guestUserId: guestUser }, { countryId: country }] }
+                ]
+            });
+            return controller.sendSuccessResponse(res, {
+                requestedData: {
+                    ...cart
+                },
+                message: 'Your cart is ready!'
+            });
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while get cart'
             });
         }
     }

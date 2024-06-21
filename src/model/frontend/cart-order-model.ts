@@ -26,7 +26,7 @@ export interface CartOrderProps extends Document {
     couponAmount: number;
     totalGiftWrapAmount: number;
     totalAmount: number;
-
+    codAmount: number;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -91,6 +91,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     rewardPoints: {
         type: String,
         default: '0'
+    },
+    codAmount: {
+        type: Number,
+        default: 0
     },
     totalReturnedProduct: {
         type: Number,
