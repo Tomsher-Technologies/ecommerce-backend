@@ -32,7 +32,7 @@ class BrandService {
 
         ];
 
-        if (query._id) {
+        if (query._id || query.slug) {
             const language: any = await this.brandLanguage(hostName, pipeline)
             const data: any = await BrandModel.aggregate(language).exec();
 
