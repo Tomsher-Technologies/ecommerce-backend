@@ -5,13 +5,15 @@ import BaseController from '../../../controllers/admin/base-controller';
 import BrandService from '../../../services/frontend/guest/brand-service'
 import CommonService from '../../../services/frontend/guest/common-service'
 import { BrandQueryParams } from '../../../utils/types/brands';
+import CategoryModel from '../../../model/admin/ecommerce/category-model';
 const controller = new BaseController();
 
 class BrandController extends BaseController {
     async findAllBrand(req: Request, res: Response): Promise<void> {
         try {
             const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'brandTitle', sortorder = 'asc' } = req.query as BrandQueryParams;
-            let query: any = { }
+            let query: any = {}
+            const orConditionsForcategory: any = [];
 
             query.status = '1';
             let products: any
@@ -26,17 +28,66 @@ class BrandController extends BaseController {
 
                     if (category) {
                         // let query: any = {};
-
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                         if (isObjectId) {
-                            query = {
-                                ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                            orConditionsForcategory.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
+                            const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
+
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId: any) {
+                                    const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
+
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+
+                                // Push condition for the parent category itself
+                                orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
+                            } else {
+                                query = {
+                                    ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
+                                }
                             }
 
                         } else {
-                            query = {
-                                ...query, "productCategory.category.slug": category
+                            orConditionsForcategory.push({ "productCategory.category.slug": category });
+                            const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId: any) {
+                                    const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
+
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+
+                                // Push condition for the parent category itself
+                                orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
+                            } else {
+                                // If category not found, fallback to direct query by slug
+                                query = {
+                                    ...query, "productCategory.category.slug": category
+                                };
+
                             }
                         }
                     }
@@ -73,6 +124,13 @@ class BrandController extends BaseController {
                             ...query, slug: brand
                         }
                     }
+                }
+                query.$and = [];
+
+                if (orConditionsForcategory.length > 0) {
+                    query.$and.push({
+                        $or: orConditionsForcategory
+                    });
                 }
 
                 const brands = await BrandService.findAll({
