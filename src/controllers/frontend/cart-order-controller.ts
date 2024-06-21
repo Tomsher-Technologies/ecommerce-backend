@@ -48,6 +48,10 @@ class CartController extends BaseController {
                 guestUser = uuid
 
                 if (customer && guestUser) {
+                    console.log("customer", customer);
+                    console.log("country", country);
+                    console.log("guestUser", guestUser);
+
                     const customerCart: any = await CartService.findCart(
                         {
                             $and: [
@@ -73,7 +77,8 @@ class CartController extends BaseController {
 
                     const combinedData: any = [];
                     const variantIdMap: any = {};
-                    console.log("cartProducts", guestUserCart );
+                    console.log("cartProducts", guestUserCart);
+                    console.log("cartProducts", customerCart);
 
                     // Iterate through each object in data
                     cartProducts.forEach((item: any) => {
@@ -102,7 +107,13 @@ class CartController extends BaseController {
                     var updateCart
 
                     for (let data of combinedData) {
-                        updateCart = await CartService.updateCartProductByCart(data.cartId, data)
+                        updateCart = await CartService.updateCartProductByCart({
+                            $and: [
+                                { cartId: data.cartId },
+                                { variantId: data.variantId }
+                            ]
+                        }, data)
+                        console.log("updateCart", updateCart);
 
                     }
                     if (updateCart) {
@@ -112,9 +123,21 @@ class CartController extends BaseController {
                         console.log("deletedData", deletedData);
 
                         const deletedProductData = await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
+                        console.log("deletedDcccccccccata", customer, country);
 
-                        console.log("deletedDcccccccccata", deletedProductData);
+                        const cart = await CartService.findCartPopulate({
+                            $and: [
+                                { customerId: customer },
+                                { countryId: country }
+                            ]
+                        })
 
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: {
+                                ...cart
+                            },
+                            message: 'Your cart is ready!'
+                        });
                     }
 
                 } else
@@ -132,12 +155,14 @@ class CartController extends BaseController {
 
                         let totalAmountOfProduct = 0
                         let totalDiscountAmountOfProduct = 0
-                        let quantityProduct
+                        let quantityProduct = 0
 
                         if (existingCart) {
                             const existingCartProduct: any = await CartService.findCartProduct({
-                                cartId: existingCart._id,
-                                variantId: variantId
+                                $and: [
+                                    { cartId: existingCart._id },
+                                    { variantId: variantId }
+                                ]
                             });
                             if (existingCart.totalProductAmount) {
                                 totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData.price * quantity)
@@ -150,31 +175,44 @@ class CartController extends BaseController {
 
                             if (quantity == 1) {
                                 quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity
+                                console.log("quantityProduct", existingCartProduct);
+
                             } else if (quantity > 1) {
                                 quantityProduct = quantity
                             } else if (quantity == 0) {
-                                const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
-                                if (deletedData) {
+                                if (existingCartProduct) {
 
-                                    const products = await CartService.findAllCart({ cartId: existingCartProduct._id })
-                                    return controller.sendSuccessResponse(res, {
-                                        requestedData: {
-                                            ...existingCartProduct,
-                                            products: products
-                                        },
-                                        message: 'Product removed successfully!'
-                                    });
+                                    const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
+                                    if (deletedData) {
+
+                                        const cart = await CartService.findCartPopulate({ _id: existingCartProduct.cartId })
+                                        console.log("...........", cart);
+
+                                        return controller.sendSuccessResponse(res, {
+                                            requestedData: {
+                                                ...cart
+                                            },
+                                            message: 'Product removed successfully!'
+                                        });
+
+
+                                    } else {
+                                        return controller.sendErrorResponse(res, 500, {
+                                            message: 'Somethng went wrong on Product removed!'
+                                        });
+                                    }
                                 } else {
                                     return controller.sendErrorResponse(res, 500, {
-                                        message: 'Somethng went wrong on Product removed!'
+                                        message: 'Something went wrong: the product is not in the cart.'
                                     });
-                                }
 
+
+                                }
                             }
                         }
                         console.log("productVariantData", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
                         if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
-                            if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) <= quantityProduct) {
+                            if (Number(productVariantData.cartMinQuantity) >= quantityProduct ? 0 : quantity || Number(productVariantData.cartMaxQuantity) <= quantityProduct ? 0 : quantity) {
 
                                 return controller.sendErrorResponse(res, 200, {
                                     message: 'Validation error',

@@ -32,6 +32,9 @@ class CartController extends base_controller_1.default {
                 customer = user;
                 guestUser = uuid;
                 if (customer && guestUser) {
+                    console.log("customer", customer);
+                    console.log("country", country);
+                    console.log("guestUser", guestUser);
                     const customerCart = await cart_service_1.default.findCart({
                         $and: [
                             { customerId: customer },
@@ -52,7 +55,8 @@ class CartController extends base_controller_1.default {
                     });
                     const combinedData = [];
                     const variantIdMap = {};
-                    console.log("cartProducts", cartProducts);
+                    console.log("cartProducts", guestUserCart);
+                    console.log("cartProducts", customerCart);
                     // Iterate through each object in data
                     cartProducts.forEach((item) => {
                         const variantId = item.variantId;
@@ -77,14 +81,32 @@ class CartController extends base_controller_1.default {
                     console.log("combinedDatacombinedData", combinedData);
                     var updateCart;
                     for (let data of combinedData) {
-                        updateCart = await cart_service_1.default.updateCartProductByCart(data.cartId, data);
+                        updateCart = await cart_service_1.default.updateCartProductByCart({
+                            $and: [
+                                { cartId: data.cartId },
+                                { variantId: data.variantId }
+                            ]
+                        }, data);
+                        console.log("updateCart", updateCart);
                     }
                     if (updateCart) {
                         console.log("updateCartupdateCart", updateCart);
                         const deletedData = await cart_service_1.default.destroy(guestUserCart._id);
                         console.log("deletedData", deletedData);
                         const deletedProductData = await cart_service_1.default.destroyCartProduct1({ cartId: guestUserCart._id });
-                        console.log("deletedDcccccccccata", deletedProductData);
+                        console.log("deletedDcccccccccata", customer, country);
+                        const cart = await cart_service_1.default.findCartPopulate({
+                            $and: [
+                                { customerId: customer },
+                                { countryId: country }
+                            ]
+                        });
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: {
+                                ...cart
+                            },
+                            message: 'Your cart is ready!'
+                        });
                     }
                 }
                 else if (customer || guestUser) {
@@ -98,11 +120,13 @@ class CartController extends base_controller_1.default {
                     // totalProductAmount = 
                     let totalAmountOfProduct = 0;
                     let totalDiscountAmountOfProduct = 0;
-                    let quantityProduct;
+                    let quantityProduct = 0;
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
-                            cartId: existingCart._id,
-                            variantId: variantId
+                            $and: [
+                                { cartId: existingCart._id },
+                                { variantId: variantId }
+                            ]
                         });
                         if (existingCart.totalProductAmount) {
                             totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData.price * quantity);
@@ -114,32 +138,40 @@ class CartController extends base_controller_1.default {
                         }
                         if (quantity == 1) {
                             quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity;
+                            console.log("quantityProduct", existingCartProduct);
                         }
                         else if (quantity > 1) {
                             quantityProduct = quantity;
                         }
                         else if (quantity == 0) {
-                            const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
-                            if (deletedData) {
-                                const products = await cart_service_1.default.findAllCart({ cartId: existingCartProduct._id });
-                                return controller.sendSuccessResponse(res, {
-                                    requestedData: {
-                                        ...existingCartProduct,
-                                        products: products
-                                    },
-                                    message: 'Product removed successfully!'
-                                });
+                            if (existingCartProduct) {
+                                const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
+                                if (deletedData) {
+                                    const cart = await cart_service_1.default.findCartPopulate({ _id: existingCartProduct.cartId });
+                                    console.log("...........", cart);
+                                    return controller.sendSuccessResponse(res, {
+                                        requestedData: {
+                                            ...cart
+                                        },
+                                        message: 'Product removed successfully!'
+                                    });
+                                }
+                                else {
+                                    return controller.sendErrorResponse(res, 500, {
+                                        message: 'Somethng went wrong on Product removed!'
+                                    });
+                                }
                             }
                             else {
                                 return controller.sendErrorResponse(res, 500, {
-                                    message: 'Somethng went wrong on Product removed!'
+                                    message: 'Something went wrong: the product is not in the cart.'
                                 });
                             }
                         }
                     }
                     console.log("productVariantData", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
                     if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
-                        if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) <= quantityProduct) {
+                        if (Number(productVariantData.cartMinQuantity) >= quantityProduct ? 0 : quantity || Number(productVariantData.cartMaxQuantity) <= quantityProduct ? 0 : quantity) {
                             return controller.sendErrorResponse(res, 200, {
                                 message: 'Validation error',
                                 validation: "Cart minimum quantity is " + productVariantData.cartMinQuantity + " and Cart maximum quantity " + productVariantData.cartMaxQuantity

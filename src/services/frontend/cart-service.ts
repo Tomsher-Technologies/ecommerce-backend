@@ -14,7 +14,7 @@ class CartService {
     constructor() {
         this.cartLookup = {
             $lookup: {
-                from: 'CartOrderProducts', // Collection name of AttributeDetailModel
+                from: 'cartorderproducts', // Collection name of AttributeDetailModel
                 localField: '_id', // Field in AttributesModel
                 foreignField: 'cartId', // Field in AttributeDetailModel
                 as: 'products'
@@ -46,7 +46,7 @@ class CartService {
                 totalTaxAmount: 1,
                 totalAmount: 1,
                 products: {
-                    $ifNull: ['$attributeValues', []]
+                    $ifNull: ['$products', []]
                 },
 
             }
@@ -54,7 +54,25 @@ class CartService {
 
     }
     async findCart(data: any): Promise<CartOrderProps | null> {
-        return CartOrderModel.findOne(data);
+
+        const createdCartWithValues = await CartOrderModel.find(data);
+
+        return createdCartWithValues[0];
+    }
+    async findCartPopulate(data: any): Promise<CartOrderProps | null> {
+
+        const pipeline = [
+            { $match: data },
+            this.cartLookup,
+            this.project
+
+        ];
+
+        const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
+        console.log(createdCartWithValues);
+
+        return createdCartWithValues[0];
+        // return CartOrderModel.findOne(data);
     }
     async create(data: any): Promise<CartOrderProps | null> {
 
@@ -97,16 +115,9 @@ class CartService {
 
     async findCartProduct(data: any): Promise<CartOrderProductProps | null> {
 
+        const createdAttributeWithValues = await CartOrderProductsModel.findOne(data);
 
-
-        const pipeline = [
-            { $match: data },
-
-        ];
-
-        const createdAttributeWithValues = await CartOrderProductsModel.aggregate(pipeline);
-
-        return createdAttributeWithValues[0];
+        return createdAttributeWithValues;
 
     }
 
@@ -153,10 +164,10 @@ class CartService {
         }
     }
 
-    async updateCartProductByCart(_id: string, cartData: any): Promise<CartOrderProductProps | null> {
+    async updateCartProductByCart(_id: any, cartData: any): Promise<CartOrderProductProps | null> {
 
         const updatedCart = await CartOrderProductsModel.findOneAndUpdate(
-            { cartId: _id },
+            _id,
             cartData,
             { new: true, useFindAndModify: false }
         );

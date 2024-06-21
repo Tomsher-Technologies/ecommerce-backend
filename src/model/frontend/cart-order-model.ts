@@ -38,6 +38,11 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         ref: 'Customer',
         default: null
     },
+    countryId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Countries',
+        default: null
+    },
     guestUserId: {
         type: String,
         unique: true

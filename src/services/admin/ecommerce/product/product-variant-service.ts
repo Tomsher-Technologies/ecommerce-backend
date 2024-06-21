@@ -2,7 +2,7 @@ import { FilterOptionsProps, pagination } from '../../../../components/paginatio
 
 import { ProductsProps } from '../../../../utils/types/products';
 import { UserDataProps } from '../../../../utils/types/common';
-import { getCountryId, getCountryIdWithSuperAdmin, } from '../../../../utils/helpers';
+import { getCountryId, getCountryIdWithSuperAdmin, slugify, } from '../../../../utils/helpers';
 
 import ProductVariantModel, { ProductVariantsProps } from '../../../../model/admin/ecommerce/product/product-variants-model';
 import ProductSpecificationModel from '../../../../model/admin/ecommerce/product/product-specification-model';
@@ -15,6 +15,7 @@ import GeneralService from '../../general-service';
 import SeoPageService from '../../seo-page-service';
 import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
 import { seoPage } from '../../../../constants/admin/seo-page';
+import CountryModel from '../../../../model/admin/setup/country-model';
 
 class ProductVariantService {
 
@@ -130,7 +131,7 @@ class ProductVariantService {
             barcode: productVariants.barcode,
 
         }
-        console.log(productVariantData);
+        console.log("productVariantData", productVariantData);
 
         const createdProductVariant = await ProductVariantModel.create(productVariantData);
         if (createdProductVariant) {
@@ -282,14 +283,18 @@ class ProductVariantService {
                             else {
 
                                 var slugData
-                                if (data.extraProductTitle) {
-                                    slugData = productdata.slug + "-" + data.extraProductTitle
-                                }
-                                else {
-                                    slugData = productdata.slug
-                                }
+                                // if (data.extraProductTitle) {
+                                //     slugData = productdata.slug + "-" + data.extraProductTitle
+                                // }
+                                // else {
+                                //     slugData = productdata.slug
+                                // }
+                                const countryData: any = await CountryModel.findOne({ _id: variantDetail.countryId })
+
+                                slugData = productdata?.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1) // generate slug
+
                                 // Create new document
-                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
+                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugify(slugData) }, userData);
                                 // console.log("variantData", variantData);
 
                                 if (variantData) {
