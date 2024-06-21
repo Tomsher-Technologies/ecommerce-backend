@@ -345,6 +345,7 @@ export const brandLookup = {
                 $project: {
                     _id: 1,
                     brandTitle: 1,
+                    description: 1,
                     slug: 1,
                     brandImageUrl: 1,
                     status: 1,
