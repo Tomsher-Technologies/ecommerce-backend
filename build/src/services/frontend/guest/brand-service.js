@@ -14,7 +14,6 @@ class BrandService {
     constructor() { }
     async findAll(options = {}, products) {
         const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
-        console.log(sort);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -25,8 +24,7 @@ class BrandService {
             { $match: query },
             { $sort: finalSort },
         ];
-        console.log(finalSort);
-        if (query._id) {
+        if (query._id || query.slug) {
             const language = await this.brandLanguage(hostName, pipeline);
             const data = await brands_model_1.default.aggregate(language).exec();
             return data;
@@ -53,6 +51,7 @@ class BrandService {
         else {
             productData = await product_service_1.default.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
         }
+        console.log("productData", productData);
         const brandArray = [];
         var i = 1;
         if (productData) {

@@ -29,6 +29,7 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
+app.use(express_1.default.static('public'));
 app.use('/public', express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.use((0, helmet_1.default)({
     crossOriginResourcePolicy: false,
