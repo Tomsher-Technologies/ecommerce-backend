@@ -64,6 +64,11 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
 
     }
 
+    if (data.slug) {
+        query = {
+            ...query, slug: data.slug
+        } as any;
+    }
     if (data.productId) {
         query = {
             ...query, _id: new mongoose.Types.ObjectId(data.productId)

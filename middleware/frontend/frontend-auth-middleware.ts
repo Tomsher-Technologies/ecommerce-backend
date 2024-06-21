@@ -49,7 +49,27 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
         if (!authHeader && !uuid) {
             return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
         }
-        if (authHeader) {
+        if (authHeader && uuid) {
+            const token = authHeader.split(' ')[1];
+            if (!token) {
+                return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+            }
+            const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+
+
+            if (checkToken?.userId) {
+                const userData = await CustomerModel.findOne({ _id: checkToken.userId });
+                if (userData) {
+                    res.locals.user = userData._id;
+                    res.locals.uuid = uuid;
+                    next();
+                } else {
+                    return res.status(404).json({ message: 'User data not found!', status: false });
+                }
+            }
+        }
+
+        else if (authHeader) {
             const token = authHeader.split(' ')[1];
             if (!token) {
                 return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
@@ -67,7 +87,7 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
                 }
             }
         } else if (uuid) {
-            res.locals.user = uuid;
+            res.locals.uuid = uuid;
             next();
         }
 

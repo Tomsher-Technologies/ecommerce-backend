@@ -94,7 +94,8 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: String,
         required: function () {
             return !this.isExcel;
-        }
+        },
+        default:'0'
     },
     discountPrice: {
         type: Number,

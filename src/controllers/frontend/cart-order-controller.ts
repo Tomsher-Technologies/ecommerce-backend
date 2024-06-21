@@ -14,6 +14,12 @@ import CartOrdersModel from '../../model/frontend/cart-order-model';
 import CommonService from '../../services/frontend/guest/common-service'
 import cartService from '../../services/frontend/cart-service';
 import CartOrderProductsModel, { CartOrderProductProps } from '../../model/frontend/cart-order-product-model';
+import productService from '../../services/frontend/guest/product-service';
+import ProductsModel from '../../model/admin/ecommerce/product-model';
+import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
+import { number } from 'zod';
+import { addToWishlistSchema } from '../../utils/schemas/frontend/auth/wishlist-schema';
+import CustomerWishlistCountryService from '../../services/frontend/auth/customer-wishlist-servicel'
 
 const controller = new BaseController();
 
@@ -24,118 +30,271 @@ class CartController extends BaseController {
         try {
             const validatedData = cartSchema.safeParse(req.body);
             const user = res.locals.user;
+            const uuid = res.locals.uuid;
 
             if (validatedData.success) {
                 const { shippingStatus, shipmentGatwayId,
                     paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints,
-                    totalReturnedProduct, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount,
-                    totalTaxAmount, totalOrderAmount } = validatedData.data;
+                    totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount,
+                    totalTaxAmount, totalAmount } = validatedData.data;
+                const { variantId, quantity, slug, orderStatus } = req.body;
 
                 let customer, guestUser
                 let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
                 let newCartOrder
-                const isObjectId = /^[0-9a-fA-F]{24}$/.test(user);
-                if (isObjectId) {
-                    customer = user
-                } else {
-                    guestUser = user
-                }
-                if (customer || guestUser) {
-                    const existingProduct = await CartService.findCart({
-                        $or: [
-                            { customerId: customer },
-                            { guestUserId: guestUser }
-                        ]
-                    });
+                let newCartOrderProduct: any
 
-                    const cartOrderData = {
-                        customerId: customer,
-                        guestUserId: guestUser,
-                        countryId: country,
-                        cartStatus: '1',
-                        orderStatus: '0',
-                        orderStatusAt: new Date(), // Assuming orderStatusAt is set at creation time
-                        shippingStatus,
-                        shipmentGatwayId,
-                        paymentGatwayId,
-                        pickupStoreId,
-                        orderComments,
-                        paymentMethod,
-                        paymentMethodCharge,
-                        rewardPoints,
-                        totalReturnedProduct,
-                        totalDiscountAmount,
-                        totalShippingAmount,
-                        totalCouponAmount,
-                        totalWalletAmount,
-                        totalTaxAmount,
-                        totalOrderAmount,
-                        createdBy: user._id, // Assuming user._id is the creator of this entry
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    };
+                customer = user
+                guestUser = uuid
 
-                    if (existingProduct) {
-                        newCartOrder = await cartService.update(existingProduct._id, cartOrderData);
-                        if (newCartOrder) {
-                            console.log("hfghgfhfgh", newCartOrder._id, validatedData);
-
-                            const { productId, variantId, quantity, sku, slug, orderStatus } = req.body;
-                            const existingProduct: any = await CartOrderProductsModel.find({
-                                $and: [
-                                    { cartId: newCartOrder._id },
-                                    { productId: new mongoose.Types.ObjectId(productId) },
-                                    { variantId: new mongoose.Types.ObjectId(variantId) }
-                                ]
-                            });
-                            console.log("newCartOrderProduct", newCartOrder._id, productId, "llllll", existingProduct);
-
-                            const cartOrderProductData = {
-                                cartId: newCartOrder._id,
-                                customerId: customer,
-                                productId,
-                                variantId,
-                                quantity: existingProduct[0].quantity ? existingProduct[0].quantity + 1 : quantity,
-                                sku,
-                                slug,
-                                orderStatus,
-                                createdAt: new Date(),
-                                updatedAt: new Date()
-                            };
-                            let newCartOrderProduct: any
-                            if (existingProduct) {
-                                newCartOrderProduct = await CartService.updateCartProduct(existingProduct[0]._id, cartOrderProductData);
-                                console.log("cartOrderProductData", cartOrderProductData);
-
-                            } else {
-                                newCartOrderProduct = await CartOrderProductsModel.create(cartOrderProductData);
-
-                            }
-                            if (newCartOrderProduct) {
-                                console.log("newCartOrderProduct", newCartOrderProduct);
-                            }
-                            // Rest of your code
+                if (customer && guestUser) {
+                    const customerCart: any = await CartService.findCart(
+                        {
+                            $and: [
+                                { customerId: customer },
+                                { countryId: country }
+                            ]
                         }
-                    } else {
-                        newCartOrder = await cartService.create(cartOrderData);
-                    }
+                    );
+                    const guestUserCart: any = await CartService.findCart(
+                        {
+                            $and: [
+                                { guestUserId: guestUser },
+                                { countryId: country }
+                            ]
+                        });
 
+                    const cartProducts = await CartOrderProductsModel.find({
+                        $or: [
+                            { cartId: guestUserCart?._id },
+                            { cartId: customerCart?._id }
+                        ]
+                    })
 
-                    if (newCartOrder) {
-                        // Adjust response structure as needed
-                        return controller.sendSuccessResponse(res, {
-                            requestedData: {
-                                newCartOrder,
-                            },
-                            message: 'Cart order created successfully!'
-                        }, 200);
-                    }
-                } else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Error',
-                        validation: 'Something went wrong! Cart order could not be inserted. Please try again'
+                    const combinedData: any = [];
+                    const variantIdMap: any = {};
+                    console.log("cartProducts", guestUserCart );
+
+                    // Iterate through each object in data
+                    cartProducts.forEach((item: any) => {
+                        const variantId = item.variantId;
+                        if (!variantIdMap[variantId]) {
+                            // If variantId is not in the map, add it with initial quantity
+                            variantIdMap[variantId] = {
+                                _id: item._id,
+                                cartId: item.cartId,
+                                quantity: item.quantity,
+                                variantId: variantId
+                            };
+                        } else {
+                            // If variantId is already in the map, update the quantity
+                            variantIdMap[variantId].quantity += item.quantity;
+                        }
                     });
-                }
+
+                    // Convert variantIdMap object back to array format
+                    for (const key in variantIdMap) {
+                        combinedData.push(variantIdMap[key]);
+                    }
+
+
+                    console.log("combinedDatacombinedData", combinedData);
+                    var updateCart
+
+                    for (let data of combinedData) {
+                        updateCart = await CartService.updateCartProductByCart(data.cartId, data)
+
+                    }
+                    if (updateCart) {
+                        console.log("updateCartupdateCart", updateCart);
+
+                        const deletedData = await CartService.destroy(guestUserCart._id);
+                        console.log("deletedData", deletedData);
+
+                        const deletedProductData = await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
+
+                        console.log("deletedDcccccccccata", deletedProductData);
+
+                    }
+
+                } else
+                    if (customer || guestUser) {
+                        const existingCart = await CartService.findCart({
+                            $or: [
+                                { customerId: customer },
+                                { guestUserId: guestUser }
+                            ]
+                        });
+
+
+                        const productVariantData: any = await ProductVariantsModel.findOne({ _id: variantId })
+                        // totalProductAmount = 
+
+                        let totalAmountOfProduct = 0
+                        let totalDiscountAmountOfProduct = 0
+                        let quantityProduct
+
+                        if (existingCart) {
+                            const existingCartProduct: any = await CartService.findCartProduct({
+                                cartId: existingCart._id,
+                                variantId: variantId
+                            });
+                            if (existingCart.totalProductAmount) {
+                                totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData.price * quantity)
+                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (productVariantData.price * quantity)
+                            } else {
+                                totalAmountOfProduct = productVariantData?.price * quantity
+                                totalDiscountAmountOfProduct = productVariantData.price * quantity
+
+                            }
+
+                            if (quantity == 1) {
+                                quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity
+                            } else if (quantity > 1) {
+                                quantityProduct = quantity
+                            } else if (quantity == 0) {
+                                const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
+                                if (deletedData) {
+
+                                    const products = await CartService.findAllCart({ cartId: existingCartProduct._id })
+                                    return controller.sendSuccessResponse(res, {
+                                        requestedData: {
+                                            ...existingCartProduct,
+                                            products: products
+                                        },
+                                        message: 'Product removed successfully!'
+                                    });
+                                } else {
+                                    return controller.sendErrorResponse(res, 500, {
+                                        message: 'Somethng went wrong on Product removed!'
+                                    });
+                                }
+
+                            }
+                        }
+                        console.log("productVariantData", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
+                        if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
+                            if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) <= quantityProduct) {
+
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Validation error',
+                                    validation: "Cart minimum quantity is " + productVariantData.cartMinQuantity + " and Cart maximum quantity " + productVariantData.cartMaxQuantity
+                                });
+                            }
+                        }
+
+                        // const shippingAmount = await 
+
+                        const cartOrderData = {
+                            customerId: customer,
+                            guestUserId: guestUser,
+                            countryId: country,
+                            cartStatus: '1',
+                            orderStatus: '0',
+                            shippingStatus,
+                            shipmentGatwayId,
+                            paymentGatwayId,
+                            pickupStoreId,
+                            orderComments,
+                            paymentMethod,
+                            paymentMethodCharge,
+                            rewardPoints,
+                            totalProductAmount: totalAmountOfProduct,
+                            totalReturnedProduct,
+                            totalDiscountAmount: totalDiscountAmountOfProduct,
+                            totalShippingAmount,
+                            totalCouponAmount,
+                            totalWalletAmount,
+                            totalTaxAmount,
+                            totalAmount: totalAmountOfProduct - totalDiscountAmountOfProduct,
+                        };
+
+                        if (existingCart) {
+                            newCartOrder = await cartService.update(existingCart._id, cartOrderData);
+                            if (newCartOrder) {
+
+                                const existingProduct: any = await CartService.findCartProduct({
+                                    $or: [
+                                        {
+                                            $and: [
+                                                { cartId: newCartOrder._id },
+                                                { slug: new mongoose.Types.ObjectId(slug) }
+                                            ]
+                                        },
+                                        {
+                                            $and: [
+                                                { cartId: newCartOrder._id },
+                                                { variantId: new mongoose.Types.ObjectId(variantId) }
+                                            ]
+                                        }
+                                    ]
+                                });
+
+
+
+                                const cartOrderProductData = {
+                                    cartId: newCartOrder._id,
+                                    customerId: customer,
+                                    variantId,
+                                    quantity: quantityProduct,
+                                    slug,
+                                    orderStatus,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                };
+
+                                if (existingProduct) {
+
+                                    newCartOrderProduct = await CartService.updateCartProduct(existingProduct._id, cartOrderProductData);
+
+                                } else {
+
+                                    newCartOrderProduct = await CartService.createCartProduct(cartOrderProductData);
+
+                                }
+                            }
+                        } else {
+                            newCartOrder = await cartService.create(cartOrderData);
+
+                            if (newCartOrder) {
+
+
+
+                                const cartOrderProductData = {
+                                    cartId: newCartOrder._id,
+                                    customerId: customer,
+                                    variantId,
+                                    quantity: quantityProduct ? 0 : quantity,
+                                    slug,
+                                    orderStatus,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                };
+
+                                newCartOrderProduct = await CartService.createCartProduct(cartOrderProductData);
+
+
+                            }
+                        }
+
+
+                        if (newCartOrder) {
+                            const products = await CartService.findAllCart({ cartId: newCartOrder._id })
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    ...newCartOrder,
+                                    products: products
+                                },
+                                message: 'Cart order created successfully!'
+                            }, 200);
+                        }
+                    }
+                    else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Error',
+                            validation: 'Something went wrong! Cart order could not be inserted. Please try again'
+                        });
+                    }
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -143,49 +302,109 @@ class CartController extends BaseController {
                 });
             }
         } catch (error: any) {
-            // Handle specific validation errors or general errors
-            if (error && error.errors && error.errors.someSpecificField && error.errors.someSpecificField.properties) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: {
-                        someSpecificField: error.errors.someSpecificField.properties.message
-                    }
-                });
-            }
-            // Handle other errors
+            console.log("*********errorr", error);
+
             return controller.sendErrorResponse(res, 200, {
                 message: error.message || 'Some error occurred while creating cart order',
             });
         }
     }
 
-    async createCartProduct(cartId: string, data: any): Promise<void> {
+
+    async addToWishlist(req: Request, res: Response): Promise<void> {
         try {
-            console.log("data", data);
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                const validatedData = addToWishlistSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { slug, sku } = validatedData.data;
+                    const productVariantData = await ProductVariantsModel.findOne({
+                        countryId,
+                        variantSku: sku,
+                        slug
+                    });
+                    const user = res.locals.user;
 
-            const { productId, variantId, quantity, sku, slug, orderStatus } = data;
+                    if (productVariantData) {
+                        const whishlistData = await CustomerWishlistCountryService.findOne({
+                            userId: user._id,
+                            countryId,
+                        });
+                        if (whishlistData) {
+                            const deletedDataFromCart = await CartService.destroyCartProduct(productVariantData._id)
+                            if (deletedDataFromCart) {
+                                return controller.sendSuccessResponse(res, {
+                                    requestedData: {},
+                                    message: 'Product removed successfully!'
+                                });
+                            } else {
+                                return controller.sendErrorResponse(res, 500, {
+                                    message: 'Somethng went wrong on product removed!'
+                                });
+                            }
+                        } else {
+                            const whishlistInsertData = {
+                                countryId,
+                                userId: user._id,
+                                productId: productVariantData.productId,
+                                variantId: productVariantData._id,
+                                slug: productVariantData.slug,
+                                variantSku: productVariantData.variantSku
+                            }
+                            const insertData = await CustomerWishlistCountryService.create(whishlistInsertData);
+                            if (insertData) {
+                                const deletedDataFromCart = await CartService.destroyCartProduct(productVariantData._id)
 
-            const cartOrderProductData = {
-                cartId: cartId,
-                productId,
-                variantId,
-                quantity,
-                sku,
-                slug,
-                orderStatus,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            };
+                                return controller.sendSuccessResponse(res, {
+                                    requestedData: insertData,
+                                    message: 'Wishlist added successfully!'
+                                });
+                            } else {
+                                return controller.sendErrorResponse(res, 500, {
+                                    message: 'Somethng went wrong on wishlist add!'
+                                });
+                            }
+                        }
+                    } else {
+                        return controller.sendErrorResponse(res, 500, {
+                            message: 'Product not found!'
+                        });
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: formatZodError(validatedData.error.errors)
+                    });
+                }
 
-            const newCartOrderProduct: any = await CartOrderProductsModel.create(cartOrderProductData);
-            if (newCartOrderProduct) {
-                return newCartOrderProduct;
+            } else {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
             }
-
-        } catch (error) {
-            console.error("Error creating cart order product:", error);
-            throw error; // Re-throw error to be handled by calling function
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while add to wishlist'
+            });
         }
+    }
+
+    async addGiftWrap(req: Request, res: Response): Promise<void> {
+        try {
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while add to gift wrap'
+            });
+        }
+    }
+
+    async addCoupon(req: Request, res: Response): Promise<void> {
+
+    }
+
+    async addWalletPoint(req: Request, res: Response): Promise<void> {
+
     }
 
 }

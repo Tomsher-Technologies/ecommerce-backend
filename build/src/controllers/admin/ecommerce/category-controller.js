@@ -18,7 +18,7 @@ const controller = new base_controller_1.default();
 class CategoryController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', category = '', categoryId = '', _id = '', parentCategory = '' } = req.query;
+            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', slug = '', category = '', categoryId = '', _id = '', parentCategory = '' } = req.query;
             let query = { _id: { $exists: true } };
             let categoryIdCheck;
             if (status && status !== '') {
@@ -63,6 +63,11 @@ class CategoryController extends base_controller_1.default {
             if (category) {
                 query = {
                     ...query, _id: new mongoose_1.default.Types.ObjectId(category)
+                };
+            }
+            if (slug) {
+                query = {
+                    ...query, slug: slug
                 };
             }
             if (parentCategory) {

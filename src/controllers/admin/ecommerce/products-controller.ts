@@ -392,6 +392,7 @@ class ProductsController extends BaseController {
 
     async importProductExcel(req: Request, res: Response): Promise<void> {
         const validation: any = []
+        var index = 2
 
         try {
             // Load the Excel file
@@ -414,7 +415,6 @@ class ProductsController extends BaseController {
                                 const jsonData = await xlsx.utils.sheet_to_json(worksheet);
                                 if (jsonData) {
                                     var finalDataList: any = []
-                                    var index = 2
                                     for await (let data of jsonData) {
 
                                         if (data.Product_Title) {
@@ -508,7 +508,9 @@ class ProductsController extends BaseController {
 
                                                                     // await combinedArray.map(async (value: any, index: number) => {
                                                                     for await (let value of combinedArray) {
-                                                                        const attributes: any = await AttributesService.findOneAttribute({ attributeTitle: value.data, attributeType: value.type })
+                                                                        console.log(value);
+                                                                        
+                                                                        const attributes: any = await AttributesService.findOneAttribute({ value })
                                                                         attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                     }
 
@@ -653,6 +655,8 @@ class ProductsController extends BaseController {
                                                                         if (data.Item_Type == 'variant') {
                                                                             if (data.Parent_SKU) {
                                                                                 const product: any = await ProductsService.find({ sku: data.Parent_SKU })
+                                                                                console.log("ppproduct",product);
+
                                                                                 if (product) {
                                                                                     var slugData
                                                                                     if (data.Product_Title === product.productTitle) {
@@ -768,10 +772,10 @@ class ProductsController extends BaseController {
                 controller.sendErrorResponse(res, 200, { message: "please upload file" });
             }
         } catch (error: any) {
-            console.log("errorerror", error);
+            console.log("errorerror", error,index);
 
             // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-            //     validation.push({ slug: error.errors.slug.properties  })
+                // validation.push({ itemName: error.errors.slug.properties  })
 
             // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
             //     validation.push(error.errors.countryId.properties)

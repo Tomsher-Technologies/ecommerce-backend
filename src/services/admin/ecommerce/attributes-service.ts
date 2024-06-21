@@ -134,8 +134,8 @@ class AttributesService {
         }
     }
     async findOneAttribute(data: any): Promise<void | null> {
-
-        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.attributeTitle });
+        data = data.value
+        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.data });
         if (resultAttribute) {
             const attributeDetailResult: any = await this.findOneAttributeDetail(data, resultAttribute._id)
 
@@ -145,9 +145,11 @@ class AttributesService {
             }
             return result
         } else {
+            console.log("dddddddddd", data);
+
             const attributeData = {
-                attributeTitle: capitalizeWords(data.attributeTitle),
-                attributeType: data.attributeType,
+                attributeTitle: capitalizeWords(data.value.data),
+                attributeType: data.type,
                 isExcel: true,
                 slug: slugify(data.attributeTitle)
             }
@@ -166,14 +168,14 @@ class AttributesService {
     }
 
     async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
-        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.itemName }, { attributeId: attributeId }] });
+        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.name }, { attributeId: attributeId }] });
         if (resultAttribute) {
             return resultAttribute
         } else {
             const attributeData = {
                 attributeId: attributeId,
-                itemName: data.itemName,
-                itemValue: data.itemValue,
+                itemName: data.name,
+                itemValue: data.value,
 
             }
             const attributeResult: any = await AttributeDetailModel.create(attributeData);

@@ -49,63 +49,80 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     shippingStatus: {
         type: String,
-        default: '1'
+        default: '0'
     },
     shipmentGatwayId: {
         type: String,
-        default: '1'
+        default: '0'
     },
     paymentGatwayId: {
         type: String,
-        default: '1'
+        default: '0'
     },
     pickupStoreId: {
         type: String,
-        default: '1'
+        default: '0'
     },
     orderComments: {
         type: String,
-        default: '1'
+        default: '0'
     },
     paymentMethod: {
         type: String,
-        default: '1'
+        default: '0'
     },
     paymentMethodCharge: {
         type: String,
-        default: '1'
+        default: '0'
     },
     rewardPoints: {
         type: String,
-        default: '1'
+        default: '0'
     },
     totalReturnedProduct: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalDiscountAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalShippingAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalCouponAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalWalletAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
     totalTaxAmount: {
-        type: String,
-        default: '1'
+        type: Number,
+        default: 0
     },
-    totalOrderAmount: {
-        type: String,
-        default: '1'
+    totalProductAmount: {
+        type: Number,
+        default: 0
+    },
+    couponId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Customer',
+        default: null
+    },
+    couponAmount: {
+        type: Number,
+        default: 0
+    },
+    totalGiftWrapAmount: {
+        type: Number,
+        default: 0
+    },
+    totalAmount: {
+        type: Number,
+        default: 0
     },
     createdAt: {
         type: Date,

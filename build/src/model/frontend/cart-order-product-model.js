@@ -32,26 +32,21 @@ const cartOrderProductSchema = new mongoose_1.Schema({
     },
     slug: {
         type: String,
-        required: true,
+        required: false,
     },
     quantity: {
         type: Number,
         required: true,
         default: 1
     },
-    productId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
-        required: true,
+    giftWrapAmount: {
+        type: Number,
+        default: 0
     },
     variantId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'ProductVariants',
-        required: true
-    },
-    sku: {
-        type: String,
-        default: ''
+        required: false
     },
     orderStatus: {
         type: String,
