@@ -10,4 +10,8 @@ const cart_order_controller_1 = __importDefault(require("../../src/controllers/f
 const router = express_1.default.Router();
 router.use(frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware);
 router.post('/create-cart', response_status_1.logResponseStatus, cart_order_controller_1.default.createCartOrder);
+router.get('/get-cart', response_status_1.logResponseStatus, cart_order_controller_1.default.findUserCart);
+router.post('/add-gift-wrap', response_status_1.logResponseStatus, cart_order_controller_1.default.addGiftWrap);
+router.post('/move-to-wishlist', response_status_1.logResponseStatus, cart_order_controller_1.default.addToWishlist);
+// router.post('/get-cart', logResponseStatus, cartOrderController.createCartOrder);
 exports.default = router;

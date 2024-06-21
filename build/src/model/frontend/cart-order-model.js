@@ -84,6 +84,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: String,
         default: '0'
     },
+    codAmount: {
+        type: Number,
+        default: 0
+    },
     totalReturnedProduct: {
         type: Number,
         default: 0

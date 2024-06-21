@@ -20,6 +20,8 @@ import ProductVariantsModel from '../../model/admin/ecommerce/product/product-va
 import { number } from 'zod';
 import { addToWishlistSchema } from '../../utils/schemas/frontend/auth/wishlist-schema';
 import CustomerWishlistCountryService from '../../services/frontend/auth/customer-wishlist-servicel'
+import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
+import { blockReferences, websiteSetup } from '../../constants/website-setup';
 
 const controller = new BaseController();
 
@@ -36,7 +38,7 @@ class CartController extends BaseController {
                 const { shippingStatus, shipmentGatwayId,
                     paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints,
                     totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount,
-                    totalTaxAmount, totalAmount } = validatedData.data;
+                    totalTaxAmount, totalAmount, codAmount } = validatedData.data;
                 const { variantId, quantity, slug, orderStatus } = req.body;
 
                 let customer, guestUser
@@ -48,10 +50,6 @@ class CartController extends BaseController {
                 guestUser = uuid
 
                 if (customer && guestUser) {
-                    console.log("customer", customer);
-                    console.log("country", country);
-                    console.log("guestUser", guestUser);
-
                     const customerCart: any = await CartService.findCart(
                         {
                             $and: [
@@ -77,8 +75,6 @@ class CartController extends BaseController {
 
                     const combinedData: any = [];
                     const variantIdMap: any = {};
-                    console.log("cartProducts", guestUserCart);
-                    console.log("cartProducts", customerCart);
 
                     // Iterate through each object in data
                     cartProducts.forEach((item: any) => {
@@ -102,8 +98,6 @@ class CartController extends BaseController {
                         combinedData.push(variantIdMap[key]);
                     }
 
-
-                    console.log("combinedDatacombinedData", combinedData);
                     var updateCart
 
                     for (let data of combinedData) {
@@ -113,17 +107,13 @@ class CartController extends BaseController {
                                 { variantId: data.variantId }
                             ]
                         }, data)
-                        console.log("updateCart", updateCart);
 
                     }
                     if (updateCart) {
-                        console.log("updateCartupdateCart", updateCart);
 
                         const deletedData = await CartService.destroy(guestUserCart._id);
-                        console.log("deletedData", deletedData);
 
                         const deletedProductData = await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
-                        console.log("deletedDcccccccccata", customer, country);
 
                         const cart = await CartService.findCartPopulate({
                             $and: [
@@ -210,7 +200,7 @@ class CartController extends BaseController {
                                 }
                             }
                         }
-                        console.log("productVariantData", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
+                        console.log("productVariantData11", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
                         if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
                             if (Number(productVariantData.cartMinQuantity) >= quantityProduct ? 0 : quantity || Number(productVariantData.cartMaxQuantity) <= quantityProduct ? 0 : quantity) {
 
@@ -221,7 +211,9 @@ class CartController extends BaseController {
                             }
                         }
 
-                        // const shippingAmount = await 
+                        const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings })
+                        // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
+                        console.log("shippingAmount", shippingAmount.blockValues.shippingCharge);
 
                         const cartOrderData = {
                             customerId: customer,
@@ -240,9 +232,10 @@ class CartController extends BaseController {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount,
+                            totalShippingAmount: Number(shippingAmount.blockValues.shippingCharge),
                             totalCouponAmount,
                             totalWalletAmount,
+                            codAmount,
                             totalTaxAmount,
                             totalAmount: totalAmountOfProduct - totalDiscountAmountOfProduct,
                         };
@@ -429,10 +422,47 @@ class CartController extends BaseController {
 
     async addGiftWrap(req: Request, res: Response): Promise<void> {
         try {
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
+            let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+
+            const cart: any = await CartService.findCartPopulate({
+                $or: [
+                    { $and: [{ customerId: customer }, { countryId: country }] },
+                    { $and: [{ guestUserId: guestUser }, { countryId: country }] }
+                ]
+            });
 
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while add to gift wrap'
+            });
+        }
+    }
+
+    async findUserCart(req: Request, res: Response): Promise<void> {
+        try {
+
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
+            let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+
+            const cart: any = await CartService.findCartPopulate({
+                $or: [
+                    { $and: [{ customerId: customer }, { countryId: country }] },
+                    { $and: [{ guestUserId: guestUser }, { countryId: country }] }
+                ]
+            });
+
+            return controller.sendSuccessResponse(res, {
+                requestedData: {
+                    ...cart
+                },
+                message: 'Your cart is ready!'
+            });
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while get cart'
             });
         }
     }
