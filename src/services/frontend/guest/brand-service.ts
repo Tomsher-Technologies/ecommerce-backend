@@ -19,7 +19,6 @@ class BrandService {
     async findAll(options: FilterOptionsProps = {}, products: any): Promise<BrandProps[]> {
 
         const { query, hostName, sort } = pagination(options.query || {}, options);
-        console.log(sort);
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -32,9 +31,6 @@ class BrandService {
             { $sort: finalSort },
 
         ];
-
-
-        console.log(finalSort);
 
         if (query._id) {
             const language: any = await this.brandLanguage(hostName, pipeline)
@@ -74,6 +70,7 @@ class BrandService {
 
             productData = await ProductService.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
         }
+        console.log("productData", productData);
 
         const brandArray: any = []
         var i = 1;
