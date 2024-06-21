@@ -7,12 +7,14 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const brand_service_1 = __importDefault(require("../../../services/frontend/guest/brand-service"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const controller = new base_controller_1.default();
 class BrandController extends base_controller_1.default {
     async findAllBrand(req, res) {
         try {
             const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'brandTitle', sortorder = 'asc' } = req.query;
-            let query = { _id: { $exists: true } };
+            let query = {};
+            const orConditionsForcategory = [];
             query.status = '1';
             let products;
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -23,17 +25,58 @@ class BrandController extends base_controller_1.default {
                 }
                 if (!brand) {
                     if (category) {
-                        let query = {};
+                        // let query: any = {};
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         if (isObjectId) {
-                            query = {
-                                ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
-                            };
+                            orConditionsForcategory.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
+                            const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId) {
+                                    const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+                                // Push condition for the parent category itself
+                                orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
+                            }
+                            else {
+                                query = {
+                                    ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
+                                };
+                            }
                         }
                         else {
-                            query = {
-                                ...query, "productCategory.category.slug": category
-                            };
+                            orConditionsForcategory.push({ "productCategory.category.slug": category });
+                            const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                            if (findcategory && findcategory._id) {
+                                // Function to recursively fetch category IDs and their children
+                                async function fetchCategoryAndChildren(categoryId) {
+                                    const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
+                                    const categoryIds = categoriesData.map(category => category._id);
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
+                                }
+                                // Start fetching categories recursively
+                                await fetchCategoryAndChildren(findcategory._id);
+                                // Push condition for the parent category itself
+                                orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
+                            }
+                            else {
+                                // If category not found, fallback to direct query by slug
+                                query = {
+                                    ...query, "productCategory.category.slug": category
+                                };
+                            }
                         }
                     }
                     if (collectionproduct) {
@@ -53,7 +96,6 @@ class BrandController extends base_controller_1.default {
                     }
                 }
                 if (brand) {
-                    console.log("jkkjkjkjkkjkjkj", brand);
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
                     if (isObjectId) {
                         query = {
@@ -65,6 +107,12 @@ class BrandController extends base_controller_1.default {
                             ...query, slug: brand
                         };
                     }
+                }
+                if (orConditionsForcategory.length > 0) {
+                    query.$and = [];
+                    query.$and.push({
+                        $or: orConditionsForcategory
+                    });
                 }
                 const brands = await brand_service_1.default.findAll({
                     hostName: req.get('origin'),

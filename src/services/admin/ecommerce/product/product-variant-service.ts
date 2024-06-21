@@ -131,7 +131,6 @@ class ProductVariantService {
             barcode: productVariants.barcode,
 
         }
-        console.log("productVariantData", productVariantData);
 
         const createdProductVariant = await ProductVariantModel.create(productVariantData);
         if (createdProductVariant) {
