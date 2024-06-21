@@ -125,9 +125,9 @@ class BrandController extends BaseController {
                         }
                     }
                 }
-                query.$and = [];
 
                 if (orConditionsForcategory.length > 0) {
+                    query.$and = [];
                     query.$and.push({
                         $or: orConditionsForcategory
                     });
