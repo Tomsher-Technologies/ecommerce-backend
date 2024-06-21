@@ -536,9 +536,11 @@ class ProductController extends BaseController {
 
                     for await (let specification of specificationArray) {
 
-                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(specification);
+                        console.log("..........123456........", new mongoose.Types.ObjectId(specification),isObjectId);
 
                         if (isObjectId) {
+
                             orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail._id": new mongoose.Types.ObjectId(specification) })
                         } else {
                             orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail.itemName": specification })
@@ -568,20 +570,22 @@ class ProductController extends BaseController {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                     if (isObjectId) {
-                        orConditionsForcategory.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
-                        const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
+                        // orConditionsForcategory.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
+                        const findcategory = await CategoryModel.findOne({ _id: new mongoose.Types.ObjectId(category) }, '_id');
 
                         if (findcategory && findcategory._id) {
                             // Function to recursively fetch category IDs and their children
                             async function fetchCategoryAndChildren(categoryId: any) {
                                 const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
-                                const categoryIds = categoriesData.map(category => category._id);
+                                if (categoriesData && categoriesData.length > 0) {
+                                    const categoryIds = categoriesData.map(category => category._id);
 
-                                for (let childId of categoryIds) {
-                                    orConditionsForcategory.push({ "productCategory.category._id": childId });
+                                    for (let childId of categoryIds) {
+                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
 
-                                    // Recursively fetch children of childId
-                                    await fetchCategoryAndChildren(childId);
+                                        // Recursively fetch children of childId
+                                        await fetchCategoryAndChildren(childId);
+                                    }
                                 }
                             }
 
@@ -632,7 +636,7 @@ class ProductController extends BaseController {
 
                 if (brand) {
 
-                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
 
                     if (isObjectId) {
                         query = {
@@ -679,7 +683,7 @@ class ProductController extends BaseController {
                     }
                 }
 
-                if (orConditionsForAttributes.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategory.length > 0 || orConditionsForcategories.length > 0) {
+                if (orConditionsForAttributes.length > 0 || orConditionsForSpecification.length > 0 || orConditionsForBrands.length > 0 || orConditionsForcategory.length > 0 || orConditionsForcategories.length > 0) {
                     query.$and = [];
 
                     if (orConditionsForAttributes.length > 0) {
@@ -711,6 +715,7 @@ class ProductController extends BaseController {
                         });
                     }
                 }
+
                 if (sortby == 'createdAt') {
                     if (sortorder === 'asc') {
                         sort = { createdAt: -1 };

@@ -9,6 +9,10 @@ const router: Router = express.Router();
 router.use(frontendAuthAndUnAuthMiddleware);
 
 router.post('/create-cart', logResponseStatus, cartOrderController.createCartOrder);
+router.get('/get-cart', logResponseStatus, cartOrderController.findUserCart);
+router.post('/add-gift-wrap', logResponseStatus, cartOrderController.addGiftWrap);
+router.post('/move-to-wishlist', logResponseStatus, cartOrderController.addToWishlist);
+// router.post('/get-cart', logResponseStatus, cartOrderController.createCartOrder);
 
 
 

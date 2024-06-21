@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const helmet_1 = __importDefault(require("helmet"));
 const cors_1 = __importDefault(require("cors"));
-const path_1 = __importDefault(require("path"));
 require('dotenv').config();
 const allowed_origins_1 = require("./config/allowed-origins");
 const admin_routers_1 = __importDefault(require("./routes/admin-routers"));
@@ -30,7 +29,7 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
 app.use(express_1.default.static('public'));
-app.use('/public', express_1.default.static(path_1.default.join(__dirname, 'public')));
+// app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use((0, helmet_1.default)({
     crossOriginResourcePolicy: false,
     crossOriginEmbedderPolicy: false,

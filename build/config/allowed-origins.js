@@ -8,6 +8,7 @@ exports.allowedOrigins = [
     'https://beyondfreshadmin.vercel.app',
     'https://homestyleadmin.vercel.app',
     'https://smartbabyadmin.vercel.app',
+    'https://timehouse.vercel.app/',
     'http://localhost:3002',
     'http://localhost:3027',
     'http://localhost:3028',
