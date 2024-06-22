@@ -12,6 +12,130 @@ export const productVariantsLookupValues = {
     }
 }
 
+export const wishlistProductCategoryLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.products.productcategorylinks}`,
+        localField: 'productDetails._id',
+        foreignField: 'productId',
+        as: 'productDetails.offer',
+        pipeline: [
+            {
+                $lookup: {
+                    from: `${collections.ecommerce.categories}`,
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'category',
+                },
+            },
+            {
+                $unwind: "$category"
+            },
+            {
+                $project: {
+                    _id: 1,
+                    productId: 1,
+                    category: {
+                        _id: 1,
+                        categoryTitle: 1,
+                        slug: 1,
+                        parentCategory: 1,
+                        level: 1,
+                        categoryImageUrl: 1,
+                        status: 1,
+                    }
+                }
+            }
+        ]
+    }
+};
+export const wishlistOfferProductPopulation = (getOfferList: any, offerApplied: any) => {
+    return {
+        $addFields: {
+            "productDetails.offer": {
+                $arrayElemAt: [
+                    {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                    { $in: ["$productId", offerApplied.products] } // Match product ID
+                                ]
+                            }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
+    }
+}
+
+export const wishlistOfferBrandPopulation = (getOfferList: any, offerApplied: any) => {
+    return {
+        $addFields: {
+            "productDetails.offer": {
+                $arrayElemAt: [
+                    {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                    { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                                ]
+                            }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
+    }
+}
+
+export const wishlistOfferCategory = (getOfferList: any, offerApplied: any) => {
+    return {
+        $addFields: {
+            "productDetails.offer": {
+                $arrayElemAt: [
+                    {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                    {
+                                        $gt: [
+                                            {
+                                                $size: {
+                                                    $filter: {
+                                                        input: "$productDetails.productCategory.category",
+                                                        as: "cat",
+                                                        cond: {
+                                                            $in: ["$$cat._id", offerApplied.categories]
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            0
+                                        ]
+                                    } // Match category ID within productCategory array
+                                ]
+                            }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
+    }
+}
+
+
 export const replaceProductLookupValues = {
     $set: {
         "productDetails.productTitle": {
@@ -59,7 +183,7 @@ export const replaceProductLookupValues = {
     }
 }
 
-export const multilanguageFieldsLookup = (languageId:any) => ({
+export const multilanguageFieldsLookup = (languageId: any) => ({
     $lookup: {
         from: `${collections.multilanguagefieleds}`,
         let: { productId: "$productDetails._id", languageIdVar: languageId },

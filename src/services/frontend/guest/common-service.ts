@@ -11,6 +11,7 @@ import { addFieldsProductSpecification, addFieldsProductVariantAttributes, produ
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 import { offers } from '../../../constants/offers';
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
 
 import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
 import SliderModel, { SliderProps } from "../../../model/admin/ecommerce/slider-model";
@@ -254,7 +255,7 @@ class CommonService {
     }
 
     async findCollectionProducts(options: any) {
-        const { query, hostName, getspecification ,getattribute} = options;
+        const { query, hostName, getspecification, getattribute } = options;
 
         const languageId = getLanguageValueFromSubdomain(hostName, await LanguagesModel.find().exec());
 
@@ -329,17 +330,17 @@ class CommonService {
 
                 // Add the stages for product-specific offers
                 if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-                    const offerProduct = await this.offerProduct(getOfferList, offerApplied.product)
+                    const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
                     productPipeline.push(offerProduct)
                 }
                 // Add the stages for brand-specific offers
                 if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-                    const offerBrand = await this.offerBrand(getOfferList, offerApplied.brand)
+                    const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
                     productPipeline.push(offerBrand);
                 }
                 // Add the stages for category-specific offers
                 if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-                    const offerCategory = await this.offerCategory(getOfferList, offerApplied.category)
+                    const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
                     productPipeline.push(offerCategory);
                 }
 
@@ -627,10 +628,10 @@ class CommonService {
 
         getOfferList = await OffersModel.find(query);
 
-
         if (getOfferList && getOfferList.length > 0) {
             for await (const offerDetail of getOfferList) {
                 if (offerDetail.offerApplyValues && offerDetail.offerApplyValues.length > 0) {
+
                     if (offerDetail.offersBy === offers.brand) {
                         if (offer) {
                             pipeline.push({ $match: { brand: { $in: offerDetail.offerApplyValues } } });
@@ -668,80 +669,11 @@ class CommonService {
         return { pipeline, getOfferList, offerApplied };
     }
 
-    async offerProduct(getOfferList: any, offerApplied: any) {
-        let pipeline = {
-            $addFields: {
-                productOffers: {
-                    $filter: {
-                        input: getOfferList,
-                        as: "offer",
-                        cond: {
-                            $and: [
-                                { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                                { $in: ["$_id", offerApplied.products] } // Match product ID
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        return pipeline
-    }
 
-    async offerCategory(getOfferList: any, offerApplied: any) {
-        let pipeline = {
-            $addFields: {
-                categoryOffers: {
-                    $filter: {
-                        input: getOfferList,
-                        as: "offer",
-                        cond: {
-                            $and: [
-                                { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                                {
-                                    $gt: [
-                                        {
-                                            $size: {
-                                                $filter: {
-                                                    input: "$productCategory.category",
-                                                    as: "cat",
-                                                    cond: {
-                                                        $in: ["$$cat._id", offerApplied.categories]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        0
-                                    ]
-                                } // Match category ID within productCategory array
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        return pipeline
-    }
 
-    async offerBrand(getOfferList: any, offerApplied: any) {
-        let pipeline = {
-            $addFields: {
-                brandOffers: {
-                    $filter: {
-                        input: getOfferList,
-                        as: "offer",
-                        cond: {
-                            $and: [
-                                { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                                { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        return pipeline
-    }
+    
+
+
 }
 
 export default new CommonService();
