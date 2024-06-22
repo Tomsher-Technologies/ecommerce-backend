@@ -69,8 +69,6 @@ class CartService {
         ];
 
         const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
-        console.log(createdCartWithValues);
-
         return createdCartWithValues[0];
         // return CartOrderModel.findOne(data);
     }
@@ -172,7 +170,6 @@ class CartService {
             cartData,
             { new: true, useFindAndModify: false }
         );
-console.log("updatedCart",updatedCart);
 
         if (updatedCart) {
             const pipeline = [

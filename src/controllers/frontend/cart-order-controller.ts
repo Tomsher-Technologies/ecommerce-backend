@@ -48,8 +48,23 @@ class CartController extends BaseController {
 
                 customer = user
                 guestUser = uuid
+                const guestUserCart: any = await CartService.findCart(
+                    {
+                        $and: [
+                            { guestUserId: guestUser },
+                            { countryId: country },
+                            { customerId: null }
+                        ]
+                    });
+                const productVariantData: any = await ProductVariantsModel.findOne({
+                    $or: [
+                        { _id: variantId },
+                        { slug: slug }
+                    ]
+                })
 
-                if (customer && guestUser) {
+                if (customer && guestUser && guestUserCart) {
+
                     const customerCart: any = await CartService.findCart(
                         {
                             $and: [
@@ -58,79 +73,86 @@ class CartController extends BaseController {
                             ]
                         }
                     );
-                    const guestUserCart: any = await CartService.findCart(
-                        {
-                            $and: [
-                                { guestUserId: guestUser },
-                                { countryId: country }
-                            ]
-                        });
-
-                    const cartProducts = await CartOrderProductsModel.find({
-                        $or: [
-                            { cartId: guestUserCart?._id },
-                            { cartId: customerCart?._id }
-                        ]
-                    })
-
-                    const combinedData: any = [];
-                    const variantIdMap: any = {};
-
-                    // Iterate through each object in data
-                    cartProducts.forEach((item: any) => {
-                        const variantId = item.variantId;
-                        if (!variantIdMap[variantId]) {
-                            // If variantId is not in the map, add it with initial quantity
-                            variantIdMap[variantId] = {
-                                _id: item._id,
-                                cartId: item.cartId,
-                                quantity: item.quantity,
-                                variantId: variantId
-                            };
-                        } else {
-                            // If variantId is already in the map, update the quantity
-                            variantIdMap[variantId].quantity += item.quantity;
-                        }
-                    });
-
-                    // Convert variantIdMap object back to array format
-                    for (const key in variantIdMap) {
-                        combinedData.push(variantIdMap[key]);
-                    }
-
-                    var updateCart
-
-                    for (let data of combinedData) {
-                        updateCart = await CartService.updateCartProductByCart({
-                            $and: [
-                                { cartId: data.cartId },
-                                { variantId: data.variantId }
-                            ]
-                        }, data)
-
-                    }
-                    if (updateCart) {
-
-                        const deletedData = await CartService.destroy(guestUserCart._id);
-
-                        const deletedProductData = await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
-
-                        const cart = await CartService.findCartPopulate({
-                            $and: [
-                                { customerId: customer },
-                                { countryId: country }
+                    // const guestUserCart: any = await CartService.findCart(
+                    //     {
+                    //         $and: [
+                    //             { guestUserId: guestUser },
+                    //             { countryId: country }
+                    //         ]
+                    //     });
+                    if (guestUserCart) {
+                        const cartProducts = await CartOrderProductsModel.find({
+                            $or: [
+                                { cartId: guestUserCart?._id },
+                                { cartId: customerCart?._id }
                             ]
                         })
 
-                        return controller.sendSuccessResponse(res, {
-                            requestedData: {
-                                ...cart
-                            },
-                            message: 'Your cart is ready!'
-                        });
-                    }
+                        const combinedData: any = [];
+                        const variantIdMap: any = {};
 
+                        // Iterate through each object in data
+                        cartProducts.forEach((item: any) => {
+                            const variantId = item.variantId;
+                            if (!variantIdMap[variantId]) {
+                                // If variantId is not in the map, add it with initial quantity
+                                variantIdMap[variantId] = {
+                                    _id: item._id,
+                                    cartId: item.cartId,
+                                    slug: productVariantData.slug,
+                                    giftWrapAmount: item.giftWrapAmount,
+                                    quantity: item.quantity,
+                                    variantId: productVariantData._id,
+
+                                };
+                            } else {
+                                // If variantId is already in the map, update the quantity
+                                variantIdMap[variantId].quantity += item.quantity;
+                            }
+                        });
+
+                        // Convert variantIdMap object back to array format
+                        for (const key in variantIdMap) {
+                            combinedData.push(variantIdMap[key]);
+                        }
+
+                        var updateCart
+
+                        for (let data of combinedData) {
+
+                            updateCart = await CartService.updateCartProductByCart({
+                                $and: [
+                                    { cartId: data.cartId },
+                                    { variantId: data.variantId }
+                                ]
+                            }, data)
+
+
+                        }
+                        if (updateCart) {
+
+                            const deletedData = await CartService.destroy(guestUserCart._id);
+                            const updateData = await CartService.update(customerCart._id, { guestUserId: null });
+
+                            const deletedProductData = await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
+
+                            const cart = await CartService.findCartPopulate({
+                                $and: [
+                                    { customerId: customer },
+                                    { countryId: country }
+                                ]
+                            })
+
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    ...cart
+                                },
+                                message: 'Your cart is ready!'
+                            });
+                        }
+                    }
                 } else
+
                     if (customer || guestUser) {
                         const existingCart = await CartService.findCart({
                             $or: [
@@ -140,12 +162,7 @@ class CartController extends BaseController {
                         });
 
 
-                        const productVariantData: any = await ProductVariantsModel.findOne({
-                            $or: [
-                                { variantId: variantId },
-                                { slug: slug }
-                            ]
-                        })
+
                         // totalProductAmount = 
 
                         let totalAmountOfProduct = 0
@@ -153,19 +170,15 @@ class CartController extends BaseController {
                         let quantityProduct = 0
 
                         if (existingCart) {
+
+
                             const existingCartProduct: any = await CartService.findCartProduct({
                                 $and: [
                                     { cartId: existingCart._id },
-                                    {
-                                        $or: [
-                                            { variantId: variantId },
-                                            { slug: slug }
-                                        ]
-                                    }
+                                    { variantId: productVariantData._id }
                                 ]
                             });
 
-                            console.log("..........", productVariantData);
 
                             if (existingCart.totalProductAmount) {
                                 totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData.price * quantity)
@@ -177,8 +190,8 @@ class CartController extends BaseController {
                             }
 
                             if (quantity == 1) {
+
                                 quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity
-                                console.log("quantityProduct", existingCartProduct);
 
                             } else if (quantity > 1) {
                                 quantityProduct = quantity
@@ -189,7 +202,6 @@ class CartController extends BaseController {
                                     if (deletedData) {
 
                                         const cart = await CartService.findCartPopulate({ _id: existingCartProduct.cartId })
-                                        console.log("...........", cart);
 
                                         return controller.sendSuccessResponse(res, {
                                             requestedData: {
@@ -213,7 +225,6 @@ class CartController extends BaseController {
                                 }
                             }
                         }
-                        console.log("productVariantData11", Number(productVariantData.cartMinQuantity), quantityProduct, Number(productVariantData.cartMaxQuantity), quantityProduct);
                         if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
                             if (Number(productVariantData.cartMinQuantity) >= quantityProduct ? 0 : quantity || Number(productVariantData.cartMaxQuantity) <= quantityProduct ? 0 : quantity) {
 
@@ -226,7 +237,6 @@ class CartController extends BaseController {
 
                         const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings })
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                        console.log("shippingAmount", shippingAmount.blockValues.shippingCharge);
 
                         const cartOrderData = {
                             customerId: customer,
@@ -258,30 +268,19 @@ class CartController extends BaseController {
                             if (newCartOrder) {
 
                                 const existingProduct: any = await CartService.findCartProduct({
-                                    $or: [
-                                        {
-                                            $and: [
-                                                { cartId: newCartOrder._id },
-                                                { slug: slug }
-                                            ]
-                                        },
-                                        {
-                                            $and: [
-                                                { cartId: newCartOrder._id },
-                                                { variantId: new mongoose.Types.ObjectId(variantId) }
-                                            ]
-                                        }
+
+                                    $and: [
+                                        { cartId: newCartOrder._id },
+                                        { variantId: productVariantData._id }
                                     ]
                                 });
-
-
 
                                 const cartOrderProductData = {
                                     cartId: newCartOrder._id,
                                     customerId: customer,
-                                    variantId,
+                                    variantId: productVariantData._id,
                                     quantity: quantityProduct,
-                                    slug,
+                                    slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),
                                     updatedAt: new Date()
@@ -303,13 +302,12 @@ class CartController extends BaseController {
                             if (newCartOrder) {
 
 
-
                                 const cartOrderProductData = {
                                     cartId: newCartOrder._id,
                                     customerId: customer,
-                                    variantId,
+                                    variantId: productVariantData._id,
                                     quantity: quantityProduct ? 0 : quantity,
-                                    slug,
+                                    slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),
                                     updatedAt: new Date()
@@ -455,7 +453,6 @@ class CartController extends BaseController {
             },);
 
             const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
-            console.log("giftWrapAmount", giftWrapAmount);
             var giftWrapCharge
             if (giftWrapAmount.blockValues.enableGiftWrap == true) {
                 giftWrapCharge = giftWrapAmount.blockValues.giftWrapCharge
