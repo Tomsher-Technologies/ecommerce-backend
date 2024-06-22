@@ -108,7 +108,12 @@ class CartController extends base_controller_1.default {
                             { guestUserId: guestUser }
                         ]
                     });
-                    const productVariantData = await product_variants_model_1.default.findOne({ _id: variantId });
+                    const productVariantData = await product_variants_model_1.default.findOne({
+                        $or: [
+                            { variantId: variantId },
+                            { slug: slug }
+                        ]
+                    });
                     // totalProductAmount = 
                     let totalAmountOfProduct = 0;
                     let totalDiscountAmountOfProduct = 0;
@@ -117,9 +122,15 @@ class CartController extends base_controller_1.default {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
                                 { cartId: existingCart._id },
-                                { variantId: variantId }
+                                {
+                                    $or: [
+                                        { variantId: variantId },
+                                        { slug: slug }
+                                    ]
+                                }
                             ]
                         });
+                        console.log("..........", productVariantData);
                         if (existingCart.totalProductAmount) {
                             totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData.price * quantity);
                             totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (productVariantData.price * quantity);
@@ -205,7 +216,7 @@ class CartController extends base_controller_1.default {
                                     {
                                         $and: [
                                             { cartId: newCartOrder._id },
-                                            { slug: new mongoose_1.default.Types.ObjectId(slug) }
+                                            { slug: slug }
                                         ]
                                     },
                                     {
@@ -368,11 +379,35 @@ class CartController extends base_controller_1.default {
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
             let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            const { variantId, slug } = req.body;
             const cart = await cart_service_1.default.findCartPopulate({
                 $or: [
                     { $and: [{ customerId: customer }, { countryId: country }] },
                     { $and: [{ guestUserId: guestUser }, { countryId: country }] }
                 ]
+            });
+            const existingCartProduct = await cart_service_1.default.findCartProduct({
+                $or: [
+                    { $and: [{ cartId: cart._id }, { variantId: variantId }] },
+                    { $and: [{ cartId: cart._id }, { slug: slug }] }
+                ]
+            });
+            const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
+            console.log("giftWrapAmount", giftWrapAmount);
+            var giftWrapCharge;
+            if (giftWrapAmount.blockValues.enableGiftWrap == true) {
+                giftWrapCharge = giftWrapAmount.blockValues.giftWrapCharge;
+            }
+            const updateCart = await cart_service_1.default.updateCartProductByCart({
+                $and: [
+                    { cartId: cart._id },
+                    { variantId: variantId }
+                ]
+            }, { giftWrapAmount: giftWrapCharge });
+            const cartUpdate = await cart_service_1.default.update(cart._id, { totalGiftWrapAmount: giftWrapCharge });
+            return controller.sendSuccessResponse(res, {
+                requestedData: cartUpdate,
+                message: 'gift wrap added successfully!'
             });
         }
         catch (error) {

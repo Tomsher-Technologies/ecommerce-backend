@@ -77,6 +77,7 @@ class CartService {
         if (updatedCart) {
             const pipeline = [
                 { $match: { _id: updatedCart._id } },
+                this.cartLookup
             ];
             const updatedCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
             return updatedCartWithValues[0];
@@ -120,6 +121,7 @@ class CartService {
     }
     async updateCartProductByCart(_id, cartData) {
         const updatedCart = await cart_order_product_model_1.default.findOneAndUpdate(_id, cartData, { new: true, useFindAndModify: false });
+        console.log("updatedCart", updatedCart);
         if (updatedCart) {
             const pipeline = [
                 { $match: { _id: updatedCart._id } },

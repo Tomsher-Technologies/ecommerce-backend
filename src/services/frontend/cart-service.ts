@@ -102,6 +102,7 @@ class CartService {
         if (updatedCart) {
             const pipeline = [
                 { $match: { _id: updatedCart._id } },
+                this.cartLookup
             ];
 
             const updatedCartWithValues = await CartOrderModel.aggregate(pipeline);
@@ -171,6 +172,7 @@ class CartService {
             cartData,
             { new: true, useFindAndModify: false }
         );
+console.log("updatedCart",updatedCart);
 
         if (updatedCart) {
             const pipeline = [

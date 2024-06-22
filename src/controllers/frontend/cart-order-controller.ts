@@ -140,7 +140,12 @@ class CartController extends BaseController {
                         });
 
 
-                        const productVariantData: any = await ProductVariantsModel.findOne({ _id: variantId })
+                        const productVariantData: any = await ProductVariantsModel.findOne({
+                            $or: [
+                                { variantId: variantId },
+                                { slug: slug }
+                            ]
+                        })
                         // totalProductAmount = 
 
                         let totalAmountOfProduct = 0
@@ -151,9 +156,17 @@ class CartController extends BaseController {
                             const existingCartProduct: any = await CartService.findCartProduct({
                                 $and: [
                                     { cartId: existingCart._id },
-                                    { variantId: variantId }
+                                    {
+                                        $or: [
+                                            { variantId: variantId },
+                                            { slug: slug }
+                                        ]
+                                    }
                                 ]
                             });
+
+                            console.log("..........", productVariantData);
+
                             if (existingCart.totalProductAmount) {
                                 totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData.price * quantity)
                                 totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (productVariantData.price * quantity)
@@ -249,7 +262,7 @@ class CartController extends BaseController {
                                         {
                                             $and: [
                                                 { cartId: newCartOrder._id },
-                                                { slug: new mongoose.Types.ObjectId(slug) }
+                                                { slug: slug }
                                             ]
                                         },
                                         {
@@ -425,12 +438,43 @@ class CartController extends BaseController {
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            const { variantId, slug } = req.body;
 
             const cart: any = await CartService.findCartPopulate({
                 $or: [
                     { $and: [{ customerId: customer }, { countryId: country }] },
                     { $and: [{ guestUserId: guestUser }, { countryId: country }] }
                 ]
+            });
+
+            const existingCartProduct: any = await CartService.findCartProduct({
+                $or: [
+                    { $and: [{ cartId: cart._id }, { variantId: variantId }] },
+                    { $and: [{ cartId: cart._id }, { slug: slug }] }
+                ]
+            },);
+
+            const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
+            console.log("giftWrapAmount", giftWrapAmount);
+            var giftWrapCharge
+            if (giftWrapAmount.blockValues.enableGiftWrap == true) {
+                giftWrapCharge = giftWrapAmount.blockValues.giftWrapCharge
+            }
+
+
+
+            const updateCart = await CartService.updateCartProductByCart({
+                $and: [
+                    { cartId: cart._id },
+                    { variantId: variantId }
+                ]
+            }, { giftWrapAmount: giftWrapCharge })
+
+            const cartUpdate: any = await CartService.update(cart._id, { totalGiftWrapAmount: giftWrapCharge });
+
+            return controller.sendSuccessResponse(res, {
+                requestedData: cartUpdate,
+                message: 'gift wrap added successfully!'
             });
 
         } catch (error: any) {

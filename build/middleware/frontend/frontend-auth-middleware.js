@@ -44,7 +44,7 @@ exports.frontendAuthMiddleware = frontendAuthMiddleware;
 const frontendAuthAndUnAuthMiddleware = async (req, res, next) => {
     try {
         const authHeader = req.header('Authorization');
-        const uuid = req.headers['uuid'];
+        const uuid = req.header('User-Token');
         if (!authHeader && !uuid) {
             return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
         }
