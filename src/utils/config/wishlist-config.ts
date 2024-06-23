@@ -17,7 +17,7 @@ export const wishlistProductCategoryLookup = {
         from: `${collections.ecommerce.products.productcategorylinks}`,
         localField: 'productDetails._id',
         foreignField: 'productId',
-        as: 'productDetails.offer',
+        as: 'productDetails.productCategory',
         pipeline: [
             {
                 $lookup: {
@@ -48,6 +48,7 @@ export const wishlistProductCategoryLookup = {
         ]
     }
 };
+
 export const wishlistOfferProductPopulation = (getOfferList: any, offerApplied: any) => {
     return {
         $addFields: {
@@ -209,3 +210,4 @@ export const wishlistFinalProject = {
         languageValues: 0
     }
 };
+
