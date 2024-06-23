@@ -77,15 +77,15 @@ class CartService {
 
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = wishlistOfferProductPopulation(getOfferList, offerApplied.product)
-            pipeline.push(offerProduct)
+            modifiedPipeline.$lookup.pipeline.push(offerProduct)
 
         } else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = wishlistOfferBrandPopulation(getOfferList, offerApplied.brand)
 
-            pipeline.push(offerBrand);
+            modifiedPipeline.$lookup.pipeline.push(offerBrand);
         } else if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
-            pipeline.push(offerCategory);
+            modifiedPipeline.$lookup.pipeline.push(offerCategory);
         }
 
         if (skip) {
