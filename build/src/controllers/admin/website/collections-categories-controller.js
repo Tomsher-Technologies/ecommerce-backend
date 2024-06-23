@@ -188,11 +188,12 @@ class CollectionsCategoriesController extends base_controller_1.default {
                 const collectionId = req.params.id;
                 if (collectionId) {
                     const { collectionsCategories } = validatedData.data;
+                    const collectionImage = req.files.find((file) => file.fieldname === 'collectionImage');
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
                         collectionsCategories: collectionsCategories ? collectionsCategories.split(',').map((id) => id.trim()) : [],
-                        collectionImageUrl: (0, helpers_1.handleFileUpload)(req, await collections_categories_service_1.default.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
+                        collectionImageUrl: (0, helpers_1.handleFileUpload)(req, await collections_categories_service_1.default.findOne(collectionId), (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };
                     const updatedCollection = await collections_categories_service_1.default.update(collectionId, updatedCollectionData);

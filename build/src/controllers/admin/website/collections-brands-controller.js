@@ -188,12 +188,12 @@ class CollectionsBrandsController extends base_controller_1.default {
                 const collectionId = req.params.id;
                 if (collectionId) {
                     const { collectionsBrands } = validatedData.data;
-                    console.log('collectionsBrands', collectionsBrands);
+                    const collectionImage = req.files.find((file) => file.fieldname === 'collectionImage');
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
                         collectionsBrands: collectionsBrands ? collectionsBrands.split(',').map((id) => id.trim()) : [],
-                        collectionImageUrl: (0, helpers_1.handleFileUpload)(req, await collections_brands_service_1.default.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
+                        collectionImageUrl: (0, helpers_1.handleFileUpload)(req, await collections_brands_service_1.default.findOne(collectionId), (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };
                     const updatedCollection = await collections_brands_service_1.default.update(collectionId, updatedCollectionData);
