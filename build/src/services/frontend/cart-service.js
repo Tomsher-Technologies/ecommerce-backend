@@ -37,13 +37,15 @@ class CartService {
         const languageData = await language_model_1.default.find().exec();
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
+        // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
                 ...this.cartLookup.$lookup,
                 pipeline: [
                     product_config_1.productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-                    wishlist_config_1.productVariantsLookupValues,
+                    (0, wishlist_config_1.productVariantsLookupValues)("1"),
+                    // attributePipeline,
                     { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
                     wishlist_config_1.wishlistProductCategoryLookup,
                     (0, wishlist_config_1.multilanguageFieldsLookup)(languageId),
@@ -60,15 +62,15 @@ class CartService {
         ];
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
-            pipeline.push(offerProduct);
+            modifiedPipeline.$lookup.pipeline.push(offerProduct);
         }
         else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
-            pipeline.push(offerBrand);
+            modifiedPipeline.$lookup.pipeline.push(offerBrand);
         }
         else if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
-            pipeline.push(offerCategory);
+            modifiedPipeline.$lookup.pipeline.push(offerCategory);
         }
         if (skip) {
             pipeline.push({ $skip: skip });

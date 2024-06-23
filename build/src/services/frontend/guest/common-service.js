@@ -13,7 +13,6 @@ const product_config_1 = require("../../../utils/config/product-config");
 const collections_product_config_1 = require("../../../utils/config/collections-product-config");
 const collections_categories_config_1 = require("../../../utils/config/collections-categories-config");
 const offers_1 = require("../../../constants/offers");
-const offer_config_1 = require("../../../utils/config/offer-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const slider_model_1 = __importDefault(require("../../../model/admin/ecommerce/slider-model"));
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
@@ -31,6 +30,7 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
 const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
 const product_service_1 = __importDefault(require("./product-service"));
+const offer_config_1 = require("../../../utils/config/offer-config");
 class CommonService {
     constructor() { }
     async findAllCountries() {
@@ -286,22 +286,18 @@ class CommonService {
                 productPipeline.push(product_config_1.productMultilanguageFieldsLookup);
                 productPipeline.push(product_config_1.productFinalProject);
                 const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName);
-                // Add the stages for product-specific offers
-                if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-                    const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
-                    productPipeline.push(offerProduct);
-                }
-                // Add the stages for brand-specific offers
-                if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-                    const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
-                    productPipeline.push(offerBrand);
-                }
-                // Add the stages for category-specific offers
                 if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
                     const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
                     productPipeline.push(offerCategory);
                 }
-                // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
+                else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                    const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
+                    productPipeline.push(offerBrand);
+                }
+                else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                    const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
+                    productPipeline.push(offerProduct);
+                }
                 productPipeline.push({
                     $addFields: {
                         offer: {

@@ -27,7 +27,7 @@ class CustomerWishlistCountryService {
         let pipeline: any[] = [
             productLookup,
             { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-            productVariantsLookupValues,
+            productVariantsLookupValues(),
             { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
             wishlistProductCategoryLookup,
             multilanguageFieldsLookup(languageId),

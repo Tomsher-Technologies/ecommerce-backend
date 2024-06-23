@@ -25,7 +25,7 @@ class CustomerWishlistCountryService {
         let pipeline = [
             product_config_1.productLookup,
             { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-            wishlist_config_1.productVariantsLookupValues,
+            (0, wishlist_config_1.productVariantsLookupValues)(),
             { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
             wishlist_config_1.wishlistProductCategoryLookup,
             (0, wishlist_config_1.multilanguageFieldsLookup)(languageId),

@@ -2,16 +2,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.wishlistFinalProject = exports.multilanguageFieldsLookup = exports.replaceProductLookupValues = exports.wishlistOfferCategory = exports.wishlistOfferBrandPopulation = exports.wishlistOfferProductPopulation = exports.wishlistProductCategoryLookup = exports.productVariantsLookupValues = void 0;
 const collections_1 = require("../../constants/collections");
-exports.productVariantsLookupValues = {
-    $lookup: {
-        from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
-        let: { productId: "$productDetails._id", variantId: "$variantId" },
-        pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
-        ],
-        as: "productDetails.variantDetails"
-    }
+const product_config_1 = require("./product-config");
+const productVariantsLookupValues = (getattribute) => {
+    return ({
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+            let: { productId: "$productDetails._id", variantId: "$variantId" },
+            pipeline: [
+                ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
+            ],
+            as: "productDetails.variantDetails"
+        }
+    });
 };
+exports.productVariantsLookupValues = productVariantsLookupValues;
 exports.wishlistProductCategoryLookup = {
     $lookup: {
         from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,

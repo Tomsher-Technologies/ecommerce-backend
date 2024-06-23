@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.offerBrandPopulation = exports.offerCategoryPopulation = exports.offerProductPopulation = void 0;
 const offerProductPopulation = (getOfferList, offerApplied) => {
-    return {
+    let pipeline = {
         $addFields: {
             productOffers: {
                 $filter: {
@@ -11,13 +11,14 @@ const offerProductPopulation = (getOfferList, offerApplied) => {
                     cond: {
                         $and: [
                             { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                            { $in: ["$productId", offerApplied.products] } // Match product ID
+                            { $in: ["$_id", offerApplied.products] } // Match product ID
                         ]
                     }
                 }
             }
         }
     };
+    return pipeline;
 };
 exports.offerProductPopulation = offerProductPopulation;
 const offerCategoryPopulation = (getOfferList, offerApplied) => {
