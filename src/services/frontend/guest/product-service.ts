@@ -97,8 +97,6 @@ class ProductService {
 
         ];
 
-        var offerDetails: any
-
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName)
 
         // Add the stages for product-specific offers
@@ -478,20 +476,18 @@ class ProductService {
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
             pipeline.push(offerProduct)
-            console.log("...........1");
 
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = await offerBrandPopulation(getOfferList, offerApplied.brand)
+            const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = await offerCategoryPopulation(getOfferList, offerApplied.category)
+            const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
         }
-        console.log("11111111111");
 
 
         // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
@@ -512,23 +508,15 @@ class ProductService {
                 }
             }
         });
-        pipeline.push({
-            $project: {
-                brandOffers: 0,
-                productOffers: 0,
-                categoryOffers: 0
-            }
-        })
-        // { variantSku: sku }
 
-        // const language: any = await this.productLanguage(hostName, pipeline)
+
+        const language: any = await this.productLanguage(hostName, pipeline)
         // console.log("......1234....", language);
 
         // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
 
 
-        const productDataWithValues: any = await ProductsModel.aggregate(pipeline);
-        console.log("productDataWithValues", productDataWithValues);
+        const productDataWithValues: any = await ProductsModel.aggregate(language);
 
         return productDataWithValues[0];
 

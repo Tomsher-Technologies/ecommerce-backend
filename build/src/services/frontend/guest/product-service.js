@@ -77,22 +77,19 @@ class ProductService {
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
         ];
-        var offerDetails;
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
         // Add the stages for product-specific offers
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
-            pipeline.push(offerProduct);
+        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+            const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
+            pipeline.push(offerCategory);
         }
-        // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
             pipeline.push(offerBrand);
         }
-        // Add the stages for category-specific offers
-        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
-            pipeline.push(offerCategory);
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
+            pipeline.push(offerProduct);
         }
         // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
         pipeline.push({
@@ -390,19 +387,17 @@ class ProductService {
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
             pipeline.push(offerProduct);
-            console.log("...........1");
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = await (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
+            const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = await (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
+            const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
             pipeline.push(offerCategory);
         }
-        console.log("11111111111");
         // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
         pipeline.push({
             $addFields: {
@@ -421,19 +416,10 @@ class ProductService {
                 }
             }
         });
-        pipeline.push({
-            $project: {
-                brandOffers: 0,
-                productOffers: 0,
-                categoryOffers: 0
-            }
-        });
-        // { variantSku: sku }
-        // const language: any = await this.productLanguage(hostName, pipeline)
+        const language = await this.productLanguage(hostName, pipeline);
         // console.log("......1234....", language);
         // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
-        const productDataWithValues = await product_model_1.default.aggregate(pipeline);
-        console.log("productDataWithValues", productDataWithValues);
+        const productDataWithValues = await product_model_1.default.aggregate(language);
         return productDataWithValues[0];
     }
     async findOne(productOption) {

@@ -146,6 +146,29 @@ export const addFieldsProductSpecification = {
         }
     }
 };
+export const addFieldsProductsSpecification = {
+    $addFields: {
+        productSpecification: {
+            $map: {
+                input: '$productSpecification',
+                in: {
+                    productId: '$$this.productId',
+                    _id: '$$this._id',
+                    specificationId: '$$this.specification._id',
+                    specificationTitle: '$$this.specification.specificationTitle',
+                    enableTab: '$$this.specification.enableTab',
+                    slug: '$$this.specification.slug',
+                    specificationDetail: {
+                        _id: '$$this.specificationDetail._id',
+                        specificationId: '$$this.specificationDetail.specificationId',
+                        itemName: '$$this.specificationDetail.itemName',
+                        itemValue: '$$this.specificationDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+};
 
 export const productSeoLookup = {
     $lookup: {
@@ -493,6 +516,9 @@ export const productProject = {
         },
         languageValues: {
             $ifNull: ['$languageValues', []]
+        },
+        productSpecification: {
+            $ifNull: ['$productSpecification', []]
         }
 
     }

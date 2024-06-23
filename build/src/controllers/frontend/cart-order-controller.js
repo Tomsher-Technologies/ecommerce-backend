@@ -182,7 +182,10 @@ class CartController extends base_controller_1.default {
                             if (existingCartProduct) {
                                 const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
                                 if (deletedData) {
-                                    const cart = await cart_service_1.default.findCartPopulate({ _id: existingCartProduct.cartId, hostName: req.get('origin') });
+                                    totalAmountOfProduct = totalAmountOfProduct - (productVariantData?.price * existingCartProduct?.quantity);
+                                    totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity);
+                                    const cartUpdate = await cart_service_1.default.update(existingCartProduct.cartId, { _id: existingCartProduct.cartId, hostName: req.get('origin') });
+                                    const cart = await cart_service_1.default.findCartPopulate({ query: { _id: existingCartProduct.cartId }, hostName: req.get('origin') });
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             ...cart
@@ -286,7 +289,7 @@ class CartController extends base_controller_1.default {
                     }
                     if (newCartOrder) {
                         const products = await cart_service_1.default.findCartPopulate({
-                            _id: newCartOrder._id, hostName: req.get('origin'),
+                            query: { _id: newCartOrder._id }, hostName: req.get('origin'),
                         });
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
