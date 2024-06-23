@@ -42,81 +42,52 @@ class WishlistsController extends base_controller_1.default {
     async addToWishlist(req, res) {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            if (countryId) {
-                const validatedData = wishlist_schema_1.addToWishlistSchema.safeParse(req.body);
-                if (validatedData.success) {
-                    const { slug, sku } = validatedData.data;
-                    const productVariantData = await product_variants_model_1.default.findOne({
-                        countryId,
-                        variantSku: sku,
-                        slug
-                    });
-                    const user = res.locals.user;
-                    if (productVariantData) {
-                        const whishlistData = await customer_wishlist_servicel_1.default.findOne({
-                            userId: user._id,
-                            countryId,
-                        });
-                        if (whishlistData) {
-                            const deletedData = await customer_wishlist_servicel_1.default.destroy(whishlistData._id);
-                            if (deletedData) {
-                                return controller.sendSuccessResponse(res, {
-                                    requestedData: {},
-                                    message: 'Wishlist removed successfully!'
-                                });
-                            }
-                            else {
-                                return controller.sendErrorResponse(res, 500, {
-                                    message: 'Somethng went wrong on wishlist removed!'
-                                });
-                            }
-                        }
-                        else {
-                            const whishlistInsertData = {
-                                countryId,
-                                userId: user._id,
-                                productId: productVariantData.productId,
-                                variantId: productVariantData._id,
-                                slug: productVariantData.slug,
-                                variantSku: productVariantData.variantSku
-                            };
-                            const insertData = await customer_wishlist_servicel_1.default.create(whishlistInsertData);
-                            if (insertData) {
-                                return controller.sendSuccessResponse(res, {
-                                    requestedData: insertData,
-                                    message: 'Wishlist added successfully!'
-                                });
-                            }
-                            else {
-                                return controller.sendErrorResponse(res, 500, {
-                                    message: 'Somethng went wrong on wishlist add!'
-                                });
-                            }
-                        }
-                    }
-                    else {
-                        return controller.sendErrorResponse(res, 500, {
-                            message: 'Product not found!'
-                        });
-                    }
+            if (!countryId) {
+                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+            }
+            const validatedData = wishlist_schema_1.addToWishlistSchema.safeParse(req.body);
+            if (!validatedData.success) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                });
+            }
+            const { slug, sku } = validatedData.data;
+            const productVariantData = await product_variants_model_1.default.findOne({ countryId, variantSku: sku, slug });
+            if (!productVariantData) {
+                return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
+            }
+            const user = res.locals.user;
+            const wishlistData = await customer_wishlist_servicel_1.default.findOne({ userId: user._id, countryId, slug });
+            if (wishlistData) {
+                const deletedData = await customer_wishlist_servicel_1.default.destroy(wishlistData._id);
+                if (!deletedData) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong on wishlist removed!' });
                 }
-                else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
-                    });
-                }
+                const query = { status: '1', userId: user._id };
+                const requestedData = await customer_wishlist_servicel_1.default.findAll({ query, hostName: req.get('origin') });
+                return controller.sendSuccessResponse(res, { requestedData, message: 'Wishlist removed successfully!' });
             }
             else {
-                return controller.sendErrorResponse(res, 500, {
-                    message: 'Country is missing'
-                });
+                const wishlistInsertData = {
+                    countryId,
+                    userId: user._id,
+                    productId: productVariantData.productId,
+                    variantId: productVariantData._id,
+                    slug: productVariantData.slug,
+                    variantSku: productVariantData.variantSku
+                };
+                const insertData = await customer_wishlist_servicel_1.default.create(wishlistInsertData);
+                if (!insertData) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong on wishlist add!' });
+                }
+                const query = { status: '1', userId: user._id };
+                const requestedData = await customer_wishlist_servicel_1.default.findAll({ query, hostName: req.get('origin') });
+                return controller.sendSuccessResponse(res, { requestedData, message: 'Wishlist added successfully!' });
             }
         }
         catch (error) {
-            return controller.sendErrorResponse(res, 500, {
-                message: error.message || 'Some error occurred while add to wishlist'
-            });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while add to wishlist' });
         }
     }
     async moveTCart(req, res) {

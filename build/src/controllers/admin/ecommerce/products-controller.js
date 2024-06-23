@@ -500,7 +500,7 @@ class ProductsController extends base_controller_1.default {
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         price: data.Price,
-                                                                        discountPrice: data.Discount_Price,
+                                                                        discountPrice: data.Discount_Price ? data.Discount_Price : 0,
                                                                         quantity: data.Quantity,
                                                                         variantDescription: data.Description,
                                                                         cartMinQuantity: data.Cart_Min_Quantity,
@@ -509,6 +509,7 @@ class ProductsController extends base_controller_1.default {
                                                                         isDefault: data.Is_Default ? data.Is_Default : 0,
                                                                         isExcel: true
                                                                     };
+                                                                    console.log("productVariantsproductVariants", Number(productVariants.discountPrice ? productVariants.discountPrice : 0));
                                                                     if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
                                                                         const product = await product_service_1.default.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] });
                                                                         if (!product) {

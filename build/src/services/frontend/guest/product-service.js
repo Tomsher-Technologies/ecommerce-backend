@@ -18,6 +18,7 @@ const collections_brands_model_1 = __importDefault(require("../../../model/admin
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const offer_config_1 = require("../../../utils/config/offer-config");
 class ProductService {
     constructor() {
     }
@@ -67,9 +68,9 @@ class ProductService {
             // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
             product_config_1.productCategoryLookup,
-            ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             product_config_1.brandLookup,
             product_config_1.brandObject,
+            ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
@@ -80,17 +81,17 @@ class ProductService {
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName);
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = await common_service_1.default.offerProduct(getOfferList, offerApplied.product);
+            const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
             pipeline.push(offerProduct);
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = await common_service_1.default.offerBrand(getOfferList, offerApplied.brand);
+            const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = await common_service_1.default.offerCategory(getOfferList, offerApplied.category);
+            const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
             pipeline.push(offerCategory);
         }
         // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
@@ -387,18 +388,18 @@ class ProductService {
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = await common_service_1.default.offerProduct(getOfferList, offerApplied.product);
+            const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
             pipeline.push(offerProduct);
             console.log("...........1");
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = await common_service_1.default.offerBrand(getOfferList, offerApplied.brand);
+            const offerBrand = await (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = await common_service_1.default.offerCategory(getOfferList, offerApplied.category);
+            const offerCategory = await (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
             pipeline.push(offerCategory);
         }
         console.log("11111111111");

@@ -86,9 +86,9 @@ class ProductService {
             // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
             productCategoryLookup,
-            ...(getimagegallery === '1' ? [imageLookup] : []),
             brandLookup,
             brandObject,
+            ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
@@ -108,12 +108,12 @@ class ProductService {
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand =  offerBrandPopulation(getOfferList, offerApplied.brand)
+            const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory =  offerCategoryPopulation(getOfferList, offerApplied.category)
+            const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
         }
 

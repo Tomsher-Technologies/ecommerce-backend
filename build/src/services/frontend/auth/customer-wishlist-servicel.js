@@ -9,6 +9,7 @@ const customer_wishlist_model_1 = __importDefault(require("../../../model/fronte
 const product_config_1 = require("../../../utils/config/product-config");
 const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
+const common_service_1 = __importDefault(require("../guest/common-service"));
 class CustomerWishlistCountryService {
     async findAll(options = {}) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
@@ -20,20 +21,38 @@ class CustomerWishlistCountryService {
         }
         const languageData = await language_model_1.default.find().exec();
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         let pipeline = [
             product_config_1.productLookup,
             { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
             wishlist_config_1.productVariantsLookupValues,
             { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+            wishlist_config_1.wishlistProductCategoryLookup,
             (0, wishlist_config_1.multilanguageFieldsLookup)(languageId),
             { $unwind: { path: "$productDetails.languageValues", preserveNullAndEmptyArrays: true } },
             wishlist_config_1.replaceProductLookupValues,
             { $unset: "productDetails.languageValues" },
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
             { $sort: finalSort },
         ];
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
+            pipeline.push(offerProduct);
+        }
+        else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+            const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
+            pipeline.push(offerBrand);
+        }
+        else if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+            const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
+            pipeline.push(offerCategory);
+        }
+        if (skip) {
+            pipeline.push({ $skip: skip });
+        }
+        if (limit) {
+            pipeline.push({ $limit: limit });
+        }
         return customer_wishlist_model_1.default.aggregate(pipeline).exec();
     }
     async getTotalCount(query = {}) {

@@ -334,13 +334,24 @@ class CategoryService {
             return categoryResult;
         }
         else {
-            const catData = slug.split('-');
+            // const catData = slug.split(/([^-]+)/g);
+            function splitHyphenOutsideParentheses(inputStr) {
+                // Regular expression to split by hyphens not inside parentheses
+                const parts = inputStr.split(/-(?![^()]*\))/);
+                return parts;
+            }
+            // Example usage
+            const inputData = "Infant-Baby Girl (6-36M)-Dresses";
+            const catData = splitHyphenOutsideParentheses(categoryTitle);
+            console.log(".....sdsd.....", categoryTitle);
+            console.log(".....sdsd.....", catData);
             let currentSlug = '';
             for (const data of catData) {
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
-                currentSlug += data;
+                currentSlug += (0, helpers_1.slugify)(data);
+                // console.log("fvdgdfgsd",currentSlug);
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
                 if (categoryResult == null) {
                     const titleData = currentSlug.split('-');
@@ -348,6 +359,7 @@ class CategoryService {
                     titleData.pop();
                     const parentSlug = titleData.join('-');
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
+                    console.log();
                     const categoryData = {
                         categoryTitle: (0, helpers_1.capitalizeWords)(lastItem),
                         slug: (0, helpers_1.slugify)(currentSlug),
