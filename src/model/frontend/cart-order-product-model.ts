@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CartOrderProductProps extends Document {
     cartId: Schema.Types.ObjectId;
+    productId: Schema.Types.ObjectId;
     variantId: Schema.Types.ObjectId;
     quantity: number;
     slug: string;
@@ -34,6 +35,11 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     variantId: {
         type: Schema.Types.ObjectId,
         ref: 'ProductVariants',
+        required: false
+    },
+    productId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Products',
         required: false
     },
 
