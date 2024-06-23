@@ -233,8 +233,12 @@ class CartController extends BaseController {
 
                                     const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
                                     if (deletedData) {
+                                        totalAmountOfProduct = totalAmountOfProduct - (productVariantData?.price * existingCartProduct?.quantity)
+                                        totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
+                                        const cartUpdate = await CartService.update(existingCartProduct.cartId, { _id: existingCartProduct.cartId, hostName: req.get('origin') })
 
-                                        const cart = await CartService.findCartPopulate({ _id: existingCartProduct.cartId, hostName: req.get('origin') })
+
+                                        const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId }, hostName: req.get('origin') })
 
                                         return controller.sendSuccessResponse(res, {
                                             requestedData: {
@@ -360,7 +364,7 @@ class CartController extends BaseController {
 
                         if (newCartOrder) {
                             const products = await CartService.findCartPopulate({
-                                _id: newCartOrder._id, hostName: req.get('origin'),
+                                query: { _id: newCartOrder._id }, hostName: req.get('origin'),
                             })
 
 

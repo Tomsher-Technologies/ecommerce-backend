@@ -3,7 +3,7 @@ import { FilterOptionsProps, frontendPagination, pagination } from '../../compon
 import CartOrderModel, { CartOrderProps } from '../../model/frontend/cart-order-model';
 import CartOrderProductsModel, { CartOrderProductProps } from '../../model/frontend/cart-order-product-model';
 import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistOfferBrandPopulation, wishlistOfferCategory, wishlistOfferProductPopulation, wishlistProductCategoryLookup } from '../../utils/config/wishlist-config';
-import { productLookup } from '../../utils/config/product-config';
+import { addFieldsProductVariantAttributes, productLookup, productVariantAttributesLookup } from '../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
 import LanguagesModel from '../../model/admin/setup/language-model';
 import commonService from './guest/common-service';
@@ -48,14 +48,15 @@ class CartService {
 
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await commonService.findOffers(0, hostName);
 
-
+        // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
                 ...this.cartLookup.$lookup,
                 pipeline: [
                     productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-                    productVariantsLookupValues,
+                    productVariantsLookupValues("1"),
+                    // attributePipeline,
                     { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
                     wishlistProductCategoryLookup,
                     multilanguageFieldsLookup(languageId),

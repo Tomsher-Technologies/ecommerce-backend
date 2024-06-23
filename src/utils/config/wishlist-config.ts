@@ -1,15 +1,24 @@
 import { collections } from "../../constants/collections"
+import { addFieldsProductVariantAttributes, productVariantAttributesLookup } from "./product-config";
 
 
-export const productVariantsLookupValues = {
-    $lookup: {
-        from: `${collections.ecommerce.products.productvariants.productvariants}`,
-        let: { productId: "$productDetails._id", variantId: "$variantId" },
-        pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
-        ],
-        as: "productDetails.variantDetails"
-    }
+export const productVariantsLookupValues = (getattribute?:string ) => {
+    return (
+        {
+            $lookup: {
+                from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                let: { productId: "$productDetails._id", variantId: "$variantId" },
+                pipeline: [
+                    ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+
+                    { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
+                ],
+                as: "productDetails.variantDetails"
+            }
+        }
+    )
+
 }
 
 export const wishlistProductCategoryLookup = {
