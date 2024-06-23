@@ -286,6 +286,15 @@ class ProductService {
                     }
                 }
             }
+            for await (let product of productData) {
+                for await (let specification of product.productSpecification) {
+                    // for await (let specification of variant.productSpecification) {
+                    if (!specificationArray.map((spec) => spec.toString()).includes(specification.specificationId.toString())) {
+                        specificationArray.push(specification.specificationId);
+                    }
+                    // }
+                }
+            }
             for await (let specification of specificationArray) {
                 const query = { _id: specification };
                 let pipeline = [
