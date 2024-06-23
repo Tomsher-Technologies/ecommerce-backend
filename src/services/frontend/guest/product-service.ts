@@ -20,6 +20,7 @@ import CollectionsCategoriesModel from '../../../model/admin/website/collections
 import CommonService from '../../../services/frontend/guest/common-service';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
 
 
 class ProductService {
@@ -85,9 +86,9 @@ class ProductService {
             // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
             productCategoryLookup,
-            ...(getimagegallery === '1' ? [imageLookup] : []),
             brandLookup,
             brandObject,
+            ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
@@ -102,17 +103,17 @@ class ProductService {
 
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = await CommonService.offerProduct(getOfferList, offerApplied.product)
+            const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
             pipeline.push(offerProduct)
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = await CommonService.offerBrand(getOfferList, offerApplied.brand)
+            const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = await CommonService.offerCategory(getOfferList, offerApplied.category)
+            const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
         }
 
@@ -479,19 +480,19 @@ class ProductService {
 
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = await CommonService.offerProduct(getOfferList, offerApplied.product)
+            const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
             pipeline.push(offerProduct)
             console.log("...........1");
 
         }
         // Add the stages for brand-specific offers
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = await CommonService.offerBrand(getOfferList, offerApplied.brand)
+            const offerBrand = await offerBrandPopulation(getOfferList, offerApplied.brand)
             pipeline.push(offerBrand);
         }
         // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = await CommonService.offerCategory(getOfferList, offerApplied.category)
+            const offerCategory = await offerCategoryPopulation(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
         }
         console.log("11111111111");

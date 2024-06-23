@@ -148,10 +148,10 @@ class AttributesService {
             console.log("dddddddddd", data);
 
             const attributeData = {
-                attributeTitle: capitalizeWords(data.value.data),
+                attributeTitle: capitalizeWords(data.data),
                 attributeType: data.type,
                 isExcel: true,
-                slug: slugify(data.attributeTitle)
+                slug: slugify(data.data)
             }
             const attributeResult: any = await this.create(attributeData)
 

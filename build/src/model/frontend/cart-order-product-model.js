@@ -48,6 +48,11 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         ref: 'ProductVariants',
         required: false
     },
+    productId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Products',
+        required: false
+    },
     orderStatus: {
         type: String,
         required: true,

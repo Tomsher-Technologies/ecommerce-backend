@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.wishlistFinalProject = exports.multilanguageFieldsLookup = exports.replaceProductLookupValues = exports.productVariantsLookupValues = void 0;
+exports.wishlistFinalProject = exports.multilanguageFieldsLookup = exports.replaceProductLookupValues = exports.wishlistOfferCategory = exports.wishlistOfferBrandPopulation = exports.wishlistOfferProductPopulation = exports.wishlistProductCategoryLookup = exports.productVariantsLookupValues = void 0;
 const collections_1 = require("../../constants/collections");
 exports.productVariantsLookupValues = {
     $lookup: {
@@ -12,6 +12,129 @@ exports.productVariantsLookupValues = {
         as: "productDetails.variantDetails"
     }
 };
+exports.wishlistProductCategoryLookup = {
+    $lookup: {
+        from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
+        localField: 'productDetails._id',
+        foreignField: 'productId',
+        as: 'productDetails.productCategory',
+        pipeline: [
+            {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.categories}`,
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'category',
+                },
+            },
+            {
+                $unwind: "$category"
+            },
+            {
+                $project: {
+                    _id: 1,
+                    productId: 1,
+                    category: {
+                        _id: 1,
+                        categoryTitle: 1,
+                        slug: 1,
+                        parentCategory: 1,
+                        level: 1,
+                        categoryImageUrl: 1,
+                        status: 1,
+                    }
+                }
+            }
+        ]
+    }
+};
+const wishlistOfferProductPopulation = (getOfferList, offerApplied) => {
+    return {
+        $addFields: {
+            "productDetails.offer": {
+                $arrayElemAt: [
+                    {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                    { $in: ["$productId", offerApplied.products] } // Match product ID
+                                ]
+                            }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
+    };
+};
+exports.wishlistOfferProductPopulation = wishlistOfferProductPopulation;
+const wishlistOfferBrandPopulation = (getOfferList, offerApplied) => {
+    return {
+        $addFields: {
+            "productDetails.offer": {
+                $arrayElemAt: [
+                    {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                    { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                                ]
+                            }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
+    };
+};
+exports.wishlistOfferBrandPopulation = wishlistOfferBrandPopulation;
+const wishlistOfferCategory = (getOfferList, offerApplied) => {
+    return {
+        $addFields: {
+            "productDetails.offer": {
+                $arrayElemAt: [
+                    {
+                        $filter: {
+                            input: getOfferList,
+                            as: "offer",
+                            cond: {
+                                $and: [
+                                    { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
+                                    {
+                                        $gt: [
+                                            {
+                                                $size: {
+                                                    $filter: {
+                                                        input: "$productDetails.productCategory.category",
+                                                        as: "cat",
+                                                        cond: {
+                                                            $in: ["$$cat._id", offerApplied.categories]
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            0
+                                        ]
+                                    } // Match category ID within productCategory array
+                                ]
+                            }
+                        }
+                    },
+                    0
+                ]
+            }
+        }
+    };
+};
+exports.wishlistOfferCategory = wishlistOfferCategory;
 exports.replaceProductLookupValues = {
     $set: {
         "productDetails.productTitle": {

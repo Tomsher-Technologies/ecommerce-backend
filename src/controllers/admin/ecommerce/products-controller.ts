@@ -509,7 +509,7 @@ class ProductsController extends BaseController {
                                                                     // await combinedArray.map(async (value: any, index: number) => {
                                                                     for await (let value of combinedArray) {
                                                                         console.log(value);
-                                                                        
+
                                                                         const attributes: any = await AttributesService.findOneAttribute({ value })
                                                                         attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                     }
@@ -574,7 +574,7 @@ class ProductsController extends BaseController {
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         price: data.Price,
-                                                                        discountPrice: data.Discount_Price,
+                                                                        discountPrice: data.Discount_Price ? data.Discount_Price : 0,
                                                                         quantity: data.Quantity,
                                                                         variantDescription: data.Description,
                                                                         cartMinQuantity: data.Cart_Min_Quantity,
@@ -583,6 +583,9 @@ class ProductsController extends BaseController {
                                                                         isDefault: data.Is_Default ? data.Is_Default : 0,
                                                                         isExcel: true
                                                                     }
+
+                                                                    console.log("productVariantsproductVariants", Number(productVariants.discountPrice ? productVariants.discountPrice : 0));
+
                                                                     if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
                                                                         const product: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] })
 
@@ -655,7 +658,7 @@ class ProductsController extends BaseController {
                                                                         if (data.Item_Type == 'variant') {
                                                                             if (data.Parent_SKU) {
                                                                                 const product: any = await ProductsService.find({ sku: data.Parent_SKU })
-                                                                                console.log("ppproduct",product);
+                                                                                console.log("ppproduct", product);
 
                                                                                 if (product) {
                                                                                     var slugData
@@ -772,10 +775,10 @@ class ProductsController extends BaseController {
                 controller.sendErrorResponse(res, 200, { message: "please upload file" });
             }
         } catch (error: any) {
-            console.log("errorerror", error,index);
+            console.log("errorerror", error, index);
 
             // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-                // validation.push({ itemName: error.errors.slug.properties  })
+            // validation.push({ itemName: error.errors.slug.properties  })
 
             // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
             //     validation.push(error.errors.countryId.properties)

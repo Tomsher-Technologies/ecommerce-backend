@@ -129,10 +129,10 @@ class AttributesService {
         else {
             console.log("dddddddddd", data);
             const attributeData = {
-                attributeTitle: (0, helpers_1.capitalizeWords)(data.value.data),
+                attributeTitle: (0, helpers_1.capitalizeWords)(data.data),
                 attributeType: data.type,
                 isExcel: true,
-                slug: (0, helpers_1.slugify)(data.attributeTitle)
+                slug: (0, helpers_1.slugify)(data.data)
             };
             const attributeResult = await this.create(attributeData);
             if (attributeResult) {
