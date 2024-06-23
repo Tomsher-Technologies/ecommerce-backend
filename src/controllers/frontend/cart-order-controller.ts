@@ -121,14 +121,12 @@ class CartController extends BaseController {
                         var updateCart
 
                         for (let data of combinedData) {
-                            console.log("khkhjkh", data);
                             const cartProduct: any = await CartOrderProductsModel.findOne({
                                 $and: [
                                     { cartId: data.cartId },
                                     { variantId: data.variantId }
                                 ]
                             })
-                            console.log("cartProduct", cartProduct);
 
                             if (cartProduct) {
                                 updateCart = await CartService.updateCartProductByCart({
@@ -145,7 +143,6 @@ class CartController extends BaseController {
                                         variantId: data.variantId,
                                         productId: data.productId
                                     })
-                                console.log("dddddddddddd", updateCart);
 
                                 if (updateCart) {
 
@@ -216,7 +213,7 @@ class CartController extends BaseController {
                             });
 
 
-                            if (existingCart.totalProductAmount) {
+                            if (existingCart.totalProductAmount && existingCartProduct && existingCartProduct.quantity) {
                                 totalAmountOfProduct = (productVariantData.price * existingCartProduct.quantity)
                                 totalDiscountAmountOfProduct = (productVariantData.discountPrice * existingCartProduct.quantity)
                             } else {
@@ -362,11 +359,14 @@ class CartController extends BaseController {
 
 
                         if (newCartOrder) {
-                            const products = await CartService.findAllCart({ cartId: newCartOrder._id })
+                            const products = await CartService.findCartPopulate({
+                                _id: newCartOrder._id, hostName: req.get('origin'),
+                            })
+
+
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
-                                    ...newCartOrder,
-                                    products: products
+                                    ...products
                                 },
                                 message: 'Cart order created successfully!'
                             }, 200);
@@ -544,7 +544,6 @@ class CartController extends BaseController {
 
             // query.status = '1';
             query.customerId = userData._id;
-            console.log(query);
 
             const sort: any = {};
             if (sortby && sortorder) {

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { FilterOptionsProps, frontendPagination, pagination } from '../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../model/frontend/cart-order-model';
 import CartOrderProductsModel, { CartOrderProductProps } from '../../model/frontend/cart-order-product-model';
-import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistOfferBrandPopulation, wishlistOfferCategory, wishlistOfferProductPopulation } from '../../utils/config/wishlist-config';
+import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistOfferBrandPopulation, wishlistOfferCategory, wishlistOfferProductPopulation, wishlistProductCategoryLookup } from '../../utils/config/wishlist-config';
 import { productLookup } from '../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
 import LanguagesModel from '../../model/admin/setup/language-model';
@@ -57,6 +57,7 @@ class CartService {
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
                     productVariantsLookupValues,
                     { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+                    wishlistProductCategoryLookup,
                     multilanguageFieldsLookup(languageId),
                     { $unwind: { path: "$productDetails.languageValues", preserveNullAndEmptyArrays: true } },
                     replaceProductLookupValues,
