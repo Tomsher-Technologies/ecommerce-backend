@@ -201,12 +201,12 @@ class CollectionsBrandsController extends BaseController {
                 if (collectionId) {
                     const { collectionsBrands } = validatedData.data;
 
-                    console.log('collectionsBrands', collectionsBrands);
+                    const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
                         collectionsBrands: collectionsBrands ? collectionsBrands.split(',').map((id: string) => id.trim()) : [],
-                        collectionImageUrl: handleFileUpload(req, await CollectionsBrandsService.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
+                        collectionImageUrl: handleFileUpload(req, await CollectionsBrandsService.findOne(collectionId), (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };
 

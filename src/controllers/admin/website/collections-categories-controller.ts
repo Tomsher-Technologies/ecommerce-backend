@@ -200,12 +200,13 @@ class CollectionsCategoriesController extends BaseController {
                 const collectionId = req.params.id;
                 if (collectionId) {
                     const { collectionsCategories } = validatedData.data;
-
+                    const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
+                    
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
                         collectionsCategories: collectionsCategories ? collectionsCategories.split(',').map((id: string) => id.trim()) : [],
-                        collectionImageUrl: handleFileUpload(req, await CollectionsCategoriesService.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
+                        collectionImageUrl: handleFileUpload(req, await CollectionsCategoriesService.findOne(collectionId), (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };
 

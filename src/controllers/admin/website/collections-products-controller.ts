@@ -212,14 +212,16 @@ class CollectionsProductsController extends BaseController {
                 const collectionId = req.params.id;
                 if (collectionId) {
                     const { collectionsProducts } = validatedData.data;
+                    const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
+                    
                     let updatedCollectionData = req.body;
                     updatedCollectionData = {
                         ...updatedCollectionData,
                         collectionsProducts: collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [],
-                        collectionImageUrl: handleFileUpload(req, await CollectionsProductsService.findOne(collectionId), req.file, 'collectionImageUrl', 'collection'),
+                        collectionImageUrl: handleFileUpload(req, await CollectionsProductsService.findOne(collectionId), (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };
-
+ 
                     const updatedCollection = await CollectionsProductsService.update(collectionId, updatedCollectionData);
                     if (updatedCollection) {
                         const languageValuesImages = (req as any).files.filter((file: any) =>
