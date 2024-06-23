@@ -11,7 +11,6 @@ import { addFieldsProductSpecification, addFieldsProductVariantAttributes, produ
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 import { offers } from '../../../constants/offers';
-import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
 
 import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
 import SliderModel, { SliderProps } from "../../../model/admin/ecommerce/slider-model";
@@ -31,6 +30,7 @@ import CollectionsBrandsModel from "../../../model/admin/website/collections-bra
 import OffersModel from "../../../model/admin/marketing/offers-model";
 import ProductService from "./product-service";
 import { collections } from "../../../constants/collections";
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
 
 class CommonService {
     constructor() { }
@@ -328,24 +328,17 @@ class CommonService {
                 productPipeline.push(productFinalProject);
                 const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName)
 
-                // Add the stages for product-specific offers
-                if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-                    const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
-                    productPipeline.push(offerProduct)
-                }
-                // Add the stages for brand-specific offers
-                if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-                    const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
-                    productPipeline.push(offerBrand);
-                }
-                // Add the stages for category-specific offers
                 if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
                     const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
                     productPipeline.push(offerCategory);
+                } else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                    const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
+                    productPipeline.push(offerBrand);
+                } else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                    const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
+                    productPipeline.push(offerProduct)
                 }
-
-
-                // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
+             
                 productPipeline.push({
                     $addFields: {
                         offer: {
@@ -628,10 +621,10 @@ class CommonService {
 
         getOfferList = await OffersModel.find(query);
 
+
         if (getOfferList && getOfferList.length > 0) {
             for await (const offerDetail of getOfferList) {
                 if (offerDetail.offerApplyValues && offerDetail.offerApplyValues.length > 0) {
-
                     if (offerDetail.offersBy === offers.brand) {
                         if (offer) {
                             pipeline.push({ $match: { brand: { $in: offerDetail.offerApplyValues } } });
@@ -668,10 +661,6 @@ class CommonService {
 
         return { pipeline, getOfferList, offerApplied };
     }
-
-
-
-    
 
 
 }

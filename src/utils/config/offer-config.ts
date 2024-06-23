@@ -2,7 +2,7 @@
 
 
 export const offerProductPopulation = (getOfferList: any, offerApplied: any) => {
-    return {
+    let pipeline = {
         $addFields: {
             productOffers: {
                 $filter: {
@@ -11,13 +11,14 @@ export const offerProductPopulation = (getOfferList: any, offerApplied: any) => 
                     cond: {
                         $and: [
                             { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                            { $in: ["$productId", offerApplied.products] } // Match product ID
+                            { $in: ["$_id", offerApplied.products] } // Match product ID
                         ]
                     }
                 }
             }
         }
     }
+    return pipeline
 }
 
 export const offerCategoryPopulation = (getOfferList: any, offerApplied: any) => {
@@ -54,7 +55,7 @@ export const offerCategoryPopulation = (getOfferList: any, offerApplied: any) =>
     }
 }
 export const offerBrandPopulation = (getOfferList: any, offerApplied: any) => {
-    return{
+    return {
         $addFields: {
             brandOffers: {
                 $filter: {

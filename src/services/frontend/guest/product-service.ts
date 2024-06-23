@@ -102,22 +102,18 @@ class ProductService {
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName)
 
         // Add the stages for product-specific offers
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
-            pipeline.push(offerProduct)
-        }
-        // Add the stages for brand-specific offers
-        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
-            pipeline.push(offerBrand);
-        }
-        // Add the stages for category-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
         }
-
-
+        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+            const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
+            pipeline.push(offerBrand);
+        }
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
+            pipeline.push(offerProduct)
+        }
         // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
         pipeline.push({
             $addFields: {
