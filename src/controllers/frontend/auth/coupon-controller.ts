@@ -15,11 +15,15 @@ class CouponController extends BaseController {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 let query: any = { _id: { $exists: true } };
-
+                const currentDate = new Date(); 
                 query = {
                     ...query,
                     countryId,
                     status: '1',
+                    $and: [
+                        { "discountDateRange.0": { $lte: currentDate } },
+                        { "discountDateRange.1": { $gte: currentDate } },
+                    ],
                 } as any;
 
                 const coupon = await CouponService.findAll({
@@ -55,13 +59,14 @@ class CouponController extends BaseController {
 
                         const query = {
                             countryId,
-                            status: '1',
-                            couponCode
+                            couponCode,
                         } as any;
 
                         const user = res.locals.user;
                         const couponDetails: any = await CouponService.checkCouponCode({ query, user, deviceType });
                         if (couponDetails?.status) {
+                            console.log('here',couponDetails);
+                            
                             return controller.sendSuccessResponse(res, {
                                 requestedData: couponDetails?.requestedData,
                                 message: couponDetails.message
@@ -72,8 +77,6 @@ class CouponController extends BaseController {
                                 message: couponDetails?.message,
                             });
                         }
-                        console.log(couponDetails);
-
                     } else {
                         return controller.sendErrorResponse(res, 200, {
                             message: 'Validation error',

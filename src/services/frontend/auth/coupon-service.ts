@@ -2,9 +2,21 @@ import { FilterOptionsProps, frontendPagination } from '../../../components/pagi
 import { couponDeviceType } from '../../../constants/cart';
 
 import CouponModel from '../../../model/admin/marketing/coupon-model';
+import CartOrdersModel from '../../../model/frontend/cart-order-model';
 import { CustomerWishlistModelProps } from '../../../model/frontend/customer-wishlist-model';
 import CartService from "../../../services/frontend/cart-service";
 
+interface CheckCouponOptions {
+    query: Record<string, any>;
+    user: { _id: string };
+    deviceType: string;
+}
+
+interface CheckValues {
+    status: boolean;
+    message: string;
+    requestedData?: Document | null;
+}
 
 class CouponService {
     async findAll(options: any): Promise<any> {
@@ -17,51 +29,107 @@ class CouponService {
 
         return CouponModel.aggregate(pipeline).exec();
     }
-    async checkCouponCode(options: any): Promise<any> {
+    async checkCouponCode(options: CheckCouponOptions): Promise<CheckValues> {
         const { query, user, deviceType } = options;
+    
+        const currentDate = new Date();
+    
+        try {
+            const checkCart = await CartService.findOneCart({
+                cartStatus: '1',
+                customerId: user._id
+            });
+            if(!checkCart){
+                return {
+                    status: false,
+                    message: 'Active cart is not found!'
+                };
+            }
 
-        const couponDetails: any = await this.findOne(query);
-        if (couponDetails) {
-            if (couponDetails.couponUsage.mobileAppOnlyCoupon) {
-                if (deviceType === couponDeviceType.mobile) {
-                    return {
-                        status: true,
-                        requestedData: couponDetails,
-                        message: 'This coupon are successfully verified'
-                    }
-                } else {
-                    return {
-                        status: false,
-                        message: 'This Coupon only to use mobile application users!'
-                    }
-                }
-            } else if (couponDetails.couponUsage.onlyForNewUser) {
+            const couponDetails: any = await this.findOne({
+                ...query,
+                status: '1',
+                $and: [
+                    { "discountDateRange.0": { $lte: currentDate } },
+                    { "discountDateRange.1": { $gte: currentDate } },
+                ]
+            });
+    
+            if (!couponDetails) {
+                return {
+                    status: false,
+                    message: 'Coupon not found!'
+                };
+            }
+    
+            // Check if the coupon is only for mobile app users
+            if (couponDetails.couponUsage.mobileAppOnlyCoupon && deviceType !== couponDeviceType.mobile) {
+                return {
+                    status: false,
+                    message: 'This coupon can only be used by mobile application users!'
+                };
+            }
+    
+            // Check if the coupon is only for new users
+            if (couponDetails.couponUsage.onlyForNewUser) {
                 const checkCart = await CartService.findOneCart({
+                    cartStatus: { $ne: '1' },
                     customerId: user._id
                 });
-                console.log(user._id);
-
+    
                 if (checkCart) {
                     return {
                         status: false,
-                        message: 'This Coupon only to use mobile application users!'
-                    }
-                } else {
-                    return {
-                        status: true,
-                        requestedData: couponDetails,
-                        message: 'This coupon are successfully verified'
-                    }
+                        message: 'This coupon can only be used by new users!'
+                    };
                 }
             }
-        } else {
+    
+            // Check coupon usage limit per user
+            if (couponDetails.couponUsage.enableCouponUsageLimit) {
+                const usageCount = await CartOrdersModel.countDocuments({
+                    customerId: user._id,
+                    couponId: couponDetails._id,
+                });
+    
+                if (usageCount >= Number(couponDetails.couponUsage.couponUsageLimit)) {
+                    return {
+                        status: false,
+                        message: 'You have reached the usage limit for this coupon!'
+                    };
+                }
+            }
+    
+            // Check overall coupon usage limit
+            if (couponDetails.couponUsage.enableLimitPerUser) {
+                const totalUsageCount = await CartOrdersModel.countDocuments({
+                    couponId: couponDetails._id,
+                });
+    
+                if (totalUsageCount >= Number(couponDetails.couponUsage.limitPerUser)) {
+                    return {
+                        status: false,
+                        message: 'This coupon has reached its usage limit!'
+                    };
+                }
+            }
+    
+         
+       
+            // If all checks pass, return successful verification
+            return {
+                status: true,
+                message: 'This coupon has been successfully verified',
+                requestedData: couponDetails
+            };
+        } catch (error) {
+            console.error('Error checking coupon code:', error);
             return {
                 status: false,
-                message: 'Coupon not found!'
-            }
+                message: 'An error occurred while verifying the coupon'
+            };
         }
     }
-
     async findOne(query: any): Promise<CustomerWishlistModelProps | null> {
         return CouponModel.findOne(query);
     }

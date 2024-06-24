@@ -218,6 +218,10 @@ class CartService {
         return CartOrderModel.findOne(query);
     }
 
+    async findOneCartProducts(query: any): Promise<CartOrderProductProps | null> {
+        return CartOrderProductsModel.findOne(query);
+    }
+
 
     async destroy(cartId: string): Promise<CartOrderProps | null> {
         return CartOrderModel.findOneAndDelete({ _id: cartId });

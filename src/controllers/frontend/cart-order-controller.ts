@@ -572,9 +572,6 @@ class CartController extends BaseController {
         }
     }
 
-    async addCoupon(req: Request, res: Response): Promise<void> {
-
-    }
 
     async addWalletPoint(req: Request, res: Response): Promise<void> {
 
