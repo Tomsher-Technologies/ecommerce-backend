@@ -24,3 +24,17 @@ export const OrderStatus = [
     { value: '15', label: "Completed" },
     { value: '16', label: "Pickup" },
 ];
+
+
+export const couponTypes = {
+    entireOrders: "entire-orders",
+    forProduct: "for-product",
+    forCategory: "for-category",
+    forBrand: "for-brand",
+    cashback: "cashback",
+}
+
+export const couponDeviceType = {
+    desktop: "desktop",
+    mobile: "mobile"
+}

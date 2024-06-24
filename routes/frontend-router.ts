@@ -6,6 +6,7 @@ import ProductRoutes from './frontend/guest/product-routes';
 import PagesController from '../src/controllers/frontend/guest/pages-controller';
 import WishlistRoutes from './frontend/auth/wishlist-routes';
 import CartRoutes from './frontend/cart-routes';
+import CouponRoutes from './frontend/auth/coupon-routes';
 
 const frontendRouter = express.Router();
 
@@ -15,5 +16,6 @@ frontendRouter.use('/product', ProductRoutes);
 frontendRouter.use('/wishlist', WishlistRoutes);
 frontendRouter.use('/pages/:slug', PagesController.findPagesData);
 frontendRouter.use('/cart', CartRoutes);
+frontendRouter.use('/coupons', CouponRoutes);
 
 export default frontendRouter;
