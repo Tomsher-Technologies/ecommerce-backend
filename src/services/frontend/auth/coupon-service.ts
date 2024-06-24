@@ -1,5 +1,7 @@
 import { FilterOptionsProps, frontendPagination } from '../../../components/pagination';
-import { couponDeviceType } from '../../../constants/cart';
+import { couponDeviceType, couponTypes } from '../../../constants/cart';
+import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 
 import CouponModel from '../../../model/admin/marketing/coupon-model';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';
@@ -31,15 +33,15 @@ class CouponService {
     }
     async checkCouponCode(options: CheckCouponOptions): Promise<CheckValues> {
         const { query, user, deviceType } = options;
-    
+
         const currentDate = new Date();
-    
+
         try {
-            const checkCart = await CartService.findOneCart({
+            const cartDetails = await CartService.findOneCart({
                 cartStatus: '1',
                 customerId: user._id
             });
-            if(!checkCart){
+            if (!cartDetails) {
                 return {
                     status: false,
                     message: 'Active cart is not found!'
@@ -54,14 +56,45 @@ class CouponService {
                     { "discountDateRange.1": { $gte: currentDate } },
                 ]
             });
-    
+
             if (!couponDetails) {
                 return {
                     status: false,
                     message: 'Coupon not found!'
                 };
             }
+            if (![couponTypes.entireOrders, couponTypes.cashback].includes(couponDetails.couponType)) {
+                const cartProductDetails = await CartService.findAllCart({ cartId: cartDetails._id });
+                const productIds = cartProductDetails.map((product: any) => product.productId.toString());
+                const applicableCouponApplyValues = couponDetails.couponApplyValues;
     
+                if (couponDetails.couponType === couponTypes.forProduct) {
+                    if (!productIds.some((id: string) => applicableCouponApplyValues.includes(id))) {
+                        return {
+                            status: false,
+                            message: "This coupon can't be used for the products in your cart!"
+                        };
+                    }
+                } else if (couponDetails.couponType === couponTypes.forBrand) {
+                    const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
+                    const brandIds = productDetails.map((product: any) => product.brand.toString());
+                    if (!brandIds.some((id: string) => applicableCouponApplyValues.includes(id))) {
+                        return {
+                            status: false,
+                            message: "This coupon can't be used for the brands in your cart!"
+                        };
+                    }
+                } else if (couponDetails.couponType === couponTypes.forCategory) {
+                    const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
+                    const categoryIds = productCategoryDetails.map((product: any) => product.categoryId.toString());
+                    if (!categoryIds.some((id: string) => applicableCouponApplyValues.includes(id))) {
+                        return {
+                            status: false,
+                            message: "This coupon can't be used for the categories in your cart!"
+                        };
+                    }
+                }
+            }
             // Check if the coupon is only for mobile app users
             if (couponDetails.couponUsage.mobileAppOnlyCoupon && deviceType !== couponDeviceType.mobile) {
                 return {
@@ -69,14 +102,10 @@ class CouponService {
                     message: 'This coupon can only be used by mobile application users!'
                 };
             }
-    
+
             // Check if the coupon is only for new users
             if (couponDetails.couponUsage.onlyForNewUser) {
-                const checkCart = await CartService.findOneCart({
-                    cartStatus: { $ne: '1' },
-                    customerId: user._id
-                });
-    
+                const checkCart = await CartService.findOneCart({ cartStatus: { $ne: '1' }, customerId: user._id });
                 if (checkCart) {
                     return {
                         status: false,
@@ -84,14 +113,14 @@ class CouponService {
                     };
                 }
             }
-    
+
             // Check coupon usage limit per user
             if (couponDetails.couponUsage.enableCouponUsageLimit) {
                 const usageCount = await CartOrdersModel.countDocuments({
                     customerId: user._id,
                     couponId: couponDetails._id,
                 });
-    
+
                 if (usageCount >= Number(couponDetails.couponUsage.couponUsageLimit)) {
                     return {
                         status: false,
@@ -99,13 +128,13 @@ class CouponService {
                     };
                 }
             }
-    
+
             // Check overall coupon usage limit
             if (couponDetails.couponUsage.enableLimitPerUser) {
                 const totalUsageCount = await CartOrdersModel.countDocuments({
                     couponId: couponDetails._id,
                 });
-    
+
                 if (totalUsageCount >= Number(couponDetails.couponUsage.limitPerUser)) {
                     return {
                         status: false,
@@ -113,9 +142,7 @@ class CouponService {
                     };
                 }
             }
-    
-         
-       
+
             // If all checks pass, return successful verification
             return {
                 status: true,

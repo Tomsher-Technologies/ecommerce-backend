@@ -65,7 +65,6 @@ class CouponController extends BaseController {
                         const user = res.locals.user;
                         const couponDetails: any = await CouponService.checkCouponCode({ query, user, deviceType });
                         if (couponDetails?.status) {
-                            console.log('here',couponDetails);
                             
                             return controller.sendSuccessResponse(res, {
                                 requestedData: couponDetails?.requestedData,
