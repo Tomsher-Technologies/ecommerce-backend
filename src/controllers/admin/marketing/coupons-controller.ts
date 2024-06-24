@@ -8,6 +8,7 @@ import { QueryParams } from '../../../utils/types/common';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import CouponService from '../../../services/admin/marketing/coupon-service'
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -15,14 +16,17 @@ class CouponsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
             const { couponFromDate, couponEndDate }: any = req.query;
 
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-            if (countryId) {
-                query.countryId = countryId;
+
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
             if (status && status !== '') {
@@ -42,7 +46,6 @@ class CouponsController extends BaseController {
                     ...query
                 } as any;
             }
-            console.log("---------------------------", couponFromDate);
             const discountStartDate = new Date(couponFromDate);
             const discountEndDate = new Date(couponEndDate);
 
@@ -50,8 +53,8 @@ class CouponsController extends BaseController {
                 if (couponFromDate) {
                     query = {
                         ...query,
-                        'discountDateRange.0': {$lte: discountStartDate},
-                        'discountDateRange.1': {$gte: discountEndDate}   
+                        'discountDateRange.0': { $lte: discountStartDate },
+                        'discountDateRange.1': { $gte: discountEndDate }
                     }
                 }
                 // if (couponEndDate) {
@@ -68,7 +71,6 @@ class CouponsController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            console.log("************************", query);
 
             const coupons = await CouponService.findAll({
                 page: parseInt(page_size as string),

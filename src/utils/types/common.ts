@@ -7,6 +7,7 @@ export interface QueryParams {
     sortby?: string;
     sortorder?: string;
     keyword?: string;
+    countryId?: string;
 }
 
 export interface UserDataProps {
@@ -28,5 +29,6 @@ export interface QueryParamsWithPage {
     keyword?: string;
     page?: string;
     pageReference?: string;
+    countryId?: string;
 }
 
