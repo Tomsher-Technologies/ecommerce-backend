@@ -156,7 +156,8 @@ class CartController extends BaseController {
                                             $and: [
                                                 { customerId: customer },
                                                 { countryId: country }
-                                            ]
+                                            ],
+                                            cartStatus: "1"
                                         },
                                         hostName: req.get('origin'),
                                     })
@@ -238,7 +239,7 @@ class CartController extends BaseController {
                                         const cartUpdate = await CartService.update(existingCartProduct.cartId, { _id: existingCartProduct.cartId, hostName: req.get('origin') })
 
 
-                                        const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId }, hostName: req.get('origin') })
+                                        const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') })
 
                                         return controller.sendSuccessResponse(res, {
                                             requestedData: {
@@ -364,7 +365,7 @@ class CartController extends BaseController {
 
                         if (newCartOrder) {
                             const products = await CartService.findCartPopulate({
-                                query: { _id: newCartOrder._id }, hostName: req.get('origin'),
+                                query: { _id: newCartOrder._id, cartStatus: "1" }, hostName: req.get('origin'),
                             })
 
 
@@ -488,7 +489,8 @@ class CartController extends BaseController {
                     $or: [
                         { $and: [{ customerId: customer }, { countryId: country }] },
                         { $and: [{ guestUserId: guestUser }, { countryId: country }] }
-                    ]
+                    ],
+                    cartStatus: "1"
                 },
                 hostName: req.get('origin'),
 
@@ -543,7 +545,7 @@ class CartController extends BaseController {
             //     ]
             // }
 
-            let query: any = { _id: { $exists: true } };
+            let query: any = { _id: { $exists: true }, cartStatus: "1" };
             const userData = await res.locals.user;
 
             // query.status = '1';
@@ -560,11 +562,18 @@ class CartController extends BaseController {
                 hostName: req.get('origin'),
                 sort
             });
+            if(cart){
+                return controller.sendSuccessResponse(res, {
+                    requestedData: cart,
+                    message: 'Your cart is ready!'
+                });
+            }else{  
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Active cart not fount'
+                });
+            }
 
-            return controller.sendSuccessResponse(res, {
-                requestedData: cart,
-                message: 'Your cart is ready!'
-            });
+          
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while get cart'
