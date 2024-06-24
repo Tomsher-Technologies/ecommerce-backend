@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productLookup = {
@@ -127,6 +127,29 @@ exports.addFieldsProductSpecification = {
                 input: '$productSpecification',
                 in: {
                     variantId: '$$this.variantId',
+                    _id: '$$this._id',
+                    specificationId: '$$this.specification._id',
+                    specificationTitle: '$$this.specification.specificationTitle',
+                    enableTab: '$$this.specification.enableTab',
+                    slug: '$$this.specification.slug',
+                    specificationDetail: {
+                        _id: '$$this.specificationDetail._id',
+                        specificationId: '$$this.specificationDetail.specificationId',
+                        itemName: '$$this.specificationDetail.itemName',
+                        itemValue: '$$this.specificationDetail.itemValue'
+                    }
+                }
+            }
+        }
+    }
+};
+exports.addFieldsProductsSpecification = {
+    $addFields: {
+        productSpecification: {
+            $map: {
+                input: '$productSpecification',
+                in: {
+                    productId: '$$this.productId',
                     _id: '$$this._id',
                     specificationId: '$$this.specification._id',
                     specificationTitle: '$$this.specification.specificationTitle',
@@ -467,6 +490,9 @@ exports.productProject = {
         },
         languageValues: {
             $ifNull: ['$languageValues', []]
+        },
+        productSpecification: {
+            $ifNull: ['$productSpecification', []]
         }
     }
 };
