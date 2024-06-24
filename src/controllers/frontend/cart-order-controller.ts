@@ -103,6 +103,7 @@ class CartController extends BaseController {
                                     slug: productVariantData.slug,
                                     giftWrapAmount: item.giftWrapAmount,
                                     quantity: item.quantity,
+                                    productAmount: item.productAmount,
                                     variantId: productVariantData._id,
                                     productId: productVariantData.productId,
 
@@ -110,6 +111,8 @@ class CartController extends BaseController {
                             } else {
                                 // If variantId is already in the map, update the quantity
                                 variantIdMap[variantId].quantity += item.quantity;
+                                variantIdMap[variantId].totalProductAmount = variantIdMap[variantId].quantity * item.totalProductAmount;
+
                             }
                         });
 
@@ -140,6 +143,7 @@ class CartController extends BaseController {
                                         slug: data.slug,
                                         giftWrapAmount: data.giftWrapAmount,
                                         quantity: data.quantity,
+                                        productAmount: data.productAmount,
                                         variantId: data.variantId,
                                         productId: data.productId
                                     })
@@ -322,6 +326,7 @@ class CartController extends BaseController {
                                     variantId: productVariantData._id,
                                     productId: productVariantData.productId,
                                     quantity: quantityProduct,
+                                    productAmount: quantityProduct * productVariantData.price,
                                     slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),
@@ -562,18 +567,18 @@ class CartController extends BaseController {
                 hostName: req.get('origin'),
                 sort
             });
-            if(cart){
+            if (cart) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: cart,
                     message: 'Your cart is ready!'
                 });
-            }else{  
+            } else {
                 return controller.sendErrorResponse(res, 500, {
                     message: 'Active cart not fount'
                 });
             }
 
-          
+
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while get cart'
