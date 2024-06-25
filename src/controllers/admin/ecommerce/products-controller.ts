@@ -464,7 +464,15 @@ class ProductsController extends BaseController {
                                     const imageUrl = data.Image;
 
                                     const productImage: any = await uploadImageFromUrl(imageUrl)
+                                    console.log("productImageproductImage", productImage);
 
+                                    if (productImage == null) {
+                                        return controller.sendErrorResponse(res, 200, {
+                                            validation: {
+                                                message: "Image uploading failed"
+                                            },
+                                        }, req);
+                                    }
                                     /********************************************************* */
                                     if (data.Product_Title) {
                                         if (data.Description) {
@@ -640,6 +648,7 @@ class ProductsController extends BaseController {
                                                                 if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
 
                                                                     const product: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] })
+                                                                    console.log("productproduct", !product);
 
                                                                     if (!product) {
 
@@ -686,6 +695,7 @@ class ProductsController extends BaseController {
 
                                                                             // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
                                                                             slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1)
+                                                                            console.log("slugDataslugData1234", slugify(slugData));
 
                                                                             productVariants = {
                                                                                 ...productVariants,
@@ -712,6 +722,8 @@ class ProductsController extends BaseController {
                                                                     }
 
                                                                     else {
+                                                                        console.log("kjhkhjkjhk");
+
                                                                         validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
                                                                         // throw new Error('')
                                                                     }
@@ -722,7 +734,7 @@ class ProductsController extends BaseController {
                                                                             const product: any = await ProductsService.find({ sku: data.Parent_SKU })
                                                                             console.log("ppproduct", product);
 
-                                                                            if (product) {
+                                                                            if (!product) {
                                                                                 var slugData
                                                                                 // if (data.Product_Title === product.productTitle) {
                                                                                 //     slugData = product?.slug
@@ -731,6 +743,7 @@ class ProductsController extends BaseController {
                                                                                 //     slugData = product?.slug + "-" + data.Product_Title
                                                                                 // }
                                                                                 slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1) // generate slug
+                                                                                console.log("slugDataslugData", slugData);
 
                                                                                 if (product.productTitle === productVariants.extraProductTitle) {
                                                                                     productVariants.extraProductTitle = ""

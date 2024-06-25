@@ -4,7 +4,8 @@ import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
 import { Request } from 'express';
 import fs from 'fs';
-import axios from 'axios';
+import http from 'http';
+import https from 'https';
 import path from 'path';
 
 import ProductsService from '../services/admin/ecommerce/product-service';
@@ -230,39 +231,40 @@ export const capitalizeWords = (sentence: any) => {
 
 export const uploadImageFromUrl = async (imageUrl: any) => {
     try {
-        // Use axios to make a GET request to the image URL
-        const response = await axios({
-            url: imageUrl,
-            method: 'GET',
-            responseType: 'stream'
-        });
+        // Determine if the URL is HTTP or HTTPS
+        const protocol = imageUrl.startsWith('https') ? https : http;
 
+        // Use the URL module to parse the imageUrl
         const parsedUrl = new URL(imageUrl);
 
         // Extract the filename from the URL or generate a unique filename
-        let filename = path.basename(parsedUrl.pathname); // Extract filename from path
+        let filename = path.basename(parsedUrl.pathname);
 
         // Optionally, generate a unique filename if the URL doesn't have a direct filename
         // if (!filename) {
-
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(imageUrl);
-        filename = `productImage` + '-' + uniqueSuffix + ext;
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            filename = `productImage-${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
         // }
-        // Create a writable stream to save the image
+
+        // Define the path where the image will be saved
         const outputPath = path.join(__dirname, `../../public/uploads/product/`, filename);
+
+        // Create a writable stream to save the image
         const writer = fs.createWriteStream(outputPath);
 
-        // Pipe the image stream to the writable stream
-        response.data.pipe(writer);
-
-        // Return a promise to indicate completion
-        return new Promise((resolve, reject) => {
-            writer.on('finish', () => resolve(filename));
-            writer.on('error', reject);
+        // Make the HTTP/HTTPS GET request to the image URL
+        const response = await new Promise((resolve, reject) => {
+            protocol.get(imageUrl, (res:any) => {
+                res.pipe(writer);
+                res.on('end', () => resolve(filename));
+                res.on('error', reject);
+            }).on('error', reject);
         });
+
+        return response; // Return the filename when download completes
     } catch (error) {
         console.error('Error downloading image:', error);
-        return error; // Rethrow the error for handling in caller
+        return null; // Return null if there's an error
     }
 };
+
