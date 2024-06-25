@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import 'module-alias/register';
 
-import { capitalizeWords, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, categorySlugify, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
 import { CategoryQueryParams } from '../../../utils/types/category';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -235,9 +235,9 @@ class CategoryController extends BaseController {
                     data = categoryTitle
                 }
                 else {
-                    data = category?.slug + "-" + categoryTitle
+                    data = category?.slug + "-" + categorySlugify(categoryTitle)
                 }
-                slugData = slugify(data, '_')
+                slugData = data
 
 
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');

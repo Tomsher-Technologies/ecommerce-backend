@@ -30,7 +30,7 @@ export const productSchema = zod.object({
     }).optional(),
     warehouse: zod.string().optional(),
     unit: zod.string().optional(),
-    description: zod.string({ required_error: 'Description is required', }).min(17, 'Description is should be 10 chars minimum'),
+    description: zod.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     longDescription: zod.string().optional(),
     productImage: zod.string().optional(),
     imageGallery: zod.any().optional(),
@@ -430,4 +430,39 @@ export const productStatusSchema = zod.object({
         })
 });
 
+
+export const productExcelSchema = zod.object({
+    Product_Title: zod.string().min(3),
+    Description: zod.string().min(10),
+    Long_Description: zod.string().optional(),
+    SKU: zod.any().optional(), // Assuming SKU is a string of digits
+    Item_Type: zod.string(),
+    Category: zod.string(),
+    Image: zod.string().url(),
+    Gallery_Image_1: zod.string().url().optional(),
+    Unit: zod.any().optional(),
+    Weight: zod.any().optional(),
+    Brand: zod.string(),
+    Warehouse: zod.string().optional(),
+    Price: zod.number(),
+    Quantity: zod.number().int(),
+    Discount_Price: zod.number().optional(),
+    Cart_Min_Quantity: zod.number().int().optional(),
+    Cart_Max_Quantity: zod.number().int().optional(),
+    Meta_Title: zod.string().optional(),
+    Meta_Keywords: zod.string().optional(),
+    Meta_Description: zod.string().optional(),
+    Attribute_Option_1: zod.string().optional(),
+    Attribute_Name_1: zod.string().optional(),
+    Attribute_Type_1: zod.string().optional(),
+    Attribute_Value_1: zod.string().optional(),
+}).refine(data => {
+    if (data.Item_Type === 'variant') {
+        // Check if Attribute_Option_1 exists and is not empty
+        if (!data.Attribute_Option_1) {
+            throw new Error('Attribute_Option_1 is required when Item_Type is "variant"');
+        }
+    }
+    return true; // Return true if validation passes
+});
 

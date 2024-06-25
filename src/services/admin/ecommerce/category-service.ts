@@ -5,7 +5,7 @@ import GeneralService from '../../../services/admin/general-service';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import { pipeline } from 'stream';
-import { capitalizeWords, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, categorySlugify, handleFileUpload, slugify } from '../../../utils/helpers';
 
 
 class CategoryService {
@@ -236,7 +236,7 @@ class CategoryService {
             for (let i = 0; i < findCategories.length; i++) {
                 const data = {
                     level: parseInt(category.level) + 1,
-                    slug: slugify(category.slug + "-" + findCategories[i].categoryTitle)
+                    slug: categorySlugify(category.slug + "-" + findCategories[i].categoryTitle)
                 }
                 const query = findCategories[i]._id
 
@@ -377,7 +377,7 @@ class CategoryService {
     // }
 
     async findCategoryId(categoryTitle: string): Promise<void | any> {
-        const slug = slugify(categoryTitle);
+        const slug = categorySlugify(categoryTitle);
 
         let categoryResult = await this.findOneCategory({ slug: slug });
         if (categoryResult) {
@@ -394,44 +394,37 @@ class CategoryService {
             }
 
             // Example usage
-            const inputData = "Infant-Baby Girl (6-36M)-Dresses";
             const catData = splitHyphenOutsideParentheses(categoryTitle);
 
-            console.log(".....sdsd.....", categoryTitle);
-
-            console.log(".....sdsd.....", catData);
-
-
+            let parentSlug = null
             let currentSlug = '';
             for (const data of catData) {
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
-                currentSlug += slugify(data);
-// console.log("fvdgdfgsd",currentSlug);
+                currentSlug += categorySlugify(data);
 
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
                 if (categoryResult == null) {
-                    const titleData = currentSlug.split('-');
-                    const lastItem = titleData[titleData.length - 1];
-                    titleData.pop();
-                    const parentSlug = titleData.join('-');
 
+
+                    const titleData = splitHyphenOutsideParentheses(data);
+                    const lastItem = titleData[titleData.length - 1];
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
-                    console.log();
+                    parentSlug = currentSlug;
 
                     const categoryData = {
                         categoryTitle: capitalizeWords(lastItem),
-                        slug: slugify(currentSlug),
+                        slug: categorySlugify(currentSlug),
                         parentCategory: parentCategory ? parentCategory._id : null,
-                        level: parentCategory ? titleData.length.toString() : '0',
+                        level: parentCategory ? Number(parentCategory.level) + 1 : '0',
                         isExcel: true
                     };
 
                     await this.create(categoryData);
                 }
             }
-            const result: any = await this.findOneCategory({ slug: slugify(categoryTitle) })
+            const result: any = await this.findOneCategory({ slug: categorySlugify(categoryTitle) })
             if (result) {
                 return result
             }
