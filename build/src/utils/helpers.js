@@ -8,7 +8,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const fs_2 = __importDefault(require("fs"));
-const axios_1 = __importDefault(require("axios"));
+const http_1 = __importDefault(require("http"));
+const https_1 = __importDefault(require("https"));
 const path_1 = __importDefault(require("path"));
 const product_service_1 = __importDefault(require("../services/admin/ecommerce/product-service"));
 const country_model_1 = __importDefault(require("../model/admin/setup/country-model"));
@@ -221,35 +222,34 @@ const capitalizeWords = (sentence) => {
 exports.capitalizeWords = capitalizeWords;
 const uploadImageFromUrl = async (imageUrl) => {
     try {
-        // Use axios to make a GET request to the image URL
-        const response = await (0, axios_1.default)({
-            url: imageUrl,
-            method: 'GET',
-            responseType: 'stream'
-        });
+        // Determine if the URL is HTTP or HTTPS
+        const protocol = imageUrl.startsWith('https') ? https_1.default : http_1.default;
+        // Use the URL module to parse the imageUrl
         const parsedUrl = new URL(imageUrl);
         // Extract the filename from the URL or generate a unique filename
-        let filename = path_1.default.basename(parsedUrl.pathname); // Extract filename from path
+        let filename = path_1.default.basename(parsedUrl.pathname);
         // Optionally, generate a unique filename if the URL doesn't have a direct filename
         // if (!filename) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path_1.default.extname(imageUrl);
-        filename = `productImage` + '-' + uniqueSuffix + ext;
+        filename = `productImage-${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
         // }
-        // Create a writable stream to save the image
+        // Define the path where the image will be saved
         const outputPath = path_1.default.join(__dirname, `../../public/uploads/product/`, filename);
+        // Create a writable stream to save the image
         const writer = fs_2.default.createWriteStream(outputPath);
-        // Pipe the image stream to the writable stream
-        response.data.pipe(writer);
-        // Return a promise to indicate completion
-        return new Promise((resolve, reject) => {
-            writer.on('finish', () => resolve(filename));
-            writer.on('error', reject);
+        // Make the HTTP/HTTPS GET request to the image URL
+        const response = await new Promise((resolve, reject) => {
+            protocol.get(imageUrl, (res) => {
+                res.pipe(writer);
+                res.on('end', () => resolve(filename));
+                res.on('error', reject);
+            }).on('error', reject);
         });
+        return response; // Return the filename when download completes
     }
     catch (error) {
         console.error('Error downloading image:', error);
-        return error; // Rethrow the error for handling in caller
+        return null; // Return null if there's an error
     }
 };
 exports.uploadImageFromUrl = uploadImageFromUrl;

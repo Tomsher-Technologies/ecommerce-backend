@@ -391,6 +391,14 @@ class ProductsController extends base_controller_1.default {
                                     /**********************************************************/
                                     const imageUrl = data.Image;
                                     const productImage = await (0, helpers_2.uploadImageFromUrl)(imageUrl);
+                                    console.log("productImageproductImage", productImage);
+                                    if (productImage == null) {
+                                        return controller.sendErrorResponse(res, 200, {
+                                            validation: {
+                                                message: "Image uploading failed"
+                                            },
+                                        }, req);
+                                    }
                                     /********************************************************* */
                                     if (data.Product_Title) {
                                         if (data.Description) {
@@ -544,6 +552,7 @@ class ProductsController extends base_controller_1.default {
                                                                 console.log("productVariantsproductVariants", Number(productVariants.discountPrice ? productVariants.discountPrice : 0));
                                                                 if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
                                                                     const product = await product_service_1.default.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] });
+                                                                    console.log("productproduct", !product);
                                                                     if (!product) {
                                                                         const createProduct = await product_service_1.default.create(finalData);
                                                                         console.log("createProductcreateProduct", createProduct);
@@ -581,6 +590,7 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                             // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
                                                                             slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1);
+                                                                            console.log("slugDataslugData1234", (0, helpers_1.slugify)(slugData));
                                                                             productVariants = {
                                                                                 ...productVariants,
                                                                                 slug: (0, helpers_1.slugify)(slugData)
@@ -604,6 +614,7 @@ class ProductsController extends base_controller_1.default {
                                                                         }
                                                                     }
                                                                     else {
+                                                                        console.log("kjhkhjkjhk");
                                                                         validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" });
                                                                         // throw new Error('')
                                                                     }
@@ -612,7 +623,7 @@ class ProductsController extends base_controller_1.default {
                                                                     if (data.Parent_SKU) {
                                                                         const product = await product_service_1.default.find({ sku: data.Parent_SKU });
                                                                         console.log("ppproduct", product);
-                                                                        if (product) {
+                                                                        if (!product) {
                                                                             var slugData;
                                                                             // if (data.Product_Title === product.productTitle) {
                                                                             //     slugData = product?.slug
@@ -621,6 +632,7 @@ class ProductsController extends base_controller_1.default {
                                                                             //     slugData = product?.slug + "-" + data.Product_Title
                                                                             // }
                                                                             slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1); // generate slug
+                                                                            console.log("slugDataslugData", slugData);
                                                                             if (product.productTitle === productVariants.extraProductTitle) {
                                                                                 productVariants.extraProductTitle = "";
                                                                             }
