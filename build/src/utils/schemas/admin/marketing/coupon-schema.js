@@ -26,6 +26,7 @@ exports.couponSchema = zod_1.z.object({
         limitPerUser: zod_1.z.string().optional(),
         enableCouponUsageLimit: zod_1.z.boolean().optional(),
         couponUsageLimit: zod_1.z.string().optional(),
+        displayCoupon: zod_1.z.boolean().optional(),
     }),
     enableFreeShipping: zod_1.z.boolean().optional(),
     discountDateRange: zod_1.z.array(zod_1.z.string(), {

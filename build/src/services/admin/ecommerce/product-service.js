@@ -90,13 +90,15 @@ class ProductsService {
         return product_model_1.default.findOne(productData);
     }
     async create(productData) {
-        const data = product_model_1.default.create(productData);
-        if (data) {
-            return data;
-        }
-        else {
-            return null;
-        }
+        console.log("errrrrrrrrrrrr12333rrrrrrrrrrrrrr");
+        return product_model_1.default.create(productData);
+        // console.log("ddddddddddddddddr", data);
+        // if (data) {
+        //     return data
+        // } else {
+        //     console.log("errrrrrrrrrrrrrrrrrrrrrrrrrr");
+        //     return null
+        // }
     }
     async findOne(productId) {
         try {

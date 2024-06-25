@@ -33,6 +33,7 @@ exports.products = [
     'Twitter_Description',
     'Attribute_Option_1',
     'Attribute_Name_1',
+    'Attribute_Type_1',
     'Attribute_Value_1',
     'Specification_Option_1',
     'Specification_Name_1',

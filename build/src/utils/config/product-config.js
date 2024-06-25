@@ -493,6 +493,9 @@ exports.productProject = {
         },
         productSpecification: {
             $ifNull: ['$productSpecification', []]
+        },
+        imageGallery: {
+            $ifNull: ['$imageGallery', []]
         }
     }
 };

@@ -3,11 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const fs_2 = __importDefault(require("fs"));
+const axios_1 = __importDefault(require("axios"));
+const path_1 = __importDefault(require("path"));
 const product_service_1 = __importDefault(require("../services/admin/ecommerce/product-service"));
 const country_model_1 = __importDefault(require("../model/admin/setup/country-model"));
 function getCountryId(userData) {
@@ -149,6 +151,12 @@ const slugify = (text, slugDiff = '-') => {
         .trim(); // Trim leading and trailing spaces
 };
 exports.slugify = slugify;
+const categorySlugify = (text) => {
+    return text.toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/-/g, '_');
+};
+exports.categorySlugify = categorySlugify;
 const isValidPriceFormat = (value) => {
     const priceRegex = /^\d+(\.\d{1,2})?$/;
     return priceRegex.test(value);
@@ -211,3 +219,37 @@ const capitalizeWords = (sentence) => {
     return capitalized;
 };
 exports.capitalizeWords = capitalizeWords;
+const uploadImageFromUrl = async (imageUrl) => {
+    try {
+        // Use axios to make a GET request to the image URL
+        const response = await (0, axios_1.default)({
+            url: imageUrl,
+            method: 'GET',
+            responseType: 'stream'
+        });
+        const parsedUrl = new URL(imageUrl);
+        // Extract the filename from the URL or generate a unique filename
+        let filename = path_1.default.basename(parsedUrl.pathname); // Extract filename from path
+        // Optionally, generate a unique filename if the URL doesn't have a direct filename
+        // if (!filename) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path_1.default.extname(imageUrl);
+        filename = `productImage` + '-' + uniqueSuffix + ext;
+        // }
+        // Create a writable stream to save the image
+        const outputPath = path_1.default.join(__dirname, `../../public/uploads/product/`, filename);
+        const writer = fs_2.default.createWriteStream(outputPath);
+        // Pipe the image stream to the writable stream
+        response.data.pipe(writer);
+        // Return a promise to indicate completion
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => resolve(filename));
+            writer.on('error', reject);
+        });
+    }
+    catch (error) {
+        console.error('Error downloading image:', error);
+        return error; // Rethrow the error for handling in caller
+    }
+};
+exports.uploadImageFromUrl = uploadImageFromUrl;

@@ -12,16 +12,20 @@ const base_controller_1 = __importDefault(require("../../../controllers/admin/ba
 const banner_service_1 = __importDefault(require("../../../services/admin/ecommerce/banner-service"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const banner_model_1 = __importDefault(require("../../../model/admin/ecommerce/banner-model"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const controller = new base_controller_1.default();
 class BannerController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '' } = req.query;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '', countryId = '' } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };

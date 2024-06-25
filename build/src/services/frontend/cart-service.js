@@ -156,6 +156,9 @@ class CartService {
             return null;
         }
     }
+    async findOneCart(query) {
+        return cart_order_model_1.default.findOne(query);
+    }
     async destroy(cartId) {
         return cart_order_model_1.default.findOneAndDelete({ _id: cartId });
     }

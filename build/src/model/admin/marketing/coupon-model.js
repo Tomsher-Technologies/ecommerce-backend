@@ -87,6 +87,7 @@ const couponSchema = new mongoose_1.Schema({
             limitPerUser: String,
             enableCouponUsageLimit: Boolean,
             couponUsageLimit: String,
+            displayCoupon: Boolean,
         },
         required: true,
     },

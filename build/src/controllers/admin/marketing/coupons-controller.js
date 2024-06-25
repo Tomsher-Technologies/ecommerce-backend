@@ -9,17 +9,21 @@ const coupon_schema_1 = require("../../../utils/schemas/admin/marketing/coupon-s
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const coupon_service_1 = __importDefault(require("../../../services/admin/marketing/coupon-service"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const controller = new base_controller_1.default();
 class CouponsController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId = '' } = req.query;
             let query = { _id: { $exists: true } };
             const { couponFromDate, couponEndDate } = req.query;
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -37,7 +41,6 @@ class CouponsController extends base_controller_1.default {
                     ...query
                 };
             }
-            console.log("---------------------------", couponFromDate);
             const discountStartDate = new Date(couponFromDate);
             const discountEndDate = new Date(couponEndDate);
             if (couponFromDate || couponEndDate) {
@@ -61,7 +64,6 @@ class CouponsController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            console.log("************************", query);
             const coupons = await coupon_service_1.default.findAll({
                 page: parseInt(page_size),
                 limit: parseInt(limit),

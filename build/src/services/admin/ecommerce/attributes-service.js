@@ -127,7 +127,6 @@ class AttributesService {
             return result;
         }
         else {
-            console.log("dddddddddd", data);
             const attributeData = {
                 attributeTitle: (0, helpers_1.capitalizeWords)(data.data),
                 attributeType: data.type,
@@ -188,7 +187,6 @@ class AttributesService {
                         .map(entry => entry._id);
                     await attribute_detail_model_1.default.deleteMany({ attributeId: attributeId, _id: { $in: attributeDetailIDsToRemove } });
                 }
-                console.log("attributeDetails", attributeDetails);
                 const inventryPricingPromises = await Promise.all(attributeDetails.map(async (data) => {
                     const existingEntry = await attribute_detail_model_1.default.findOne({ _id: data._id });
                     if (existingEntry) {
