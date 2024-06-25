@@ -694,7 +694,7 @@ class ProductsController extends BaseController {
 
 
                                                                             // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
-                                                                            slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1)
+                                                                            slugData = createProduct.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1)
                                                                             console.log("slugDataslugData1234", slugify(slugData));
 
                                                                             productVariants = {

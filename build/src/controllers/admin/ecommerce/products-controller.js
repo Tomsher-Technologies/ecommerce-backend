@@ -589,7 +589,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 }
                                                                             }
                                                                             // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
-                                                                            slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1);
+                                                                            slugData = createProduct.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1);
                                                                             console.log("slugDataslugData1234", (0, helpers_1.slugify)(slugData));
                                                                             productVariants = {
                                                                                 ...productVariants,
