@@ -30,6 +30,8 @@ import { uploadImageFromUrl } from '../../../utils/helpers';
 import SpecificationService from '../../../services/admin/ecommerce/specification-service';
 import { products } from "../../../constants/admin/excel/products";
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
+import CountryModel from '../../../model/admin/setup/country-model';
+import WarehouseModel from '../../../model/admin/stores/warehouse-model';
 
 const controller = new BaseController();
 
@@ -415,32 +417,41 @@ class ProductsController extends BaseController {
 
                         // Convert the worksheet to JSON
                         if (worksheet) {
+
                             const jsonData = await xlsx.utils.sheet_to_json(worksheet);
                             if (jsonData) {
                                 var finalDataList: any = []
 
                                 const errors: any = [];
 
-                                const validateProducts = (jsonData: any) => {
-                                    jsonData.forEach(async (product: any, index: number) => {
+                                const validateProducts = async (jsonData: any) => {
+                                    // jsonData.forEach(async (product: any, index: number) => {
+                                    var length = 2
+                                    for await (let data of jsonData) {
                                         try {
-                                            productExcelSchema.parse(product);
+                                            productExcelSchema.parse(data);
+
                                         } catch (error: any) {
                                             // console.log("77777***********888888888", error.errors[1]);
-                                            for (let errorData = 0; errorData < error.errors.length; errorData++) {
-                                                errors.push({
-                                                    message: error.errors[errorData].path[0] + " - " + error.errors[errorData].message + " row : " + `${index + 2}`
-                                                });
+
+                                            if (error && error.errors && error.errors.length > 0) {
+                                                for (let errorData = 0; errorData < error.errors.length; errorData++) {
+                                                    errors.push({
+                                                        message: error.errors[errorData].path[0] + " - " + error.errors[errorData].message + " row : " + `${length}`
+                                                    });
+                                                }
                                             }
 
 
                                         }
-                                    });
+                                        length++
+
+                                    };
                                     return errors;
                                 };
 
                                 // Validate all products and collect errors
-                                const validationErrors = validateProducts(jsonData);
+                                const validationErrors = await validateProducts(jsonData);
 
 
                                 if (validationErrors.length > 0) {
@@ -467,11 +478,8 @@ class ProductsController extends BaseController {
                                     console.log("productImageproductImage", productImage);
 
                                     if (productImage == null) {
-                                        return controller.sendErrorResponse(res, 200, {
-                                            validation: {
-                                                message: "Image uploading failed"
-                                            },
-                                        }, req);
+                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
+
                                     }
                                     /********************************************************* */
                                     if (data.Product_Title) {
@@ -491,6 +499,7 @@ class ProductsController extends BaseController {
                                                                 const categoryArray = [];
                                                                 var brandId = {};
                                                                 var countryId = {};
+                                                                var warehouseId = {};
                                                                 const specificationData = [];
                                                                 const attributeData = [];
                                                                 var countryData: any
@@ -504,6 +513,13 @@ class ProductsController extends BaseController {
                                                                     countryData = await CountryService.findCountryId({ countryTitle: data.Country })
                                                                     if (countryData) {
                                                                         countryId = countryData._id
+                                                                    }
+                                                                }
+
+                                                                if (data.Warehouse) {
+                                                                    const warehouseData = await WarehouseModel.findOne({ warehouseTitle: data.Warehouse })
+                                                                    if (warehouseData) {
+                                                                        warehouseId = warehouseData._id
                                                                     }
                                                                 }
                                                                 if (data.Category) {
@@ -596,14 +612,14 @@ class ProductsController extends BaseController {
                                                                 var finalData: Partial<ProductsProps> = {
                                                                     productTitle: capitalizeWords(data.Product_Title),
                                                                     slug: slugify(data.Product_Title),
-                                                                    productImageUrl: productImage,
+                                                                    productImageUrl: productImage ? productImage : '',
                                                                     isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                     description: data.Description,
                                                                     longDescription: data.Long_Description,
                                                                     brand: brandId as any,
                                                                     sku: data.SKU,
                                                                     unit: data.Unit,
-                                                                    warehouse: data.Warehouse,
+                                                                    warehouse: warehouseId as any,
                                                                     isExcel: true,
                                                                     measurements: {
                                                                         weight: data.Weight,
@@ -643,96 +659,103 @@ class ProductsController extends BaseController {
                                                                     isExcel: true
                                                                 }
 
-                                                                console.log("productVariantsproductVariants", Number(productVariants.discountPrice ? productVariants.discountPrice : 0));
+                                                                const shortTitleOfCountry: any = await CountryModel.findOne({ _id: await getCountryIdWithSuperAdmin(userData) })
 
+                                                                var countryForSlug
+
+                                                                if (countryData && countryData.countryShortTitle) {
+                                                                    countryForSlug = countryData.countryShortTitle
+                                                                } else {
+                                                                    countryForSlug = shortTitleOfCountry.countryShortTitle
+                                                                }
                                                                 if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
+                                                                    const productDuplication: any = await ProductsService.find({ productTitle: data.Product_Title })
 
-                                                                    const product: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: data.Product_Title }] })
-                                                                    console.log("productproduct", !product);
+                                                                    if (!productDuplication) {
+                                                                        const product: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: capitalizeWords(data.Product_Title) }] })
 
-                                                                    if (!product) {
+                                                                        if (!product) {
 
-                                                                        const createProduct = await ProductsService.create(finalData)
-                                                                        console.log("createProductcreateProduct", createProduct);
+                                                                            const createProduct = await ProductsService.create(finalData)
 
-                                                                        if (createProduct) {
-                                                                            for await (const item of categoryArray) {
-                                                                                const newCategory = await ProductCategoryLinkService.create({
-                                                                                    productId: createProduct._id,
-                                                                                    categoryId: item
-                                                                                })
-
-                                                                            }
-
-                                                                            if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                const newSeo = await SeoPageService.create({
-                                                                                    pageId: createProduct._id,
-                                                                                    page: seoPage.ecommerce.products,
-                                                                                    ...productSeo
-                                                                                })
-                                                                            }
-
-                                                                            if (specificationData && specificationData.length > 0) {
-                                                                                for await (const specification of specificationData) {
-                                                                                    const specificationValues = {
+                                                                            if (createProduct) {
+                                                                                for await (const item of categoryArray) {
+                                                                                    const newCategory = await ProductCategoryLinkService.create({
                                                                                         productId: createProduct._id,
-                                                                                        ...specification
-                                                                                    }
-                                                                                    const specifications = await ProductSpecificationService.create(specificationValues)
+                                                                                        categoryId: item
+                                                                                    })
+
                                                                                 }
-                                                                            }
 
-                                                                            if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                for await (const galleryImage of galleryImageArray) {
-                                                                                    const galleryImageData = {
-                                                                                        productID: createProduct._id,
-                                                                                        ...galleryImage
-                                                                                    }
-                                                                                    const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
+                                                                                if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                                    const newSeo = await SeoPageService.create({
+                                                                                        pageId: createProduct._id,
+                                                                                        page: seoPage.ecommerce.products,
+                                                                                        ...productSeo
+                                                                                    })
                                                                                 }
-                                                                            }
 
-
-                                                                            // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
-                                                                            slugData = createProduct.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1)
-                                                                            console.log("slugDataslugData1234", slugify(slugData));
-
-                                                                            productVariants = {
-                                                                                ...productVariants,
-
-                                                                                slug: slugify(slugData)
-                                                                            }
-
-                                                                            const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
-                                                                            if (createVariant) {
-                                                                                if (attributeData && attributeData.length > 0) {
-                                                                                    for await (const attribute of attributeData) {
-                                                                                        const attributeValues = {
-                                                                                            variantId: createVariant._id,
+                                                                                if (specificationData && specificationData.length > 0) {
+                                                                                    for await (const specification of specificationData) {
+                                                                                        const specificationValues = {
                                                                                             productId: createProduct._id,
-                                                                                            ...attribute
+                                                                                            ...specification
                                                                                         }
-                                                                                        const attributes = await ProductVariantAttributeService.create(attributeValues)
+                                                                                        const specifications = await ProductSpecificationService.create(specificationValues)
                                                                                     }
                                                                                 }
-                                                                            } else {
-                                                                                await deleteFunction(createProduct._id)
+
+                                                                                if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                    for await (const galleryImage of galleryImageArray) {
+                                                                                        const galleryImageData = {
+                                                                                            productID: createProduct._id,
+                                                                                            ...galleryImage
+                                                                                        }
+                                                                                        const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
+                                                                                    }
+                                                                                }
+
+                                                                                // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
+                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index + 1)
+
+                                                                                productVariants = {
+                                                                                    ...productVariants,
+
+                                                                                    slug: slugify(slugData)
+                                                                                }
+
+                                                                                const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
+                                                                                if (createVariant) {
+                                                                                    if (attributeData && attributeData.length > 0) {
+                                                                                        for await (const attribute of attributeData) {
+                                                                                            const attributeValues = {
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: createProduct._id,
+                                                                                                ...attribute
+                                                                                            }
+                                                                                            const attributes = await ProductVariantAttributeService.create(attributeValues)
+                                                                                        }
+                                                                                    }
+                                                                                } else {
+                                                                                    await deleteFunction(createProduct._id)
+                                                                                }
                                                                             }
                                                                         }
-                                                                    }
 
-                                                                    else {
-                                                                        console.log("kjhkhjkjhk");
+                                                                        else {
 
-                                                                        validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
-                                                                        // throw new Error('')
+                                                                            validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
+                                                                            // throw new Error('')
+                                                                        }
+                                                                    } else {
+                                                                        validation.push({ productTitle: productDuplication.productTitle, SKU: productDuplication.sku, message: productDuplication.productTitle + " is already existing" })
+
                                                                     }
 
                                                                 } else
                                                                     if (data.Item_Type == 'variant') {
                                                                         if (data.Parent_SKU) {
                                                                             const product: any = await ProductsService.find({ sku: data.Parent_SKU })
-                                                                            console.log("ppproduct", product);
 
                                                                             if (!product) {
                                                                                 var slugData
@@ -742,8 +765,7 @@ class ProductsController extends BaseController {
                                                                                 // else {
                                                                                 //     slugData = product?.slug + "-" + data.Product_Title
                                                                                 // }
-                                                                                slugData = product.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1) // generate slug
-                                                                                console.log("slugDataslugData", slugData);
+                                                                                slugData = product.productTitle + "-" + countryForSlug + '-' + (index + 1) // generate slug
 
                                                                                 if (product.productTitle === productVariants.extraProductTitle) {
                                                                                     productVariants.extraProductTitle = ""

@@ -442,12 +442,36 @@ exports.productExcelSchema = zod_1.z.object({
     Attribute_Name_1: zod_1.z.string().optional(),
     Attribute_Type_1: zod_1.z.string().optional(),
     Attribute_Value_1: zod_1.z.string().optional(),
-}).refine(data => {
+    Specification_Option_1: zod_1.z.string().optional(),
+    Specification_Name_1: zod_1.z.string().optional(),
+    Specification_Value_1: zod_1.z.string().optional(),
+}).superRefine((data, ctx) => {
     if (data.Item_Type === 'variant') {
-        // Check if Attribute_Option_1 exists and is not empty
-        if (!data.Attribute_Option_1) {
-            throw new Error('Attribute_Option_1 is required when Item_Type is "variant"');
+        // Validation for Attribute_Option_1
+        if (!data.Attribute_Option_1 || !data.Attribute_Name_1 || !data.Attribute_Type_1) {
+            ctx.addIssue({
+                code: "custom",
+                message: 'Attribute_Option_1,Attribute_Name_1,Attribute_Type_1 is required when Item_Type is "variant"',
+                path: [data.Product_Title]
+            });
         }
+    }
+    if (data.Attribute_Option_1) {
+        if (!data.Attribute_Name_1 || !data.Attribute_Type_1) {
+            ctx.addIssue({
+                code: "custom",
+                message: 'Attribute_Name_1 and Attribute_Type_1 are required when Attribute_Option_1 is provided',
+                path: [data.Product_Title]
+            });
+        }
+    }
+    // Validation for Specification_Option_1
+    if (data.Specification_Option_1 && !data.Specification_Name_1) {
+        ctx.addIssue({
+            code: "custom",
+            message: 'Specification_Name_1 is required when Specification_Option_1 is provided',
+            path: [data.Product_Title]
+        });
     }
     return true; // Return true if validation passes
 });

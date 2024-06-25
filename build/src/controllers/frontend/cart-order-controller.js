@@ -32,6 +32,9 @@ class CartController extends base_controller_1.default {
                 let newCartOrderProduct;
                 customer = user;
                 guestUser = uuid;
+                let totalAmountOfProduct = 0;
+                let totalDiscountAmountOfProduct = 0;
+                let quantityProduct = 0;
                 const guestUserCart = await cart_service_1.default.findCart({
                     $and: [
                         { guestUserId: guestUser },
@@ -159,11 +162,9 @@ class CartController extends base_controller_1.default {
                         ]
                     });
                     // totalProductAmount = 
-                    let totalAmountOfProduct = 0;
-                    let totalDiscountAmountOfProduct = 0;
-                    let quantityProduct = 0;
-                    totalAmountOfProduct = productVariantData?.price * quantity;
-                    totalDiscountAmountOfProduct = (productVariantData.discountPrice * quantity);
+                    totalAmountOfProduct = (productVariantData?.price * quantity);
+                    totalDiscountAmountOfProduct = (((productVariantData?.discountPrice - productVariantData.discountPrice) / productVariantData?.discountPrice) * 100);
+                    // console.log("totalDiscountAmountOfProducttotalDiscountAmountOfProduct", totalDiscountAmountOfProduct);
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
@@ -172,8 +173,8 @@ class CartController extends base_controller_1.default {
                             ]
                         });
                         if (existingCart.totalProductAmount && existingCartProduct && existingCartProduct.quantity) {
-                            totalAmountOfProduct = (productVariantData.price * existingCartProduct.quantity);
-                            totalDiscountAmountOfProduct = (productVariantData.discountPrice * existingCartProduct.quantity);
+                            totalAmountOfProduct = existingCart?.totalProductAmount + (productVariantData.price * existingCartProduct.quantity);
+                            totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount + (productVariantData.discountPrice * existingCartProduct.quantity);
                         }
                         else {
                             totalAmountOfProduct = productVariantData?.price * quantity;
@@ -225,7 +226,7 @@ class CartController extends base_controller_1.default {
                     }
                     const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings });
                     // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                    // console.log(productVariantData, "........1234d.....", codAmount);
+                    console.log("........1234d.....", shippingAmount);
                     const cartOrderData = {
                         customerId: customer,
                         guestUserId: guestUser,
@@ -243,13 +244,13 @@ class CartController extends base_controller_1.default {
                         totalProductAmount: totalAmountOfProduct,
                         totalReturnedProduct,
                         totalDiscountAmount: totalDiscountAmountOfProduct,
-                        totalShippingAmount: Number(shippingAmount.blockValues.shippingCharge),
+                        totalShippingAmount: shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0,
                         totalCouponAmount,
                         totalWalletAmount,
                         codAmount,
                         // codAmount: Number(codAmount.blockValues.codCharge),
                         totalTaxAmount,
-                        totalAmount: totalAmountOfProduct + Number(shippingAmount.blockValues.shippingCharge),
+                        totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0) - totalDiscountAmountOfProduct,
                     };
                     if (existingCart) {
                         newCartOrder = await cart_service_2.default.update(existingCart._id, cartOrderData);
@@ -289,6 +290,7 @@ class CartController extends base_controller_1.default {
                                 variantId: productVariantData._id,
                                 productId: productVariantData.productId,
                                 quantity: quantityProduct ? 0 : quantity,
+                                productAmount: quantity * productVariantData.price,
                                 slug: productVariantData.slug,
                                 orderStatus,
                                 createdAt: new Date(),
