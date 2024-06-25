@@ -49,6 +49,10 @@ class CartController extends BaseController {
 
                 customer = user
                 guestUser = uuid
+
+                let totalAmountOfProduct = 0
+                let totalDiscountAmountOfProduct = 0
+                let quantityProduct = 0
                 const guestUserCart: any = await CartService.findCart(
                     {
                         $and: [
@@ -194,7 +198,7 @@ class CartController extends BaseController {
                 } else
 
                     if (customer || guestUser) {
-                        const existingCart = await CartService.findCart({
+                        const existingCart: any = await CartService.findCart({
                             $or: [
                                 { customerId: customer },
                                 { guestUserId: guestUser }
@@ -205,11 +209,10 @@ class CartController extends BaseController {
 
                         // totalProductAmount = 
 
-                        let totalAmountOfProduct = 0
-                        let totalDiscountAmountOfProduct = 0
-                        let quantityProduct = 0
-                        totalAmountOfProduct = productVariantData?.price * quantity
-                        totalDiscountAmountOfProduct = (productVariantData.discountPrice * quantity)
+
+                        totalAmountOfProduct = (productVariantData?.price * quantity)
+                        totalDiscountAmountOfProduct = (((productVariantData?.discountPrice - productVariantData.discountPrice) / productVariantData?.discountPrice) * 100);
+                        // console.log("totalDiscountAmountOfProducttotalDiscountAmountOfProduct", totalDiscountAmountOfProduct);
 
                         if (existingCart) {
 
@@ -223,8 +226,8 @@ class CartController extends BaseController {
 
 
                             if (existingCart.totalProductAmount && existingCartProduct && existingCartProduct.quantity) {
-                                totalAmountOfProduct = (productVariantData.price * existingCartProduct.quantity)
-                                totalDiscountAmountOfProduct = (productVariantData.discountPrice * existingCartProduct.quantity)
+                                totalAmountOfProduct = existingCart?.totalProductAmount + (productVariantData.price * existingCartProduct.quantity)
+                                totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount + (productVariantData.discountPrice * existingCartProduct.quantity)
                             } else {
                                 totalAmountOfProduct = productVariantData?.price * quantity
                                 totalDiscountAmountOfProduct = productVariantData.discountPrice * quantity
@@ -286,7 +289,7 @@ class CartController extends BaseController {
 
                         const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings })
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                        // console.log(productVariantData, "........1234d.....", codAmount);
+                        console.log("........1234d.....", shippingAmount);
 
                         const cartOrderData = {
                             customerId: customer,
@@ -305,13 +308,13 @@ class CartController extends BaseController {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: Number(shippingAmount.blockValues.shippingCharge),
+                            totalShippingAmount: shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount,
-                            totalAmount: totalAmountOfProduct + Number(shippingAmount.blockValues.shippingCharge),
+                            totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0) - totalDiscountAmountOfProduct,
                         };
 
                         if (existingCart) {
@@ -354,13 +357,13 @@ class CartController extends BaseController {
 
                             if (newCartOrder) {
 
-
                                 const cartOrderProductData = {
                                     cartId: newCartOrder._id,
                                     customerId: customer,
                                     variantId: productVariantData._id,
                                     productId: productVariantData.productId,
                                     quantity: quantityProduct ? 0 : quantity,
+                                    productAmount: quantity * productVariantData.price,
                                     slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),
