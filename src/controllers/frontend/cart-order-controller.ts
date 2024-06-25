@@ -487,6 +487,9 @@ class CartController extends BaseController {
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (!country) {
+                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+            }
             const { variantId, slug } = req.body;
 
             const cart: any = await CartService.findCartPopulate({

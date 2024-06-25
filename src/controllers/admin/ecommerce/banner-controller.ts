@@ -26,7 +26,7 @@ class BannerController extends BaseController {
             const country = getCountryId(userData);
             if (country) {
                 query.countryId = country;
-            } else {
+            } else if (countryId) {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
