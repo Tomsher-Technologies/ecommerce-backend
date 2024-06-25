@@ -94,7 +94,6 @@ class AttributesController extends BaseController {
                             attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, itemName);
                         }
                     } else {
-                        console.log("gfdgdfdfhdf`", attributeValues);
 
                         attributeDetailsValue = await AttributesService.attributeDetailsService(newAttribute._id, attributeValues);
                     }

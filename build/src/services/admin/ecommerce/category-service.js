@@ -211,7 +211,7 @@ class CategoryService {
             for (let i = 0; i < findCategories.length; i++) {
                 const data = {
                     level: parseInt(category.level) + 1,
-                    slug: (0, helpers_1.slugify)(category.slug + "-" + findCategories[i].categoryTitle)
+                    slug: (0, helpers_1.categorySlugify)(category.slug + "-" + findCategories[i].categoryTitle)
                 };
                 const query = findCategories[i]._id;
                 const categories = await this.update(query, data);
@@ -328,7 +328,7 @@ class CategoryService {
     //     return CategoryModel.findById(categoryId);
     // }
     async findCategoryId(categoryTitle) {
-        const slug = (0, helpers_1.slugify)(categoryTitle);
+        const slug = (0, helpers_1.categorySlugify)(categoryTitle);
         let categoryResult = await this.findOneCategory({ slug: slug });
         if (categoryResult) {
             return categoryResult;
@@ -341,36 +341,31 @@ class CategoryService {
                 return parts;
             }
             // Example usage
-            const inputData = "Infant-Baby Girl (6-36M)-Dresses";
             const catData = splitHyphenOutsideParentheses(categoryTitle);
-            console.log(".....sdsd.....", categoryTitle);
-            console.log(".....sdsd.....", catData);
+            let parentSlug = null;
             let currentSlug = '';
             for (const data of catData) {
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
-                currentSlug += (0, helpers_1.slugify)(data);
-                // console.log("fvdgdfgsd",currentSlug);
+                currentSlug += (0, helpers_1.categorySlugify)(data);
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
                 if (categoryResult == null) {
-                    const titleData = currentSlug.split('-');
+                    const titleData = splitHyphenOutsideParentheses(data);
                     const lastItem = titleData[titleData.length - 1];
-                    titleData.pop();
-                    const parentSlug = titleData.join('-');
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
-                    console.log();
+                    parentSlug = currentSlug;
                     const categoryData = {
                         categoryTitle: (0, helpers_1.capitalizeWords)(lastItem),
-                        slug: (0, helpers_1.slugify)(currentSlug),
+                        slug: (0, helpers_1.categorySlugify)(currentSlug),
                         parentCategory: parentCategory ? parentCategory._id : null,
-                        level: parentCategory ? titleData.length.toString() : '0',
+                        level: parentCategory ? Number(parentCategory.level) + 1 : '0',
                         isExcel: true
                     };
                     await this.create(categoryData);
                 }
             }
-            const result = await this.findOneCategory({ slug: (0, helpers_1.slugify)(categoryTitle) });
+            const result = await this.findOneCategory({ slug: (0, helpers_1.categorySlugify)(categoryTitle) });
             if (result) {
                 return result;
             }

@@ -460,7 +460,6 @@ class ProductController extends base_controller_1.default {
                     const specificationArray = specification.split(',');
                     for await (let specification of specificationArray) {
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(specification);
-                        console.log("..........123456........", new mongoose_1.default.Types.ObjectId(specification), isObjectId);
                         if (isObjectId) {
                             orConditionsForSpecification.push({ "productVariants.productSpecification.specificationDetail._id": new mongoose_1.default.Types.ObjectId(specification) });
                         }

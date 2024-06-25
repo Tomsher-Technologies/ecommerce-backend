@@ -27,6 +27,7 @@ export const couponSchema = zod.object({
         limitPerUser: zod.string().optional(),
         enableCouponUsageLimit: zod.boolean().optional(),
         couponUsageLimit: zod.string().optional(),
+        displayCoupon: zod.boolean().optional(),
     }),
 
     enableFreeShipping: zod.boolean().optional(),

@@ -8,7 +8,7 @@ export interface ProductVariantsProps extends Document {
     variantSku: string;
     countryId: Schema.Types.ObjectId;
     price: number;
-    quantity: string;
+    quantity: number;
     discountPrice: number;
     isDefault: Number,
     hsn: string;
@@ -91,11 +91,11 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         }
     },
     quantity: {
-        type: String,
+        type: Number,
         required: function () {
             return !this.isExcel;
         },
-        default:'0'
+        default: 0
     },
     discountPrice: {
         type: Number,

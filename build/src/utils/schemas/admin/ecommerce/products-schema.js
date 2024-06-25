@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productStatusSchema = exports.updateWebsitePrioritySchema = exports.productVariantsSchema = exports.productSchema = exports.fileSchema = void 0;
+exports.productExcelSchema = exports.productStatusSchema = exports.updateWebsitePrioritySchema = exports.productVariantsSchema = exports.productSchema = exports.fileSchema = void 0;
 const zod_1 = require("zod");
 // const countryVariantSchema = zod.object({
 //     countryID: zod.string().min(1),
@@ -31,7 +31,7 @@ exports.productSchema = zod_1.z.object({
     }).optional(),
     warehouse: zod_1.z.string().optional(),
     unit: zod_1.z.string().optional(),
-    description: zod_1.z.string({ required_error: 'Description is required', }).min(17, 'Description is should be 10 chars minimum'),
+    description: zod_1.z.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     longDescription: zod_1.z.string().optional(),
     productImage: zod_1.z.string().optional(),
     imageGallery: zod_1.z.any().optional(),
@@ -416,4 +416,38 @@ exports.productStatusSchema = zod_1.z.object({
         .refine(value => value === "1" || value === "2", {
         message: "Status must be either '1' or '2'"
     })
+});
+exports.productExcelSchema = zod_1.z.object({
+    Product_Title: zod_1.z.string().min(3),
+    Description: zod_1.z.string().min(10),
+    Long_Description: zod_1.z.string().optional(),
+    SKU: zod_1.z.any().optional(), // Assuming SKU is a string of digits
+    Item_Type: zod_1.z.string(),
+    Category: zod_1.z.string(),
+    Image: zod_1.z.string().url(),
+    Gallery_Image_1: zod_1.z.string().url().optional(),
+    Unit: zod_1.z.any().optional(),
+    Weight: zod_1.z.any().optional(),
+    Brand: zod_1.z.string(),
+    Warehouse: zod_1.z.string().optional(),
+    Price: zod_1.z.number(),
+    Quantity: zod_1.z.number().int(),
+    Discount_Price: zod_1.z.number().optional(),
+    Cart_Min_Quantity: zod_1.z.number().int().optional(),
+    Cart_Max_Quantity: zod_1.z.number().int().optional(),
+    Meta_Title: zod_1.z.string().optional(),
+    Meta_Keywords: zod_1.z.string().optional(),
+    Meta_Description: zod_1.z.string().optional(),
+    Attribute_Option_1: zod_1.z.string().optional(),
+    Attribute_Name_1: zod_1.z.string().optional(),
+    Attribute_Type_1: zod_1.z.string().optional(),
+    Attribute_Value_1: zod_1.z.string().optional(),
+}).refine(data => {
+    if (data.Item_Type === 'variant') {
+        // Check if Attribute_Option_1 exists and is not empty
+        if (!data.Attribute_Option_1) {
+            throw new Error('Attribute_Option_1 is required when Item_Type is "variant"');
+        }
+    }
+    return true; // Return true if validation passes
 });

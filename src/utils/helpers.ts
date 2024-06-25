@@ -4,6 +4,8 @@ import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
 import { Request } from 'express';
 import fs from 'fs';
+import axios from 'axios';
+import path from 'path';
 
 import ProductsService from '../services/admin/ecommerce/product-service';
 import CountryModel from '../model/admin/setup/country-model';
@@ -152,6 +154,12 @@ export const slugify = (text: string, slugDiff = '-'): string => {
         .trim(); // Trim leading and trailing spaces
 };
 
+export const categorySlugify = (text: string): string => {
+    return text.toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/-/g, '_')
+};
+
 export const isValidPriceFormat = (value: string): boolean => {
     const priceRegex = /^\d+(\.\d{1,2})?$/;
     return priceRegex.test(value);
@@ -210,7 +218,7 @@ export function calculateWalletAmount(earnPoints: number, referAndEarn: any) {
 }
 
 
-export const  capitalizeWords=(sentence: any)=> {
+export const capitalizeWords = (sentence: any) => {
     let capitalized = sentence?.replace(/\b\w/g, (char: any) => {
         return char.toUpperCase();
     });
@@ -219,3 +227,42 @@ export const  capitalizeWords=(sentence: any)=> {
     capitalized = capitalized.trim();
     return capitalized;
 }
+
+export const uploadImageFromUrl = async (imageUrl: any) => {
+    try {
+        // Use axios to make a GET request to the image URL
+        const response = await axios({
+            url: imageUrl,
+            method: 'GET',
+            responseType: 'stream'
+        });
+
+        const parsedUrl = new URL(imageUrl);
+
+        // Extract the filename from the URL or generate a unique filename
+        let filename = path.basename(parsedUrl.pathname); // Extract filename from path
+
+        // Optionally, generate a unique filename if the URL doesn't have a direct filename
+        // if (!filename) {
+
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(imageUrl);
+        filename = `productImage` + '-' + uniqueSuffix + ext;
+        // }
+        // Create a writable stream to save the image
+        const outputPath = path.join(__dirname, `../../public/uploads/product/`, filename);
+        const writer = fs.createWriteStream(outputPath);
+
+        // Pipe the image stream to the writable stream
+        response.data.pipe(writer);
+
+        // Return a promise to indicate completion
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => resolve(filename));
+            writer.on('error', reject);
+        });
+    } catch (error) {
+        console.error('Error downloading image:', error);
+        return error; // Rethrow the error for handling in caller
+    }
+};

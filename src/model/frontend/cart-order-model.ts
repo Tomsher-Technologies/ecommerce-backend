@@ -43,6 +43,11 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         ref: 'Countries',
         default: null
     },
+    couponId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Coupon',
+        default: null
+    },
     guestUserId: {
         type: String,
         unique: true
@@ -123,11 +128,6 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     totalProductAmount: {
         type: Number,
         default: 0
-    },
-    couponId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Customer',
-        default: null
     },
     couponAmount: {
         type: Number,

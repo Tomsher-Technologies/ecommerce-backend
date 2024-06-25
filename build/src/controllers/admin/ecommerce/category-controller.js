@@ -215,9 +215,9 @@ class CategoryController extends base_controller_1.default {
                     data = categoryTitle;
                 }
                 else {
-                    data = category?.slug + "-" + categoryTitle;
+                    data = category?.slug + "-" + (0, helpers_1.categorySlugify)(categoryTitle);
                 }
-                slugData = (0, helpers_1.slugify)(data, '_');
+                slugData = data;
                 const categoryImage = (req?.file) || req.files.find((file) => file.fieldname === 'categoryImage');
                 const categoryData = {
                     categoryTitle: (0, helpers_1.capitalizeWords)(categoryTitle),

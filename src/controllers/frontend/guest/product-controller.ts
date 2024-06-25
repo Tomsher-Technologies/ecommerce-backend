@@ -537,7 +537,6 @@ class ProductController extends BaseController {
                     for await (let specification of specificationArray) {
 
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(specification);
-                        console.log("..........123456........", new mongoose.Types.ObjectId(specification),isObjectId);
 
                         if (isObjectId) {
 

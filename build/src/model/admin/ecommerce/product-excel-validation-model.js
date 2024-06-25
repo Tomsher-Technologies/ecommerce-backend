@@ -24,53 +24,36 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const cartOrderProductSchema = new mongoose_1.Schema({
-    cartId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Customer',
-        default: null
+const productsSchema1 = new mongoose_1.Schema({
+    productTitle: {
+        type: String,
+        required: true,
+        unique: true,
+        minlength: [3, 'Product title must be at least 3 characters long']
     },
     slug: {
         type: String,
-        required: false,
+        required: [true, 'Slug is required'],
+        unique: true,
     },
-    quantity: {
-        type: Number,
-        required: true,
-        default: 1
-    },
-    productAmount: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    giftWrapAmount: {
+    isVariant: {
         type: Number,
         default: 0
     },
-    variantId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
-        required: false
-    },
-    productId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
-        required: false
-    },
-    orderStatus: {
+    description: {
         type: String,
         required: true,
-        default: '1'
+        minlength: [10, 'Description must be at least 10 characters long']
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    longDescription: {
+        type: String,
+        // minlength: [7, 'Long description must be at least 7 characters long']
     },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
+    sku: {
+        type: String,
+        required: false,
+        unique: true,
+    },
 });
-const CartOrderProductsModel = mongoose_1.default.model('CartOrderProducts', cartOrderProductSchema);
-exports.default = CartOrderProductsModel;
+const ProductsModel1 = mongoose_1.default.model('Products1', productsSchema1);
+exports.default = ProductsModel1;

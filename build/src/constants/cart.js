@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrderStatus = exports.cartStatus = void 0;
+exports.couponDeviceType = exports.couponTypes = exports.OrderStatus = exports.cartStatus = void 0;
 exports.cartStatus = [
     { value: '1', label: "Active" },
     { value: '2', label: "Order" },
@@ -24,3 +24,14 @@ exports.OrderStatus = [
     { value: '15', label: "Completed" },
     { value: '16', label: "Pickup" },
 ];
+exports.couponTypes = {
+    entireOrders: "entire-orders",
+    forProduct: "for-product",
+    forCategory: "for-category",
+    forBrand: "for-brand",
+    cashback: "cashback",
+};
+exports.couponDeviceType = {
+    desktop: "desktop",
+    mobile: "mobile"
+};

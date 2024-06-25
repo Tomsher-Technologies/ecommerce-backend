@@ -51,6 +51,7 @@ export interface ProductsQueryParams {
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;
+    countryId?: string;
 }
 
 export interface ProductVariantsProps {

@@ -22,7 +22,13 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
             'productVariants.countryId': countryId
         }
 
+    // } else {
+    //     queryFilterIds = {
+    //         ...queryFilterIds,
+    //         'productVariants.countryId': new mongoose.Types.ObjectId(data.countryId)
+    //     }
     }
+
     if (data.status && data.status !== '') {
         query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };
     } else {

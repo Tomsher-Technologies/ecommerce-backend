@@ -81,7 +81,6 @@ class AttributesController extends base_controller_1.default {
                         }
                     }
                     else {
-                        console.log("gfdgdfdfhdf`", attributeValues);
                         attributeDetailsValue = await attributes_service_1.default.attributeDetailsService(newAttribute._id, attributeValues);
                     }
                     if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {

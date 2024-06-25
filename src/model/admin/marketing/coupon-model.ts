@@ -84,6 +84,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
             limitPerUser: String,
             enableCouponUsageLimit: Boolean,
             couponUsageLimit: String,
+            displayCoupon: Boolean,
         },
         required: true,
     },

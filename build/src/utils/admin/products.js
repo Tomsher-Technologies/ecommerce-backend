@@ -23,6 +23,11 @@ const filterProduct = async (data, countryId) => {
             ...queryFilterIds,
             'productVariants.countryId': countryId
         };
+        // } else {
+        //     queryFilterIds = {
+        //         ...queryFilterIds,
+        //         'productVariants.countryId': new mongoose.Types.ObjectId(data.countryId)
+        //     }
     }
     if (data.status && data.status !== '') {
         query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };

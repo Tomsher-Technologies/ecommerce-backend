@@ -8,9 +8,9 @@ export const cartSchema = zod.object({
 }).nonstrict();
 export const cartProductSchema = zod.object({
     customerId: zod.string().optional(),
-    variantId: zod.string(),
-    quantity: zod.string(),
-    slug: zod.string(),
+    variantId: zod.string().optional(),
+    quantity: zod.string().optional(),
+    slug: zod.string().optional(),
     guestUserId: zod.any().optional(),
 
 }).nonstrict();

@@ -98,14 +98,21 @@ class ProductsService {
     }
 
     async create(productData: any): Promise<ProductsProps | null> {
+        console.log("errrrrrrrrrrrr12333rrrrrrrrrrrrrr");
+       
+        
+        return ProductsModel.create(productData);
 
-        const data = ProductsModel.create(productData);
-        if (data) {
+        // console.log("ddddddddddddddddr", data);
 
-            return data
-        } else {
-            return null
-        }
+        // if (data) {
+
+        //     return data
+        // } else {
+        //     console.log("errrrrrrrrrrrrrrrrrrrrrrrrrr");
+
+        //     return null
+        // }
     }
 
     async findOne(productId: string): Promise<ProductsProps | null> {
