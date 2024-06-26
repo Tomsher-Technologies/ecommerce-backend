@@ -401,10 +401,18 @@ class ProductService {
     }
     async findOneProduct(productOption) {
         var { query, getimagegallery, getattribute, getspecification, getSeo, hostName, productId, variantSku } = productOption;
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(hostName);
         const modifiedPipeline = {
             $lookup: {
                 ...product_config_1.variantLookup.$lookup,
                 pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
+                            }
+                        }
+                    },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
                     ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
@@ -425,6 +433,7 @@ class ProductService {
             ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
         ];
+        console.log(query);
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {

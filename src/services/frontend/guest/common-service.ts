@@ -309,10 +309,19 @@ class CommonService {
                         },
                     },
                 ];
+                const countryId = await this.findOneCountrySubDomainWithId(hostName)
+
                 const modifiedPipeline = {
                     $lookup: {
                         ...variantLookup.$lookup,
                         pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+                                    }
+                                }
+                            },
                             ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
                             ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                             ...(getspecification === '1' ? [...productSpecificationLookup] : []),
@@ -338,7 +347,7 @@ class CommonService {
                     const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
                     productPipeline.push(offerProduct)
                 }
-             
+
                 productPipeline.push({
                     $addFields: {
                         offer: {

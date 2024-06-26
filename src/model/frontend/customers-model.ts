@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CustomrProps extends Document {
+    countryId: Schema.Types.ObjectId;
     email: string;
     firstName: string;
     phone: string;
@@ -20,6 +21,11 @@ export interface CustomrProps extends Document {
 }
 
 const customerSchema: Schema<CustomrProps> = new Schema({
+    countryId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Countries',
+        required: true,
+    },
     email: {
         type: String,
         required: true,

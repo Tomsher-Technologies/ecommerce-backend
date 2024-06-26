@@ -484,11 +484,19 @@ class ProductService {
 
     async findOneProduct(productOption: any): Promise<void> {
         var { query, getimagegallery, getattribute, getspecification, getSeo, hostName, productId, variantSku } = productOption;
+        const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
 
         const modifiedPipeline = {
             $lookup: {
                 ...variantLookup.$lookup,
                 pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+                            }
+                        }
+                    },
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
                     ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...productSpecificationLookup] : []),
@@ -513,6 +521,7 @@ class ProductService {
 
         ];
 
+        console.log(query);
 
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(0, hostName)
 

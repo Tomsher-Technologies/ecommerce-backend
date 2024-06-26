@@ -29,6 +29,8 @@ class GuestController extends BaseController {
                 const { email, firstName, phone, password, referralCode, otpType } = validatedData.data;
                 let referralCodeWithCustomerData: any = null;
 
+                const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+
                 if (referralCode) {
                     referralCodeWithCustomerData = await CustomerService.findOne({ referralCode: referralCode, status: '1' }); //referrer
                     if (!referralCodeWithCustomerData) {
@@ -43,6 +45,7 @@ class GuestController extends BaseController {
                 const generatedReferralCode = await CustomerService.generateReferralCode(firstName);
 
                 const customerData = {
+                    countryId,
                     email,
                     firstName,
                     phone,
