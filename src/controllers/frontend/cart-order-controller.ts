@@ -288,8 +288,8 @@ class CartController extends BaseController {
                             if (quantity && quantityChange == true) {
 
                                 quantityProduct = quantity
-                                totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
-                                totalAmountOfProduct = productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity)
+                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
+                                totalAmountOfProduct = existingCart.totalProductAmount + productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity)
 
                             }
 
@@ -314,7 +314,6 @@ class CartController extends BaseController {
                                         totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity))
                                         totalAmountOfProduct = existingCart?.totalProductAmount - (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity))
                                         // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
-                                        console.log("************", totalAmountOfProduct);
 
 
                                         const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })

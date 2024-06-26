@@ -230,8 +230,8 @@ class CartController extends base_controller_1.default {
                         }
                         if (quantity && quantityChange == true) {
                             quantityProduct = quantity;
-                            totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity);
-                            totalAmountOfProduct = productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity);
+                            totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity);
+                            totalAmountOfProduct = existingCart.totalProductAmount + productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity);
                         }
                         else if (quantity == 1) {
                             quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity;
@@ -250,7 +250,6 @@ class CartController extends base_controller_1.default {
                                     totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity));
                                     totalAmountOfProduct = existingCart?.totalProductAmount - (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity));
                                     // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
-                                    console.log("************", totalAmountOfProduct);
                                     const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
                                     var giftWrapCharge;
                                     if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
