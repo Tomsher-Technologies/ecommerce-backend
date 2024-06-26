@@ -316,8 +316,11 @@ class CartController extends BaseController {
                             totalTaxAmount,
                             totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0) - totalDiscountAmountOfProduct,
                         };
+                        console.log("jjjjjjjjjjjjjjjjjjj");
 
                         if (existingCart) {
+                            console.log("jjjjjjjjjjjjjjjjjjj");
+
                             newCartOrder = await cartService.update(existingCart._id, cartOrderData);
                             if (newCartOrder) {
 
@@ -354,6 +357,7 @@ class CartController extends BaseController {
                             }
                         } else {
                             newCartOrder = await cartService.create(cartOrderData);
+                            console.log("jjjjjjjjjjjjjjjjjjj");
 
                             if (newCartOrder) {
 
@@ -520,11 +524,13 @@ class CartController extends BaseController {
             const { variantId, slug } = validatedData.data;
 
             const productVariantData = await ProductVariantsModel.findOne({
-                countryId: country,
-                $or: [
-                    { _id: variantId },
-                    { slug: slug }
-                ]
+                $and: [
+                    {
+                        $or: [
+                            { _id: variantId },
+                            { slug: slug }
+                        ]
+                    }, { countryId: country }]
             });
 
             if (!productVariantData) {
