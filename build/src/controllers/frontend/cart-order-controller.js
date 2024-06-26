@@ -248,8 +248,9 @@ class CartController extends base_controller_1.default {
                                 const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
                                 if (deletedData) {
                                     totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity));
-                                    totalAmountOfProduct = totalAmountOfProduct - (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price * existingCartProduct?.quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * existingCartProduct?.quantity));
+                                    totalAmountOfProduct = existingCart?.totalProductAmount - (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity));
                                     // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
+                                    console.log("************", totalAmountOfProduct);
                                     const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
                                     var giftWrapCharge;
                                     if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
@@ -257,10 +258,12 @@ class CartController extends base_controller_1.default {
                                     }
                                     // const cartfind:any = await CartService.findCart({ _id: existingCartProduct.cartId })
                                     // const giftWrapAmount = cartfind?.totalGiftWrapAmount -
+                                    const removeGiftWrapAmount = existingCart.totalGiftWrapAmount > 0 && giftWrapCharge ? existingCart.totalGiftWrapAmount - giftWrapCharge : existingCart.totalGiftWrapAmount;
                                     const cartUpdate = await cart_service_1.default.update(existingCartProduct.cartId, {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
-                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount > 0 && giftWrapCharge ? existingCart.totalGiftWrapAmount - giftWrapCharge : existingCart.totalGiftWrapAmount
+                                        totalAmount: totalAmountOfProduct - removeGiftWrapAmount,
+                                        totalGiftWrapAmount: removeGiftWrapAmount
                                     });
                                     const cart = await cart_service_1.default.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') });
                                     return controller.sendSuccessResponse(res, {
