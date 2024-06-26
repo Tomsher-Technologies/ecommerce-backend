@@ -232,7 +232,7 @@ class BrandsController extends BaseController {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        brandTitle: error.errors.brandImageUrl.properties.message
+                        brandImageUrl: error.errors.brandImageUrl.properties.message
                     }
                 }, req);
             }

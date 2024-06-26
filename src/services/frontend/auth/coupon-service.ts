@@ -63,11 +63,34 @@ class CouponService {
                     message: 'Coupon not found!'
                 };
             }
+
+            if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
+                return {
+                    status: false,
+                    message: `The coupon will apply with a minimum purchase of ${Number(couponDetails.minPurchaseValue)}`
+                };
+            }
+            
+            // Check if the totalCouponAmount exceeds discountMaxRedeemAmount for carts with status not equal to '1'
+            const totalCouponAmountResult  = await CartOrdersModel.aggregate([
+                { $match: { cartStatus: '1', customerId: user._id } },
+                { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
+            ]);
+    
+            const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
+    
+            if (totalCouponAmount >= Number(couponDetails.discountMaxRedeemAmount)) {
+                return {
+                    status: false,
+                    message: `The total coupon amount exceeds the maximum redeemable amount`
+                };
+            }
+
             if (![couponTypes.entireOrders, couponTypes.cashback].includes(couponDetails.couponType)) {
                 const cartProductDetails = await CartService.findAllCart({ cartId: cartDetails._id });
                 const productIds = cartProductDetails.map((product: any) => product.productId.toString());
                 const applicableCouponApplyValues = couponDetails.couponApplyValues;
-    
+
                 if (couponDetails.couponType === couponTypes.forProduct) {
                     if (!productIds.some((id: string) => applicableCouponApplyValues.includes(id))) {
                         return {

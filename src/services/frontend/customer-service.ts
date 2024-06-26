@@ -1,4 +1,5 @@
 import { FilterOptionsProps, pagination } from '../../components/pagination';
+import CustomerAddress, { CustomerAddressProps } from '../../model/frontend/customer-address-model';
 import CustomerModel, { CustomrProps } from '../../model/frontend/customers-model';
 
 
@@ -48,8 +49,12 @@ class CustomerService {
         return CustomerModel.create(customerData);
     }
 
-    async findOne(query: any): Promise<CustomrProps | null> {
-        return CustomerModel.findOne(query);
+    async findOne(query: any, selectData?: string): Promise<any | null> {
+        const queryBuilder = CustomerModel.findOne(query);
+        if (selectData) {
+            queryBuilder.select(selectData);
+        }
+        return queryBuilder;
     }
 
     async update(customerId: string, customerData: any): Promise<CustomrProps | null> {
@@ -59,6 +64,32 @@ class CustomerService {
     async destroy(customerId: string): Promise<CustomrProps | null> {
         return CustomerModel.findOneAndDelete({ _id: customerId });
     }
+
+
+    async findCustomerAddressAll(options: FilterOptionsProps = {}): Promise<CustomerAddressProps[]> {
+        const { query, skip, limit, sort } = pagination(options.query || {}, options);
+        let queryBuilder = CustomerAddress.find(query)
+
+        if (sort) {
+            queryBuilder = queryBuilder.sort(sort);
+        }
+
+        return queryBuilder;
+    }
+
+    async createCustomerAddress(customerAddressData: any): Promise<CustomerAddressProps> {
+        return CustomerAddress.create(customerAddressData);
+    }
+
+    
+    async updateCustomerAddress(addressId: string, customerAddressData: any): Promise<CustomerAddressProps | null> {
+        return CustomerAddress.findByIdAndUpdate(addressId, customerAddressData, { new: true, useFindAndModify: false });
+    }
+
+    async destroyCustomerAddress(addressId: string): Promise<CustomerAddressProps | null> {
+        return CustomerAddress.findOneAndDelete({ _id: addressId });
+    }
+
 }
 
 export default new CustomerService();
