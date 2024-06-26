@@ -237,7 +237,7 @@ class CartController extends BaseController {
                             hostName: req.get('origin'),
                         })
                         let offerAmount = 0
-
+                        let singleProductTotal = 0
                         // console.log("productVariantDataproductVariantData", offerProduct);
                         for (let i = 0; i < offerProduct.productVariants.length; i++) {
 
@@ -253,7 +253,7 @@ class CartController extends BaseController {
                         let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0
                         totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
                         totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
-
+                        singleProductTotal = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
                         if (existingCart) {
                             const existingCartProduct: any = await CartService.findCartProduct({
                                 $and: [
@@ -406,14 +406,13 @@ class CartController extends BaseController {
                                         { variantId: productVariantData._id }
                                     ]
                                 });
-
                                 const cartOrderProductData = {
                                     cartId: newCartOrder._id,
                                     customerId: customer,
                                     variantId: productVariantData._id,
                                     productId: productVariantData.productId,
                                     quantity: quantityProduct,
-                                    productAmount: quantityProduct * productVariantData.price,
+                                    productAmount: singleProductTotal,
                                     slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),
@@ -421,8 +420,8 @@ class CartController extends BaseController {
                                 };
 
                                 if (existingProduct) {
-
-                                    newCartOrderProduct = await CartService.updateCartProduct(existingProduct._id, cartOrderProductData);
+                                    cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal,
+                                        newCartOrderProduct = await CartService.updateCartProduct(existingProduct._id, cartOrderProductData);
 
                                 } else {
 
@@ -441,7 +440,7 @@ class CartController extends BaseController {
                                     variantId: productVariantData._id,
                                     productId: productVariantData.productId,
                                     quantity: quantityProduct ? 0 : quantity,
-                                    productAmount: quantity * productVariantData.price,
+                                    productAmount: singleProductTotal,
                                     slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),

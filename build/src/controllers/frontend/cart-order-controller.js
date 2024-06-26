@@ -190,6 +190,7 @@ class CartController extends base_controller_1.default {
                         hostName: req.get('origin'),
                     });
                     let offerAmount = 0;
+                    let singleProductTotal = 0;
                     // console.log("productVariantDataproductVariantData", offerProduct);
                     for (let i = 0; i < offerProduct.productVariants.length; i++) {
                         if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
@@ -204,6 +205,7 @@ class CartController extends base_controller_1.default {
                     let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0;
                     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
                     totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
+                    singleProductTotal = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
@@ -332,14 +334,15 @@ class CartController extends base_controller_1.default {
                                 variantId: productVariantData._id,
                                 productId: productVariantData.productId,
                                 quantity: quantityProduct,
-                                productAmount: quantityProduct * productVariantData.price,
+                                productAmount: singleProductTotal,
                                 slug: productVariantData.slug,
                                 orderStatus,
                                 createdAt: new Date(),
                                 updatedAt: new Date()
                             };
                             if (existingProduct) {
-                                newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
+                                cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal,
+                                    newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
                             }
                             else {
                                 newCartOrderProduct = await cart_service_1.default.createCartProduct(cartOrderProductData);
@@ -355,7 +358,7 @@ class CartController extends base_controller_1.default {
                                 variantId: productVariantData._id,
                                 productId: productVariantData.productId,
                                 quantity: quantityProduct ? 0 : quantity,
-                                productAmount: quantity * productVariantData.price,
+                                productAmount: singleProductTotal,
                                 slug: productVariantData.slug,
                                 orderStatus,
                                 createdAt: new Date(),
