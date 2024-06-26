@@ -457,8 +457,8 @@ class ProductsController extends BaseController {
                                 if (validationErrors.length > 0) {
 
                                     return controller.sendErrorResponse(res, 200, {
-                                        // validation: validationErrors,
-                                        message: validationErrors
+                                        validation: validationErrors,
+                                        message: "Something went wrong"
                                     }, req);
                                 }
 

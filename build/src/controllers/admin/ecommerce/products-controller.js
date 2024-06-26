@@ -390,8 +390,8 @@ class ProductsController extends base_controller_1.default {
                                 const validationErrors = await validateProducts(jsonData);
                                 if (validationErrors.length > 0) {
                                     return controller.sendErrorResponse(res, 200, {
-                                        // validation: validationErrors,
-                                        message: validationErrors
+                                        validation: validationErrors,
+                                        message: "Something went wrong"
                                     }, req);
                                 }
                                 for await (let data of jsonData) {
