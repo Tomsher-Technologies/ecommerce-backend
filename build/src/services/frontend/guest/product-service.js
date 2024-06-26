@@ -36,7 +36,7 @@ class ProductService {
             query = {
                 ...query,
                 // $match: {
-                'productVariants.countryId': new mongoose_1.default.Types.ObjectId('663209ff5ded1a6bb444797a')
+                'productVariants.countryId': new mongoose_1.default.Types.ObjectId(countryId)
                 // }
             };
         }
@@ -49,10 +49,44 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
             }
         }
+        let pipeline2 = [
+            {
+                // $lookup: {
+                from: product_config_1.variantLookup.$lookup.from,
+                localField: product_config_1.variantLookup.$lookup.localField,
+                foreignField: product_config_1.variantLookup.$lookup.foreignField,
+                as: 'productVariants',
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
+                            }
+                        }
+                    },
+                    ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                    ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
+                    ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                    ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
+                    ...(getSeo === '1' ? [product_config_1.productSeoLookup] : []),
+                    ...(getSeo === '1' ? [product_config_1.addFieldsProductSeo] : []),
+                    ...(getimagegallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
+                ]
+            }
+            // }
+        ];
         const modifiedPipeline = {
             $lookup: {
                 ...product_config_1.variantLookup.$lookup,
+                // ...pipeline2[0],
                 pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
+                            }
+                        }
+                    },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
                     ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
