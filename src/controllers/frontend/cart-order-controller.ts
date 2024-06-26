@@ -285,11 +285,20 @@ class CartController extends BaseController {
 
                             }
 
-                            if (quantity && quantityChange == true) {
+                            if (quantityChange == true && existingCartProduct) {
+
+                                console.log("existingCart.totalDiscountAmount", productVariantData?.discountPrice, quantity);
 
                                 quantityProduct = quantity
-                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
-                                totalAmountOfProduct = existingCart.totalProductAmount + productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity)
+                                totalDiscountAmountOfProduct = (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity))
+                                totalAmountOfProduct = (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantityProduct)) : (productVariantData?.price * quantityProduct))
+                                console.log(existingCart.totalProductAmount, "existingCart.ddddddddddd", totalDiscountAmountOfProduct, totalAmountOfProduct);
+
+                            } else if (quantityChange == true) {
+                                quantityProduct = quantity
+                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity))
+                                totalAmountOfProduct = existingCart.totalProductAmount + (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantityProduct)) : (productVariantData?.price * quantityProduct))
+                                console.log("existingCart.ddddddddddd", totalDiscountAmountOfProduct, totalAmountOfProduct);
 
                             }
 
