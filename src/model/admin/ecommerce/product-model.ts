@@ -61,8 +61,9 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         default: ''
     },
     warehouse: {
-        type: String,
-        default: ''
+        type: Schema.Types.ObjectId,
+        ref: 'Warehouse',
+        default: null
     },
     measurements: {
         weight: {

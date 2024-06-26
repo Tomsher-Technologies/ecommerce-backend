@@ -83,8 +83,9 @@ const productsSchema = new mongoose_1.Schema({
         default: ''
     },
     warehouse: {
-        type: String,
-        default: ''
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Warehouse',
+        default: null
     },
     measurements: {
         weight: {

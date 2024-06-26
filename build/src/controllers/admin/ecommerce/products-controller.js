@@ -390,7 +390,8 @@ class ProductsController extends base_controller_1.default {
                                 const validationErrors = await validateProducts(jsonData);
                                 if (validationErrors.length > 0) {
                                     return controller.sendErrorResponse(res, 200, {
-                                        validation: validationErrors,
+                                        // validation: validationErrors,
+                                        message: validationErrors
                                     }, req);
                                 }
                                 for await (let data of jsonData) {
@@ -412,9 +413,9 @@ class ProductsController extends base_controller_1.default {
                                                         if (data.Image) {
                                                             if (data.Brand) {
                                                                 const categoryArray = [];
-                                                                var brandId = {};
-                                                                var countryId = {};
-                                                                var warehouseId = {};
+                                                                var brandId;
+                                                                var countryId;
+                                                                var warehouseId;
                                                                 const specificationData = [];
                                                                 const attributeData = [];
                                                                 var countryData;
@@ -505,6 +506,7 @@ class ProductsController extends base_controller_1.default {
                                                                 }
                                                                 // await specificationCombinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of specificationCombinedArray) {
+                                                                    console.log("valuevalue", value);
                                                                     const specifications = await specification_service_1.default.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value });
                                                                     specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId });
                                                                 }
@@ -514,6 +516,7 @@ class ProductsController extends base_controller_1.default {
                                                                         galleryImageUrl: await (0, helpers_2.uploadImageFromUrl)(data[galleryImage[i]]),
                                                                     });
                                                                 }
+                                                                console.log("WarehouseWarehouse", warehouseId);
                                                                 var finalData = {
                                                                     productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                     slug: (0, helpers_1.slugify)(data.Product_Title),
