@@ -45,12 +45,10 @@ class ProductService {
             query = {
                 ...query,
                 // $match: {
-                'productVariants.countryId': new mongoose.Types.ObjectId('663209ff5ded1a6bb444797a')
+                'productVariants.countryId': new mongoose.Types.ObjectId(countryId)
                 // }
             } as any;
         }
-
-
 
         if (discount) {
             const discountArray: any = await discount.split(",")
@@ -64,11 +62,44 @@ class ProductService {
 
 
         }
+        let pipeline2 = [
+            {
+                // $lookup: {
+                from: variantLookup.$lookup.from,
+                localField: variantLookup.$lookup.localField,
+                foreignField: variantLookup.$lookup.foreignField,
+                as: 'productVariants',
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+                            }
+                        }
+                    },
+                    ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
+                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                    ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                    ...(getSeo === '1' ? [productSeoLookup] : []),
+                    ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                    ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),]
+            }
+            // }
+        ];
 
         const modifiedPipeline = {
             $lookup: {
                 ...variantLookup.$lookup,
+                // ...pipeline2[0],
                 pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+                            }
+                        }
+                    },
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
                     ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...productSpecificationLookup] : []),
