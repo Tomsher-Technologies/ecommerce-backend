@@ -46,6 +46,24 @@ class CouponService {
                     message: 'Coupon not found!'
                 };
             }
+            if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
+                return {
+                    status: false,
+                    message: `The coupon will apply with a minimum purchase of ${Number(couponDetails.minPurchaseValue)}`
+                };
+            }
+            // Check if the totalCouponAmount exceeds discountMaxRedeemAmount for carts with status not equal to '1'
+            const totalCouponAmountResult = await cart_order_model_1.default.aggregate([
+                { $match: { cartStatus: '1', customerId: user._id } },
+                { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
+            ]);
+            const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
+            if (totalCouponAmount >= Number(couponDetails.discountMaxRedeemAmount)) {
+                return {
+                    status: false,
+                    message: `The total coupon amount exceeds the maximum redeemable amount`
+                };
+            }
             if (![cart_1.couponTypes.entireOrders, cart_1.couponTypes.cashback].includes(couponDetails.couponType)) {
                 const cartProductDetails = await cart_service_1.default.findAllCart({ cartId: cartDetails._id });
                 const productIds = cartProductDetails.map((product) => product.productId.toString());

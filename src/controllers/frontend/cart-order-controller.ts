@@ -221,12 +221,38 @@ class CartController extends BaseController {
 
 
                         // totalProductAmount = 
+                        const offerProduct: any = await productService.findOneProduct({
+                            query: {
+                                $and: [
+                                    {
+                                        $or: [
+                                            { 'productVariants._id': variantId },
+                                            { 'productVariants.slug': slug },
+                                        ]
+                                    },
+                                    { 'productVariants.countryId': country }
+                                ]
 
+                            },
+                            hostName: req.get('origin'),
+                        })
+                        let offerAmount = 0
 
-                        totalAmountOfProduct = (productVariantData?.price * quantity)
-                        console.log("productVariantDataproductVariantData", productVariantData);
+                        // console.log("productVariantDataproductVariantData", offerProduct);
+                        for (let i = 0; i < offerProduct.productVariants.length; i++) {
 
-                        totalDiscountAmountOfProduct = (productVariantData?.price - productVariantData.discountPrice);
+                            if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
+                                if (offerProduct.offer.offerType == 'percent') {
+                                    offerAmount = productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)
+                                }
+                                if (offerProduct.offer.offerType == 'amount') {
+                                    offerAmount = productVariantData.discountPrice - offerProduct.offer.offerIN
+                                }
+                            }
+                        }
+                        let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0
+                        totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
+                        totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
 
                         if (existingCart) {
                             const existingCartProduct: any = await CartService.findCartProduct({
@@ -237,85 +263,97 @@ class CartController extends BaseController {
                             });
                             if (!existingCartProduct) {
                                 quantityProduct = quantity
-                                totalAmountOfProduct = existingCart.totalProductAmount + (productVariantData?.price * quantity)
-                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + ((productVariantData?.price - productVariantData?.discountPrice) * quantity)
+                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + offerAmountOfProduct > 0 ? offerAmountOfProduct : (existingCart.totalDiscountAmount + ((productVariantData?.price - productVariantData?.discountPrice) * quantity))
+                                totalAmountOfProduct = existingCart.totalProductAmount + (totalDiscountAmountOfProduct > 0 ? ((totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity))
 
 
-                            } else {
+                                // } else {
 
 
-                                if (existingCart.totalProductAmount && existingCartProduct && existingCartProduct.quantity) {
-                                    totalAmountOfProduct = existingCart?.totalProductAmount + (productVariantData.price * existingCartProduct.quantity)
-                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount + ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity)
-                                } else {
-                                    totalAmountOfProduct = productVariantData?.price * quantity
-                                    totalDiscountAmountOfProduct = (productVariantData?.price - productVariantData.discountPrice) * quantity
+                                // if (existingCart.totalProductAmount && existingCartProduct && existingCartProduct.quantity) {
 
-                                }
+                                //     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (existingCart?.totalDiscountAmount + ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity))
+                                //     totalAmountOfProduct = existingCart?.totalProductAmount + (productVariantData.discountPrice > 0 ? ((productVariantData?.price * existingCartProduct.quantity) - productVariantData.discountPrice) : (productVariantData.price * existingCartProduct.quantity))
+                                //     console.log(".000000000000000", totalDiscountAmountOfProduct);
+                                //     console.log(".0000000000000fffff00", totalAmountOfProduct);
 
-                                if (quantity && quantityChange == true) {
-                                    quantityProduct = quantity
-                                    totalAmountOfProduct = (productVariantData?.price * quantity)
-                                    totalDiscountAmountOfProduct = ((productVariantData?.price - productVariantData.discountPrice) * quantity)
+                                // } else {
+                                //     console.log(".11111111111111");
 
-                                }
+                                //     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
+                                //     totalAmountOfProduct = productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - productVariantData.discountPrice) : (productVariantData?.price * quantity)
 
-                                else if (quantity == 1) {
+                            }
 
-                                    quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity
-                                    totalAmountOfProduct = totalAmountOfProduct + (productVariantData?.price * quantity)
+                            if (quantity && quantityChange == true) {
 
-                                } else if (quantity > 1) {
-                                    quantityProduct = quantity
-                                    totalAmountOfProduct = totalAmountOfProduct + (productVariantData?.price * quantity)
+                                quantityProduct = quantity
+                                totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
+                                totalAmountOfProduct = productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity)
 
-                                } else if (quantity == 0) {
-                                    if (existingCartProduct) {
+                            }
 
-                                        const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
-                                        if (deletedData) {
-                                            totalAmountOfProduct = totalAmountOfProduct - (productVariantData?.price * existingCartProduct?.quantity)
-                                            // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
+                            else if (quantity == 1) {
 
-                                            totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity)
+                                quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity
+                                totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity))
 
-                                            const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
-                                            var giftWrapCharge: any
-                                            if (giftWrapAmount.blockValues.enableGiftWrap == true) {
-                                                giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
-                                            }
-                                            // const cartfind:any = await CartService.findCart({ _id: existingCartProduct.cartId })
-                                            // const giftWrapAmount = cartfind?.totalGiftWrapAmount -
+                                totalAmountOfProduct = existingCart.totalProductAmount + (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantity)) : (productVariantData?.price * quantity))
 
-                                            const cartUpdate = await CartService.update(existingCartProduct.cartId, {
-                                                totalProductAmount: totalAmountOfProduct,
-                                                totalGiftWrapAmount: existingCart.totalGiftWrapAmount > 0 ? existingCart.totalGiftWrapAmount - giftWrapCharge : existingCart.totalGiftWrapAmount
-                                            });
+                            } else if (quantity > 1) {
+                                quantityProduct = quantity
+                                totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
 
-                                            const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') })
+                                totalAmountOfProduct = totalAmountOfProduct + (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price * quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * quantity))
 
-                                            return controller.sendSuccessResponse(res, {
-                                                requestedData: {
-                                                    ...cart
-                                                },
-                                                message: 'Product removed successfully!'
-                                            });
+                            } else if (quantity == 0) {
+                                if (existingCartProduct) {
+
+                                    const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
+                                    if (deletedData) {
+                                        totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity))
+                                        totalAmountOfProduct = totalAmountOfProduct - (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price * existingCartProduct?.quantity) - totalDiscountAmountOfProduct) : (productVariantData?.price * existingCartProduct?.quantity))
+                                        // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
 
 
-                                        } else {
-                                            return controller.sendErrorResponse(res, 500, {
-                                                message: 'Somethng went wrong on Product removed!'
-                                            });
+                                        const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
+                                        var giftWrapCharge: any
+                                        if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
+                                            giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
                                         }
-                                    } else {
-                                        return controller.sendErrorResponse(res, 500, {
-                                            message: 'Something went wrong: the product is not in the cart.'
+                                        // const cartfind:any = await CartService.findCart({ _id: existingCartProduct.cartId })
+                                        // const giftWrapAmount = cartfind?.totalGiftWrapAmount -
+
+                                        const cartUpdate = await CartService.update(existingCartProduct.cartId, {
+                                            totalProductAmount: totalAmountOfProduct,
+                                            totalDiscountAmount: totalDiscountAmountOfProduct,
+                                            totalGiftWrapAmount: existingCart.totalGiftWrapAmount > 0 && giftWrapCharge ? existingCart.totalGiftWrapAmount - giftWrapCharge : existingCart.totalGiftWrapAmount
+                                        });
+
+                                        const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') })
+
+                                        return controller.sendSuccessResponse(res, {
+                                            requestedData: {
+                                                ...cart
+                                            },
+                                            message: 'Product removed successfully!'
                                         });
 
 
+                                    } else {
+                                        return controller.sendErrorResponse(res, 500, {
+                                            message: 'Somethng went wrong on Product removed!'
+                                        });
                                     }
+                                } else {
+                                    return controller.sendErrorResponse(res, 500, {
+                                        message: 'Something went wrong: the product is not in the cart.'
+                                    });
+
+
                                 }
                             }
+                            // }
                         }
                         if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
                             if (Number(productVariantData.cartMinQuantity) >= quantityProduct ? 0 : quantity || Number(productVariantData.cartMaxQuantity) <= quantityProduct ? 0 : quantity) {
@@ -353,7 +391,7 @@ class CartController extends BaseController {
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount,
-                            totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0) - totalDiscountAmountOfProduct,
+                            totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0),
                         };
 
                         if (existingCart) {

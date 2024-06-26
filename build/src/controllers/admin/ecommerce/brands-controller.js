@@ -214,7 +214,7 @@ class BrandsController extends base_controller_1.default {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: {
-                        brandTitle: error.errors.brandImageUrl.properties.message
+                        brandImageUrl: error.errors.brandImageUrl.properties.message
                     }
                 }, req);
             }

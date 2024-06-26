@@ -22,7 +22,7 @@ exports.registerSchema = zod_1.z.object({
         ctx.addIssue({
             code: "custom",
             message: "The password and the confirmed password do not match.",
-            path: ["category"]
+            path: ["password"]
         });
     }
 });

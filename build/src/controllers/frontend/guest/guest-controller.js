@@ -24,6 +24,7 @@ class GuestController extends base_controller_1.default {
             if (validatedData.success) {
                 const { email, firstName, phone, password, referralCode, otpType } = validatedData.data;
                 let referralCodeWithCustomerData = null;
+                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                 if (referralCode) {
                     referralCodeWithCustomerData = await customer_service_1.default.findOne({ referralCode: referralCode, status: '1' }); //referrer
                     if (!referralCodeWithCustomerData) {
@@ -36,6 +37,7 @@ class GuestController extends base_controller_1.default {
                 const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
                 const generatedReferralCode = await customer_service_1.default.generateReferralCode(firstName);
                 const customerData = {
+                    countryId,
                     email,
                     firstName,
                     phone,
