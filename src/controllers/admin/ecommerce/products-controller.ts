@@ -457,7 +457,8 @@ class ProductsController extends BaseController {
                                 if (validationErrors.length > 0) {
 
                                     return controller.sendErrorResponse(res, 200, {
-                                        validation: validationErrors,
+                                        // validation: validationErrors,
+                                        message: validationErrors
                                     }, req);
                                 }
 
@@ -497,9 +498,9 @@ class ProductsController extends BaseController {
                                                             if (data.Brand) {
 
                                                                 const categoryArray = [];
-                                                                var brandId = {};
-                                                                var countryId = {};
-                                                                var warehouseId = {};
+                                                                var brandId;
+                                                                var countryId;
+                                                                var warehouseId;
                                                                 const specificationData = [];
                                                                 const attributeData = [];
                                                                 var countryData: any
@@ -598,6 +599,8 @@ class ProductsController extends BaseController {
 
                                                                 // await specificationCombinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of specificationCombinedArray) {
+                                                                    console.log("valuevalue", value);
+
                                                                     const specifications: any = await SpecificationService.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value })
                                                                     specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId })
                                                                 }
@@ -609,6 +612,8 @@ class ProductsController extends BaseController {
 
                                                                     });
                                                                 }
+                                                                console.log("WarehouseWarehouse", warehouseId);
+
                                                                 var finalData: Partial<ProductsProps> = {
                                                                     productTitle: capitalizeWords(data.Product_Title),
                                                                     slug: slugify(data.Product_Title),
