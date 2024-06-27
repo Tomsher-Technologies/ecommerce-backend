@@ -35,6 +35,7 @@ export const adminTaskLog = {
         country: 'country',
         paymentMethod: 'payment-method',
         languages: 'languages',
+        taxs: 'taxs',
         settings: {
             websitesettings: 'websitesettings'
         },

@@ -11,8 +11,11 @@ import { addFieldsProductSpecification, addFieldsProductVariantAttributes, produ
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 import { offers } from '../../../constants/offers';
-
 import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
+import { blockReferences, websiteSetup } from "../../../constants/website-setup";
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
+import { customPaymentMethodProject, paymentMethodFinalProject, paymentMethodLookup, paymentMethodlanguageFieldsReplace } from "../../../utils/config/payment-method-config";
+
 import SliderModel, { SliderProps } from "../../../model/admin/ecommerce/slider-model";
 import CountryModel, { CountryProps } from "../../../model/admin/setup/country-model";
 import LanguagesModel from "../../../model/admin/setup/language-model";
@@ -20,7 +23,6 @@ import { bannerFinalProject, bannerLookup, bannerProject, bannerlanguageFieldsRe
 import BannerModel from "../../../model/admin/ecommerce/banner-model";
 import WebsiteSetupModel, { WebsiteSetupProps } from "../../../model/admin/setup/website-setup-model";
 import GeneralService from "../../admin/general-service";
-import { blockReferences, websiteSetup } from "../../../constants/website-setup";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import CollectionsProductsModel from "../../../model/admin/website/collections-products-model";
 import CategoryModel from "../../../model/admin/ecommerce/category-model";
@@ -29,10 +31,8 @@ import BrandsModel from "../../../model/admin/ecommerce/brands-model";
 import CollectionsBrandsModel from "../../../model/admin/website/collections-brands-model";
 import OffersModel from "../../../model/admin/marketing/offers-model";
 import ProductService from "./product-service";
-import { collections } from "../../../constants/collections";
-import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { customPaymentMethodProject, paymentMethodFinalProject, paymentMethodLookup, paymentMethodlanguageFieldsReplace } from "../../../utils/config/payment-method-config";
+import StoreModel from "../../../model/admin/stores/store-model";
 
 class CommonService {
     constructor() { }
@@ -43,6 +43,14 @@ class CommonService {
         } catch (error) {
             throw new Error('Error fetching country');
         }
+    }
+    async findAllStores(options: any): Promise<any> {
+        const { query,  hostName } = options;
+        let pipeline: any[] = [
+            { $match: query },
+        ];
+
+        return StoreModel.aggregate(pipeline).exec();
     }
     async findPaymentMethods(options: any): Promise<any> {
         const { query,  hostName } = options;

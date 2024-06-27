@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { QueryParams } from '../../../utils/types/common';
 import { storeSchema, storeStatusSchema } from '../../../utils/schemas/admin/store/store-schema';
@@ -17,8 +17,16 @@ class StoreController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { _id = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { _id = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '',countryId } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
+            const userData = await res.locals.user;
+
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -73,10 +81,11 @@ class StoreController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeImageUrl, latitude, longitude } = validatedData.data;
+                const {countryId, storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeDesription, latitude, longitude } = validatedData.data;
                 const user = res.locals.user;
 
-                const storeData: Partial<StoreProps> = {
+                const storeData: Partial<any> = {
+                    countryId: countryId || getCountryId(user),
                     storeTitle,
                     slug: slug || slugify(storeTitle) as any,
                     storePhone,
@@ -85,6 +94,7 @@ class StoreController extends BaseController {
                     storeWorkingHours,
                     storeEmail,
                     storeImageUrl: handleFileUpload(req, null, req.file, 'storeImageUrl', 'store'),
+                    storeDesription,
                     latitude,
                     longitude,
                     status: '1', // active

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface StoreProps extends Document {
+    countryId: Schema.Types.ObjectId;
     storeTitle: string;
     slug: string;
     storePhone: string;
@@ -9,8 +10,9 @@ export interface StoreProps extends Document {
     storeWorkingHours?: string;
     storeEmail: string;
     storeImageUrl?: string;
-    latitude?: string;
-    longitude?: string;
+    storeDesription?: string;
+    longitude: string;
+    latitude: string;
     status: string;
     createdBy?: string;
     statusAt?: Date;
@@ -18,7 +20,12 @@ export interface StoreProps extends Document {
     updatedAt?: Date;
 }
 
-const warehouseSchema: Schema<StoreProps> = new Schema({
+const warehouseSchema: Schema<StoreProps> = new Schema({ 
+    countryId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Countries',
+    },
     storeTitle: {
         type: String,
         required: true,
@@ -51,6 +58,10 @@ const warehouseSchema: Schema<StoreProps> = new Schema({
         minlength: [8, 'Store phone must be at least 8 characters long']
     },
     storePhone2: {
+        type: String,
+        defualt: '',
+    },
+    storeDesription: {
         type: String,
         defualt: '',
     },
