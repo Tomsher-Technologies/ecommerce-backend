@@ -33,6 +33,7 @@ export const adminTaskLog = {
     },
     setup: {
         country: 'country',
+        paymentMethod: 'payment-method',
         languages: 'languages',
         settings: {
             websitesettings: 'websitesettings'

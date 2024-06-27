@@ -26,6 +26,7 @@ import OfferRoutes from './admin/marketing/offer-routes';
 
 // admin setup
 import CountryRoutes from './admin/setup/country-routes';
+import PaymentMethodRoutes from './admin/setup/payment-methods-routes';
 import LanguagesRoutes from './admin/setup/languages-routes';
 import SetingsRoutes from './admin/setup/settings-routes';
 import CollectionProductRoutes from './admin/website/collection-product-routes';
@@ -67,6 +68,7 @@ adminRouter.use('/marketing/offers', OfferRoutes);
 
 // //admin setup
 adminRouter.use('/setup/country', CountryRoutes);
+adminRouter.use('/setup/payment-method', PaymentMethodRoutes);
 adminRouter.use('/setup/languages', LanguagesRoutes);
 adminRouter.use('/setup/website-settings', SetingsRoutes);
 

@@ -21,6 +21,7 @@ export const permissionBlocks = {
     setup: {
         languages: 'languages',
         country: 'country',
+        paymentMethod: 'paymentmethod',
         websitesetups: 'websitesetups',
     },
     stores: {

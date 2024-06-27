@@ -22,7 +22,7 @@ class HomeController extends BaseController {
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
-                    validation: 'block and blockReference is missing! please check'
+                    validation: 'Country is missing! please check'
                 }, req);
             }
 
@@ -213,7 +213,7 @@ class HomeController extends BaseController {
 
     async findCollectionProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, page, pageReference, getspecification,getattribute } = req.query as CommonQueryParams;
+            const { page_size = 1, page, pageReference, getspecification, getattribute } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -342,6 +342,44 @@ class HomeController extends BaseController {
 
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching brands' });
+        }
+    }
+
+    async findPaymentMethods(req: Request, res: Response): Promise<void> {
+        try {
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                let query: any = { _id: { $exists: true } };
+
+                const { enableDisplay = ['0', '1', '2']} = req.query;
+                query = {
+                    ...query,
+                    countryId,
+                    status: '1',
+                } as any;
+             
+                if (enableDisplay && enableDisplay !== '') {
+                    query.enableDisplay = { $in: Array.isArray(enableDisplay) ? enableDisplay : [enableDisplay] };
+                } else {
+                    query.enableDisplay = '1';
+                }
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: await CommonService.findPaymentMethods({
+                        hostName: req.get('origin'),
+                        query,
+                    }),
+                    message: 'Success!'
+                }, 200);
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing! please check'
+                }, req);
+            }
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }
     }
 }
