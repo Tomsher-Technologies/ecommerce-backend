@@ -122,11 +122,18 @@ class CustomerController extends base_controller_1.default {
     async getAllCustomerAddress(req, res) {
         let query = { _id: { $exists: true } };
         const currentUser = res.locals.user;
+        const { addressMode } = req.query;
         query = {
             ...query,
             status: '1',
             customerId: currentUser._id
         };
+        if (addressMode) {
+            query = {
+                ...query,
+                addressMode
+            };
+        }
         const customerAddress = await customer_service_1.default.findCustomerAddressAll({
             query,
         });

@@ -837,7 +837,6 @@ class ProductsController extends base_controller_1.default {
                             //     const specificationData = {
                             //         ...specification
                             //     }
-                            console.log("specificationspecification", updatedProductData);
                             await product_specification_service_1.default.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification);
                             // })
                         }
@@ -912,9 +911,9 @@ class ProductsController extends base_controller_1.default {
                                 }));
                                 if (imageGallery.length > 0) {
                                     await Promise.all(imageGallery.map(async (image) => {
+                                        // ProductsService.destroyGalleryImages(image)
                                         (0, helpers_1.deleteFile)(path_1.default.resolve(__dirname, `../../../../${image.galleryImageUrl}`))
                                             .then(() => {
-                                            console.log('imageGallery', image.galleryImageUrl);
                                             product_service_1.default.destroyGalleryImages(image);
                                         })
                                             .catch((err) => {

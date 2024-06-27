@@ -20,7 +20,7 @@ class HomeController extends base_controller_1.default {
             else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
-                    validation: 'block and blockReference is missing! please check'
+                    validation: 'Country is missing! please check'
                 }, req);
             }
         }
@@ -321,6 +321,42 @@ class HomeController extends base_controller_1.default {
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching brands' });
+        }
+    }
+    async findPaymentMethods(req, res) {
+        try {
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                let query = { _id: { $exists: true } };
+                const { enableDisplay = ['0', '1', '2'] } = req.query;
+                query = {
+                    ...query,
+                    countryId,
+                    status: '1',
+                };
+                if (enableDisplay && enableDisplay !== '') {
+                    query.enableDisplay = { $in: Array.isArray(enableDisplay) ? enableDisplay : [enableDisplay] };
+                }
+                else {
+                    query.enableDisplay = '1';
+                }
+                return controller.sendSuccessResponse(res, {
+                    requestedData: await common_service_1.default.findPaymentMethods({
+                        hostName: req.get('origin'),
+                        query,
+                    }),
+                    message: 'Success!'
+                }, 200);
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing! please check'
+                }, req);
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }
     }
 }

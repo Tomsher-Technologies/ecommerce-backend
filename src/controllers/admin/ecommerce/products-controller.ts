@@ -976,7 +976,6 @@ class ProductsController extends BaseController {
                             //     const specificationData = {
                             //         ...specification
                             //     }
-                            console.log("specificationspecification", updatedProductData);
 
                             await ProductSpecificationService.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification)
                             // })
@@ -1065,9 +1064,9 @@ class ProductsController extends BaseController {
                                 if (imageGallery.length > 0) {
                                     await Promise.all(imageGallery.map(async (image: any) => {
 
+                                        // ProductsService.destroyGalleryImages(image)
                                         deleteFile(path.resolve(__dirname, `../../../../${image.galleryImageUrl}`))
                                             .then(() => {
-                                                console.log('imageGallery', image.galleryImageUrl);
                                                 ProductsService.destroyGalleryImages(image)
                                             })
                                             .catch((err) => {

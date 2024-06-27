@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const helpers_1 = require("../../utils/helpers");
 const cart_schema_1 = require("../../utils/schemas/frontend/guest/cart-schema");
+const offers_1 = require("../../constants/offers");
 const base_controller_1 = __importDefault(require("../admin/base-controller"));
 const cart_service_1 = __importDefault(require("../../services/frontend/cart-service"));
 const common_service_1 = __importDefault(require("../../services/frontend/guest/common-service"));
-const cart_service_2 = __importDefault(require("../../services/frontend/cart-service"));
 const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
 const product_service_1 = __importDefault(require("../../services/frontend/guest/product-service"));
 const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
@@ -25,7 +25,7 @@ class CartController extends base_controller_1.default {
             const user = res.locals.user;
             const uuid = res.locals.uuid;
             if (validatedData.success) {
-                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount, totalTaxAmount, totalAmount, codAmount } = validatedData.data;
+                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount, totalTaxAmount, totalAmount, codAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
                 let customer, guestUser;
                 let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -191,21 +191,20 @@ class CartController extends base_controller_1.default {
                     });
                     let offerAmount = 0;
                     let singleProductTotal = 0;
-                    // console.log("productVariantDataproductVariantData", offerProduct);
                     for (let i = 0; i < offerProduct.productVariants.length; i++) {
                         if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
-                            if (offerProduct.offer.offerType == 'percent') {
+                            if (offerProduct.offer.offerType == offers_1.offerTypes.percent) {
                                 offerAmount = productVariantData.discountPrice * (offerProduct.offer.offerIN / 100);
                             }
-                            if (offerProduct.offer.offerType == 'amount') {
+                            if (offerProduct.offer.offerType == offers_1.offerTypes.amountOff) {
                                 offerAmount = productVariantData.discountPrice - offerProduct.offer.offerIN;
                             }
                         }
                     }
                     let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0;
                     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
-                    totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
-                    singleProductTotal = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
+                    totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice) * quantity) : (productVariantData?.price * quantity);
+                    singleProductTotal = productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice - offerAmount) * quantity) : ((productVariantData?.price - offerAmount) * quantity);
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
@@ -228,18 +227,15 @@ class CartController extends base_controller_1.default {
                             //     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity)
                             //     totalAmountOfProduct = productVariantData.discountPrice > 0 ? ((productVariantData?.price * quantity) - productVariantData.discountPrice) : (productVariantData?.price * quantity)
                         }
-                        if (quantityChange == true && existingCartProduct) {
-                            console.log("existingCart.totalDiscountAmount", productVariantData?.discountPrice, quantity);
+                        if (quantity != 0 && quantityChange == true && existingCartProduct) {
                             quantityProduct = quantity;
                             totalDiscountAmountOfProduct = (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity));
-                            totalAmountOfProduct = (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantityProduct)) : (productVariantData?.price * quantityProduct));
-                            console.log(existingCart.totalProductAmount, "existingCart.ddddddddddd", totalDiscountAmountOfProduct, totalAmountOfProduct);
+                            totalAmountOfProduct = (existingCart.totalProductAmount - existingCartProduct.productAmount) + (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantityProduct)) : (productVariantData?.price * quantityProduct));
                         }
-                        else if (quantityChange == true) {
+                        else if (quantity != 0 && quantityChange == true) {
                             quantityProduct = quantity;
                             totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity));
                             totalAmountOfProduct = existingCart.totalProductAmount + (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantityProduct)) : (productVariantData?.price * quantityProduct));
-                            console.log("existingCart.ddddddddddd", totalDiscountAmountOfProduct, totalAmountOfProduct);
                         }
                         else if (quantity == 1) {
                             quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity;
@@ -256,7 +252,7 @@ class CartController extends base_controller_1.default {
                                 const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
                                 if (deletedData) {
                                     totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity));
-                                    totalAmountOfProduct = existingCart?.totalProductAmount - (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity));
+                                    totalAmountOfProduct = existingCart?.totalProductAmount - (productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity));
                                     // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
                                     const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
                                     var giftWrapCharge;
@@ -330,7 +326,7 @@ class CartController extends base_controller_1.default {
                         totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0),
                     };
                     if (existingCart) {
-                        newCartOrder = await cart_service_2.default.update(existingCart._id, cartOrderData);
+                        newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
                         if (newCartOrder) {
                             const existingProduct = await cart_service_1.default.findCartProduct({
                                 $and: [
@@ -351,8 +347,13 @@ class CartController extends base_controller_1.default {
                                 updatedAt: new Date()
                             };
                             if (existingProduct) {
-                                cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal,
-                                    newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
+                                if (quantityChange == true) {
+                                    cartOrderProductData.productAmount = singleProductTotal;
+                                }
+                                else {
+                                    cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal;
+                                }
+                                newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
                             }
                             else {
                                 newCartOrderProduct = await cart_service_1.default.createCartProduct(cartOrderProductData);
@@ -360,7 +361,7 @@ class CartController extends base_controller_1.default {
                         }
                     }
                     else {
-                        newCartOrder = await cart_service_2.default.create(cartOrderData);
+                        newCartOrder = await cart_service_1.default.create(cartOrderData);
                         if (newCartOrder) {
                             const cartOrderProductData = {
                                 cartId: newCartOrder._id,
