@@ -242,8 +242,8 @@ export const uploadImageFromUrl = async (imageUrl: any) => {
 
         // Optionally, generate a unique filename if the URL doesn't have a direct filename
         // if (!filename) {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            filename = `productImage-${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        filename = `productImage-${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
         // }
 
         // Define the path where the image will be saved
@@ -254,7 +254,7 @@ export const uploadImageFromUrl = async (imageUrl: any) => {
 
         // Make the HTTP/HTTPS GET request to the image URL
         const response = await new Promise((resolve, reject) => {
-            protocol.get(imageUrl, (res:any) => {
+            protocol.get(imageUrl, (res: any) => {
                 res.pipe(writer);
                 res.on('end', () => resolve(filename));
                 res.on('error', reject);
