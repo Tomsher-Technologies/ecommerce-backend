@@ -599,8 +599,6 @@ class ProductsController extends BaseController {
 
                                                                 // await specificationCombinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of specificationCombinedArray) {
-                                                                    console.log("valuevalue", value);
-
                                                                     const specifications: any = await SpecificationService.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value })
                                                                     specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId })
                                                                 }
@@ -608,16 +606,15 @@ class ProductsController extends BaseController {
 
                                                                 for (let i = 0; i < galleryImage.length; i++) {
                                                                     galleryImageArray.push({
-                                                                        galleryImageUrl: await uploadImageFromUrl(data[galleryImage[i]]),
+                                                                        galleryImageUrl: '/public/uploads/product/' + await uploadImageFromUrl(data[galleryImage[i]]),
 
                                                                     });
                                                                 }
-                                                                console.log("WarehouseWarehouse", warehouseId);
 
                                                                 var finalData: Partial<ProductsProps> = {
                                                                     productTitle: capitalizeWords(data.Product_Title),
                                                                     slug: slugify(data.Product_Title),
-                                                                    productImageUrl: productImage ? productImage : '',
+                                                                    productImageUrl: productImage ? '/public/uploads/product/' + productImage : '',
                                                                     isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                     description: data.Description,
                                                                     longDescription: data.Long_Description,
