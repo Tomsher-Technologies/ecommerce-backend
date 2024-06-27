@@ -506,21 +506,19 @@ class ProductsController extends base_controller_1.default {
                                                                 }
                                                                 // await specificationCombinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of specificationCombinedArray) {
-                                                                    console.log("valuevalue", value);
                                                                     const specifications = await specification_service_1.default.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value });
                                                                     specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId });
                                                                 }
                                                                 const galleryImageArray = [];
                                                                 for (let i = 0; i < galleryImage.length; i++) {
                                                                     galleryImageArray.push({
-                                                                        galleryImageUrl: await (0, helpers_2.uploadImageFromUrl)(data[galleryImage[i]]),
+                                                                        galleryImageUrl: '/public/uploads/product/' + await (0, helpers_2.uploadImageFromUrl)(data[galleryImage[i]]),
                                                                     });
                                                                 }
-                                                                console.log("WarehouseWarehouse", warehouseId);
                                                                 var finalData = {
                                                                     productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                     slug: (0, helpers_1.slugify)(data.Product_Title),
-                                                                    productImageUrl: productImage ? productImage : '',
+                                                                    productImageUrl: productImage ? '/public/uploads/product/' + productImage : '',
                                                                     isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                     description: data.Description,
                                                                     longDescription: data.Long_Description,
