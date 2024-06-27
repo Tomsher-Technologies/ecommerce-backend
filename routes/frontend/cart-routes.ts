@@ -3,6 +3,7 @@ import express, { Router } from 'express';
 import { logResponseStatus } from '../../src/components/response-status';
 import { frontendAuthAndUnAuthMiddleware } from "../../middleware/frontend/frontend-auth-middleware"
 import cartOrderController from '../../src/controllers/frontend/cart-order-controller';
+import checkoutController from '../../src/controllers/frontend/auth/checkout';
 
 const router: Router = express.Router();
 
@@ -12,7 +13,7 @@ router.post('/create-cart', logResponseStatus, cartOrderController.createCartOrd
 router.get('/get-cart', logResponseStatus, cartOrderController.findUserCart);
 router.post('/add-gift-wrap', logResponseStatus, cartOrderController.addGiftWrap);
 router.post('/move-to-wishlist', logResponseStatus, cartOrderController.moveToWishlist);
-// router.post('/get-cart', logResponseStatus, cartOrderController.createCartOrder);
+router.post('/checkout', logResponseStatus, checkoutController.checkout);
 
 
 

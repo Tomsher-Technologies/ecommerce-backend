@@ -31,6 +31,8 @@ import OffersModel from "../../../model/admin/marketing/offers-model";
 import ProductService from "./product-service";
 import { collections } from "../../../constants/collections";
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
+import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
+import { customPaymentMethodProject, paymentMethodFinalProject, paymentMethodLookup, paymentMethodlanguageFieldsReplace } from "../../../utils/config/payment-method-config";
 
 class CommonService {
     constructor() { }
@@ -41,6 +43,50 @@ class CommonService {
         } catch (error) {
             throw new Error('Error fetching country');
         }
+    }
+    async findPaymentMethods(options: any): Promise<any> {
+        const { query,  hostName } = options;
+        let pipeline: any[] = [
+            { $match: query },
+        ];
+
+        const languageData = await LanguagesModel.find().exec();
+        const languageId = getLanguageValueFromSubdomain(hostName, languageData);
+        if (languageId) {
+            const paymentMethodLookupWithLanguage = {
+                ...paymentMethodLookup,
+                $lookup: {
+                    ...paymentMethodLookup.$lookup,
+                    pipeline: paymentMethodLookup.$lookup.pipeline.map((stage: any) => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] },
+                                        ]
+                                    }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+            
+            pipeline.push(paymentMethodLookupWithLanguage);
+            pipeline.push(paymentMethodlanguageFieldsReplace);
+        }
+        
+        pipeline.push(customPaymentMethodProject);
+
+        pipeline.push(paymentMethodFinalProject);
+
+        return PaymentMethodModel.aggregate(pipeline).exec();
     }
 
     async findWebsiteSetups(options: FilterOptionsProps = {}): Promise<WebsiteSetupProps> {

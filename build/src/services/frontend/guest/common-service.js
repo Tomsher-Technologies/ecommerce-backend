@@ -31,6 +31,8 @@ const collections_brands_model_1 = __importDefault(require("../../../model/admin
 const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
 const product_service_1 = __importDefault(require("./product-service"));
 const offer_config_1 = require("../../../utils/config/offer-config");
+const payment_methods_model_1 = __importDefault(require("../../../model/admin/setup/payment-methods-model"));
+const payment_method_config_1 = require("../../../utils/config/payment-method-config");
 class CommonService {
     constructor() { }
     async findAllCountries() {
@@ -40,6 +42,45 @@ class CommonService {
         catch (error) {
             throw new Error('Error fetching country');
         }
+    }
+    async findPaymentMethods(options) {
+        const { query, hostName } = options;
+        let pipeline = [
+            { $match: query },
+        ];
+        const languageData = await language_model_1.default.find().exec();
+        const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+        if (languageId) {
+            const paymentMethodLookupWithLanguage = {
+                ...payment_method_config_1.paymentMethodLookup,
+                $lookup: {
+                    ...payment_method_config_1.paymentMethodLookup.$lookup,
+                    pipeline: payment_method_config_1.paymentMethodLookup.$lookup.pipeline.map((stage) => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] },
+                                        ]
+                                    }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+            pipeline.push(paymentMethodLookupWithLanguage);
+            pipeline.push(payment_method_config_1.paymentMethodlanguageFieldsReplace);
+        }
+        pipeline.push(payment_method_config_1.customPaymentMethodProject);
+        pipeline.push(payment_method_config_1.paymentMethodFinalProject);
+        return payment_methods_model_1.default.aggregate(pipeline).exec();
     }
     async findWebsiteSetups(options = {}) {
         const { query, sort, hostName, block, blockReference } = options;

@@ -14,7 +14,6 @@ router.get('/priority-product', CommonController.findPriorityProducts);
 router.get('/collection-products', CommonController.findCollectionProducts);
 router.get('/collection-categories', CommonController.findCollectionCategories);
 router.get('/collection-brands', CommonController.findCollectionBrands);
-
-
+router.get('/payment-methods', CommonController.findPaymentMethods);
 
 export default router;

@@ -4,17 +4,14 @@ export interface CartOrderProps extends Document {
     customerId: Schema.Types.ObjectId;
     guestUserId: string;
     countryId: Schema.Types.ObjectId;
-    cartStatus: string;
-    orderStatus: string;
-    orderStatusAt: Date;
-    shippingStatus: string;
-    shipmentGatwayId: string;
-    paymentGatwayId: string;
-    pickupStoreId: string;
-    orderComments: string;
-    paymentMethod: string;
-    paymentMethodCharge: string;
-    rewardPoints: string;
+    shippingId: Schema.Types.ObjectId;
+    billingId: Schema.Types.ObjectId;
+    // paymentGatwayId: Schema.Types.ObjectId;
+    paymentMethodId: Schema.Types.ObjectId;
+    pickupStoreId: Schema.Types.ObjectId;
+    couponId: Schema.Types.ObjectId;
+    paymentMethodCharge: number;
+    rewardPoints: number;
     totalProductAmount: number //productprice*quantity
     totalReturnedProduct: number;
     totalDiscountAmount: number;
@@ -22,11 +19,14 @@ export interface CartOrderProps extends Document {
     totalCouponAmount: number;
     totalWalletAmount: number;
     totalTaxAmount: number;
-    couponId: Schema.Types.ObjectId;
     couponAmount: number;
     totalGiftWrapAmount: number;
     totalAmount: number;
-    codAmount: number;
+    cartStatus: string;
+    orderStatus: string;
+    orderStatusAt: Date;
+    shippingStatus: string;
+    orderComments: string;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -69,35 +69,40 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: String,
         default: '0'
     },
-    shipmentGatwayId: {
-        type: String,
-        default: '0'
+    shippingId: {
+        type: Schema.Types.ObjectId,
+        ref: 'CustomerAddress',
+        default: null
     },
-    paymentGatwayId: {
-        type: String,
-        default: '0'
+    billingId: {
+        type: Schema.Types.ObjectId,
+        ref: 'CustomerAddress',
+        default: null
     },
+    // paymentGatwayId: {
+    //     type: Schema.Types.ObjectId,
+    //     ref: '',
+    //     default: null
+    // },
     pickupStoreId: {
-        type: String,
-        default: '0'
+        type: Schema.Types.ObjectId,
+        ref: 'Store',
+        default: null
     },
     orderComments: {
         type: String,
-        default: '0'
+        default: ''
     },
-    paymentMethod: {
-        type: String,
-        default: '0'
+    paymentMethodId: {
+        type: Schema.Types.ObjectId,
+        ref: 'PaymentMethods',
+        default: null
     },
     paymentMethodCharge: {
-        type: String,
-        default: '0'
+        type: Number,
+        default: 0
     },
     rewardPoints: {
-        type: String,
-        default: '0'
-    },
-    codAmount: {
         type: Number,
         default: 0
     },

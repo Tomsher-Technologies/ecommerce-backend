@@ -48,7 +48,7 @@ class CustomerController extends BaseController {
                     message: 'Country is missing'
                 });
             }
-    
+
             const validationResult = updateCustomerSchema.safeParse(req.body);
             if (!validationResult.success) {
                 return controller.sendErrorResponse(res, 200, {
@@ -56,25 +56,25 @@ class CustomerController extends BaseController {
                     validation: formatZodError(validationResult.error.errors)
                 });
             }
-    
+
             const { email, firstName, phone } = validationResult.data;
             const currentUser = res.locals.user;
-    
+
             const updateResult = await CustomerModel.updateOne(
-                { _id: currentUser._id }, 
-                { $set: { email, firstName, phone } } 
+                { _id: currentUser._id },
+                { $set: { email, firstName, phone } }
             );
-    
+
             if (updateResult.modifiedCount === 0) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'No updates were necessary or data is already up-to-date'
                 });
             }
-    
+
             return controller.sendSuccessResponse(res, {
                 message: 'Customer details updated successfully'
             }, 200);
-    
+
         } catch (error: any) {
             if (error && error.errors && error.errors.email && error.errors.email.properties) {
                 return controller.sendErrorResponse(res, 200, {
@@ -101,7 +101,7 @@ class CustomerController extends BaseController {
             if (!originCountryId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
-    
+
             const validationResult = changePassword.safeParse(req.body);
             if (!validationResult.success) {
                 return controller.sendErrorResponse(res, 200, {
@@ -109,15 +109,15 @@ class CustomerController extends BaseController {
                     validation: formatZodError(validationResult.error.errors)
                 });
             }
-    
+
             const { oldPassword, newPassword } = validationResult.data;
             const currentUser = res.locals.user;
-    
+
             const user = await CustomerModel.findById(currentUser._id);
             if (!user || !user.password) {
                 return controller.sendErrorResponse(res, 200, { message: 'User not found or no password set.' });
             }
-    
+
             const passwordMatch = await bcrypt.compare(oldPassword, user.password);
             if (!passwordMatch) {
                 return controller.sendErrorResponse(res, 200, { message: 'Incorrect old password.' });
@@ -127,32 +127,40 @@ class CustomerController extends BaseController {
                 { _id: currentUser._id },
                 { $set: { password: await bcrypt.hash(newPassword, 10) } }
             );
-    
+
             if (updateResult.modifiedCount === 0) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'No updates were necessary or data is already up-to-date'
                 });
             }
-    
+
             return controller.sendSuccessResponse(res, {
                 message: 'Password updated successfully'
             }, 200);
-    
+
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'An error occurred while processing your request.' });
         }
     }
-    
+
 
     async getAllCustomerAddress(req: Request, res: Response): Promise<void> {
         let query: any = { _id: { $exists: true } };
         const currentUser = res.locals.user;
+        const { addressMode } = req.query;
 
         query = {
             ...query,
             status: '1',
             customerId: currentUser._id
         } as any;
+
+        if (addressMode) {
+            query = {
+                ...query,
+                addressMode
+            } as any;
+        }
 
         const customerAddress = await CustomerService.findCustomerAddressAll({
             query,
