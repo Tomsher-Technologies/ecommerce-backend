@@ -69,7 +69,7 @@ class CountryController extends base_controller_1.default {
                     currencyCode,
                     countryShortTitle,
                     countrySubDomain,
-                    isOrigin,
+                    isOrigin: Boolean(isOrigin),
                     status: '1', // active
                     statusAt: new Date(),
                     createdBy: user._id,

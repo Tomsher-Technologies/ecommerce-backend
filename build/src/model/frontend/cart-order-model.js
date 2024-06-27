@@ -61,35 +61,40 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: String,
         default: '0'
     },
-    shipmentGatwayId: {
-        type: String,
-        default: '0'
+    shippingId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'CustomerAddress',
+        default: null
     },
-    paymentGatwayId: {
-        type: String,
-        default: '0'
+    billingId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'CustomerAddress',
+        default: null
     },
+    // paymentGatwayId: {
+    //     type: Schema.Types.ObjectId,
+    //     ref: '',
+    //     default: null
+    // },
     pickupStoreId: {
-        type: String,
-        default: '0'
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Store',
+        default: null
     },
     orderComments: {
         type: String,
-        default: '0'
+        default: ''
     },
-    paymentMethod: {
-        type: String,
-        default: '0'
+    paymentMethodId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'PaymentMethods',
+        default: null
     },
     paymentMethodCharge: {
-        type: String,
-        default: '0'
+        type: Number,
+        default: 0
     },
     rewardPoints: {
-        type: String,
-        default: '0'
-    },
-    codAmount: {
         type: Number,
         default: 0
     },

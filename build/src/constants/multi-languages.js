@@ -21,6 +21,7 @@ exports.multiLanguageSources = {
     setup: {
         websiteSetups: 'websitesetups',
         basicSettings: 'basic-settings',
+        paymentMethod: 'paymentmethod'
     },
     settings: {
         basicDetailsSettings: 'basicdetailssettings'
