@@ -8,7 +8,8 @@ import { permissionBlocks } from '../../../src/constants/permission-blocks';
 import PagesController from '../../../src/controllers/admin/website/pages-controller';
 
 const router: Router = express.Router();
-const { upload } = configureMulter('basicsettings', ['multiFiles',]);
+
+const { upload } = configureMulter('website', ['aboutImage','aboutImage2']);
 
 router.use(authMiddleware);
 

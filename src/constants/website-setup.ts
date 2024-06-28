@@ -20,4 +20,5 @@ export const blockReferences = {
     termsAndConditions:'terms-and-conditions',
     privacyAndPolicy: 'privacy-and-policy',
     contactUs: 'contact-us',
+    aboutUs: 'about-us',
 }
