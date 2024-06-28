@@ -91,7 +91,6 @@ class CartService {
 
         }
 
-        console.log("modifiedPipeline.$lookup.pipeline", modifiedPipeline.$lookup.pipeline);
 
         modifiedPipeline.$lookup.pipeline.push({
             $addFields: {

@@ -235,8 +235,10 @@ class CartController extends BaseController {
 
                             if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
                                 if (offerProduct.offer.offerType == offerTypes.percent) {
-                                    offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100))
-                                    // offerAmount = productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)
+                                    offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100));
+                                    offerAmount = productVariantData.discountPrice > 0 ? productVariantData.discountPrice - offerAmount : productVariantData.price - offerAmount
+
+                                    console.log("+++++++++", offerAmount);
                                 }
                                 if (offerProduct.offer.offerType == offerTypes.amountOff) {
                                     offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice - offerProduct.offer.offerIN) : (productVariantData.price - offerProduct.offer.offerIN)
@@ -247,7 +249,7 @@ class CartController extends BaseController {
                         let offerAmountOfProduct = offerAmount > 0 ? productVariantData.price - offerAmount : 0
                         totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
                         totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
-                        console.log("+++++++++", productVariantData?.discountAmount);
+                        console.log("+++++++1243++", productVariantData?.discountPrice);
 
                         singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity))
 
