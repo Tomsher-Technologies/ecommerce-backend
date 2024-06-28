@@ -56,7 +56,8 @@ const websiteSetupSchema = new mongoose_1.Schema({
             website_setup_1.blockReferences.home,
             website_setup_1.blockReferences.termsAndConditions,
             website_setup_1.blockReferences.privacyAndPolicy,
-            website_setup_1.blockReferences.contactUs
+            website_setup_1.blockReferences.contactUs,
+            website_setup_1.blockReferences.aboutUs
         ],
     },
     blockValues: {
