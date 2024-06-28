@@ -445,7 +445,7 @@ export const productExcelSchema = zod.object({
     Brand: zod.string(),
     Warehouse: zod.string().optional(),
     Price: zod.number(),
-    Quantity: zod.number().int(),
+    Quantity: zod.number().int().optional(),
     Discount_Price: zod.number().optional(),
     Cart_Min_Quantity: zod.number().int().optional(),
     Cart_Max_Quantity: zod.number().int().optional(),
@@ -490,6 +490,16 @@ export const productExcelSchema = zod.object({
             message: 'Specification_Name_1 is required when Specification_Option_1 is provided',
             path: [data.Product_Title]
         });
+    }
+
+    if (data.Item_Type != 'config-item') {
+        if (!data.Quantity) {
+            ctx.addIssue({
+                code: "custom",
+                message: 'Quantity is required ',
+                path: [data.Product_Title]
+            });
+        }
     }
     return true; // Return true if validation passes
 });
