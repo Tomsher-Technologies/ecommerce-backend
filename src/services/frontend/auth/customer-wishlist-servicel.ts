@@ -38,19 +38,21 @@ class CustomerWishlistCountryService {
 
             { $sort: finalSort },
         ];
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = wishlistOfferProductPopulation   (getOfferList, offerApplied.product)
-            pipeline.push(offerProduct)
-
-        } else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = wishlistOfferBrandPopulation(getOfferList, offerApplied.brand)
-
-            pipeline.push(offerBrand);
-        } else if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
         }
 
+        else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+            const offerBrand = wishlistOfferBrandPopulation(getOfferList, offerApplied.brand)
+
+            pipeline.push(offerBrand);
+        } else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            const offerProduct = wishlistOfferProductPopulation(getOfferList, offerApplied.product)
+            pipeline.push(offerProduct)
+
+        }
+        
         if (skip) {
             pipeline.push({ $skip: skip });
         }

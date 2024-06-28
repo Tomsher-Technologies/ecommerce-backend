@@ -76,17 +76,17 @@ class CartService {
 
         ];
 
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = wishlistOfferProductPopulation(getOfferList, offerApplied.product)
-            modifiedPipeline.$lookup.pipeline.push(offerProduct)
-
+        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+            const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
+            modifiedPipeline.$lookup.pipeline.push(offerCategory);
         } else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = wishlistOfferBrandPopulation(getOfferList, offerApplied.brand)
 
             modifiedPipeline.$lookup.pipeline.push(offerBrand);
-        } else if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
-            modifiedPipeline.$lookup.pipeline.push(offerCategory);
+        } else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+            const offerProduct = wishlistOfferProductPopulation(getOfferList, offerApplied.product)
+            modifiedPipeline.$lookup.pipeline.push(offerProduct)
+
         }
 
         if (skip) {
@@ -213,7 +213,7 @@ class CartService {
             return null;
         }
     }
-    
+
     async findOneCart(query: any): Promise<CartOrderProps | null> {
         return CartOrderModel.findOne(query);
     }
