@@ -3,10 +3,11 @@ import { FilterOptionsProps, frontendPagination, pagination } from '../../compon
 import CartOrderModel, { CartOrderProps } from '../../model/frontend/cart-order-model';
 import CartOrderProductsModel, { CartOrderProductProps } from '../../model/frontend/cart-order-product-model';
 import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistOfferBrandPopulation, wishlistOfferCategory, wishlistOfferProductPopulation, wishlistProductCategoryLookup } from '../../utils/config/wishlist-config';
-import { addFieldsProductVariantAttributes, productLookup, productVariantAttributesLookup } from '../../utils/config/product-config';
+import { addFieldsProductVariantAttributes, brandLookup, brandObject, productCategoryLookup, productLookup, productProject, productVariantAttributesLookup } from '../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
 import LanguagesModel from '../../model/admin/setup/language-model';
 import commonService from './guest/common-service';
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../utils/config/offer-config';
 
 
 
@@ -75,19 +76,45 @@ class CartService {
             { $sort: finalSort },
 
         ];
-
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
             modifiedPipeline.$lookup.pipeline.push(offerCategory);
-        } else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+        }
+        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = wishlistOfferBrandPopulation(getOfferList, offerApplied.brand)
 
             modifiedPipeline.$lookup.pipeline.push(offerBrand);
-        } else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+        }
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = wishlistOfferProductPopulation(getOfferList, offerApplied.product)
             modifiedPipeline.$lookup.pipeline.push(offerProduct)
 
         }
+
+        console.log("modifiedPipeline.$lookup.pipeline", modifiedPipeline.$lookup.pipeline);
+
+        modifiedPipeline.$lookup.pipeline.push({
+            $addFields: {
+                'productDetails.offer': {
+                    $cond: {
+                        if: "$productDetails.categoryOffers",
+                        then: "$productDetails.categoryOffers",
+                        else: {
+                            $cond: {
+                                if: "$brandOffers",
+                                then: "$productDetails.brandOffers",
+                                else: "$productDetails.productOffers"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.categoryOffers" })
+        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.brandOffers" })
+        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.productOffers" })
+
+
 
         if (skip) {
             pipeline.push({ $skip: skip });

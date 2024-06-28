@@ -2,7 +2,7 @@ import { collections } from "../../constants/collections"
 import { addFieldsProductVariantAttributes, productVariantAttributesLookup } from "./product-config";
 
 
-export const productVariantsLookupValues = (getattribute?:string ) => {
+export const productVariantsLookupValues = (getattribute?: string) => {
     return (
         {
             $lookup: {
@@ -61,7 +61,7 @@ export const wishlistProductCategoryLookup = {
 export const wishlistOfferProductPopulation = (getOfferList: any, offerApplied: any) => {
     return {
         $addFields: {
-            "productDetails.offer": {
+            "productDetails.productOffers": {
                 $arrayElemAt: [
                     {
                         $filter: {
@@ -85,7 +85,7 @@ export const wishlistOfferProductPopulation = (getOfferList: any, offerApplied: 
 export const wishlistOfferBrandPopulation = (getOfferList: any, offerApplied: any) => {
     return {
         $addFields: {
-            "productDetails.offer": {
+            "productDetails.brandOffers": {
                 $arrayElemAt: [
                     {
                         $filter: {
@@ -109,7 +109,7 @@ export const wishlistOfferBrandPopulation = (getOfferList: any, offerApplied: an
 export const wishlistOfferCategory = (getOfferList: any, offerApplied: any) => {
     return {
         $addFields: {
-            "productDetails.offer": {
+            "productDetails.categoryOffers": {
                 $arrayElemAt: [
                     {
                         $filter: {

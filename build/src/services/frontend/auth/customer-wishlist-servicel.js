@@ -35,18 +35,39 @@ class CustomerWishlistCountryService {
             { $match: query },
             { $sort: finalSort },
         ];
+        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+            const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
+            pipeline.push(offerCategory);
+        }
+        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+            const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
+            pipeline.push(offerBrand);
+        }
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
             pipeline.push(offerProduct);
         }
-        else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
-            pipeline.push(offerBrand);
-        }
-        else if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
-            pipeline.push(offerCategory);
-        }
+        console.log("pipeldssfsd", pipeline);
+        pipeline.push({
+            $addFields: {
+                'productDetails.offer': {
+                    $cond: {
+                        if: "$productDetails.categoryOffers",
+                        then: "$productDetails.categoryOffers",
+                        else: {
+                            $cond: {
+                                if: "$brandOffers",
+                                then: "$productDetails.brandOffers",
+                                else: "$productDetails.productOffers"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        pipeline.push({ $unset: "productDetails.categoryOffers" });
+        pipeline.push({ $unset: "productDetails.brandOffers" });
+        pipeline.push({ $unset: "productDetails.productOffers" });
         if (skip) {
             pipeline.push({ $skip: skip });
         }

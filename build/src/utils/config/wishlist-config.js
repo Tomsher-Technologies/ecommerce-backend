@@ -57,7 +57,7 @@ exports.wishlistProductCategoryLookup = {
 const wishlistOfferProductPopulation = (getOfferList, offerApplied) => {
     return {
         $addFields: {
-            "productDetails.offer": {
+            "productDetails.productOffers": {
                 $arrayElemAt: [
                     {
                         $filter: {
@@ -81,7 +81,7 @@ exports.wishlistOfferProductPopulation = wishlistOfferProductPopulation;
 const wishlistOfferBrandPopulation = (getOfferList, offerApplied) => {
     return {
         $addFields: {
-            "productDetails.offer": {
+            "productDetails.brandOffers": {
                 $arrayElemAt: [
                     {
                         $filter: {
@@ -105,7 +105,7 @@ exports.wishlistOfferBrandPopulation = wishlistOfferBrandPopulation;
 const wishlistOfferCategory = (getOfferList, offerApplied) => {
     return {
         $addFields: {
-            "productDetails.offer": {
+            "productDetails.categoryOffers": {
                 $arrayElemAt: [
                     {
                         $filter: {
