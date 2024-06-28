@@ -194,19 +194,27 @@ class CartController extends base_controller_1.default {
                     for (let i = 0; i < offerProduct.productVariants.length; i++) {
                         if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
                             if (offerProduct.offer.offerType == offers_1.offerTypes.percent) {
-                                // offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100))
-                                offerAmount = productVariantData.discountPrice * (offerProduct.offer.offerIN / 100);
+                                offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100));
+                                // offerAmount = productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)
                             }
                             if (offerProduct.offer.offerType == offers_1.offerTypes.amountOff) {
-                                // offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice - offerProduct.offer.offerIN) : (productVariantData.price - offerProduct.offer.offerIN)
-                                offerAmount = productVariantData.discountPrice - offerProduct.offer.offerIN;
+                                offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice - offerProduct.offer.offerIN) : (productVariantData.price - offerProduct.offer.offerIN);
+                                // offerAmount = productVariantData.discountPrice - offerProduct.offer.offerIN
                             }
                         }
                     }
-                    let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0;
+                    let offerAmountOfProduct = offerAmount > 0 ? productVariantData.price - offerAmount : 0;
                     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
-                    totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice) * quantity) : (productVariantData?.price * quantity);
-                    singleProductTotal = productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice - offerAmount) * quantity) : ((productVariantData?.price - offerAmount) * quantity);
+                    totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
+                    console.log("+++++++++", productVariantData?.discountAmount);
+                    singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity));
+                    /********************************************************** */
+                    // let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0
+                    // totalDiscountAmountOfProduct = offerAmount > 0 ? (productVariantData?.price - offerAmount) * quantity : (productVariantData?.price - productVariantData.discountPrice) * quantity;
+                    // totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
+                    // singleProductTotal = productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice - offerAmount) * quantity) : ((productVariantData?.price - offerAmount) * quantity)
+                    console.log("qqqqqqqqqofferAmountq", offerAmountOfProduct, offerAmount, totalDiscountAmountOfProduct, totalAmountOfProduct, singleProductTotal);
+                    /*************************************************************** */
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
@@ -242,7 +250,8 @@ class CartController extends base_controller_1.default {
                         else if (quantity == 1) {
                             quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity;
                             totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity));
-                            totalAmountOfProduct = existingCart.totalProductAmount + (totalDiscountAmountOfProduct > 0 ? ((productVariantData?.discountPrice * quantity)) : (productVariantData?.price * quantity));
+                            totalAmountOfProduct = offerAmount ? existingCart.totalProductAmount + offerAmount : existingCart.totalProductAmount + totalAmountOfProduct;
+                            console.log(totalDiscountAmountOfProduct, totalAmountOfProduct, quantityProduct);
                         }
                         else if (quantity > 1) {
                             quantityProduct = quantity;

@@ -45,7 +45,8 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
             blockReferences.home,
             blockReferences.termsAndConditions,
             blockReferences.privacyAndPolicy,
-            blockReferences.contactUs
+            blockReferences.contactUs,
+            blockReferences.aboutUs
         ],
     },
     blockValues: {

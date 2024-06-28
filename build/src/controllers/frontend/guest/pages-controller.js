@@ -15,7 +15,7 @@ class PageController extends base_controller_1.default {
             const pageSlug = req.params.slug;
             if ((0, helpers_1.checkValueExists)(website_setup_1.blockReferences, pageSlug)) {
                 let query = { _id: { $exists: true } };
-                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('host'));
+                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                 if (countryId) {
                     query = {
                         ...query,
@@ -26,7 +26,7 @@ class PageController extends base_controller_1.default {
                     };
                     const websiteSetup = await pages_service_1.default.findPagesData({
                         limit: 500,
-                        hostName: req.get('host'),
+                        hostName: req.get('origin'),
                         block: website_setup_1.websiteSetup.pages,
                         blockReference: pageSlug,
                         query,

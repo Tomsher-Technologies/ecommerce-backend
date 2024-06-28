@@ -28,11 +28,19 @@ class PageController extends base_controller_1.default {
                 const { block, blockReference, websiteSetupId, blockValues, status, languageSources, languageValues } = validatedData.data;
                 if (((0, helpers_1.checkValueExists)(website_setup_1.websiteSetup, block) && ((0, helpers_1.checkValueExists)(website_setup_1.blockReferences, blockReference)))) {
                     const user = res.locals.user;
+                    const aboutImage = req.files.filter((file) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage]'));
+                    const aboutImage2 = req.files.filter((file) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage2]'));
+                    const aboutImageUrl = (0, helpers_1.handleFileUpload)(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website');
+                    const aboutImageUrl2 = (0, helpers_1.handleFileUpload)(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website');
                     const pagesData = {
                         countryId: new mongoose_1.default.Types.ObjectId(countryId),
                         block,
                         blockReference,
-                        blockValues: blockValues,
+                        blockValues: {
+                            ...blockValues,
+                            ...(website_setup_1.blockReferences.aboutUs === blockReference && aboutImageUrl !== null && aboutImageUrl !== '' ? { aboutImageUrl } : {}),
+                            ...(website_setup_1.blockReferences.aboutUs === blockReference && aboutImageUrl2 !== null && aboutImageUrl2 !== '' ? { aboutImageUrl2 } : {})
+                        },
                         status: status || '1', // active
                         createdBy: user._id,
                         createdAt: new Date(),
