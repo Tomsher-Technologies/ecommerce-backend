@@ -207,14 +207,14 @@ class CartController extends base_controller_1.default {
                     let offerAmountOfProduct = offerAmount > 0 ? productVariantData.price - offerAmount : 0;
                     totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
                     totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
-                    console.log("+++++++1243++", productVariantData?.discountPrice);
+                    // console.log("+++++++1243++", productVariantData?.discountPrice);
                     singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity));
                     /********************************************************** */
                     // let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0
                     // totalDiscountAmountOfProduct = offerAmount > 0 ? (productVariantData?.price - offerAmount) * quantity : (productVariantData?.price - productVariantData.discountPrice) * quantity;
                     // totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
                     // singleProductTotal = productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice - offerAmount) * quantity) : ((productVariantData?.price - offerAmount) * quantity)
-                    console.log("qqqqqqqqqofferAmountq", offerAmountOfProduct, offerAmount, totalDiscountAmountOfProduct, totalAmountOfProduct, singleProductTotal);
+                    // console.log("qqqqqqqqqofferAmountq", offerAmountOfProduct, offerAmount, totalDiscountAmountOfProduct, totalAmountOfProduct, singleProductTotal);
                     /*************************************************************** */
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
@@ -263,11 +263,11 @@ class CartController extends base_controller_1.default {
                             if (existingCartProduct) {
                                 const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
                                 if (deletedData) {
-                                    console.log("existingCart", existingCart?.totalDiscountAmount, offerAmountOfProduct, productVariantData?.price, productVariantData?.discountPrice, existingCartProduct.quantity);
-                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity));
-                                    totalAmountOfProduct = existingCart?.totalProductAmount - (productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity));
+                                    console.log(existingCartProduct.productAmount, "existingCart", existingCart?.totalDiscountAmount, productVariantData?.price, productVariantData?.discountPrice, existingCartProduct.quantity);
+                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? (offerAmountOfProduct * existingCartProduct.quantity) : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity));
+                                    totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount;
                                     // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
-                                    console.log("totalDiscountAmountOfProduct", totalDiscountAmountOfProduct, totalAmountOfProduct);
+                                    console.log("totalDiscountAmountOfProduct", totalDiscountAmountOfProduct, offerAmountOfProduct);
                                     const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
                                     var giftWrapCharge;
                                     if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
