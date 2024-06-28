@@ -28,6 +28,35 @@ class HomeController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }
     }
+    async findAllStores(req, res) {
+        try {
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                let query = { _id: { $exists: true } };
+                query = {
+                    ...query,
+                    countryId,
+                    status: '1',
+                };
+                return controller.sendSuccessResponse(res, {
+                    requestedData: await common_service_1.default.findAllStores({
+                        hostName: req.get('origin'),
+                        query,
+                    }),
+                    message: 'Success!'
+                }, 200);
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing! please check'
+                }, req);
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching stores' });
+        }
+    }
     async findWebsiteSetups(req, res) {
         try {
             const { block, blockReference } = req.query;

@@ -334,6 +334,11 @@ class CartController extends BaseController {
                                                 totalAmount: totalAmountOfProduct - removeGiftWrapAmount,
                                                 totalGiftWrapAmount: removeGiftWrapAmount
                                             });
+                                            const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
+                                            if (checkCartProducts && checkCartProducts.length == 0) {
+                                                const deletedData = await CartService.destroy(existingCartProduct.cartId);
+
+                                            }
 
                                             const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') })
 

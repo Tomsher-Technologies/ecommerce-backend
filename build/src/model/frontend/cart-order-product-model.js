@@ -44,6 +44,11 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         required: true,
         default: 0
     },
+    productCouponAmount: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     giftWrapAmount: {
         type: Number,
         default: 0

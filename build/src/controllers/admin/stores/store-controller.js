@@ -14,8 +14,16 @@ const controller = new base_controller_1.default();
 class StoreController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { _id = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { _id = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId } = req.query;
             let query = { _id: { $exists: true } };
+            const userData = await res.locals.user;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             }
@@ -65,9 +73,10 @@ class StoreController extends base_controller_1.default {
             const validatedData = store_schema_1.storeSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeImageUrl, latitude, longitude } = validatedData.data;
+                const { countryId, storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeDesription, latitude, longitude } = validatedData.data;
                 const user = res.locals.user;
                 const storeData = {
+                    countryId: countryId || (0, helpers_1.getCountryId)(user),
                     storeTitle,
                     slug: slug || (0, helpers_1.slugify)(storeTitle),
                     storePhone,
@@ -76,6 +85,7 @@ class StoreController extends base_controller_1.default {
                     storeWorkingHours,
                     storeEmail,
                     storeImageUrl: (0, helpers_1.handleFileUpload)(req, null, req.file, 'storeImageUrl', 'store'),
+                    storeDesription,
                     latitude,
                     longitude,
                     status: '1', // active
