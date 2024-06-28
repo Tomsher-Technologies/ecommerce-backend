@@ -72,7 +72,6 @@ class CartService {
             const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
             modifiedPipeline.$lookup.pipeline.push(offerProduct);
         }
-        console.log("modifiedPipeline.$lookup.pipeline", modifiedPipeline.$lookup.pipeline);
         modifiedPipeline.$lookup.pipeline.push({
             $addFields: {
                 'productDetails.offer': {
