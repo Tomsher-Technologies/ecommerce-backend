@@ -45,7 +45,7 @@ class CommonService {
         }
     }
     async findAllStores(options: any): Promise<any> {
-        const { query,  hostName } = options;
+        const { query, hostName } = options;
         let pipeline: any[] = [
             { $match: query },
         ];
@@ -53,7 +53,7 @@ class CommonService {
         return StoreModel.aggregate(pipeline).exec();
     }
     async findPaymentMethods(options: any): Promise<any> {
-        const { query,  hostName } = options;
+        const { query, hostName } = options;
         let pipeline: any[] = [
             { $match: query },
         ];
@@ -85,11 +85,11 @@ class CommonService {
                     })
                 }
             };
-            
+
             pipeline.push(paymentMethodLookupWithLanguage);
             pipeline.push(paymentMethodlanguageFieldsReplace);
         }
-        
+
         pipeline.push(customPaymentMethodProject);
 
         pipeline.push(paymentMethodFinalProject);
@@ -126,7 +126,7 @@ class CommonService {
         return websiteSetupData;
     }
 
-    async findOneCountrySubDomainWithId(hostname: string | null | undefined): Promise<any> {
+    async findOneCountrySubDomainWithId(hostname: string | null | undefined, returnCountry?: boolean): Promise<any> {
         try {
             const countrySubDomain = getCountrySubDomainFromHostname(hostname);
             const allCountryData = await CountryModel.find();
@@ -136,11 +136,11 @@ class CommonService {
 
                 const countryData: any = countrySubDomain && allCountryData.find((country: any) => regex.test(country?.countrySubDomain));
                 if (countryData) {
-                    return countryData._id
+                    return returnCountry ? countryData : countryData._id
                 } else {
                     const defualtCountryData = allCountryData.find((country: any) => country?.isOrigin === true);
                     if (defualtCountryData) {
-                        return defualtCountryData._id
+                        return returnCountry ? defualtCountryData : defualtCountryData._id
                     }
                 }
             } else {
