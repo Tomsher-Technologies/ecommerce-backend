@@ -14,6 +14,9 @@ const collections_product_config_1 = require("../../../utils/config/collections-
 const collections_categories_config_1 = require("../../../utils/config/collections-categories-config");
 const offers_1 = require("../../../constants/offers");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
+const website_setup_1 = require("../../../constants/website-setup");
+const offer_config_1 = require("../../../utils/config/offer-config");
+const payment_method_config_1 = require("../../../utils/config/payment-method-config");
 const slider_model_1 = __importDefault(require("../../../model/admin/ecommerce/slider-model"));
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
@@ -21,7 +24,6 @@ const banner_config_1 = require("../../../utils/config/banner-config");
 const banner_model_1 = __importDefault(require("../../../model/admin/ecommerce/banner-model"));
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
 const general_service_1 = __importDefault(require("../../admin/general-service"));
-const website_setup_1 = require("../../../constants/website-setup");
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const collections_products_model_1 = __importDefault(require("../../../model/admin/website/collections-products-model"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
@@ -30,9 +32,8 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
 const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
 const product_service_1 = __importDefault(require("./product-service"));
-const offer_config_1 = require("../../../utils/config/offer-config");
 const payment_methods_model_1 = __importDefault(require("../../../model/admin/setup/payment-methods-model"));
-const payment_method_config_1 = require("../../../utils/config/payment-method-config");
+const store_model_1 = __importDefault(require("../../../model/admin/stores/store-model"));
 class CommonService {
     constructor() { }
     async findAllCountries() {
@@ -42,6 +43,13 @@ class CommonService {
         catch (error) {
             throw new Error('Error fetching country');
         }
+    }
+    async findAllStores(options) {
+        const { query, hostName } = options;
+        let pipeline = [
+            { $match: query },
+        ];
+        return store_model_1.default.aggregate(pipeline).exec();
     }
     async findPaymentMethods(options) {
         const { query, hostName } = options;

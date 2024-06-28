@@ -30,6 +30,36 @@ class HomeController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }
     }
+    async findAllStores(req: Request, res: Response): Promise<void> {
+        try {
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                let query: any = { _id: { $exists: true } };
+
+                query = {
+                    ...query,
+                    countryId,
+                    status: '1',
+                } as any;
+             
+                return controller.sendSuccessResponse(res, {
+                    requestedData: await CommonService.findAllStores({
+                        hostName: req.get('origin'),
+                        query,
+                    }),
+                    message: 'Success!'
+                }, 200);
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing! please check'
+                }, req);
+            }
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching stores' });
+        }
+    }
     async findWebsiteSetups(req: Request, res: Response): Promise<void> {
         try {
             const { block, blockReference } = req.query as CommonQueryParams;

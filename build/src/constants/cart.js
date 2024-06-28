@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.couponDeviceType = exports.couponTypes = exports.OrderStatus = exports.cartStatus = void 0;
+exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.OrderStatus = exports.cartStatus = void 0;
 exports.cartStatus = [
     { value: '1', label: "Active" },
     { value: '2', label: "Order" },
@@ -29,9 +29,18 @@ exports.couponTypes = {
     forProduct: "for-product",
     forCategory: "for-category",
     forBrand: "for-brand",
-    cashback: "cashback",
+    // cashback: "cashback",
 };
 exports.couponDeviceType = {
     desktop: "desktop",
     mobile: "mobile"
+};
+exports.paymentMethods = {
+    cashOnDelivery: "cash-on-delivery",
+    tap: "tap",
+    tabby: "tabby"
+};
+exports.couponDiscountType = {
+    percentage: 'percentage',
+    amount: 'amount',
 };

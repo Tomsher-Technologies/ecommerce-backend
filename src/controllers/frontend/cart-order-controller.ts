@@ -235,9 +235,11 @@ class CartController extends BaseController {
 
                             if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
                                 if (offerProduct.offer.offerType == offerTypes.percent) {
+                                    // offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100))
                                     offerAmount = productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)
                                 }
                                 if (offerProduct.offer.offerType == offerTypes.amountOff) {
+                                    // offerAmount = productVariantData.discountPrice ? (productVariantData.discountPrice - offerProduct.offer.offerIN) : (productVariantData.price - offerProduct.offer.offerIN)
                                     offerAmount = productVariantData.discountPrice - offerProduct.offer.offerIN
                                 }
                             }
@@ -310,10 +312,12 @@ class CartController extends BaseController {
 
                                         const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
                                         if (deletedData) {
+                                            console.log("existingCart", existingCart?.totalDiscountAmount, offerAmountOfProduct, productVariantData?.price, productVariantData?.discountPrice, existingCartProduct.quantity);
                                             totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity))
 
                                             totalAmountOfProduct = existingCart?.totalProductAmount - (productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity))
                                             // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
+                                            console.log("totalDiscountAmountOfProduct", totalDiscountAmountOfProduct, totalAmountOfProduct);
 
 
                                             const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
@@ -330,6 +334,11 @@ class CartController extends BaseController {
                                                 totalAmount: totalAmountOfProduct - removeGiftWrapAmount,
                                                 totalGiftWrapAmount: removeGiftWrapAmount
                                             });
+                                            const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
+                                            if (checkCartProducts && checkCartProducts.length == 0) {
+                                                const deletedData = await CartService.destroy(existingCartProduct.cartId);
+
+                                            }
 
                                             const cart = await CartService.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') })
 

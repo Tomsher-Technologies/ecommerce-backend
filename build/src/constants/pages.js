@@ -9,6 +9,7 @@ exports.page = [
     { value: 'wishlist', label: "Wishlist" },
     { value: 'login', label: "Login" },
     { value: 'register', label: "Register" },
+    { value: 'brand-promotion', label: "Brand Promotion" },
     { value: 'forgot-password', label: "Forgot Password" },
     { value: 'collections', label: "Collections" },
     { value: 'collections-brand', label: "Collections Brand" },
