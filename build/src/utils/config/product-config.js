@@ -474,6 +474,7 @@ exports.productProject = {
         brand: 1,
         unit: 1,
         warehouse: 1,
+        starRating: 1,
         measurements: 1,
         tags: 1,
         sku: 1,

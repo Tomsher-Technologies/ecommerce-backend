@@ -18,7 +18,7 @@ export interface CartOrderProductProps extends Document {
 const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     cartId: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: 'CartOrders',
         default: null
     },
     slug: {

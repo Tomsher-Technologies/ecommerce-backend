@@ -64,14 +64,35 @@ class CartService {
             const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
             modifiedPipeline.$lookup.pipeline.push(offerCategory);
         }
-        else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
             modifiedPipeline.$lookup.pipeline.push(offerBrand);
         }
-        else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
             modifiedPipeline.$lookup.pipeline.push(offerProduct);
         }
+        console.log("modifiedPipeline.$lookup.pipeline", modifiedPipeline.$lookup.pipeline);
+        modifiedPipeline.$lookup.pipeline.push({
+            $addFields: {
+                'productDetails.offer': {
+                    $cond: {
+                        if: "$productDetails.categoryOffers",
+                        then: "$productDetails.categoryOffers",
+                        else: {
+                            $cond: {
+                                if: "$brandOffers",
+                                then: "$productDetails.brandOffers",
+                                else: "$productDetails.productOffers"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.categoryOffers" });
+        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.brandOffers" });
+        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.productOffers" });
         if (skip) {
             pipeline.push({ $skip: skip });
         }

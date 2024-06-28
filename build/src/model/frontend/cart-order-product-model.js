@@ -27,7 +27,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const cartOrderProductSchema = new mongoose_1.Schema({
     cartId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: 'CartOrders',
         default: null
     },
     slug: {
