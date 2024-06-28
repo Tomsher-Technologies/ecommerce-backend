@@ -349,12 +349,15 @@ class CategoryService {
                     currentSlug += '-';
                 }
                 currentSlug += (0, helpers_1.categorySlugify)(data);
-                categoryResult = await this.findOneCategory({ slug: currentSlug });
+                console.log("currentSlug", (0, helpers_1.categorySlugify)(currentSlug));
+                categoryResult = await this.findOneCategory({ slug: (0, helpers_1.categorySlugify)(currentSlug) });
+                console.log("categoryResultcategoryResult", categoryResult);
                 if (categoryResult == null) {
                     const titleData = splitHyphenOutsideParentheses(data);
                     const lastItem = titleData[titleData.length - 1];
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
-                    parentSlug = currentSlug;
+                    parentSlug = (0, helpers_1.categorySlugify)(currentSlug);
+                    console.log("parentCategory", parentCategory);
                     const categoryData = {
                         categoryTitle: (0, helpers_1.capitalizeWords)(lastItem),
                         slug: (0, helpers_1.categorySlugify)(currentSlug),

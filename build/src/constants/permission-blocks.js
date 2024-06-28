@@ -20,6 +20,7 @@ exports.permissionBlocks = {
     },
     setup: {
         languages: 'languages',
+        taxs: 'taxs',
         country: 'country',
         paymentMethod: 'paymentmethod',
         websitesetups: 'websitesetups',

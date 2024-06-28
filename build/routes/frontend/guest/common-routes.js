@@ -16,4 +16,5 @@ router.get('/collection-products', common_controller_1.default.findCollectionPro
 router.get('/collection-categories', common_controller_1.default.findCollectionCategories);
 router.get('/collection-brands', common_controller_1.default.findCollectionBrands);
 router.get('/payment-methods', common_controller_1.default.findPaymentMethods);
+router.get('/stores', common_controller_1.default.findAllStores);
 exports.default = router;

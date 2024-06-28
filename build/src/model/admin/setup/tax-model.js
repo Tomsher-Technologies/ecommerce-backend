@@ -24,83 +24,33 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const warehouseSchema = new mongoose_1.Schema({
+const taxSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
         ref: 'Countries',
     },
-    storeTitle: {
+    taxTitle: {
         type: String,
         required: true,
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Store').countDocuments({ storeTitle: value });
+                const count = await this.model('Taxs').countDocuments({ taxTitle: value });
                 return count === 0;
             },
-            message: 'Store title must be unique'
+            message: 'Tax title must be unique'
         },
-        minlength: [3, 'Store title must be at least 3 characters long']
+        minlength: [3, 'Tax title must be at least 3 characters long']
     },
     slug: {
         type: String,
         required: true,
         unique: true
     },
-    storePhone: {
+    taxPercentage: {
         type: String,
-        required: true,
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Store').countDocuments({ storePhone: value });
-                return count === 0;
-            },
-            message: 'Store phone must be unique'
-        },
-        minlength: [8, 'Store phone must be at least 8 characters long']
-    },
-    storePhone2: {
-        type: String,
-        defualt: '',
-    },
-    storeDesription: {
-        type: String,
-        defualt: '',
-    },
-    storeImageUrl: {
-        type: String,
-        defualt: '',
-    },
-    storeEmail: {
-        type: String,
-        required: true,
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Store').countDocuments({ storeEmail: value });
-                return count === 0;
-            },
-            message: 'Store email must be unique'
-        },
-        minlength: [8, 'Store email must be at least 8 characters long']
-    },
-    latitude: {
-        type: String,
-        defualt: '',
-    },
-    longitude: {
-        type: String,
-        defualt: '',
-    },
-    storeAddress: {
-        type: String,
-        required: true,
-    },
-    storeWorkingHours: {
-        type: String,
-        defualt: '',
+        required: true
     },
     status: {
         type: String,
@@ -122,5 +72,5 @@ const warehouseSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const StoreModel = mongoose_1.default.model('Store', warehouseSchema);
-exports.default = StoreModel;
+const TaxsModel = mongoose_1.default.model('Taxs', taxSchema);
+exports.default = TaxsModel;
