@@ -403,15 +403,18 @@ class CategoryService {
                     currentSlug += '-';
                 }
                 currentSlug += categorySlugify(data);
+                console.log("currentSlug", categorySlugify(currentSlug));
 
-                categoryResult = await this.findOneCategory({ slug: currentSlug });
+                categoryResult = await this.findOneCategory({ slug: categorySlugify(currentSlug) });
+                console.log("categoryResultcategoryResult", categoryResult);
+
                 if (categoryResult == null) {
-
-
                     const titleData = splitHyphenOutsideParentheses(data);
                     const lastItem = titleData[titleData.length - 1];
+
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
-                    parentSlug = currentSlug;
+                    parentSlug = categorySlugify(currentSlug);
+                    console.log("parentCategory", parentCategory);
 
                     const categoryData = {
                         categoryTitle: capitalizeWords(lastItem),

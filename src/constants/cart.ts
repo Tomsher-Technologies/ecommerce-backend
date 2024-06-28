@@ -31,10 +31,21 @@ export const couponTypes = {
     forProduct: "for-product",
     forCategory: "for-category",
     forBrand: "for-brand",
-    cashback: "cashback",
+    // cashback: "cashback",
 }
 
 export const couponDeviceType = {
     desktop: "desktop",
     mobile: "mobile"
 }
+
+export const paymentMethods = {
+    cashOnDelivery: "cash-on-delivery",
+    tap: "tap",
+    tabby: "tabby"
+}
+
+export const couponDiscountType = {
+    percentage: 'percentage',
+    amount: 'amount',
+};
