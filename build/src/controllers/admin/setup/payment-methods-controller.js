@@ -67,12 +67,12 @@ class PaymentMethodController extends base_controller_1.default {
             const validatedData = payment_method_schema_1.paymentMethodSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { countryId, paymentMethodTitle, slug, description, enableDisplay, paymentMethodValues, languageValues } = validatedData.data;
+                const { countryId, paymentMethodTitle, operatorName, slug, description, enableDisplay, paymentMethodValues, languageValues } = validatedData.data;
                 const user = res.locals.user;
                 const paymentMethodData = {
                     countryId: countryId || (0, helpers_1.getCountryId)(user),
                     paymentMethodTitle,
-                    slug: slug || (0, helpers_1.slugify)(paymentMethodTitle),
+                    slug: slug || (0, helpers_1.slugify)(operatorName),
                     paymentMethodImageUrl: (0, helpers_1.handleFileUpload)(req, null, req.file, 'paymentMethodImageUrl', 'paymentMethod'),
                     description,
                     paymentMethodValues,

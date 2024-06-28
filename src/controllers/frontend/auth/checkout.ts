@@ -12,6 +12,10 @@ import { formatZodError } from "../../../utils/helpers";
 import ProductCategoryLinkModel from "../../../model/admin/ecommerce/product/product-category-link-model";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import axios from 'axios';
+import { tapPayment } from "../../../lib/tap-payment";
+import CustomerModel from "../../../model/frontend/customers-model";
+import { tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
+import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 
 const controller = new BaseController();
 
@@ -21,19 +25,29 @@ class CheckoutController extends BaseController {
         try {
 
             const customerId: any = res.locals.user;
-            let countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-            if (!countryId) {
+            let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
+            if (!countryData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
             }
             const validatedData = checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
+
+                const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
+                if (!customerDetails) {
+                    return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
+                }
+
+                const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentMethodId })
+                if (!paymentMethod) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
+                }
 
                 const cart: any = await CartService.findCartPopulate({
                     query: {
                         $and: [
                             { customerId: customerId },
-                            { countryId: countryId },
+                            { countryId: countryData._id },
                             { cartStatus: "1" }
                         ],
 
@@ -43,28 +57,45 @@ class CheckoutController extends BaseController {
                 if (!cart) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }
-                let couponId
-                let couponAmountTotal: any
+                let couponAmountTotal: any = 0
                 let productId: any
+                let cartUpdate = {
+                    paymentMethodCharge: 0,
+                    couponId: null,
+                    totalCouponAmount: couponAmountTotal,
+                    totalAmount: cart.totalAmount,
+                    shippingId: shippingId,
+                    billingId: billingId
+                }
                 if (couponCode && deviceType) {
 
                     const query = {
-                        countryId,
+                        countryId: countryData._id,
                         couponCode,
                     } as any;
 
                     const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType });
 
-                    console.log("couponDetails", couponDetails);
                     if (couponDetails?.status) {
 
-                        couponId = couponDetails?.requestedData._id
+                        cartUpdate = {
+                            ...cartUpdate,
+                            couponId: couponDetails?.requestedData._id,
+                        }
+
                         const cartProductDetails: any = await CartService.findAllCart({ cartId: cart._id });
                         const productIds = cartProductDetails.map((product: any) => product.productId.toString());
 
-                        const discountedAmount = (couponDetails?.requestedData.discountAmount) / 100 * cart.totalAmount
-                        const couponPercentage = Math.min(discountedAmount, couponDetails?.requestedData.discountMaxRedeemAmount);
+                        const discountedAmountByPercentage = (couponDetails?.requestedData.discountAmount) / 100 * cart.totalAmount
+                        const couponPercentage = Math.min(discountedAmountByPercentage, couponDetails?.requestedData.discountMaxRedeemAmount);
                         const couponAmount = couponDetails?.requestedData.discountAmount
+
+                        const updateTotalCouponAmount = (product: any) => {
+                            if (product) {
+                                couponAmountTotal = product.productAmount - couponAmount;
+                                productId = product.productId;
+                            }
+                        };
 
                         if (couponDetails?.requestedData.couponType == couponTypes.entireOrders) {
                             if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
@@ -78,17 +109,14 @@ class CheckoutController extends BaseController {
                                 // couponAmountTotal = couponAmount
                                 const updatedCartProductDetails = cartProductDetails.map(async (product: any) => {
                                     if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        couponAmountTotal = product.productAmount - couponAmount
-                                        productId = product.productId
+                                        updateTotalCouponAmount(product)
                                     }
                                 });
                             }
                             if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
                                 const updatedCartProductDetails = cartProductDetails.map(async (product: any) => {
                                     if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        couponAmountTotal = product.productAmount - couponAmount
-                                        // const updateCartProduct = await CartService.updateCartProduct(product._id, { productAmount: product.productAmount })
-                                        productId = product.productId
+                                        updateTotalCouponAmount(product)
                                     }
                                 });
                             }
@@ -98,16 +126,14 @@ class CheckoutController extends BaseController {
                             if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
                                 const updatedCartProductDetails = categoryIds.map(async (product: any) => {
                                     if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        couponAmountTotal = product.productAmount - couponAmount
-                                        productId = product.productId
+                                        updateTotalCouponAmount(product)
                                     }
                                 });
                             }
                             if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
                                 const updatedCartProductDetails = categoryIds.map(async (product: any) => {
                                     if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        couponAmountTotal = product.productAmount - couponAmount
-                                        productId = product.productId
+                                        updateTotalCouponAmount(product)
                                     }
                                 });
                             }
@@ -117,16 +143,14 @@ class CheckoutController extends BaseController {
                             if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
                                 const updatedCartProductDetails = brandIds.map(async (product: any) => {
                                     if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        couponAmountTotal = product.productAmount - couponAmount
-                                        productId = product.productId
+                                        updateTotalCouponAmount(product)
                                     }
                                 });
                             }
                             if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
                                 const updatedCartProductDetails = brandIds.map(async (product: any) => {
                                     if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        couponAmountTotal = product.productAmount - couponAmount
-                                        productId = product.productId
+                                        updateTotalCouponAmount(product)
                                     }
                                 });
                             }
@@ -140,55 +164,40 @@ class CheckoutController extends BaseController {
 
                 }
 
-                if (shippingId) {
-
-                }
-                let cartUpdate = {
-                    paymentMethodCharge: 0,
-                    couponId: couponId,
+                cartUpdate = {
+                    ...cartUpdate,
                     totalCouponAmount: couponAmountTotal,
                     totalAmount: cart.totalAmount - couponAmountTotal,
-                    shippingId: shippingId,
-                    billingId: billingId
                 }
 
-                console.log("cartUpdatecartUpdate", cartUpdate);
 
-                const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentMethodId })
-                if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
+                if (paymentMethod.slug !== paymentMethods.cashOnDelivery) {
+
+                    if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
+                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cart._id }, customerDetails)
+
+                        const tapResponse = await tapPayment(tapDefaultValues)
+                        console.log("cartUpdatecartUpdate", tapResponse);
+
+                    } else if (paymentMethod && paymentMethod.slug == paymentMethods.tabby) {
+
+                    }
+                } else {
                     const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
                     cartUpdate = {
                         ...cartUpdate,
                         paymentMethodCharge: codAmount.blockValues.codCharge
                     }
-
-                } else if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
-                    // const response = await axios.post(tapApiUrl, {
-                    //     amount :cartUpdate.totalAmount,
-                    //     currency,
-                    //     source: {
-                    //         id: token, // Token obtained from Tap Payments SDK or Payment Form
-                    //         type: 'token',
-                    //     },
-                    // }, {
-                    //     headers: {
-                    //         'Authorization': `Bearer ${tapApiKey}`,
-                    //         'Content-Type': 'application/json',
-                    //     },
-                    // });
                 }
 
-                else if (paymentMethod && paymentMethod.slug == paymentMethods.tabby) {
-
-                }
-
-                if (couponCode) {
-
-                    const updateCartProduct = await CartService.updateCartProduct(productId, { productAmount: couponAmountTotal })
-                }
+                // if (couponCode) {
+                //     const updateCartProduct = await CartService.updateCartProduct(productId, { productAmount: couponAmountTotal })
+                // }
                 const updateCart = await CartService.update(cart._id, cartUpdate)
 
-
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Some error occurred while Checkout',
+                });
 
 
             } else {
@@ -206,6 +215,17 @@ class CheckoutController extends BaseController {
                 message: error.message || 'Some error occurred while Checkout',
             });
         }
+    }
+
+    async tapSuccessResponse(req: Request, res: Response): Promise<void> {
+        console.log('here',);
+        await PaymentTransactionModel.create({
+            data: JSON.stringify(req.query),
+            status: '1',
+            createdAt: new Date(),
+        })
+        res.redirect("http://stackoverflow.com");
+
     }
 }
 

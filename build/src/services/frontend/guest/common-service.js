@@ -115,7 +115,7 @@ class CommonService {
         }
         return websiteSetupData;
     }
-    async findOneCountrySubDomainWithId(hostname) {
+    async findOneCountrySubDomainWithId(hostname, returnCountry) {
         try {
             const countrySubDomain = (0, sub_domain_1.getCountrySubDomainFromHostname)(hostname);
             const allCountryData = await country_model_1.default.find();
@@ -124,12 +124,12 @@ class CommonService {
                 const regex = new RegExp(`^${normalizedHostname}$`, 'i');
                 const countryData = countrySubDomain && allCountryData.find((country) => regex.test(country?.countrySubDomain));
                 if (countryData) {
-                    return countryData._id;
+                    return returnCountry ? countryData : countryData._id;
                 }
                 else {
                     const defualtCountryData = allCountryData.find((country) => country?.isOrigin === true);
                     if (defualtCountryData) {
-                        return defualtCountryData._id;
+                        return returnCountry ? defualtCountryData : defualtCountryData._id;
                     }
                 }
             }

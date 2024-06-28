@@ -76,13 +76,13 @@ class PaymentMethodController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, paymentMethodTitle, slug, description, enableDisplay, paymentMethodValues, languageValues } = validatedData.data;
+                const { countryId, paymentMethodTitle, operatorName,slug, description, enableDisplay, paymentMethodValues, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
                 const paymentMethodData: Partial<PaymentMethodProps> = {
                     countryId: countryId || getCountryId(user),
                     paymentMethodTitle,
-                    slug: slug || slugify(paymentMethodTitle) as any,
+                    slug: slug || slugify(operatorName) as any,
                     paymentMethodImageUrl: handleFileUpload(req, null, req.file, 'paymentMethodImageUrl', 'paymentMethod'),
                     description,
                     paymentMethodValues,
