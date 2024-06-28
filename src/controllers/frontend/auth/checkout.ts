@@ -11,6 +11,7 @@ import { checkoutSchema } from "../../../utils/schemas/frontend/auth/checkout-sc
 import { formatZodError } from "../../../utils/helpers";
 import ProductCategoryLinkModel from "../../../model/admin/ecommerce/product/product-category-link-model";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
+import axios from 'axios';
 
 const controller = new BaseController();
 
@@ -162,7 +163,19 @@ class CheckoutController extends BaseController {
                     }
 
                 } else if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
-
+                    // const response = await axios.post(tapApiUrl, {
+                    //     amount :cartUpdate.totalAmount,
+                    //     currency,
+                    //     source: {
+                    //         id: token, // Token obtained from Tap Payments SDK or Payment Form
+                    //         type: 'token',
+                    //     },
+                    // }, {
+                    //     headers: {
+                    //         'Authorization': `Bearer ${tapApiKey}`,
+                    //         'Content-Type': 'application/json',
+                    //     },
+                    // });
                 }
 
                 else if (paymentMethod && paymentMethod.slug == paymentMethods.tabby) {
