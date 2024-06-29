@@ -4,24 +4,26 @@ export const cartStatus = {
     delivered: "3"
 }
 
-export const orderStatus = [
+export const orderStatusArray = [
     { value: '1', label: "Pending" },
     { value: '2', label: "Processing" },
-    { value: '3', label: "Shipped" },
-    { value: '4', label: "Delivered" },
-    { value: '5', label: "Canceled" },
-    { value: '6', label: "Returned" },
-    { value: '7', label: "Refunded" },
-    { value: '8', label: "Awaiting Payment" },
-    { value: '9', label: "Awaiting Fulfillment" },
-    { value: '10', label: "Awaiting Shipment" },
-    { value: '11', label: "Partially Shipped" },
-    { value: '12', label: "Partially Refunded" },
-    { value: '13', label: "On Hold" },
-    { value: '14', label: "Failed" },
-    { value: '15', label: "Completed" },
-    { value: '16', label: "Pickup" },
+    { value: '3', label: "Packed" },
+    { value: '4', label: "Shipped" },
+    { value: '5', label: "Delivered" },
+    { value: '6', label: "Canceled" },
+    { value: '7', label: "Returned" },
+    { value: '8', label: "Refunded" },
+    { value: '9', label: "Partially Shipped" },
+    { value: '10', label: "On Hold" },
+    { value: '11', label: "Failed" },
+    { value: '12', label: "Completed" },
+    { value: '13', label: "Pickup" }
 ];
+
+export const orderStatusMap = orderStatusArray.reduce((map, obj) => {
+    map[obj.value] = obj;
+    return map;
+}, {} as Record<string, { value: string; label: string }>);
 
 
 export const couponTypes = {

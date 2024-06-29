@@ -758,7 +758,7 @@ class CartController extends BaseController {
                     message: 'Your cart is ready!'
                 });
             } else {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Active cart not fount'
                 });
             }
