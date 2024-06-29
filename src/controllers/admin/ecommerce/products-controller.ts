@@ -603,8 +603,15 @@ class ProductsController extends BaseController {
                                                                 const galleryImageArray = []
 
                                                                 for (let i = 0; i < galleryImage.length; i++) {
+
+
+                                                                    const productImage: any = await uploadImageFromUrl(imageUrl)
+                                                                    if (productImage == null) {
+                                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
+
+                                                                    }
                                                                     galleryImageArray.push({
-                                                                        galleryImageUrl: '/public/uploads/product/' + await uploadImageFromUrl(data[galleryImage[i]]),
+                                                                        galleryImageUrl: '/public/uploads/product/' + productImage,
 
                                                                     });
                                                                 }
