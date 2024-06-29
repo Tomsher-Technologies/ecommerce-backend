@@ -121,17 +121,70 @@ const cartOrderSchema = new mongoose_1.Schema({
         required: true,
         default: '1'
     },
-    shippingStatusAt: {
-        type: Date,
-        default: null
+    orderStatus: {
+        type: String,
+        required: true,
+        default: '1'
     },
     cartStatusAt: {
         type: Date,
         default: Date.now
     },
-    shippingStatus: {
-        type: String,
-        default: '0'
+    orderStatusAt: {
+        type: Date,
+        default: null
+    },
+    processingStatusAt: {
+        type: Date,
+        default: null
+    },
+    packedStatusAt: {
+        type: Date,
+        default: null
+    },
+    shippedStatusAt: {
+        type: Date,
+        default: null
+    },
+    deliveredStatusAt: {
+        type: Date,
+        default: null
+    },
+    canceledStatusAt: {
+        type: Date,
+        default: null
+    },
+    returnedStatusAt: {
+        type: Date,
+        default: null
+    },
+    refundedStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyShippedStatusAt: {
+        type: Date,
+        default: null
+    },
+    onHoldStatusAt: {
+        type: Date,
+        default: null
+    },
+    failedStatusAt: {
+        type: Date,
+        default: null
+    },
+    completedStatusAt: {
+        type: Date,
+        default: null
+    },
+    pickupStatusAt: {
+        type: Date,
+        default: null
+    },
+    deliverStatusAt: {
+        type: Date,
+        default: null
     },
     createdAt: {
         type: Date,

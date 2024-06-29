@@ -526,7 +526,6 @@ class ProductService {
 
         ];
 
-        console.log(query);
 
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(0, hostName)
 

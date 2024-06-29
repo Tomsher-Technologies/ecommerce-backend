@@ -436,7 +436,6 @@ class ProductService {
             ...(getspecification === '1' ? [product_config_1.addFieldsProductSpecification] : []),
             { $match: query },
         ];
-        console.log(query);
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         // Add the stages for product-specific offers
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
