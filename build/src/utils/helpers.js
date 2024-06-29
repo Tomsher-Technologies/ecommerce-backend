@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -253,3 +253,17 @@ const uploadImageFromUrl = async (imageUrl) => {
     }
 };
 exports.uploadImageFromUrl = uploadImageFromUrl;
+const calculateTotalDiscountAmountDifference = (totalAmount, discountType, discountVal) => {
+    let discountAmount;
+    if (discountType === 'amount' || discountType === 'amount-off') {
+        discountAmount = discountVal;
+    }
+    else if (discountType === 'percent' || discountType === 'percentage') {
+        discountAmount = (discountVal / 100) * totalAmount;
+    }
+    else {
+        discountAmount = 0;
+    }
+    return discountAmount;
+};
+exports.calculateTotalDiscountAmountDifference = calculateTotalDiscountAmountDifference;

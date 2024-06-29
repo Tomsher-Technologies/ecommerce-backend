@@ -25,6 +25,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const paymentTransactionSchema = new mongoose_1.Schema({
+    orderId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'CartOrders',
+        default: null
+    },
+    transactionId: {
+        type: String,
+        required: true,
+    },
     data: {
         type: mongoose_1.Schema.Types.Mixed,
         default: ''

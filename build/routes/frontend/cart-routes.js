@@ -13,8 +13,6 @@ router.use(frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware);
 router.post('/create-cart', response_status_1.logResponseStatus, cart_order_controller_1.default.createCartOrder);
 router.get('/get-cart', response_status_1.logResponseStatus, cart_order_controller_1.default.findUserCart);
 router.post('/add-gift-wrap', response_status_1.logResponseStatus, cart_order_controller_1.default.addGiftWrap);
-router.post('/move-to-wishlist', response_status_1.logResponseStatus, cart_order_controller_1.default.moveToWishlist);
-router.post('/checkout', response_status_1.logResponseStatus, checkout_1.default.checkout);
 router.get('/tap-success-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
 router.get('/tap-failure-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
 router.post('/tap-success-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);

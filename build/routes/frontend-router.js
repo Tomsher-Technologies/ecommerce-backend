@@ -12,6 +12,7 @@ const wishlist_routes_1 = __importDefault(require("./frontend/auth/wishlist-rout
 const cart_routes_1 = __importDefault(require("./frontend/cart-routes"));
 const coupon_routes_1 = __importDefault(require("./frontend/auth/coupon-routes"));
 const customer_routes_1 = __importDefault(require("./frontend/auth/customer-routes"));
+const order_routes_1 = __importDefault(require("./frontend/auth//order-routes"));
 const frontendRouter = express_1.default.Router();
 frontendRouter.use('/auth', auth_routes_1.default);
 frontendRouter.use('/common', common_routes_1.default);
@@ -21,4 +22,5 @@ frontendRouter.use('/pages/:slug', pages_controller_1.default.findPagesData);
 frontendRouter.use('/cart', cart_routes_1.default);
 frontendRouter.use('/coupons', coupon_routes_1.default);
 frontendRouter.use('/customer', customer_routes_1.default);
+frontendRouter.use('/order', order_routes_1.default);
 exports.default = frontendRouter;
