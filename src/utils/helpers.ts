@@ -268,3 +268,23 @@ export const uploadImageFromUrl = async (imageUrl: any) => {
     }
 };
 
+export type DiscountType = 'amount' | 'percentage' | 'percent' | 'amount-off';
+
+export const calculateTotalDiscountAmountDifference = (
+    totalAmount: number,
+    discountType: DiscountType,
+    discountVal: number
+  ): number => {
+    let discountAmount: number;
+  
+    if (discountType === 'amount' || discountType === 'amount-off') {
+      discountAmount = discountVal;
+    } else if (discountType === 'percent' || discountType === 'percentage') {
+      discountAmount = (discountVal / 100) * totalAmount;
+    } else {
+      discountAmount = 0;
+    }
+  
+    return discountAmount;
+  };
+  

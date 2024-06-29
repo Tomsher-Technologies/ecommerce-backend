@@ -249,7 +249,7 @@ class CartController extends BaseController {
                         let offerAmountOfProduct = offerAmount > 0 ? productVariantData.price - offerAmount : 0
                         totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
                         totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
-                        console.log("+++++++1243++", productVariantData?.discountPrice);
+                        // console.log("+++++++1243++", productVariantData?.discountPrice);
 
                         singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity))
 
@@ -260,7 +260,7 @@ class CartController extends BaseController {
                         // totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
 
                         // singleProductTotal = productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice - offerAmount) * quantity) : ((productVariantData?.price - offerAmount) * quantity)
-                        console.log("qqqqqqqqqofferAmountq", offerAmountOfProduct, offerAmount, totalDiscountAmountOfProduct, totalAmountOfProduct, singleProductTotal);
+                        // console.log("qqqqqqqqqofferAmountq", offerAmountOfProduct, offerAmount, totalDiscountAmountOfProduct, totalAmountOfProduct, singleProductTotal);
 
                         /*************************************************************** */
                         if (existingCart) {
@@ -326,12 +326,12 @@ class CartController extends BaseController {
 
                                         const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
                                         if (deletedData) {
-                                            console.log("existingCart", existingCart?.totalDiscountAmount, offerAmountOfProduct, productVariantData?.price, productVariantData?.discountPrice, existingCartProduct.quantity);
-                                            totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity))
+                                            console.log(existingCartProduct.productAmount, "existingCart", existingCart?.totalDiscountAmount, productVariantData?.price, productVariantData?.discountPrice, existingCartProduct.quantity);
+                                            totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - (offerAmountOfProduct > 0 ? (offerAmountOfProduct * existingCartProduct.quantity) : ((productVariantData?.price - productVariantData.discountPrice) * existingCartProduct.quantity))
 
-                                            totalAmountOfProduct = existingCart?.totalProductAmount - (productVariantData?.discountPrice > 0 ? ((productVariantData?.discountPrice * existingCartProduct?.quantity)) : (productVariantData?.price * existingCartProduct?.quantity))
+                                            totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount
                                             // totalDiscountAmountOfProduct = totalDiscountAmountOfProduct - (productVariantData.discountPrice * existingCartProduct?.quantity)
-                                            console.log("totalDiscountAmountOfProduct", totalDiscountAmountOfProduct, totalAmountOfProduct);
+                                            console.log("totalDiscountAmountOfProduct", totalDiscountAmountOfProduct, offerAmountOfProduct);
 
 
                                             const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
