@@ -1,45 +1,67 @@
 "use strict";
+// const mailchimp = require('@mailchimp/mailchimp_transactional')(`${process.env.MAILCHIMP_API_KEY}`);
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mailChimpSmsGateway = void 0;
-const apiUrl = 'https://api.your-sms-gateway.com/send-sms'; // Replace with your actual API URL
-const auth = 'Bearer your-auth-token'; // Replace with your actual authorization token
-const accountId = 'your-account-id'; // Replace with your actual account ID
-const mailChimpSmsGateway = async (mailChimpValues) => {
+exports.mailChimpEmailGateway = void 0;
+// export const mailChimpEmailGateway = async (mailChimpValues: any) => {
+//     try {
+//         const response = await mailchimp.messages.send({
+//             message: {
+//                 from_email: 'mail@timehouse.store', // Replace with your actual sender email
+//                 subject: 'Hello World',
+//                 text: 'This is a test email sent using Mailchimp Transactional Email API.',
+//                 to: [
+//                     {
+//                         email: mailChimpValues.email, // Replace with the actual recipient email
+//                         type: 'to'
+//                     }
+//                 ]
+//             }
+//         });
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response}`);
+//         }
+//         console.log("response :", response);
+//     } catch (error: any) {
+//         console.error('Error:', error.response, error.message);
+//         throw error;
+//     }
+// }
+const mailChimpEmailGateway = async (ethisalatDefaultValues) => {
     try {
-        console.log('Starting fetch request to:', apiUrl);
-        const response = await fetch(apiUrl, {
+        const payload = {
+            key: `${process.env.MAILCHIMP_API_KEY}`,
+            message: {
+                from_email: 'mail@timehouse.store', // Replace with your actual sender email
+                subject: 'Hello World',
+                text: 'This is a test email sent using Mailchimp Transactional Email API.',
+                to: [
+                    {
+                        email: 'hannahabdulkader@gmail.com', // Replace with the actual recipient email
+                        type: 'to'
+                    }
+                ]
+            }
+        };
+        console.log('Sending request to:', 'https://mandrillapp.com/api/1.0/messages/send.json');
+        const response = await fetch('https://mandrillapp.com/api/1.0/messages/send.json', {
             method: 'POST',
             headers: {
-                'Authorization': auth,
                 'Content-Type': 'application/json',
-                'X-Account-ID': accountId,
             },
-            body: JSON.stringify({
-                sender: 'TIME HOUSE TRADING LLC',
-                recipient: '+971556151476',
-                message: 'Hello from Etisalat SMS Gateway!',
-            }),
+            body: JSON.stringify(payload),
         });
-        console.log('Fetch request completed.');
-        const contentType = response.headers.get('content-type');
-        const responseText = await response.text(); // Read the response text
-        // Log the full response text for debugging
-        console.log('Response text:', responseText);
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Response is not JSON');
-        }
+        // console.log('response', response);
         if (!response.ok) {
-            console.error('HTTP error! Status:', response.status);
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            const responseData = await response.json();
+            console.log('response', responseData);
+            throw new Error(`HTTP error! status: ${responseData}`);
         }
-        const responseData = JSON.parse(responseText); // Parse the JSON manually
-        console.log('SMS Sent Successfully');
-        console.log(responseData); // Handle response as needed
+        const responseData = await response.json();
         return responseData;
     }
     catch (error) {
-        console.error('Error:', error);
-        throw error; // Rethrow the error to propagate it up the call stack if needed
+        console.error('Error sending SMS:', error);
+        throw error;
     }
 };
-exports.mailChimpSmsGateway = mailChimpSmsGateway;
+exports.mailChimpEmailGateway = mailChimpEmailGateway;

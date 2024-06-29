@@ -13,12 +13,13 @@ const website_setup_1 = require("../../../constants/website-setup");
 const coupon_service_1 = __importDefault(require("../../../services/frontend/auth/coupon-service"));
 const checkout_schema_1 = require("../../../utils/schemas/frontend/auth/checkout-schema");
 const helpers_1 = require("../../../utils/helpers");
-const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
-const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const tap_payment_1 = require("../../../lib/tap-payment");
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const cart_utils_1 = require("../../../utils/frontend/cart-utils");
 const payment_transaction_model_1 = __importDefault(require("../../../model/frontend/payment-transaction-model"));
+const checkout_service_1 = __importDefault(require("../../../services/frontend/checkout-service"));
+const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
+const tabby_payment_1 = require("../../../lib/tabby-payment");
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
@@ -39,7 +40,7 @@ class CheckoutController extends base_controller_1.default {
                 if (!paymentMethod) {
                     return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
                 }
-                const cart = await cart_service_1.default.findCartPopulate({
+                const cartDetails = await cart_service_1.default.findCartPopulate({
                     query: {
                         $and: [
                             { customerId: customerId },
@@ -49,16 +50,14 @@ class CheckoutController extends base_controller_1.default {
                     },
                     hostName: req.get('origin'),
                 });
-                if (!cart) {
+                if (!cartDetails) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }
-                let couponAmountTotal = 0;
-                let productId;
                 let cartUpdate = {
                     paymentMethodCharge: 0,
                     couponId: null,
-                    totalCouponAmount: couponAmountTotal,
-                    totalAmount: cart.totalAmount,
+                    totalCouponAmount: 0,
+                    totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
                     billingId: billingId
                 };
@@ -73,78 +72,6 @@ class CheckoutController extends base_controller_1.default {
                             ...cartUpdate,
                             couponId: couponDetails?.requestedData._id,
                         };
-                        const cartProductDetails = await cart_service_1.default.findAllCart({ cartId: cart._id });
-                        const productIds = cartProductDetails.map((product) => product.productId.toString());
-                        const discountedAmountByPercentage = (couponDetails?.requestedData.discountAmount) / 100 * cart.totalAmount;
-                        const couponPercentage = Math.min(discountedAmountByPercentage, couponDetails?.requestedData.discountMaxRedeemAmount);
-                        const couponAmount = couponDetails?.requestedData.discountAmount;
-                        const updateTotalCouponAmount = (product) => {
-                            if (product) {
-                                couponAmountTotal = product.productAmount - couponAmount;
-                                productId = product.productId;
-                            }
-                        };
-                        if (couponDetails?.requestedData.couponType == cart_1.couponTypes.entireOrders) {
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.amount) {
-                                couponAmountTotal = couponAmount;
-                            }
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.percentage) {
-                                couponAmountTotal = couponPercentage;
-                            }
-                        }
-                        else if (couponDetails?.requestedData.couponType == cart_1.couponTypes.forProduct) {
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.amount) {
-                                // couponAmountTotal = couponAmount
-                                const updatedCartProductDetails = cartProductDetails.map(async (product) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product);
-                                    }
-                                });
-                            }
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.percentage) {
-                                const updatedCartProductDetails = cartProductDetails.map(async (product) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product);
-                                    }
-                                });
-                            }
-                        }
-                        else if (couponDetails?.requestedData.couponType == cart_1.couponTypes.forCategory) {
-                            const productCategoryDetails = await product_category_link_model_1.default.find({ productId: { $in: productIds } });
-                            const categoryIds = productCategoryDetails.map((product) => product.categoryId.toString());
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.amount) {
-                                const updatedCartProductDetails = categoryIds.map(async (product) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product);
-                                    }
-                                });
-                            }
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.percentage) {
-                                const updatedCartProductDetails = categoryIds.map(async (product) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product);
-                                    }
-                                });
-                            }
-                        }
-                        else if (couponDetails?.requestedData.couponType == cart_1.couponTypes.forBrand) {
-                            const productDetails = await product_model_1.default.find({ _id: { $in: productIds } });
-                            const brandIds = productDetails.map((product) => product.brand.toString());
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.amount) {
-                                const updatedCartProductDetails = brandIds.map(async (product) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product);
-                                    }
-                                });
-                            }
-                            if (couponDetails?.requestedData.discountType == cart_1.couponDiscountType.percentage) {
-                                const updatedCartProductDetails = brandIds.map(async (product) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product);
-                                    }
-                                });
-                            }
-                        }
                     }
                     else {
                         return controller.sendErrorResponse(res, 200, {
@@ -154,16 +81,42 @@ class CheckoutController extends base_controller_1.default {
                 }
                 cartUpdate = {
                     ...cartUpdate,
-                    totalCouponAmount: couponAmountTotal,
-                    totalAmount: cart.totalAmount - couponAmountTotal,
+                    totalCouponAmount: 0,
+                    totalAmount: cartDetails.totalAmount,
                 };
+                let paymentRedirectionUrl = '';
                 if (paymentMethod.slug !== cart_1.paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.tap) {
-                        const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cart._id }, customerDetails);
-                        const tapResponse = await (0, tap_payment_1.tapPayment)(tapDefaultValues);
-                        console.log("cartUpdatecartUpdate", tapResponse);
+                        const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
+                        const tapResponse = await (0, tap_payment_1.tapPaymentCreate)(tapDefaultValues);
+                        if (tapResponse && tapResponse.status === cart_1.tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
+                            const paymentTransaction = await payment_transaction_model_1.default.create({
+                                transactionId: tapResponse.id,
+                                orderId: cartDetails._id,
+                                data: '',
+                                orderStatus: cart_1.orderPaymentStatus.pending, // Pending
+                                createdAt: new Date(),
+                            });
+                            if (!paymentTransaction) {
+                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                            }
+                            paymentRedirectionUrl = tapResponse.transaction.url;
+                        }
                     }
                     else if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.tabby) {
+                        const shippingAddressDetails = await customer_address_model_1.default.findById(shippingId);
+                        // const cartProductsDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails._id });
+                        const tabbyDefaultValues = (0, cart_utils_1.tabbyPaymentGatwayDefaultValues)(countryData, {
+                            ...cartUpdate,
+                            _id: cartDetails._id,
+                            orderComments: cartDetails.orderComments,
+                            cartStatusAt: cartDetails.cartStatusAt,
+                            totalDiscountAmount: cartDetails.totalDiscountAmount,
+                            totalTaxAmount: cartDetails.totalTaxAmount,
+                            products: cartDetails?.products
+                        }, customerDetails, paymentMethod, shippingAddressDetails);
+                        const tapResponse = await (0, tabby_payment_1.tabbyPaymentCreate)(tabbyDefaultValues);
+                        console.log('tapResponse', tapResponse);
                     }
                 }
                 else {
@@ -173,13 +126,18 @@ class CheckoutController extends base_controller_1.default {
                         paymentMethodCharge: codAmount.blockValues.codCharge
                     };
                 }
-                // if (couponCode) {
-                //     const updateCartProduct = await CartService.updateCartProduct(productId, { productAmount: couponAmountTotal })
-                // }
-                const updateCart = await cart_service_1.default.update(cart._id, cartUpdate);
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Some error occurred while Checkout',
-                });
+                const updateCart = await cart_service_1.default.update(cartDetails._id, cartUpdate);
+                if (!updateCart) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Cart updation is failed. Please try again' });
+                }
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        orderId: cartDetails._id,
+                        orderType: paymentMethod.slug,
+                        paymentRedirectionUrl
+                    },
+                    message: 'Order successfully Created!'
+                }, 200);
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
@@ -195,13 +153,27 @@ class CheckoutController extends base_controller_1.default {
         }
     }
     async tapSuccessResponse(req, res) {
-        console.log('here');
-        await payment_transaction_model_1.default.create({
-            data: JSON.stringify(req.query),
-            status: '1',
-            createdAt: new Date(),
-        });
-        res.redirect("http://stackoverflow.com");
+        const { tap_id, data } = req.query;
+        if (!tap_id) {
+            res.redirect("https://developers.tap.company/reference/retrieve-an-authorize?tap_id=fail"); // fail
+            return false;
+        }
+        const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id);
+        if (tapResponse.status) {
+            const retValResponse = await checkout_service_1.default.paymentResponse({
+                transactionId: tap_id, allPaymentResponseData: data,
+                paymentStatus: (tapResponse.status === cart_1.tapPaymentGatwayStatus.authorized || tapResponse.status === cart_1.tapPaymentGatwayStatus.captured) ?
+                    cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
+            });
+            if (retValResponse.status) {
+                res.redirect("http://stackoverflow.com"); // success
+                return true;
+            }
+            else {
+                res.redirect(`https://developers.tap.company/reference/retrieve-an-authorize?${retValResponse.message}`); // fail
+                return false;
+            }
+        }
     }
 }
 exports.default = new CheckoutController();

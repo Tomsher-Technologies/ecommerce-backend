@@ -4,7 +4,7 @@ exports.etisalatSmsGateway = void 0;
 const etisalatSmsGateway = async (ethisalatDefaultValues) => {
     try {
         const auth = 'Basic ' + btoa(`${'Ka477b286-20b7-4ad7-a285-878f100a93a9'}:${'S237a387d-c9e4-4362-8652-3212a695d53f'}`);
-        const response = await fetch('https://api.etisalat.com/sendSMS', {
+        const response = await fetch('https://consentportal.etisalatdigital.ae', {
             method: "POST",
             mode: "cors",
             cache: "no-cache",
