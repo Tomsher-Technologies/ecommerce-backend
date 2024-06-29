@@ -5,6 +5,7 @@ export interface CartOrderProductProps extends Document {
     productId: Schema.Types.ObjectId;
     variantId: Schema.Types.ObjectId;
     productAmount: number;
+    productDiscountAmount: number;
     productCouponAmount: number;
     quantity: number;
     slug: string;
@@ -31,6 +32,11 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         default: 1
     },
     productAmount: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    productDiscountAmount: {
         type: Number,
         required: true,
         default: 0

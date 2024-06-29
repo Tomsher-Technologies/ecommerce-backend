@@ -3,12 +3,13 @@ import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
 import { checkoutSchema } from "../../../utils/schemas/frontend/auth/checkout-schema";
 import { formatZodError } from "../../../utils/helpers";
+import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from "../../../lib/tabby-payment";
 
 import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
@@ -16,8 +17,6 @@ import { tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
-import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
-import { tabbyPaymentCreate, tabbyPaymentRetrieve } from "../../../lib/tabby-payment";
 
 const controller = new BaseController();
 
@@ -26,7 +25,7 @@ class CheckoutController extends BaseController {
     async checkout(req: Request, res: Response): Promise<void> {
         try {
 
-            const customerId: any = res.locals.user;
+            const customerId: any = res.locals.user._id;
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
@@ -56,6 +55,7 @@ class CheckoutController extends BaseController {
                     },
                     hostName: req.get('origin'),
                 })
+
                 if (!cartDetails) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }
@@ -66,7 +66,7 @@ class CheckoutController extends BaseController {
                     totalCouponAmount: 0,
                     totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
-                    billingId: billingId
+                    billingId: billingId || null
                 }
                 if (couponCode && deviceType) {
                     const query = {
@@ -132,11 +132,24 @@ class CheckoutController extends BaseController {
                                 customerDetails,
                                 paymentMethod,
                                 shippingAddressDetails);
-                            console.log('tabbyResponse', paymentMethod);
 
                             const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
+
+                            const paymentTransaction = await PaymentTransactionModel.create({
+                                transactionId: tabbyResponse.id,
+                                orderId: cartDetails._id,
+                                data: '',
+                                orderStatus: orderPaymentStatus.pending, // Pending
+                                createdAt: new Date(),
+                            });
+                            if (!paymentTransaction) {
+                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                            }
                             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
-                                paymentData = tabbyResponse.configuration.available_products
+                                paymentData = {
+                                    transactionId: tabbyResponse.id,
+                                    ...tabbyResponse.configuration.available_products
+                                }
                             }
                         } else {
                             return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
@@ -178,10 +191,51 @@ class CheckoutController extends BaseController {
         }
     }
 
+    async tabbyCheckoutRetrieveDetails(req: Request, res: Response): Promise<any> {
+        try {
+            const tabbyId = req.params.tabby;
+
+            let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
+            if (!countryData) {
+                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+            }
+
+            const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId);
+            if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
+                const customerId: any = res.locals.user._id;
+                const cartDetails: any = await CartService.findCartPopulate({
+                    query: {
+                        $and: [
+                            { customerId: customerId },
+                            { countryId: countryData._id },
+                            { cartStatus: "1" }
+                        ],
+
+                    },
+                    hostName: req.get('origin'),
+                })
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        cartDetails,
+                        orderType: orderTypes.tabby,
+                        paymentData: tabbyResponse.configuration.available_products
+                    },
+                    message: 'Order successfully Created!'
+                }, 200);
+            }
+
+        } catch (error: any) {
+
+            return controller.sendErrorResponse(res, 200, {
+                message: error.message || 'Some error occurred while get tabby payment details',
+            });
+        }
+    }
+
     async tapSuccessResponse(req: Request, res: Response): Promise<any> {
         const { tap_id, data }: any = req.query
         if (!tap_id) {
-            res.redirect("https://timehouse.vercel.app?tap_id=fail"); // fail
+            res.redirect("https://timehouse.vercel.app/?status=failure"); // failure
             return false
         }
         const tapResponse = await tapPaymentRetrieve(tap_id);
@@ -193,12 +247,15 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect("http://stackoverflow.com"); // success
+                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://timehouse.vercel.app?${retValResponse.message}`); // fail
+                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false
             }
+        } else {
+            res.redirect(`https://timehouse.vercel.app?status=${tapResponse?.status}`); // failure
+            return false
         }
     }
 

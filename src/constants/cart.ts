@@ -56,6 +56,12 @@ export const orderPaymentStatus = {
     expired: "5",
 }
 
+export const orderTypes = {
+    tap: "tap",
+    tabby: "tabby",
+    cashOnDelivery: "cash-on-delivery",
+}
+
 export const tapPaymentGatwayStatus = {
     initiated: 'INITIATED', // Tap will provide the payment URL(transaction.url) to process the payment. The customer should be redirected to this URL to complete the payment.
     authorized: 'AUTHORIZED', // The amount is successfully authorized.
