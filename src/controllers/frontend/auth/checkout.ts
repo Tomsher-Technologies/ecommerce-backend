@@ -50,7 +50,6 @@ class CheckoutController extends BaseController {
                             { countryId: countryData._id },
                             { cartStatus: "1" }
                         ],
-
                     },
                     hostName: req.get('origin'),
                 })
@@ -59,7 +58,7 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }
 
-                let cartUpdate :any= {
+                let cartUpdate: any = {
                     cartStatus: "1",
                     paymentMethodCharge: 0,
                     couponId: null,
@@ -135,17 +134,22 @@ class CheckoutController extends BaseController {
                                 shippingAddressDetails);
 
                             const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
-
-                            const paymentTransaction = await PaymentTransactionModel.create({
-                                transactionId: tabbyResponse.id,
-                                orderId: cartDetails._id,
-                                data: '',
-                                orderStatus: orderPaymentStatus.pending, // Pending
-                                createdAt: new Date(),
-                            });
-                            if (!paymentTransaction) {
+                            console.log('response', tabbyResponse);
+                            if (tabbyResponse) {
+                                const paymentTransaction = await PaymentTransactionModel.create({
+                                    transactionId: tabbyResponse.id,
+                                    orderId: cartDetails._id,
+                                    data: '',
+                                    orderStatus: orderPaymentStatus.pending, // Pending
+                                    createdAt: new Date(),
+                                });
+                                if (!paymentTransaction) {
+                                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+                            } else {
                                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
+
                             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
                                 paymentData = {
                                     transactionId: tabbyResponse.id,
