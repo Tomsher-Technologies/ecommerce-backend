@@ -6,7 +6,7 @@ export const cartStatus = [
 
 ]
 
-export const OrderStatus = [
+export const orderStatus = [
     { value: '1', label: "Pending" },
     { value: '2', label: "Processing" },
     { value: '3', label: "Shipped" },
@@ -49,3 +49,18 @@ export const couponDiscountType = {
     percentage: 'percentage',
     amount: 'amount',
 };
+
+export const orderPaymentStatus = {
+    pending: "1",
+    success: "2",
+    failure: "3",
+    cancelled: "4"
+}
+
+export const tapPaymentGatwayStatus = {
+    initiated: 'INITIATED', // Tap will provide the payment URL(transaction.url) to process the payment. The customer should be redirected to this URL to complete the payment.
+    authorized: 'AUTHORIZED', // The amount is successfully authorized.
+    captured: 'CAPTURED', //The authorized amount is successfully captured.
+    void: 'VOID' ,// The authorized amount is successfully voided.
+    cancelled: 'CANCELLED' 
+}

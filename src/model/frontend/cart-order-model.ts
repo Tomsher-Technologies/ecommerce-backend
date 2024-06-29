@@ -22,11 +22,11 @@ export interface CartOrderProps extends Document {
     couponAmount: number;
     totalGiftWrapAmount: number;
     totalAmount: number;
-    cartStatus: string;
-    orderStatus: string;
-    orderStatusAt: Date;
-    shippingStatus: string;
     orderComments: string;
+    cartStatus: string;
+    shippingStatus: string;
+    shippingStatusAt?: Date;
+    cartStatusAt?: Date;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -52,23 +52,6 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: String,
         unique: true
     },
-    cartStatus: {
-        type: String,
-        required: true,
-        default: '1'
-    },
-    orderStatus: {
-        type: String,
-        required: true,
-        default: '0'
-    },
-    orderStatusAt: {
-        type: Date,
-    },
-    shippingStatus: {
-        type: String,
-        default: '0'
-    },
     shippingId: {
         type: Schema.Types.ObjectId,
         ref: 'CustomerAddress',
@@ -79,24 +62,19 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         ref: 'CustomerAddress',
         default: null
     },
-    // paymentGatwayId: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: '',
-    //     default: null
-    // },
     pickupStoreId: {
         type: Schema.Types.ObjectId,
         ref: 'Store',
         default: null
     },
-    orderComments: {
-        type: String,
-        default: ''
-    },
     paymentMethodId: {
         type: Schema.Types.ObjectId,
         ref: 'PaymentMethods',
         default: null
+    },
+    orderComments: {
+        type: String,
+        default: ''
     },
     paymentMethodCharge: {
         type: Number,
@@ -146,7 +124,23 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: Number,
         default: 0
     },
-
+    cartStatus: {
+        type: String,
+        required: true,
+        default: '1'
+    },
+    shippingStatusAt: {
+        type: Date,
+        default: null
+    },
+    cartStatusAt: {
+        type: Date,
+        default: Date.now
+    },
+    shippingStatus: {
+        type: String,
+        default: '0'
+    },
     createdAt: {
         type: Date,
         default: Date.now

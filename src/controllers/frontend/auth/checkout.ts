@@ -1,21 +1,23 @@
 import BaseController from "../../admin/base-controller";
-import { Request, Response, query } from 'express';
+import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, couponTypes, couponDiscountType } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
 import { checkoutSchema } from "../../../utils/schemas/frontend/auth/checkout-schema";
 import { formatZodError } from "../../../utils/helpers";
-import ProductCategoryLinkModel from "../../../model/admin/ecommerce/product/product-category-link-model";
-import ProductsModel from "../../../model/admin/ecommerce/product-model";
-import axios from 'axios';
-import { tapPayment } from "../../../lib/tap-payment";
+
+import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
-import { tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
+import { tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
+import CheckoutService from "../../../services/frontend/checkout-service";
+import CustomerAddress from "../../../model/frontend/customer-address-model";
+import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
+import { tabbyPaymentCreate } from "../../../lib/tabby-payment";
 
 const controller = new BaseController();
 
@@ -43,7 +45,7 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
                 }
 
-                const cart: any = await CartService.findCartPopulate({
+                const cartDetails: any = await CartService.findCartPopulate({
                     query: {
                         $and: [
                             { customerId: customerId },
@@ -54,28 +56,25 @@ class CheckoutController extends BaseController {
                     },
                     hostName: req.get('origin'),
                 })
-                if (!cart) {
+                if (!cartDetails) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }
-                let couponAmountTotal: any = 0
-                let productId: any
+
                 let cartUpdate = {
                     paymentMethodCharge: 0,
                     couponId: null,
-                    totalCouponAmount: couponAmountTotal,
-                    totalAmount: cart.totalAmount,
+                    totalCouponAmount: 0,
+                    totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
                     billingId: billingId
                 }
                 if (couponCode && deviceType) {
-
                     const query = {
                         countryId: countryData._id,
                         couponCode,
                     } as any;
 
                     const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType });
-
                     if (couponDetails?.status) {
 
                         cartUpdate = {
@@ -83,104 +82,56 @@ class CheckoutController extends BaseController {
                             couponId: couponDetails?.requestedData._id,
                         }
 
-                        const cartProductDetails: any = await CartService.findAllCart({ cartId: cart._id });
-                        const productIds = cartProductDetails.map((product: any) => product.productId.toString());
-
-                        const discountedAmountByPercentage = (couponDetails?.requestedData.discountAmount) / 100 * cart.totalAmount
-                        const couponPercentage = Math.min(discountedAmountByPercentage, couponDetails?.requestedData.discountMaxRedeemAmount);
-                        const couponAmount = couponDetails?.requestedData.discountAmount
-
-                        const updateTotalCouponAmount = (product: any) => {
-                            if (product) {
-                                couponAmountTotal = product.productAmount - couponAmount;
-                                productId = product.productId;
-                            }
-                        };
-
-                        if (couponDetails?.requestedData.couponType == couponTypes.entireOrders) {
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
-                                couponAmountTotal = couponAmount
-                            }
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
-                                couponAmountTotal = couponPercentage
-                            }
-                        } else if (couponDetails?.requestedData.couponType == couponTypes.forProduct) {
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
-                                // couponAmountTotal = couponAmount
-                                const updatedCartProductDetails = cartProductDetails.map(async (product: any) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product)
-                                    }
-                                });
-                            }
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
-                                const updatedCartProductDetails = cartProductDetails.map(async (product: any) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product)
-                                    }
-                                });
-                            }
-                        } else if (couponDetails?.requestedData.couponType == couponTypes.forCategory) {
-                            const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
-                            const categoryIds = productCategoryDetails.map((product: any) => product.categoryId.toString());
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
-                                const updatedCartProductDetails = categoryIds.map(async (product: any) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product)
-                                    }
-                                });
-                            }
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
-                                const updatedCartProductDetails = categoryIds.map(async (product: any) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product)
-                                    }
-                                });
-                            }
-                        } else if (couponDetails?.requestedData.couponType == couponTypes.forBrand) {
-                            const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
-                            const brandIds = productDetails.map((product: any) => product.brand.toString());
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.amount) {
-                                const updatedCartProductDetails = brandIds.map(async (product: any) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product)
-                                    }
-                                });
-                            }
-                            if (couponDetails?.requestedData.discountType == couponDiscountType.percentage) {
-                                const updatedCartProductDetails = brandIds.map(async (product: any) => {
-                                    if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                        updateTotalCouponAmount(product)
-                                    }
-                                });
-                            }
-                        }
-
                     } else {
                         return controller.sendErrorResponse(res, 200, {
                             message: couponDetails?.message,
                         });
                     }
-
                 }
 
                 cartUpdate = {
                     ...cartUpdate,
-                    totalCouponAmount: couponAmountTotal,
-                    totalAmount: cart.totalAmount - couponAmountTotal,
+                    totalCouponAmount: 0,
+                    totalAmount: cartDetails.totalAmount,
                 }
 
-
+                let paymentRedirectionUrl = ''
                 if (paymentMethod.slug !== paymentMethods.cashOnDelivery) {
-
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
-                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cart._id }, customerDetails)
+                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
 
-                        const tapResponse = await tapPayment(tapDefaultValues)
-                        console.log("cartUpdatecartUpdate", tapResponse);
+                        const tapResponse = await tapPaymentCreate(tapDefaultValues);
+                        if (tapResponse && tapResponse.status === tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
+                            const paymentTransaction = await PaymentTransactionModel.create({
+                                transactionId: tapResponse.id,
+                                orderId: cartDetails._id,
+                                data: '',
+                                orderStatus: orderPaymentStatus.pending, // Pending
+                                createdAt: new Date(),
+                            });
+                            if (!paymentTransaction) {
+                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                            }
+                            paymentRedirectionUrl = tapResponse.transaction.url
+                        }
 
                     } else if (paymentMethod && paymentMethod.slug == paymentMethods.tabby) {
+                        const shippingAddressDetails: any = await CustomerAddress.findById(shippingId);
 
+                        // const cartProductsDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails._id });
+                     
+
+                        const tabbyDefaultValues = tabbyPaymentGatwayDefaultValues(countryData, {
+                            ...cartUpdate,
+                            _id: cartDetails._id,
+                            orderComments: cartDetails.orderComments,
+                            cartStatusAt: cartDetails.cartStatusAt,
+                            totalDiscountAmount: cartDetails.totalDiscountAmount,
+                            totalTaxAmount: cartDetails.totalTaxAmount,
+                            products: cartDetails?.products
+                        }, customerDetails, paymentMethod, shippingAddressDetails);
+                        const tapResponse = await tabbyPaymentCreate(tabbyDefaultValues);
+                        console.log('tapResponse', tapResponse);
                     }
                 } else {
                     const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
@@ -190,15 +141,18 @@ class CheckoutController extends BaseController {
                     }
                 }
 
-                // if (couponCode) {
-                //     const updateCartProduct = await CartService.updateCartProduct(productId, { productAmount: couponAmountTotal })
-                // }
-                const updateCart = await CartService.update(cart._id, cartUpdate)
-
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Some error occurred while Checkout',
-                });
-
+                const updateCart = await CartService.update(cartDetails._id, cartUpdate)
+                if (!updateCart) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Cart updation is failed. Please try again' });
+                }
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        orderId: cartDetails._id,
+                        orderType: paymentMethod.slug,
+                        paymentRedirectionUrl
+                    },
+                    message: 'Order successfully Created!'
+                }, 200);
 
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -206,8 +160,6 @@ class CheckoutController extends BaseController {
                     validation: formatZodError(validatedData.error.errors)
                 });
             }
-
-
 
         } catch (error: any) {
 
@@ -217,15 +169,28 @@ class CheckoutController extends BaseController {
         }
     }
 
-    async tapSuccessResponse(req: Request, res: Response): Promise<void> {
-        console.log('here',);
-        await PaymentTransactionModel.create({
-            data: JSON.stringify(req.query),
-            status: '1',
-            createdAt: new Date(),
-        })
-        res.redirect("http://stackoverflow.com");
+    async tapSuccessResponse(req: Request, res: Response): Promise<any> {
+        const { tap_id, data }: any = req.query
+        if (!tap_id) {
+            res.redirect("https://developers.tap.company/reference/retrieve-an-authorize?tap_id=fail"); // fail
+            return false
+        }
+        const tapResponse = await tapPaymentRetrieve(tap_id);
+        if (tapResponse.status) {
+            const retValResponse = await CheckoutService.paymentResponse({
+                transactionId: tap_id, allPaymentResponseData: data,
+                paymentStatus: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
+                    orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
+            });
 
+            if (retValResponse.status) {
+                res.redirect("http://stackoverflow.com"); // success
+                return true
+            } else {
+                res.redirect(`https://developers.tap.company/reference/retrieve-an-authorize?${retValResponse.message}`); // fail
+                return false
+            }
+        }
     }
 }
 
