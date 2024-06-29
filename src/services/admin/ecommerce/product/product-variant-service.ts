@@ -67,10 +67,14 @@ class ProductVariantService {
 
         return ProductVariantModel.aggregate(pipeline).exec();
     }
-    async find(query: any): Promise<ProductVariantsProps[]> {
-
-        const variantData = await ProductVariantModel.find(query)
-        return variantData
+    async find(query: any): Promise<ProductVariantsProps | null> {
+        const variantData = await ProductVariantModel.findOne(query)
+        if (variantData) {
+            return variantData
+        }
+        else {
+            return null
+        }
     }
     async findVariant(productId: string, id: string): Promise<ProductVariantsProps[]> {
 
