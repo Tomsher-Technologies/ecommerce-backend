@@ -42,10 +42,10 @@ const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) =
             "time": 100
         },
         "post": {
-            "url": "https://thadmin.staging-ecom.com/api/common/tap-success-response"
+            "url": "https://thadmin.staging-ecom.com/api/cart/tap-success-response"
         },
         "redirect": {
-            "url": "https://thadmin.staging-ecom.com/api/common/tap-success-response"
+            "url": "https://thadmin.staging-ecom.com/api/cart/tap-success-response"
         }
     };
 };

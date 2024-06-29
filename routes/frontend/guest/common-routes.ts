@@ -16,9 +16,6 @@ router.get('/collection-categories', CommonController.findCollectionCategories);
 router.get('/collection-brands', CommonController.findCollectionBrands);
 router.get('/payment-methods', CommonController.findPaymentMethods);
 router.get('/stores', CommonController.findAllStores);
-router.get('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.get('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.post('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.post('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
+
 
 export default router;
