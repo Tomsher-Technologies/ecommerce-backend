@@ -18,17 +18,17 @@ class CheckoutService {
         if (!paymentDetails) {
             return {
                 status: false,
-                message: 'paymentDetails=fail'
+                message: 'Payment transactions not found'
             };
         }
         const cartDetails = await cart_order_model_1.default.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" });
-        // console.log('cartDetails', cartDetails);
+        console.log('cartDetails', paymentDetails?.orderId);
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
                 orderId: null,
                 status: false,
-                message: 'cartDetails=fail'
+                message: 'Active cart not found'
             };
         }
         if (paymentStatus === cart_1.orderPaymentStatus.success) {
@@ -49,7 +49,7 @@ class CheckoutService {
                 return {
                     orderId: cartDetails._id,
                     status: false,
-                    message: 'updateTransaction=fail'
+                    message: 'update transaction is fail please contact administrator'
                 };
             }
         }
@@ -132,7 +132,8 @@ class CheckoutService {
             cartUpdate = {
                 ...cartUpdate,
                 cartStatus: cart_1.cartStatus.order,
-                cartStatusAt: new Date(),
+                processingStatusAt: new Date(),
+                orderStatusAt: new Date(),
             };
             const updateCart = await cart_service_1.default.update(cartDetails?._id, cartUpdate);
             if (!updateCart) {

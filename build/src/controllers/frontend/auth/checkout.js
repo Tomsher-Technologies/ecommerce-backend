@@ -54,12 +54,14 @@ class CheckoutController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }
                 let cartUpdate = {
+                    cartStatus: "1",
                     paymentMethodCharge: 0,
                     couponId: null,
                     totalCouponAmount: 0,
                     totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
-                    billingId: billingId || null
+                    billingId: billingId || null,
+                    orderStatusAt: null,
                 };
                 if (couponCode && deviceType) {
                     const query = {
@@ -144,7 +146,9 @@ class CheckoutController extends base_controller_1.default {
                     const codAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.defualtSettings });
                     cartUpdate = {
                         ...cartUpdate,
-                        paymentMethodCharge: codAmount.blockValues.codCharge
+                        paymentMethodCharge: codAmount.blockValues.codCharge,
+                        cartStatus: "2",
+                        orderStatusAt: new Date(),
                     };
                 }
                 const updateCart = await cart_service_1.default.update(cartDetails._id, cartUpdate);
@@ -257,7 +261,7 @@ class CheckoutController extends base_controller_1.default {
                 paymentStatus: (tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.closed) ?
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });
-            console.log('tabbyId', tabbyResponse);
+            console.log('tabbyResponse', retValResponse);
             if (retValResponse.status) {
                 res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
                 return true;
