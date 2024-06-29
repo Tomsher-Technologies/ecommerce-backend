@@ -17,5 +17,10 @@ router.get('/collection-brands', CommonController.findCollectionBrands);
 router.get('/payment-methods', CommonController.findPaymentMethods);
 router.get('/stores', CommonController.findAllStores);
 
+router.get('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
+router.get('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
+
+router.get('/tabby-success-response', logResponseStatus, checkoutController.tabbySuccessResponse);
+router.get('/tabby-failure-response', logResponseStatus, checkoutController.tabbySuccessResponse);
 
 export default router;
