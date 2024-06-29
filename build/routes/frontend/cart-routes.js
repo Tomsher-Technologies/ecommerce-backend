@@ -15,6 +15,4 @@ router.get('/get-cart', response_status_1.logResponseStatus, cart_order_controll
 router.post('/add-gift-wrap', response_status_1.logResponseStatus, cart_order_controller_1.default.addGiftWrap);
 router.get('/tap-success-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
 router.get('/tap-failure-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
-router.get('/tabby-success-response', response_status_1.logResponseStatus, checkout_1.default.tabbySuccessResponse);
-router.get('/tabby-failure-response', response_status_1.logResponseStatus, checkout_1.default.tabbySuccessResponse);
 exports.default = router;
