@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const response_status_1 = require("../../../src/components/response-status");
 const common_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/common-controller"));
-const checkout_1 = __importDefault(require("../../../src/controllers/frontend/auth/checkout"));
 const router = express_1.default.Router();
 router.get('/countries', response_status_1.logResponseStatus, common_controller_1.default.findAllCountries);
 router.get('/slider', response_status_1.logResponseStatus, common_controller_1.default.findAllSliders);
@@ -18,8 +17,4 @@ router.get('/collection-categories', common_controller_1.default.findCollectionC
 router.get('/collection-brands', common_controller_1.default.findCollectionBrands);
 router.get('/payment-methods', common_controller_1.default.findPaymentMethods);
 router.get('/stores', common_controller_1.default.findAllStores);
-router.get('/tap-success-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
-router.get('/tap-failure-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
-router.post('/tap-success-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
-router.post('/tap-failure-response', response_status_1.logResponseStatus, checkout_1.default.tapSuccessResponse);
 exports.default = router;
