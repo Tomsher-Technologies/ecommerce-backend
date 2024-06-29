@@ -14,8 +14,7 @@ router.get('/get-cart', logResponseStatus, cartOrderController.findUserCart);
 router.post('/add-gift-wrap', logResponseStatus, cartOrderController.addGiftWrap);
 router.get('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
 router.get('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.get('/tabby-success-response', logResponseStatus, checkoutController.tabbySuccessResponse);
-router.get('/tabby-failure-response', logResponseStatus, checkoutController.tabbySuccessResponse);
+
 
 
 
