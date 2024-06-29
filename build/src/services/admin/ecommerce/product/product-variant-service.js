@@ -57,8 +57,13 @@ class ProductVariantService {
         return product_variants_model_1.default.aggregate(pipeline).exec();
     }
     async find(query) {
-        const variantData = await product_variants_model_1.default.find(query);
-        return variantData;
+        const variantData = await product_variants_model_1.default.findOne(query);
+        if (variantData) {
+            return variantData;
+        }
+        else {
+            return null;
+        }
     }
     async findVariant(productId, id) {
         const variantData = await product_variants_model_1.default.find({

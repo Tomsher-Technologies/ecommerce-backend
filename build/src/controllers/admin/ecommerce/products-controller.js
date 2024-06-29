@@ -400,7 +400,6 @@ class ProductsController extends base_controller_1.default {
                                     /**********************************************************/
                                     const imageUrl = data.Image;
                                     const productImage = await (0, helpers_2.uploadImageFromUrl)(imageUrl);
-                                    console.log("productImageproductImage", productImage);
                                     if (productImage == null) {
                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index });
                                     }
@@ -492,7 +491,6 @@ class ProductsController extends base_controller_1.default {
                                                                 }
                                                                 // await combinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of combinedArray) {
-                                                                    console.log(value);
                                                                     const attributes = await attributes_service_1.default.findOneAttribute({ value });
                                                                     attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId });
                                                                 }
@@ -643,7 +641,7 @@ class ProductsController extends base_controller_1.default {
                                                                 else if (data.Item_Type == 'variant') {
                                                                     if (data.Parent_SKU) {
                                                                         const product = await product_service_1.default.find({ sku: data.Parent_SKU });
-                                                                        if (!product) {
+                                                                        if (product) {
                                                                             var slugData;
                                                                             // if (data.Product_Title === product.productTitle) {
                                                                             //     slugData = product?.slug
@@ -651,57 +649,65 @@ class ProductsController extends base_controller_1.default {
                                                                             // else {
                                                                             //     slugData = product?.slug + "-" + data.Product_Title
                                                                             // }
-                                                                            slugData = product.productTitle + "-" + countryForSlug + '-' + (index + 1); // generate slug
-                                                                            if (product.productTitle === productVariants.extraProductTitle) {
+                                                                            slugData = data.Product_Title + "-" + countryForSlug + '-' + (index + 1); // generate slug
+                                                                            console.log("iuyiyuiyuiyu");
+                                                                            if (data.Product_Title === productVariants.extraProductTitle) {
                                                                                 productVariants.extraProductTitle = "";
                                                                             }
                                                                             productVariants = {
                                                                                 ...productVariants,
                                                                                 slug: (0, helpers_1.slugify)(slugData)
                                                                             };
-                                                                            const createVariant = await product_variant_service_1.default.create(product._id, productVariants, userData);
-                                                                            if (createVariant) {
-                                                                                if (attributeData && attributeData.length > 0) {
-                                                                                    for await (const attribute of attributeData) {
-                                                                                        const attributeValues = {
-                                                                                            variantId: createVariant._id,
-                                                                                            productId: product._id,
-                                                                                            ...attribute
-                                                                                        };
-                                                                                        const attributes = await product_variant_attributes_service_1.default.create(attributeValues);
+                                                                            const variant = await product_variant_service_1.default.find({ slug: productVariants.slug });
+                                                                            if (!variant) {
+                                                                                const createVariant = await product_variant_service_1.default.create(product._id, productVariants, userData);
+                                                                                if (createVariant) {
+                                                                                    if (attributeData && attributeData.length > 0) {
+                                                                                        for await (const attribute of attributeData) {
+                                                                                            const attributeValues = {
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: product._id,
+                                                                                                ...attribute
+                                                                                            };
+                                                                                            const attributes = await product_variant_attributes_service_1.default.create(attributeValues);
+                                                                                        }
                                                                                     }
-                                                                                }
-                                                                                if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                    const newSeo = await seo_page_service_1.default.create({
-                                                                                        pageId: product._id,
-                                                                                        pageReferenceId: createVariant._id,
-                                                                                        page: seo_page_1.seoPage.ecommerce.products,
-                                                                                        ...productSeo
-                                                                                    });
-                                                                                }
-                                                                                if (specificationData && specificationData.length > 0) {
-                                                                                    for await (const specification of specificationData) {
-                                                                                        const specificationValues = {
-                                                                                            variantId: createVariant._id,
-                                                                                            productId: product._id,
-                                                                                            ...specification
-                                                                                        };
-                                                                                        const specifications = await product_specification_service_1.default.create(specificationValues);
+                                                                                    if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                                        const newSeo = await seo_page_service_1.default.create({
+                                                                                            pageId: product._id,
+                                                                                            pageReferenceId: createVariant._id,
+                                                                                            page: seo_page_1.seoPage.ecommerce.products,
+                                                                                            ...productSeo
+                                                                                        });
                                                                                     }
-                                                                                }
-                                                                                if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                    for await (const galleryImage of galleryImageArray) {
-                                                                                        const galleryImageData = {
-                                                                                            variantId: createVariant._id,
-                                                                                            ...galleryImage
-                                                                                        };
-                                                                                        const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
+                                                                                    if (specificationData && specificationData.length > 0) {
+                                                                                        for await (const specification of specificationData) {
+                                                                                            const specificationValues = {
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: product._id,
+                                                                                                ...specification
+                                                                                            };
+                                                                                            const specifications = await product_specification_service_1.default.create(specificationValues);
+                                                                                        }
+                                                                                    }
+                                                                                    if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                        for await (const galleryImage of galleryImageArray) {
+                                                                                            const galleryImageData = {
+                                                                                                variantId: createVariant._id,
+                                                                                                ...galleryImage
+                                                                                            };
+                                                                                            const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                             }
+                                                                            else {
+                                                                                validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Variant " + data.Product_Title + " is already existing" });
+                                                                                // throw new Error('not inserted')
+                                                                            }
                                                                         }
                                                                         else {
-                                                                            validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" });
+                                                                            validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: data.Product_Title + " is already existing" });
                                                                             // throw new Error('not inserted')
                                                                         }
                                                                     }
