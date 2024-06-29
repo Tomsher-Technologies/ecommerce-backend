@@ -248,6 +248,7 @@ class CartController extends BaseController {
                         }
                         var cartOrderData
                         const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings })
+                        const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
 
                         if (existingCart) {
                             const existingCartProduct: any = await CartService.findCartProduct({
@@ -351,15 +352,14 @@ class CartController extends BaseController {
                                 totalProductAmount: totalAmountOfProduct,
                                 totalReturnedProduct,
                                 totalDiscountAmount: totalDiscountAmountOfProduct,
-                                totalShippingAmount: shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0,
+                                totalShippingAmount: shippingCharge,
                                 totalCouponAmount,
                                 totalWalletAmount,
                                 codAmount,
                                 // codAmount: Number(codAmount.blockValues.codCharge),
                                 totalTaxAmount,
-                                totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0),
+                                totalAmount: totalAmountOfProduct + shippingCharge,
                             };
-
 
 
                             newCartOrder = await CartService.update(existingCart._id, cartOrderData);
@@ -409,7 +409,6 @@ class CartController extends BaseController {
 
                             totalDiscountAmountOfProduct = singleProductDiscountTotal
                             totalAmountOfProduct = singleProductTotal
-                            console.log("hhhhhhhhhhhhhhhhhhhhhhhhh", quantityProduct, totalDiscountAmountOfProduct, totalAmountOfProduct);
                             cartOrderData = {
                                 customerId: customer,
                                 guestUserId: guestUser,
@@ -427,13 +426,13 @@ class CartController extends BaseController {
                                 totalProductAmount: totalAmountOfProduct,
                                 totalReturnedProduct,
                                 totalDiscountAmount: totalDiscountAmountOfProduct,
-                                totalShippingAmount: shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0,
+                                totalShippingAmount: shippingCharge,
                                 totalCouponAmount,
                                 totalWalletAmount,
                                 codAmount,
                                 // codAmount: Number(codAmount.blockValues.codCharge),
                                 totalTaxAmount,
-                                totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0),
+                                totalAmount: totalAmountOfProduct + shippingCharge,
                             };
 
                             newCartOrder = await CartService.create(cartOrderData);
