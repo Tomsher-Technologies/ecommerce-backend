@@ -199,8 +199,12 @@ class CheckoutController extends BaseController {
             if (!countryData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
             }
+            const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby })
+            if (!paymentMethod) {
+                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
+            }
 
-            const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId);
+            const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId, paymentMethod.paymentMethodValues);
             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
                 const customerId: any = res.locals.user._id;
                 const cartDetails: any = await CartService.findCartPopulate({
@@ -265,13 +269,18 @@ class CheckoutController extends BaseController {
             res.redirect("https://timehouse.vercel.app/?status=failure"); // failure
             return false
         }
-        const tabbyResponse = await tabbyPaymentRetrieve(payment_id);
+        const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby })
+        if (!paymentMethod) {
+            res.redirect("https://timehouse.vercel.app/?status=failure&message=Payment method not found. Please contact administrator"); // failure
+        }
+        const tabbyResponse = await tabbyPaymentRetrieve(payment_id,paymentMethod.paymentMethodValues);
         if (tabbyResponse.status) {
             const retValResponse = await CheckoutService.paymentResponse({
                 transactionId: payment_id, allPaymentResponseData: null,
                 paymentStatus: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
                     orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : orderPaymentStatus.expired)
             });
+            console.log('tabbyId', tabbyResponse);
 
             if (retValResponse.status) {
                 res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
