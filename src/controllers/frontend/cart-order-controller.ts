@@ -231,6 +231,7 @@ class CartController extends BaseController {
                         })
                         let offerAmount = 0
                         let singleProductTotal = 0
+                        let singleProductDiscountTotal = 0
                         for (let i = 0; i < offerProduct.productVariants.length; i++) {
 
                             if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
@@ -247,11 +248,12 @@ class CartController extends BaseController {
                             }
                         }
                         let offerAmountOfProduct = offerAmount > 0 ? productVariantData.price - offerAmount : 0
-                        totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
-                        totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
-                        // console.log("+++++++1243++", productVariantData?.discountPrice);
+                        totalDiscountAmountOfProduct = offerAmountOfProduct == 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
+                        totalAmountOfProduct = totalDiscountAmountOfProduct == 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity)
+                        console.log("+++++++1243++", productVariantData?.discountPrice, totalAmountOfProduct);
 
                         singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity))
+                        singleProductDiscountTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity))
 
 
                         /********************************************************** */
@@ -313,7 +315,7 @@ class CartController extends BaseController {
                                 else if (quantity == 1) {
 
                                     quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity
-                                    totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity))
+                                    totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct == 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity))
 
                                     totalAmountOfProduct = offerAmount ? existingCart.totalProductAmount + offerAmount : existingCart.totalProductAmount + totalAmountOfProduct
                                     console.log(totalDiscountAmountOfProduct, totalAmountOfProduct, quantityProduct);
@@ -440,6 +442,7 @@ class CartController extends BaseController {
                                     productId: productVariantData.productId,
                                     quantity: quantityProduct,
                                     productAmount: singleProductTotal,
+                                    productDiscountAmount: singleProductDiscountTotal,
                                     slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),
@@ -473,6 +476,7 @@ class CartController extends BaseController {
                                     productId: productVariantData.productId,
                                     quantity: quantityProduct ? 0 : quantity,
                                     productAmount: singleProductTotal,
+                                    productDiscountAmount: singleProductDiscountTotal,
                                     slug: productVariantData.slug,
                                     orderStatus,
                                     createdAt: new Date(),

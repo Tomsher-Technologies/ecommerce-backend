@@ -205,9 +205,9 @@ class CartController extends base_controller_1.default {
                         }
                     }
                     let offerAmountOfProduct = offerAmount > 0 ? productVariantData.price - offerAmount : 0;
-                    totalDiscountAmountOfProduct = offerAmountOfProduct > 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
-                    totalAmountOfProduct = totalDiscountAmountOfProduct > 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
-                    // console.log("+++++++1243++", productVariantData?.discountPrice);
+                    totalDiscountAmountOfProduct = offerAmountOfProduct == 0 ? offerAmountOfProduct : (productVariantData?.price - productVariantData.discountPrice) * quantity;
+                    totalAmountOfProduct = totalDiscountAmountOfProduct == 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
+                    console.log("+++++++1243++", productVariantData?.discountPrice, totalAmountOfProduct);
                     singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity));
                     /********************************************************** */
                     // let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0
@@ -251,7 +251,7 @@ class CartController extends base_controller_1.default {
                         }
                         else if (quantity == 1) {
                             quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity;
-                            totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct > 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity));
+                            totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + (offerAmountOfProduct == 0 ? offerAmountOfProduct : ((productVariantData?.price - productVariantData.discountPrice) * quantity));
                             totalAmountOfProduct = offerAmount ? existingCart.totalProductAmount + offerAmount : existingCart.totalProductAmount + totalAmountOfProduct;
                             console.log(totalDiscountAmountOfProduct, totalAmountOfProduct, quantityProduct);
                         }

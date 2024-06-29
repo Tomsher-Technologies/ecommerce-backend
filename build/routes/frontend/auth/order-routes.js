@@ -15,4 +15,5 @@ router.get('/order-list', response_status_1.logResponseStatus, order_controller_
 router.get('/:id', response_status_1.logResponseStatus, order_controller_1.default.getOrder);
 router.post('/move-to-wishlist', response_status_1.logResponseStatus, cart_order_controller_1.default.moveToWishlist);
 router.post('/checkout', response_status_1.logResponseStatus, checkout_1.default.checkout);
+router.get('/checkout/retrieve-checkout-tabby/:tabby', response_status_1.logResponseStatus, checkout_1.default.tabbyCheckoutRetrieveDetails);
 exports.default = router;

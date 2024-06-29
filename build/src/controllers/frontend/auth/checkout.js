@@ -13,18 +13,18 @@ const website_setup_1 = require("../../../constants/website-setup");
 const coupon_service_1 = __importDefault(require("../../../services/frontend/auth/coupon-service"));
 const checkout_schema_1 = require("../../../utils/schemas/frontend/auth/checkout-schema");
 const helpers_1 = require("../../../utils/helpers");
+const tabby_payment_1 = require("../../../lib/tabby-payment");
 const tap_payment_1 = require("../../../lib/tap-payment");
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const cart_utils_1 = require("../../../utils/frontend/cart-utils");
 const payment_transaction_model_1 = __importDefault(require("../../../model/frontend/payment-transaction-model"));
 const checkout_service_1 = __importDefault(require("../../../services/frontend/checkout-service"));
 const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
-const tabby_payment_1 = require("../../../lib/tabby-payment");
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
         try {
-            const customerId = res.locals.user;
+            const customerId = res.locals.user._id;
             let countryData = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
@@ -59,7 +59,7 @@ class CheckoutController extends base_controller_1.default {
                     totalCouponAmount: 0,
                     totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
-                    billingId: billingId
+                    billingId: billingId || null
                 };
                 if (couponCode && deviceType) {
                     const query = {
@@ -117,10 +117,22 @@ class CheckoutController extends base_controller_1.default {
                                 totalTaxAmount: cartDetails.totalTaxAmount,
                                 products: cartDetails?.products
                             }, customerDetails, paymentMethod, shippingAddressDetails);
-                            console.log('tabbyResponse', paymentMethod);
                             const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentCreate)(tabbyDefaultValues, paymentMethod.paymentMethodValues);
+                            const paymentTransaction = await payment_transaction_model_1.default.create({
+                                transactionId: tabbyResponse.id,
+                                orderId: cartDetails._id,
+                                data: '',
+                                orderStatus: cart_1.orderPaymentStatus.pending, // Pending
+                                createdAt: new Date(),
+                            });
+                            if (!paymentTransaction) {
+                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                            }
                             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
-                                paymentData = tabbyResponse.configuration.available_products;
+                                paymentData = {
+                                    transactionId: tabbyResponse.id,
+                                    ...tabbyResponse.configuration.available_products
+                                };
                             }
                         }
                         else {
@@ -161,10 +173,46 @@ class CheckoutController extends base_controller_1.default {
             });
         }
     }
+    async tabbyCheckoutRetrieveDetails(req, res) {
+        try {
+            const tabbyId = req.params.tabby;
+            let countryData = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'), true);
+            if (!countryData) {
+                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+            }
+            const tabbyResponse = await (0, tabby_payment_1.tabbyCheckoutRetrieve)(tabbyId);
+            if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
+                const customerId = res.locals.user._id;
+                const cartDetails = await cart_service_1.default.findCartPopulate({
+                    query: {
+                        $and: [
+                            { customerId: customerId },
+                            { countryId: countryData._id },
+                            { cartStatus: "1" }
+                        ],
+                    },
+                    hostName: req.get('origin'),
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        cartDetails,
+                        orderType: cart_1.orderTypes.tabby,
+                        paymentData: tabbyResponse.configuration.available_products
+                    },
+                    message: 'Order successfully Created!'
+                }, 200);
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 200, {
+                message: error.message || 'Some error occurred while get tabby payment details',
+            });
+        }
+    }
     async tapSuccessResponse(req, res) {
         const { tap_id, data } = req.query;
         if (!tap_id) {
-            res.redirect("https://timehouse.vercel.app?tap_id=fail"); // fail
+            res.redirect("https://timehouse.vercel.app/?status=failure"); // failure
             return false;
         }
         const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id);
@@ -175,13 +223,17 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
             });
             if (retValResponse.status) {
-                res.redirect("http://stackoverflow.com"); // success
+                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://timehouse.vercel.app?${retValResponse.message}`); // fail
+                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false;
             }
+        }
+        else {
+            res.redirect(`https://timehouse.vercel.app?status=${tapResponse?.status}`); // failure
+            return false;
         }
     }
     async tabbySuccessResponse(req, res) {
