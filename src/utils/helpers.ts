@@ -254,12 +254,13 @@ export const uploadImageFromUrl = async (imageUrl: any) => {
 
         // Make the HTTP/HTTPS GET request to the image URL
         const response = await new Promise((resolve, reject) => {
-            protocol.get(imageUrl, (res: any) => {
+            protocol.get(imageUrl, { timeout: 60000 }, (res: any) => {
                 res.pipe(writer);
                 res.on('end', () => resolve(filename));
                 res.on('error', reject);
             }).on('error', reject);
         });
+        // const req = protocol.get(imageUrl, { timeout: 10000 }, (res: any) => {
 
         return response; // Return the filename when download completes
     } catch (error) {
@@ -274,17 +275,16 @@ export const calculateTotalDiscountAmountDifference = (
     totalAmount: number,
     discountType: DiscountType,
     discountVal: number
-  ): number => {
+): number => {
     let discountAmount: number;
-  
+
     if (discountType === 'amount' || discountType === 'amount-off') {
-      discountAmount = discountVal;
+        discountAmount = discountVal;
     } else if (discountType === 'percent' || discountType === 'percentage') {
-      discountAmount = (discountVal / 100) * totalAmount;
+        discountAmount = (discountVal / 100) * totalAmount;
     } else {
-      discountAmount = 0;
+        discountAmount = 0;
     }
-  
+
     return discountAmount;
-  };
-  
+};

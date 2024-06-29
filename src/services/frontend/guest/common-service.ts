@@ -390,7 +390,6 @@ class CommonService {
                 productPipeline.push(productMultilanguageFieldsLookup);
                 productPipeline.push(productFinalProject);
                 const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName)
-console.log("getOfferListgetOfferList",getOfferList);
 
                 if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
                     const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
@@ -402,7 +401,6 @@ console.log("getOfferListgetOfferList",getOfferList);
                     const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
                     productPipeline.push(offerProduct)
                 }
-                console.log("................", productPipeline);
 
                 productPipeline.push({
                     $addFields: {

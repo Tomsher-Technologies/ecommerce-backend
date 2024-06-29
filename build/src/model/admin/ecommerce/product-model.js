@@ -58,7 +58,9 @@ const productsSchema = new mongoose_1.Schema({
     },
     productImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        },
     },
     isVariant: {
         type: Number,
