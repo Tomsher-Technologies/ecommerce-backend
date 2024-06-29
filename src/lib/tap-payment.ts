@@ -20,7 +20,6 @@ export const tapPaymentCreate = async (tapDefaultValues: any) => {
         }
 
         const responseData = await response.json();
-        // console.log('response', responseData);
 
         return responseData;
     } catch (error) {

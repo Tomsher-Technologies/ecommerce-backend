@@ -21,7 +21,6 @@ const tapPaymentCreate = async (tapDefaultValues) => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const responseData = await response.json();
-        // console.log('response', responseData);
         return responseData;
     }
     catch (error) {
