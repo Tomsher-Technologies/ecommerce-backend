@@ -23,7 +23,7 @@ export const tabbyPaymentCreate = async (tabbyDefaultValues: any, paymentMethodV
         const responseData = await response.json();
 
         if (responseData && responseData.status === tabbyPaymentGatwayStatus.created) {
-            return tabbyCheckoutRetrieve(responseData.id)
+            return tabbyCheckoutRetrieve(responseData.id, paymentMethodValues)
         }
         // return responseData;
     } catch (error) {
@@ -33,7 +33,7 @@ export const tabbyPaymentCreate = async (tabbyDefaultValues: any, paymentMethodV
 }
 
 
-export const tabbyCheckoutRetrieve = async (tabbyId: any) => {
+export const tabbyCheckoutRetrieve = async (tabbyId: any, paymentMethodValues: any) => {
     try {
 
         const response = await fetch(`https://api.tabby.ai/api/v2/checkout/${tabbyId}`, {
@@ -44,7 +44,7 @@ export const tabbyCheckoutRetrieve = async (tabbyId: any) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${process.env.TABBY_TEST_KEY}`
+                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
@@ -62,7 +62,7 @@ export const tabbyCheckoutRetrieve = async (tabbyId: any) => {
     }
 }
 
-export const tabbyPaymentRetrieve = async (tabbyId: any) => {
+export const tabbyPaymentRetrieve = async (tabbyId: any, paymentMethodValues: any) => {
     try {
 
         const response = await fetch(`https://api.tabby.ai/api/v2/payments/${tabbyId}`, {
@@ -73,7 +73,7 @@ export const tabbyPaymentRetrieve = async (tabbyId: any) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${process.env.TABBY_TEST_KEY}`
+                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
