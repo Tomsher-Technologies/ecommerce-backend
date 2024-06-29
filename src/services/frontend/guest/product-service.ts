@@ -191,9 +191,8 @@ class ProductService {
                 // }
             }
         } else {
-            // const language: any = await this.productLanguage(hostName, pipeline)
-
-            productData = collection.productData
+            const language: any = await this.productLanguage(hostName, pipeline)
+            productData = await ProductsModel.aggregate(language).exec();
 
         }
 
@@ -223,11 +222,17 @@ class ProductService {
         }
         else if (collection && collection.collectionsBrands) {
 
-            productData = collection.productData
+            for await (let data of collection.collectionsBrands) {
+                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
 
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await ProductsModel.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0])
+                }
+            }
         } else {
-            productData = collection.productData
-
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' })
         }
 
         const attributeArray: any = []
@@ -356,10 +361,17 @@ class ProductService {
         }
         else if (collection && collection.collectionsBrands) {
 
-            productData = collection.productData
+            for await (let data of collection.collectionsBrands) {
+                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
 
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await ProductsModel.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0])
+                }
+            }
         } else {
-            productData = collection.productData
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' })
         }
         const specificationArray: any = []
 

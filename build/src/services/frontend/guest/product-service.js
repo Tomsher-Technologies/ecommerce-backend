@@ -165,8 +165,8 @@ class ProductService {
             }
         }
         else {
-            // const language: any = await this.productLanguage(hostName, pipeline)
-            productData = collection.productData;
+            const language = await this.productLanguage(hostName, pipeline);
+            productData = await product_model_1.default.aggregate(language).exec();
         }
         return productData;
     }
@@ -189,10 +189,17 @@ class ProductService {
             productData = collection.productData;
         }
         else if (collection && collection.collectionsBrands) {
-            productData = collection.productData;
+            for await (let data of collection.collectionsBrands) {
+                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await product_model_1.default.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0]);
+                }
+            }
         }
         else {
-            productData = collection.productData;
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
         }
         const attributeArray = [];
         if (productData) {
@@ -293,10 +300,17 @@ class ProductService {
             productData = collection.productData;
         }
         else if (collection && collection.collectionsBrands) {
-            productData = collection.productData;
+            for await (let data of collection.collectionsBrands) {
+                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
+                // productData = await ProductsModel.aggregate(language).exec();
+                const result = await product_model_1.default.aggregate(language).exec();
+                if (result && result.length > 0) {
+                    productData.push(result[0]);
+                }
+            }
         }
         else {
-            productData = collection.productData;
+            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
         }
         const specificationArray = [];
         if (productData) {
