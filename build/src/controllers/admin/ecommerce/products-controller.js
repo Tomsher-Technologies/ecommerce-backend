@@ -509,7 +509,7 @@ class ProductsController extends base_controller_1.default {
                                                                 }
                                                                 const galleryImageArray = [];
                                                                 for (let i = 0; i < galleryImage.length; i++) {
-                                                                    const productImage = await (0, helpers_2.uploadImageFromUrl)(imageUrl);
+                                                                    const productImage = await (0, helpers_2.uploadImageFromUrl)(data[galleryImage[i]]);
                                                                     if (productImage == null) {
                                                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index });
                                                                     }

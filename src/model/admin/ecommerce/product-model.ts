@@ -36,7 +36,9 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     productImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        },
     },
     isVariant: {
         type: Number,
