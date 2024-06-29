@@ -204,6 +204,7 @@ class CartController extends base_controller_1.default {
                     }
                     var cartOrderData;
                     const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings });
+                    const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
@@ -300,13 +301,13 @@ class CartController extends base_controller_1.default {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0,
+                            totalShippingAmount: shippingCharge,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount,
-                            totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0),
+                            totalAmount: totalAmountOfProduct + shippingCharge,
                         };
                         newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
                         if (newCartOrder) {
@@ -348,7 +349,6 @@ class CartController extends base_controller_1.default {
                         singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
                         totalDiscountAmountOfProduct = singleProductDiscountTotal;
                         totalAmountOfProduct = singleProductTotal;
-                        console.log("hhhhhhhhhhhhhhhhhhhhhhhhh", quantityProduct, totalDiscountAmountOfProduct, totalAmountOfProduct);
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
@@ -366,13 +366,13 @@ class CartController extends base_controller_1.default {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0,
+                            totalShippingAmount: shippingCharge,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount,
-                            totalAmount: totalAmountOfProduct + (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0),
+                            totalAmount: totalAmountOfProduct + shippingCharge,
                         };
                         newCartOrder = await cart_service_1.default.create(cartOrderData);
                         if (newCartOrder) {

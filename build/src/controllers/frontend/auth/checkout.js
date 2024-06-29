@@ -148,6 +148,7 @@ class CheckoutController extends base_controller_1.default {
                         ...cartUpdate,
                         paymentMethodCharge: codAmount.blockValues.codCharge,
                         cartStatus: "2",
+                        orderStatus: cart_1.orderStatusMap['1'].value,
                         orderStatusAt: new Date(),
                     };
                 }
@@ -261,7 +262,6 @@ class CheckoutController extends base_controller_1.default {
                 paymentStatus: (tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.closed) ?
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });
-            console.log('tabbyResponse', retValResponse);
             if (retValResponse.status) {
                 res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
                 return true;
