@@ -724,6 +724,7 @@ class ProductController extends BaseController {
                     }
                 }
 
+console.log("productsproducts",products);
 
                 const productData: any = await ProductService.findProductList({
                     page: parseInt(page_size as string),

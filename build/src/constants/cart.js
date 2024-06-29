@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tapPaymentGatwayStatus = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatus = exports.cartStatus = void 0;
-exports.cartStatus = [
-    { value: '1', label: "Active" },
-    { value: '2', label: "Order" },
-    { value: '3', label: "Delivered" },
-];
+exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatus = exports.cartStatus = void 0;
+exports.cartStatus = {
+    active: "1",
+    order: "2",
+    delivered: "3"
+};
 exports.orderStatus = [
     { value: '1', label: "Pending" },
     { value: '2', label: "Processing" },
@@ -48,7 +48,8 @@ exports.orderPaymentStatus = {
     pending: "1",
     success: "2",
     failure: "3",
-    cancelled: "4"
+    cancelled: "4",
+    expired: "5",
 };
 exports.tapPaymentGatwayStatus = {
     initiated: 'INITIATED', // Tap will provide the payment URL(transaction.url) to process the payment. The customer should be redirected to this URL to complete the payment.
@@ -56,4 +57,17 @@ exports.tapPaymentGatwayStatus = {
     captured: 'CAPTURED', //The authorized amount is successfully captured.
     void: 'VOID', // The authorized amount is successfully voided.
     cancelled: 'CANCELLED'
+};
+exports.tabbyPaymentGatwayStatus = {
+    created: 'created',
+    rejected: 'rejected',
+    expired: 'expired',
+    approved: 'approved',
+};
+exports.tabbyPaymentGatwaySuccessStatus = {
+    created: 'CREATED', // means that the payment is created successfully, but not finished yet
+    authorized: 'AUTHORIZED', // "authorized" and "closed" mark the succesfully approved and captured payments accordingly
+    closed: 'CLOSED', // "authorized" and "closed" mark the succesfully approved and captured payments accordingly
+    rejected: 'REJECTED', //is retuned when a customer is rejected during Tabby Checkout 
+    expired: 'EXPIRED', // is used when a customer cancels a payment or when Tabby doesn't receive a successfully paid transaction after timeout.
 };

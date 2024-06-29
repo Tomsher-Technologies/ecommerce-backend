@@ -72,7 +72,7 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
             },
             "order": {
                 "tax_amount": cartData?.totalTaxAmount,
-                "shipping_amount": cartData?.totalDiscountAmount,
+                "shipping_amount": cartData?.totalShippingAmount,
                 "discount_amount": cartData?.totalDiscountAmount,
                 "updated_at": cartData.cartStatusAt,
                 "reference_id": cartData._id,
@@ -148,7 +148,7 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
             }
         },
         "lang": "en",
-        "merchant_code": paymentMethod.paymentMethodValues?.merchantCode,
+        "merchant_code": paymentMethod.paymentMethodValues?.merchantCode?.toUpperCase(),
         "merchant_urls": {
             "success": "https://smadmin.staging-ecom.com/api/common/tap-success-response",
             "cancel": "https://smadmin.staging-ecom.com/api/common/tap-success-response",

@@ -176,18 +176,24 @@ class ProductService {
         else if (collection && collection.collectionsBrands) {
 
             for await (let data of collection.collectionsBrands) {
-                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+                productData = collection.productData
+
+                // const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+                // console.log("ffffffffffffff", language);
 
                 // productData = await ProductsModel.aggregate(language).exec();
-                const result = await ProductsModel.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0])
-                }
+                // const result = await ProductsModel.find({ brand: new mongoose.Types.ObjectId(data) })
+
+                // console.log("resultresult", result);
+
+                // if (result && result.length > 0) {
+                //     productData.push(result[0])
+                // }
             }
         } else {
-            const language: any = await this.productLanguage(hostName, pipeline)
+            // const language: any = await this.productLanguage(hostName, pipeline)
 
-            productData = await ProductsModel.aggregate(language).exec();
+            productData = collection.productData
 
         }
 
@@ -217,17 +223,11 @@ class ProductService {
         }
         else if (collection && collection.collectionsBrands) {
 
-            for await (let data of collection.collectionsBrands) {
-                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+            productData = collection.productData
 
-                // productData = await ProductsModel.aggregate(language).exec();
-                const result = await ProductsModel.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0])
-                }
-            }
         } else {
-            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' })
+            productData = collection.productData
+
         }
 
         const attributeArray: any = []
@@ -356,17 +356,10 @@ class ProductService {
         }
         else if (collection && collection.collectionsBrands) {
 
-            for await (let data of collection.collectionsBrands) {
-                const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+            productData = collection.productData
 
-                // productData = await ProductsModel.aggregate(language).exec();
-                const result = await ProductsModel.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0])
-                }
-            }
         } else {
-            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' })
+            productData = collection.productData
         }
         const specificationArray: any = []
 
@@ -722,20 +715,49 @@ class ProductService {
             collections = await CollectionsBrandsModel.findOne({ _id: products.collectionbrand })
 
             if (collections && collections.collectionsBrands) {
-                return { collectionsBrands: collections.collectionsBrands }
+                for await (let data of collections.collectionsBrands) {
+                    const query = {
+
+                        'brand._id': { $in: [new mongoose.Types.ObjectId(data)] },
+                        'status': "1"
+
+                    }
+
+                    const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
+                    if (result && result.length > 0) {
+                        productData.push(result)
+
+                    }
+                }
+
+
+                return { productData: productData }
+
+                // return { collectionsBrands: collections.collectionsBrands }
             }
 
         }
         else if (products && products.collectionproduct) {
             collections = await CollectionsProductsModel.findOne({ _id: products.collectionproduct })
 
-
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
-                        const language: any = await this.productLanguage(hostName, [{ $match: { _id: new mongoose.Types.ObjectId(data) } }])
+                        const language: any = await this.productLanguage(hostName, [{
+                            $match: {
+                                _id: { $in: new mongoose.Types.ObjectId(data) }
+                            }
+                        }])
 
-                        const result = await this.findProductList({ language, getattribute: '1', getspecification: '1' })
+                        const query = {
+
+                            _id: { $in: [new mongoose.Types.ObjectId(data)] },
+                            status: "1"
+
+                        }
+
+                        const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
+                        console.log("resultresult", result);
 
                         productData.push(result[0])
                     }

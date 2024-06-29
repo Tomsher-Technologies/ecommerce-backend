@@ -153,17 +153,20 @@ class ProductService {
         }
         else if (collection && collection.collectionsBrands) {
             for await (let data of collection.collectionsBrands) {
-                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
+                productData = collection.productData;
+                // const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
+                // console.log("ffffffffffffff", language);
                 // productData = await ProductsModel.aggregate(language).exec();
-                const result = await product_model_1.default.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0]);
-                }
+                // const result = await ProductsModel.find({ brand: new mongoose.Types.ObjectId(data) })
+                // console.log("resultresult", result);
+                // if (result && result.length > 0) {
+                //     productData.push(result[0])
+                // }
             }
         }
         else {
-            const language = await this.productLanguage(hostName, pipeline);
-            productData = await product_model_1.default.aggregate(language).exec();
+            // const language: any = await this.productLanguage(hostName, pipeline)
+            productData = collection.productData;
         }
         return productData;
     }
@@ -186,17 +189,10 @@ class ProductService {
             productData = collection.productData;
         }
         else if (collection && collection.collectionsBrands) {
-            for await (let data of collection.collectionsBrands) {
-                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
-                // productData = await ProductsModel.aggregate(language).exec();
-                const result = await product_model_1.default.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0]);
-                }
-            }
+            productData = collection.productData;
         }
         else {
-            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
+            productData = collection.productData;
         }
         const attributeArray = [];
         if (productData) {
@@ -297,17 +293,10 @@ class ProductService {
             productData = collection.productData;
         }
         else if (collection && collection.collectionsBrands) {
-            for await (let data of collection.collectionsBrands) {
-                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
-                // productData = await ProductsModel.aggregate(language).exec();
-                const result = await product_model_1.default.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0]);
-                }
-            }
+            productData = collection.productData;
         }
         else {
-            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
+            productData = collection.productData;
         }
         const specificationArray = [];
         if (productData) {
@@ -584,7 +573,18 @@ class ProductService {
         else if (products && products.collectionbrand) {
             collections = await collections_brands_model_1.default.findOne({ _id: products.collectionbrand });
             if (collections && collections.collectionsBrands) {
-                return { collectionsBrands: collections.collectionsBrands };
+                for await (let data of collections.collectionsBrands) {
+                    const query = {
+                        'brand._id': { $in: [new mongoose_1.default.Types.ObjectId(data)] },
+                        'status': "1"
+                    };
+                    const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName });
+                    if (result && result.length > 0) {
+                        productData.push(result);
+                    }
+                }
+                return { productData: productData };
+                // return { collectionsBrands: collections.collectionsBrands }
             }
         }
         else if (products && products.collectionproduct) {
@@ -592,8 +592,17 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
-                        const language = await this.productLanguage(hostName, [{ $match: { _id: new mongoose_1.default.Types.ObjectId(data) } }]);
-                        const result = await this.findProductList({ language, getattribute: '1', getspecification: '1' });
+                        const language = await this.productLanguage(hostName, [{
+                                $match: {
+                                    _id: { $in: new mongoose_1.default.Types.ObjectId(data) }
+                                }
+                            }]);
+                        const query = {
+                            _id: { $in: [new mongoose_1.default.Types.ObjectId(data)] },
+                            status: "1"
+                        };
+                        const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName });
+                        console.log("resultresult", result);
                         productData.push(result[0]);
                     }
                 }

@@ -343,6 +343,7 @@ class CommonService {
                 productPipeline.push(product_config_1.productMultilanguageFieldsLookup);
                 productPipeline.push(product_config_1.productFinalProject);
                 const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName);
+                console.log("getOfferListgetOfferList", getOfferList);
                 if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
                     const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
                     productPipeline.push(offerCategory);
@@ -355,6 +356,7 @@ class CommonService {
                     const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
                     productPipeline.push(offerProduct);
                 }
+                console.log("................", productPipeline);
                 productPipeline.push({
                     $addFields: {
                         offer: {
@@ -594,7 +596,8 @@ class CommonService {
                 ...(offer ? [offer] : []),
                 { "offerDateRange.0": { $lte: currentDate } },
                 { "offerDateRange.1": { $gte: currentDate } },
-                { "countryId": countryId }
+                { "countryId": countryId },
+                { status: "1" }
             ],
             ...(offersBy && { offersBy: offersBy })
         };

@@ -614,6 +614,7 @@ class ProductController extends base_controller_1.default {
                         sort = { createdAt: 1 };
                     }
                 }
+                console.log("productsproducts", products);
                 const productData = await product_service_1.default.findProductList({
                     page: parseInt(page_size),
                     limit: parseInt(limit),
