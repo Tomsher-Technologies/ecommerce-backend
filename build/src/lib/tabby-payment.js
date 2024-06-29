@@ -23,7 +23,7 @@ const tabbyPaymentCreate = async (tabbyDefaultValues, paymentMethodValues) => {
         }
         const responseData = await response.json();
         if (responseData && responseData.status === cart_1.tabbyPaymentGatwayStatus.created) {
-            return (0, exports.tabbyCheckoutRetrieve)(responseData.id);
+            return (0, exports.tabbyCheckoutRetrieve)(responseData.id, paymentMethodValues);
         }
         // return responseData;
     }
@@ -33,7 +33,7 @@ const tabbyPaymentCreate = async (tabbyDefaultValues, paymentMethodValues) => {
     }
 };
 exports.tabbyPaymentCreate = tabbyPaymentCreate;
-const tabbyCheckoutRetrieve = async (tabbyId) => {
+const tabbyCheckoutRetrieve = async (tabbyId, paymentMethodValues) => {
     try {
         const response = await fetch(`https://api.tabby.ai/api/v2/checkout/${tabbyId}`, {
             method: "GET",
@@ -43,7 +43,7 @@ const tabbyCheckoutRetrieve = async (tabbyId) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${process.env.TABBY_TEST_KEY}`
+                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
@@ -60,7 +60,7 @@ const tabbyCheckoutRetrieve = async (tabbyId) => {
     }
 };
 exports.tabbyCheckoutRetrieve = tabbyCheckoutRetrieve;
-const tabbyPaymentRetrieve = async (tabbyId) => {
+const tabbyPaymentRetrieve = async (tabbyId, paymentMethodValues) => {
     try {
         const response = await fetch(`https://api.tabby.ai/api/v2/payments/${tabbyId}`, {
             method: "GET",
@@ -70,7 +70,7 @@ const tabbyPaymentRetrieve = async (tabbyId) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${process.env.TABBY_TEST_KEY}`
+                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
