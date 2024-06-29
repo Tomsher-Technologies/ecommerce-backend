@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
@@ -17,7 +17,7 @@ import PaymentTransactionModel from "../../../model/frontend/payment-transaction
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
 import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
-import { tabbyPaymentCreate } from "../../../lib/tabby-payment";
+import { tabbyPaymentCreate, tabbyPaymentRetrieve } from "../../../lib/tabby-payment";
 
 const controller = new BaseController();
 
@@ -95,7 +95,7 @@ class CheckoutController extends BaseController {
                     totalAmount: cartDetails.totalAmount,
                 }
 
-                let paymentRedirectionUrl = ''
+                let paymentData = null
                 if (paymentMethod.slug !== paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
                         const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
@@ -112,26 +112,35 @@ class CheckoutController extends BaseController {
                             if (!paymentTransaction) {
                                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
-                            paymentRedirectionUrl = tapResponse.transaction.url
+                            paymentData = { paymentRedirectionUrl: tapResponse.transaction.url }
                         }
 
                     } else if (paymentMethod && paymentMethod.slug == paymentMethods.tabby) {
-                        const shippingAddressDetails: any = await CustomerAddress.findById(shippingId);
+                        if (paymentMethod.paymentMethodValues) {
+                            const shippingAddressDetails: any = await CustomerAddress.findById(shippingId);
+                            // const cartProductsDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails._id });
+                            const tabbyDefaultValues = tabbyPaymentGatwayDefaultValues(countryData, {
+                                ...cartUpdate,
+                                _id: cartDetails._id,
+                                orderComments: cartDetails.orderComments,
+                                cartStatusAt: cartDetails.cartStatusAt,
+                                totalDiscountAmount: cartDetails.totalDiscountAmount,
+                                totalShippingAmount: cartDetails.totalShippingAmount,
+                                totalTaxAmount: cartDetails.totalTaxAmount,
+                                products: cartDetails?.products
+                            },
+                                customerDetails,
+                                paymentMethod,
+                                shippingAddressDetails);
+                            console.log('tabbyResponse', paymentMethod);
 
-                        // const cartProductsDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails._id });
-                     
-
-                        const tabbyDefaultValues = tabbyPaymentGatwayDefaultValues(countryData, {
-                            ...cartUpdate,
-                            _id: cartDetails._id,
-                            orderComments: cartDetails.orderComments,
-                            cartStatusAt: cartDetails.cartStatusAt,
-                            totalDiscountAmount: cartDetails.totalDiscountAmount,
-                            totalTaxAmount: cartDetails.totalTaxAmount,
-                            products: cartDetails?.products
-                        }, customerDetails, paymentMethod, shippingAddressDetails);
-                        const tapResponse = await tabbyPaymentCreate(tabbyDefaultValues);
-                        console.log('tapResponse', tapResponse);
+                            const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
+                            if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
+                                paymentData = tabbyResponse.configuration.available_products
+                            }
+                        } else {
+                            return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
+                        }
                     }
                 } else {
                     const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
@@ -149,7 +158,7 @@ class CheckoutController extends BaseController {
                     requestedData: {
                         orderId: cartDetails._id,
                         orderType: paymentMethod.slug,
-                        paymentRedirectionUrl
+                        paymentData
                     },
                     message: 'Order successfully Created!'
                 }, 200);
@@ -172,7 +181,7 @@ class CheckoutController extends BaseController {
     async tapSuccessResponse(req: Request, res: Response): Promise<any> {
         const { tap_id, data }: any = req.query
         if (!tap_id) {
-            res.redirect("https://developers.tap.company/reference/retrieve-an-authorize?tap_id=fail"); // fail
+            res.redirect("https://timehouse.vercel.app?tap_id=fail"); // fail
             return false
         }
         const tapResponse = await tapPaymentRetrieve(tap_id);
@@ -187,9 +196,36 @@ class CheckoutController extends BaseController {
                 res.redirect("http://stackoverflow.com"); // success
                 return true
             } else {
-                res.redirect(`https://developers.tap.company/reference/retrieve-an-authorize?${retValResponse.message}`); // fail
+                res.redirect(`https://timehouse.vercel.app?${retValResponse.message}`); // fail
                 return false
             }
+        }
+    }
+
+    async tabbySuccessResponse(req: Request, res: Response): Promise<any> {
+        const { payment_id }: any = req.query
+        if (!payment_id) {
+            res.redirect("https://timehouse.vercel.app/?status=failure"); // failure
+            return false
+        }
+        const tabbyResponse = await tabbyPaymentRetrieve(payment_id);
+        if (tabbyResponse.status) {
+            const retValResponse = await CheckoutService.paymentResponse({
+                transactionId: payment_id, allPaymentResponseData: null,
+                paymentStatus: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
+                    orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : orderPaymentStatus.expired)
+            });
+
+            if (retValResponse.status) {
+                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
+                return true
+            } else {
+                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                return false
+            }
+        } else {
+            res.redirect(`https://timehouse.vercel.app?status=${tabbyResponse?.status}`); // failure
+            return false
         }
     }
 }
