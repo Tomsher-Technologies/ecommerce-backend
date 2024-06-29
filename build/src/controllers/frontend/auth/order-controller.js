@@ -62,7 +62,7 @@ class OrderController extends base_controller_1.default {
             if (!customerDetails) {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
-            //of
+            //offer - specification
             const order = await cart_service_1.default.findCartPopulate({
                 query: {
                     $and: [
