@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
@@ -162,6 +162,7 @@ class CheckoutController extends BaseController {
                         ...cartUpdate,
                         paymentMethodCharge: codAmount.blockValues.codCharge,
                         cartStatus: "2",
+                        orderStatus: orderStatusMap['1'].value,
                         orderStatusAt: new Date(),
                     }
                 }
@@ -284,7 +285,6 @@ class CheckoutController extends BaseController {
                 paymentStatus: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
                     orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : orderPaymentStatus.expired)
             });
-            console.log('tabbyResponse', retValResponse);
 
             if (retValResponse.status) {
                 res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
