@@ -24,7 +24,6 @@ class CheckoutController extends BaseController {
 
     async checkout(req: Request, res: Response): Promise<void> {
         try {
-
             const customerId: any = res.locals.user._id;
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
