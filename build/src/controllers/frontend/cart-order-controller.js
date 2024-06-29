@@ -191,6 +191,7 @@ class CartController extends base_controller_1.default {
                     });
                     let offerAmount = 0;
                     let singleProductTotal = 0;
+                    let singleProductDiscountTotal = 0;
                     for (let i = 0; i < offerProduct.productVariants.length; i++) {
                         if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
                             if (offerProduct.offer.offerType == offers_1.offerTypes.percent) {
@@ -209,6 +210,7 @@ class CartController extends base_controller_1.default {
                     totalAmountOfProduct = totalDiscountAmountOfProduct == 0 ? ((productVariantData?.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity);
                     console.log("+++++++1243++", productVariantData?.discountPrice, totalAmountOfProduct);
                     singleProductTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity));
+                    singleProductDiscountTotal = offerAmount > 0 ? ((offerAmount) * quantity) : ((productVariantData?.discountPrice > 0) ? ((productVariantData?.discountPrice) * quantity) : ((productVariantData?.price) * quantity));
                     /********************************************************** */
                     // let offerAmountOfProduct = offerAmount ? (productVariantData.discountPrice > 0 ? (productVariantData.discountPrice - offerAmount) : (productVariantData?.price - offerAmount)) : 0
                     // totalDiscountAmountOfProduct = offerAmount > 0 ? (productVariantData?.price - offerAmount) * quantity : (productVariantData?.price - productVariantData.discountPrice) * quantity;
@@ -360,6 +362,7 @@ class CartController extends base_controller_1.default {
                                 productId: productVariantData.productId,
                                 quantity: quantityProduct,
                                 productAmount: singleProductTotal,
+                                productDiscountAmount: singleProductDiscountTotal,
                                 slug: productVariantData.slug,
                                 orderStatus,
                                 createdAt: new Date(),
@@ -389,6 +392,7 @@ class CartController extends base_controller_1.default {
                                 productId: productVariantData.productId,
                                 quantity: quantityProduct ? 0 : quantity,
                                 productAmount: singleProductTotal,
+                                productDiscountAmount: singleProductDiscountTotal,
                                 slug: productVariantData.slug,
                                 orderStatus,
                                 createdAt: new Date(),

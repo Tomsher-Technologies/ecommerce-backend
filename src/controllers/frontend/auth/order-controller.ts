@@ -28,7 +28,7 @@ class OrderController extends BaseController {
                     $and: [
                         { customerId: customerDetails._id },
                         { countryId: countryData._id },
-                        { cartStatus: "2" }
+                        { cartStatus: { $ne: "1" } }
                     ],
 
                 },
@@ -65,13 +65,13 @@ class OrderController extends BaseController {
             if (!customerDetails) {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
-
+//of
             const order: any = await CartService.findCartPopulate({
                 query: {
                     $and: [
                         { customerId: customerDetails._id },
                         { countryId: countryData._id },
-                        { cartStatus: "2" },
+                        // { cartStatus: "2" },
                         { _id: new mongoose.Types.ObjectId(orderId) }
                     ],
 
