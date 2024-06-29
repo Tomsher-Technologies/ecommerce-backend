@@ -120,14 +120,20 @@ class CheckoutController extends base_controller_1.default {
                                 products: cartDetails?.products
                             }, customerDetails, paymentMethod, shippingAddressDetails);
                             const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentCreate)(tabbyDefaultValues, paymentMethod.paymentMethodValues);
-                            const paymentTransaction = await payment_transaction_model_1.default.create({
-                                transactionId: tabbyResponse.id,
-                                orderId: cartDetails._id,
-                                data: '',
-                                orderStatus: cart_1.orderPaymentStatus.pending, // Pending
-                                createdAt: new Date(),
-                            });
-                            if (!paymentTransaction) {
+                            console.log('response', tabbyResponse);
+                            if (tabbyResponse) {
+                                const paymentTransaction = await payment_transaction_model_1.default.create({
+                                    transactionId: tabbyResponse.id,
+                                    orderId: cartDetails._id,
+                                    data: '',
+                                    orderStatus: cart_1.orderPaymentStatus.pending, // Pending
+                                    createdAt: new Date(),
+                                });
+                                if (!paymentTransaction) {
+                                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+                            }
+                            else {
                                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
                             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
