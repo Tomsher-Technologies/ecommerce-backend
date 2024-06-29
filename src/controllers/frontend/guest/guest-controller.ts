@@ -15,6 +15,8 @@ import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-m
 import CommonService from '../../../services/frontend/guest/common-service';
 import CustomerWalletTransactionsModel from '../../../model/frontend/customer-wallet-transaction-model'
 import SettingsService from '../../../services/admin/setup/settings-service';
+import { etisalatSmsGateway } from '../../../lib/ethisalat-sms-gateway';
+import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 
 
 const controller = new BaseController();
@@ -89,6 +91,14 @@ class GuestController extends BaseController {
                             }
                         }
                     }
+                    const etisalatDefaultValues = smsGatwayDefaultValues('username', 'password', 'TIME HOUSE TRADING LLC ', newCustomer)
+
+                    const sendOtp = await etisalatSmsGateway({
+                        "sender": "TIME HOUSE TRADING LLC",
+                        "recipient": '+971556151476',
+                        "message": "Hello from Etisalat SMS Gateway!"
+                    })
+                    console.log("sendOtp", sendOtp);
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: newCustomer._id,
