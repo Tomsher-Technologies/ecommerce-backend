@@ -7,9 +7,9 @@ import CustomerModel from "../../../model/frontend/customers-model";
 
 const controller = new BaseController();
 
-class CheckoutController extends BaseController {
+class OrderController extends BaseController {
 
-    async checkout(req: Request, res: Response): Promise<void> {
+    async orderList(req: Request, res: Response): Promise<void> {
         try {
             const customerId: any = res.locals.user;
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
@@ -24,7 +24,7 @@ class CheckoutController extends BaseController {
             const order: any = await CartService.findCartPopulate({
                 query: {
                     $and: [
-                        { customerId: customerId },
+                        { customerId: customerDetails._id },
                         { countryId: countryData._id },
                         { cartStatus: "1" }
                     ],
@@ -32,6 +32,9 @@ class CheckoutController extends BaseController {
                 },
                 hostName: req.get('origin'),
             })
+
+            console.log("0000000000000", order);
+
         } catch (error: any) {
 
 
@@ -41,4 +44,4 @@ class CheckoutController extends BaseController {
 
 }
 
-export default new CheckoutController();
+export default new OrderController();
