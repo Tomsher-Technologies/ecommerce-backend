@@ -14,10 +14,11 @@ router.get('/get-cart', logResponseStatus, cartOrderController.findUserCart);
 router.post('/add-gift-wrap', logResponseStatus, cartOrderController.addGiftWrap);
 router.get('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
 router.get('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.post('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.post('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
+router.post('/tabby-success-response', logResponseStatus, checkoutController.tabbySuccessResponse);
+router.post('/tabby-failure-response', logResponseStatus, checkoutController.tabbySuccessResponse);
 
 
 
 
 export default router;
+ 
