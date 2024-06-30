@@ -337,7 +337,7 @@ class CartController extends BaseController {
                             }
 
                             // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-
+                            const giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0
                             cartOrderData = {
                                 customerId: customer,
                                 guestUserId: guestUser,
@@ -361,7 +361,7 @@ class CartController extends BaseController {
                                 codAmount,
                                 // codAmount: Number(codAmount.blockValues.codCharge),
                                 totalTaxAmount,
-                                totalAmount: totalAmountOfProduct + shippingCharge,
+                                totalAmount: totalAmountOfProduct + shippingCharge + giftWrapcharge
                             };
 
 
@@ -402,10 +402,12 @@ class CartController extends BaseController {
                                     // } else {
                                     //     cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal
                                     // }
+                                    console.log("*********************", cartOrderProductData);
 
                                     newCartOrderProduct = await CartService.updateCartProduct(existingProduct._id, cartOrderProductData);
 
                                 } else {
+                                    console.log("********dffdfdf*************", cartOrderProductData);
 
                                     newCartOrderProduct = await CartService.createCartProduct(cartOrderProductData);
 
