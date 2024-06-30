@@ -25,7 +25,7 @@ class CartController extends base_controller_1.default {
             const user = res.locals.user;
             const uuid = res.locals.uuid;
             if (validatedData.success) {
-                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount, totalTaxAmount, totalAmount, codAmount, totalGiftWrapAmount } = req.body;
+                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount, totalTaxAmount, totalAmount, codAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
                 let customer, guestUser;
                 let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -246,7 +246,7 @@ class CartController extends base_controller_1.default {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
                                         totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                        totalGiftWrapAmount: totalGiftWrapAmount - removeGiftWrapAmount
+                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount - removeGiftWrapAmount
                                     });
                                     const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
                                     if (checkCartProducts && checkCartProducts.length == 0) {
@@ -301,7 +301,6 @@ class CartController extends base_controller_1.default {
                             rewardPoints,
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
-                            totalGiftWrapAmount,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
                             totalShippingAmount: shippingCharge,
                             totalCouponAmount,
@@ -365,7 +364,6 @@ class CartController extends base_controller_1.default {
                             paymentMethod,
                             paymentMethodCharge,
                             rewardPoints,
-                            totalGiftWrapAmount,
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
