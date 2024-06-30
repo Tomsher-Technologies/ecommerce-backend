@@ -63,7 +63,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     guestUserId: {
         type: String,
-        unique: true
+        // unique: true
     },
     shippingId: {
         type: Schema.Types.ObjectId,
