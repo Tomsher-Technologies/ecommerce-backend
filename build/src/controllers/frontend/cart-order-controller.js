@@ -159,7 +159,7 @@ class CartController extends base_controller_1.default {
                                 ]
                             },
                             { countryId: country },
-                            { status: '1' }
+                            { cartStatus: '1' }
                         ]
                     });
                     const offerProduct = await product_service_1.default.findOneProduct({

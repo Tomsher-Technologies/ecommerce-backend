@@ -69,6 +69,19 @@ class PaymentMethodController extends base_controller_1.default {
             if (validatedData.success) {
                 const { countryId, paymentMethodTitle, operatorName, slug, description, enableDisplay, paymentMethodValues, languageValues } = validatedData.data;
                 const user = res.locals.user;
+                const existingPaymentMethod = await payment_method_service_1.default.findPaymentMethod({ countryId: countryId || (0, helpers_1.getCountryId)(user) });
+                if (existingPaymentMethod) {
+                    if (existingPaymentMethod.paymentMethodTitle === paymentMethodTitle) {
+                        controller.sendErrorResponse(res, 500, {
+                            message: 'Payment method title is uniqe'
+                        }, req);
+                    }
+                    else if (existingPaymentMethod.slug === slug || (0, helpers_1.slugify)(operatorName)) {
+                        controller.sendErrorResponse(res, 500, {
+                            message: 'Payment operator name is uniqe'
+                        }, req);
+                    }
+                }
                 const paymentMethodData = {
                     countryId: countryId || (0, helpers_1.getCountryId)(user),
                     paymentMethodTitle,
