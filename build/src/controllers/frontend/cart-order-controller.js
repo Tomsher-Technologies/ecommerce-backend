@@ -155,10 +155,11 @@ class CartController extends base_controller_1.default {
                             {
                                 $or: [
                                     { customerId: customer },
-                                    { guestUserId: guestUser }
+                                    { guestUserId: guestUser },
                                 ]
                             },
-                            { countryId: country }
+                            { countryId: country },
+                            { status: '1' }
                         ]
                     });
                     const offerProduct = await product_service_1.default.findOneProduct({
