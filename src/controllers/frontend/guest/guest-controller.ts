@@ -102,9 +102,9 @@ class GuestController extends BaseController {
                     // console.log("sendOtp", sendOtp);
 
 
-                    const sendEmail = await mailChimpEmailGateway(newCustomer)
+                    // const sendEmail = await mailChimpEmailGateway(newCustomer)
 
-                    console.log("sendEmail", sendEmail);
+                    // console.log("sendEmail", sendEmail);
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: newCustomer._id,
