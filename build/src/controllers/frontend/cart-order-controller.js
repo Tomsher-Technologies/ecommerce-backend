@@ -282,7 +282,7 @@ class CartController extends base_controller_1.default {
                         }
                         else {
                             totalDiscountAmountOfProduct = existingCart.totalDiscountAmount - (existingCartProduct.productDiscountAmount) + singleProductDiscountTotal;
-                            totalAmountOfProduct = existingCart.totalAmount - (existingCartProduct.productAmount) + singleProductTotal;
+                            totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
                         }
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
                         cartOrderData = {
