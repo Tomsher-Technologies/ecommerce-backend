@@ -290,7 +290,7 @@ class CartController extends BaseController {
                                             totalProductAmount: totalAmountOfProduct,
                                             totalDiscountAmount: totalDiscountAmountOfProduct,
                                             totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                            totalGiftWrapAmount: existingCart.totalGiftWrapAmount - removeGiftWrapAmount
+                                            totalGiftWrapAmount: existingCart.totalGiftWrapAmount - existingCartProduct.totalGiftWrapAmount
                                         });
 
                                         const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
