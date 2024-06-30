@@ -276,6 +276,7 @@ class CartController extends base_controller_1.default {
                         singleProductTotal = offerAmount > 0 ? ((productVariantData.discountPrice > 0) ? (productVariantData.discountPrice - offerAmount) : (productVariantData.price - offerAmount)) : (productVariantData.discountPrice ? productVariantData.discountPrice : productVariantData.price);
                         singleProductTotal *= quantityProduct;
                         singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
+                        let giftWrapcharge = 0;
                         if (!existingCartProduct) {
                             totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + singleProductDiscountTotal;
                             totalAmountOfProduct = existingCart.totalProductAmount + singleProductTotal;
@@ -283,9 +284,11 @@ class CartController extends base_controller_1.default {
                         else {
                             totalDiscountAmountOfProduct = existingCart.totalDiscountAmount - (existingCartProduct.productDiscountAmount) + singleProductDiscountTotal;
                             totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
+                            giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0;
                         }
+                        console.log("ffffffffffffff", existingCartProduct);
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                        const giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0;
+                        console.log("giftWrapchargegiftWrapcharge", giftWrapcharge, existingCartProduct);
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
