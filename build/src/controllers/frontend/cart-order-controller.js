@@ -246,7 +246,7 @@ class CartController extends base_controller_1.default {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
                                         totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount - removeGiftWrapAmount
+                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount - existingCartProduct.totalGiftWrapAmount
                                     });
                                     const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
                                     if (checkCartProducts && checkCartProducts.length == 0) {
