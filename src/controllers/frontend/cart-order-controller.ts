@@ -192,10 +192,11 @@ class CartController extends BaseController {
                                 {
                                     $or: [
                                         { customerId: customer },
-                                        { guestUserId: guestUser }
+                                        { guestUserId: guestUser },
                                     ]
                                 },
-                                { countryId: country }
+                                { countryId: country },
+                                { status: '1' }
                             ]
                         });
 
