@@ -246,7 +246,7 @@ class CartController extends base_controller_1.default {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
                                         totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount - existingCartProduct.totalGiftWrapAmount
+                                        totalGiftWrapAmount: existingCartProduct.totalGiftWrapAmount > 0 ? existingCart.totalGiftWrapAmount - existingCartProduct.totalGiftWrapAmount : existingCart.totalGiftWrapAmount
                                     });
                                     const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
                                     if (checkCartProducts && checkCartProducts.length == 0) {
@@ -333,7 +333,6 @@ class CartController extends base_controller_1.default {
                                 productDiscountAmount: singleProductDiscountTotal,
                                 slug: productVariantData.slug,
                                 orderStatus,
-                                giftWrapAmount: existingProduct.giftWrapAmount ? existingProduct.giftWrapAmount : 0,
                                 createdAt: new Date(),
                                 updatedAt: new Date()
                             };

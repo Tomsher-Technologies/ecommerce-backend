@@ -291,7 +291,7 @@ class CartController extends BaseController {
                                             totalProductAmount: totalAmountOfProduct,
                                             totalDiscountAmount: totalDiscountAmountOfProduct,
                                             totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                            totalGiftWrapAmount: existingCart.totalGiftWrapAmount - existingCartProduct.totalGiftWrapAmount
+                                            totalGiftWrapAmount: existingCartProduct.totalGiftWrapAmount > 0 ? existingCart.totalGiftWrapAmount - existingCartProduct.totalGiftWrapAmount : existingCart.totalGiftWrapAmount
                                         });
 
                                         const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
@@ -392,7 +392,6 @@ class CartController extends BaseController {
                                     productDiscountAmount: singleProductDiscountTotal,
                                     slug: productVariantData.slug,
                                     orderStatus,
-                                    giftWrapAmount: existingProduct.giftWrapAmount ? existingProduct.giftWrapAmount : 0,
                                     createdAt: new Date(),
                                     updatedAt: new Date()
                                 };
