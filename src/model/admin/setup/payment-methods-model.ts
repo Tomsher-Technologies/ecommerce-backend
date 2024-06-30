@@ -25,20 +25,20 @@ const paymentMethodSchema: Schema<PaymentMethodProps> = new Schema({
     paymentMethodTitle: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Countries').countDocuments({ paymentMethodTitle: value });
-                return count === 0;
-            },
-            message: 'Payment method title must be unique'
-        },
+        // unique: true,
+        // validate: {
+        //     validator: async function (this: any, value: string): Promise<boolean> {
+        //         const count = await this.model('Countries').countDocuments({ paymentMethodTitle: value });
+        //         return count === 0;
+        //     },
+        //     message: 'Payment method title must be unique'
+        // },
         minlength: [3, 'Payment method title must be at least 3 characters long']
     },
     slug: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     subTitle: {
         type: String,

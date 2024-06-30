@@ -196,7 +196,7 @@ class CartController extends BaseController {
                                     ]
                                 },
                                 { countryId: country },
-                                { status: '1' }
+                                { cartStatus: '1' }
                             ]
                         });
 
