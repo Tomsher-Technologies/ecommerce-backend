@@ -42,7 +42,7 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     guestUserId: {
         type: String,
-        unique: true
+        // unique: true
     },
     shippingId: {
         type: mongoose_1.Schema.Types.ObjectId,
