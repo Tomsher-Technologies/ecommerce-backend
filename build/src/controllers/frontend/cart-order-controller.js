@@ -318,6 +318,11 @@ class CartController extends base_controller_1.default {
                                     { variantId: productVariantData._id }
                                 ]
                             });
+                            // const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
+                            // var giftWrapCharge: any
+                            // if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
+                            //     giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
+                            // }
                             const cartOrderProductData = {
                                 cartId: newCartOrder._id,
                                 customerId: customer,
@@ -328,6 +333,7 @@ class CartController extends base_controller_1.default {
                                 productDiscountAmount: singleProductDiscountTotal,
                                 slug: productVariantData.slug,
                                 orderStatus,
+                                giftWrapAmount: existingProduct.giftWrapAmount ? existingProduct.giftWrapAmount : 0,
                                 createdAt: new Date(),
                                 updatedAt: new Date()
                             };
@@ -401,7 +407,7 @@ class CartController extends base_controller_1.default {
                             requestedData: {
                                 ...products
                             },
-                            message: 'Cart order created successfully!'
+                            message: 'Cart updated successfully!'
                         }, 200);
                     }
                 }
