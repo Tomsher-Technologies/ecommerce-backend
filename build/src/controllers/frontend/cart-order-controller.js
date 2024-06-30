@@ -245,7 +245,7 @@ class CartController extends base_controller_1.default {
                                     const cartUpdate = await cart_service_1.default.update(existingCartProduct.cartId, {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
-                                        totalAmount: totalAmountOfProduct - removeGiftWrapAmount,
+                                        totalAmount: totalAmountOfProduct - removeGiftWrapAmount + shippingCharge,
                                         totalGiftWrapAmount: removeGiftWrapAmount
                                     });
                                     const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
