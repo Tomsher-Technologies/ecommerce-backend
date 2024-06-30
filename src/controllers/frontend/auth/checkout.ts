@@ -134,7 +134,7 @@ class CheckoutController extends BaseController {
                                 shippingAddressDetails);
 
                             const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
-                            console.log('response', tabbyResponse);
+
                             if (tabbyResponse) {
                                 const paymentTransaction = await PaymentTransactionModel.create({
                                     transactionId: tabbyResponse.id,
@@ -175,6 +175,11 @@ class CheckoutController extends BaseController {
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
+
+                if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
+                    await CheckoutService.cartUpdation(updateCart, true)
+                }
+                
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: cartDetails._id,
@@ -190,7 +195,6 @@ class CheckoutController extends BaseController {
                     validation: formatZodError(validatedData.error.errors)
                 });
             }
-
         } catch (error: any) {
 
             return controller.sendErrorResponse(res, 200, {
@@ -247,7 +251,7 @@ class CheckoutController extends BaseController {
     async tapSuccessResponse(req: Request, res: Response): Promise<any> {
         const { tap_id, data }: any = req.query
         if (!tap_id) {
-            res.redirect("https://timehouse.vercel.app/?status=failure"); // failure
+            res.redirect("https://th.tomsher.net/?status=failure"); // failure
             return false
         }
         const tapResponse = await tapPaymentRetrieve(tap_id);
@@ -259,14 +263,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://timehouse.vercel.app?status=${tapResponse?.status}`); // failure
+            res.redirect(`https://th.tomsher.net?status=${tapResponse?.status}`); // failure
             return false
         }
     }
@@ -274,12 +278,12 @@ class CheckoutController extends BaseController {
     async tabbySuccessResponse(req: Request, res: Response): Promise<any> {
         const { payment_id }: any = req.query
         if (!payment_id) {
-            res.redirect("https://timehouse.vercel.app/?status=failure"); // failure
+            res.redirect("https://th.tomsher.net/?status=failure"); // failure
             return false
         }
         const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby })
         if (!paymentMethod) {
-            res.redirect("https://timehouse.vercel.app/?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect("https://th.tomsher.net/?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
 
@@ -291,14 +295,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://timehouse.vercel.app/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://timehouse.vercel.app?status=${tabbyResponse?.status}`); // failure
+            res.redirect(`https://th.tomsher.net?status=${tabbyResponse?.status}`); // failure
             return false
         }
     }
