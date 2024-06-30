@@ -615,13 +615,13 @@ class CartController extends base_controller_1.default {
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
             let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            let query = {
-                $or: [
-                    { $and: [{ customerId: customer }, { countryId: country }] },
-                    { $and: [{ guestUserId: guestUser }, { countryId: country }] }
-                ],
-                cartStatus: '1'
-            };
+            let query;
+            if (guestUser && !customer) {
+                query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] };
+            }
+            else {
+                query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] };
+            }
             // let query: any = { _id: { $exists: true }, cartStatus: "1" };
             // const userData = await res.locals.user;
             // query.cartStatus = '1';
