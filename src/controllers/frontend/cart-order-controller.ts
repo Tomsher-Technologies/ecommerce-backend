@@ -32,7 +32,7 @@ class CartController extends BaseController {
                 const { shippingStatus, shipmentGatwayId,
                     paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints,
                     totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount,
-                    totalTaxAmount, totalAmount, codAmount } = req.body;
+                    totalTaxAmount, totalAmount, codAmount, totalGiftWrapAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
 
                 let customer, guestUser
@@ -290,7 +290,7 @@ class CartController extends BaseController {
                                             totalProductAmount: totalAmountOfProduct,
                                             totalDiscountAmount: totalDiscountAmountOfProduct,
                                             totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                            totalGiftWrapAmount: removeGiftWrapAmount
+                                            totalGiftWrapAmount: totalGiftWrapAmount - removeGiftWrapAmount
                                         });
 
                                         const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
@@ -353,6 +353,7 @@ class CartController extends BaseController {
                                 rewardPoints,
                                 totalProductAmount: totalAmountOfProduct,
                                 totalReturnedProduct,
+                                totalGiftWrapAmount,
                                 totalDiscountAmount: totalDiscountAmountOfProduct,
                                 totalShippingAmount: shippingCharge,
                                 totalCouponAmount,
@@ -425,6 +426,7 @@ class CartController extends BaseController {
                                 paymentMethod,
                                 paymentMethodCharge,
                                 rewardPoints,
+                                totalGiftWrapAmount,
                                 totalProductAmount: totalAmountOfProduct,
                                 totalReturnedProduct,
                                 totalDiscountAmount: totalDiscountAmountOfProduct,
