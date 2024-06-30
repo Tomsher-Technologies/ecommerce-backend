@@ -285,6 +285,7 @@ class CartController extends base_controller_1.default {
                             totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
                         }
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
+                        const giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0;
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
@@ -308,7 +309,7 @@ class CartController extends base_controller_1.default {
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount,
-                            totalAmount: totalAmountOfProduct + shippingCharge,
+                            totalAmount: totalAmountOfProduct + shippingCharge + giftWrapcharge
                         };
                         newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
                         if (newCartOrder) {
@@ -342,9 +343,11 @@ class CartController extends base_controller_1.default {
                                 // } else {
                                 //     cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal
                                 // }
+                                console.log("*********************", cartOrderProductData);
                                 newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
                             }
                             else {
+                                console.log("********dffdfdf*************", cartOrderProductData);
                                 newCartOrderProduct = await cart_service_1.default.createCartProduct(cartOrderProductData);
                             }
                         }
