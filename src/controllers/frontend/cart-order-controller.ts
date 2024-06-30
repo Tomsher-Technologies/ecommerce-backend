@@ -16,6 +16,7 @@ import CustomerWishlistCountryService from '../../services/frontend/auth/custome
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import { blockReferences, websiteSetup } from '../../constants/website-setup';
 import { QueryParams } from '../../utils/types/common';
+import CartOrdersModel from '../../model/frontend/cart-order-model';
 
 const controller = new BaseController();
 
@@ -699,12 +700,13 @@ class CartController extends BaseController {
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-            let query = {
-                $or: [
-                    { $and: [{ customerId: customer }, { countryId: country }] },
-                    { $and: [{ guestUserId: guestUser }, { countryId: country }] }
-                ],
-                cartStatus: '1'
+            let query
+            if (guestUser && !customer) {
+                query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] }
+            }
+            else {
+                query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] }
+
             }
 
             // let query: any = { _id: { $exists: true }, cartStatus: "1" };
