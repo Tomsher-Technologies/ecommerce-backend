@@ -285,13 +285,14 @@ class CartController extends BaseController {
                                         if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
                                             giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
                                         }
-                                        const removeGiftWrapAmount: 0 = existingCart.totalGiftWrapAmount > 0 && giftWrapCharge ? existingCart.totalGiftWrapAmount - giftWrapCharge : existingCart.totalGiftWrapAmount
+                                        const removeGiftWrapAmount: 0 = existingCartProduct.totalGiftWrapAmount > 0 && giftWrapCharge ? existingCart.totalGiftWrapAmount - giftWrapCharge : existingCart.totalGiftWrapAmount
                                         const cartUpdate = await CartService.update(existingCartProduct.cartId, {
                                             totalProductAmount: totalAmountOfProduct,
                                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                                            totalAmount: totalAmountOfProduct - removeGiftWrapAmount + shippingCharge,
+                                            totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
                                             totalGiftWrapAmount: removeGiftWrapAmount
                                         });
+
                                         const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
                                         if (checkCartProducts && checkCartProducts.length == 0) {
                                             const deletedData = await CartService.destroy(existingCartProduct.cartId);
