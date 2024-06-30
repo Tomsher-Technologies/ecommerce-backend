@@ -289,7 +289,7 @@ class CartController extends BaseController {
                                         const cartUpdate = await CartService.update(existingCartProduct.cartId, {
                                             totalProductAmount: totalAmountOfProduct,
                                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                                            totalAmount: totalAmountOfProduct - removeGiftWrapAmount,
+                                            totalAmount: totalAmountOfProduct - removeGiftWrapAmount + shippingCharge,
                                             totalGiftWrapAmount: removeGiftWrapAmount
                                         });
                                         const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })
