@@ -151,7 +151,7 @@ class CheckoutController extends base_controller_1.default {
                     const codAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.defualtSettings });
                     cartUpdate = {
                         ...cartUpdate,
-                        paymentMethodCharge: codAmount.blockValues.codCharge,
+                        paymentMethodCharge: codAmount?.blockValues?.codCharge || 0,
                         cartStatus: "2",
                         orderStatus: cart_1.orderStatusMap['1'].value,
                         orderStatusAt: new Date(),
@@ -229,7 +229,7 @@ class CheckoutController extends base_controller_1.default {
     async tapSuccessResponse(req, res) {
         const { tap_id, data } = req.query;
         if (!tap_id) {
-            res.redirect("https://th.tomsher.net/?status=failure"); // failure
+            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
             return false;
         }
         const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id);
@@ -240,28 +240,28 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
             });
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false;
             }
         }
         else {
-            res.redirect(`https://th.tomsher.net?status=${tapResponse?.status}`); // failure
+            res.redirect(`https://th.tomsher.net/order-response?status=${tapResponse?.status}`); // failure
             return false;
         }
     }
     async tabbySuccessResponse(req, res) {
         const { payment_id } = req.query;
         if (!payment_id) {
-            res.redirect("https://th.tomsher.net/?status=failure"); // failure
+            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
             return false;
         }
         const paymentMethod = await payment_methods_model_1.default.findOne({ slug: cart_1.paymentMethods.tabby });
         if (!paymentMethod) {
-            res.redirect("https://th.tomsher.net/?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect("https://th.tomsher.net/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentRetrieve)(payment_id, paymentMethod.paymentMethodValues);
         if (tabbyResponse.status) {
@@ -271,16 +271,16 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
                 return false;
             }
         }
         else {
-            res.redirect(`https://th.tomsher.net?status=${tabbyResponse?.status}`); // failure
+            res.redirect(`https://th.tomsher.net/order-response?status=${tabbyResponse?.status}`); // failure
             return false;
         }
     }
