@@ -39,6 +39,10 @@ import DynamicPageRoutes from './admin/website/pages-routes';
 import WarehouseRoutes from './admin/stores/warehouse-routes';
 import StoreRoutes from './admin/stores/store-routes';
 
+//order
+import OrderRoutes from './admin/order/order-routes';
+import CustomerRoutes from './admin/customer/customer-routes';
+
 const adminRouter = express.Router();
 
 // admin
@@ -82,5 +86,11 @@ adminRouter.use('/website/pages', DynamicPageRoutes);
 // stores
 adminRouter.use('/stores/warehouse', WarehouseRoutes);
 adminRouter.use('/stores/store', StoreRoutes);
+
+//order
+adminRouter.use('/order', OrderRoutes);
+
+//customer
+adminRouter.use('/customer', CustomerRoutes);
 
 export default adminRouter;

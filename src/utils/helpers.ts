@@ -254,7 +254,7 @@ export const uploadImageFromUrl = async (imageUrl: any) => {
 
         // Make the HTTP/HTTPS GET request to the image URL
         const response = await new Promise((resolve, reject) => {
-            protocol.get(imageUrl, { timeout: 60000 }, (res: any) => {
+            protocol.get(imageUrl, { timeout: 600000 }, (res: any) => {
                 res.pipe(writer);
                 res.on('end', () => resolve(filename));
                 res.on('error', reject);
@@ -291,19 +291,19 @@ export const calculateTotalDiscountAmountDifference = (
 
 export function calculateRewardPoints(wallet: { orderAmount: string, redeemPoints: string }, totalOrderAmount: number): number {
     if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
-      return 0;
+        return 0;
     }
-  
+
     const orderAmount = Number(wallet.orderAmount);
     const redeemPoints = Number(wallet.redeemPoints);
-  
+
     if (orderAmount <= 0 || redeemPoints <= 0) {
-      return 0;
+        return 0;
     }
-  
+
     const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
-  
+
     const totalRedeemPoints = numberOfTimesRedeemable * redeemPoints;
-  
+
     return totalRedeemPoints;
-  }
+}

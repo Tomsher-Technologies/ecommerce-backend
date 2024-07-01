@@ -1,0 +1,44 @@
+
+export interface OrderQueryParams {
+    _id?: string;
+    page_size?: string;
+    limit?: string;
+    status?: string;
+    sortby?: string;
+    sortorder?: string;
+    keyword?: string;
+    countryId?: string;
+    customerId?: string;
+    pickupStoreId?: string;
+    paymentMethodId?: string;
+    couponId?: string;
+    cartStatus?: string;
+    orderFromDate?: string;
+    orderEndDate?: string;
+    processingFromDate?: string;
+    processingEndDate?: string;
+    packedFromDate?: string;
+    packedEndDate?: string;
+    shippedFromDate?: string;
+    shippedEndDate?: string;
+    deliveredFromDate?: string;
+    deliveredEndDate?: string;
+    canceledFromDate?: string;
+    canceledEndDate?: string;
+    returnedFromDate?: string;
+    returnedEndDate?: string;
+    refundedFromDate?: string;
+    refundedEndDate?: string;
+    partiallyShippedFromDate?: string;
+    partiallyShippedEndDate?: string;
+    onHoldFromDate?: string;
+    onHoldEndDate?: string;
+    failedFromDate?: string;
+    failedEndDate?: string;
+    completedFromDate?: string;
+    completedEndDate?: string;
+    pickupFromDate?: string;
+    pickupEndDate?: string;
+    cartFromDate?: string;
+    cartEndDate?: string;
+}
