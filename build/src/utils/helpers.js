@@ -239,7 +239,7 @@ const uploadImageFromUrl = async (imageUrl) => {
         const writer = fs_2.default.createWriteStream(outputPath);
         // Make the HTTP/HTTPS GET request to the image URL
         const response = await new Promise((resolve, reject) => {
-            protocol.get(imageUrl, { timeout: 60000 }, (res) => {
+            protocol.get(imageUrl, { timeout: 600000 }, (res) => {
                 res.pipe(writer);
                 res.on('end', () => resolve(filename));
                 res.on('error', reject);

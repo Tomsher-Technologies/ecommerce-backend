@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
-const cart_service_1 = __importDefault(require("../../../services/frontend/cart-service"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_service_1 = __importDefault(require("../../../services/frontend/auth/order-service"));
@@ -22,7 +21,7 @@ class OrderController extends base_controller_1.default {
             if (!customerDetails) {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
-            const order = await order_service_1.default.OrderList({
+            const order = await order_service_1.default.orderList({
                 query: {
                     $and: [
                         { customerId: customerDetails._id },
@@ -63,7 +62,7 @@ class OrderController extends base_controller_1.default {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
             //offer - specification
-            const order = await cart_service_1.default.findCartPopulate({
+            const order = await order_service_1.default.orderDetails({
                 query: {
                     $and: [
                         { customerId: customerDetails._id },
