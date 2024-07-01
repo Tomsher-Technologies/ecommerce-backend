@@ -1,5 +1,5 @@
-import { cartStatus, couponDiscountType, couponTypes, orderPaymentStatus } from "../../constants/cart";
-import { DiscountType, calculateTotalDiscountAmountDifference } from "../../utils/helpers";
+import { cartStatus, couponTypes, orderPaymentStatus } from "../../constants/cart";
+import { DiscountType,  calculateTotalDiscountAmountDifference, calculateWalletAmount } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
 import CartService from "./cart-service";
@@ -9,7 +9,6 @@ import CartOrdersModel from "../../model/frontend/cart-order-model";
 import PaymentTransactionModel from "../../model/frontend/payment-transaction-model";
 
 class CheckoutService {
-
 
     async paymentResponse(options: any = {}): Promise<any> {
         const { transactionId, allPaymentResponseData, paymentStatus } = options;
@@ -80,6 +79,8 @@ class CheckoutService {
                 totalCouponAmount: 0,
                 couponId: cartDetails?.couponId
             }
+    
+
             if (!paymentSuccess) {
                 cartUpdate = {
                     ...cartUpdate,
@@ -133,6 +134,19 @@ class CheckoutService {
                     }
                 }
             }
+
+            // if (cartDetails.customerId) {
+            //     const walletsDetails = await settingsService.findOne({ countryId: cartDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
+            //     if ((walletsDetails) && (walletsDetails.blockValues)&&(walletsDetails.blockValues.enableWallet)) {
+            //         await CustomerWalletTransactionsModel.create({
+            //             customerId: cartDetails.customerId,
+            //             earnType: earnTypes.order,
+            //             walletAmount: walletsDetails.blockValues.orderAmount,
+            //             walletPoints: calculateRewardPoints(walletsDetails.blockValues, cartUpdate.totalAmount),
+            //             status: '1'
+            //         });
+            //     }
+            // }
 
             cartUpdate = {
                 ...cartUpdate,

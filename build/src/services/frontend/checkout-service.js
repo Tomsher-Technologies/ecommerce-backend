@@ -128,6 +128,18 @@ class CheckoutService {
                     }
                 }
             }
+            // if (cartDetails.customerId) {
+            //     const walletsDetails = await settingsService.findOne({ countryId: cartDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
+            //     if ((walletsDetails) && (walletsDetails.blockValues)&&(walletsDetails.blockValues.enableWallet)) {
+            //         await CustomerWalletTransactionsModel.create({
+            //             customerId: cartDetails.customerId,
+            //             earnType: earnTypes.order,
+            //             walletAmount: walletsDetails.blockValues.orderAmount,
+            //             walletPoints: calculateRewardPoints(walletsDetails.blockValues, cartUpdate.totalAmount),
+            //             status: '1'
+            //         });
+            //     }
+            // }
             cartUpdate = {
                 ...cartUpdate,
                 cartStatus: cart_1.cartStatus.order,

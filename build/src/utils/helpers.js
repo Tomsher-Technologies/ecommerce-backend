@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.calculateRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -268,3 +268,17 @@ const calculateTotalDiscountAmountDifference = (totalAmount, discountType, disco
     return discountAmount;
 };
 exports.calculateTotalDiscountAmountDifference = calculateTotalDiscountAmountDifference;
+function calculateRewardPoints(wallet, totalOrderAmount) {
+    if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
+        return 0;
+    }
+    const orderAmount = Number(wallet.orderAmount);
+    const redeemPoints = Number(wallet.redeemPoints);
+    if (orderAmount <= 0 || redeemPoints <= 0) {
+        return 0;
+    }
+    const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
+    const totalRedeemPoints = numberOfTimesRedeemable * redeemPoints;
+    return totalRedeemPoints;
+}
+exports.calculateRewardPoints = calculateRewardPoints;
