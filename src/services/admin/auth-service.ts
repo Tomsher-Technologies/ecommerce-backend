@@ -12,6 +12,8 @@ class AuthService {
     async login(username: string, password: string): Promise<any> {
         try {
             const user: UserProps | null | any = await UserModel.findOne({ $and: [{ email: username }, { status: '1' }] }).populate('userTypeID', ['userTypeName', 'slug']);
+            console.log('user',user);
+            
             if (user.userTypeID.slug != "super-admin") {
                 const userType = await UserTypeModel.findOne({ $and: [{ slug: user.userTypeID.slug }, { status: '1' }] })
                 console.log(userType);
