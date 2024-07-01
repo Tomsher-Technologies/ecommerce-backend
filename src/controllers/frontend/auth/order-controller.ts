@@ -23,7 +23,7 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
 
-            const order: any = await OrderService.OrderList({
+            const order: any = await OrderService.orderList({
                 query: {
                     $and: [
                         { customerId: customerDetails._id },
@@ -65,8 +65,8 @@ class OrderController extends BaseController {
             if (!customerDetails) {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
-//offer - specification
-            const order: any = await CartService.findCartPopulate({
+            //offer - specification
+            const order: any = await OrderService.orderDetails({
                 query: {
                     $and: [
                         { customerId: customerDetails._id },
