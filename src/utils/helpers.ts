@@ -288,3 +288,22 @@ export const calculateTotalDiscountAmountDifference = (
 
     return discountAmount;
 };
+
+export function calculateRewardPoints(wallet: { orderAmount: string, redeemPoints: string }, totalOrderAmount: number): number {
+    if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
+      return 0;
+    }
+  
+    const orderAmount = Number(wallet.orderAmount);
+    const redeemPoints = Number(wallet.redeemPoints);
+  
+    if (orderAmount <= 0 || redeemPoints <= 0) {
+      return 0;
+    }
+  
+    const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
+  
+    const totalRedeemPoints = numberOfTimesRedeemable * redeemPoints;
+  
+    return totalRedeemPoints;
+  }

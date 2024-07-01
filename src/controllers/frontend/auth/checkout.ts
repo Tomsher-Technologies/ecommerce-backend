@@ -161,10 +161,10 @@ class CheckoutController extends BaseController {
                         }
                     }
                 } else {
-                    const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
+                    const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings });
                     cartUpdate = {
                         ...cartUpdate,
-                        paymentMethodCharge: codAmount.blockValues.codCharge,
+                        paymentMethodCharge: codAmount?.blockValues?.codCharge || 0,
                         cartStatus: "2",
                         orderStatus: orderStatusMap['1'].value,
                         orderStatusAt: new Date(),
@@ -179,7 +179,7 @@ class CheckoutController extends BaseController {
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
                     await CheckoutService.cartUpdation(updateCart, true)
                 }
-                
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: cartDetails._id,
@@ -251,7 +251,7 @@ class CheckoutController extends BaseController {
     async tapSuccessResponse(req: Request, res: Response): Promise<any> {
         const { tap_id, data }: any = req.query
         if (!tap_id) {
-            res.redirect("https://th.tomsher.net/?status=failure"); // failure
+            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
             return false
         }
         const tapResponse = await tapPaymentRetrieve(tap_id);
@@ -263,14 +263,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://th.tomsher.net?status=${tapResponse?.status}`); // failure
+            res.redirect(`https://th.tomsher.net/order-response?status=${tapResponse?.status}`); // failure
             return false
         }
     }
@@ -278,12 +278,12 @@ class CheckoutController extends BaseController {
     async tabbySuccessResponse(req: Request, res: Response): Promise<any> {
         const { payment_id }: any = req.query
         if (!payment_id) {
-            res.redirect("https://th.tomsher.net/?status=failure"); // failure
+            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
             return false
         }
         const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby })
         if (!paymentMethod) {
-            res.redirect("https://th.tomsher.net/?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect("https://th.tomsher.net/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
 
@@ -295,14 +295,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://th.tomsher.net/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://th.tomsher.net?status=${tabbyResponse?.status}`); // failure
+            res.redirect(`https://th.tomsher.net/order-response?status=${tabbyResponse?.status}`); // failure
             return false
         }
     }
