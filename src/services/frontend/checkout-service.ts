@@ -10,7 +10,6 @@ import PaymentTransactionModel from "../../model/frontend/payment-transaction-mo
 
 class CheckoutService {
 
-
     async paymentResponse(options: any = {}): Promise<any> {
         const { transactionId, allPaymentResponseData, paymentStatus } = options;
         const paymentDetails = await PaymentTransactionModel.findOne({ transactionId });
