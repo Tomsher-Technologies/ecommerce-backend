@@ -25,7 +25,7 @@ class CheckoutService {
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
-                orderId: null,
+                _id: null,
                 status: false,
                 message: 'Active cart not found'
             }
@@ -42,13 +42,15 @@ class CheckoutService {
 
             if (updateTransaction) {
                 return {
-                    orderId: cartDetails._id,
+                    _id: cartDetails._id,
+                    orderId: cartDetails.orderId,
                     status: true,
                     message: 'Payment success'
                 }
             } else {
                 return {
-                    orderId: cartDetails._id,
+                    _id: cartDetails._id,
+                    orderId: cartDetails.orderId,
                     status: false,
                     message: 'update transaction is fail please contact administrator'
                 }
@@ -63,11 +65,23 @@ class CheckoutService {
             this.cartUpdation(cartDetails, false);
 
             return {
-                orderId: cartDetails._id,
+                _id: cartDetails._id,
+                orderId: cartDetails.orderId,
                 status: false,
                 message: paymentStatus
             }
         }
+    }
+
+
+    async getNextSequenceValue(): Promise<any> {
+        const maxOrder: any = await CartOrdersModel.find().sort({ orderId: -1 }).limit(1);
+        let maxOrderId = maxOrder.length > 0 ? maxOrder[0].orderId : '000000';
+
+        // Convert to an integer, increment, and then convert back to a zero-padded string
+        let nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
+        return nextOrderId
+
     }
 
     async cartUpdation(cartDetails: any, paymentSuccess: boolean): Promise<any> {
@@ -154,9 +168,11 @@ class CheckoutService {
             //         });
             //     }
             // }
+            const orderId = await this.getNextSequenceValue()
 
             cartUpdate = {
                 ...cartUpdate,
+                orderId: orderId,
                 cartStatus: cartStatus.order,
                 processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
@@ -165,13 +181,15 @@ class CheckoutService {
             const updateCart = await CartService.update(cartDetails?._id, cartUpdate)
             if (!updateCart) {
                 return {
-                    orderId: cartDetails?._id,
+                    _id: cartDetails?._id,
+                    orderId: cartDetails?.orderId,
                     status: false,
                     message: 'Cart updation failed'
                 }
             } else {
                 return {
-                    orderId: cartDetails?._id,
+                    _id: cartDetails?._id,
+                    orderId: cartDetails?.orderId,
                     status: true,
                     message: 'Cart updation success'
                 }

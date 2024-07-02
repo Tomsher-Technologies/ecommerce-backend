@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface CartOrderProps extends Document {
     customerId: Schema.Types.ObjectId;
     guestUserId: string;
+    orderId: string;
     countryId: Schema.Types.ObjectId;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
@@ -55,6 +56,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Countries',
         default: null
+    },
+    orderId: {
+        type: String,
+        unique: true
     },
     couponId: {
         type: Schema.Types.ObjectId,

@@ -214,7 +214,6 @@ class OrdersController extends BaseController {
 
                 hostName: req.get('origin'),
             })
-            console.log(order);
 
             if (order) {
                 return controller.sendSuccessResponse(res, {
