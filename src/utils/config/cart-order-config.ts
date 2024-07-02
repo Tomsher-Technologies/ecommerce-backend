@@ -153,10 +153,18 @@ export const cartProject = {
         updatedAt: 1,
         __v: 1,
         totalProductCount: { $size: '$products' }, // Calculate the size of the products array
-        paymentMethod: '$paymentMethod',
-        customer: '$customer',
-        shippingAddress: '$shippingAddress',
-        billingAddress: '$billingAddress'
+        paymentMethod: {
+            $ifNull: ['$paymentMethod', null]
+        },
+        customer: {
+            $ifNull: ['$customer', null]
+        },
+        shippingAddress: {
+            $ifNull: ['$shippingAddress', null]
+        },
+        billingAddress: {
+            $ifNull: ['$billingAddress', null]
+        }
 
     }
 
@@ -206,9 +214,15 @@ export const cartDeatilProject = {
         updatedAt: 1,
         __v: 1,
         totalProductCount: { $size: '$products' }, // Calculate the size of the products array
-        paymentMethod: '$paymentMethod',
-        shippingAddress: '$shippingAddress',
-        billingAddress: '$billingAddress'
+        paymentMethod: {
+            $ifNull: ['$paymentMethod', null]
+        },
+        shippingAddress: {
+            $ifNull: ['$shippingAddress', null]
+        },
+        billingAddress: {
+            $ifNull: ['$billingAddress', null]
+        }
     }
 
 }
