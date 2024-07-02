@@ -95,8 +95,8 @@ class DashboardController extends BaseController {
 
             const totalOrders = await DashboardService.findTotalOrder({
                 salesQuery,
-                fromDate,
-                endDate
+                fromDate: fromDate ? fromDate : today,
+                endDate: endDate ? endDate : currentDate
             });
 
             controller.sendSuccessResponse(res, {

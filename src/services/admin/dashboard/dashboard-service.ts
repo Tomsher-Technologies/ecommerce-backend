@@ -9,18 +9,16 @@ import ProductVariantsModel from '../../../model/admin/ecommerce/product/product
 class DashboardService {
     async findAll(options: FilterOptionsProps = {}): Promise<any | null> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        console.log("query", query);
-
 
         const totalOrders = await CartOrderModel.aggregate([
             {
-                $match: { countryId: query.countryId, cartStatus: { $ne: "1" } }
+                $match: query
             },
-            {
-                $group: {
-                    _id: { countryId: "$countryId" }
-                }
-            },
+            // {
+            //     $group: {
+            //         _id: { countryId: "$countryId" }
+            //     }
+            // },
             {
                 $count: "totalOrders"
             }
@@ -30,7 +28,7 @@ class DashboardService {
         const totalUsers = await CustomerModel.countDocuments();
         const totalSKUs = await ProductVariantsModel.aggregate([
             {
-                $match: { countryId: query.countryId }
+                $match: query
             },
             {
                 $group: {
@@ -46,7 +44,10 @@ class DashboardService {
 
         const outOfStockSKUs = await ProductVariantsModel.aggregate([
             {
-                $match: { quantity: 0, countryId: query.countryId }
+                $match: {
+                    quantity: 0,
+                    ...query
+                }
             },
             {
                 $group: {
@@ -59,7 +60,6 @@ class DashboardService {
         ]);
 
         const outOfStockSKUsCount = outOfStockSKUs.length > 0 ? outOfStockSKUs[0].outOfStockSKUs : 0;
-        console.log("***", totalOrders, totalSKUs, totalUsers, outOfStockSKUs);
         const counts = {
             totalOrders: totalOrdersCount,
             totalSKUs: totalSKUsCount,
@@ -106,8 +106,6 @@ class DashboardService {
         };
         return counts
 
-        // const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
-        // return createdCartWithValues;
     }
 
     async findTotalSales(options: any = {}): Promise<any | null> {
@@ -156,9 +154,7 @@ class DashboardService {
 
         const ordersData = await CartOrderModel.aggregate([
             {
-                $match: {
-                    createdAt: salesQuery
-                }
+                $match: salesQuery
             },
             {
                 $group: {
@@ -177,7 +173,6 @@ class DashboardService {
             map[item._id] = item.totalOrders;
             return map;
         }, {});
-        console.log("-----------", ordersData);
 
         const labels = dateRange;
         const orders = dateRange.map((date: any) => orderMap[date] || 0);
