@@ -11,7 +11,7 @@ const router: Router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.counts }), DashboardController.dashboard);
+router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.dashboards }), DashboardController.dashboard);
 
 
 export default router;
