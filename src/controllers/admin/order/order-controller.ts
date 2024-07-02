@@ -179,7 +179,6 @@ class OrdersController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            console.log("************queryquery******", query);
 
             const order = await OrderService.OrderList({
                 page: parseInt(page_size as string),
@@ -187,7 +186,6 @@ class OrdersController extends BaseController {
                 query,
                 sort
             });
-            console.log("******************", order);
 
             return controller.sendSuccessResponse(res, {
                 requestedData: order,
@@ -216,7 +214,6 @@ class OrdersController extends BaseController {
 
                 hostName: req.get('origin'),
             })
-            console.log(order);
 
             if (order) {
                 return controller.sendSuccessResponse(res, {

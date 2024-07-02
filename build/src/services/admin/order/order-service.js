@@ -21,6 +21,9 @@ class OrderService {
         }
         const pipeline = [
             cart_order_config_1.cartLookup,
+            cart_order_config_1.paymentMethodLookup,
+            cart_order_config_1.customerLookup,
+            cart_order_config_1.orderListObjectLookup,
             { $match: query },
             { $sort: finalSort },
             cart_order_config_1.cartProject
@@ -62,15 +65,12 @@ class OrderService {
         const pipeline = [
             modifiedPipeline,
             cart_order_config_1.couponLookup,
-            cart_order_config_1.couponObject,
             cart_order_config_1.shippingLookup,
-            cart_order_config_1.shippingObject,
             cart_order_config_1.billingLookup,
-            cart_order_config_1.billingObject,
             cart_order_config_1.paymentMethodLookup,
-            cart_order_config_1.paymentMethodObject,
             cart_order_config_1.pickupStoreLookup,
-            cart_order_config_1.pickupStoreObject,
+            cart_order_config_1.objectLookup,
+            cart_order_config_1.cartDeatilProject,
             { $match: query },
             { $sort: finalSort },
         ];

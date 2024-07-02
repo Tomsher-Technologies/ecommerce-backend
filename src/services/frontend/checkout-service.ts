@@ -1,5 +1,5 @@
 import { cartStatus, couponTypes, orderPaymentStatus } from "../../constants/cart";
-import { DiscountType,  calculateTotalDiscountAmountDifference, calculateWalletAmount } from "../../utils/helpers";
+import { DiscountType, calculateTotalDiscountAmountDifference, calculateWalletAmount } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
 import CartService from "./cart-service";
@@ -25,7 +25,7 @@ class CheckoutService {
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
-                orderId: null,
+                _id: null,
                 status: false,
                 message: 'Active cart not found'
             }
@@ -42,13 +42,15 @@ class CheckoutService {
 
             if (updateTransaction) {
                 return {
-                    orderId: cartDetails._id,
+                    _id: cartDetails._id,
+                    orderId: cartDetails.orderId,
                     status: true,
                     message: 'Payment success'
                 }
             } else {
                 return {
-                    orderId: cartDetails._id,
+                    _id: cartDetails._id,
+                    orderId: cartDetails.orderId,
                     status: false,
                     message: 'update transaction is fail please contact administrator'
                 }
@@ -63,11 +65,23 @@ class CheckoutService {
             this.cartUpdation(cartDetails, false);
 
             return {
-                orderId: cartDetails._id,
+                _id: cartDetails._id,
+                orderId: cartDetails.orderId,
                 status: false,
                 message: paymentStatus
             }
         }
+    }
+
+
+    async getNextSequenceValue(): Promise<any> {
+        const maxOrder: any = await CartOrdersModel.find().sort({ orderId: -1 }).limit(1);
+        let maxOrderId = maxOrder.length > 0 ? maxOrder[0].orderId : '000000';
+
+        // Convert to an integer, increment, and then convert back to a zero-padded string
+        let nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
+        return nextOrderId
+
     }
 
     async cartUpdation(cartDetails: any, paymentSuccess: boolean): Promise<any> {
@@ -77,14 +91,14 @@ class CheckoutService {
                 cartStatus: cartStatus.active,
                 totalAmount: cartDetails?.totalAmount,
                 totalCouponAmount: 0,
-                couponId: cartDetails?.couponId
+                couponId: cartDetails?.couponId,
+                paymentMethodId: cartDetails?.paymentMethodId
             }
-    
-
             if (!paymentSuccess) {
                 cartUpdate = {
                     ...cartUpdate,
-                    couponId: null
+                    couponId: null,
+                    paymentMethodId: null
                 }
             } else {
                 const couponDetails: any = await CouponService.findOne({ _id: cartDetails?.couponId });
@@ -92,45 +106,52 @@ class CheckoutService {
                     const cartProductDetails: any = await CartService.findAllCart({ cartId: cartDetails?._id });
                     const productIds = cartProductDetails.map((product: any) => product.productId.toString());
 
-                    const couponAmount = couponDetails?.requestedData?.discountAmount;
-                    const discountType = couponDetails?.requestedData?.discountType
-
+                    const couponAmount = couponDetails?.discountAmount;
+                    const discountType = couponDetails.discountType
                     const updateTotalCouponAmount = (productAmount: any, discountAmount: number, discountType: DiscountType) => {
                         if (productAmount) {
                             const totalCouponAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
-                            const cartTtotalAmount = cartDetails?.totalAmount - calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
+                            const cartTotalAmount = cartDetails?.totalAmount - calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
                             cartUpdate = {
                                 ...cartUpdate,
-                                totalAmount: cartTtotalAmount,
+                                totalAmount: cartTotalAmount,
                                 totalCouponAmount: totalCouponAmount
                             }
                         }
                     };
-
-                    if (couponDetails?.requestedData.couponType == couponTypes.entireOrders) {
+                    var totalAmount = 0
+                    if (couponDetails?.couponType == couponTypes.entireOrders) {
                         updateTotalCouponAmount(cartDetails?.totalAmount, couponAmount, discountType)
-                    } else if (couponDetails?.requestedData.couponType == couponTypes.forProduct) {
+                    } else if (couponDetails?.couponType == couponTypes.forProduct) {
                         cartProductDetails.map(async (product: any) => {
-                            if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
+                                totalAmount += product.productAmount
+                                // updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
-                    } else if (couponDetails?.requestedData.couponType == couponTypes.forCategory) {
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
+                    } else if (couponDetails?.couponType == couponTypes.forCategory) {
                         const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
-                        const categoryIds = productCategoryDetails.map((product: any) => product.categoryId.toString());
+                        const categoryIds = productCategoryDetails.map((product: any) => product.categoryId);
                         categoryIds.map(async (product: any) => {
-                            if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
+                            if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
+                                totalAmount += product.productAmount
+
+                                // updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
-                    } else if (couponDetails?.requestedData.couponType == couponTypes.forBrand) {
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
+                    } else if (couponDetails?.couponType == couponTypes.forBrand) {
                         const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
-                        const brandIds = productDetails.map((product: any) => product.brand.toString());
+                        const brandIds = productDetails.map((product: any) => product.brand);
                         brandIds.map(async (product: any) => {
-                            if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
-                                updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
+                                totalAmount += product.productAmount
+
+                                // updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
                     }
                 }
             }
@@ -147,9 +168,11 @@ class CheckoutService {
             //         });
             //     }
             // }
+            const orderId = await this.getNextSequenceValue()
 
             cartUpdate = {
                 ...cartUpdate,
+                orderId: orderId,
                 cartStatus: cartStatus.order,
                 processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
@@ -158,13 +181,15 @@ class CheckoutService {
             const updateCart = await CartService.update(cartDetails?._id, cartUpdate)
             if (!updateCart) {
                 return {
-                    orderId: cartDetails?._id,
+                    _id: cartDetails?._id,
+                    orderId: cartDetails?.orderId,
                     status: false,
                     message: 'Cart updation failed'
                 }
             } else {
                 return {
-                    orderId: cartDetails?._id,
+                    _id: cartDetails?._id,
+                    orderId: cartDetails?.orderId,
                     status: true,
                     message: 'Cart updation success'
                 }

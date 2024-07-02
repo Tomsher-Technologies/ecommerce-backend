@@ -5,14 +5,13 @@ import authMiddleware from '../../../middleware/admin/auth-middleware';
 import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
 import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import CustomerController from '../../../src/controllers/admin/customer/customer-controller';
+import DashboardController from '../../../src/controllers/admin/dashboard/dashboard-controller';
 
 const router: Router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/customer-list', CustomerController.findAll);
-router.get('/customer-detail/:id', CustomerController.findCustomer);
+router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.counts }), DashboardController.dashboard);
 
 
 export default router;
