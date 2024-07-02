@@ -93,10 +93,10 @@ adminRouter.use('/stores/warehouse', WarehouseRoutes);
 adminRouter.use('/stores/store', StoreRoutes);
 
 //order
-adminRouter.use('/order', OrderRoutes);
+adminRouter.use('/orders', OrderRoutes);
 
 //customer
-adminRouter.use('/customer', CustomerRoutes);
+adminRouter.use('/customers', CustomerRoutes);
 
 //dashboard
 adminRouter.use('/dashboard', DashboardRoutes);
