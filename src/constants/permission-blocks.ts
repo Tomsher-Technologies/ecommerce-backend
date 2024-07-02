@@ -1,6 +1,10 @@
 
 
 export const permissionBlocks = {
+    dashboards: {
+        orders: 'orders',
+        counts: 'counts'
+    },
     ecommerce: {
         products: 'products',
         categories: 'categories',
@@ -10,6 +14,17 @@ export const permissionBlocks = {
         sliders: 'sliders',
         specifications: 'specifications'
 
+    },
+    orders: {
+        orders: 'orders',
+    },
+    customers: {
+        customers: 'customers',
+        whishlists: 'whishlists',
+    },
+    reports: {
+        customerWiseReports: 'customerwisereports',
+        productWiseReports: 'productwisereports'
     },
     website: {
         collectionsProducts: 'collectionsproducts',
@@ -37,5 +52,6 @@ export const permissionBlocks = {
     marketing: {
         coupons: 'coupons',
         offers: 'offers',
-    }
+    },
+
 }

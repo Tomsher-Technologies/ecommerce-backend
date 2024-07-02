@@ -1,20 +1,31 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
+import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup } from '../../../utils/config/customer-config';
 
 
 class CustomerService {
     async findAll(options: FilterOptionsProps = {}): Promise<CustomrProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        let queryBuilder = CustomerModel.find(query)
-            .skip(skip)
-            .limit(limit)
-            .lean();
 
-        if (sort) {
-            queryBuilder = queryBuilder.sort(sort);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
         }
-
-        return queryBuilder;
+        const pipeline: any[] = [
+            whishlistLookup,
+            orderLookup,
+            addField,
+            customerProject,
+            { $match: query },
+            { $sort: finalSort },
+            { $limit: limit },
+            { $sort: finalSort },
+        ];
+        const createdCartWithValues = await CustomerModel.aggregate(pipeline);
+        return createdCartWithValues;
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
@@ -28,12 +39,23 @@ class CustomerService {
 
 
 
-    async findOne(query: any, selectData?: string): Promise<any | null> {
-        const queryBuilder = CustomerModel.findOne(query);
-        if (selectData) {
-            queryBuilder.select(selectData);
-        }
-        return queryBuilder;
+    async findOne(customerId: string): Promise<any | null> {
+        const pipeline = [
+            whishlistLookup,
+            orderLookup,
+            addField,
+            billingLookup,
+            shippingLookup,
+            orderWalletTransactionLookup,
+            referredWalletTransactionLookup,
+            referrerWalletTransactionLookup,
+            customerDetailProject,
+            { $match: { _id: mongoose.Types.ObjectId.createFromHexString(customerId) } },
+
+        ];
+
+        const result: any = await CustomerModel.aggregate(pipeline).exec();
+        return result
     }
 
 

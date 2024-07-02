@@ -7,7 +7,7 @@ import { addFieldsProductVariantAttributes, brandLookup, brandObject, productCat
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import commonService from './../guest/common-service';
-import { billingLookup, billingObject, paymentMethodLookup, paymentMethodObject, shippingLookup, shippingObject } from '../../../utils/config/cart-order-config';
+import { billingLookup, cartProject, objectLookup, paymentMethodLookup, shippingLookup } from '../../../utils/config/cart-order-config';
 
 
 class CartService {
@@ -65,11 +65,10 @@ class CartService {
         const pipeline: any[] = [
             modifiedPipeline,
             shippingLookup,
-            shippingObject,
             billingLookup,
-            billingObject,
             paymentMethodLookup,
-            paymentMethodObject,
+            objectLookup,
+            cartProject,
             { $match: query },
 
             { $sort: finalSort },
