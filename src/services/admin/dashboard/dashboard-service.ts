@@ -9,6 +9,7 @@ import ProductVariantsModel from '../../../model/admin/ecommerce/product/product
 class DashboardService {
     async findAll(options: FilterOptionsProps = {}): Promise<any | null> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
+        console.log("query", query);
 
 
         const totalOrders = await CartOrderModel.aggregate([
@@ -100,8 +101,8 @@ class DashboardService {
         const counts = {
             todayOrders: todayOrders.length,
             todaySales: todaySales,
-            yesterdayOrders: orderComparison,
-            yesterdaySales: salesComparison
+            orderComparison: orderComparison,
+            salesComparison: salesComparison
         };
         return counts
 
