@@ -19,7 +19,6 @@ exports.products = [
     'Brand',
     'Tags',
     'Price',
-    'Quantity',
     'Discount_Price',
     'Is_Default',
     'Cart_Min_Quantity',
