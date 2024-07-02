@@ -213,6 +213,7 @@ export const cartDeatilProject = {
         createdAt: 1,
         updatedAt: 1,
         __v: 1,
+        products: 1,
         totalProductCount: { $size: '$products' }, // Calculate the size of the products array
         paymentMethod: {
             $ifNull: ['$paymentMethod', null]
