@@ -1,5 +1,5 @@
 import { cartStatus, couponTypes, orderPaymentStatus } from "../../constants/cart";
-import { DiscountType,  calculateTotalDiscountAmountDifference, calculateWalletAmount } from "../../utils/helpers";
+import { DiscountType, calculateTotalDiscountAmountDifference, calculateWalletAmount } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
 import CartService from "./cart-service";
@@ -79,8 +79,6 @@ class CheckoutService {
                 totalCouponAmount: 0,
                 couponId: cartDetails?.couponId
             }
-    
-
             if (!paymentSuccess) {
                 cartUpdate = {
                     ...cartUpdate,
@@ -92,9 +90,8 @@ class CheckoutService {
                     const cartProductDetails: any = await CartService.findAllCart({ cartId: cartDetails?._id });
                     const productIds = cartProductDetails.map((product: any) => product.productId.toString());
 
-                    const couponAmount = couponDetails?.requestedData?.discountAmount;
-                    const discountType = couponDetails?.requestedData?.discountType
-
+                    const couponAmount = couponDetails?.discountAmount;
+                    const discountType = couponDetails.discountType
                     const updateTotalCouponAmount = (productAmount: any, discountAmount: number, discountType: DiscountType) => {
                         if (productAmount) {
                             const totalCouponAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
@@ -107,27 +104,27 @@ class CheckoutService {
                         }
                     };
 
-                    if (couponDetails?.requestedData.couponType == couponTypes.entireOrders) {
+                    if (couponDetails?.couponType == couponTypes.entireOrders) {
                         updateTotalCouponAmount(cartDetails?.totalAmount, couponAmount, discountType)
-                    } else if (couponDetails?.requestedData.couponType == couponTypes.forProduct) {
+                    } else if (couponDetails?.couponType == couponTypes.forProduct) {
                         cartProductDetails.map(async (product: any) => {
-                            if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
                                 updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
-                    } else if (couponDetails?.requestedData.couponType == couponTypes.forCategory) {
+                    } else if (couponDetails?.couponType == couponTypes.forCategory) {
                         const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
-                        const categoryIds = productCategoryDetails.map((product: any) => product.categoryId.toString());
+                        const categoryIds = productCategoryDetails.map((product: any) => product.categoryId);
                         categoryIds.map(async (product: any) => {
-                            if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
+                            if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
                                 updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
-                    } else if (couponDetails?.requestedData.couponType == couponTypes.forBrand) {
+                    } else if (couponDetails?.couponType == couponTypes.forBrand) {
                         const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
-                        const brandIds = productDetails.map((product: any) => product.brand.toString());
+                        const brandIds = productDetails.map((product: any) => product.brand);
                         brandIds.map(async (product: any) => {
-                            if (couponDetails?.requestedData.couponApplyValues.includes((product.productId.toString()))) {
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
                                 updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
