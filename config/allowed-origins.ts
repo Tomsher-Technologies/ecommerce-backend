@@ -9,6 +9,8 @@ export const allowedOrigins: string[] = [
     'http://localhost:3002',
     'http://localhost:3027',
     'http://localhost:3028',
+    'http://tomsher.xyz',
+    'http://admin.tomsher.xyz',
     'http://kw.localhost:3028',
     'http://sa.localhost:3028',
     'http://qa.localhost:3028',

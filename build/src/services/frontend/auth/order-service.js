@@ -54,11 +54,10 @@ class CartService {
         const pipeline = [
             modifiedPipeline,
             cart_order_config_1.shippingLookup,
-            cart_order_config_1.shippingObject,
             cart_order_config_1.billingLookup,
-            cart_order_config_1.billingObject,
             cart_order_config_1.paymentMethodLookup,
-            cart_order_config_1.paymentMethodObject,
+            cart_order_config_1.objectLookup,
+            cart_order_config_1.cartProject,
             { $match: query },
             { $sort: finalSort },
         ];

@@ -150,18 +150,25 @@ class CartController extends base_controller_1.default {
                     }
                 }
                 else if (customer || guestUser) {
-                    const existingCart = await cart_service_1.default.findCart({
-                        $and: [
-                            {
-                                $or: [
-                                    { customerId: customer },
-                                    { guestUserId: guestUser },
-                                ]
-                            },
-                            { countryId: country },
-                            { cartStatus: '1' }
-                        ]
-                    });
+                    var existingCart;
+                    if (customer) {
+                        existingCart = await cart_service_1.default.findCart({
+                            $and: [
+                                { customerId: customer },
+                                { countryId: country },
+                                { cartStatus: '1' }
+                            ]
+                        });
+                    }
+                    else {
+                        existingCart = await cart_service_1.default.findCart({
+                            $and: [
+                                { guestUserId: guestUser },
+                                { countryId: country },
+                                { cartStatus: '1' }
+                            ]
+                        });
+                    }
                     const offerProduct = await product_service_1.default.findOneProduct({
                         query: {
                             $and: [
@@ -241,13 +248,12 @@ class CartController extends base_controller_1.default {
                                     if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
                                         giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge);
                                     }
-                                    const removeGiftWrapAmount = (existingCartProduct.giftWrapAmount > 0 && giftWrapCharge) ? (existingCart.totalGiftWrapAmount - giftWrapCharge) : existingCart.totalGiftWrapAmount;
-                                    console.log("++++++++++++++++++++++++", removeGiftWrapAmount);
+                                    const removeGiftWrapAmount = existingCartProduct.giftWrapAmount;
                                     const cartUpdate = await cart_service_1.default.update(existingCartProduct.cartId, {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
                                         totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                        totalGiftWrapAmount: existingCartProduct.giftWrapAmount > 0 ? (existingCart.totalGiftWrapAmount - removeGiftWrapAmount) : existingCart.totalGiftWrapAmount
+                                        totalGiftWrapAmount: removeGiftWrapAmount > 0 ? (existingCart.totalGiftWrapAmount - removeGiftWrapAmount) : existingCart.totalGiftWrapAmount
                                     });
                                     const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
                                     if (checkCartProducts && checkCartProducts.length == 0) {

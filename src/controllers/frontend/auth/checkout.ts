@@ -66,6 +66,7 @@ class CheckoutController extends BaseController {
                     totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
                     billingId: billingId || null,
+                    paymentMethodId: paymentMethod._id,
                     orderStatusAt: null,
                 }
                 if (couponCode && deviceType) {

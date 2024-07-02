@@ -40,8 +40,13 @@ import WarehouseRoutes from './admin/stores/warehouse-routes';
 import StoreRoutes from './admin/stores/store-routes';
 
 //order
-import OrderRoutes from './admin/order/order-routes';
-import CustomerRoutes from './admin/customer/customer-routes';
+import OrderRoutes from './admin/orders/orders-routes';
+
+//customer
+import CustomerRoutes from './admin/customers/customers-routes';
+
+//dashboard
+import DashboardRoutes from './admin/dashboard/dashboard-routes';
 
 const adminRouter = express.Router();
 
@@ -88,9 +93,13 @@ adminRouter.use('/stores/warehouse', WarehouseRoutes);
 adminRouter.use('/stores/store', StoreRoutes);
 
 //order
-adminRouter.use('/order', OrderRoutes);
+adminRouter.use('/orders', OrderRoutes);
 
 //customer
-adminRouter.use('/customer', CustomerRoutes);
+adminRouter.use('/customers', CustomerRoutes);
+
+//dashboard
+adminRouter.use('/dashboard', DashboardRoutes);
+
 
 export default adminRouter;

@@ -186,21 +186,26 @@ class CartController extends BaseController {
 
                     }
                 } else
-
                     if (customer || guestUser) {
-                        const existingCart: any = await CartService.findCart({
-                            $and: [
-                                {
-                                    $or: [
-                                        { customerId: customer },
-                                        { guestUserId: guestUser },
-                                    ]
-                                },
-                                { countryId: country },
-                                { cartStatus: '1' }
-                            ]
-                        });
+                        var existingCart: any
 
+                        if (customer) {
+                            existingCart = await CartService.findCart({
+                                $and: [
+                                    { customerId: customer },
+                                    { countryId: country },
+                                    { cartStatus: '1' }
+                                ]
+                            });
+                        } else {
+                            existingCart = await CartService.findCart({
+                                $and: [
+                                    { guestUserId: guestUser },
+                                    { countryId: country },
+                                    { cartStatus: '1' }
+                                ]
+                            });
+                        }
 
                         const offerProduct: any = await productService.findOneProduct({
                             query: {
@@ -286,14 +291,13 @@ class CartController extends BaseController {
                                         if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
                                             giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
                                         }
-                                        const removeGiftWrapAmount: 0 = (existingCartProduct.giftWrapAmount > 0 && giftWrapCharge) ? (existingCart.totalGiftWrapAmount - giftWrapCharge) : existingCart.totalGiftWrapAmount
-                                        console.log("++++++++++++++++++++++++", removeGiftWrapAmount);
+                                        const removeGiftWrapAmount: 0 = existingCartProduct.giftWrapAmount
 
                                         const cartUpdate = await CartService.update(existingCartProduct.cartId, {
                                             totalProductAmount: totalAmountOfProduct,
                                             totalDiscountAmount: totalDiscountAmountOfProduct,
                                             totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
-                                            totalGiftWrapAmount: existingCartProduct.giftWrapAmount > 0 ? (existingCart.totalGiftWrapAmount - removeGiftWrapAmount) : existingCart.totalGiftWrapAmount
+                                            totalGiftWrapAmount: removeGiftWrapAmount > 0 ? (existingCart.totalGiftWrapAmount - removeGiftWrapAmount) : existingCart.totalGiftWrapAmount
                                         });
 
                                         const checkCartProducts = await CartService.findAllCart({ cartId: existingCartProduct.cartId })

@@ -2,6 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.permissionBlocks = void 0;
 exports.permissionBlocks = {
+    dashboards: {
+        orders: 'orders',
+        dashboards: 'dashboards'
+    },
     ecommerce: {
         products: 'products',
         categories: 'categories',
@@ -10,6 +14,17 @@ exports.permissionBlocks = {
         banners: 'banners',
         sliders: 'sliders',
         specifications: 'specifications'
+    },
+    orders: {
+        orders: 'orders',
+    },
+    customers: {
+        customers: 'customers',
+        whishlists: 'whishlists',
+    },
+    reports: {
+        customerWiseReports: 'customerwisereports',
+        productWiseReports: 'productwisereports'
     },
     website: {
         collectionsProducts: 'collectionsproducts',
@@ -37,5 +52,5 @@ exports.permissionBlocks = {
     marketing: {
         coupons: 'coupons',
         offers: 'offers',
-    }
+    },
 };

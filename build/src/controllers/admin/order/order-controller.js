@@ -143,14 +143,12 @@ class OrdersController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            console.log("************queryquery******", query);
             const order = await order_service_1.default.OrderList({
                 page: parseInt(page_size),
                 limit: parseInt(limit),
                 query,
                 sort
             });
-            console.log("******************", order);
             return controller.sendSuccessResponse(res, {
                 requestedData: order,
                 // totalCount: await CouponService.getTotalCount(query),
@@ -176,7 +174,6 @@ class OrdersController extends base_controller_1.default {
                 },
                 hostName: req.get('origin'),
             });
-            console.log(order);
             if (order) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: order,
