@@ -10,22 +10,6 @@ class DashboardService {
     async findAll(options: FilterOptionsProps = {}): Promise<any | null> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
 
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
-        const pipeline: any[] = [
-            whishlistLookup,
-            orderLookup,
-            addField,
-            customerProject,
-            { $match: query },
-            { $sort: finalSort },
-            { $limit: limit },
-            { $sort: finalSort },
-        ];
 
         const totalOrders = await CartOrderModel.aggregate([
             {
@@ -116,8 +100,8 @@ class DashboardService {
         const counts = {
             todayOrders: todayOrders.length,
             todaySales: todaySales,
-            orderComparison: orderComparison,
-            salesComparison: salesComparison
+            yesterdayOrders: orderComparison,
+            yesterdaySales: salesComparison
         };
         return counts
 

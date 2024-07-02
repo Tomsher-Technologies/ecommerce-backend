@@ -102,7 +102,7 @@ class DashboardController extends BaseController {
             controller.sendSuccessResponse(res, {
                 requestedData: {
                     overViewCount: dashboard,
-                    salesComparison: salesComparison,
+                    salesAndOrderComparison: salesComparison,
                     totalSales: totalSales,
                     totalOrders: totalOrders
                 },
