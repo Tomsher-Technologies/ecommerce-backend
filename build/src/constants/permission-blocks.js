@@ -4,7 +4,7 @@ exports.permissionBlocks = void 0;
 exports.permissionBlocks = {
     dashboards: {
         orders: 'orders',
-        counts: 'counts'
+        dashboards: 'dashboards'
     },
     ecommerce: {
         products: 'products',
