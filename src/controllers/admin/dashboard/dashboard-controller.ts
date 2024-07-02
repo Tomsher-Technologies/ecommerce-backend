@@ -17,7 +17,7 @@ class DashboardController extends BaseController {
     async dashboard(req: Request, res: Response): Promise<void> {
         try {
 
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', fromDate = '', endDate = '' } = req.query as DashboardQueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', fromDate, endDate } = req.query as DashboardQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -27,19 +27,46 @@ class DashboardController extends BaseController {
                 query.countryId = countryId;
             }
 
-            if (status && status !== '') {
-                query.status = { $in: Array.isArray(status) ? status : [status] };
-            } else {
-                query.status = '1';
-            }
+            // if (status && status !== '') {
+            //     query.status = { $in: Array.isArray(status) ? status : [status] };
+            // } else {
+            //     query.cartStatus != '1';
+            // }
+
+            query = { cartStatus: { $ne: "1" } }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
             let salesQuery: any = {}
-            if (fromDate || endDate) {
+            // if (fromDate || endDate) {
+            //     salesQuery.createdAt = {
+            //         ...(fromDate && { $gte: new Date(fromDate) }),
+            //         ...(endDate && { $lte: dateConvertPm(endDate) })
+            //     };
+            // }
+
+
+            let currentDate = new Date();
+            currentDate.setHours(0, 59, 59, 59);
+            // Subtract 7 days from the current date
+            today.setDate(today.getDate() - 7);
+
+
+            if (!fromDate || !endDate) {
+
+                salesQuery.createdAt = {
+                    ...(today && { $gte: today }),
+                    ...(today && { $lte: currentDate })
+                };
+
+            } else {
                 salesQuery.createdAt = {
                     ...(fromDate && { $gte: new Date(fromDate) }),
                     ...(endDate && { $lte: dateConvertPm(endDate) })
                 };
-
             }
+
+            // salesQuery.cartStatus= { $ne: "1" } }
 
 
             const sort: any = {};
@@ -59,12 +86,11 @@ class DashboardController extends BaseController {
                 query,
                 sort
             });
-            console.log("...........", query);
 
             const totalSales = await DashboardService.findTotalSales({
                 salesQuery,
-                fromDate,
-                endDate
+                fromDate: fromDate ? fromDate : today,
+                endDate: endDate ? endDate : currentDate
             });
 
             const totalOrders = await DashboardService.findTotalOrder({

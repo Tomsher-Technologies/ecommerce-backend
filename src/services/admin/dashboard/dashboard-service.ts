@@ -26,11 +26,10 @@ class DashboardService {
             { $limit: limit },
             { $sort: finalSort },
         ];
-        console.log("query", query.countryId);
 
         const totalOrders = await CartOrderModel.aggregate([
             {
-                $match: { countryId: query.countryId }
+                $match: { countryId: query.countryId, cartStatus: { $ne: "1" } }
             },
             {
                 $group: {
@@ -129,7 +128,6 @@ class DashboardService {
     async findTotalSales(options: any = {}): Promise<any | null> {
         const { salesQuery, fromDate, endDate } = options;
 
-        console.log(salesQuery, "dfdsf");
 
         const salesData = await CartOrderModel.aggregate([
             {
@@ -152,7 +150,6 @@ class DashboardService {
             map[item._id] = item.totalSales;
             return map;
         }, {});
-        console.log("-----------", dateRange);
 
         const labels = dateRange;
         const sales = dateRange.map((date: any) => salesMap[date] || 0);
@@ -170,7 +167,7 @@ class DashboardService {
     async findTotalOrder(options: any = {}): Promise<any | null> {
         const { salesQuery, fromDate, endDate } = options;
 
-        console.log(salesQuery, "dfdsf");
+        // console.log(salesQuery, "dfdsf");
 
         const ordersData = await CartOrderModel.aggregate([
             {
