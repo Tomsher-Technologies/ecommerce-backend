@@ -2,7 +2,8 @@
 
 export const permissionBlocks = {
     dashboards: {
-        // orders: 'orders',
+        orders: 'orders',
+        counts: 'counts'
     },
     ecommerce: {
         products: 'products',

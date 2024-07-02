@@ -3,7 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.permissionBlocks = void 0;
 exports.permissionBlocks = {
     dashboards: {
+<<<<<<< HEAD
     // orders: 'orders',
+=======
+        orders: 'orders',
+        counts: 'counts'
+>>>>>>> eecff9093ab69667808639723dfaad04c4ba16df
     },
     ecommerce: {
         products: 'products',
