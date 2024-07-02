@@ -249,14 +249,12 @@ class CartController extends base_controller_1.default {
                                         giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge);
                                     }
                                     const removeGiftWrapAmount = existingCartProduct.giftWrapAmount;
-                                    console.log("++++++++++++++++++++++++", removeGiftWrapAmount);
                                     const cartUpdate = await cart_service_1.default.update(existingCartProduct.cartId, {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
                                         totalAmount: (totalAmountOfProduct - removeGiftWrapAmount) + shippingCharge,
                                         totalGiftWrapAmount: removeGiftWrapAmount > 0 ? (existingCart.totalGiftWrapAmount - removeGiftWrapAmount) : existingCart.totalGiftWrapAmount
                                     });
-                                    console.log("............0", cartUpdate);
                                     const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
                                     if (checkCartProducts && checkCartProducts.length == 0) {
                                         const deletedData = await cart_service_1.default.destroy(existingCartProduct.cartId);
