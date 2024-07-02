@@ -431,7 +431,7 @@ exports.productExcelSchema = zod_1.z.object({
     Brand: zod_1.z.string(),
     Warehouse: zod_1.z.string().optional(),
     Price: zod_1.z.number(),
-    Quantity: zod_1.z.number().int().optional(),
+    Quantity: zod_1.z.number().int().nonnegative().optional(),
     Discount_Price: zod_1.z.number().optional(),
     Cart_Min_Quantity: zod_1.z.number().int().optional(),
     Cart_Max_Quantity: zod_1.z.number().int().optional(),
@@ -473,14 +473,14 @@ exports.productExcelSchema = zod_1.z.object({
             path: [data.Product_Title]
         });
     }
-    if (data.Item_Type != 'config-item') {
-        if (!data.Quantity) {
-            ctx.addIssue({
-                code: "custom",
-                message: 'Quantity is required ',
-                path: [data.Product_Title]
-            });
-        }
-    }
+    // if (data.Item_Type != 'config-item') {
+    //     if (!data.Quantity) {
+    //         ctx.addIssue({
+    //             code: "custom",
+    //             message: 'Quantity is required ',
+    //             path: [data.Product_Title]
+    //         });
+    //     }
+    // }
     return true; // Return true if validation passes
 });
