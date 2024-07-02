@@ -35,6 +35,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         ref: 'Countries',
         default: null
     },
+    orderId: {
+        type: String,
+        unique: true
+    },
     couponId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Coupon',

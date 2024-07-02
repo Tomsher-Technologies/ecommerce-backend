@@ -37,8 +37,11 @@ const pages_routes_1 = __importDefault(require("./admin/website/pages-routes"));
 const warehouse_routes_1 = __importDefault(require("./admin/stores/warehouse-routes"));
 const store_routes_1 = __importDefault(require("./admin/stores/store-routes"));
 //order
-const order_routes_1 = __importDefault(require("./admin/order/order-routes"));
-const customer_routes_1 = __importDefault(require("./admin/customer/customer-routes"));
+const orders_routes_1 = __importDefault(require("./admin/orders/orders-routes"));
+//customer
+const customers_routes_1 = __importDefault(require("./admin/customers/customers-routes"));
+//dashboard
+const dashboard_routes_1 = __importDefault(require("./admin/dashboard/dashboard-routes"));
 const adminRouter = express_1.default.Router();
 // admin
 adminRouter.use('/auth', auth_routes_1.default);
@@ -75,7 +78,9 @@ adminRouter.use('/website/pages', pages_routes_1.default);
 adminRouter.use('/stores/warehouse', warehouse_routes_1.default);
 adminRouter.use('/stores/store', store_routes_1.default);
 //order
-adminRouter.use('/order', order_routes_1.default);
+adminRouter.use('/orders', orders_routes_1.default);
 //customer
-adminRouter.use('/customer', customer_routes_1.default);
+adminRouter.use('/customers', customers_routes_1.default);
+//dashboard
+adminRouter.use('/dashboard', dashboard_routes_1.default);
 exports.default = adminRouter;

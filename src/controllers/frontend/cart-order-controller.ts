@@ -186,21 +186,26 @@ class CartController extends BaseController {
 
                     }
                 } else
-
                     if (customer || guestUser) {
-                        const existingCart: any = await CartService.findCart({
-                            $and: [
-                                {
-                                    $or: [
-                                        { customerId: customer },
-                                        { guestUserId: guestUser },
-                                    ]
-                                },
-                                { countryId: country },
-                                { cartStatus: '1' }
-                            ]
-                        });
+                        var existingCart: any
 
+                        if (customer) {
+                            existingCart = await CartService.findCart({
+                                $and: [
+                                    { customerId: customer },
+                                    { countryId: country },
+                                    { cartStatus: '1' }
+                                ]
+                            });
+                        } else {
+                            existingCart = await CartService.findCart({
+                                $and: [
+                                    { guestUserId: guestUser },
+                                    { countryId: country },
+                                    { cartStatus: '1' }
+                                ]
+                            });
+                        }
 
                         const offerProduct: any = await productService.findOneProduct({
                             query: {
