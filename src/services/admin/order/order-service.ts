@@ -1,6 +1,6 @@
 import { FilterOptionsProps, frontendPagination, pagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { billingLookup, billingObject, cartLookup, cartProject, couponLookup, couponObject, paymentMethodLookup, paymentMethodObject, pickupStoreLookup, pickupStoreObject, productBrandLookupValues, shippingLookup, shippingObject } from '../../../utils/config/cart-order-config';
+import { billingLookup, cartDeatilProject, cartLookup, cartProject, couponLookup, customerLookup, objectLookup, orderListObjectLookup, paymentMethodLookup, pickupStoreLookup, shippingLookup } from '../../../utils/config/cart-order-config';
 import { brandLookup, brandObject, productLookup } from '../../../utils/config/product-config';
 import { productVariantsLookupValues, wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
 
@@ -22,6 +22,9 @@ class OrderService {
 
         const pipeline: any[] = [
             cartLookup,
+            paymentMethodLookup,
+            customerLookup,
+            orderListObjectLookup,
             { $match: query },
             { $sort: finalSort },
             cartProject
@@ -73,19 +76,14 @@ class OrderService {
         const pipeline: any[] = [
             modifiedPipeline,
             couponLookup,
-            couponObject,
             shippingLookup,
-            shippingObject,
             billingLookup,
-            billingObject,
             paymentMethodLookup,
-            paymentMethodObject,
             pickupStoreLookup,
-            pickupStoreObject,
+            objectLookup,
+            cartDeatilProject,
             { $match: query },
-
             { $sort: finalSort },
-
         ];
 
 

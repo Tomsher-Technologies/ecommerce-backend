@@ -77,12 +77,14 @@ class CheckoutService {
                 cartStatus: cartStatus.active,
                 totalAmount: cartDetails?.totalAmount,
                 totalCouponAmount: 0,
-                couponId: cartDetails?.couponId
+                couponId: cartDetails?.couponId,
+                paymentMethodId: cartDetails?.paymentMethodId
             }
             if (!paymentSuccess) {
                 cartUpdate = {
                     ...cartUpdate,
-                    couponId: null
+                    couponId: null,
+                    paymentMethodId: null
                 }
             } else {
                 const couponDetails: any = await CouponService.findOne({ _id: cartDetails?.couponId });
@@ -95,39 +97,47 @@ class CheckoutService {
                     const updateTotalCouponAmount = (productAmount: any, discountAmount: number, discountType: DiscountType) => {
                         if (productAmount) {
                             const totalCouponAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
-                            const cartTtotalAmount = cartDetails?.totalAmount - calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
+                            const cartTotalAmount = cartDetails?.totalAmount - calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
                             cartUpdate = {
                                 ...cartUpdate,
-                                totalAmount: cartTtotalAmount,
+                                totalAmount: cartTotalAmount,
                                 totalCouponAmount: totalCouponAmount
                             }
                         }
                     };
-
+                    var totalAmount = 0
                     if (couponDetails?.couponType == couponTypes.entireOrders) {
                         updateTotalCouponAmount(cartDetails?.totalAmount, couponAmount, discountType)
                     } else if (couponDetails?.couponType == couponTypes.forProduct) {
                         cartProductDetails.map(async (product: any) => {
                             if (couponDetails?.couponApplyValues.includes((product.productId))) {
-                                updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
+                                totalAmount += product.productAmount
+                                // updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
                     } else if (couponDetails?.couponType == couponTypes.forCategory) {
                         const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
                         const categoryIds = productCategoryDetails.map((product: any) => product.categoryId);
                         categoryIds.map(async (product: any) => {
                             if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
-                                updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
+                                totalAmount += product.productAmount
+
+                                // updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
                     } else if (couponDetails?.couponType == couponTypes.forBrand) {
                         const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
                         const brandIds = productDetails.map((product: any) => product.brand);
                         brandIds.map(async (product: any) => {
                             if (couponDetails?.couponApplyValues.includes((product.productId))) {
-                                updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
+                                totalAmount += product.productAmount
+
+                                // updateTotalCouponAmount(product.productAmount, couponAmount, discountType)
                             }
                         });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
                     }
                 }
             }
