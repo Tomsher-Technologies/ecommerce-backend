@@ -133,7 +133,7 @@ class DashboardService {
         // console.log(salesQuery, "dfdsf");
         const ordersData = await cart_order_model_1.default.aggregate([
             {
-                $match: salesQuery
+                $match: { $and: [{ cartStatus: { $ne: "1" } }, salesQuery] },
             },
             {
                 $group: {
