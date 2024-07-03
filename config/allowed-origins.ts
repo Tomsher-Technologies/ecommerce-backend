@@ -18,4 +18,8 @@ export const allowedOrigins: string[] = [
     'http://ar-sa.localhost:3028',
     'http://ar-kw.localhost:3028',
     'http://ar-qa.localhost:3028',
+    'http://timehouse.store',
+    'http://ar.timehouse.store',
+    'https://timehouse.store',
+    'https://ar.timehouse.store',
   ];
