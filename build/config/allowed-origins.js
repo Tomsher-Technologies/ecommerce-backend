@@ -25,4 +25,6 @@ exports.allowedOrigins = [
     'http://ar.timehouse.store',
     'https://timehouse.store',
     'https://ar.timehouse.store',
+    'https://www.timehouse.store',
+    'https://ar.www.timehouse.store',
 ];
