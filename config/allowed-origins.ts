@@ -23,5 +23,5 @@ export const allowedOrigins: string[] = [
     'https://timehouse.store',
     'https://ar.timehouse.store',
     'https://www.timehouse.store',
-    'https://ar.www.timehouse.store',
+    'https://www.ar.timehouse.store',
   ];
