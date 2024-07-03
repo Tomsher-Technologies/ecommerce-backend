@@ -1,18 +1,27 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.customerDetailProject = exports.customerProject = exports.referredWalletTransactionLookup = exports.referrerWalletTransactionLookup = exports.orderWalletTransactionLookup = exports.billingLookup = exports.shippingLookup = exports.groupStage = exports.addField = exports.orderLookup = exports.whishlistLookup = void 0;
+exports.customerDetailProject = exports.customerProject = exports.referredWalletTransactionLookup = exports.referrerWalletTransactionLookup = exports.orderWalletTransactionLookup = exports.billingLookup = exports.shippingLookup = exports.groupStage = exports.addField = exports.orderLookup = exports.countriesLookup = exports.whishlistLookup = void 0;
+const collections_1 = require("../../constants/collections");
 const wallet_1 = require("../../constants/wallet");
 exports.whishlistLookup = {
     $lookup: {
-        from: `${'wishlists'}`,
+        from: `${collections_1.collections.customer.wishlists}`,
         localField: '_id',
         foreignField: 'userId',
         as: 'whishlist'
     }
 };
+exports.countriesLookup = {
+    $lookup: {
+        from: `${collections_1.collections.setup.countries}`,
+        localField: 'countryId',
+        foreignField: '_id',
+        as: 'country'
+    }
+};
 exports.orderLookup = {
     $lookup: {
-        from: 'cartorders',
+        from: `${collections_1.collections.cart.cartorders}`,
         let: { userId: '$_id' },
         pipeline: [
             { $match: { $expr: { $and: [{ $eq: ['$customerId', '$$userId'] }, { $ne: ['$cartStatus', '1'] }] } } }
@@ -157,7 +166,7 @@ exports.customerProject = {
         updatedAt: 1,
         __v: 1,
         whishlist: '$whishlistCount',
-        order: '$orderCount',
+        totalOrderCount: '$orderCount',
         orderTotalAmount: 1,
     }
 };
@@ -183,7 +192,7 @@ exports.customerDetailProject = {
         updatedAt: 1,
         __v: 1,
         whishlist: '$whishlistCount',
-        order: '$orderCount',
+        totalOrderCount: '$orderCount',
         orderTotalAmount: 1,
         shippingAddress: {
             $ifNull: ['$shippingAddress', []]
@@ -200,5 +209,6 @@ exports.customerDetailProject = {
         orderWalletTransactions: {
             $ifNull: ['$orderWalletTransactions', []]
         },
+        country: { $arrayElemAt: ['$country', 0] }
     }
 };

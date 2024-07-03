@@ -3,12 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
-const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
-const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
-const website_setup_1 = require("../../../constants/website-setup");
+const base_controller_1 = __importDefault(require("../admin/base-controller"));
+const country_model_1 = __importDefault(require("../../model/admin/setup/country-model"));
+const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
+const website_setup_1 = require("../../constants/website-setup");
 const controller = new base_controller_1.default();
-class GeneralController extends base_controller_1.default {
+class CommonController extends base_controller_1.default {
     async getGeneralSettings(req, res) {
         const countryDetails = await country_model_1.default.findOne({ isOrigin: true });
         if (!countryDetails) {
@@ -33,4 +33,4 @@ class GeneralController extends base_controller_1.default {
         });
     }
 }
-exports.default = new GeneralController();
+exports.default = new CommonController();

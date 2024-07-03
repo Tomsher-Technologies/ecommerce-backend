@@ -7,13 +7,16 @@ import UserModel, { UserProps } from '../../../src/model/admin/account/user-mode
 import AuthorisationModel from '../../../src/model/admin/authorisation-model';
 import PrivilagesService from './account/privilages-service';
 import UserTypeModel from '../../model/admin/account/user-type-model';
+import CountryModel from '../../model/admin/setup/country-model';
+import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
+import { blockReferences } from '../../constants/website-setup';
 
 class AuthService {
     async login(username: string, password: string): Promise<any> {
         try {
             const user: UserProps | null | any = await UserModel.findOne({ $and: [{ email: username }, { status: '1' }] }).populate('userTypeID', ['userTypeName', 'slug']);
-            console.log('user',user);
-            
+            console.log('user', user);
+
             if (user.userTypeID.slug != "super-admin") {
                 const userType = await UserTypeModel.findOne({ $and: [{ slug: user.userTypeID.slug }, { status: '1' }] })
                 console.log(userType);
@@ -30,6 +33,13 @@ class AuthService {
                     //     Buffer.from(password.trim()),
                     //     Buffer.from(user.password.trim())
                     // );
+                    let websiteLogoUrl = ''
+                    const countryDetails: any = await CountryModel.findOne({ isOrigin: true });
+                    if (countryDetails) {
+                        const websiteDetails: any = await WebsiteSetupModel.findOne({ countryId: countryDetails._id, blockReference: blockReferences.websiteSettings });
+                        if (websiteDetails && websiteDetails?.blockValues && websiteDetails?.blockValues?.websiteLogoUrl)
+                            websiteLogoUrl = websiteDetails?.blockValues?.websiteLogoUrl
+                    }
 
                     const token: string = jwt.sign({
                         userId: user._id,
@@ -53,7 +63,8 @@ class AuthService {
                             phone: user.phone,
                             token,
                             expiresIn: insertedValues.expiresIn,
-                            privilages
+                            privilages,
+                            websiteLogoUrl
                         }
                     } else {
                         throw new Error('Something went wrong. please try agaim!');

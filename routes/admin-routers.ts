@@ -14,6 +14,7 @@ import SpecificationRoutes from './admin/ecommerce/specification-route';
 
 // admin general
 import PageRoute from './admin/general/page-routes';
+import CommonRoute from './admin/general/common-routes';
 
 // admin account
 import UserRoute from './admin/account/user-routes';
@@ -48,6 +49,7 @@ import CustomerRoutes from './admin/customers/customers-routes';
 //dashboard
 import DashboardRoutes from './admin/dashboard/dashboard-routes';
 
+//dashboard
 const adminRouter = express.Router();
 
 // admin
@@ -56,6 +58,7 @@ adminRouter.use('/auth', AuthRoute);
 
 // admin general
 adminRouter.use('/general/pages', PageRoute);
+adminRouter.use('/general/common', CommonRoute);
 
 //admin ecommerce 
 adminRouter.use('/account/user', UserRoute);
@@ -100,6 +103,8 @@ adminRouter.use('/customers', CustomerRoutes);
 
 //dashboard
 adminRouter.use('/dashboard', DashboardRoutes);
+
+//dashboard
 
 
 export default adminRouter;
