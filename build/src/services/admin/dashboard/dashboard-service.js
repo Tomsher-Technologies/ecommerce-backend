@@ -5,38 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const cart_order_model_1 = __importDefault(require("../../../model//frontend/cart-order-model"));
-const customer_config_1 = require("../../../utils/config/customer-config");
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 class DashboardService {
     async findAll(options = {}) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
-        const pipeline = [
-            customer_config_1.whishlistLookup,
-            customer_config_1.orderLookup,
-            customer_config_1.addField,
-            customer_config_1.customerProject,
-            { $match: query },
-            { $sort: finalSort },
-            { $limit: limit },
-            { $sort: finalSort },
-        ];
-        console.log("query", query.countryId);
         const totalOrders = await cart_order_model_1.default.aggregate([
             {
-                $match: { countryId: query.countryId }
+                $match: query
             },
-            {
-                $group: {
-                    _id: { countryId: "$countryId" }
-                }
-            },
+            // {
+            //     $group: {
+            //         _id: { countryId: "$countryId" }
+            //     }
+            // },
             {
                 $count: "totalOrders"
             }
@@ -45,7 +27,7 @@ class DashboardService {
         const totalUsers = await customers_model_1.default.countDocuments();
         const totalSKUs = await product_variants_model_1.default.aggregate([
             {
-                $match: { countryId: query.countryId }
+                $match: query
             },
             {
                 $group: {
@@ -59,7 +41,10 @@ class DashboardService {
         const totalSKUsCount = totalSKUs.length > 0 ? totalSKUs[0].totalSKUs : 0;
         const outOfStockSKUs = await product_variants_model_1.default.aggregate([
             {
-                $match: { quantity: 0, countryId: query.countryId }
+                $match: {
+                    quantity: 0,
+                    ...query
+                }
             },
             {
                 $group: {
@@ -71,7 +56,6 @@ class DashboardService {
             }
         ]);
         const outOfStockSKUsCount = outOfStockSKUs.length > 0 ? outOfStockSKUs[0].outOfStockSKUs : 0;
-        console.log("***", totalOrders, totalSKUs, totalUsers, outOfStockSKUs);
         const counts = {
             totalOrders: totalOrdersCount,
             totalSKUs: totalSKUsCount,
@@ -94,10 +78,11 @@ class DashboardService {
         today.setHours(0, 0, 0, 0);
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
+        today.setHours(59, 59, 59, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
-        const todayOrders = await cart_order_model_1.default.find({ createdAt: { $gte: today, $lt: tomorrow } });
-        const yesterdayOrders = await cart_order_model_1.default.find({ createdAt: { $gte: yesterday, $lt: today } });
+        const todayOrders = await cart_order_model_1.default.find({ $and: [{ createdAt: { $gte: today, $lt: tomorrow } }, { cartStatus: { $ne: "1" } }] });
+        const yesterdayOrders = await cart_order_model_1.default.find({ $and: [{ createdAt: { $gte: yesterday, $lt: today } }, { cartStatus: { $ne: "1" } }] });
         const todaySales = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         const yesterdaySales = yesterdayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         const orderComparison = todayOrders.length - yesterdayOrders.length;
@@ -109,12 +94,9 @@ class DashboardService {
             salesComparison: salesComparison
         };
         return counts;
-        // const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
-        // return createdCartWithValues;
     }
     async findTotalSales(options = {}) {
         const { salesQuery, fromDate, endDate } = options;
-        console.log(salesQuery, "dfdsf");
         const salesData = await cart_order_model_1.default.aggregate([
             {
                 $match: salesQuery
@@ -136,7 +118,6 @@ class DashboardService {
             map[item._id] = item.totalSales;
             return map;
         }, {});
-        console.log("-----------", dateRange);
         const labels = dateRange;
         const sales = dateRange.map((date) => salesMap[date] || 0);
         const salesGraph = {
@@ -149,12 +130,10 @@ class DashboardService {
     }
     async findTotalOrder(options = {}) {
         const { salesQuery, fromDate, endDate } = options;
-        console.log(salesQuery, "dfdsf");
+        // console.log(salesQuery, "dfdsf");
         const ordersData = await cart_order_model_1.default.aggregate([
             {
-                $match: {
-                    createdAt: salesQuery
-                }
+                $match: salesQuery
             },
             {
                 $group: {
@@ -173,7 +152,6 @@ class DashboardService {
             map[item._id] = item.totalOrders;
             return map;
         }, {});
-        console.log("-----------", ordersData);
         const labels = dateRange;
         const orders = dateRange.map((date) => orderMap[date] || 0);
         const orderGraph = {

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
-import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup } from '../../../utils/config/customer-config';
+import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup, countriesLookup } from '../../../utils/config/customer-config';
 
 
 class CustomerService {
@@ -41,6 +41,7 @@ class CustomerService {
 
     async findOne(customerId: string): Promise<any | null> {
         const pipeline = [
+            countriesLookup,
             whishlistLookup,
             orderLookup,
             addField,
@@ -55,7 +56,7 @@ class CustomerService {
         ];
 
         const result: any = await CustomerModel.aggregate(pipeline).exec();
-        return result
+        return result?.length > 0 ? result[0] : []
     }
 
 

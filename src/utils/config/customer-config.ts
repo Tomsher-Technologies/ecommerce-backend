@@ -3,16 +3,25 @@ import { earnTypes } from "../../constants/wallet";
 
 export const whishlistLookup = {
     $lookup: {
-        from: `${'wishlists'}`,
+        from: `${collections.customer.wishlists}`,
         localField: '_id',
         foreignField: 'userId',
         as: 'whishlist'
     }
 };
 
+export const countriesLookup = {
+    $lookup: {
+        from: `${collections.setup.countries}`, 
+        localField: 'countryId', 
+        foreignField: '_id',
+        as: 'country'
+    }
+};
+
 export const orderLookup = {
     $lookup: {
-        from: 'cartorders',
+        from: `${collections.cart.cartorders}`,
         let: { userId: '$_id' },
         pipeline: [
             { $match: { $expr: { $and: [{ $eq: ['$customerId', '$$userId'] }, { $ne: ['$cartStatus', '1'] }] } } }
@@ -168,7 +177,7 @@ export const customerProject = {
         updatedAt: 1,
         __v: 1,
         whishlist: '$whishlistCount',
-        order: '$orderCount',
+        totalOrderCount: '$orderCount',
         orderTotalAmount: 1,
     }
 
@@ -198,7 +207,7 @@ export const customerDetailProject = {
         updatedAt: 1,
         __v: 1,
         whishlist: '$whishlistCount',
-        order: '$orderCount',
+        totalOrderCount: '$orderCount',
         orderTotalAmount: 1,
         shippingAddress: {
             $ifNull: ['$shippingAddress', []]
@@ -216,6 +225,7 @@ export const customerDetailProject = {
         orderWalletTransactions: {
             $ifNull: ['$orderWalletTransactions', []]
         },
+        country: { $arrayElemAt: ['$country', 0] }
     }
 
 
