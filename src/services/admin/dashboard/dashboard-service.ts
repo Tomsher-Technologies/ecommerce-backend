@@ -156,7 +156,7 @@ class DashboardService {
 
         const ordersData = await CartOrderModel.aggregate([
             {
-                $match: salesQuery
+                $match: { $and: [{ cartStatus: { $ne: "1" } }, salesQuery] },
             },
             {
                 $group: {
