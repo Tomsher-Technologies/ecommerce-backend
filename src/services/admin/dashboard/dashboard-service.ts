@@ -86,11 +86,13 @@ class DashboardService {
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
 
+        today.setHours(59, 59, 59, 0);
+
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        const todayOrders = await CartOrderModel.find({ createdAt: { $gte: today, $lt: tomorrow } });
-        const yesterdayOrders = await CartOrderModel.find({ createdAt: { $gte: yesterday, $lt: today } });
+        const todayOrders = await CartOrderModel.find({ $and: [{ createdAt: { $gte: today, $lt: tomorrow } }, { cartStatus: { $ne: "1" } }] });
+        const yesterdayOrders = await CartOrderModel.find({ $and: [{ createdAt: { $gte: yesterday, $lt: today } }, { cartStatus: { $ne: "1" } }] });
 
         const todaySales = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         const yesterdaySales = yesterdayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
