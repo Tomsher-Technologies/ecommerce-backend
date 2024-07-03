@@ -1,15 +1,15 @@
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 
-import { page, pageReference } from '../../../constants/pages';
+import BaseController from "../admin/base-controller";
 
-import BaseController from '../../../controllers/admin/base-controller';
-import CountryModel from '../../../model/admin/setup/country-model';
-import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
-import { blockReferences } from '../../../constants/website-setup';
+import CountryModel from "../../model/admin/setup/country-model";
+import WebsiteSetupModel from "../../model/admin/setup/website-setup-model";
+import { blockReferences } from "../../constants/website-setup";
 
 const controller = new BaseController();
 
-class GeneralController extends BaseController {
+class CommonController extends BaseController {
+
 
     async getGeneralSettings(req: Request, res: Response): Promise<void> {
 
@@ -39,4 +39,4 @@ class GeneralController extends BaseController {
 
 }
 
-export default new GeneralController();
+export default new CommonController();

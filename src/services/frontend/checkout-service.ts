@@ -1,5 +1,5 @@
-import { cartStatus, couponTypes, orderPaymentStatus } from "../../constants/cart";
-import { DiscountType, calculateTotalDiscountAmountDifference, calculateWalletAmount } from "../../utils/helpers";
+import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap } from "../../constants/cart";
+import { DiscountType, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
 import CartService from "./cart-service";
@@ -157,8 +157,8 @@ class CheckoutService {
             }
 
             // if (cartDetails.customerId) {
-            //     const walletsDetails = await settingsService.findOne({ countryId: cartDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
-            //     if ((walletsDetails) && (walletsDetails.blockValues)&&(walletsDetails.blockValues.enableWallet)) {
+            //     const walletsDetails = await SettingsService.findOne({ countryId: cartDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
+            //     if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (Number(walletsDetails.blockValues.minimumOrderAmount) >= cartDetails?.totalAmount)) {
             //         await CustomerWalletTransactionsModel.create({
             //             customerId: cartDetails.customerId,
             //             earnType: earnTypes.order,
@@ -174,6 +174,7 @@ class CheckoutService {
                 ...cartUpdate,
                 orderId: orderId,
                 cartStatus: cartStatus.order,
+                orderStatus: orderStatusMap['1'].value,
                 processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
             } as any;

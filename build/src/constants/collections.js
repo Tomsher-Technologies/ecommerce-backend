@@ -24,5 +24,14 @@ exports.collections = {
         specificationdetails: 'specificationdetails',
         offers: 'offers',
     },
-    multilanguagefieleds: 'multilanguagefieleds'
+    multilanguagefieleds: 'multilanguagefieleds',
+    customer: {
+        wishlists: 'wishlists'
+    },
+    cart: {
+        cartorders: 'cartorders'
+    },
+    setup: {
+        countries: 'countries'
+    }
 };
