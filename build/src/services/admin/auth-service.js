@@ -9,6 +9,9 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const user_model_1 = __importDefault(require("../../../src/model/admin/account/user-model"));
 const privilages_service_1 = __importDefault(require("./account/privilages-service"));
 const user_type_model_1 = __importDefault(require("../../model/admin/account/user-type-model"));
+const country_model_1 = __importDefault(require("../../model/admin/setup/country-model"));
+const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
+const website_setup_1 = require("../../constants/website-setup");
 class AuthService {
     async login(username, password) {
         try {
@@ -28,6 +31,13 @@ class AuthService {
                     //     Buffer.from(password.trim()),
                     //     Buffer.from(user.password.trim())
                     // );
+                    let websiteLogoUrl = '';
+                    const countryDetails = await country_model_1.default.findOne({ isOrigin: true });
+                    if (countryDetails) {
+                        const websiteDetails = await website_setup_model_1.default.findOne({ countryId: countryDetails._id, blockReference: website_setup_1.blockReferences.websiteSettings });
+                        if (websiteDetails && websiteDetails?.blockValues && websiteDetails?.blockValues?.websiteLogoUrl)
+                            websiteLogoUrl = websiteDetails?.blockValues?.websiteLogoUrl;
+                    }
                     const token = jsonwebtoken_1.default.sign({
                         userId: user._id,
                         userTypeID: user.userTypeID,
@@ -47,7 +57,8 @@ class AuthService {
                             phone: user.phone,
                             token,
                             expiresIn: insertedValues.expiresIn,
-                            privilages
+                            privilages,
+                            websiteLogoUrl
                         };
                     }
                     else {

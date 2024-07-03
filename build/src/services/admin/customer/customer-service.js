@@ -40,6 +40,7 @@ class CustomerService {
     }
     async findOne(customerId) {
         const pipeline = [
+            customer_config_1.countriesLookup,
             customer_config_1.whishlistLookup,
             customer_config_1.orderLookup,
             customer_config_1.addField,
@@ -52,7 +53,7 @@ class CustomerService {
             { $match: { _id: mongoose_1.default.Types.ObjectId.createFromHexString(customerId) } },
         ];
         const result = await customers_model_1.default.aggregate(pipeline).exec();
-        return result;
+        return result?.length > 0 ? result[0] : [];
     }
 }
 exports.default = new CustomerService();
