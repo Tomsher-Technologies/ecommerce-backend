@@ -312,7 +312,7 @@ class ProductController extends base_controller_1.default {
                     getimagegallery,
                     getattribute,
                     getspecification,
-                    hostName: req.get('host')
+                    hostName: req.get('origin')
                 });
                 if (product) {
                     controller.sendSuccessResponse(res, {
@@ -627,7 +627,7 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     getSeo,
-                    hostName: req.get('host'),
+                    hostName: req.get('origin'),
                 });
                 if (sortby == "price") {
                     productData.sort((a, b) => {

@@ -194,13 +194,13 @@ exports.variantLookup = {
         foreignField: 'productId',
         as: 'productVariants',
         pipeline: [
-            ...exports.productVariantAttributesLookup,
-            exports.addFieldsProductVariantAttributes,
-            ...exports.productSpecificationLookup,
-            exports.addFieldsProductSpecification,
-            exports.productSeoLookup,
-            exports.addFieldsProductSeo,
-            exports.variantImageGalleryLookup
+        // ...productVariantAttributesLookup,
+        // addFieldsProductVariantAttributes,
+        // ...productSpecificationLookup,
+        // addFieldsProductSpecification,
+        // productSeoLookup,
+        // addFieldsProductSeo,
+        // variantImageGalleryLookup
         ]
     }
 };
