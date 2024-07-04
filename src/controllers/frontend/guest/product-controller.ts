@@ -363,7 +363,7 @@ class ProductController extends BaseController {
                         getimagegallery,
                         getattribute,
                         getspecification,
-                        hostName: req.get('host')
+                        hostName: req.get('origin')
                     }
                 );
 
@@ -738,7 +738,7 @@ console.log("productsproducts",products);
                     getattribute,
                     getspecification,
                     getSeo,
-                    hostName: req.get('host'),
+                    hostName: req.get('origin'),
                 });
 
 
