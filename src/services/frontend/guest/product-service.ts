@@ -1,37 +1,31 @@
-import { FilterOptionsProps, frontendPagination, pagination } from '../../../components/pagination';
+import mongoose from 'mongoose';
+import { frontendPagination, pagination } from '../../../components/pagination';
 import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 
-import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, seoLookup, seoObject, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
-import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 import { ProductsProps } from '../../../utils/types/products';
-import CategoryService from './category-service';
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
+
 import CollectionsProductsModel from '../../../model/admin/website/collections-products-model';
 import CollectionsBrandsModel from '../../../model/admin/website/collections-brands-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
 
 import CommonService from '../../../services/frontend/guest/common-service';
-import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
-import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
-import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
 
 
 class ProductService {
 
 
-
-    constructor() {
-    }
-
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, products, discount, getimagegallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
@@ -44,9 +38,7 @@ class ProductService {
         if (countryId) {
             query = {
                 ...query,
-                // $match: {
                 'productVariants.countryId': new mongoose.Types.ObjectId(countryId)
-                // }
             } as any;
         }
 
@@ -59,39 +51,14 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
 
             }
-
-
         }
-        let pipeline2 = [
-            {
-                // $lookup: {
-                from: variantLookup.$lookup.from,
-                localField: variantLookup.$lookup.localField,
-                foreignField: variantLookup.$lookup.foreignField,
-                as: 'productVariants',
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                            }
-                        }
-                    },
-                    ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
-                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    ...(getSeo === '1' ? [productSeoLookup] : []),
-                    ...(getSeo === '1' ? [addFieldsProductSeo] : []),
-                    ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),]
-            }
-            // }
-        ];
 
         const modifiedPipeline = {
             $lookup: {
-                ...variantLookup.$lookup,
-                // ...pipeline2[0],
+                from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                localField: '_id',
+                foreignField: 'productId',
+                as: 'productVariants',
                 pipeline: [
                     {
                         $match: {
@@ -128,7 +95,7 @@ class ProductService {
 
         ];
 
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName)
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, countryId)
 
         // Add the stages for product-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
@@ -167,33 +134,19 @@ class ProductService {
         }
 
         let productData: any = [];
-
-        const collection: any = await this.collection(products, hostName)
-
-        if (collection && collection.productData) {
-            productData = collection.productData
-        }
-        else if (collection && collection.collectionsBrands) {
-
-            for await (let data of collection.collectionsBrands) {
-                productData = collection.productData
-
-                // const language: any = await this.productLanguage(hostName, { brand: new mongoose.Types.ObjectId(data) })
-                // console.log("ffffffffffffff", language);
-
-                // productData = await ProductsModel.aggregate(language).exec();
-                // const result = await ProductsModel.find({ brand: new mongoose.Types.ObjectId(data) })
-
-                // console.log("resultresult", result);
-
-                // if (result && result.length > 0) {
-                //     productData.push(result[0])
-                // }
+        if (collectionProductsData) {
+            const collectionData: any = await this.collection(collectionProductsData, hostName)
+            if (collectionData && collectionData.productData) {
+                productData = collectionData.productData
+            }
+            else if (collectionData && collectionData.collectionsBrands) {
+                for await (let data of collectionData.collectionsBrands) {
+                    productData = collectionData.productData
+                }
             }
         } else {
             const language: any = await this.productLanguage(hostName, pipeline)
             productData = await ProductsModel.aggregate(language).exec();
-
         }
 
         return productData

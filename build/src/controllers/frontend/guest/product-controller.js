@@ -307,17 +307,26 @@ class ProductController extends base_controller_1.default {
                         ...query, 'productVariants.slug': productId
                     };
                 }
-                const product = await product_service_1.default.findOneProduct({
+                const product = await product_service_1.default.findProductList({
                     query,
                     getimagegallery,
                     getattribute,
                     getspecification,
-                    hostName: req.get('host')
+                    hostName: req.get('origin'),
                 });
-                if (product) {
+                // const product: any = await ProductService.findOneProduct(
+                //     {
+                //         query,
+                //         getimagegallery,
+                //         getattribute,
+                //         getspecification,
+                //         hostName: req.get('origin')
+                //     }
+                // );
+                if (product && product?.length > 0) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            product,
+                            product: product[0],
                             reviews: []
                         },
                         message: 'Success'
@@ -348,7 +357,7 @@ class ProductController extends base_controller_1.default {
             let getBrand = '1';
             let getCategory = '1';
             let query = { _id: { $exists: true } };
-            let products;
+            let collectionProductsData;
             let discountValue;
             let offers;
             const orConditionsForAttributes = [];
@@ -550,18 +559,18 @@ class ProductController extends base_controller_1.default {
                     }
                 }
                 if (collectionproduct) {
-                    products = {
-                        ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
                     };
                 }
                 if (collectionbrand) {
-                    products = {
-                        ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
                     };
                 }
                 if (collectioncategory) {
-                    products = {
-                        ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
                     };
                 }
                 if (maxprice || minprice) {
@@ -614,20 +623,19 @@ class ProductController extends base_controller_1.default {
                         sort = { createdAt: 1 };
                     }
                 }
-                console.log("productsproducts", products);
                 const productData = await product_service_1.default.findProductList({
                     page: parseInt(page_size),
                     limit: parseInt(limit),
                     query,
                     sort,
-                    products,
+                    collectionProductsData,
                     discount,
                     offers,
                     getimagegallery,
                     getattribute,
                     getspecification,
                     getSeo,
-                    hostName: req.get('host'),
+                    hostName: req.get('origin'),
                 });
                 if (sortby == "price") {
                     productData.sort((a, b) => {
@@ -643,7 +651,7 @@ class ProductController extends base_controller_1.default {
                 }
                 const totalProductData = await product_service_1.default.findProductList({
                     query,
-                    products,
+                    collectionProductsData,
                     discount,
                     offers,
                     hostName: req.get('origin'),

@@ -32,8 +32,8 @@ class CartController extends BaseController {
             if (validatedData.success) {
                 const { shippingStatus, shipmentGatwayId,
                     paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints,
-                    totalReturnedProduct, totalProductAmount, totalDiscountAmount, totalShippingAmount, totalCouponAmount, totalWalletAmount,
-                    totalTaxAmount, totalAmount, codAmount } = req.body;
+                    totalReturnedProduct, totalCouponAmount, totalWalletAmount,
+                    totalTaxAmount, codAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
 
                 let customer, guestUser

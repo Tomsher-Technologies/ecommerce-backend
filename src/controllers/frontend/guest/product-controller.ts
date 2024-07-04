@@ -357,21 +357,29 @@ class ProductController extends BaseController {
                     }
                 }
 
-                const product: any = await ProductService.findOneProduct(
-                    {
-                        query,
-                        getimagegallery,
-                        getattribute,
-                        getspecification,
-                        hostName: req.get('host')
-                    }
-                );
+                const product: any = await ProductService.findProductList({
+                    query,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                });
 
-                if (product) {
+                // const product: any = await ProductService.findOneProduct(
+                //     {
+                //         query,
+                //         getimagegallery,
+                //         getattribute,
+                //         getspecification,
+                //         hostName: req.get('origin')
+                //     }
+                // );
+
+                if (product && product?.length > 0) {
 
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            product,
+                            product: product[0],
                             reviews: []
                         },
                         message: 'Success'
@@ -400,7 +408,7 @@ class ProductController extends BaseController {
             let getBrand = '1'
             let getCategory = '1'
             let query: any = { _id: { $exists: true } };
-            let products: any;
+            let collectionProductsData: any;
             let discountValue: any;
             let offers: any;
             const orConditionsForAttributes: any = [];
@@ -650,20 +658,20 @@ class ProductController extends BaseController {
                 }
 
                 if (collectionproduct) {
-                    products = {
-                        ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
                     }
                 }
 
                 if (collectionbrand) {
-                    products = {
-                        ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
                     }
                 }
 
                 if (collectioncategory) {
-                    products = {
-                        ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
                     }
                 }
 
@@ -724,21 +732,19 @@ class ProductController extends BaseController {
                     }
                 }
 
-console.log("productsproducts",products);
-
                 const productData: any = await ProductService.findProductList({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
                     query,
                     sort,
-                    products,
+                    collectionProductsData,
                     discount,
                     offers,
                     getimagegallery,
                     getattribute,
                     getspecification,
                     getSeo,
-                    hostName: req.get('host'),
+                    hostName: req.get('origin'),
                 });
 
 
@@ -756,7 +762,7 @@ console.log("productsproducts",products);
                 }
                 const totalProductData: any = await ProductService.findProductList({
                     query,
-                    products,
+                    collectionProductsData,
                     discount,
                     offers,
                     hostName: req.get('origin'),
