@@ -225,8 +225,9 @@ class CartController extends BaseController {
                         let offerAmount = 0
                         let singleProductTotal = 0
                         let singleProductDiscountTotal = 0;
+
                         if (offerProduct && offerProduct?.length > 0) {
-                            for (let i = 0; i < offerProduct.productVariants.length; i++) {
+                            for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
 
                                 if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
                                     if (offerProduct[0].offer.offerType == offerTypes.percent) {
