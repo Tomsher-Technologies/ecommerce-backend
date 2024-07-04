@@ -207,7 +207,7 @@ class CartController extends BaseController {
                             });
                         }
 
-                        const offerProduct: any = await productService.findOneProduct({
+                        const offerProduct: any = await productService.findProductList({
                             query: {
                                 $and: [
                                     {
@@ -224,15 +224,17 @@ class CartController extends BaseController {
                         })
                         let offerAmount = 0
                         let singleProductTotal = 0
-                        let singleProductDiscountTotal = 0
-                        for (let i = 0; i < offerProduct.productVariants.length; i++) {
+                        let singleProductDiscountTotal = 0;
+                        if (offerProduct && offerProduct?.length > 0) {
+                            for (let i = 0; i < offerProduct.productVariants.length; i++) {
 
-                            if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
-                                if (offerProduct.offer.offerType == offerTypes.percent) {
-                                    offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100));
-                                }
-                                if (offerProduct.offer.offerType == offerTypes.amountOff) {
-                                    offerAmount = offerProduct.offer.offerIN
+                                if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
+                                    if (offerProduct[0].offer.offerType == offerTypes.percent) {
+                                        offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
+                                    }
+                                    if (offerProduct[0].offer.offerType == offerTypes.amountOff) {
+                                        offerAmount = offerProduct[0].offer.offerIN
+                                    }
                                 }
                             }
                         }

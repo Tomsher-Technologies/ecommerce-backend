@@ -199,15 +199,9 @@ class OrdersController extends BaseController {
 
     async getOrderDetails(req: Request, res: Response): Promise<void> {
         try {
-            const customerId: any = res.locals.user;
             const orderId = req.params.id;
 
-            // const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
-            // if (!customerDetails) {
-            //     return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
-            // }
-            //offer - specification
-            const order: any = await OrderService.orderDetails({
+            const orderDetails: any = await OrderService.OrderList({
                 query: {
                     _id: new mongoose.Types.ObjectId(orderId)
                 },
@@ -215,9 +209,9 @@ class OrdersController extends BaseController {
                 hostName: req.get('origin'),
             })
 
-            if (order) {
+            if (orderDetails && orderDetails?.length > 0) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: order,
+                    requestedData: orderDetails[0],
                     message: 'Your Order is ready!'
                 });
             } else {

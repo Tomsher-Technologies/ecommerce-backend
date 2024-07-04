@@ -1075,7 +1075,7 @@ class ProductsController extends BaseController {
 
                                 if (imageGallery.length > 0) {
                                     await Promise.all(imageGallery.map(async (image: any) => {
-                                        // ProductsService.destroyGalleryImages(image)
+                                        await ProductsService.destroyGalleryImages(image)
                                         deleteFile(path.resolve(__dirname, `../../../../${image.galleryImageUrl}`))
                                             .then(() => {
                                                 ProductsService.destroyGalleryImages(image)

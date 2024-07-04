@@ -145,8 +145,8 @@ class ProductService {
                 }
             }
         } else {
-            const language: any = await this.productLanguage(hostName, pipeline)
-            productData = await ProductsModel.aggregate(language).exec();
+            const lastPipelineModification: any = await this.productLanguage(hostName, pipeline)
+            productData = await ProductsModel.aggregate(lastPipelineModification).exec();
         }
 
         return productData
@@ -440,160 +440,6 @@ class ProductService {
         return pipeline
     }
 
-    async findOneProduct(productOption: any): Promise<void> {
-        var { query, getimagegallery, getattribute, getspecification, getSeo, hostName, productId, variantSku } = productOption;
-        const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
-
-        const modifiedPipeline = {
-            $lookup: {
-                ...variantLookup.$lookup,
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                            }
-                        }
-                    },
-                    ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
-                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    ...(getSeo === '1' ? [productSeoLookup] : []),
-                    ...(getSeo === '1' ? [addFieldsProductSeo] : []),
-                    ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
-
-                ]
-            }
-        };
-
-        let pipeline: any[] = [
-            modifiedPipeline,
-            productCategoryLookup,
-            brandLookup,
-            brandObject,
-            ...(getimagegallery === '1' ? [imageLookup] : []),
-            ...(getspecification === '1' ? [productSpecificationsLookup] : []),
-            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-            { $match: query },
-
-        ];
-
-
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(0, hostName)
-
-        // Add the stages for product-specific offers
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
-            pipeline.push(offerProduct)
-
-        }
-        // Add the stages for brand-specific offers
-        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
-            pipeline.push(offerBrand);
-        }
-        // Add the stages for category-specific offers
-        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
-            pipeline.push(offerCategory);
-        }
-
-
-        // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
-        pipeline.push({
-            $addFields: {
-                offer: {
-                    $cond: {
-                        if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
-                        then: { $arrayElemAt: ["$categoryOffers", 0] },
-                        else: {
-                            $cond: {
-                                if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
-                                then: { $arrayElemAt: ["$brandOffers", 0] },
-                                else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-
-        const language: any = await this.productLanguage(hostName, pipeline)
-        // console.log("......1234....", language);
-
-        // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
-
-
-        const productDataWithValues: any = await ProductsModel.aggregate(language);
-
-        return productDataWithValues[0];
-
-
-    }
-
-    async findOne(productOption: any): Promise<void> {
-        var { getimagegallery, getattribute, getspecification, getSeo, hostName, productId, sku } = productOption;
-        let query: any = { sku: sku };
-
-        if (productId) {
-
-            const data = /^[0-9a-fA-F]{24}$/.test(productId);
-
-            if (data) {
-                query = {
-                    ...query, _id: new mongoose.Types.ObjectId(productId)
-
-                }
-
-            } else {
-                query = {
-                    ...query, slug: productId
-                }
-            }
-
-            const modifiedPipeline = {
-                $lookup: {
-                    ...variantLookup.$lookup,
-                    pipeline: [
-                        ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                        ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
-                        ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                        ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                        ...(getSeo === '1' ? [productSeoLookup] : []),
-                        ...(getSeo === '1' ? [addFieldsProductSeo] : []),
-                        ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
-
-                    ]
-                }
-            };
-
-            let pipeline: any[] = [
-                // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
-                modifiedPipeline,
-                productCategoryLookup,
-                ...(getimagegallery === '1' ? [imageLookup] : []),
-                brandLookup,
-                brandObject,
-                ...(getspecification === '1' ? [specificationsLookup] : []),
-                { $match: query },
-
-            ];
-            // { variantSku: sku }
-
-            const language: any = await this.productLanguage(hostName, pipeline)
-            // console.log("......1234....", language);
-
-            // const productVariantDataWithValues: any = await ProductVariantsModel.aggregate(pipeline);
-
-
-            const productDataWithValues: any = await ProductsModel.aggregate(language);
-
-            return productDataWithValues[0];
-        }
-
-    }
     async productLanguage(hostName: any, pipeline: any): Promise<void> {
 
         const languageData = await LanguagesModel.find().exec();
@@ -601,7 +447,6 @@ class ProductService {
         const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
 
         if (languageId) {
-
             const productLookupWithLanguage = {
                 ...productMultilanguageFieldsLookup,
                 $lookup: {

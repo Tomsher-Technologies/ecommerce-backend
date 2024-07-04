@@ -338,18 +338,12 @@ class ProductController extends BaseController {
                     };
                 }
 
+                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
 
-                const data = /^[0-9a-fA-F]{24}$/.test(productId);
-
-                if (data) {
+                if (checkProductIdOrSlug) {
                     query = {
-                        ...query,
-                        $or: [
-                            { 'productVariants._id': new mongoose.Types.ObjectId(productId) },
-                            { _id: new mongoose.Types.ObjectId(productId) }
-                        ]
+                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
                     }
-
 
                 } else {
                     query = {
@@ -357,7 +351,7 @@ class ProductController extends BaseController {
                     }
                 }
 
-                const product: any = await ProductService.findProductList({
+                const productDetails: any = await ProductService.findProductList({
                     query,
                     getimagegallery,
                     getattribute,
@@ -365,37 +359,26 @@ class ProductController extends BaseController {
                     hostName: req.get('origin'),
                 });
 
-                // const product: any = await ProductService.findOneProduct(
-                //     {
-                //         query,
-                //         getimagegallery,
-                //         getattribute,
-                //         getspecification,
-                //         hostName: req.get('origin')
-                //     }
-                // );
-
-                if (product && product?.length > 0) {
-
-                    controller.sendSuccessResponse(res, {
+                if (productDetails && productDetails?.length > 0) {
+                    return controller.sendSuccessResponse(res, {
                         requestedData: {
-                            product: product[0],
+                            product: productDetails[0],
                             reviews: []
                         },
                         message: 'Success'
                     });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Products are not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Products Id not found!',
                 });
             }
-        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 

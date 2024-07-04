@@ -161,22 +161,16 @@ class OrdersController extends base_controller_1.default {
     }
     async getOrderDetails(req, res) {
         try {
-            const customerId = res.locals.user;
             const orderId = req.params.id;
-            // const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
-            // if (!customerDetails) {
-            //     return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
-            // }
-            //offer - specification
-            const order = await order_service_1.default.orderDetails({
+            const orderDetails = await order_service_1.default.OrderList({
                 query: {
                     _id: new mongoose_1.default.Types.ObjectId(orderId)
                 },
                 hostName: req.get('origin'),
             });
-            if (order) {
+            if (orderDetails && orderDetails?.length > 0) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: order,
+                    requestedData: orderDetails[0],
                     message: 'Your Order is ready!'
                 });
             }

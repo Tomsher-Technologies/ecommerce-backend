@@ -40,6 +40,7 @@ class CartService {
         const languageData = await LanguagesModel.find().exec();
         const languageId = await getLanguageValueFromSubdomain(hostName, languageData)
 
+        // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
                 ...this.cartLookup.$lookup,
@@ -65,7 +66,7 @@ class CartService {
             billingLookup,
             paymentMethodLookup,
             objectLookup,
-            cartProject,
+            // cartProject,
             { $match: query },
 
             { $sort: finalSort },
@@ -86,7 +87,6 @@ class CartService {
         return createdCartWithValues;
         // return CartOrderModel.findOne(data);
     }
-
 }
 
 export default new CartService();

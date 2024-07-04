@@ -41,6 +41,7 @@ const filterProduct = async (data, countryId) => {
             $or: [
                 { productTitle: keywordRegex },
                 { slug: keywordRegex },
+                { sku: keywordRegex },
                 { 'productCategory.category.categoryTitle': keywordRegex },
                 { 'brand.brandTitle': keywordRegex },
                 { 'productCategory.category.slug': keywordRegex },
