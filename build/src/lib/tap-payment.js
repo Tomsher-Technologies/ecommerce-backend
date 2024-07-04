@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tapPaymentRetrieve = exports.tapPaymentCreate = void 0;
-const tapPaymentCreate = async (tapDefaultValues) => {
+const tapPaymentCreate = async (tapDefaultValues, paymentMethodValues) => {
     try {
         const response = await fetch(`${process.env.TAP_API_URL}`, {
             method: "POST",
@@ -11,12 +11,14 @@ const tapPaymentCreate = async (tapDefaultValues) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${process.env.TAP_TEST_KEY}`
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
             body: JSON.stringify(tapDefaultValues),
         });
+        console.log('paymentMethodValues.secretKey', paymentMethodValues.secretKey);
+        console.log('paymentMethodValues.secretKey', paymentMethodValues);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

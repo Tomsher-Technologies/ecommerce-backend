@@ -12,7 +12,7 @@ const tabbyPaymentCreate = async (tabbyDefaultValues, paymentMethodValues) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
@@ -43,7 +43,7 @@ const tabbyCheckoutRetrieve = async (tabbyId, paymentMethodValues) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
@@ -70,7 +70,7 @@ const tabbyPaymentRetrieve = async (tabbyId, paymentMethodValues) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${paymentMethodValues.testSecretKey}`
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",

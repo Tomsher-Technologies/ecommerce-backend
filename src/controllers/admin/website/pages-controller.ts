@@ -31,13 +31,15 @@ class PageController extends BaseController {
                 const { block, blockReference, websiteSetupId, blockValues, status, languageSources, languageValues } = validatedData.data;
                 if ((checkValueExists(websiteSetup, block) && (checkValueExists(blockReferences, blockReference)))) {
                     const user = res.locals.user;
+                    let aboutImageUrl
+                    let aboutImageUrl2
+                    if (req.files) {
+                        const aboutImage = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage]'));
+                        const aboutImage2 = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage2]'));
 
-                    const aboutImage = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage]'));
-                    const aboutImage2 = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage2]'));
-
-                    const aboutImageUrl = handleFileUpload(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website')
-                    const aboutImageUrl2 = handleFileUpload(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website')
-
+                        aboutImageUrl = handleFileUpload(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website')
+                        aboutImageUrl2 = handleFileUpload(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website')
+                    }
                     const pagesData: Partial<any> = {
                         countryId: new mongoose.Types.ObjectId(countryId),
                         block,
