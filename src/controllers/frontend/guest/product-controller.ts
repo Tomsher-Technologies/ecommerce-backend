@@ -342,13 +342,8 @@ class ProductController extends BaseController {
 
                 if (checkProductIdOrSlug) {
                     query = {
-                        ...query,
-                        $or: [
-                            { 'productVariants._id': new mongoose.Types.ObjectId(productId) },
-                            { _id: new mongoose.Types.ObjectId(productId) }
-                        ]
+                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
                     }
-
 
                 } else {
                     query = {
