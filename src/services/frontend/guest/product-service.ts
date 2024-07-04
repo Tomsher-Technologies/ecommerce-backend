@@ -1,7 +1,6 @@
 import { FilterOptionsProps, frontendPagination, pagination } from '../../../components/pagination';
 import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 
-import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
@@ -18,8 +17,6 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
 
 import CommonService from '../../../services/frontend/guest/common-service';
-import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
-import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
 
 
@@ -59,34 +56,7 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
 
             }
-
-
         }
-        let pipeline2 = [
-            {
-                // $lookup: {
-                from: variantLookup.$lookup.from,
-                localField: variantLookup.$lookup.localField,
-                foreignField: variantLookup.$lookup.foreignField,
-                as: 'productVariants',
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                            }
-                        }
-                    },
-                    ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
-                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    ...(getSeo === '1' ? [productSeoLookup] : []),
-                    ...(getSeo === '1' ? [addFieldsProductSeo] : []),
-                    ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),]
-            }
-            // }
-        ];
 
         const modifiedPipeline = {
             $lookup: {
