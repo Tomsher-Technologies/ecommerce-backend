@@ -11,14 +11,14 @@ const tapPaymentCreate = async (tapDefaultValues, paymentMethodValues) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer sk_live_FN9LTnqhRCzQivfMG34ptaH1`
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
             body: JSON.stringify(tapDefaultValues),
         });
         console.log('paymentMethodValues.secretKey', paymentMethodValues.secretKey);
-        console.log('paymentMethodValues', paymentMethodValues);
+        console.log('paymentMethodValues.secretKey', paymentMethodValues);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
