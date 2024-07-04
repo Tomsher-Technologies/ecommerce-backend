@@ -323,10 +323,10 @@ class ProductController extends base_controller_1.default {
                 //         hostName: req.get('origin')
                 //     }
                 // );
-                if (product) {
+                if (product && product?.length > 0) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
-                            product,
+                            product: product[0],
                             reviews: []
                         },
                         message: 'Success'
@@ -357,7 +357,7 @@ class ProductController extends base_controller_1.default {
             let getBrand = '1';
             let getCategory = '1';
             let query = { _id: { $exists: true } };
-            let products;
+            let collectionProductsData;
             let discountValue;
             let offers;
             const orConditionsForAttributes = [];
@@ -559,18 +559,18 @@ class ProductController extends base_controller_1.default {
                     }
                 }
                 if (collectionproduct) {
-                    products = {
-                        ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
                     };
                 }
                 if (collectionbrand) {
-                    products = {
-                        ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
                     };
                 }
                 if (collectioncategory) {
-                    products = {
-                        ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                    collectionProductsData = {
+                        ...collectionProductsData, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
                     };
                 }
                 if (maxprice || minprice) {
@@ -628,7 +628,7 @@ class ProductController extends base_controller_1.default {
                     limit: parseInt(limit),
                     query,
                     sort,
-                    products,
+                    collectionProductsData,
                     discount,
                     offers,
                     getimagegallery,
@@ -651,7 +651,7 @@ class ProductController extends base_controller_1.default {
                 }
                 const totalProductData = await product_service_1.default.findProductList({
                     query,
-                    products,
+                    collectionProductsData,
                     discount,
                     offers,
                     hostName: req.get('origin'),
