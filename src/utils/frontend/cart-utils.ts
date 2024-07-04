@@ -7,7 +7,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { tota
 
     return {
         "amount": cartData.totalAmount,
-        "currency": 'KWD',
+        "currency": countryData.currencyCode,
         "customer_initiated": "true",
         "threeDSecure": true,
         "save_card": false,
