@@ -357,15 +357,23 @@ class ProductController extends BaseController {
                     }
                 }
 
-                const product: any = await ProductService.findOneProduct(
-                    {
-                        query,
-                        getimagegallery,
-                        getattribute,
-                        getspecification,
-                        hostName: req.get('origin')
-                    }
-                );
+                const product: any = await ProductService.findProductList({
+                    query,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                });
+
+                // const product: any = await ProductService.findOneProduct(
+                //     {
+                //         query,
+                //         getimagegallery,
+                //         getattribute,
+                //         getspecification,
+                //         hostName: req.get('origin')
+                //     }
+                // );
 
                 if (product) {
 
@@ -723,8 +731,6 @@ class ProductController extends BaseController {
                         sort = { createdAt: 1 };
                     }
                 }
-
-console.log("productsproducts",products);
 
                 const productData: any = await ProductService.findProductList({
                     page: parseInt(page_size as string),
