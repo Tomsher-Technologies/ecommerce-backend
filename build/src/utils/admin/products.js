@@ -44,7 +44,9 @@ const filterProduct = async (data, countryId) => {
                 { 'productCategory.category.categoryTitle': keywordRegex },
                 { 'brand.brandTitle': keywordRegex },
                 { 'productCategory.category.slug': keywordRegex },
-                { 'brand.slug': keywordRegex }
+                { 'brand.slug': keywordRegex },
+                { 'productVariants.variantSku': keywordRegex },
+                { 'productVariants.extraProductTitle': keywordRegex }
             ],
             ...query
         };

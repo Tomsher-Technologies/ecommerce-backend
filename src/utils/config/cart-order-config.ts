@@ -111,6 +111,7 @@ export const orderListObjectLookup = {
 export const cartProject = {
     $project: {
         _id: 1,
+        orderId: 1,
         customerId: 1,
         countryId: 1,
         couponId: 1,
