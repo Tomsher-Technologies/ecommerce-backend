@@ -1,4 +1,4 @@
-export const tapPaymentCreate = async (tapDefaultValues: any) => {
+export const tapPaymentCreate = async (tapDefaultValues: any, paymentMethodValues: { secretKey: string; publicKey: string; testSecretKey: string; testPublicKey: string }) => {
     try {
         const response = await fetch(`${process.env.TAP_API_URL}`, {
             method: "POST",
@@ -8,12 +8,14 @@ export const tapPaymentCreate = async (tapDefaultValues: any) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${process.env.TAP_TEST_KEY}`
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
             body: JSON.stringify(tapDefaultValues),
         });
+        console.log('paymentMethodValues.secretKey', paymentMethodValues.secretKey);
+        console.log('paymentMethodValues.secretKey', paymentMethodValues);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

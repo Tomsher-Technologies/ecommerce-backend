@@ -91,7 +91,7 @@ class CheckoutController extends base_controller_1.default {
                 if (paymentMethod.slug !== cart_1.paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.tap) {
                         const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
-                        const tapResponse = await (0, tap_payment_1.tapPaymentCreate)(tapDefaultValues);
+                        const tapResponse = await (0, tap_payment_1.tapPaymentCreate)(tapDefaultValues, paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === cart_1.tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
                             const paymentTransaction = await payment_transaction_model_1.default.create({
                                 transactionId: tapResponse.id,
@@ -230,7 +230,7 @@ class CheckoutController extends base_controller_1.default {
     async tapSuccessResponse(req, res) {
         const { tap_id, data } = req.query;
         if (!tap_id) {
-            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
+            res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
             return false;
         }
         const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id);
@@ -241,28 +241,28 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
             });
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false;
             }
         }
         else {
-            res.redirect(`https://th.tomsher.net/order-response?status=${tapResponse?.status}`); // failure
+            res.redirect(`https://www.timehouse.store/order-response?status=${tapResponse?.status}`); // failure
             return false;
         }
     }
     async tabbySuccessResponse(req, res) {
         const { payment_id } = req.query;
         if (!payment_id) {
-            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
+            res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
             return false;
         }
         const paymentMethod = await payment_methods_model_1.default.findOne({ slug: cart_1.paymentMethods.tabby });
         if (!paymentMethod) {
-            res.redirect("https://th.tomsher.net/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentRetrieve)(payment_id, paymentMethod.paymentMethodValues);
         if (tabbyResponse.status) {
@@ -272,16 +272,16 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
                 return false;
             }
         }
         else {
-            res.redirect(`https://th.tomsher.net/order-response?status=${tabbyResponse?.status}`); // failure
+            res.redirect(`https://www.timehouse.store/order-response?status=${tabbyResponse?.status}`); // failure
             return false;
         }
     }
