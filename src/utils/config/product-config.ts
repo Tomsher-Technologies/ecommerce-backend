@@ -201,13 +201,13 @@ export const variantLookup = {
         foreignField: 'productId',
         as: 'productVariants',
         pipeline: [
-            // ...productVariantAttributesLookup,
-            // addFieldsProductVariantAttributes,
-            // ...productSpecificationLookup,
-            // addFieldsProductSpecification,
-            // productSeoLookup,
-            // addFieldsProductSeo,
-            // variantImageGalleryLookup
+            ...productVariantAttributesLookup,
+            addFieldsProductVariantAttributes,
+            ...productSpecificationLookup,
+            addFieldsProductSpecification,
+            productSeoLookup,
+            addFieldsProductSeo,
+            variantImageGalleryLookup
         ]
     }
 };

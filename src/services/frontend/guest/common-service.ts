@@ -652,7 +652,7 @@ class CommonService {
 
         return brandCollectionData;
     }
-    async findOffers(offer: any, hostName: any, offersBy?: string) {
+    async findOffers(offer: any, hostName: any, offersBy?: string, defaultCountryId?: null | string) {
         let getOfferList: any;
         let offerApplied: any = {
             brand: {
@@ -669,7 +669,9 @@ class CommonService {
             },
         };
         const pipeline: any[] = [];
-        const countryId = await this.findOneCountrySubDomainWithId(hostName)
+        if (!defaultCountryId) {
+            var countryId = await this.findOneCountrySubDomainWithId(hostName)
+        }
 
         const currentDate = new Date();
         const query = {
@@ -677,7 +679,7 @@ class CommonService {
                 ...(offer ? [offer] : []),
                 { "offerDateRange.0": { $lte: currentDate } },
                 { "offerDateRange.1": { $gte: currentDate } },
-                { "countryId": countryId },
+                { "countryId": countryId || defaultCountryId },
                 { status: "1" }
             ],
             ...(offersBy && { offersBy: offersBy })
