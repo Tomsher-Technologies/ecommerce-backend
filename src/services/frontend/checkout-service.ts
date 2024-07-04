@@ -183,14 +183,14 @@ class CheckoutService {
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
-                    orderId: cartDetails?.orderId,
+                    orderId: orderId,
                     status: false,
                     message: 'Cart updation failed'
                 }
             } else {
                 return {
                     _id: cartDetails?._id,
-                    orderId: cartDetails?.orderId,
+                    orderId: orderId,
                     status: true,
                     message: 'Cart updation success'
                 }

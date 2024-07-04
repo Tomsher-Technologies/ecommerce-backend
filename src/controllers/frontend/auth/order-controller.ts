@@ -66,7 +66,7 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
             }
             //offer - specification
-            const order: any = await OrderService.orderDetails({
+            const order: any = await OrderService.orderList({
                 query: {
                     $and: [
                         { customerId: customerDetails._id },
@@ -78,11 +78,10 @@ class OrderController extends BaseController {
                 },
                 hostName: req.get('origin'),
             })
-            console.log(order);
 
-            if (order) {
+            if (order && order.length > 0) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: order,
+                    requestedData: order[0],
                     message: 'Your Order is ready!'
                 });
             } else {
