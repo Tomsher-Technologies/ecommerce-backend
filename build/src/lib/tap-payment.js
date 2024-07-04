@@ -11,7 +11,7 @@ const tapPaymentCreate = async (tapDefaultValues, paymentMethodValues) => {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer sk_live_FN9LTnqhRCzQivfMG34ptaH1`
+                "Authorization": `Bearer ${process.env.TAP_TEST_KEY}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",
