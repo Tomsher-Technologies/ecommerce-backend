@@ -101,7 +101,7 @@ class CheckoutController extends BaseController {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
                         const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
 
-                        const tapResponse = await tapPaymentCreate(tapDefaultValues,paymentMethod.paymentMethodValues);
+                        const tapResponse = await tapPaymentCreate(tapDefaultValues, paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
                             const paymentTransaction = await PaymentTransactionModel.create({
                                 transactionId: tapResponse.id,
@@ -183,7 +183,7 @@ class CheckoutController extends BaseController {
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
-                        orderId: cartDetails._id,
+                        orderId: updateCart._id,
                         orderType: paymentMethod.slug,
                         paymentData
                     },
@@ -264,10 +264,10 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
                 return false
             }
         } else {
@@ -296,10 +296,10 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=${tabbyResponse?.status}`); // failure
                 return false
             }
         } else {

@@ -41,6 +41,7 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
             $or: [
                 { productTitle: keywordRegex },
                 { slug: keywordRegex },
+                { sku: keywordRegex },
                 { 'productCategory.category.categoryTitle': keywordRegex },
                 { 'brand.brandTitle': keywordRegex },
                 { 'productCategory.category.slug': keywordRegex },
