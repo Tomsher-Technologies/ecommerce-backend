@@ -4,7 +4,7 @@ exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues 
 const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) => {
     return {
         "amount": cartData.totalAmount,
-        "currency": countryData.currencyCode,
+        "currency": 'KWD',
         "customer_initiated": "true",
         "threeDSecure": true,
         "save_card": false,
