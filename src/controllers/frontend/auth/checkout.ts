@@ -101,7 +101,7 @@ class CheckoutController extends BaseController {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
                         const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
 
-                        const tapResponse = await tapPaymentCreate(tapDefaultValues);
+                        const tapResponse = await tapPaymentCreate(tapDefaultValues,paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
                             const paymentTransaction = await PaymentTransactionModel.create({
                                 transactionId: tapResponse.id,
@@ -252,7 +252,7 @@ class CheckoutController extends BaseController {
     async tapSuccessResponse(req: Request, res: Response): Promise<any> {
         const { tap_id, data }: any = req.query
         if (!tap_id) {
-            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
+            res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
             return false
         }
         const tapResponse = await tapPaymentRetrieve(tap_id);
@@ -264,14 +264,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://th.tomsher.net/order-response?status=${tapResponse?.status}`); // failure
+            res.redirect(`https://www.timehouse.store/order-response?status=${tapResponse?.status}`); // failure
             return false
         }
     }
@@ -279,12 +279,12 @@ class CheckoutController extends BaseController {
     async tabbySuccessResponse(req: Request, res: Response): Promise<any> {
         const { payment_id }: any = req.query
         if (!payment_id) {
-            res.redirect("https://th.tomsher.net/order-response?status=failure"); // failure
+            res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
             return false
         }
         const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby })
         if (!paymentMethod) {
-            res.redirect("https://th.tomsher.net/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
 
@@ -296,14 +296,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://th.tomsher.net/order-response${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://th.tomsher.net/order-response?status=${tabbyResponse?.status}`); // failure
+            res.redirect(`https://www.timehouse.store/order-response?status=${tabbyResponse?.status}`); // failure
             return false
         }
     }
