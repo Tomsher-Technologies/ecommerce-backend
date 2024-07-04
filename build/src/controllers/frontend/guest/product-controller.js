@@ -292,14 +292,10 @@ class ProductController extends base_controller_1.default {
                         ...query, 'productVariants.variantSku': variantSku
                     };
                 }
-                const data = /^[0-9a-fA-F]{24}$/.test(productId);
-                if (data) {
+                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+                if (checkProductIdOrSlug) {
                     query = {
-                        ...query,
-                        $or: [
-                            { 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId) },
-                            { _id: new mongoose_1.default.Types.ObjectId(productId) }
-                        ]
+                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
                     };
                 }
                 else {
@@ -307,45 +303,36 @@ class ProductController extends base_controller_1.default {
                         ...query, 'productVariants.slug': productId
                     };
                 }
-                const product = await product_service_1.default.findProductList({
+                const productDetails = await product_service_1.default.findProductList({
                     query,
                     getimagegallery,
                     getattribute,
                     getspecification,
                     hostName: req.get('origin'),
                 });
-                // const product: any = await ProductService.findOneProduct(
-                //     {
-                //         query,
-                //         getimagegallery,
-                //         getattribute,
-                //         getspecification,
-                //         hostName: req.get('origin')
-                //     }
-                // );
-                if (product && product?.length > 0) {
-                    controller.sendSuccessResponse(res, {
+                if (productDetails && productDetails?.length > 0) {
+                    return controller.sendSuccessResponse(res, {
                         requestedData: {
-                            product: product[0],
+                            product: productDetails[0],
                             reviews: []
                         },
                         message: 'Success'
                     });
                 }
                 else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Products are not found!',
                     });
                 }
             }
             else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Products Id not found!',
                 });
             }
         }
-        catch (error) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message });
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
     async findAllProducts(req, res) {

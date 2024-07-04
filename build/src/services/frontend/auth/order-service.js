@@ -9,7 +9,6 @@ const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 const product_config_1 = require("../../../utils/config/product-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
-const common_service_1 = __importDefault(require("./../guest/common-service"));
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
 class CartService {
     constructor() {
@@ -32,7 +31,6 @@ class CartService {
         }
         const languageData = await language_model_1.default.find().exec();
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
@@ -57,42 +55,10 @@ class CartService {
             cart_order_config_1.billingLookup,
             cart_order_config_1.paymentMethodLookup,
             cart_order_config_1.objectLookup,
-            cart_order_config_1.cartProject,
+            // cartProject,
             { $match: query },
             { $sort: finalSort },
         ];
-        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
-            modifiedPipeline.$lookup.pipeline.push(offerCategory);
-        }
-        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
-            modifiedPipeline.$lookup.pipeline.push(offerBrand);
-        }
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
-            modifiedPipeline.$lookup.pipeline.push(offerProduct);
-        }
-        modifiedPipeline.$lookup.pipeline.push({
-            $addFields: {
-                'productDetails.offer': {
-                    $cond: {
-                        if: "$productDetails.categoryOffers",
-                        then: "$productDetails.categoryOffers",
-                        else: {
-                            $cond: {
-                                if: "$brandOffers",
-                                then: "$productDetails.brandOffers",
-                                else: "$productDetails.productOffers"
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.categoryOffers" });
-        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.brandOffers" });
-        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.productOffers" });
         if (skip) {
             pipeline.push({ $skip: skip });
         }
@@ -102,83 +68,6 @@ class CartService {
         const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
         // console.log("createdCartWithValues", createdCartWithValues);
         return createdCartWithValues;
-        // return CartOrderModel.findOne(data);
-    }
-    async orderDetails(options) {
-        const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
-        const languageData = await language_model_1.default.find().exec();
-        const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
-        // productVariantAttributesLookup
-        const modifiedPipeline = {
-            $lookup: {
-                ...this.cartLookup.$lookup,
-                pipeline: [
-                    product_config_1.productLookup,
-                    { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-                    (0, wishlist_config_1.productVariantsLookupValues)("1"),
-                    // attributePipeline,
-                    { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
-                    wishlist_config_1.wishlistProductCategoryLookup,
-                    (0, wishlist_config_1.multilanguageFieldsLookup)(languageId),
-                    { $unwind: { path: "$productDetails.languageValues", preserveNullAndEmptyArrays: true } },
-                    wishlist_config_1.replaceProductLookupValues,
-                    { $unset: "productDetails.languageValues" },
-                ]
-            }
-        };
-        const pipeline = [
-            modifiedPipeline,
-            { $match: query },
-            { $sort: finalSort },
-        ];
-        if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-            const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
-            modifiedPipeline.$lookup.pipeline.push(offerCategory);
-        }
-        if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-            const offerBrand = (0, wishlist_config_1.wishlistOfferBrandPopulation)(getOfferList, offerApplied.brand);
-            modifiedPipeline.$lookup.pipeline.push(offerBrand);
-        }
-        if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-            const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
-            modifiedPipeline.$lookup.pipeline.push(offerProduct);
-        }
-        modifiedPipeline.$lookup.pipeline.push({
-            $addFields: {
-                'productDetails.offer': {
-                    $cond: {
-                        if: "$productDetails.categoryOffers",
-                        then: "$productDetails.categoryOffers",
-                        else: {
-                            $cond: {
-                                if: "$brandOffers",
-                                then: "$productDetails.brandOffers",
-                                else: "$productDetails.productOffers"
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.categoryOffers" });
-        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.brandOffers" });
-        modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.productOffers" });
-        if (skip) {
-            pipeline.push({ $skip: skip });
-        }
-        if (limit) {
-            pipeline.push({ $limit: limit });
-        }
-        const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
-        // console.log("createdCartWithValues", createdCartWithValues);
-        return createdCartWithValues[0];
         // return CartOrderModel.findOne(data);
     }
 }

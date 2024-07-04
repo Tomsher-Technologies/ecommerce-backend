@@ -169,7 +169,7 @@ class CartController extends base_controller_1.default {
                             ]
                         });
                     }
-                    const offerProduct = await product_service_1.default.findOneProduct({
+                    const offerProduct = await product_service_1.default.findProductList({
                         query: {
                             $and: [
                                 {
@@ -186,13 +186,15 @@ class CartController extends base_controller_1.default {
                     let offerAmount = 0;
                     let singleProductTotal = 0;
                     let singleProductDiscountTotal = 0;
-                    for (let i = 0; i < offerProduct.productVariants.length; i++) {
-                        if (productVariantData._id.toString() === offerProduct.productVariants[i]._id.toString()) {
-                            if (offerProduct.offer.offerType == offers_1.offerTypes.percent) {
-                                offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct.offer.offerIN / 100)) : (productVariantData.price * (offerProduct.offer.offerIN / 100));
-                            }
-                            if (offerProduct.offer.offerType == offers_1.offerTypes.amountOff) {
-                                offerAmount = offerProduct.offer.offerIN;
+                    if (offerProduct && offerProduct?.length > 0) {
+                        for (let i = 0; i < offerProduct.productVariants.length; i++) {
+                            if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
+                                if (offerProduct[0].offer.offerType == offers_1.offerTypes.percent) {
+                                    offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
+                                }
+                                if (offerProduct[0].offer.offerType == offers_1.offerTypes.amountOff) {
+                                    offerAmount = offerProduct[0].offer.offerIN;
+                                }
                             }
                         }
                     }
