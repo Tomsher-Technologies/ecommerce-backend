@@ -172,7 +172,7 @@ class CheckoutService {
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
-                    orderId: cartDetails?.orderId,
+                    orderId: orderId,
                     status: false,
                     message: 'Cart updation failed'
                 };
@@ -180,7 +180,7 @@ class CheckoutService {
             else {
                 return {
                     _id: cartDetails?._id,
-                    orderId: cartDetails?.orderId,
+                    orderId: orderId,
                     status: true,
                     message: 'Cart updation success'
                 };

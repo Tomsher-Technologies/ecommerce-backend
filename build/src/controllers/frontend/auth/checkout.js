@@ -167,7 +167,7 @@ class CheckoutController extends base_controller_1.default {
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
-                        orderId: cartDetails._id,
+                        orderId: updateCart._id,
                         orderType: paymentMethod.slug,
                         paymentData
                     },
@@ -241,11 +241,11 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
             });
             if (retValResponse.status) {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tapResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
                 return false;
             }
         }
@@ -272,11 +272,11 @@ class CheckoutController extends base_controller_1.default {
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });
             if (retValResponse.status) {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=success`); // success
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=success`); // success
                 return true;
             }
             else {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?.orderId}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=${tabbyResponse?.status}`); // failure
                 return false;
             }
         }
