@@ -307,13 +307,22 @@ class ProductController extends base_controller_1.default {
                         ...query, 'productVariants.slug': productId
                     };
                 }
-                const product = await product_service_1.default.findOneProduct({
+                const product = await product_service_1.default.findProductList({
                     query,
                     getimagegallery,
                     getattribute,
                     getspecification,
-                    hostName: req.get('origin')
+                    hostName: req.get('origin'),
                 });
+                // const product: any = await ProductService.findOneProduct(
+                //     {
+                //         query,
+                //         getimagegallery,
+                //         getattribute,
+                //         getspecification,
+                //         hostName: req.get('origin')
+                //     }
+                // );
                 if (product) {
                     controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -614,7 +623,6 @@ class ProductController extends base_controller_1.default {
                         sort = { createdAt: 1 };
                     }
                 }
-                console.log("productsproducts", products);
                 const productData = await product_service_1.default.findProductList({
                     page: parseInt(page_size),
                     limit: parseInt(limit),
