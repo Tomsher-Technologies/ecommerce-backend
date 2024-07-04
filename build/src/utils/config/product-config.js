@@ -43,10 +43,12 @@ exports.productVariantAttributesLookup = [
                 },
                 {
                     $project: {
-                        _id: 1,
+                        _id: 1, // Exclude _id from the output of the inner pipeline
                         variantId: 1,
-                        productId: 1,
-                        attribute: '$attribute',
+                        attributeId: '$attribute._id',
+                        attributeTitle: '$attribute.attributeTitle',
+                        slug: '$attribute.slug',
+                        attributeType: '$attribute.attributeType',
                         attributeDetail: '$attributeDetail'
                     }
                 }
@@ -72,6 +74,12 @@ exports.addFieldsProductVariantAttributes = {
                         itemName: '$$this.attributeDetail.itemName',
                         itemValue: '$$this.attributeDetail.itemValue'
                     }
+                    // attributeDetail: {
+                    //     _id: '$$this.attributeDetail._id',
+                    //     attributeId: '$$this.attributeDetail.attributeId',
+                    //     itemName: '$$this.attributeDetail.itemName',
+                    //     itemValue: '$$this.attributeDetail.itemValue'
+                    // }
                 }
             }
         }
@@ -111,8 +119,10 @@ exports.productSpecificationLookup = [
                     $project: {
                         _id: 1,
                         variantId: 1,
-                        productId: 1,
-                        specification: '$specification',
+                        specificationId: '$specification._id',
+                        specificationTitle: '$specification.specificationTitle',
+                        enableTab: '$specification.enableTab',
+                        slug: '$specification.slug',
                         specificationDetail: '$specificationDetail'
                     }
                 }
@@ -309,9 +319,11 @@ exports.productSpecificationsLookup = {
             {
                 $project: {
                     _id: 1,
-                    productId: 1,
-                    enableTab: 1,
-                    specification: '$specification',
+                    variantId: 1,
+                    specificationId: '$specification._id',
+                    specificationTitle: '$specification.specificationTitle',
+                    enableTab: '$specification.enableTab',
+                    slug: '$specification.slug',
                     specificationDetail: '$specificationDetail'
                 }
             }
