@@ -61,6 +61,7 @@ class ProductService {
                         }
                     },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
+                    ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
                     // ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
                     // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),

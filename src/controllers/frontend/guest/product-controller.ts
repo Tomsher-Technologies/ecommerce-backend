@@ -344,7 +344,62 @@ class ProductController extends BaseController {
                     query = {
                         ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
                     }
+                } else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    }
+                }
 
+                const productDetails: any = await ProductService.findProductList({
+                    query,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                });
+
+                if (productDetails && productDetails?.length > 0) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            product: productDetails[0],
+                            reviews: []
+                        },
+                        message: 'Success'
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Products are not found!',
+                    });
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Products Id not found!',
+                });
+            }
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message });
+        }
+    }
+
+    async findProductDetailSeo(req: Request, res: Response): Promise<void> {
+        try {
+            const productId: any = req.params.slug;
+            const variantSku: any = req.params.sku;
+            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
+            let query: any = {}
+            if (productId) {
+                if (variantSku) {
+                    query = {
+                        ...query, 'productVariants.variantSku': variantSku
+                    };
+                }
+
+                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+
+                if (checkProductIdOrSlug) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
+                    }
                 } else {
                     query = {
                         ...query, 'productVariants.slug': productId
