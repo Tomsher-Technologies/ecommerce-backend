@@ -343,6 +343,7 @@ class ProductController extends base_controller_1.default {
                         productId: variantDetails.productId
                     }));
                 }
+                console.log('productSpecification', productSpecification);
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         product: {

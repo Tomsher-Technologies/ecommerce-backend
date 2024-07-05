@@ -388,7 +388,7 @@ class ProductController extends BaseController {
                     imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId }).select('-createdAt -statusAt -status');
                 }
                 let productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
-                   variantId: variantDetails._id
+                    variantId: variantDetails._id
                 }));
 
                 if (!productSpecification?.length) {
@@ -396,6 +396,7 @@ class ProductController extends BaseController {
                         productId: variantDetails.productId
                     }));
                 }
+                console.log('productSpecification', productSpecification);
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
