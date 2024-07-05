@@ -135,7 +135,7 @@ class AttributesService {
     }
     async findOneAttribute(data: any): Promise<void | null> {
         data = data.value
-        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.data });
+        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.data.trim() });
         if (resultAttribute) {
             const attributeDetailResult: any = await this.findOneAttributeDetail(data, resultAttribute._id)
 

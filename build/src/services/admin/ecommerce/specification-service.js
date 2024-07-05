@@ -166,8 +166,12 @@ class SpecificationService {
         return specifications_model_1.default.findOneAndDelete({ _id: specificationId });
     }
     async findOneSpecification(data) {
-        const resultSpecification = await specifications_model_1.default.findOne({ specificationTitle: data.specificationTitle });
+        console.log(data, "datadatadatadata", data.specificationTitle.trim(), "safafassf");
+        // console.log(".................", JSON.stringify({ specificationTitle: data.specificationTitle }), "lllllllll");
+        const resultSpecification = await specifications_model_1.default.findOne({ specificationTitle: data.specificationTitle.trim() });
+        console.log("resultSpecification", resultSpecification);
         if (resultSpecification) {
+            console.log("dssssssssssssssssss");
             const specificationDetailResult = await this.findOneSpecificationDetail(data, resultSpecification._id);
             const result = {
                 specificationId: resultSpecification._id,
@@ -176,6 +180,7 @@ class SpecificationService {
             return result;
         }
         else {
+            console.log("5555555555");
             const specificationData = {
                 specificationTitle: (0, helpers_1.capitalizeWords)(data.specificationTitle),
                 isExcel: true,
