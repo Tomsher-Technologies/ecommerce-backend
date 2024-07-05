@@ -37,6 +37,7 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     orderId: {
         type: String,
+        default: null,
         unique: true
     },
     couponId: {
