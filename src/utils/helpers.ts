@@ -158,7 +158,7 @@ export const slugify = (text: string, slugDiff = '-'): string => {
 export const categorySlugify = (text: string): string => {
     return text.toLowerCase()
         .replace(/\s+/g, '_')
-        .replace(/-/g, '_')
+        .replace(/-/g, '-')
 };
 
 export const isValidPriceFormat = (value: string): boolean => {

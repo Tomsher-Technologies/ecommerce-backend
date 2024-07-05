@@ -8,6 +8,12 @@ const base_controller_1 = __importDefault(require("../../admin/base-controller")
 const product_service_1 = __importDefault(require("../../../services/frontend/guest/product-service"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
+const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
+const seo_page_model_1 = __importDefault(require("../../../model/admin/seo-page-model"));
+const product_gallery_images_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-gallery-images-model"));
+const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
+const specification_config_1 = require("../../../utils/config/specification-config");
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
@@ -293,37 +299,61 @@ class ProductController extends base_controller_1.default {
                     };
                 }
                 const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                let variantDetails = null;
                 if (checkProductIdOrSlug) {
                     query = {
                         ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
                     };
+                    variantDetails = await product_variants_model_1.default.findOne({
+                        _id: new mongoose_1.default.Types.ObjectId(productId),
+                        countryId
+                    });
                 }
                 else {
                     query = {
                         ...query, 'productVariants.slug': productId
                     };
+                    variantDetails = await product_variants_model_1.default.findOne({
+                        slug: productId,
+                        countryId
+                    });
+                }
+                if (!variantDetails) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product not found!',
+                    });
                 }
                 const productDetails = await product_service_1.default.findProductList({
                     query,
-                    getimagegallery,
                     getattribute,
-                    getspecification,
                     hostName: req.get('origin'),
                 });
-                if (productDetails && productDetails?.length > 0) {
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: {
-                            product: productDetails[0],
-                            reviews: []
+                let imageGallery = await product_gallery_images_model_1.default.find({
+                    variantId: variantDetails._id
+                }).select('-createdAt -statusAt -status');
+                if (!imageGallery?.length) { // Check if imageGallery is empty
+                    imageGallery = await product_gallery_images_model_1.default.find({ productID: variantDetails.productId }).select('-createdAt -statusAt -status');
+                }
+                let productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
+                    variantId: variantDetails._id
+                }));
+                if (!productSpecification?.length) {
+                    productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
+                        productId: variantDetails.productId
+                    }));
+                }
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        product: {
+                            ...productDetails[0],
+                            imageGallery: imageGallery || [],
+                            productSpecification: productSpecification || [],
                         },
-                        message: 'Success'
-                    });
-                }
-                else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Products are not found!',
-                    });
-                }
+                        reviews: []
+                    },
+                    message: 'Success'
+                });
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
@@ -335,56 +365,112 @@ class ProductController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
+    // async findProductDetail(req: Request, res: Response): Promise<void> {
+    //     try {
+    //         const productId: any = req.params.slug;
+    //         const variantSku: any = req.params.sku;
+    //         const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
+    //         let query: any = {}
+    //         if (productId) {
+    //             if (variantSku) {
+    //                 query = {
+    //                     ...query, 'productVariants.variantSku': variantSku
+    //                 };
+    //             }
+    //             const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+    //             if (checkProductIdOrSlug) {
+    //                 query = {
+    //                     ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
+    //                 }
+    //             } else {
+    //                 query = {
+    //                     ...query, 'productVariants.slug': productId
+    //                 }
+    //             }
+    //             const productDetails: any = await ProductService.findProductList({
+    //                 query,
+    //                 getimagegallery,
+    //                 getattribute,
+    //                 getspecification,
+    //                 hostName: req.get('origin'),
+    //             });
+    //             if (productDetails && productDetails?.length > 0) {
+    //                 return controller.sendSuccessResponse(res, {
+    //                     requestedData: {
+    //                         product: productDetails[0],
+    //                         reviews: []
+    //                     },
+    //                     message: 'Success'
+    //                 });
+    //             } else {
+    //                 return controller.sendErrorResponse(res, 200, {
+    //                     message: 'Products are not found!',
+    //                 });
+    //             }
+    //         } else {
+    //             return controller.sendErrorResponse(res, 200, {
+    //                 message: 'Products Id not found!',
+    //             });
+    //         }
+    //     } catch (error: any) {
+    //         return controller.sendErrorResponse(res, 500, { message: error.message });
+    //     }
+    // }
     async findProductDetailSeo(req, res) {
         try {
             const productId = req.params.slug;
             const variantSku = req.params.sku;
-            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query;
-            let query = {};
-            if (productId) {
-                if (variantSku) {
-                    query = {
-                        ...query, 'productVariants.variantSku': variantSku
-                    };
-                }
-                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
-                if (checkProductIdOrSlug) {
-                    query = {
-                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
-                    };
-                }
-                else {
-                    query = {
-                        ...query, 'productVariants.slug': productId
-                    };
-                }
-                const productDetails = await product_service_1.default.findProductList({
-                    query,
-                    getimagegallery,
-                    getattribute,
-                    getspecification,
-                    hostName: req.get('origin'),
+            if (!productId) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product Id not found!',
                 });
-                if (productDetails && productDetails?.length > 0) {
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: {
-                            product: productDetails[0],
-                            reviews: []
-                        },
-                        message: 'Success'
-                    });
-                }
-                else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Products are not found!',
-                    });
-                }
+            }
+            const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            let variantDetails = null;
+            if (checkProductIdOrSlug) {
+                variantDetails = await product_variants_model_1.default.findOne({
+                    _id: new mongoose_1.default.Types.ObjectId(productId),
+                    countryId
+                });
             }
             else {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Products Id not found!',
+                variantDetails = await product_variants_model_1.default.findOne({
+                    slug: productId,
+                    countryId
                 });
             }
+            if (!variantDetails) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product not found!',
+                });
+            }
+            let seoDetails = null;
+            if (variantDetails.id) {
+                seoDetails = await seo_page_model_1.default.findOne({
+                    pageReferenceId: variantDetails.id
+                }).select('-pageId -page -pageReferenceId');
+            }
+            if (!seoDetails) {
+                seoDetails = await seo_page_model_1.default.findOne({
+                    pageId: variantDetails.productId
+                }).select('-pageId -page');
+            }
+            const productDetails = await product_model_1.default.findOne({
+                _id: variantDetails.productId
+            }).select('_id productTitle slug longDescription productImageUrl');
+            if (!productDetails) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product details not found!',
+                });
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: {
+                    ...productDetails.toObject(),
+                    ...seoDetails?.toObject()
+                },
+                message: 'Success'
+            });
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message });
