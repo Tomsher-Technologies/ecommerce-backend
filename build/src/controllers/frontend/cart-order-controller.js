@@ -26,6 +26,7 @@ class CartController extends base_controller_1.default {
             const guestUser = res.locals.uuid;
             if (validatedData.success) {
                 const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalCouponAmount, totalWalletAmount, totalTaxAmount, codAmount } = req.body;
+                const { shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints, totalReturnedProduct, totalCouponAmount, totalWalletAmount, totalTaxAmount, codAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
                 let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                 let newCartOrder;
