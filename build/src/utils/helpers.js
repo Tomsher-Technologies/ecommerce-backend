@@ -155,7 +155,7 @@ exports.slugify = slugify;
 const categorySlugify = (text) => {
     return text.toLowerCase()
         .replace(/\s+/g, '_')
-        .replace(/-/g, '_');
+        .replace(/-/g, '-');
 };
 exports.categorySlugify = categorySlugify;
 const isValidPriceFormat = (value) => {

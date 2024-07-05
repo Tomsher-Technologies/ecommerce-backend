@@ -10,7 +10,6 @@ const offers_1 = require("../../constants/offers");
 const base_controller_1 = __importDefault(require("../admin/base-controller"));
 const cart_service_1 = __importDefault(require("../../services/frontend/cart-service"));
 const common_service_1 = __importDefault(require("../../services/frontend/guest/common-service"));
-const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
 const product_service_1 = __importDefault(require("../../services/frontend/guest/product-service"));
 const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-schema");
@@ -55,117 +54,7 @@ class CartController extends base_controller_1.default {
                 if (!productVariantData) {
                     return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
                 }
-                if (customer && guestUser && guestUserCart) {
-                    let customerCart = await cart_service_1.default.findCart({
-                        $and: [
-                            { customerId: customer },
-                            { countryId: country },
-                            { cartStatus: '1' }
-                        ]
-                    });
-                    // If customer does not have a cart, create a new one
-                    if (!customerCart) {
-                        customerCart = await cart_service_1.default.create({
-                            customerId: customer,
-                            countryId: country,
-                            cartStatus: '1',
-                            guestUserId: null
-                        });
-                    }
-                    console.log("9999erer999", customerCart);
-                    if (guestUserCart) {
-                        const cartProducts = await cart_order_product_model_1.default.find({
-                            $or: [
-                                { cartId: guestUserCart?._id },
-                                { cartId: customerCart?._id }
-                            ]
-                        });
-                        const combinedData = [];
-                        const variantIdMap = {};
-                        // Iterate through each object in data
-                        cartProducts.forEach((item) => {
-                            const variantId = item.variantId;
-                            if (!variantIdMap[variantId]) {
-                                // If variantId is not in the map, add it with initial quantity
-                                variantIdMap[variantId] = {
-                                    _id: item._id,
-                                    cartId: item.cartId,
-                                    slug: productVariantData.slug,
-                                    giftWrapAmount: item.giftWrapAmount,
-                                    quantity: item.quantity,
-                                    productAmount: item.productAmount * item.quantity,
-                                    variantId: productVariantData._id,
-                                    productId: productVariantData.productId
-                                };
-                            }
-                            else {
-                                // If variantId is already in the map, update the quantity
-                                variantIdMap[variantId].quantity += item.quantity;
-                                variantIdMap[variantId].totalProductAmount = variantIdMap[variantId].quantity * item.productAmount;
-                            }
-                        });
-                        // Convert variantIdMap object back to array format
-                        for (const key in variantIdMap) {
-                            combinedData.push(variantIdMap[key]);
-                        }
-                        for (let data of combinedData) {
-                            const cartProduct = await cart_order_product_model_1.default.findOne({
-                                $and: [
-                                    { cartId: data.cartId },
-                                    { variantId: data.variantId }
-                                ]
-                            });
-                            console.log("cartProduct", cartProduct, data);
-                            if (cartProduct) {
-                                const updateCart = await cart_service_1.default.updateCartProductByCart({
-                                    $and: [
-                                        { cartId: data.cartId },
-                                        { variantId: data.variantId }
-                                    ]
-                                }, {
-                                    cartId: customerCart._id,
-                                    slug: data.slug,
-                                    giftWrapAmount: data.giftWrapAmount,
-                                    quantity: data.quantity,
-                                    productAmount: data.productAmount,
-                                    variantId: data.variantId,
-                                    productId: data.productId
-                                });
-                                console.log("dsfsdfsdfsdf", guestUserCart);
-                                if (updateCart) {
-                                    await cart_service_1.default.destroy(guestUserCart._id);
-                                    if (customerCart) {
-                                        await cart_service_1.default.update(customerCart._id, {
-                                            guestUserId: null,
-                                            totalDiscountAmount: guestUserCart.totalDiscountAmount,
-                                            totalShippingAmount: guestUserCart.totalShippingAmount,
-                                            totalProductAmount: guestUserCart.totalProductAmount,
-                                            totalAmount: guestUserCart.totalAmount,
-                                            totalGiftWrapAmount: guestUserCart.totalGiftWrapAmount,
-                                        });
-                                    }
-                                    await cart_service_1.default.destroyCartProduct1({ cartId: guestUserCart._id });
-                                    const cart = await cart_service_1.default.findCartPopulate({
-                                        query: {
-                                            $and: [
-                                                { customerId: customer },
-                                                { countryId: country },
-                                                { cartStatus: "1" }
-                                            ]
-                                        },
-                                        hostName: req.get('origin')
-                                    });
-                                    console.log("747474", cart);
-                                    return controller.sendSuccessResponse(res, {
-                                        requestedData: { ...cart },
-                                        message: 'Your cart is ready!'
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-                else if (customer || guestUser) {
+                if (customer || guestUser) {
                     var existingCart;
                     if (customer) {
                         existingCart = await cart_service_1.default.findCart({
@@ -664,6 +553,19 @@ class CartController extends base_controller_1.default {
             }
             else {
                 query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] };
+            }
+            if (guestUser && customer) {
+                const guestUserCart = await cart_service_1.default.findCart({
+                    $and: [
+                        { guestUserId: guestUser },
+                        { countryId: country },
+                        { customerId: null },
+                        { cartStatus: '1' }
+                    ]
+                });
+                if (guestUserCart) {
+                }
+                console.log("**********", guestUserCart);
             }
             // let query: any = { _id: { $exists: true }, cartStatus: "1" };
             // const userData = await res.locals.user;

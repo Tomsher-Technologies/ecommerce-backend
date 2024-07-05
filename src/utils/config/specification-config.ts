@@ -1,3 +1,4 @@
+import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
 
 export const specificationDetailsLookup = {
@@ -93,4 +94,45 @@ export const specificationProject = {
         }
 
     }
+}
+
+export const frontendSpecificationLookup = (match: any) => {
+    return [
+        {
+            $match: match
+        },
+        {
+            $lookup: {
+                from: `${collections.ecommerce.specifications}`,
+                localField: 'specificationId',
+                foreignField: '_id',
+                as: 'specification'
+            }
+        },
+        {
+            $unwind: "$specification"
+        },
+        {
+            $lookup: {
+                from: `${collections.ecommerce.specificationdetails}`,
+                localField: 'specificationDetailId',
+                foreignField: '_id',
+                as: 'specificationDetail'
+            }
+        },
+        {
+            $unwind: "$specificationDetail"
+        },
+        {
+            $project: {
+                _id: 1,
+                variantId: 1,
+                specificationId: '$specification._id',
+                specificationTitle: '$specification.specificationTitle',
+                enableTab: '$specification.enableTab',
+                slug: '$specification.slug',
+                specificationDetail: '$specificationDetail'
+            }
+        }
+    ]
 }

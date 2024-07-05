@@ -27,7 +27,7 @@ class BrandsService {
             { $limit: limit },
             { $sort: finalSort },
 
-          brandLookup,
+            brandLookup,
         ];
 
         return BrandsModel.aggregate(pipeline).exec();
@@ -47,7 +47,7 @@ class BrandsService {
         if (createdBrand) {
             const pipeline = [
                 { $match: { _id: createdBrand._id } },
-              brandLookup,
+                brandLookup,
             ];
 
             const createdBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -63,7 +63,7 @@ class BrandsService {
             const objectId = new mongoose.Types.ObjectId(brandId);
             const pipeline = [
                 { $match: { _id: objectId } },
-              brandLookup,
+                brandLookup,
             ];
 
             const brandDataWithValues = await BrandsModel.aggregate(pipeline);
@@ -84,7 +84,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-              brandLookup,
+                brandLookup,
             ];
 
             const updatedBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -104,7 +104,7 @@ class BrandsService {
     async findBrandId(brandTitle: string): Promise<void | null> {
         const slug = slugify(brandTitle);
 
-        const resultBrand: any = await this.findBrand({ slug: slug });
+        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle.trim() });
         if (resultBrand) {
             return resultBrand
         } else {

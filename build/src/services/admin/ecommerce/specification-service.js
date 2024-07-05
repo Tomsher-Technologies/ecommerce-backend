@@ -166,7 +166,7 @@ class SpecificationService {
         return specifications_model_1.default.findOneAndDelete({ _id: specificationId });
     }
     async findOneSpecification(data) {
-        const resultSpecification = await specifications_model_1.default.findOne({ specificationTitle: data.specificationTitle });
+        const resultSpecification = await specifications_model_1.default.findOne({ specificationTitle: data.specificationTitle.trim() });
         if (resultSpecification) {
             const specificationDetailResult = await this.findOneSpecificationDetail(data, resultSpecification._id);
             const result = {
