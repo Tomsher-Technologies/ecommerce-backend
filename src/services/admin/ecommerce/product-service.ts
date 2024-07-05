@@ -131,18 +131,7 @@ class ProductsService {
                 const pipeline = [
                     { $match: { _id: objectId } },
                     productCategoryLookup,
-                    {
-                        $lookup: {
-                            from: `${collections.ecommerce.products.productvariants.productvariants}`,
-                            localField: '_id',
-                            foreignField: 'productId',
-                            as: 'productVariants',
-                            pipeline: [
-                                productVariantAttributesAdminLookup,
-                                productSpecificationAdminLookup
-                            ]
-                        },
-                    },
+                    variantLookup,
                     imageLookup,
                     brandLookup,
                     brandObject,
