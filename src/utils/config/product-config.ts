@@ -204,23 +204,6 @@ export const variantImageGalleryLookup = {
     }
 };
 
-export const variantLookup = {
-    $lookup: {
-        from: `${collections.ecommerce.products.productvariants.productvariants}`,
-        localField: '_id',
-        foreignField: 'productId',
-        as: 'productVariants',
-        pipeline: [
-            ...productVariantAttributesLookup,
-            addFieldsProductVariantAttributes,
-            ...productSpecificationLookup,
-            addFieldsProductSpecification,
-            productSeoLookup,
-            addFieldsProductSeo,
-            variantImageGalleryLookup
-        ]
-    }
-};
 
 export const productVariantAttributesAdminLookup = [
     {
@@ -309,6 +292,27 @@ export const productSpecificationAdminLookup = [
         }
     }
 ];
+
+export const variantLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.products.productvariants.productvariants}`,
+        localField: '_id',
+        foreignField: 'productId',
+        as: 'productVariants',
+        pipeline: [
+            ...productVariantAttributesAdminLookup,
+            addFieldsProductVariantAttributes,
+            ...productSpecificationAdminLookup,
+            addFieldsProductSpecification,
+            productSeoLookup,
+            addFieldsProductSeo,
+            variantImageGalleryLookup
+        ]
+    }
+};
+
+
+
 
 export const productCategoryLookup = {
     $lookup: {
