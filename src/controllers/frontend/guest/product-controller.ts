@@ -360,6 +360,37 @@ class ProductController extends BaseController {
                 if (!variantDetails) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Product not found!',
+
+                if (checkProductIdOrSlug) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
+                    }
+
+                } else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    }
+                }
+
+                const productDetails: any = await ProductService.findProductList({
+                    query,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                });
+
+                if (productDetails && productDetails?.length > 0) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            product: productDetails[0],
+                            reviews: []
+                        },
+                        message: 'Success'
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Products are not found!',
                     });
                 }
 
@@ -503,6 +534,7 @@ class ProductController extends BaseController {
 
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message });
+
         }
     }
 

@@ -313,6 +313,35 @@ class ProductController extends base_controller_1.default {
                 if (!variantDetails) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Product not found!',
+                if (checkProductIdOrSlug) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
+                    };
+                }
+                else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    };
+                }
+                const productDetails = await product_service_1.default.findProductList({
+                    query,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                });
+                if (productDetails && productDetails?.length > 0) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            product: productDetails[0],
+                            reviews: []
+                        },
+                        message: 'Success'
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Products are not found!',
                     });
                 }
                 return controller.sendSuccessResponse(res, {

@@ -36,6 +36,10 @@ class CartController extends BaseController {
                     paymentMethodCharge, rewardPoints, totalReturnedProduct, totalCouponAmount, totalWalletAmount,
                     totalTaxAmount, codAmount
                 } = req.body;
+                const { shippingStatus, shipmentGatwayId,
+                    paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints,
+                    totalReturnedProduct, totalCouponAmount, totalWalletAmount,
+                    totalTaxAmount, codAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
 
                 let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
