@@ -119,7 +119,7 @@ export const productSpecificationLookup = [
                 },
                 {
                     $project: {
-                        _id: 1, 
+                        _id: 1,
                         variantId: 1,
                         specificationId: '$specification._id',
                         specificationTitle: '$specification.specificationTitle',
@@ -222,6 +222,93 @@ export const variantLookup = {
     }
 };
 
+export const productVariantAttributesAdminLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productvariants.productvariantattributes}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productVariantAttributes',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.attributedetails}`,
+                        localField: 'attributeDetailId',
+                        foreignField: '_id',
+                        as: 'attributeDetail'
+                    }
+                },
+                {
+                    $unwind: "$attributeDetail"
+                },
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.attributes}`,
+                        localField: 'attributeId',
+                        foreignField: '_id',
+                        as: 'attribute'
+                    }
+                },
+                {
+                    $unwind: "$attribute"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        attribute: '$attribute',
+                        attributeDetail: '$attributeDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+
+export const productSpecificationAdminLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productSpecification',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.specifications}`,
+                        localField: 'specificationId',
+                        foreignField: '_id',
+                        as: 'specification'
+                    }
+                },
+                {
+                    $unwind: "$specification"
+                },
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.specificationdetails}`,
+                        localField: 'specificationDetailId',
+                        foreignField: '_id',
+                        as: 'specificationDetail'
+                    }
+                },
+                {
+                    $unwind: "$specificationDetail"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        specification: '$specification',
+                        specificationDetail: '$specificationDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
 
 export const productCategoryLookup = {
     $lookup: {
@@ -333,7 +420,7 @@ export const productSpecificationsLookup = {
             },
             {
                 $project: {
-                    _id: 1, 
+                    _id: 1,
                     variantId: 1,
                     specificationId: '$specification._id',
                     specificationTitle: '$specification.specificationTitle',
