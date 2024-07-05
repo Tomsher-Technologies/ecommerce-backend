@@ -70,19 +70,14 @@ class CheckoutService {
         }
     }
     async getNextSequenceValue() {
-        try {
-            const maxOrder = await cart_order_model_1.default.find().sort({ orderId: -1 }).limit(1);
-            if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
-                const maxOrderId = maxOrder[0].orderId;
-                const nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
-                return nextOrderId;
-            }
-            else {
-                return '000001';
-            }
+        const maxOrder = await cart_order_model_1.default.find().sort({ orderId: -1 }).limit(1);
+        console.log('maxOrder', maxOrder);
+        if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
+            const maxOrderId = maxOrder[0].orderId;
+            const nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
+            return nextOrderId;
         }
-        catch (error) {
-            console.error('Error fetching max order ID:', error);
+        else {
             return '000001';
         }
     }

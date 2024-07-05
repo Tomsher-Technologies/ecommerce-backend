@@ -567,7 +567,6 @@ class ProductService {
                         }
 
                         const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
-                        console.log("resultresult", result);
 
                         productData.push(result[0])
                     }
