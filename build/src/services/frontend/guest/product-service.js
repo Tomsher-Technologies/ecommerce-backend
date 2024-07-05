@@ -61,11 +61,7 @@ class ProductService {
                         }
                     },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
-                    // ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
-                    // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    // ...(getSeo === '1' ? [productSeoLookup] : []),
-                    // ...(getSeo === '1' ? [addFieldsProductSeo] : []),
                     ...(getimagegallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
                 ]
             }
