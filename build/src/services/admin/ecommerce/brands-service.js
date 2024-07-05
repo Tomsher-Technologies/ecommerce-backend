@@ -86,7 +86,7 @@ class BrandsService {
     }
     async findBrandId(brandTitle) {
         const slug = (0, helpers_1.slugify)(brandTitle);
-        const resultBrand = await this.findBrand({ slug: slug });
+        const resultBrand = await this.findBrand({ brandTitle: brandTitle.trim() });
         if (resultBrand) {
             return resultBrand;
         }

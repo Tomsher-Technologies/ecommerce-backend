@@ -365,112 +365,56 @@ class ProductController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
-    // async findProductDetail(req: Request, res: Response): Promise<void> {
-    //     try {
-    //         const productId: any = req.params.slug;
-    //         const variantSku: any = req.params.sku;
-    //         const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
-    //         let query: any = {}
-    //         if (productId) {
-    //             if (variantSku) {
-    //                 query = {
-    //                     ...query, 'productVariants.variantSku': variantSku
-    //                 };
-    //             }
-    //             const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
-    //             if (checkProductIdOrSlug) {
-    //                 query = {
-    //                     ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
-    //                 }
-    //             } else {
-    //                 query = {
-    //                     ...query, 'productVariants.slug': productId
-    //                 }
-    //             }
-    //             const productDetails: any = await ProductService.findProductList({
-    //                 query,
-    //                 getimagegallery,
-    //                 getattribute,
-    //                 getspecification,
-    //                 hostName: req.get('origin'),
-    //             });
-    //             if (productDetails && productDetails?.length > 0) {
-    //                 return controller.sendSuccessResponse(res, {
-    //                     requestedData: {
-    //                         product: productDetails[0],
-    //                         reviews: []
-    //                     },
-    //                     message: 'Success'
-    //                 });
-    //             } else {
-    //                 return controller.sendErrorResponse(res, 200, {
-    //                     message: 'Products are not found!',
-    //                 });
-    //             }
-    //         } else {
-    //             return controller.sendErrorResponse(res, 200, {
-    //                 message: 'Products Id not found!',
-    //             });
-    //         }
-    //     } catch (error: any) {
-    //         return controller.sendErrorResponse(res, 500, { message: error.message });
-    //     }
-    // }
     async findProductDetailSeo(req, res) {
         try {
             const productId = req.params.slug;
             const variantSku = req.params.sku;
-            if (!productId) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Product Id not found!',
+            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query;
+            let query = {};
+            if (productId) {
+                if (variantSku) {
+                    query = {
+                        ...query, 'productVariants.variantSku': variantSku
+                    };
+                }
+                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+                if (checkProductIdOrSlug) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
+                    };
+                }
+                else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    };
+                }
+                const productDetails = await product_service_1.default.findProductList({
+                    query,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
                 });
-            }
-            const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            let variantDetails = null;
-            if (checkProductIdOrSlug) {
-                variantDetails = await product_variants_model_1.default.findOne({
-                    _id: new mongoose_1.default.Types.ObjectId(productId),
-                    countryId
-                });
+                if (productDetails && productDetails?.length > 0) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            product: productDetails[0],
+                            reviews: []
+                        },
+                        message: 'Success'
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Products are not found!',
+                    });
+                }
             }
             else {
-                variantDetails = await product_variants_model_1.default.findOne({
-                    slug: productId,
-                    countryId
-                });
-            }
-            if (!variantDetails) {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Product not found!',
+                    message: 'Products Id not found!',
                 });
             }
-            let seoDetails = null;
-            if (variantDetails.id) {
-                seoDetails = await seo_page_model_1.default.findOne({
-                    pageReferenceId: variantDetails.id
-                }).select('-pageId -page -pageReferenceId');
-            }
-            if (!seoDetails) {
-                seoDetails = await seo_page_model_1.default.findOne({
-                    pageId: variantDetails.productId
-                }).select('-pageId -page');
-            }
-            const productDetails = await product_model_1.default.findOne({
-                _id: variantDetails.productId
-            }).select('_id productTitle slug longDescription productImageUrl');
-            if (!productDetails) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Product details not found!',
-                });
-            }
-            return controller.sendSuccessResponse(res, {
-                requestedData: {
-                    ...productDetails.toObject(),
-                    ...seoDetails?.toObject()
-                },
-                message: 'Success'
-            });
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message });
