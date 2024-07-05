@@ -49,7 +49,7 @@ export const productVariantAttributesLookup = [
                         attributeTitle: '$attribute.attributeTitle',
                         slug: '$attribute.slug',
                         attributeType: '$attribute.attributeType',
-                        attributeDetail: '$attributeDetail'
+                        attributeDetail: 1
                     }
                 }
             ]
