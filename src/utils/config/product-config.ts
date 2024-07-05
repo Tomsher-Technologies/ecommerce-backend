@@ -43,7 +43,7 @@ export const productVariantAttributesLookup = [
                 },
                 {
                     $project: {
-                        _id: 1,
+                        _id: 1, // Exclude _id from the output of the inner pipeline
                         variantId: 1,
                         attributeId: '$attribute._id',
                         attributeTitle: '$attribute.attributeTitle',
