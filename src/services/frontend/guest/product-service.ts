@@ -68,11 +68,12 @@ class ProductService {
                         }
                     },
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    ...(getSeo === '1' ? [productSeoLookup] : []),
-                    ...(getSeo === '1' ? [addFieldsProductSeo] : []),
+                    // ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
+                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
+                    // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+                    // ...(getSeo === '1' ? [productSeoLookup] : []),
+                    // ...(getSeo === '1' ? [addFieldsProductSeo] : []),
                     ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
 
                 ]
@@ -88,7 +89,7 @@ class ProductService {
             brandObject,
             ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
-            ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
+            // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),

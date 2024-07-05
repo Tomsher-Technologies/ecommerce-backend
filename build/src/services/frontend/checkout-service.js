@@ -70,11 +70,21 @@ class CheckoutService {
         }
     }
     async getNextSequenceValue() {
-        const maxOrder = await cart_order_model_1.default.find().sort({ orderId: -1 }).limit(1);
-        let maxOrderId = maxOrder.length > 0 ? maxOrder[0].orderId : '000000';
-        // Convert to an integer, increment, and then convert back to a zero-padded string
-        let nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
-        return nextOrderId;
+        try {
+            const maxOrder = await cart_order_model_1.default.find().sort({ orderId: -1 }).limit(1);
+            if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
+                const maxOrderId = maxOrder[0].orderId;
+                const nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
+                return nextOrderId;
+            }
+            else {
+                return '000001';
+            }
+        }
+        catch (error) {
+            console.error('Error fetching max order ID:', error);
+            return '000001';
+        }
     }
     async cartUpdation(cartDetails, paymentSuccess) {
         if (cartDetails) {
@@ -160,6 +170,7 @@ class CheckoutService {
             //     }
             // }
             const orderId = await this.getNextSequenceValue();
+            console.log('orderId', orderId);
             cartUpdate = {
                 ...cartUpdate,
                 orderId: orderId,

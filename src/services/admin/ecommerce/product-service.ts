@@ -6,8 +6,9 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
 import mongoose from 'mongoose';
-import { brandLookup, brandObject, imageLookup, productCategoryLookup, seoLookup, seoObject, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSpecificationAdminLookup, productVariantAttributesAdminLookup, seoLookup, seoObject, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
+import { collections } from '../../../constants/collections';
 
 class ProductsService {
     private multilanguageFieldsLookup: any;
@@ -46,14 +47,17 @@ class ProductsService {
 
         let pipeline: any[] = [
             productCategoryLookup,
-            variantLookup,
-            imageLookup,
+            {
+                $lookup: {
+                    from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'productVariants',
+                },
+            },
             brandLookup,
             brandObject,
-            seoLookup,
-            seoObject,
             this.multilanguageFieldsLookup,
-            specificationsLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
@@ -67,14 +71,18 @@ class ProductsService {
         try {
             let pipeline: any[] = [
                 productCategoryLookup,
-                variantLookup,
-                imageLookup,
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                        localField: '_id',
+                        foreignField: 'productId',
+                        as: 'productVariants',
+                    },
+                },
                 brandLookup,
                 brandObject,
-                seoLookup,
-                seoObject,
+
                 this.multilanguageFieldsLookup,
-                specificationsLookup,
                 { $match: query },
                 {
                     $count: 'count'
@@ -99,8 +107,8 @@ class ProductsService {
 
     async create(productData: any): Promise<ProductsProps | null> {
         console.log("errrrrrrrrrrrr12333rrrrrrrrrrrrrr");
-       
-        
+
+
         return ProductsModel.create(productData);
 
         // console.log("ddddddddddddddddr", data);

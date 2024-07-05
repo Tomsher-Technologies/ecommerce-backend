@@ -59,6 +59,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     orderId: {
         type: String,
+        default: null,
         unique: true
     },
     couponId: {

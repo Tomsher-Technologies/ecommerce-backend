@@ -43,11 +43,13 @@ export const productVariantAttributesLookup = [
                 },
                 {
                     $project: {
-                        _id: 1,
+                        _id: 1, // Exclude _id from the output of the inner pipeline
                         variantId: 1,
-                        productId: 1,
-                        attribute: '$attribute',
-                        attributeDetail: '$attributeDetail'
+                        attributeId: '$attribute._id',
+                        attributeTitle: '$attribute.attributeTitle',
+                        slug: '$attribute.slug',
+                        attributeType: '$attribute.attributeType',
+                        attributeDetail: 1
                     }
                 }
             ]
@@ -73,6 +75,12 @@ export const addFieldsProductVariantAttributes = {
                         itemName: '$$this.attributeDetail.itemName',
                         itemValue: '$$this.attributeDetail.itemValue'
                     }
+                    // attributeDetail: {
+                    //     _id: '$$this.attributeDetail._id',
+                    //     attributeId: '$$this.attributeDetail.attributeId',
+                    //     itemName: '$$this.attributeDetail.itemName',
+                    //     itemValue: '$$this.attributeDetail.itemValue'
+                    // }
                 }
             }
         }
@@ -113,8 +121,10 @@ export const productSpecificationLookup = [
                     $project: {
                         _id: 1,
                         variantId: 1,
-                        productId: 1,
-                        specification: '$specification',
+                        specificationId: '$specification._id',
+                        specificationTitle: '$specification.specificationTitle',
+                        enableTab: '$specification.enableTab',
+                        slug: '$specification.slug',
                         specificationDetail: '$specificationDetail'
                     }
                 }
@@ -194,6 +204,95 @@ export const variantImageGalleryLookup = {
     }
 };
 
+
+export const productVariantAttributesAdminLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productvariants.productvariantattributes}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productVariantAttributes',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.attributedetails}`,
+                        localField: 'attributeDetailId',
+                        foreignField: '_id',
+                        as: 'attributeDetail'
+                    }
+                },
+                {
+                    $unwind: "$attributeDetail"
+                },
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.attributes}`,
+                        localField: 'attributeId',
+                        foreignField: '_id',
+                        as: 'attribute'
+                    }
+                },
+                {
+                    $unwind: "$attribute"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        attribute: '$attribute',
+                        attributeDetail: '$attributeDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+
+export const productSpecificationAdminLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productvariants.productspecifications}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productSpecification',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.specifications}`,
+                        localField: 'specificationId',
+                        foreignField: '_id',
+                        as: 'specification'
+                    }
+                },
+                {
+                    $unwind: "$specification"
+                },
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.specificationdetails}`,
+                        localField: 'specificationDetailId',
+                        foreignField: '_id',
+                        as: 'specificationDetail'
+                    }
+                },
+                {
+                    $unwind: "$specificationDetail"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        specification: '$specification',
+                        specificationDetail: '$specificationDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+
 export const variantLookup = {
     $lookup: {
         from: `${collections.ecommerce.products.productvariants.productvariants}`,
@@ -201,9 +300,9 @@ export const variantLookup = {
         foreignField: 'productId',
         as: 'productVariants',
         pipeline: [
-            ...productVariantAttributesLookup,
+            ...productVariantAttributesAdminLookup,
             addFieldsProductVariantAttributes,
-            ...productSpecificationLookup,
+            ...productSpecificationAdminLookup,
             addFieldsProductSpecification,
             productSeoLookup,
             addFieldsProductSeo,
@@ -211,6 +310,8 @@ export const variantLookup = {
         ]
     }
 };
+
+
 
 
 export const productCategoryLookup = {
@@ -324,11 +425,12 @@ export const productSpecificationsLookup = {
             {
                 $project: {
                     _id: 1,
-                    productId: 1,
-                    enableTab: 1,
-                    specification: '$specification',
+                    variantId: 1,
+                    specificationId: '$specification._id',
+                    specificationTitle: '$specification.specificationTitle',
+                    enableTab: '$specification.enableTab',
+                    slug: '$specification.slug',
                     specificationDetail: '$specificationDetail'
-
                 }
             }
         ],
