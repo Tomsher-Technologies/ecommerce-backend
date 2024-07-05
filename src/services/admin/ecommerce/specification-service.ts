@@ -186,7 +186,8 @@ class SpecificationService {
 
     async findOneSpecification(data: any): Promise<void | null> {
 
-        const resultSpecification: any = await SpecificationModel.findOne({ specificationTitle: data.specificationTitle });
+        const resultSpecification: any = await SpecificationModel.findOne({ specificationTitle: data.specificationTitle.trim() });
+
         if (resultSpecification) {
             const specificationDetailResult: any = await this.findOneSpecificationDetail(data, resultSpecification._id)
 
