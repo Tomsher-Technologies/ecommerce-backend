@@ -77,6 +77,7 @@ class CheckoutService {
     async getNextSequenceValue(): Promise<string> {
         try {
             const maxOrder: any = await CartOrdersModel.find().sort({ orderId: -1 }).limit(1);
+            console.log('maxOrder',maxOrder);
             
             if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
                 const maxOrderId = maxOrder[0].orderId;
