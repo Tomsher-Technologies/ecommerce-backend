@@ -10,6 +10,7 @@ const inventry_pricing_model_1 = __importDefault(require("../../../model/admin/e
 const mongoose_1 = __importDefault(require("mongoose"));
 const product_config_1 = require("../../../utils/config/product-config");
 const multi_languages_1 = require("../../../constants/multi-languages");
+const collections_1 = require("../../../constants/collections");
 class ProductsService {
     constructor() {
         this.multilanguageFieldsLookup = {
@@ -42,14 +43,17 @@ class ProductsService {
         }
         let pipeline = [
             product_config_1.productCategoryLookup,
-            product_config_1.variantLookup,
-            product_config_1.imageLookup,
+            {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'productVariants',
+                },
+            },
             product_config_1.brandLookup,
             product_config_1.brandObject,
-            product_config_1.seoLookup,
-            product_config_1.seoObject,
             this.multilanguageFieldsLookup,
-            product_config_1.specificationsLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
@@ -61,14 +65,17 @@ class ProductsService {
         try {
             let pipeline = [
                 product_config_1.productCategoryLookup,
-                product_config_1.variantLookup,
-                product_config_1.imageLookup,
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                        localField: '_id',
+                        foreignField: 'productId',
+                        as: 'productVariants',
+                    },
+                },
                 product_config_1.brandLookup,
                 product_config_1.brandObject,
-                product_config_1.seoLookup,
-                product_config_1.seoObject,
                 this.multilanguageFieldsLookup,
-                product_config_1.specificationsLookup,
                 { $match: query },
                 {
                     $count: 'count'

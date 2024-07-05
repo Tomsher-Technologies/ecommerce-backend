@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productLookup = {
@@ -49,7 +49,7 @@ exports.productVariantAttributesLookup = [
                         attributeTitle: '$attribute.attributeTitle',
                         slug: '$attribute.slug',
                         attributeType: '$attribute.attributeType',
-                        attributeDetail: '$attributeDetail'
+                        attributeDetail: 1
                     }
                 }
             ]
@@ -197,6 +197,92 @@ exports.variantImageGalleryLookup = {
         as: 'variantImageGallery'
     }
 };
+exports.productVariantAttributesAdminLookup = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productvariants.productvariantattributes}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productVariantAttributes',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.attributedetails}`,
+                        localField: 'attributeDetailId',
+                        foreignField: '_id',
+                        as: 'attributeDetail'
+                    }
+                },
+                {
+                    $unwind: "$attributeDetail"
+                },
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.attributes}`,
+                        localField: 'attributeId',
+                        foreignField: '_id',
+                        as: 'attribute'
+                    }
+                },
+                {
+                    $unwind: "$attribute"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        attribute: '$attribute',
+                        attributeDetail: '$attributeDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
+exports.productSpecificationAdminLookup = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productvariants.productspecifications}`,
+            localField: '_id',
+            foreignField: 'variantId',
+            as: 'productSpecification',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.specifications}`,
+                        localField: 'specificationId',
+                        foreignField: '_id',
+                        as: 'specification'
+                    }
+                },
+                {
+                    $unwind: "$specification"
+                },
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.specificationdetails}`,
+                        localField: 'specificationDetailId',
+                        foreignField: '_id',
+                        as: 'specificationDetail'
+                    }
+                },
+                {
+                    $unwind: "$specificationDetail"
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        variantId: 1,
+                        productId: 1,
+                        specification: '$specification',
+                        specificationDetail: '$specificationDetail'
+                    }
+                }
+            ]
+        }
+    }
+];
 exports.variantLookup = {
     $lookup: {
         from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
@@ -204,9 +290,9 @@ exports.variantLookup = {
         foreignField: 'productId',
         as: 'productVariants',
         pipeline: [
-            ...exports.productVariantAttributesLookup,
+            ...exports.productVariantAttributesAdminLookup,
             exports.addFieldsProductVariantAttributes,
-            ...exports.productSpecificationLookup,
+            ...exports.productSpecificationAdminLookup,
             exports.addFieldsProductSpecification,
             exports.productSeoLookup,
             exports.addFieldsProductSeo,

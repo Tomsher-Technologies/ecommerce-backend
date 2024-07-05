@@ -9,6 +9,10 @@ import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
+import ProductGalleryImagesModel from '../../../model/admin/ecommerce/product/product-gallery-images-model';
+import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
+import { collections } from '../../../constants/collections';
+import { frontendSpecificationLookup } from '../../../utils/config/specification-config';
 const controller = new BaseController();
 
 class ProductController extends BaseController {
@@ -346,28 +350,60 @@ class ProductController extends BaseController {
 
                 let variantDetails: any = null;
                 if (checkProductIdOrSlug) {
+                    query = {
+                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
+                    }
                     variantDetails = await ProductVariantsModel.findOne({
                         _id: new mongoose.Types.ObjectId(productId),
                         countryId
                     });
                 } else {
+                    query = {
+                        ...query, 'productVariants.slug': productId
+                    }
                     variantDetails = await ProductVariantsModel.findOne({
                         slug: productId,
                         countryId
                     });
                 }
-    
+
                 if (!variantDetails) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Product not found!',
                     });
                 }
 
-       
+                const productDetails: any = await ProductService.findProductList({
+                    query,
+                    getattribute,
+                    hostName: req.get('origin'),
+                });
+
+
+                let imageGallery = await ProductGalleryImagesModel.find({
+                    variantId: variantDetails._id
+                }).select('-createdAt -statusAt -status');
+
+                if (!imageGallery?.length) { // Check if imageGallery is empty
+                    imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId }).select('-createdAt -statusAt -status');
+                }
+                let productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
+                    variantId: variantDetails._id
+                }));
+
+                if (!productSpecification?.length) {
+                    productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
+                        productId: variantDetails.productId
+                    }));
+                }
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
-                        product: {},
+                        product: {
+                            ...productDetails[0],
+                            imageGallery: imageGallery || [],
+                            productSpecification: productSpecification || [],
+                        },
                         reviews: []
                     },
                     message: 'Success'
@@ -476,7 +512,7 @@ class ProductController extends BaseController {
                     pageReferenceId: variantDetails.id
                 }).select('-pageId -page -pageReferenceId')
             }
-    
+
             if (!seoDetails) {
                 seoDetails = await SeoPageModel.findOne({
                     pageId: variantDetails.productId
