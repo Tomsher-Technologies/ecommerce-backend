@@ -117,7 +117,7 @@ class AttributesService {
     }
     async findOneAttribute(data) {
         data = data.value;
-        const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: data.data });
+        const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: data.data.trim() });
         if (resultAttribute) {
             const attributeDetailResult = await this.findOneAttributeDetail(data, resultAttribute._id);
             const result = {

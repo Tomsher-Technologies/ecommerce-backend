@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.specificationProject = exports.specificationDetailLanguageFieldsReplace = exports.specificationLanguageFieldsReplace = exports.specificationLanguageLookup = exports.specificationDetailsLookup = void 0;
+exports.frontendSpecificationLookup = exports.specificationProject = exports.specificationDetailLanguageFieldsReplace = exports.specificationLanguageFieldsReplace = exports.specificationLanguageLookup = exports.specificationDetailsLookup = void 0;
+const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.specificationDetailsLookup = {
     $lookup: {
@@ -89,3 +90,44 @@ exports.specificationProject = {
         }
     }
 };
+const frontendSpecificationLookup = (match) => {
+    return [
+        {
+            $match: match
+        },
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.specifications}`,
+                localField: 'specificationId',
+                foreignField: '_id',
+                as: 'specification'
+            }
+        },
+        {
+            $unwind: "$specification"
+        },
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.specificationdetails}`,
+                localField: 'specificationDetailId',
+                foreignField: '_id',
+                as: 'specificationDetail'
+            }
+        },
+        {
+            $unwind: "$specificationDetail"
+        },
+        {
+            $project: {
+                _id: 1,
+                variantId: 1,
+                specificationId: '$specification._id',
+                specificationTitle: '$specification.specificationTitle',
+                enableTab: '$specification.enableTab',
+                slug: '$specification.slug',
+                specificationDetail: '$specificationDetail'
+            }
+        }
+    ];
+};
+exports.frontendSpecificationLookup = frontendSpecificationLookup;
