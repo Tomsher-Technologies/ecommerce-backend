@@ -10,7 +10,6 @@ const productVariantsLookupValues = (getattribute) => {
             let: { productId: "$productDetails._id", variantId: "$variantId" },
             pipeline: [
                 ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
-                ...(getattribute === '1' ? [product_config_1.addFieldsProductVariantAttributes] : []),
                 { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
             ],
             as: "productDetails.variantDetails"

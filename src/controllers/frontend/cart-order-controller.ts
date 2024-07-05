@@ -24,66 +24,76 @@ class CartController extends BaseController {
 
 
     async createCartOrder(req: Request, res: Response): Promise<void> {
+
         try {
             const validatedData = cartSchema.safeParse(req.body);
-            const user = res.locals.user;
-            const uuid = res.locals.uuid;
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
 
             if (validatedData.success) {
+                const {
+                    shippingStatus, shipmentGatwayId, paymentGatwayId, pickupStoreId, orderComments, paymentMethod,
+                    paymentMethodCharge, rewardPoints, totalReturnedProduct, totalCouponAmount, totalWalletAmount,
+                    totalTaxAmount, codAmount
+                } = req.body;
                 const { shippingStatus, shipmentGatwayId,
                     paymentGatwayId, pickupStoreId, orderComments, paymentMethod, paymentMethodCharge, rewardPoints,
                     totalReturnedProduct, totalCouponAmount, totalWalletAmount,
                     totalTaxAmount, codAmount } = req.body;
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
 
-                let customer, guestUser
                 let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-                let newCartOrder
-                let newCartOrderProduct: any
+                let newCartOrder;
+                let newCartOrderProduct: any;
 
-                customer = user
-                guestUser = uuid
+                let totalAmountOfProduct = 0;
+                let totalDiscountAmountOfProduct = 0;
+                let quantityProduct = 1;
 
-                let totalAmountOfProduct = 0
-                let totalDiscountAmountOfProduct = 0
-                let quantityProduct = 1
-                const guestUserCart: any = await CartService.findCart(
-                    {
-                        $and: [
-                            { guestUserId: guestUser },
-                            { countryId: country },
-                            { customerId: null },
-                            { cartStatus: '1' }
-                        ]
-                    });
+                const guestUserCart: any = await CartService.findCart({
+                    $and: [
+                        { guestUserId: guestUser },
+                        { countryId: country },
+                        { customerId: null },
+                        { cartStatus: '1' }
+                    ]
+                });
+
                 const productVariantData: any = await ProductVariantsModel.findOne({
                     $and: [
                         {
                             $or: [
                                 { _id: variantId },
-                                { slug: slug },
+                                { slug: slug }
                             ]
                         },
                         { countryId: country }
                     ]
-
-                })
+                });
 
                 if (!productVariantData) {
                     return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
                 }
 
                 if (customer && guestUser && guestUserCart) {
+                    let customerCart: any = await CartService.findCart({
+                        $and: [
+                            { customerId: customer },
+                            { countryId: country },
+                            { cartStatus: '1' }
+                        ]
+                    });
+                    // If customer does not have a cart, create a new one
+                    if (!customerCart) {
+                        customerCart = await CartService.create({
+                            customerId: customer,
+                            countryId: country,
+                            cartStatus: '1',
+                            guestUserId: null
+                        });
+                    }
 
-                    const customerCart: any = await CartService.findCart(
-                        {
-                            $and: [
-                                { customerId: customer },
-                                { countryId: country },
-                                { cartStatus: '1' }
-                            ]
-                        }
-                    );
+                    console.log("9999erer999", customerCart);
 
                     if (guestUserCart) {
                         const cartProducts = await CartOrderProductsModel.find({
@@ -91,8 +101,7 @@ class CartController extends BaseController {
                                 { cartId: guestUserCart?._id },
                                 { cartId: customerCart?._id }
                             ]
-                        })
-
+                        });
                         const combinedData: any = [];
                         const variantIdMap: any = {};
 
@@ -109,14 +118,12 @@ class CartController extends BaseController {
                                     quantity: item.quantity,
                                     productAmount: item.productAmount * item.quantity,
                                     variantId: productVariantData._id,
-                                    productId: productVariantData.productId,
-
+                                    productId: productVariantData.productId
                                 };
                             } else {
                                 // If variantId is already in the map, update the quantity
                                 variantIdMap[variantId].quantity += item.quantity;
-                                variantIdMap[variantId].totalProductAmount = variantIdMap[variantId].quantity * item.totalProductAmount;
-
+                                variantIdMap[variantId].totalProductAmount = variantIdMap[variantId].quantity * item.productAmount;
                             }
                         });
 
@@ -125,39 +132,46 @@ class CartController extends BaseController {
                             combinedData.push(variantIdMap[key]);
                         }
 
-                        var updateCart
-
                         for (let data of combinedData) {
                             const cartProduct: any = await CartOrderProductsModel.findOne({
                                 $and: [
                                     { cartId: data.cartId },
                                     { variantId: data.variantId }
                                 ]
-                            })
+                            });
+                            console.log("cartProduct", cartProduct, data);
 
                             if (cartProduct) {
-                                updateCart = await CartService.updateCartProductByCart({
+                                const updateCart = await CartService.updateCartProductByCart({
                                     $and: [
                                         { cartId: data.cartId },
                                         { variantId: data.variantId }
                                     ]
-                                },
-                                    {
-                                        cartId: data.cartId,
-                                        slug: data.slug,
-                                        giftWrapAmount: data.giftWrapAmount,
-                                        quantity: data.quantity,
-                                        productAmount: data.productAmount * data.quantity,
-                                        variantId: data.variantId,
-                                        productId: data.productId
-                                    })
+                                }, {
+                                    cartId: customerCart._id,
+                                    slug: data.slug,
+                                    giftWrapAmount: data.giftWrapAmount,
+                                    quantity: data.quantity,
+                                    productAmount: data.productAmount,
+                                    variantId: data.variantId,
+                                    productId: data.productId
+                                });
+                                console.log("dsfsdfsdfsdf", guestUserCart);
 
                                 if (updateCart) {
+                                    await CartService.destroy(guestUserCart._id);
+                                    if (customerCart) {
+                                        await CartService.update(customerCart._id, {
+                                            guestUserId: null,
+                                            totalDiscountAmount: guestUserCart.totalDiscountAmount,
+                                            totalShippingAmount: guestUserCart.totalShippingAmount,
+                                            totalProductAmount: guestUserCart.totalProductAmount,
+                                            totalAmount: guestUserCart.totalAmount,
+                                            totalGiftWrapAmount: guestUserCart.totalGiftWrapAmount,
+                                        });
+                                    }
 
-                                    const deletedData = await CartService.destroy(guestUserCart._id);
-                                    const updateData = await CartService.update(customerCart._id, { guestUserId: null });
-
-                                    const deletedProductData = await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
+                                    await CartService.destroyCartProduct1({ cartId: guestUserCart._id });
 
                                     const cart: any = await CartService.findCartPopulate({
                                         query: {
@@ -165,27 +179,22 @@ class CartController extends BaseController {
                                                 { customerId: customer },
                                                 { countryId: country },
                                                 { cartStatus: "1" }
-                                            ],
-
+                                            ]
                                         },
-                                        hostName: req.get('origin'),
-                                    })
+                                        hostName: req.get('origin')
+                                    });
+                                    console.log("747474", cart);
 
                                     return controller.sendSuccessResponse(res, {
-                                        requestedData: {
-                                            ...cart
-                                        },
+                                        requestedData: { ...cart },
                                         message: 'Your cart is ready!'
                                     });
                                 }
                             }
-
-
-
                         }
-
                     }
-                } else
+                }
+                else
                     if (customer || guestUser) {
                         var existingCart: any
 
@@ -661,43 +670,48 @@ class CartController extends BaseController {
 
                 if (existingCartProduct) {
                     const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
-                    var giftWrapCharge: any
-                    if (giftWrapAmount.blockValues.enableGiftWrap == true) {
-                        giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
-                    }
+                    if (giftWrapAmount) {
+                        var giftWrapCharge: any
+                        if (giftWrapAmount.blockValues.enableGiftWrap == true) {
+                            giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
+                        }
 
-                    if (existingCartProduct.giftWrapAmount != 0) {
-                        await CartService.updateCartProductByCart(
-                            existingCartProduct._id,
-                            { giftWrapAmount: 0 })
+                        if (existingCartProduct.giftWrapAmount != 0) {
+                            await CartService.updateCartProductByCart(
+                                existingCartProduct._id,
+                                { giftWrapAmount: 0 })
 
-                        const cartUpdate: any = await CartService.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount - giftWrapCharge), totalAmount: (cart.totalAmount - giftWrapCharge) });
+                            const cartUpdate: any = await CartService.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount - giftWrapCharge), totalAmount: (cart.totalAmount - giftWrapCharge) });
 
+                        } else {
+
+                            const updateCart = await CartService.updateCartProductByCart(
+                                existingCartProduct._id
+                                , { giftWrapAmount: giftWrapCharge })
+
+                            const cartUpdate: any = await CartService.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount + giftWrapCharge), totalAmount: (cart.totalAmount + giftWrapCharge) });
+                        }
+
+                        const resultCart: any = await CartService.findCartPopulate({
+                            query: {
+                                $or: [
+                                    { $and: [{ customerId: customer }, { countryId: country }] },
+                                    { $and: [{ guestUserId: guestUser }, { countryId: country }] },
+                                ],
+                                cartStatus: "1"
+                            },
+                            hostName: req.get('origin'),
+
+                        });
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: resultCart,
+                            message: 'gift wrap added successfully!'
+                        });
                     } else {
-
-                        const updateCart = await CartService.updateCartProductByCart(
-                            existingCartProduct._id
-                            , { giftWrapAmount: giftWrapCharge })
-
-                        const cartUpdate: any = await CartService.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount + giftWrapCharge), totalAmount: (cart.totalAmount + giftWrapCharge) });
+                        return controller.sendErrorResponse(res, 500, {
+                            message: 'Giftwrap option is currently unavailable'
+                        });
                     }
-
-                    const resultCart: any = await CartService.findCartPopulate({
-                        query: {
-                            $or: [
-                                { $and: [{ customerId: customer }, { countryId: country }] },
-                                { $and: [{ guestUserId: guestUser }, { countryId: country }] },
-                            ],
-                            cartStatus: "1"
-                        },
-                        hostName: req.get('origin'),
-
-                    });
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: resultCart,
-                        message: 'gift wrap added successfully!'
-                    });
-
 
                 } else {
                     return controller.sendErrorResponse(res, 500, {

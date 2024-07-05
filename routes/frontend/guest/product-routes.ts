@@ -13,6 +13,7 @@ router.get('/brand', logResponseStatus, BrandController.findAllBrand);
 router.get('/attribute', logResponseStatus, ProductController.findAllAttributes);
 router.get('/specification', logResponseStatus, ProductController.findAllSpecifications);
 router.get('/product-detail/:slug/:sku?', logResponseStatus, ProductController.findProductDetail);
+router.get('/product-detail-seo/:slug/:sku?', logResponseStatus, ProductController.findProductDetailSeo);
 router.get('/product-list', logResponseStatus, ProductController.findAllProducts);
 
 
