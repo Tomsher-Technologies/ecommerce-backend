@@ -14,6 +14,7 @@ const seo_page_model_1 = __importDefault(require("../../../model/admin/seo-page-
 const product_gallery_images_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-gallery-images-model"));
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 const specification_config_1 = require("../../../utils/config/specification-config");
+
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllAttributes(req, res) {
@@ -301,6 +302,24 @@ class ProductController extends base_controller_1.default {
                 const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
                 const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                 let variantDetails = null;
+<<<<<<< HEAD
+=======
+                if (checkProductIdOrSlug) {
+                    variantDetails = await product_variants_model_1.default.findOne({
+                        _id: new mongoose_1.default.Types.ObjectId(productId),
+                        countryId
+                    });
+                }
+                else {
+                    variantDetails = await product_variants_model_1.default.findOne({
+                        slug: productId,
+                        countryId
+                    });
+                }
+                if (!variantDetails) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product not found!',
+>>>>>>> 237473be433cfb8ff4a1d793be178f6f7e2fec75
                 if (checkProductIdOrSlug) {
                     query = {
                         ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
@@ -350,6 +369,20 @@ class ProductController extends base_controller_1.default {
                             imageGallery: imageGallery || [],
                             productSpecification: productSpecification || [],
                         },
+<<<<<<< HEAD
+=======
+                        message: 'Success'
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Products are not found!',
+                    });
+                }
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        product: {},
+>>>>>>> 237473be433cfb8ff4a1d793be178f6f7e2fec75
                         reviews: []
                     },
                     message: 'Success'

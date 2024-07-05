@@ -1,5 +1,5 @@
 import { collections } from "../../constants/collections"
-import { addFieldsProductVariantAttributes, productVariantAttributesLookup } from "./product-config";
+import { productVariantAttributesLookup } from "./product-config";
 
 
 export const productVariantsLookupValues = (getattribute?: string) => {
@@ -10,8 +10,6 @@ export const productVariantsLookupValues = (getattribute?: string) => {
                 let: { productId: "$productDetails._id", variantId: "$variantId" },
                 pipeline: [
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
-                    ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
-
                     { $match: { $expr: { $eq: ["$_id", "$$variantId"] } } }
                 ],
                 as: "productDetails.variantDetails"
