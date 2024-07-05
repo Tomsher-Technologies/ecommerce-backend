@@ -260,11 +260,11 @@ class CartController extends base_controller_1.default {
                                 // } else {
                                 //     cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal
                                 // }
-                                console.log("*********************", cartOrderProductData);
+                                // console.log("*********************", cartOrderProductData);
                                 newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
                             }
                             else {
-                                console.log("********dffdfdf*************", cartOrderProductData);
+                                // console.log("********dffdfdf*************", cartOrderProductData);
                                 newCartOrderProduct = await cart_service_1.default.createCartProduct(cartOrderProductData);
                             }
                         }
@@ -345,7 +345,7 @@ class CartController extends base_controller_1.default {
             }
         }
         catch (error) {
-            console.log("*********errorr", error);
+            // console.log("*********errorr", error);
             return controller.sendErrorResponse(res, 200, {
                 message: error.message || 'Some error occurred while creating cart order',
             });
@@ -565,7 +565,6 @@ class CartController extends base_controller_1.default {
                 });
                 if (guestUserCart) {
                 }
-                console.log("**********", guestUserCart);
             }
             // let query: any = { _id: { $exists: true }, cartStatus: "1" };
             // const userData = await res.locals.user;
