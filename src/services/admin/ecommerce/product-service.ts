@@ -55,7 +55,6 @@ class ProductsService {
                     as: 'productVariants',
                 },
             },
-            imageLookup,
             brandLookup,
             brandObject,
             this.multilanguageFieldsLookup,
@@ -72,14 +71,18 @@ class ProductsService {
         try {
             let pipeline: any[] = [
                 productCategoryLookup,
-                variantLookup,
-                imageLookup,
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                        localField: '_id',
+                        foreignField: 'productId',
+                        as: 'productVariants',
+                    },
+                },
                 brandLookup,
                 brandObject,
-                seoLookup,
-                seoObject,
+
                 this.multilanguageFieldsLookup,
-                specificationsLookup,
                 { $match: query },
                 {
                     $count: 'count'
@@ -128,7 +131,18 @@ class ProductsService {
                 const pipeline = [
                     { $match: { _id: objectId } },
                     productCategoryLookup,
-                    variantLookup,
+                    {
+                        $lookup: {
+                            from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                            localField: '_id',
+                            foreignField: 'productId',
+                            as: 'productVariants',
+                            pipeline: [
+                                productVariantAttributesAdminLookup,
+                                productSpecificationAdminLookup
+                            ]
+                        },
+                    },
                     imageLookup,
                     brandLookup,
                     brandObject,
