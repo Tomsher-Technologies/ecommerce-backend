@@ -55,5 +55,8 @@ class CustomerService {
         const result = await customers_model_1.default.aggregate(pipeline).exec();
         return result?.length > 0 ? result[0] : [];
     }
+    async create(customerData) {
+        return customers_model_1.default.create(customerData);
+    }
 }
 exports.default = new CustomerService();

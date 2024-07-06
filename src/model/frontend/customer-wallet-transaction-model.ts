@@ -40,7 +40,7 @@ const customerWalletTransactionsSchema: Schema<CustomerWalletTransactionsProps> 
     },
     orderId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order',
+        ref: 'CartOrders',
         required: function(this: CustomerWalletTransactionsProps): boolean {
             return this.referredCode === '';
         },

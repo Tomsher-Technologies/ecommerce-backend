@@ -9,6 +9,7 @@ import CommonService from "../../../services/frontend/guest/common-service";
 import CustomerService from "../../../services/frontend/customer-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
 import CustomerModel from "../../../model/frontend/customers-model";
+import CustomerWalletTransactionsModel from "../../../model/frontend/customer-wallet-transaction-model";
 
 const controller = new BaseController();
 
@@ -18,14 +19,17 @@ class CustomerController extends BaseController {
         try {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const customer = await CustomerService.findOne({
+                const currentUser = res.locals.user;
+
+                const customerDetails = await CustomerService.findOne({
+                    _id: currentUser._id,
                     status: '1',
                 },
                     '_id email firstName phone customerImageUrl referralCode totalRewardPoint totalWalletAmount isVerified status'
                 );
 
                 controller.sendSuccessResponse(res, {
-                    requestedData: customer,
+                    requestedData: customerDetails,
                     message: 'Success!'
                 }, 200);
 
@@ -34,6 +38,78 @@ class CustomerController extends BaseController {
                     message: 'Country is missing'
                 });
             }
+
+        } catch (error: any) {
+            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching customer' });
+        }
+    }
+
+
+    async getAllCustomerAddress(req: Request, res: Response): Promise<void> {
+        let query: any = { _id: { $exists: true } };
+        const currentUser = res.locals.user;
+        const { addressMode } = req.query;
+
+        query = {
+            ...query,
+            status: '1',
+            customerId: currentUser._id
+        } as any;
+
+        if (addressMode) {
+            query = {
+                ...query,
+                addressMode
+            } as any;
+        }
+
+        const customerAddress = await CustomerService.findCustomerAddressAll({
+            query,
+        });
+
+        controller.sendSuccessResponse(res, {
+            requestedData: customerAddress,
+            message: 'Success!'
+        }, 200);
+
+    }
+
+    async findWalletDetails(req: Request, res: Response): Promise<void> {
+        try {
+            const currentUser = res.locals.user;
+            const customerDetails = await CustomerService.findOne({
+                _id: currentUser._id,
+                status: '1',
+            },
+                '_id email firstName phone customerImageUrl referralCode totalRewardPoint totalWalletAmount isVerified status'
+            );
+            if (!customerDetails) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Customer not found'
+                });
+            }
+
+            const walletDetails = await CustomerWalletTransactionsModel.find({
+                status: '1',
+                customerId: currentUser._id
+            })
+                .populate({
+                    path: 'referrerCustomerId',
+                    select: '_id firstName email',
+                })
+                .populate({
+                    path: 'referredCustomerId',
+                    select: '_id firstName email',
+                })
+                .populate({
+                    path: 'orderId',
+                    select: '_id orderId',
+                })
+
+            return controller.sendSuccessResponse(res, {
+                requestedData: { customerDetails, walletDetails },
+                message: 'Success!'
+            }, 200);
 
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching customer' });
@@ -141,36 +217,6 @@ class CustomerController extends BaseController {
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'An error occurred while processing your request.' });
         }
-    }
-
-
-    async getAllCustomerAddress(req: Request, res: Response): Promise<void> {
-        let query: any = { _id: { $exists: true } };
-        const currentUser = res.locals.user;
-        const { addressMode } = req.query;
-
-        query = {
-            ...query,
-            status: '1',
-            customerId: currentUser._id
-        } as any;
-
-        if (addressMode) {
-            query = {
-                ...query,
-                addressMode
-            } as any;
-        }
-
-        const customerAddress = await CustomerService.findCustomerAddressAll({
-            query,
-        });
-
-        controller.sendSuccessResponse(res, {
-            requestedData: customerAddress,
-            message: 'Success!'
-        }, 200);
-
     }
 
     async addEditCustomerAddress(req: Request, res: Response): Promise<void> {
