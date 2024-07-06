@@ -8,7 +8,7 @@ exports.registerSchema = zod_1.z.object({
         required_error: 'Otp type is required',
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
-    firstName: zod_1.z.string({ required_error: 'First name is required', }).min(2, 'First name is should be 2 chars minimum'),
+    firstName: zod_1.z.string({ required_error: 'First name is required', }).min(2, 'First name is should be 2 chars minimum').refine(value => /^[A-Za-z\s]+$/.test(value), { message: 'Name should contain only alphabetic characters ' }),
     phone: zod_1.z.string().min(7, { message: 'Phone number must be at least 8 characters long' }).max(15).refine(value => value.trim() !== '', { message: 'Phone number cannot be empty' }).refine(value => /^[0-9]+$/.test(value), { message: 'Phone number must contain only numerals' }),
     password: zod_1.z.string({ required_error: 'password is required' }).min(6, 'Password too short - should be 6 chars minimum'),
     confirmPassword: zod_1.z.string({ required_error: 'Confirm password is required' }).min(6, 'Password too short - should be 6 chars minimum'),
