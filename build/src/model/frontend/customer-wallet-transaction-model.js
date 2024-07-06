@@ -49,7 +49,7 @@ const customerWalletTransactionsSchema = new mongoose_1.Schema({
     },
     orderId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Order',
+        ref: 'CartOrders',
         required: function () {
             return this.referredCode === '';
         },

@@ -11,17 +11,20 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
 const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
+const customer_wallet_transaction_model_1 = __importDefault(require("../../../model/frontend/customer-wallet-transaction-model"));
 const controller = new base_controller_1.default();
 class CustomerController extends base_controller_1.default {
     async findCustomer(req, res) {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const customer = await customer_service_1.default.findOne({
+                const currentUser = res.locals.user;
+                const customerDetails = await customer_service_1.default.findOne({
+                    _id: currentUser._id,
                     status: '1',
                 }, '_id email firstName phone customerImageUrl referralCode totalRewardPoint totalWalletAmount isVerified status');
                 controller.sendSuccessResponse(res, {
-                    requestedData: customer,
+                    requestedData: customerDetails,
                     message: 'Success!'
                 }, 200);
             }
@@ -30,6 +33,66 @@ class CustomerController extends base_controller_1.default {
                     message: 'Country is missing'
                 });
             }
+        }
+        catch (error) {
+            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching customer' });
+        }
+    }
+    async getAllCustomerAddress(req, res) {
+        let query = { _id: { $exists: true } };
+        const currentUser = res.locals.user;
+        const { addressMode } = req.query;
+        query = {
+            ...query,
+            status: '1',
+            customerId: currentUser._id
+        };
+        if (addressMode) {
+            query = {
+                ...query,
+                addressMode
+            };
+        }
+        const customerAddress = await customer_service_1.default.findCustomerAddressAll({
+            query,
+        });
+        controller.sendSuccessResponse(res, {
+            requestedData: customerAddress,
+            message: 'Success!'
+        }, 200);
+    }
+    async findWalletDetails(req, res) {
+        try {
+            const currentUser = res.locals.user;
+            const customerDetails = await customer_service_1.default.findOne({
+                _id: currentUser._id,
+                status: '1',
+            }, '_id email firstName phone customerImageUrl referralCode totalRewardPoint totalWalletAmount isVerified status');
+            if (!customerDetails) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Customer not found'
+                });
+            }
+            const walletDetails = await customer_wallet_transaction_model_1.default.find({
+                status: '1',
+                customerId: currentUser._id
+            })
+                .populate({
+                path: 'referrerCustomerId',
+                select: '_id firstName email',
+            })
+                .populate({
+                path: 'referredCustomerId',
+                select: '_id firstName email',
+            })
+                .populate({
+                path: 'orderId',
+                select: '_id orderId',
+            });
+            return controller.sendSuccessResponse(res, {
+                requestedData: { customerDetails, walletDetails },
+                message: 'Success!'
+            }, 200);
         }
         catch (error) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching customer' });
@@ -118,29 +181,6 @@ class CustomerController extends base_controller_1.default {
         catch (error) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'An error occurred while processing your request.' });
         }
-    }
-    async getAllCustomerAddress(req, res) {
-        let query = { _id: { $exists: true } };
-        const currentUser = res.locals.user;
-        const { addressMode } = req.query;
-        query = {
-            ...query,
-            status: '1',
-            customerId: currentUser._id
-        };
-        if (addressMode) {
-            query = {
-                ...query,
-                addressMode
-            };
-        }
-        const customerAddress = await customer_service_1.default.findCustomerAddressAll({
-            query,
-        });
-        controller.sendSuccessResponse(res, {
-            requestedData: customerAddress,
-            message: 'Success!'
-        }, 200);
     }
     async addEditCustomerAddress(req, res) {
         try {
