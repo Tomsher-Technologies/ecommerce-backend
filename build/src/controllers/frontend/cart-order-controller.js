@@ -16,6 +16,7 @@ const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-sc
 const customer_wishlist_servicel_1 = __importDefault(require("../../services/frontend/auth/customer-wishlist-servicel"));
 const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
 const website_setup_1 = require("../../constants/website-setup");
+const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
     async createCartOrder(req, res) {
@@ -546,12 +547,6 @@ class CartController extends base_controller_1.default {
             const guestUser = res.locals.uuid;
             let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             let query;
-            if (guestUser && !customer) {
-                query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] };
-            }
-            else {
-                query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] };
-            }
             if (guestUser && customer) {
                 const guestUserCart = await cart_service_1.default.findCart({
                     $and: [
@@ -561,11 +556,111 @@ class CartController extends base_controller_1.default {
                         { cartStatus: '1' }
                     ]
                 });
-                if (guestUserCart) {
+                const customerCart = await cart_service_1.default.findCart({
+                    $and: [
+                        { customerId: customer },
+                        { countryId: country },
+                        { cartStatus: '1' }
+                    ]
+                });
+                if (guestUserCart || customerCart) {
+                    const cartProduct = await cart_order_product_model_1.default.aggregate([
+                        {
+                            $match: {
+                                $or: [
+                                    { cartId: guestUserCart?._id },
+                                    { cartId: customerCart?._id }
+                                ]
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: "$_id",
+                                cartId: { $first: "$cartId" },
+                                slug: { $first: "$slug" },
+                                quantity: { $sum: "$quantity" },
+                                productAmount: { $sum: "$productAmount" },
+                                productDiscountAmount: { $sum: "$productDiscountAmount" },
+                                productCouponAmount: { $first: "$productCouponAmount" },
+                                giftWrapAmount: { $first: "$giftWrapAmount" },
+                                productId: { $first: "$productId" },
+                                orderStatus: { $first: "$orderStatus" },
+                                createdAt: { $first: "$createdAt" },
+                                updatedAt: { $first: "$updatedAt" },
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                cartId: 1,
+                                slug: 1,
+                                quantity: 1,
+                                productAmount: 1,
+                                productDiscountAmount: 1,
+                                productCouponAmount: 1,
+                                giftWrapAmount: 1,
+                                variantId: "$_id",
+                                productId: 1,
+                                orderStatus: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
+                            }
+                        }
+                    ]);
+                    // console.log("cartProduct", cartProduct);
+                    const update = await cart_service_1.default.updateCartProduct(cartProduct._id, {
+                        quantity: cartProduct.quantity,
+                        productAmount: cartProduct.productAmount,
+                        productDiscountAmount: cartProduct.productDiscountAmount,
+                        customerId: cartProduct.customerId,
+                        guestUserId: null
+                    });
+                    // console.log("cartProduct12345", update);
                 }
+                if (guestUserCart) {
+                    const update = await cart_service_1.default.update(guestUserCart._id, { customerId: customer });
+                }
+                // if (customerCart || guestUser) {
+                // const cartProducts = await CartOrderProductsModel.find({ cartId: customerCart?._id });
+                const cartProductsaggregation = await cart_order_product_model_1.default.aggregate([
+                    { $match: { cartId: customerCart?._id } },
+                    { $unwind: "$products" }, // Unwind the array field named "products"
+                    {
+                        $group: {
+                            _id: "$_id",
+                            totalProductAmount: { $sum: "$products.productAmount" },
+                            totalGiftWrapAmount: { $sum: "$products.totalGiftWrapAmount" },
+                            totalDiscountAmount: { $sum: "$products.productDiscountAmount" },
+                            totalAmount: { $sum: { $add: ["$products.productDiscountAmount", "$products.totalGiftWrapAmount", "$products.productAmount"] } }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            totalProductAmount: 1,
+                            totalGiftWrapAmount: 1,
+                            totalDiscountAmount: 1,
+                            totalAmount: 1
+                        }
+                    }
+                ]);
+                // console.log("cartProductsaggregation", cartProductsaggregation);
+                const updateCart = await cart_service_1.default.update(customerCart?._id, {
+                    totalProductAmount: cartProductsaggregation.totalProductAmount,
+                    totalGiftWrapAmount: cartProductsaggregation.totalGiftWrapAmount,
+                    totalDiscountAmount: cartProductsaggregation.totalDiscountAmount,
+                    totalAmount: cartProductsaggregation.totalAmount
+                });
+                // console.log(".............", updateCart);
             }
-            // let query: any = { _id: { $exists: true }, cartStatus: "1" };
+            // query = { customerId: customer, cartStatus: '1' }
             // const userData = await res.locals.user;
+            if (guestUser && !customer) {
+                query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] };
+            }
+            else {
+                query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] };
+            }
             // query.cartStatus = '1';
             // query.customerId = userData._id;
             const sort = {};
