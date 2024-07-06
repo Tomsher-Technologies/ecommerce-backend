@@ -62,31 +62,24 @@ class ProductService {
                     },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
-                    // ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
-                    // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    // ...(getSeo === '1' ? [productSeoLookup] : []),
-                    // ...(getSeo === '1' ? [addFieldsProductSeo] : []),
                     ...(getimagegallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
                 ]
             }
         };
         let pipeline = [
             { $sort: finalSort },
-            // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
             product_config_1.productCategoryLookup,
             product_config_1.brandLookup,
             product_config_1.brandObject,
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
-            // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
         ];
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName, countryId);
-        // Add the stages for product-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
             pipeline.push(offerCategory);
@@ -159,7 +152,6 @@ class ProductService {
         else if (collection && collection.collectionsBrands) {
             for await (let data of collection.collectionsBrands) {
                 const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
-                // productData = await ProductsModel.aggregate(language).exec();
                 const result = await product_model_1.default.aggregate(language).exec();
                 if (result && result.length > 0) {
                     productData.push(result[0]);
@@ -167,7 +159,7 @@ class ProductService {
             }
         }
         else {
-            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
+            productData = await this.findProductList({ query, getattribute: '1' });
         }
         const attributeArray = [];
         if (productData) {
@@ -270,7 +262,6 @@ class ProductService {
         else if (collection && collection.collectionsBrands) {
             for await (let data of collection.collectionsBrands) {
                 const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
-                // productData = await ProductsModel.aggregate(language).exec();
                 const result = await product_model_1.default.aggregate(language).exec();
                 if (result && result.length > 0) {
                     productData.push(result[0]);
@@ -278,7 +269,7 @@ class ProductService {
             }
         }
         else {
-            productData = await this.findProductList({ query, getattribute: '1', getspecification: '1' });
+            productData = await this.findProductList({ query, getspecification: '1' });
         }
         const specificationArray = [];
         if (productData) {
@@ -293,11 +284,9 @@ class ProductService {
             }
             for await (let product of productData) {
                 for await (let specification of product.productSpecification) {
-                    // for await (let specification of variant.productSpecification) {
                     if (!specificationArray.map((spec) => spec.toString()).includes(specification.specificationId.toString())) {
                         specificationArray.push(specification.specificationId);
                     }
-                    // }
                 }
             }
             for await (let specification of specificationArray) {
@@ -311,10 +300,10 @@ class ProductService {
                 const specificationData = await specifications_model_1.default.aggregate(pipeline).exec();
                 const language = await this.specificationLanguage(hostName, pipeline);
                 const data = await specifications_model_1.default.aggregate(language).exec();
-                if (data.length > 0) {
+                if (data && data.length > 0) {
                     for (let j = 0; j < data[0].specificationValues.length; j++) {
                         if (Array.isArray(data[0].specificationValues[j].itemName) && data[0].specificationValues[j].itemName.length > 1) {
-                            if (data[0].specificationValues[j].itemName[j] == undefined) {
+                            if (specificationData && specificationData.length > 0 && data[0].specificationValues[j].itemName[j] == undefined) {
                                 data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
                             }
                             else {
@@ -325,7 +314,9 @@ class ProductService {
                             data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName;
                         }
                         else {
-                            data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
+                            if (specificationData && specificationData.length > 0) {
+                                data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
+                            }
                         }
                     }
                     await specificationDetail.push(data[0]);
@@ -400,7 +391,6 @@ class ProductService {
             };
             pipeline.push(productLookupWithLanguage);
             pipeline.push(product_config_1.productlanguageFieldsReplace);
-            // pipeline.push(productDetailLanguageFieldsReplace)
         }
         pipeline.push(product_config_1.productProject);
         pipeline.push(product_config_1.productFinalProject);
@@ -408,7 +398,6 @@ class ProductService {
     }
     async collection(products, hostName) {
         var collections;
-        // var collectionProducts: any
         var productData = [];
         if (products && products.collectioncategory) {
             collections = await collections_categories_model_1.default.findOne({ _id: products.collectioncategory });
@@ -444,7 +433,6 @@ class ProductService {
                     }
                 }
                 return { productData: productData };
-                // return { collectionsBrands: collections.collectionsBrands }
             }
         }
         else if (products && products.collectionproduct) {
@@ -452,11 +440,6 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     for await (let data of collections.collectionsProducts) {
-                        const language = await this.productLanguage(hostName, [{
-                                $match: {
-                                    _id: { $in: new mongoose_1.default.Types.ObjectId(data) }
-                                }
-                            }]);
                         const query = {
                             _id: { $in: [new mongoose_1.default.Types.ObjectId(data)] },
                             status: "1"

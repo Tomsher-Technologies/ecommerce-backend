@@ -17,12 +17,10 @@ import CollectionsProductsModel from '../../../model/admin/website/collections-p
 import CollectionsBrandsModel from '../../../model/admin/website/collections-brands-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
-
 import CommonService from '../../../services/frontend/guest/common-service';
 
 
 class ProductService {
-
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
         var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
@@ -69,27 +67,20 @@ class ProductService {
                     },
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
                     ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    // ...(getattribute === '1' ? [addFieldsProductVariantAttributes] : []),
                     ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
-                    // ...(getSeo === '1' ? [productSeoLookup] : []),
-                    // ...(getSeo === '1' ? [addFieldsProductSeo] : []),
                     ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
-
                 ]
             }
         };
 
         let pipeline: any[] = [
             { $sort: finalSort },
-            // ...((getattribute || getspecification) ? [modifiedPipeline] : []),
             modifiedPipeline,
             productCategoryLookup,
             brandLookup,
             brandObject,
             ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
-            // ...(getspecification === '1' ? [addFieldsProductSpecification] : []),
             { $match: query },
             ...(skip ? [{ $skip: skip }] : []),
             ...(limit ? [{ $limit: limit }] : []),
@@ -98,7 +89,6 @@ class ProductService {
 
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, countryId)
 
-        // Add the stages for product-specific offers
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
             pipeline.push(offerCategory);
