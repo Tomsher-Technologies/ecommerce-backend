@@ -42,10 +42,10 @@ const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) =
             "time": 100
         },
         "post": {
-            "url": "https://thadmin.staging-ecom.com/api/common/tap-success-response"
+            "url": "https://api.timehouse.store/api/common/tap-success-response"
         },
         "redirect": {
-            "url": "https://thadmin.staging-ecom.com/api/common/tap-success-response"
+            "url": "https://api.timehouse.store/api/common/tap-success-response"
         }
     };
 };
@@ -150,9 +150,9 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
         "lang": "en",
         "merchant_code": paymentMethod.paymentMethodValues?.merchantCode?.toUpperCase(),
         "merchant_urls": {
-            "success": "https://thadmin.staging-ecom.com/api/common/tabby-success-response",
-            "cancel": "https://thadmin.staging-ecom.com/api/common/tabby-success-response",
-            "failure": "https://thadmin.staging-ecom.com/api/common/tabby-success-response"
+            "success": "https://api.timehouse.store/api/common/tabby-success-response",
+            "cancel": "https://api.timehouse.store/api/common/tabby-success-response",
+            "failure": "https://api.timehouse.store/api/common/tabby-success-response"
         }
     };
 };

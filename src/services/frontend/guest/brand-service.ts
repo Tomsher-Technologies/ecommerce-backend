@@ -3,14 +3,9 @@ import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import BrandModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import CollectionsBrandsModel from '../../../model/admin/website/collections-brands-model';
-import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
-import CollectionsProductsModel from '../../../model/admin/website/collections-products-model';
 import { brandProject, brandLookup, brandFinalProject, brandLanguageFieldsReplace } from "../../../utils/config/brand-config";
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import ProductService from './product-service';
-import ProductsModel from '../../../model/admin/ecommerce/product-model';
-import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 
 
 class BrandService {
@@ -40,7 +35,6 @@ class BrandService {
         }
 
         var productData: any = []
-        // var collectionProducts: any
         var brandDetail: any = []
         const collection: any = await ProductService.collection(products, hostName)
 
@@ -52,7 +46,6 @@ class BrandService {
             for await (let brand of collection.collectionsBrands) {
                 pipeline = pipeline.filter(stage => !stage['$match'] || !stage['$match']._id);
 
-                // Add the new $match stage
                 pipeline.push({ '$match': { _id: new mongoose.Types.ObjectId(brand) } });
 
                 const language: any = await this.brandLanguage(hostName, pipeline)
@@ -67,17 +60,13 @@ class BrandService {
         }
 
         else {
-
-            productData = await ProductService.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' })
+            productData = await ProductService.findProductList({ query, getCategory: '1', getBrand: '1' })
         }
-        console.log("productData", productData);
 
         const brandArray: any = []
-        var i = 1;
 
         if (productData) {
             for await (let product of productData) {
-
                 const isPresent = await brandArray.some((objId: any) => objId.equals(product.brand._id));
 
                 if (!isPresent) {
