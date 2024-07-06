@@ -18,6 +18,7 @@ export interface CustomerAddressProps extends Document {
     zipCode: string;
     longitude: string;
     latitude: string;
+    isExcel: Boolean;
     status: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -71,13 +72,9 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
     },
     phoneNumber: {
         type: String,
-        required: [true, 'Phone number is required'],
-        validate: {
-            validator: function (value: string): boolean {
-                return /\d{10}/.test(value); // Example for US phone numbers
-            },
-            message: 'Phone number is invalid. It must be 10 digits.'
-        }
+        required: true,
+        minlength: [8, 'Phone must be at least 8 characters long'],
+        maxlength: [15, 'Phone must be at least 15 characters long'],
     },
     landlineNumber: {
         type: String,
@@ -100,16 +97,18 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
     },
     street: {
         type: String,
-        default:''
+        default: ''
     },
     zipCode: {
         type: String,
-        required: [true, 'Zip 1 is required'],
+        required: false,
         trim: true
     },
     longitude: {
         type: String,
-        required: [true, 'Longitude is required'],
+        required: function () {
+            return !this.isExcel;
+        },
         validate: {
             validator: function (value: string): boolean {
                 return /^(\-?\d{1,3}(\.\d+)?)$/.test(value);
@@ -119,17 +118,23 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
     },
     latitude: {
         type: String,
-        required: [true, 'Latitude is required'],
-        validate: {
+        required: function () {
+            return !this.isExcel;
+        }, validate: {
             validator: function (value: string): boolean {
                 return /^(\-?\d{1,2}(\.\d+)?)$/.test(value);
             },
             message: 'Latitude is invalid.'
         }
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     createdAt: {
         type: Date,

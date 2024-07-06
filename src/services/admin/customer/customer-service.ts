@@ -58,7 +58,9 @@ class CustomerService {
         const result: any = await CustomerModel.aggregate(pipeline).exec();
         return result?.length > 0 ? result[0] : []
     }
-
+    async create(customerData: any): Promise<CustomrProps> {
+        return CustomerModel.create(customerData);
+    }
 
 }
 
