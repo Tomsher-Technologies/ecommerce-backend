@@ -471,6 +471,7 @@ class GuestController extends base_controller_1.default {
                                     phone: user.phone,
                                     status: user.status,
                                     isVerified: user.isVerified,
+                                    referralCode: user.referralCode,
                                     otpType: 'phone'
                                 },
                                 message: 'Customer login successfully!'
