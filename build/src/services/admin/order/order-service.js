@@ -11,6 +11,7 @@ class OrderService {
     }
     async OrderList(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
+        const { getAddress } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -22,6 +23,10 @@ class OrderService {
             cart_order_config_1.paymentMethodLookup,
             cart_order_config_1.customerLookup,
             cart_order_config_1.orderListObjectLookup,
+            // shippingLookup,
+            ...(getAddress === '1' ? [cart_order_config_1.shippingLookup] : []),
+            ...(getAddress === '1' ? [cart_order_config_1.billingLookup] : []),
+            // billingLookup,
             { $match: query },
             { $sort: finalSort },
             cart_order_config_1.cartProject

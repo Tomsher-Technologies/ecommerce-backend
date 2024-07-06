@@ -16,6 +16,9 @@ const customers_model_1 = __importDefault(require("../../../model/frontend/custo
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const customer_wallet_transaction_model_1 = __importDefault(require("../../../model/frontend/customer-wallet-transaction-model"));
 const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
+const mail_chimp_sms_gateway_1 = require("../../../lib/mail-chimp-sms-gateway");
+const path_1 = __importDefault(require("path"));
+const ejs = require('ejs');
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
@@ -88,12 +91,17 @@ class GuestController extends base_controller_1.default {
                     //     "message": "Hello from Etisalat SMS Gateway!"
                     // })
                     // console.log("sendOtp", sendOtp);
-                    // const sendEmail = await mailChimpEmailGateway(newCustomer)
-                    // console.log("sendEmail", sendEmail);
+                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName }, async (err, data) => {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(newCustomer, data);
+                    });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: newCustomer._id,
-                            otp: newCustomer.otp,
+                            // otp: newCustomer.otp,
                             email: newCustomer.email,
                             phone: newCustomer.phone,
                             referralCode
