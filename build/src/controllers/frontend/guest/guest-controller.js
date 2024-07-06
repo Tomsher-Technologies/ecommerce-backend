@@ -18,6 +18,7 @@ const customer_wallet_transaction_model_1 = __importDefault(require("../../../mo
 const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
 const mail_chimp_sms_gateway_1 = require("../../../lib/mail-chimp-sms-gateway");
 const path_1 = __importDefault(require("path"));
+const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
 const ejs = require('ejs');
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
@@ -91,7 +92,8 @@ class GuestController extends base_controller_1.default {
                     //     "message": "Hello from Etisalat SMS Gateway!"
                     // })
                     // console.log("sendOtp", sendOtp);
-                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName }, async (err, data) => {
+                    const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
+                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err, data) => {
                         if (err) {
                             console.log(err);
                             return;
@@ -288,6 +290,15 @@ class GuestController extends base_controller_1.default {
                             otpExpiry,
                         });
                         if (optUpdatedCustomer) {
+                            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                            const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
+                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err, data) => {
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
+                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(optUpdatedCustomer, data);
+                            });
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: optUpdatedCustomer._id,
