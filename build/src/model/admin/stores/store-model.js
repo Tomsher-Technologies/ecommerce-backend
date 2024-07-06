@@ -33,32 +33,15 @@ const warehouseSchema = new mongoose_1.Schema({
     storeTitle: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Store').countDocuments({ storeTitle: value });
-                return count === 0;
-            },
-            message: 'Store title must be unique'
-        },
         minlength: [3, 'Store title must be at least 3 characters long']
     },
     slug: {
         type: String,
         required: true,
-        unique: true
     },
     storePhone: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Store').countDocuments({ storePhone: value });
-                return count === 0;
-            },
-            message: 'Store phone must be unique'
-        },
         minlength: [8, 'Store phone must be at least 8 characters long']
     },
     storePhone2: {
@@ -76,14 +59,6 @@ const warehouseSchema = new mongoose_1.Schema({
     storeEmail: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Store').countDocuments({ storeEmail: value });
-                return count === 0;
-            },
-            message: 'Store email must be unique'
-        },
         minlength: [8, 'Store email must be at least 8 characters long']
     },
     latitude: {

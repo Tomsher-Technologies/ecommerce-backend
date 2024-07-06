@@ -18,7 +18,9 @@ import SettingsService from '../../../services/admin/setup/settings-service';
 import { etisalatSmsGateway } from '../../../lib/ethisalat-sms-gateway';
 import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/mail-chimp-sms-gateway';
+import path from 'path';
 
+const ejs = require('ejs');
 
 const controller = new BaseController();
 
@@ -102,13 +104,18 @@ class GuestController extends BaseController {
                     // console.log("sendOtp", sendOtp);
 
 
-                    // const sendEmail = await mailChimpEmailGateway(newCustomer)
+                    const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName }, async (err: any, data: any) => {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        const sendEmail = await mailChimpEmailGateway(newCustomer, data)
+                    })
 
-                    // console.log("sendEmail", sendEmail);
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: newCustomer._id,
-                            otp: newCustomer.otp,
+                            // otp: newCustomer.otp,
                             email: newCustomer.email,
                             phone: newCustomer.phone,
                             referralCode
@@ -470,6 +477,7 @@ class GuestController extends BaseController {
                                     phone: user.phone,
                                     status: user.status,
                                     isVerified: user.isVerified,
+                                    referralCode: user.referralCode,
                                     otpType: 'phone'
                                 },
                                 message: 'Customer login successfully!'

@@ -2,7 +2,7 @@ import { tabbyPaymentGatwayStatus } from "../constants/cart";
 
 export const tabbyPaymentCreate = async (tabbyDefaultValues: any, paymentMethodValues: { secretKey: string; publicKey: string; testSecretKey: string; testPublicKey: string }) => {
     try {
-        const response = await fetch(`${process.env.TABBY_API_URL}`, {
+        const response = await fetch(`${process.env.TABBY_API_URL_CHECKOUT}`, {
             method: "POST",
             mode: "cors",
             cache: "no-cache",
@@ -36,7 +36,7 @@ export const tabbyPaymentCreate = async (tabbyDefaultValues: any, paymentMethodV
 export const tabbyCheckoutRetrieve = async (tabbyId: any, paymentMethodValues: any) => {
     try {
 
-        const response = await fetch(`https://api.tabby.ai/api/v2/checkout/${tabbyId}`, {
+        const response = await fetch(`${process.env.TABBY_API_URL_CHECKOUT}/${tabbyId}`, {
             method: "GET",
             mode: "cors",
             cache: "no-cache",
@@ -65,7 +65,7 @@ export const tabbyCheckoutRetrieve = async (tabbyId: any, paymentMethodValues: a
 export const tabbyPaymentRetrieve = async (tabbyId: any, paymentMethodValues: any) => {
     try {
 
-        const response = await fetch(`https://api.tabby.ai/api/v2/payments/${tabbyId}`, {
+        const response = await fetch(`${process.env.TABBY_API_URL_PAYMENT}/${tabbyId}`, {
             method: "GET",
             mode: "cors",
             cache: "no-cache",

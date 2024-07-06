@@ -1,6 +1,6 @@
-import { frontendPagination} from '../../../components/pagination';
+import { frontendPagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { cartLookup, cartProject, customerLookup, orderListObjectLookup, paymentMethodLookup,} from '../../../utils/config/cart-order-config';
+import { billingLookup, cartLookup, cartProject, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingLookup, } from '../../../utils/config/cart-order-config';
 
 
 class OrderService {
@@ -11,6 +11,8 @@ class OrderService {
     async OrderList(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
+        const { getAddress } = options;
+
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -23,6 +25,11 @@ class OrderService {
             paymentMethodLookup,
             customerLookup,
             orderListObjectLookup,
+            // shippingLookup,
+            ...(getAddress === '1' ? [shippingLookup] : []),
+            ...(getAddress === '1' ? [billingLookup] : []),
+
+            // billingLookup,
             { $match: query },
             { $sort: finalSort },
             cartProject

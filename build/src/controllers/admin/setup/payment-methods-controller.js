@@ -69,7 +69,7 @@ class PaymentMethodController extends base_controller_1.default {
             if (validatedData.success) {
                 const { countryId, paymentMethodTitle, operatorName, slug, description, enableDisplay, paymentMethodValues, languageValues } = validatedData.data;
                 const user = res.locals.user;
-                const existingPaymentMethod = await payment_method_service_1.default.findPaymentMethod({ countryId: countryId || (0, helpers_1.getCountryId)(user) });
+                // const existingPaymentMethod = await PaymentMethodService.findPaymentMethod({ countryId: countryId || getCountryId(user) })
                 // if (existingPaymentMethod) {
                 //     if (existingPaymentMethod.paymentMethodTitle === paymentMethodTitle) {
                 //         controller.sendErrorResponse(res, 500, {
