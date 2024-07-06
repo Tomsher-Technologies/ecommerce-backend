@@ -26,24 +26,24 @@ exports.mailChimpEmailGateway = void 0;
 //         throw error;
 //     }
 // }
-const mailChimpEmailGateway = async (ethisalatDefaultValues) => {
+// import htmlContent from '../view/email-otp';
+const mailChimpEmailGateway = async (ethisalatDefaultValues, template) => {
     try {
         const payload = {
             key: `${process.env.MAILCHIMP_API_KEY}`,
             message: {
-                from_email: 'mail@timehouse.store', // Replace with your actual sender email
-                subject: 'Hello World',
-                text: 'This is a test email sent using Mailchimp Transactional Email API.',
+                from_email: `${process.env.MAILCHIMP_API_EMAIL}`, // Replace with your actual sender email
+                subject: 'Verification OTP',
+                html: template,
                 to: [
                     {
-                        email: 'hannahabdulkader@gmail.com', // Replace with the actual recipient email
+                        email: ethisalatDefaultValues.email, // Replace with the actual recipient email
                         type: 'to'
                     }
                 ]
             }
         };
-        console.log('Sending request to:', 'https://mandrillapp.com/api/1.0/messages/send.json');
-        const response = await fetch('https://mandrillapp.com/api/1.0/messages/send.json', {
+        const response = await fetch(`${process.env.MAILCHIMP_API_URL}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
