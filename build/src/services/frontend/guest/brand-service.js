@@ -30,7 +30,6 @@ class BrandService {
             return data;
         }
         var productData = [];
-        // var collectionProducts: any
         var brandDetail = [];
         const collection = await product_service_1.default.collection(products, hostName);
         if (collection && collection.productData) {
@@ -39,7 +38,6 @@ class BrandService {
         else if (collection && collection.collectionsBrands) {
             for await (let brand of collection.collectionsBrands) {
                 pipeline = pipeline.filter(stage => !stage['$match'] || !stage['$match']._id);
-                // Add the new $match stage
                 pipeline.push({ '$match': { _id: new mongoose_1.default.Types.ObjectId(brand) } });
                 const language = await this.brandLanguage(hostName, pipeline);
                 const data = await brands_model_1.default.aggregate(language).exec();
@@ -49,11 +47,9 @@ class BrandService {
             }
         }
         else {
-            productData = await product_service_1.default.findProductList({ query, getCategory: '1', getBrand: '1', getattribute: '1', getspecification: '1' });
+            productData = await product_service_1.default.findProductList({ query, getCategory: '1', getBrand: '1' });
         }
-        console.log("productData", productData);
         const brandArray = [];
-        var i = 1;
         if (productData) {
             for await (let product of productData) {
                 const isPresent = await brandArray.some((objId) => objId.equals(product.brand._id));
