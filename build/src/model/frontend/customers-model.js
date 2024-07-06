@@ -58,8 +58,8 @@ const customerSchema = new mongoose_1.Schema({
             },
             message: 'Phone number already exists'
         },
-        minlength: [9, 'Phone must be at least 9 characters long'],
-        maxlength: [9, 'Phone must be at least 9 characters long'],
+        minlength: [8, 'Phone must be at least 8 characters long'],
+        maxlength: [15, 'Phone must be at least 15 characters long'],
     },
     password: {
         type: String,
@@ -81,13 +81,21 @@ const customerSchema = new mongoose_1.Schema({
             message: 'Referral code already exists'
         },
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
     otp: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
     },
     otpExpiry: {
         type: Date,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
     },
     isVerified: {
         type: Boolean,
@@ -111,7 +119,8 @@ const customerSchema = new mongoose_1.Schema({
     },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     createdAt: {
         type: Date,

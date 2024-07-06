@@ -4,6 +4,7 @@ export interface CustomrProps extends Document {
     countryId: Schema.Types.ObjectId;
     email: string;
     firstName: string;
+    countryCode: string;
     phone: string;
     password: string;
     customerImageUrl: string;
@@ -15,6 +16,7 @@ export interface CustomrProps extends Document {
     totalWalletAmount: number;
     failureAttemptsCount: number;
     resetPasswordCount: number;
+    isExcel: Boolean;
     status: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -54,8 +56,8 @@ const customerSchema: Schema<CustomrProps> = new Schema({
             },
             message: 'Phone number already exists'
         },
-        minlength: [9, 'Phone must be at least 9 characters long'],
-        maxlength: [9, 'Phone must be at least 9 characters long'],
+        minlength: [8, 'Phone must be at least 8 characters long'],
+        maxlength: [15, 'Phone must be at least 15 characters long'],
     },
     password: {
         type: String,
@@ -77,13 +79,21 @@ const customerSchema: Schema<CustomrProps> = new Schema({
             message: 'Referral code already exists'
         },
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
     otp: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
     },
     otpExpiry: {
         type: Date,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        }
     },
     isVerified: {
         type: Boolean,
@@ -107,7 +117,8 @@ const customerSchema: Schema<CustomrProps> = new Schema({
     },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     createdAt: {
         type: Date,

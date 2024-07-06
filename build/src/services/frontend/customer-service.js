@@ -29,18 +29,24 @@ class CustomerService {
     }
     async generateReferralCode(firstName) {
         const namePart = firstName.slice(0, 3).toUpperCase();
-        const lastCustomer = await customers_model_1.default.findOne({ referralCode: new RegExp(`^${namePart}`) })
-            .sort({ referralCode: -1 })
-            .exec();
+        // Initialize the sequence number
         let sequenceNumber = 1;
-        if (lastCustomer) {
-            const lastSequence = parseInt(lastCustomer.referralCode.slice(3), 10);
-            if (!isNaN(lastSequence)) {
-                sequenceNumber = lastSequence + 1;
+        let uniqueCodeFound = false;
+        let referralCode = '';
+        // Loop until a unique referral code is found
+        while (!uniqueCodeFound) {
+            const sequencePart = sequenceNumber.toString().padStart(4, '0');
+            referralCode = `${namePart}${sequencePart}`;
+            // Check if this referral code already exists
+            const existingCustomer = await customers_model_1.default.findOne({ referralCode: referralCode }).exec();
+            if (!existingCustomer) {
+                uniqueCodeFound = true;
+            }
+            else {
+                sequenceNumber++;
             }
         }
-        const sequencePart = sequenceNumber.toString().padStart(4, '0');
-        return `${namePart}${sequencePart}`;
+        return referralCode;
     }
     async create(customerData) {
         return customers_model_1.default.create(customerData);

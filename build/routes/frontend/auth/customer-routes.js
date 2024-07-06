@@ -11,6 +11,7 @@ const router = express_1.default.Router();
 router.use(frontend_auth_middleware_1.frontendAuthMiddleware);
 router.get('/get-customer-details', response_status_1.logResponseStatus, customer_controller_1.default.findCustomer);
 router.get('/get-all-address', response_status_1.logResponseStatus, customer_controller_1.default.getAllCustomerAddress);
+router.get('/wallet-details', response_status_1.logResponseStatus, customer_controller_1.default.findWalletDetails);
 router.post('/manage-address', response_status_1.logResponseStatus, customer_controller_1.default.addEditCustomerAddress);
 router.post('/remove-address/:id', response_status_1.logResponseStatus, customer_controller_1.default.removeCustomerAddress);
 router.post('/make-default-address/:id', response_status_1.logResponseStatus, customer_controller_1.default.makeDefaultCustomerAddress);
