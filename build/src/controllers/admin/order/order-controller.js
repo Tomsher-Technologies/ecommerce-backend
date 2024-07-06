@@ -166,6 +166,7 @@ class OrdersController extends base_controller_1.default {
                 query: {
                     _id: new mongoose_1.default.Types.ObjectId(orderId)
                 },
+                getAddress: '1',
                 hostName: req.get('origin'),
             });
             if (orderDetails && orderDetails?.length > 0) {

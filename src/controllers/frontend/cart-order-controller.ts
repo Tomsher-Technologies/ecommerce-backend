@@ -15,6 +15,8 @@ import CustomerWishlistCountryService from '../../services/frontend/auth/custome
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import { blockReferences, websiteSetup } from '../../constants/website-setup';
 import { QueryParams } from '../../utils/types/common';
+import CartOrdersModel from '../../model/frontend/cart-order-model';
+import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
 
 const controller = new BaseController();
 
@@ -229,10 +231,8 @@ class CartController extends BaseController {
                             giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0
 
                         }
-                        console.log("ffffffffffffff", existingCartProduct);
 
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                        console.log("giftWrapchargegiftWrapcharge", giftWrapcharge, existingCartProduct);
 
                         cartOrderData = {
                             customerId: customer,
@@ -298,12 +298,12 @@ class CartController extends BaseController {
                                 // } else {
                                 //     cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal
                                 // }
-                                console.log("*********************", cartOrderProductData);
+                                // console.log("*********************", cartOrderProductData);
 
                                 newCartOrderProduct = await CartService.updateCartProduct(existingProduct._id, cartOrderProductData);
 
                             } else {
-                                console.log("********dffdfdf*************", cartOrderProductData);
+                                // console.log("********dffdfdf*************", cartOrderProductData);
 
                                 newCartOrderProduct = await CartService.createCartProduct(cartOrderProductData);
 
@@ -393,7 +393,7 @@ class CartController extends BaseController {
                 });
             }
         } catch (error: any) {
-            console.log("*********errorr", error);
+            // console.log("*********errorr", error);
 
             return controller.sendErrorResponse(res, 200, {
                 message: error.message || 'Some error occurred while creating cart order',
@@ -611,13 +611,7 @@ class CartController extends BaseController {
             const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             let query
-            if (guestUser && !customer) {
-                query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] }
-            }
-            else {
-                query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] }
 
-            }
 
             if (guestUser && customer) {
                 const guestUserCart: any = await CartService.findCart({
@@ -628,17 +622,126 @@ class CartController extends BaseController {
                         { cartStatus: '1' }
                     ]
                 });
+                const customerCart: any = await CartService.findCart({
+                    $and: [
+                        { customerId: customer },
+                        { countryId: country },
+                        { cartStatus: '1' }
+                    ]
+                });
+                if (guestUserCart || customerCart) {
+                    const cartProduct: any = await CartOrderProductsModel.aggregate([
+                        {
+                            $match: {
+                                $or: [
+                                    { cartId: guestUserCart?._id },
+                                    { cartId: customerCart?._id }
+                                ]
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: "$_id",
+                                cartId: { $first: "$cartId" },
+                                slug: { $first: "$slug" },
+                                quantity: { $sum: "$quantity" },
+                                productAmount: { $sum: "$productAmount" },
+                                productDiscountAmount: { $sum: "$productDiscountAmount" },
+                                productCouponAmount: { $first: "$productCouponAmount" },
+                                giftWrapAmount: { $first: "$giftWrapAmount" },
+                                productId: { $first: "$productId" },
+                                orderStatus: { $first: "$orderStatus" },
+                                createdAt: { $first: "$createdAt" },
+                                updatedAt: { $first: "$updatedAt" },
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                cartId: 1,
+                                slug: 1,
+                                quantity: 1,
+                                productAmount: 1,
+                                productDiscountAmount: 1,
+                                productCouponAmount: 1,
+                                giftWrapAmount: 1,
+                                variantId: "$_id",
+                                productId: 1,
+                                orderStatus: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
+                            }
+                        }
+                    ]);
 
-                if (guestUserCart) {
+                    // console.log("cartProduct", cartProduct);
+                    const update = await CartService.updateCartProduct(cartProduct._id, {
+                        quantity: cartProduct.quantity,
+                        productAmount: cartProduct.productAmount,
+                        productDiscountAmount: cartProduct.productDiscountAmount,
+                        customerId: cartProduct.customerId,
+                        guestUserId: null
+                    })
+                    // console.log("cartProduct12345", update);
+
 
                 }
 
-                console.log("**********", guestUserCart);
+                if (guestUserCart) {
+                    const update = await CartService.update(guestUserCart._id, { customerId: customer })
+                }
+                // if (customerCart || guestUser) {
+                // const cartProducts = await CartOrderProductsModel.find({ cartId: customerCart?._id });
+                const cartProductsaggregation: any = await CartOrderProductsModel.aggregate([
+                    { $match: { cartId: customerCart?._id } },
+                    { $unwind: "$products" }, // Unwind the array field named "products"
+                    {
+                        $group: {
+                            _id: "$_id",
+                            totalProductAmount: { $sum: "$products.productAmount" },
+                            totalGiftWrapAmount: { $sum: "$products.totalGiftWrapAmount" },
+                            totalDiscountAmount: { $sum: "$products.productDiscountAmount" },
+                            totalAmount: { $sum: { $add: ["$products.productDiscountAmount", "$products.totalGiftWrapAmount", "$products.productAmount"] } }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            totalProductAmount: 1,
+                            totalGiftWrapAmount: 1,
+                            totalDiscountAmount: 1,
+                            totalAmount: 1
+                        }
+                    }
+                ]);
+
+                // console.log("cartProductsaggregation", cartProductsaggregation);
+
+                const updateCart = await CartService.update(customerCart?._id,
+                    {
+                        totalProductAmount: cartProductsaggregation.totalProductAmount,
+                        totalGiftWrapAmount: cartProductsaggregation.totalGiftWrapAmount,
+                        totalDiscountAmount: cartProductsaggregation.totalDiscountAmount,
+                        totalAmount: cartProductsaggregation.totalAmount
+                    },
+                )
+                // console.log(".............", updateCart);
+
+
+
+
+
             }
 
-            // let query: any = { _id: { $exists: true }, cartStatus: "1" };
+            // query = { customerId: customer, cartStatus: '1' }
             // const userData = await res.locals.user;
+            if (guestUser && !customer) {
+                query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] }
+            }
+            else {
+                query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] }
 
+            }
             // query.cartStatus = '1';
             // query.customerId = userData._id;
 

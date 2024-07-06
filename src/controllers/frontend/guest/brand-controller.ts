@@ -25,9 +25,7 @@ class BrandController extends BaseController {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 if (!brand) {
-
                     if (category) {
-                        // let query: any = {};
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
 
                         if (isObjectId) {
@@ -35,7 +33,6 @@ class BrandController extends BaseController {
                             const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
 
                             if (findcategory && findcategory._id) {
-                                // Function to recursively fetch category IDs and their children
                                 async function fetchCategoryAndChildren(categoryId: any) {
                                     const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
                                     const categoryIds = categoriesData.map(category => category._id);
@@ -43,15 +40,11 @@ class BrandController extends BaseController {
                                     for (let childId of categoryIds) {
                                         orConditionsForcategory.push({ "productCategory.category._id": childId });
 
-                                        // Recursively fetch children of childId
                                         await fetchCategoryAndChildren(childId);
                                     }
                                 }
 
-                                // Start fetching categories recursively
                                 await fetchCategoryAndChildren(findcategory._id);
-
-                                // Push condition for the parent category itself
                                 orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                             } else {
                                 query = {
@@ -64,26 +57,19 @@ class BrandController extends BaseController {
                             const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
 
                             if (findcategory && findcategory._id) {
-                                // Function to recursively fetch category IDs and their children
                                 async function fetchCategoryAndChildren(categoryId: any) {
                                     const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
                                     const categoryIds = categoriesData.map(category => category._id);
 
                                     for (let childId of categoryIds) {
                                         orConditionsForcategory.push({ "productCategory.category._id": childId });
-
-                                        // Recursively fetch children of childId
                                         await fetchCategoryAndChildren(childId);
                                     }
                                 }
 
-                                // Start fetching categories recursively
                                 await fetchCategoryAndChildren(findcategory._id);
-
-                                // Push condition for the parent category itself
                                 orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                             } else {
-                                // If category not found, fallback to direct query by slug
                                 query = {
                                     ...query, "productCategory.category.slug": category
                                 };
@@ -106,19 +92,14 @@ class BrandController extends BaseController {
                             ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
                         }
                     }
-
-
                 }
 
                 if (brand) {
-
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-
                     if (isObjectId) {
                         query = {
                             ...query, _id: new mongoose.Types.ObjectId(brand)
                         }
-
                     } else {
                         query = {
                             ...query, slug: brand
@@ -139,7 +120,6 @@ class BrandController extends BaseController {
                     sort
 
                 }, products);
-                // console.log(query);
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,

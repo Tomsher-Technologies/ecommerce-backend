@@ -75,22 +75,18 @@ class CheckoutService {
 
 
     async getNextSequenceValue(): Promise<string> {
-        try {
-            const maxOrder: any = await CartOrdersModel.find().sort({ orderId: -1 }).limit(1);
-            
-            if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
-                const maxOrderId = maxOrder[0].orderId;
-                const nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
-                return nextOrderId;
-            } else {
-                return '000001';
-            }
-        } catch (error) {
-            console.error('Error fetching max order ID:', error);
+        const maxOrder: any = await CartOrdersModel.find().sort({ orderId: -1 }).limit(1);
+        console.log('maxOrder', maxOrder);
+
+        if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
+            const maxOrderId = maxOrder[0].orderId;
+            const nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
+            return nextOrderId;
+        } else {
             return '000001';
         }
     }
-    
+
 
     async cartUpdation(cartDetails: any, paymentSuccess: boolean): Promise<any> {
         if (cartDetails) {
@@ -177,7 +173,7 @@ class CheckoutService {
             //     }
             // }
             const orderId = await this.getNextSequenceValue()
-console.log('orderId',orderId);
+            console.log('orderId', orderId);
 
             cartUpdate = {
                 ...cartUpdate,

@@ -4,7 +4,7 @@ exports.tabbyPaymentRetrieve = exports.tabbyCheckoutRetrieve = exports.tabbyPaym
 const cart_1 = require("../constants/cart");
 const tabbyPaymentCreate = async (tabbyDefaultValues, paymentMethodValues) => {
     try {
-        const response = await fetch(`${process.env.TABBY_API_URL}`, {
+        const response = await fetch(`${process.env.TABBY_API_URL_CHECKOUT}`, {
             method: "POST",
             mode: "cors",
             cache: "no-cache",
@@ -35,7 +35,7 @@ const tabbyPaymentCreate = async (tabbyDefaultValues, paymentMethodValues) => {
 exports.tabbyPaymentCreate = tabbyPaymentCreate;
 const tabbyCheckoutRetrieve = async (tabbyId, paymentMethodValues) => {
     try {
-        const response = await fetch(`https://api.tabby.ai/api/v2/checkout/${tabbyId}`, {
+        const response = await fetch(`${process.env.TABBY_API_URL_CHECKOUT}/${tabbyId}`, {
             method: "GET",
             mode: "cors",
             cache: "no-cache",
@@ -62,7 +62,7 @@ const tabbyCheckoutRetrieve = async (tabbyId, paymentMethodValues) => {
 exports.tabbyCheckoutRetrieve = tabbyCheckoutRetrieve;
 const tabbyPaymentRetrieve = async (tabbyId, paymentMethodValues) => {
     try {
-        const response = await fetch(`https://api.tabby.ai/api/v2/payments/${tabbyId}`, {
+        const response = await fetch(`${process.env.TABBY_API_URL_PAYMENT}/${tabbyId}`, {
             method: "GET",
             mode: "cors",
             cache: "no-cache",

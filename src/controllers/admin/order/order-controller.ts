@@ -205,7 +205,7 @@ class OrdersController extends BaseController {
                 query: {
                     _id: new mongoose.Types.ObjectId(orderId)
                 },
-
+                getAddress: '1',
                 hostName: req.get('origin'),
             })
 
