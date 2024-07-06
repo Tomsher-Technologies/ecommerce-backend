@@ -19,6 +19,7 @@ import { etisalatSmsGateway } from '../../../lib/ethisalat-sms-gateway';
 import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/mail-chimp-sms-gateway';
 import path from 'path';
+import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 
 const ejs = require('ejs');
 
@@ -103,8 +104,10 @@ class GuestController extends BaseController {
                     // })
                     // console.log("sendOtp", sendOtp);
 
+                    const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
 
-                    const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName }, async (err: any, data: any) => {
+
+                    const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
                         if (err) {
                             console.log(err);
                             return;
@@ -296,6 +299,18 @@ class GuestController extends BaseController {
                             otpExpiry,
                         });
                         if (optUpdatedCustomer) {
+                            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+
+                            const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
+
+
+                            const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
+                                const sendEmail = await mailChimpEmailGateway(optUpdatedCustomer, data)
+                            })
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: optUpdatedCustomer._id,
