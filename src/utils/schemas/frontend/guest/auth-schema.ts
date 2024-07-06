@@ -6,11 +6,8 @@ export const registerSchema = zod.object({
         required_error: 'Otp type is required',
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
-    firstName: zod.string({ required_error: 'First name is required', }).min(3, 'First name is should be 3 chars minimum'),
-    phone: zod.string().refine(value => /^\d+$/.test(value) && value.length >= 15, {
-        message: 'Phone number should contain only numbers and be at least 15 digits long',
-        path: ['phone']
-    }),
+    firstName: zod.string({ required_error: 'First name is required', }).min(2, 'First name is should be 2 chars minimum'),
+    phone: zod.string().min(7, { message: 'Phone number must be at least 8 characters long' }).max(15).refine(value => value.trim() !== '', { message: 'Phone number cannot be empty' }).refine(value => /^[0-9]+$/.test(value), { message: 'Phone number must contain only numerals' }),
     password: zod.string({ required_error: 'password is required' }).min(6, 'Password too short - should be 6 chars minimum'),
     confirmPassword: zod.string({ required_error: 'Confirm password is required' }).min(6, 'Password too short - should be 6 chars minimum'),
     referralCode: zod.string().optional(),
