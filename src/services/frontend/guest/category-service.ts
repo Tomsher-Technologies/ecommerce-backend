@@ -71,11 +71,9 @@ class CategoryService {
             };
 
             pipeline.push(categoryLookupWithLanguage);
-
             pipeline.push(categoryLanguageFieldsReplace);
         }
         pipeline.push(categoryProject);
-
         pipeline.push(categoryFinalProject);
 
         return pipeline

@@ -25,25 +25,20 @@ class BrandController extends base_controller_1.default {
                 }
                 if (!brand) {
                     if (category) {
-                        // let query: any = {};
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         if (isObjectId) {
                             orConditionsForcategory.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
                             const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
                             if (findcategory && findcategory._id) {
-                                // Function to recursively fetch category IDs and their children
                                 async function fetchCategoryAndChildren(categoryId) {
                                     const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
                                     const categoryIds = categoriesData.map(category => category._id);
                                     for (let childId of categoryIds) {
                                         orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                        // Recursively fetch children of childId
                                         await fetchCategoryAndChildren(childId);
                                     }
                                 }
-                                // Start fetching categories recursively
                                 await fetchCategoryAndChildren(findcategory._id);
-                                // Push condition for the parent category itself
                                 orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                             }
                             else {
@@ -56,23 +51,18 @@ class BrandController extends base_controller_1.default {
                             orConditionsForcategory.push({ "productCategory.category.slug": category });
                             const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
                             if (findcategory && findcategory._id) {
-                                // Function to recursively fetch category IDs and their children
                                 async function fetchCategoryAndChildren(categoryId) {
                                     const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
                                     const categoryIds = categoriesData.map(category => category._id);
                                     for (let childId of categoryIds) {
                                         orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                        // Recursively fetch children of childId
                                         await fetchCategoryAndChildren(childId);
                                     }
                                 }
-                                // Start fetching categories recursively
                                 await fetchCategoryAndChildren(findcategory._id);
-                                // Push condition for the parent category itself
                                 orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                             }
                             else {
-                                // If category not found, fallback to direct query by slug
                                 query = {
                                     ...query, "productCategory.category.slug": category
                                 };
@@ -119,7 +109,6 @@ class BrandController extends base_controller_1.default {
                     query,
                     sort
                 }, products);
-                // console.log(query);
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,
                     message: 'Success!'

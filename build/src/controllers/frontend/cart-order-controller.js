@@ -200,9 +200,7 @@ class CartController extends base_controller_1.default {
                             totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
                             giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0;
                         }
-                        console.log("ffffffffffffff", existingCartProduct);
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                        console.log("giftWrapchargegiftWrapcharge", giftWrapcharge, existingCartProduct);
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,

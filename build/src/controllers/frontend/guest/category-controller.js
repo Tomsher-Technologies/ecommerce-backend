@@ -21,57 +21,7 @@ class CategoryController extends base_controller_1.default {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 query.status = '1';
-                // if (slug) {
-                //     const keywordRegex = new RegExp(slug, 'i');
-                //     query = {
-                //         $or: [
-                //             { slug: keywordRegex },
-                //         ],
-                //         ...query
-                //     } as any;
-                // }
-                // if (brand) {
-                //     const keywordRegex = new RegExp(brand, 'i');
-                //     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                //     if (isObjectId) {
-                //         query = {
-                //             ...query, "brand._id": new mongoose.Types.ObjectId(brand)
-                //         }
-                //     } else {
-                //         query = {
-                //             ...query, "brand.slug": keywordRegex
-                //         }
-                //     }
-                // }
-                /*  if (category) {
-      
-                      const keywordRegex = new RegExp(category, 'i');
-      
-                      const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-      
-                      if (isObjectId) {
-                          
-                          query = {
-                              ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
-                          }
-      
-                      } else {
-                          console.log("keywordRegex,keywordRegex",keywordRegex);
-      
-                          query = {
-      
-                              ...query, "productCategory.category.slug": keywordRegex
-                          }
-                      }
-                  }
-                  else {
-                      query = {
-                          ...query, level: level
-                      } as any;
-                  }
-      */
                 if (category) {
-                    const keywordRegex = new RegExp(category, 'i');
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
                         query = {
@@ -89,26 +39,6 @@ class CategoryController extends base_controller_1.default {
                         ...query, level: level
                     };
                 }
-                // if (category) {
-                //     const keywordRegex = new RegExp(category, 'i');
-                //     var condition
-                //     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                //     if (isObjectId) {
-                //         condition = { parentCategory: new mongoose.Types.ObjectId(category) }
-                //     } else {
-                //         condition = { slug: keywordRegex }
-                //     }
-                //     query = {
-                //         $or: [
-                //             condition
-                //         ],
-                //         ...query
-                //     } as any;
-                // } else {
-                //     query = {
-                //         ...query, level: level
-                //     } as any;
-                // }
                 const categories = await category_service_1.default.findAll({
                     hostName: req.get('origin'),
                     query,
