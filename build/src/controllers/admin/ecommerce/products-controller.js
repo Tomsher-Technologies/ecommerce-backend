@@ -358,21 +358,17 @@ class ProductsController extends base_controller_1.default {
                     const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
                     const missingColunm = await product_service_1.default.checkRequiredColumns(firstRow, products_2.products);
                     if (!missingColunm) {
-                        // Convert the worksheet to JSON
                         if (worksheet) {
                             const jsonData = await xlsx.utils.sheet_to_json(worksheet);
                             if (jsonData) {
-                                var finalDataList = [];
                                 const errors = [];
                                 const validateProducts = async (jsonData) => {
-                                    // jsonData.forEach(async (product: any, index: number) => {
                                     var length = 2;
                                     for await (let data of jsonData) {
                                         try {
                                             products_schema_1.productExcelSchema.parse(data);
                                         }
                                         catch (error) {
-                                            // console.log("77777***********888888888", error.errors[1]);
                                             if (error && error.errors && error.errors.length > 0) {
                                                 for (let errorData = 0; errorData < error.errors.length; errorData++) {
                                                     errors.push({
@@ -386,7 +382,6 @@ class ProductsController extends base_controller_1.default {
                                     ;
                                     return errors;
                                 };
-                                // Validate all products and collect errors
                                 const validationErrors = await validateProducts(jsonData);
                                 if (validationErrors.length > 0) {
                                     return controller.sendErrorResponse(res, 200, {
@@ -395,15 +390,11 @@ class ProductsController extends base_controller_1.default {
                                     }, req);
                                 }
                                 for await (let data of jsonData) {
-                                    /********************************************************* */
-                                    // Loop through each data object
-                                    /**********************************************************/
                                     const imageUrl = data.Image;
                                     const productImage = await (0, helpers_2.uploadImageFromUrl)(imageUrl);
                                     if (productImage == null) {
                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index });
                                     }
-                                    /********************************************************* */
                                     if (data.Product_Title) {
                                         if (data.Description) {
                                             if (data.SKU) {
@@ -489,7 +480,6 @@ class ProductsController extends base_controller_1.default {
                                                                         value: data[valueColumns[i]]
                                                                     });
                                                                 }
-                                                                // await combinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of combinedArray) {
                                                                     const attributes = await attributes_service_1.default.findOneAttribute({ value });
                                                                     attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId });
@@ -502,7 +492,6 @@ class ProductsController extends base_controller_1.default {
                                                                         value: data[specificationName[i]]
                                                                     });
                                                                 }
-                                                                // await specificationCombinedArray.map(async (value: any, index: number) => {
                                                                 for await (let value of specificationCombinedArray) {
                                                                     const specifications = await specification_service_1.default.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value });
                                                                     specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId });
@@ -609,7 +598,6 @@ class ProductsController extends base_controller_1.default {
                                                                                         const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
                                                                                     }
                                                                                 }
-                                                                                // const slug = data?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1)
                                                                                 slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index + 1);
                                                                                 productVariants = {
                                                                                     ...productVariants,
@@ -635,7 +623,6 @@ class ProductsController extends base_controller_1.default {
                                                                         }
                                                                         else {
                                                                             validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" });
-                                                                            // throw new Error('')
                                                                         }
                                                                     }
                                                                     else {
@@ -654,7 +641,6 @@ class ProductsController extends base_controller_1.default {
                                                                             //     slugData = product?.slug + "-" + data.Product_Title
                                                                             // }
                                                                             slugData = data.Product_Title + "-" + countryForSlug + '-' + (index + 1); // generate slug
-                                                                            console.log("iuyiyuiyuiyu");
                                                                             if (data.Product_Title === productVariants.extraProductTitle) {
                                                                                 productVariants.extraProductTitle = "";
                                                                             }
@@ -707,12 +693,10 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                             else {
                                                                                 validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Variant " + data.Product_Title + " is already existing" });
-                                                                                // throw new Error('not inserted')
                                                                             }
                                                                         }
                                                                         else {
                                                                             validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: data.Product_Title + " is already existing" });
-                                                                            // throw new Error('not inserted')
                                                                         }
                                                                     }
                                                                 }
