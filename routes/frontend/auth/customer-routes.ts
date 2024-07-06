@@ -11,6 +11,7 @@ router.use(frontendAuthMiddleware);
 
 router.get('/get-customer-details', logResponseStatus, CustomerController.findCustomer);
 router.get('/get-all-address', logResponseStatus, CustomerController.getAllCustomerAddress);
+router.get('/wallet-details', logResponseStatus, CustomerController.findWalletDetails);
 router.post('/manage-address', logResponseStatus, CustomerController.addEditCustomerAddress);
 router.post('/remove-address/:id', logResponseStatus, CustomerController.removeCustomerAddress);
 router.post('/make-default-address/:id', logResponseStatus, CustomerController.makeDefaultCustomerAddress);
