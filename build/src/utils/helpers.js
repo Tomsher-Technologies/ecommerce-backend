@@ -228,28 +228,41 @@ const uploadImageFromUrl = async (imageUrl) => {
         const parsedUrl = new URL(imageUrl);
         // Extract the filename from the URL or generate a unique filename
         let filename = path_1.default.basename(parsedUrl.pathname);
-        // Optionally, generate a unique filename if the URL doesn't have a direct filename
-        // if (!filename) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        filename = `productImage-${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
-        // }
+        if (!filename || filename === '/') {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            filename = `productImage - ${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
+        }
         // Define the path where the image will be saved
-        const outputPath = path_1.default.join(__dirname, `../../public/uploads/product/`, filename);
+        const outputPath = path_1.default.join(__dirname, '../../public/uploads/product/', filename);
+        // Ensure the directory exists
+        fs_2.default.mkdirSync(path_1.default.dirname(outputPath), { recursive: true });
         // Create a writable stream to save the image
         const writer = fs_2.default.createWriteStream(outputPath);
+        // Set a timeout for the HTTP/HTTPS request
+        const timeout = 10000; // 10 seconds
         // Make the HTTP/HTTPS GET request to the image URL
         const response = await new Promise((resolve, reject) => {
-            protocol.get(imageUrl, { timeout: 600000 }, (res) => {
+            const req = protocol.get(imageUrl, { timeout }, (res) => {
+                // Check for non-200 status codes
+                if (res.statusCode !== 200) {
+                    reject(new Error(`Failed to get '${imageUrl}'(${res.statusCode})`));
+                    return;
+                }
                 res.pipe(writer);
-                res.on('end', () => resolve(filename));
-                res.on('error', reject);
-            }).on('error', reject);
+                writer.on('finish', () => resolve(filename));
+                writer.on('error', (err) => reject(new Error(`Writer error: ${err.message}`)));
+            });
+            req.on('error', (err) => reject(new Error(`Request error: ${err.message}`)));
+            // Handle request timeout
+            req.on('timeout', () => {
+                req.abort();
+                reject(new Error('Request timed out'));
+            });
         });
-        // const req = protocol.get(imageUrl, { timeout: 10000 }, (res: any) => {
         return response; // Return the filename when download completes
     }
     catch (error) {
-        console.error('Error downloading image:', error);
+        console.error('Error downloading image:', error.message);
         return null; // Return null if there's an error
     }
 };
