@@ -41,25 +41,23 @@ export const objectLookup = {
     }
 }
 
-export const shippingLookup = {
-    $lookup: {
-        from: 'customeraddresses',
-        let: { shippingId: '$shippingId' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$_id', '$$shippingId'] },
-                            { $eq: ['$addressMode', 'shipping-address'] }
-                        ]
-                    }
-                }
-            }
-        ],
-        as: 'shippingAddress'
-    }
-};
+export const shippingAndBillingLookup = (localField: string, alias: string) => [
+    {
+        $lookup: {
+            from: 'customeraddresses',
+            localField: localField,
+            foreignField: '_id',
+            as: alias
+        }
+    },
+    // Optionally unwin if you expect a single address
+    {
+        $unwind: {
+            path: '$shippingAddress',
+            preserveNullAndEmptyArrays: true
+        }
+    },
+];
 
 export const billingLookup = {
     $lookup: {

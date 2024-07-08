@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartLookup = void 0;
+exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartLookup = void 0;
 const collections_1 = require("../../constants/collections");
 exports.cartLookup = {
     $lookup: {
@@ -35,25 +35,24 @@ exports.objectLookup = {
         pickupStore: { $arrayElemAt: ['$pickupStoreId', 0] }
     }
 };
-exports.shippingLookup = {
-    $lookup: {
-        from: 'customeraddresses',
-        let: { shippingId: '$shippingId' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $eq: ['$_id', '$$shippingId'] },
-                            { $eq: ['$addressMode', 'shipping-address'] }
-                        ]
-                    }
-                }
-            }
-        ],
-        as: 'shippingAddress'
-    }
-};
+const shippingAndBillingLookup = (localField, alias) => [
+    {
+        $lookup: {
+            from: 'customeraddresses',
+            localField: localField,
+            foreignField: '_id',
+            as: alias
+        }
+    },
+    // Optionally unwin if you expect a single address
+    {
+        $unwind: {
+            path: '$shippingAddress',
+            preserveNullAndEmptyArrays: true
+        }
+    },
+];
+exports.shippingAndBillingLookup = shippingAndBillingLookup;
 exports.billingLookup = {
     $lookup: {
         from: 'customeraddresses',

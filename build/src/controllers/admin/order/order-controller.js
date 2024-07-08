@@ -8,6 +8,8 @@ const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const order_service_1 = __importDefault(require("../../../services/admin/order/order-service"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const cart_1 = require("../../../constants/cart");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -180,6 +182,111 @@ class OrdersController extends base_controller_1.default {
                     message: 'Order not fount'
                 });
             }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: 'Order not fount'
+            });
+        }
+    }
+    async orderStatusChange(req, res) {
+        try {
+            const orderId = req.params.id;
+            const orderStatus = req.body.orderStatus;
+            const isValidStatus = cart_1.orderStatusArray.some(status => status.value === orderStatus);
+            if (!isValidStatus) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Invalid order status'
+                });
+            }
+            const orderDetails = await cart_order_model_1.default.findById(orderId);
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Order not fount'
+                });
+            }
+            // Ensure that the order cannot go back to a previous status once delivered
+            if (orderDetails.orderStatus === '5' && ["1", "2", "3", "4", "9", "10", "13"].includes(orderStatus)) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status back to a previous state once delivered'
+                });
+            }
+            // Ensure that the order cannot be changed to Canceled after Delivered
+            if (orderDetails.orderStatus === '5' && orderStatus === '6') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status to Canceled once delivered'
+                });
+            }
+            // Ensure that Returned status is only possible after Delivered
+            if (orderStatus === '7' && orderDetails.orderStatus !== '5') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Returned status is only possible after Delivered'
+                });
+            }
+            if (orderStatus === '8' && orderDetails.orderStatus !== '7') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Refunded status is only possible after Returned'
+                });
+            }
+            if (orderStatus === '12' && orderDetails.orderStatus !== '5') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Completed status is only possible after Delivered'
+                });
+            }
+            // Ensure that the order cannot be changed from Completed to any other status
+            if (orderDetails.orderStatus === '12') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status once it is completed'
+                });
+            }
+            orderDetails.orderStatus = orderStatus;
+            switch (orderStatus) {
+                case '1':
+                    orderDetails.orderStatusAt = new Date();
+                    break;
+                case '2':
+                    orderDetails.processingStatusAt = new Date();
+                    break;
+                case '3':
+                    orderDetails.packedStatusAt = new Date();
+                    break;
+                case '4':
+                    orderDetails.shippedStatusAt = new Date();
+                    break;
+                case '5':
+                    orderDetails.deliveredStatusAt = new Date();
+                    break;
+                case '6':
+                    orderDetails.canceledStatusAt = new Date();
+                    break;
+                case '7':
+                    orderDetails.returnedStatusAt = new Date();
+                    break;
+                case '8':
+                    orderDetails.refundedStatusAt = new Date();
+                    break;
+                case '9':
+                    orderDetails.partiallyShippedStatusAt = new Date();
+                    break;
+                case '10':
+                    orderDetails.onHoldStatusAt = new Date();
+                    break;
+                case '11':
+                    orderDetails.failedStatusAt = new Date();
+                    break;
+                case '12':
+                    orderDetails.completedStatusAt = new Date();
+                    break;
+                case '13':
+                    orderDetails.pickupStatusAt = new Date();
+                    break;
+                default: break;
+            }
+            const updatedOrderDetails = await order_service_1.default.orderStatusUpdate(orderDetails._id, orderDetails);
+            return controller.sendSuccessResponse(res, {
+                requestedData: updatedOrderDetails,
+                message: cart_1.orderStatusMessages[orderStatus] || 'Order status updated successfully!'
+            });
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, {

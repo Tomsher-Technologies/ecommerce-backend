@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusArray = exports.cartStatus = void 0;
+exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -21,6 +21,21 @@ exports.orderStatusArray = [
     { value: '12', label: "Completed" },
     { value: '13', label: "Pickup" }
 ];
+exports.orderStatusMessages = {
+    '1': 'Order received successfully!',
+    '2': 'Order is now being processed!',
+    '3': 'Order has been packed!',
+    '4': 'Order has been shipped!',
+    '5': 'Order has been delivered!',
+    '6': 'Order has been canceled!',
+    '7': 'Order has been returned!',
+    '8': 'Order has been refunded!',
+    '9': 'Order has been partially shipped!',
+    '10': 'Order is on hold!',
+    '11': 'Order has failed!',
+    '12': 'Order has been completed!',
+    '13': 'Order is ready for pickup!'
+};
 exports.orderStatusMap = exports.orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;
     return map;
