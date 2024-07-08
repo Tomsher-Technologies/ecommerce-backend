@@ -24,14 +24,23 @@ export const collections = {
         offers: 'offers',
     },
     multilanguagefieleds: 'multilanguagefieleds',
-    customer:{
-        wishlists:'wishlists'
+    customer: {
+        customer: 'customer',
+        wishlists: 'wishlists',
+        customeraddresses: 'customeraddresses',
     },
-    cart:{
-        cartorders:'cartorders',
-        cartorderproducts:'cartorderproducts',
+    cart: {
+        cartorders: 'cartorders',
+        cartorderproducts: 'cartorderproducts',
+        paymentmethods: 'paymentmethods',
     },
-    setup:{
-        countries:'countries'
+    marketing: {
+        coupons: 'coupons'
+    },
+    stores: {
+        stores: 'stores'
+    },
+    setup: {
+        countries: 'countries'
     }
 }

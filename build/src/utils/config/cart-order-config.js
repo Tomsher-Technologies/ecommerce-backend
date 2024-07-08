@@ -12,7 +12,7 @@ exports.cartLookup = {
 };
 exports.customerLookup = {
     $lookup: {
-        from: 'customers',
+        from: `${collections_1.collections.customer.customer}`,
         localField: 'customerId',
         foreignField: '_id',
         as: 'customer',
@@ -20,7 +20,7 @@ exports.customerLookup = {
 };
 exports.couponLookup = {
     $lookup: {
-        from: 'coupons',
+        from: `${collections_1.collections.marketing.coupons}`,
         localField: 'couponId',
         foreignField: '_id',
         as: 'couponDetails',
@@ -38,7 +38,7 @@ exports.objectLookup = {
 const shippingAndBillingLookup = (localField, alias) => [
     {
         $lookup: {
-            from: 'customeraddresses',
+            from: `${collections_1.collections.customer.customeraddresses}`,
             localField: localField,
             foreignField: '_id',
             as: alias
@@ -55,7 +55,7 @@ const shippingAndBillingLookup = (localField, alias) => [
 exports.shippingAndBillingLookup = shippingAndBillingLookup;
 exports.billingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections_1.collections.customer.customeraddresses}`,
         let: { billingId: '$billingId' },
         pipeline: [
             {
@@ -74,7 +74,7 @@ exports.billingLookup = {
 };
 exports.pickupStoreLookup = {
     $lookup: {
-        from: 'stores',
+        from: `${collections_1.collections.stores.stores}`,
         localField: 'pickupStoreId',
         foreignField: '_id',
         as: 'pickupStoreId',
@@ -82,7 +82,7 @@ exports.pickupStoreLookup = {
 };
 exports.paymentMethodLookup = {
     $lookup: {
-        from: 'paymentmethods',
+        from: `${collections_1.collections.cart.paymentmethods}`,
         localField: 'paymentMethodId',
         foreignField: '_id',
         as: 'paymentMethodId',

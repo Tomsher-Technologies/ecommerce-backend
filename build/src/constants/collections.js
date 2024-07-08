@@ -26,11 +26,20 @@ exports.collections = {
     },
     multilanguagefieleds: 'multilanguagefieleds',
     customer: {
-        wishlists: 'wishlists'
+        customer: 'customer',
+        wishlists: 'wishlists',
+        customeraddresses: 'customeraddresses',
     },
     cart: {
         cartorders: 'cartorders',
         cartorderproducts: 'cartorderproducts',
+        paymentmethods: 'paymentmethods',
+    },
+    marketing: {
+        coupons: 'coupons'
+    },
+    stores: {
+        stores: 'stores'
     },
     setup: {
         countries: 'countries'

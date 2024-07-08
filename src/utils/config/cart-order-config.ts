@@ -12,7 +12,7 @@ export const cartLookup = {
 
 export const customerLookup = {
     $lookup: {
-        from: 'customers',
+        from: `${collections.customer.customer}`,
         localField: 'customerId',
         foreignField: '_id',
         as: 'customer',
@@ -22,14 +22,13 @@ export const customerLookup = {
 
 export const couponLookup = {
     $lookup: {
-        from: 'coupons',
+        from:  `${collections.marketing.coupons}`,
         localField: 'couponId',
         foreignField: '_id',
         as: 'couponDetails',
 
     }
 };
-
 
 export const objectLookup = {
     $addFields: {
@@ -44,7 +43,7 @@ export const objectLookup = {
 export const shippingAndBillingLookup = (localField: string, alias: string) => [
     {
         $lookup: {
-            from: 'customeraddresses',
+            from: `${collections.customer.customeraddresses}`,
             localField: localField,
             foreignField: '_id',
             as: alias
@@ -61,7 +60,7 @@ export const shippingAndBillingLookup = (localField: string, alias: string) => [
 
 export const billingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections.customer.customeraddresses}`,
         let: { billingId: '$billingId' },
         pipeline: [
             {
@@ -81,7 +80,7 @@ export const billingLookup = {
 
 export const pickupStoreLookup = {
     $lookup: {
-        from: 'stores',
+        from: `${collections.stores.stores}`,
         localField: 'pickupStoreId',
         foreignField: '_id',
         as: 'pickupStoreId',
@@ -91,7 +90,7 @@ export const pickupStoreLookup = {
 
 export const paymentMethodLookup = {
     $lookup: {
-        from: 'paymentmethods',
+        from: `${collections.cart.paymentmethods}`,
         localField: 'paymentMethodId',
         foreignField: '_id',
         as: 'paymentMethodId',
