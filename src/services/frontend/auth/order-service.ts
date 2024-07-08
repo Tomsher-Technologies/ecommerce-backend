@@ -1,13 +1,11 @@
 
-import mongoose from 'mongoose';
-import { FilterOptionsProps, frontendPagination, pagination } from '../../../components/pagination';
+import {  frontendPagination, pagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistOfferBrandPopulation, wishlistOfferCategory, wishlistOfferProductPopulation, wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
-import { addFieldsProductVariantAttributes, brandLookup, brandObject, productCategoryLookup, productLookup, productProject, productVariantAttributesLookup } from '../../../utils/config/product-config';
+import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues,  wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
+import {  productLookup} from '../../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import commonService from './../guest/common-service';
-import { billingLookup, cartProject, objectLookup, paymentMethodLookup, shippingLookup } from '../../../utils/config/cart-order-config';
+import {  objectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
 
 
 class CartService {
@@ -62,8 +60,8 @@ class CartService {
 
         const pipeline: any[] = [
             modifiedPipeline,
-            shippingLookup,
-            billingLookup,
+            shippingAndBillingLookup('shippingId', 'shippingAddress'),
+            shippingAndBillingLookup('billingId', 'billingAddress'),
             paymentMethodLookup,
             objectLookup,
             // cartProject,

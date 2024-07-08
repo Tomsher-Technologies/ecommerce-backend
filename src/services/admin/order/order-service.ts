@@ -1,6 +1,6 @@
 import { frontendPagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { billingLookup, cartLookup, cartProject, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingLookup, } from '../../../utils/config/cart-order-config';
+import { billingLookup, cartLookup, cartProject, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
 
 
 class OrderService {
@@ -10,7 +10,7 @@ class OrderService {
     }
     async OrderList(options: any): Promise<CartOrderProps[]> {
 
-        const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
+        const { query, skip, limit, sort } = frontendPagination(options.query || {}, options);
         const { getAddress } = options;
 
         const defaultSort = { createdAt: -1 };
@@ -19,17 +19,16 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
+        console.log('getAddress', getAddress);
 
         const pipeline: any[] = [
             cartLookup,
             paymentMethodLookup,
             customerLookup,
             orderListObjectLookup,
-            // shippingLookup,
-            ...(getAddress === '1' ? [shippingLookup] : []),
-            ...(getAddress === '1' ? [billingLookup] : []),
+            ...(getAddress === '1' ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
+            ...(getAddress === '1' ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
 
-            // billingLookup,
             { $match: query },
             { $sort: finalSort },
             cartProject
@@ -45,6 +44,31 @@ class OrderService {
 
         const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
         return createdCartWithValues;
+    }
+
+    async orderStatusUpdate(orderId: string, orderData: any): Promise<CartOrderProps | null> {
+        const updatedBrand = await CartOrderModel.findByIdAndUpdate(
+            orderId,
+            orderData,
+            { new: true, useFindAndModify: false }
+        );
+
+        if (updatedBrand) {
+            const pipeline = [
+                { $match: { _id: updatedBrand._id } },
+                cartLookup,
+                paymentMethodLookup,
+                customerLookup,
+                orderListObjectLookup,
+                cartProject
+            ];
+
+            const updatedBrandWithValues = await CartOrderModel.aggregate(pipeline);
+
+            return updatedBrandWithValues[0];
+        } else {
+            return null;
+        }
     }
 
 }

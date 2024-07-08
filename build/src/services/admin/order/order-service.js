@@ -10,7 +10,7 @@ class OrderService {
     constructor() {
     }
     async OrderList(options) {
-        const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
+        const { query, skip, limit, sort } = (0, pagination_1.frontendPagination)(options.query || {}, options);
         const { getAddress } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -18,15 +18,14 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
+        console.log('getAddress', getAddress);
         const pipeline = [
             cart_order_config_1.cartLookup,
             cart_order_config_1.paymentMethodLookup,
             cart_order_config_1.customerLookup,
             cart_order_config_1.orderListObjectLookup,
-            // shippingLookup,
-            ...(getAddress === '1' ? [cart_order_config_1.shippingLookup] : []),
-            ...(getAddress === '1' ? [cart_order_config_1.billingLookup] : []),
-            // billingLookup,
+            ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
+            ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
             { $match: query },
             { $sort: finalSort },
             cart_order_config_1.cartProject
@@ -39,6 +38,24 @@ class OrderService {
         }
         const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
         return createdCartWithValues;
+    }
+    async orderStatusUpdate(orderId, orderData) {
+        const updatedBrand = await cart_order_model_1.default.findByIdAndUpdate(orderId, orderData, { new: true, useFindAndModify: false });
+        if (updatedBrand) {
+            const pipeline = [
+                { $match: { _id: updatedBrand._id } },
+                cart_order_config_1.cartLookup,
+                cart_order_config_1.paymentMethodLookup,
+                cart_order_config_1.customerLookup,
+                cart_order_config_1.orderListObjectLookup,
+                cart_order_config_1.cartProject
+            ];
+            const updatedBrandWithValues = await cart_order_model_1.default.aggregate(pipeline);
+            return updatedBrandWithValues[0];
+        }
+        else {
+            return null;
+        }
     }
 }
 exports.default = new OrderService();

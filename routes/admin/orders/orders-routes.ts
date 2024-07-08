@@ -13,6 +13,7 @@ router.use(authMiddleware);
 
 router.get('/order-list', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders }), OrdersController.findAll);
 router.get('/order-detail/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders }), OrdersController.getOrderDetails);
+router.post('/order-status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders }), OrdersController.orderStatusChange);
 
 
 export default router;

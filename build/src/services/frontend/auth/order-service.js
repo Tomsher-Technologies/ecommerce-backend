@@ -51,8 +51,8 @@ class CartService {
         };
         const pipeline = [
             modifiedPipeline,
-            cart_order_config_1.shippingLookup,
-            cart_order_config_1.billingLookup,
+            (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress'),
+            (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress'),
             cart_order_config_1.paymentMethodLookup,
             cart_order_config_1.objectLookup,
             // cartProject,
