@@ -28,7 +28,8 @@ export const collections = {
         wishlists:'wishlists'
     },
     cart:{
-        cartorders:'cartorders'
+        cartorders:'cartorders',
+        cartorderproducts:'cartorderproducts',
     },
     setup:{
         countries:'countries'

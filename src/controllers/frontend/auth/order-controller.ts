@@ -33,6 +33,7 @@ class OrderController extends BaseController {
 
                 },
                 hostName: req.get('origin'),
+                getCartProducts: '1',
             });
             console.log('order', order);
 
@@ -48,6 +49,8 @@ class OrderController extends BaseController {
             }
 
         } catch (error: any) {
+            console.log('error', error);
+
             return controller.sendErrorResponse(res, 200, {
                 message: 'Order not fount'
             });
@@ -79,6 +82,8 @@ class OrderController extends BaseController {
 
                 },
                 hostName: req.get('origin'),
+                getAddress: '1',
+                getCartProducts: '1',
             })
 
             if (order && order.length > 0) {

@@ -2,7 +2,7 @@ import { collections } from "../../constants/collections";
 
 export const cartLookup = {
     $lookup: {
-        from: 'cartorderproducts',
+        from: `${collections.cart.cartorderproducts}`,
         localField: '_id',
         foreignField: 'cartId',
         as: 'products',
@@ -172,6 +172,7 @@ export const cartProject = {
 export const cartDeatilProject = {
     $project: {
         _id: 1,
+        orderId: 1,
         customerId: 1,
         countryId: 1,
         couponId: 1,
