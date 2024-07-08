@@ -102,7 +102,6 @@ const customerAddressSchema = new mongoose_1.Schema({
     },
     zipCode: {
         type: String,
-        required: false,
         trim: true
     },
     longitude: {

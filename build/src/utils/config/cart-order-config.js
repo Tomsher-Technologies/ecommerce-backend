@@ -4,7 +4,7 @@ exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProje
 const collections_1 = require("../../constants/collections");
 exports.cartLookup = {
     $lookup: {
-        from: 'cartorderproducts',
+        from: `${collections_1.collections.cart.cartorderproducts}`,
         localField: '_id',
         foreignField: 'cartId',
         as: 'products',
@@ -23,7 +23,7 @@ exports.couponLookup = {
         from: 'coupons',
         localField: 'couponId',
         foreignField: '_id',
-        as: 'couponId',
+        as: 'couponDetails',
     }
 };
 exports.objectLookup = {
@@ -157,6 +157,7 @@ exports.cartProject = {
 exports.cartDeatilProject = {
     $project: {
         _id: 1,
+        orderId: 1,
         customerId: 1,
         countryId: 1,
         couponId: 1,
@@ -204,6 +205,9 @@ exports.cartDeatilProject = {
         },
         shippingAddress: {
             $ifNull: ['$shippingAddress', null]
+        },
+        couponDetails: {
+            $ifNull: ['$couponDetails', null]
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]

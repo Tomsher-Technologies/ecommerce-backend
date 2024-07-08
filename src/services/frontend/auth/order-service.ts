@@ -1,11 +1,12 @@
 
-import {  frontendPagination, pagination } from '../../../components/pagination';
+import { frontendPagination, pagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues,  wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
-import {  productLookup} from '../../../utils/config/product-config';
+import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
+import { productLookup } from '../../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import {  objectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
+import { cartDeatilProject, cartLookup, cartProject, objectLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
+import { collections } from '../../../constants/collections';
 
 
 class CartService {
@@ -28,6 +29,8 @@ class CartService {
     async orderList(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
+        const { getAddress, getCartProducts } = options;
+
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -41,7 +44,7 @@ class CartService {
         // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
-                ...this.cartLookup.$lookup,
+                ...cartLookup.$lookup,
                 pipeline: [
                     productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -59,15 +62,15 @@ class CartService {
         };
 
         const pipeline: any[] = [
-            modifiedPipeline,
-            shippingAndBillingLookup('shippingId', 'shippingAddress'),
-            shippingAndBillingLookup('billingId', 'billingAddress'),
+            ...(getCartProducts === '1' ? [modifiedPipeline] : [cartLookup]),
+            ...(getAddress === '1' ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
+            ...(getAddress === '1' ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
             paymentMethodLookup,
-            objectLookup,
-            // cartProject,
-            { $match: query },
+            orderListObjectLookup,
 
+            { $match: query },
             { $sort: finalSort },
+            ...(getCartProducts === '1' ? [cartDeatilProject] : [cartProject]),
 
         ];
 

@@ -47,7 +47,6 @@ class CustomerWishlistCountryService {
             const offerProduct = (0, wishlist_config_1.wishlistOfferProductPopulation)(getOfferList, offerApplied.product);
             pipeline.push(offerProduct);
         }
-        console.log("pipeldssfsd", pipeline);
         pipeline.push({
             $addFields: {
                 'productDetails.offer': {

@@ -208,8 +208,10 @@ class OrdersController extends BaseController {
                     _id: new mongoose.Types.ObjectId(orderId)
                 },
                 getAddress: '1',
+                getCartProducts: '1',
                 hostName: req.get('origin'),
             })
+            console.log('orderDetails', orderDetails);
 
             if (orderDetails && orderDetails?.length > 0) {
                 return controller.sendSuccessResponse(res, {
@@ -217,13 +219,13 @@ class OrdersController extends BaseController {
                     message: 'Your Order is ready!'
                 });
             } else {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
                 });
             }
 
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 200, {
                 message: 'Order not fount'
             });
 
@@ -238,14 +240,14 @@ class OrdersController extends BaseController {
             const isValidStatus = orderStatusArray.some(status => status.value === orderStatus);
 
             if (!isValidStatus) {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Invalid order status'
                 });
             }
 
             const orderDetails: any = await CartOrdersModel.findById(orderId)
             if (!orderDetails) {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
                 });
             }

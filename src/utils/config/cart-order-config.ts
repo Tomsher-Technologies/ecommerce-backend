@@ -2,7 +2,7 @@ import { collections } from "../../constants/collections";
 
 export const cartLookup = {
     $lookup: {
-        from: 'cartorderproducts',
+        from: `${collections.cart.cartorderproducts}`,
         localField: '_id',
         foreignField: 'cartId',
         as: 'products',
@@ -25,7 +25,7 @@ export const couponLookup = {
         from: 'coupons',
         localField: 'couponId',
         foreignField: '_id',
-        as: 'couponId',
+        as: 'couponDetails',
 
     }
 };
@@ -172,6 +172,7 @@ export const cartProject = {
 export const cartDeatilProject = {
     $project: {
         _id: 1,
+        orderId: 1,
         customerId: 1,
         countryId: 1,
         couponId: 1,
@@ -219,6 +220,9 @@ export const cartDeatilProject = {
         },
         shippingAddress: {
             $ifNull: ['$shippingAddress', null]
+        },
+        couponDetails: {
+            $ifNull: ['$couponDetails', null]
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]

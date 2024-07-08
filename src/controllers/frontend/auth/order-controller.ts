@@ -16,11 +16,11 @@ class OrderController extends BaseController {
             const customerId: any = res.locals.user;
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
-                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
             const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
             if (!customerDetails) {
-                return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
+                return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
             }
 
             const order: any = await OrderService.orderList({
@@ -33,20 +33,25 @@ class OrderController extends BaseController {
 
                 },
                 hostName: req.get('origin'),
-            })
+                getCartProducts: '1',
+            });
+            console.log('order', order);
+
             if (order) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: order,
                     message: 'Your Order is ready!'
                 });
             } else {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
                 });
             }
 
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, {
+            console.log('error', error);
+
+            return controller.sendErrorResponse(res, 200, {
                 message: 'Order not fount'
             });
 
@@ -59,11 +64,11 @@ class OrderController extends BaseController {
 
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
-                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
             const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
             if (!customerDetails) {
-                return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
+                return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
             }
             //offer - specification
             const order: any = await OrderService.orderList({
@@ -77,6 +82,8 @@ class OrderController extends BaseController {
 
                 },
                 hostName: req.get('origin'),
+                getAddress: '1',
+                getCartProducts: '1',
             })
 
             if (order && order.length > 0) {
@@ -85,13 +92,13 @@ class OrderController extends BaseController {
                     message: 'Your Order is ready!'
                 });
             } else {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
                 });
             }
 
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 200, {
                 message: 'Order not fount'
             });
 
