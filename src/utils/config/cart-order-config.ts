@@ -12,7 +12,7 @@ export const cartLookup = {
 
 export const customerLookup = {
     $lookup: {
-        from: `${collections.customer.customer}`,
+        from: `${collections.customer.customers}`,
         localField: 'customerId',
         foreignField: '_id',
         as: 'customer',
