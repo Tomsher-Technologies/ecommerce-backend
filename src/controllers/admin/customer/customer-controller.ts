@@ -180,7 +180,7 @@ class CustomerController extends BaseController {
                                                         const newCustomer = await CustomerService.create(customerData);
                                                         if (newCustomer && data.addressBook) {
 
-                                                            const address = JSON.parse(jsonData[1].addressBook)[0]
+                                                            const address = JSON.parse(data.addressBook)[0]
                                                             if (address.fullName && address.phone && address.address1 && address.country && address.state && address.city) {
                                                                 var customerData: any = {
                                                                     customerId: newCustomer._id,
