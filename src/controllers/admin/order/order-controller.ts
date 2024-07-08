@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { calculateRewardPoints, calculateWalletRewardPoints, dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import OrderService from '../../../services/admin/order/order-service'
@@ -10,6 +10,10 @@ import mongoose from 'mongoose';
 import { OrderQueryParams } from '../../../utils/types/order';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';
 import { orderStatusArray, orderStatusMessages } from '../../../constants/cart';
+import CustomerWalletTransactionsModel from '../../../model/frontend/customer-wallet-transaction-model';
+import settingsService from '../../../services/admin/setup/settings-service';
+import { blockReferences, websiteSetup } from '../../../constants/website-setup';
+import { earnTypes } from '../../../constants/wallet';
 
 const controller = new BaseController();
 
@@ -290,6 +294,21 @@ class OrdersController extends BaseController {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+
+            // if (orderDetails.customerId) {
+            //     const walletsDetails = await settingsService.findOne({ countryId: orderDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
+
+            //     if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
+            //         console.log('walletsDetails', calculateWalletRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount));
+            //         // await CustomerWalletTransactionsModel.create({
+            //         //     customerId: orderDetails.customerId,
+            //         //     earnType: earnTypes.order,
+            //         //     walletAmount: walletsDetails.blockValues.orderAmount,
+            //         //     walletPoints: calculateRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount),
+            //         //     status: '1'
+            //         // });
+            //     }
+            // }
 
             orderDetails.orderStatus = orderStatus;
             switch (orderStatus) {

@@ -241,6 +241,19 @@ class OrdersController extends base_controller_1.default {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+            // if (orderDetails.customerId) {
+            //     const walletsDetails = await settingsService.findOne({ countryId: orderDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
+            //     if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
+            //         console.log('walletsDetails', calculateWalletRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount));
+            //         // await CustomerWalletTransactionsModel.create({
+            //         //     customerId: orderDetails.customerId,
+            //         //     earnType: earnTypes.order,
+            //         //     walletAmount: walletsDetails.blockValues.orderAmount,
+            //         //     walletPoints: calculateRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount),
+            //         //     status: '1'
+            //         // });
+            //     }
+            // }
             orderDetails.orderStatus = orderStatus;
             switch (orderStatus) {
                 case '1':
