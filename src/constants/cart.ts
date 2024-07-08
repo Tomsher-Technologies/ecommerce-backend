@@ -20,6 +20,22 @@ export const orderStatusArray = [
     { value: '13', label: "Pickup" }
 ];
 
+export const orderStatusMessages: { [key: string]: string }  = {
+    '1': 'Order received successfully!',
+    '2': 'Order is now being processed!',
+    '3': 'Order has been packed!',
+    '4': 'Order has been shipped!',
+    '5': 'Order has been delivered!',
+    '6': 'Order has been canceled!',
+    '7': 'Order has been returned!',
+    '8': 'Order has been refunded!',
+    '9': 'Order has been partially shipped!',
+    '10': 'Order is on hold!',
+    '11': 'Order has failed!',
+    '12': 'Order has been completed!',
+    '13': 'Order is ready for pickup!'
+};
+
 export const orderStatusMap = orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;
     return map;

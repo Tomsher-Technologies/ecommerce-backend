@@ -12,4 +12,5 @@ const router = express_1.default.Router();
 router.use(auth_middleware_1.default);
 router.get('/order-list', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders }), order_controller_1.default.findAll);
 router.get('/order-detail/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders }), order_controller_1.default.getOrderDetails);
+router.post('/order-status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders }), order_controller_1.default.orderStatusChange);
 exports.default = router;
