@@ -25,7 +25,7 @@ export const couponLookup = {
         from: 'coupons',
         localField: 'couponId',
         foreignField: '_id',
-        as: 'couponId',
+        as: 'couponDetails',
 
     }
 };
@@ -219,6 +219,9 @@ export const cartDeatilProject = {
         },
         shippingAddress: {
             $ifNull: ['$shippingAddress', null]
+        },
+        couponDetails: {
+            $ifNull: ['$couponDetails', null]
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]

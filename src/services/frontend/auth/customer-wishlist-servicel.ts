@@ -52,7 +52,6 @@ class CustomerWishlistCountryService {
             pipeline.push(offerProduct)
 
         }
-        console.log("pipeldssfsd", pipeline);
 
         pipeline.push({
             $addFields: {
