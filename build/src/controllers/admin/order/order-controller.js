@@ -169,8 +169,10 @@ class OrdersController extends base_controller_1.default {
                     _id: new mongoose_1.default.Types.ObjectId(orderId)
                 },
                 getAddress: '1',
+                getCartProducts: '1',
                 hostName: req.get('origin'),
             });
+            console.log('orderDetails', orderDetails);
             if (orderDetails && orderDetails?.length > 0) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: orderDetails[0],
@@ -178,13 +180,13 @@ class OrdersController extends base_controller_1.default {
                 });
             }
             else {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
                 });
             }
         }
         catch (error) {
-            return controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 200, {
                 message: 'Order not fount'
             });
         }
@@ -195,13 +197,13 @@ class OrdersController extends base_controller_1.default {
             const orderStatus = req.body.orderStatus;
             const isValidStatus = cart_1.orderStatusArray.some(status => status.value === orderStatus);
             if (!isValidStatus) {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Invalid order status'
                 });
             }
             const orderDetails = await cart_order_model_1.default.findById(orderId);
             if (!orderDetails) {
-                return controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
                 });
             }
@@ -239,6 +241,19 @@ class OrdersController extends base_controller_1.default {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+            // if (orderDetails.customerId) {
+            //     const walletsDetails = await settingsService.findOne({ countryId: orderDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
+            //     if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
+            //         console.log('walletsDetails', calculateWalletRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount));
+            //         // await CustomerWalletTransactionsModel.create({
+            //         //     customerId: orderDetails.customerId,
+            //         //     earnType: earnTypes.order,
+            //         //     walletAmount: walletsDetails.blockValues.orderAmount,
+            //         //     walletPoints: calculateRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount),
+            //         //     status: '1'
+            //         // });
+            //     }
+            // }
             orderDetails.orderStatus = orderStatus;
             switch (orderStatus) {
                 case '1':

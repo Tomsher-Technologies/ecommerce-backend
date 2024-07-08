@@ -4,7 +4,7 @@ exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProje
 const collections_1 = require("../../constants/collections");
 exports.cartLookup = {
     $lookup: {
-        from: 'cartorderproducts',
+        from: `${collections_1.collections.cart.cartorderproducts}`,
         localField: '_id',
         foreignField: 'cartId',
         as: 'products',
@@ -12,7 +12,7 @@ exports.cartLookup = {
 };
 exports.customerLookup = {
     $lookup: {
-        from: 'customers',
+        from: `${collections_1.collections.customer.customer}`,
         localField: 'customerId',
         foreignField: '_id',
         as: 'customer',
@@ -20,10 +20,10 @@ exports.customerLookup = {
 };
 exports.couponLookup = {
     $lookup: {
-        from: 'coupons',
+        from: `${collections_1.collections.marketing.coupons}`,
         localField: 'couponId',
         foreignField: '_id',
-        as: 'couponId',
+        as: 'couponDetails',
     }
 };
 exports.objectLookup = {
@@ -38,7 +38,7 @@ exports.objectLookup = {
 const shippingAndBillingLookup = (localField, alias) => [
     {
         $lookup: {
-            from: 'customeraddresses',
+            from: `${collections_1.collections.customer.customeraddresses}`,
             localField: localField,
             foreignField: '_id',
             as: alias
@@ -55,7 +55,7 @@ const shippingAndBillingLookup = (localField, alias) => [
 exports.shippingAndBillingLookup = shippingAndBillingLookup;
 exports.billingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections_1.collections.customer.customeraddresses}`,
         let: { billingId: '$billingId' },
         pipeline: [
             {
@@ -74,7 +74,7 @@ exports.billingLookup = {
 };
 exports.pickupStoreLookup = {
     $lookup: {
-        from: 'stores',
+        from: `${collections_1.collections.stores.stores}`,
         localField: 'pickupStoreId',
         foreignField: '_id',
         as: 'pickupStoreId',
@@ -82,7 +82,7 @@ exports.pickupStoreLookup = {
 };
 exports.paymentMethodLookup = {
     $lookup: {
-        from: 'paymentmethods',
+        from: `${collections_1.collections.cart.paymentmethods}`,
         localField: 'paymentMethodId',
         foreignField: '_id',
         as: 'paymentMethodId',
@@ -157,6 +157,7 @@ exports.cartProject = {
 exports.cartDeatilProject = {
     $project: {
         _id: 1,
+        orderId: 1,
         customerId: 1,
         countryId: 1,
         couponId: 1,
@@ -204,6 +205,9 @@ exports.cartDeatilProject = {
         },
         shippingAddress: {
             $ifNull: ['$shippingAddress', null]
+        },
+        couponDetails: {
+            $ifNull: ['$couponDetails', null]
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]

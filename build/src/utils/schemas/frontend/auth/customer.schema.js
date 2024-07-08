@@ -60,9 +60,7 @@ exports.customerAddressSchema = zod_1.z.object({
         message: "City is required"
     }),
     street: zod_1.z.string().optional(),
-    zipCode: zod_1.z.string({ required_error: "City is required" }).min(4, {
-        message: "City is required and min 4 chars"
-    }),
+    zipCode: zod_1.z.string().optional(),
     longitude: zod_1.z.union([
         zod_1.z.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
         zod_1.z.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Invalid longitude format" })

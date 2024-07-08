@@ -160,21 +160,8 @@ class CheckoutService {
                 }
             }
 
-            // if (cartDetails.customerId) {
-            //     const walletsDetails = await SettingsService.findOne({ countryId: cartDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
-            //     if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (Number(walletsDetails.blockValues.minimumOrderAmount) >= cartDetails?.totalAmount)) {
-            //         await CustomerWalletTransactionsModel.create({
-            //             customerId: cartDetails.customerId,
-            //             earnType: earnTypes.order,
-            //             walletAmount: walletsDetails.blockValues.orderAmount,
-            //             walletPoints: calculateRewardPoints(walletsDetails.blockValues, cartUpdate.totalAmount),
-            //             status: '1'
-            //         });
-            //     }
-            // }
-            const orderId = await this.getNextSequenceValue()
-            console.log('orderId', orderId);
-
+            const orderId = await this.getNextSequenceValue();
+            
             cartUpdate = {
                 ...cartUpdate,
                 orderId: orderId,

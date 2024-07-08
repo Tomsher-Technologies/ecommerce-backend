@@ -1,6 +1,8 @@
 import { frontendPagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { billingLookup, cartLookup, cartProject, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
+import { billingLookup, cartDeatilProject, cartLookup, cartProject, couponLookup, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
+import { productLookup } from '../../../utils/config/product-config';
+import { productVariantsLookupValues } from '../../../utils/config/wishlist-config';
 
 
 class OrderService {
@@ -11,7 +13,7 @@ class OrderService {
     async OrderList(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort } = frontendPagination(options.query || {}, options);
-        const { getAddress } = options;
+        const { getAddress, getCartProducts } = options;
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -19,10 +21,25 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        console.log('getAddress', getAddress);
+
+        const modifiedPipeline = {
+            $lookup: {
+                ...cartLookup.$lookup,
+                pipeline: [
+                    productLookup,
+                    // productBrandLookupValues,
+                    // { $unwind: { path: "$productDetails.brand", preserveNullAndEmptyArrays: true } },
+                    { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+                    productVariantsLookupValues("1"),
+                    // attributePipeline,
+                    { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+                ]
+            }
+        };
 
         const pipeline: any[] = [
-            cartLookup,
+            ...(getCartProducts === '1' ? [modifiedPipeline] : [cartLookup]),
+            ...(getCartProducts ? [couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
             paymentMethodLookup,
             customerLookup,
             orderListObjectLookup,
@@ -31,7 +48,7 @@ class OrderService {
 
             { $match: query },
             { $sort: finalSort },
-            cartProject
+            ...(getCartProducts === '1' ? [cartDeatilProject] : [cartProject]),
         ];
 
         if (skip) {
