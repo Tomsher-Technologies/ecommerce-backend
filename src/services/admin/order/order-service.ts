@@ -19,7 +19,6 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        console.log('getAddress', getAddress);
 
         const pipeline: any[] = [
             cartLookup,

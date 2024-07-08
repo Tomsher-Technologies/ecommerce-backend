@@ -101,7 +101,6 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
     },
     zipCode: {
         type: String,
-        required: false,
         trim: true
     },
     longitude: {
