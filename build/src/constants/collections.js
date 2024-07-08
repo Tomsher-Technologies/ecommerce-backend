@@ -26,7 +26,7 @@ exports.collections = {
     },
     multilanguagefieleds: 'multilanguagefieleds',
     customer: {
-        customer: 'customer',
+        customers: 'customers',
         wishlists: 'wishlists',
         customeraddresses: 'customeraddresses',
     },

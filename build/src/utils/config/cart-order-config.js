@@ -12,7 +12,7 @@ exports.cartLookup = {
 };
 exports.customerLookup = {
     $lookup: {
-        from: `${collections_1.collections.customer.customer}`,
+        from: `${collections_1.collections.customer.customers}`,
         localField: 'customerId',
         foreignField: '_id',
         as: 'customer',
