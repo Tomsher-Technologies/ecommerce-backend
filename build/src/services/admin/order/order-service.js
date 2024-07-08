@@ -6,21 +6,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
+const product_config_1 = require("../../../utils/config/product-config");
+const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 class OrderService {
     constructor() {
     }
     async OrderList(options) {
         const { query, skip, limit, sort } = (0, pagination_1.frontendPagination)(options.query || {}, options);
-        const { getAddress } = options;
+        const { getAddress, getCartProducts } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        console.log('getAddress', getAddress);
+        const modifiedPipeline = {
+            $lookup: {
+                ...cart_order_config_1.cartLookup.$lookup,
+                pipeline: [
+                    product_config_1.productLookup,
+                    // productBrandLookupValues,
+                    // { $unwind: { path: "$productDetails.brand", preserveNullAndEmptyArrays: true } },
+                    { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+                    (0, wishlist_config_1.productVariantsLookupValues)("1"),
+                    // attributePipeline,
+                    { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+                ]
+            }
+        };
         const pipeline = [
-            cart_order_config_1.cartLookup,
+            ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
+            ...(getCartProducts ? [cart_order_config_1.couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
             cart_order_config_1.paymentMethodLookup,
             cart_order_config_1.customerLookup,
             cart_order_config_1.orderListObjectLookup,
@@ -28,7 +44,7 @@ class OrderService {
             ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
             { $match: query },
             { $sort: finalSort },
-            cart_order_config_1.cartProject
+            ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
         ];
         if (skip) {
             pipeline.push({ $skip: skip });

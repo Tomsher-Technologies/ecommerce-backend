@@ -23,6 +23,7 @@ class CartService {
     }
     async orderList(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
+        const { getAddress, getCartProducts } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -34,7 +35,7 @@ class CartService {
         // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
-                ...this.cartLookup.$lookup,
+                ...cart_order_config_1.cartLookup.$lookup,
                 pipeline: [
                     product_config_1.productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -50,14 +51,14 @@ class CartService {
             }
         };
         const pipeline = [
-            modifiedPipeline,
-            (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress'),
-            (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress'),
+            ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
+            ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
+            ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
             cart_order_config_1.paymentMethodLookup,
-            cart_order_config_1.objectLookup,
-            // cartProject,
+            cart_order_config_1.orderListObjectLookup,
             { $match: query },
             { $sort: finalSort },
+            ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
         ];
         if (skip) {
             pipeline.push({ $skip: skip });
