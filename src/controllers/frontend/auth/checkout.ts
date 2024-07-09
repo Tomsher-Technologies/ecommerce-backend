@@ -136,9 +136,10 @@ class CheckoutController extends BaseController {
 
                             const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
 
-                            if (tabbyResponse) {
+                            if (tabbyResponse && tabbyResponse.payment) {
                                 const paymentTransaction = await PaymentTransactionModel.create({
                                     transactionId: tabbyResponse.id,
+                                    paymentId: tabbyResponse.payment.id,
                                     orderId: cartDetails._id,
                                     data: JSON.stringify(tabbyResponse),
                                     orderStatus: orderPaymentStatus.pending, // Pending
@@ -218,7 +219,6 @@ class CheckoutController extends BaseController {
             }
 
             const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId, paymentMethod.paymentMethodValues);
-            console.log('tabbyResponsetabbyResponse', tabbyResponse);
 
             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
                 const customerId: any = res.locals.user._id;
@@ -229,7 +229,6 @@ class CheckoutController extends BaseController {
                             { countryId: countryData._id },
                             { cartStatus: "1" }
                         ],
-
                     },
                     hostName: req.get('origin'),
                 })
@@ -260,6 +259,7 @@ class CheckoutController extends BaseController {
         const tapResponse = await tapPaymentRetrieve(tap_id);
         if (tapResponse.status) {
             const retValResponse = await CheckoutService.paymentResponse({
+                paymentMethod: paymentMethods.tap,
                 transactionId: tap_id, allPaymentResponseData: data,
                 paymentStatus: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
                     orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
@@ -292,7 +292,8 @@ class CheckoutController extends BaseController {
         console.log('tabbyResponse', tabbyResponse);
         if (tabbyResponse.status) {
             const retValResponse = await CheckoutService.paymentResponse({
-                transactionId: payment_id, allPaymentResponseData: null,
+                paymentMethod: paymentMethods.tabby,
+                paymentId: payment_id, allPaymentResponseData: null,
                 paymentStatus: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
                     orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : orderPaymentStatus.expired)
             });

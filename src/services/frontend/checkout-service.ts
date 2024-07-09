@@ -1,4 +1,4 @@
-import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap } from "../../constants/cart";
+import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, paymentMethods } from "../../constants/cart";
 import { DiscountType, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
@@ -11,8 +11,8 @@ import PaymentTransactionModel from "../../model/frontend/payment-transaction-mo
 class CheckoutService {
 
     async paymentResponse(options: any = {}): Promise<any> {
-        const { transactionId, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails = await PaymentTransactionModel.findOne({ transactionId });
+        const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
+        const paymentDetails = await PaymentTransactionModel.findOne({ ...(paymentMethod === paymentMethods.tabby ? paymentId : transactionId) });
         console.log('paymentDetails', paymentDetails);
         console.log('options', options);
 

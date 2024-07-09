@@ -121,9 +121,10 @@ class CheckoutController extends base_controller_1.default {
                                 products: cartDetails?.products
                             }, customerDetails, paymentMethod, shippingAddressDetails);
                             const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentCreate)(tabbyDefaultValues, paymentMethod.paymentMethodValues);
-                            if (tabbyResponse) {
+                            if (tabbyResponse && tabbyResponse.payment) {
                                 const paymentTransaction = await payment_transaction_model_1.default.create({
                                     transactionId: tabbyResponse.id,
+                                    paymentId: tabbyResponse.payment.id,
                                     orderId: cartDetails._id,
                                     data: JSON.stringify(tabbyResponse),
                                     orderStatus: cart_1.orderPaymentStatus.pending, // Pending
@@ -199,7 +200,6 @@ class CheckoutController extends base_controller_1.default {
                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
             }
             const tabbyResponse = await (0, tabby_payment_1.tabbyCheckoutRetrieve)(tabbyId, paymentMethod.paymentMethodValues);
-            console.log('tabbyResponsetabbyResponse', tabbyResponse);
             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
                 const customerId = res.locals.user._id;
                 const cartDetails = await cart_service_1.default.findCartPopulate({
@@ -237,6 +237,7 @@ class CheckoutController extends base_controller_1.default {
         const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id);
         if (tapResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
+                paymentMethod: cart_1.paymentMethods.tap,
                 transactionId: tap_id, allPaymentResponseData: data,
                 paymentStatus: (tapResponse.status === cart_1.tapPaymentGatwayStatus.authorized || tapResponse.status === cart_1.tapPaymentGatwayStatus.captured) ?
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
@@ -269,7 +270,8 @@ class CheckoutController extends base_controller_1.default {
         console.log('tabbyResponse', tabbyResponse);
         if (tabbyResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
-                transactionId: payment_id, allPaymentResponseData: null,
+                paymentMethod: cart_1.paymentMethods.tabby,
+                paymentId: payment_id, allPaymentResponseData: null,
                 paymentStatus: (tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.closed) ?
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });

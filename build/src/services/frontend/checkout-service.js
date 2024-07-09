@@ -13,8 +13,8 @@ const cart_order_model_1 = __importDefault(require("../../model/frontend/cart-or
 const payment_transaction_model_1 = __importDefault(require("../../model/frontend/payment-transaction-model"));
 class CheckoutService {
     async paymentResponse(options = {}) {
-        const { transactionId, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails = await payment_transaction_model_1.default.findOne({ transactionId });
+        const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
+        const paymentDetails = await payment_transaction_model_1.default.findOne({ ...(paymentMethod === cart_1.paymentMethods.tabby ? paymentId : transactionId) });
         console.log('paymentDetails', paymentDetails);
         console.log('options', options);
         if (!paymentDetails) {
