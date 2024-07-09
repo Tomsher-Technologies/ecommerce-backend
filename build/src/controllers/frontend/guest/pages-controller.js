@@ -16,6 +16,8 @@ class PageController extends base_controller_1.default {
             if ((0, helpers_1.checkValueExists)(website_setup_1.blockReferences, pageSlug)) {
                 let query = { _id: { $exists: true } };
                 const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                console.log('countryId', countryId);
+                // let countryId = await CommonService.findOneCountrySubDomainWithId(hostName);
                 if (countryId) {
                     query = {
                         ...query,
