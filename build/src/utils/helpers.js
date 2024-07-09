@@ -289,11 +289,6 @@ function calculateWalletRewardPoints(wallet, totalOrderAmount) {
     const redeemPoints = Number(wallet.redeemPoints);
     const orderAmount = Number(wallet.orderAmount);
     const minimumOrderAmount = Number(wallet.minimumOrderAmount);
-    console.log('redeemAmount:', redeemAmount);
-    console.log('redeemPoints:', redeemPoints);
-    console.log('orderAmount:', orderAmount);
-    console.log('minimumOrderAmount:', minimumOrderAmount);
-    console.log('totalOrderAmount:', totalOrderAmount);
     if (isNaN(redeemAmount) || isNaN(redeemPoints) || isNaN(orderAmount) || isNaN(minimumOrderAmount) || redeemAmount <= 0 || redeemPoints <= 0 || totalOrderAmount < minimumOrderAmount) {
         console.log('Invalid input values or totalOrderAmount is less than minimumOrderAmount');
         return { rewardPoints: 0, redeemableAmount: 0 };
@@ -301,16 +296,13 @@ function calculateWalletRewardPoints(wallet, totalOrderAmount) {
     let rewardPoints = 0;
     let redeemableAmount = 0;
     if (wallet.walletType === 'flat') {
-        const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
-        rewardPoints = numberOfTimesRedeemable * redeemPoints;
-        redeemableAmount = numberOfTimesRedeemable * orderAmount;
+        rewardPoints = (totalOrderAmount / orderAmount) * redeemPoints;
+        redeemableAmount = (totalOrderAmount / orderAmount) * redeemAmount;
     }
     else if (wallet.walletType === 'percent') {
         redeemableAmount = (totalOrderAmount * redeemAmount) / 100;
         rewardPoints = (redeemableAmount * redeemPoints) / redeemAmount;
     }
-    console.log('rewardPoints:', rewardPoints);
-    console.log('redeemableAmount:', redeemableAmount);
-    return { rewardPoints, redeemableAmount };
+    return { rewardPoints: Math.floor(rewardPoints), redeemableAmount: Number(redeemableAmount?.toFixed(2)) };
 }
 exports.calculateWalletRewardPoints = calculateWalletRewardPoints;

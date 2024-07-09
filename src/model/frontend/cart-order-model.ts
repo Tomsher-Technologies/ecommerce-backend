@@ -13,6 +13,7 @@ export interface CartOrderProps extends Document {
     couponId: Schema.Types.ObjectId;
     paymentMethodCharge: number;
     rewardPoints: number;
+    rewardAmount: number;
     totalProductAmount: number //productprice*quantity
     totalReturnedProduct: number;
     totalDiscountAmount: number;
@@ -100,6 +101,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         default: 0
     },
     rewardPoints: {
+        type: Number,
+        default: 0
+    },
+    rewardAmount: {
         type: Number,
         default: 0
     },
