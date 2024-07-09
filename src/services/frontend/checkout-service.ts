@@ -7,13 +7,12 @@ import ProductsModel from "../../model/admin/ecommerce/product-model";
 import ProductCategoryLinkModel from "../../model/admin/ecommerce/product/product-category-link-model";
 import CartOrdersModel from "../../model/frontend/cart-order-model";
 import PaymentTransactionModel from "../../model/frontend/payment-transaction-model";
-import mongoose from "mongoose";
 
 class CheckoutService {
 
     async paymentResponse(options: any = {}): Promise<any> {
         const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails: any = await PaymentTransactionModel.findOne(
+        const paymentDetails = await PaymentTransactionModel.findOne(
             paymentMethod === paymentMethods.tabby ? { paymentId } : { transactionId }
         );
 
@@ -23,10 +22,7 @@ class CheckoutService {
                 message: 'Payment transactions not found'
             }
         }
-        console.log('paymentDetails', paymentDetails);
         const cartDetails: any = await CartOrdersModel.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" })
-        const newcartDetails: any = await CartOrdersModel.findOne({ _id: new mongoose.Types.ObjectId(paymentDetails?.orderId) })
-        console.log('cartDetails', newcartDetails);
 
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
