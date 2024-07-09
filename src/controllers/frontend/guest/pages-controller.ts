@@ -18,7 +18,6 @@ class PageController extends BaseController {
 
                 let query: any = { _id: { $exists: true } };
                 const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-                console.log('countryId', countryId);
 
                 // let countryId = await CommonService.findOneCountrySubDomainWithId(hostName);
                 if (countryId) {
