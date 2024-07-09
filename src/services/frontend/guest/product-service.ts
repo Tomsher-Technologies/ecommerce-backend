@@ -501,17 +501,17 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     let query
-                    for await (let data of collections.collectionsProducts) {
-                        query = {
-                            _id: { $in: [new mongoose.Types.ObjectId(data)] },
-                            status: "1"
-                        }
-                        // const language: any = await this.productLanguage(hostName)
-                        // const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
-                        // if (result && result.length > 0) {
-                        //     productData.push(result[0])
-                        // }
-                    }
+                    const objectIds = collections.collectionsProducts.map((id: any) => new mongoose.Types.ObjectId(id));
+
+                    // Construct the query
+                    query = {
+                        _id: { $in: objectIds },
+                        status: "1"
+                    };
+
+
+                    console.log("//////////////", query);
+
                     pipeline.push({
                         $match: query
                     })
