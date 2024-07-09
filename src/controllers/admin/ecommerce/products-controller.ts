@@ -570,7 +570,7 @@ class ProductsController extends BaseController {
                                                                     //     validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
                                                                     // }
                                                                     galleryImageArray.push({
-                                                                        galleryImageUrl: '/public/uploads/product/' + productImage,
+                                                                        galleryImageUrl: productImage,
                                                                     });
                                                                 }
 

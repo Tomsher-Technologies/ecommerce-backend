@@ -424,8 +424,8 @@ exports.productExcelSchema = zod_1.z.object({
     SKU: zod_1.z.any().optional(), // Assuming SKU is a string of digits
     Item_Type: zod_1.z.string(),
     Category: zod_1.z.string(),
-    Image: zod_1.z.string().url(),
-    Gallery_Image_1: zod_1.z.string().url().optional(),
+    Image: zod_1.z.string(),
+    Gallery_Image_1: zod_1.z.string().optional(),
     Unit: zod_1.z.any().optional(),
     Weight: zod_1.z.any().optional(),
     Brand: zod_1.z.string(),

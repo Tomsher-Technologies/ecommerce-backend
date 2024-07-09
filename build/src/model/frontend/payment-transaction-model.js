@@ -28,11 +28,15 @@ const paymentTransactionSchema = new mongoose_1.Schema({
     orderId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'CartOrders',
-        default: null
+        required: true,
     },
     transactionId: {
         type: String,
         required: true,
+    },
+    paymentId: {
+        type: String,
+        default: null
     },
     data: {
         type: mongoose_1.Schema.Types.Mixed,
