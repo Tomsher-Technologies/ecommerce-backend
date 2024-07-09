@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+// const ejs = require('ejs');
 const auth_schema_1 = require("../../../utils/schemas/frontend/guest/auth-schema");
 const helpers_1 = require("../../../utils/helpers");
 const website_setup_1 = require("../../../constants/website-setup");
@@ -16,10 +17,7 @@ const customers_model_1 = __importDefault(require("../../../model/frontend/custo
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const customer_wallet_transaction_model_1 = __importDefault(require("../../../model/frontend/customer-wallet-transaction-model"));
 const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
-const mail_chimp_sms_gateway_1 = require("../../../lib/mail-chimp-sms-gateway");
-const path_1 = __importDefault(require("path"));
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
-const ejs = require('ejs');
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
@@ -93,13 +91,13 @@ class GuestController extends base_controller_1.default {
                     // })
                     // console.log("sendOtp", sendOtp);
                     const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
-                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err, data) => {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(newCustomer, data);
-                    });
+                    // const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
+                    //     if (err) {
+                    //         console.log(err);
+                    //         return;
+                    //     }
+                    //     const sendEmail = await mailChimpEmailGateway(newCustomer, data)
+                    // })
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: newCustomer._id,
@@ -292,13 +290,13 @@ class GuestController extends base_controller_1.default {
                         if (optUpdatedCustomer) {
                             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                             const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
-                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err, data) => {
-                                if (err) {
-                                    console.log(err);
-                                    return;
-                                }
-                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(optUpdatedCustomer, data);
-                            });
+                            // const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
+                            //     if (err) {
+                            //         console.log(err);
+                            //         return;
+                            //     }
+                            //     const sendEmail = await mailChimpEmailGateway(optUpdatedCustomer, data)
+                            // })
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: optUpdatedCustomer._id,
