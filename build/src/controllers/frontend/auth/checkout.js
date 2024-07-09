@@ -125,7 +125,7 @@ class CheckoutController extends base_controller_1.default {
                                 const paymentTransaction = await payment_transaction_model_1.default.create({
                                     transactionId: tabbyResponse.id,
                                     orderId: cartDetails._id,
-                                    data: '',
+                                    data: JSON.stringify(tabbyResponse),
                                     orderStatus: cart_1.orderPaymentStatus.pending, // Pending
                                     createdAt: new Date(),
                                 });
@@ -199,6 +199,7 @@ class CheckoutController extends base_controller_1.default {
                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
             }
             const tabbyResponse = await (0, tabby_payment_1.tabbyCheckoutRetrieve)(tabbyId, paymentMethod.paymentMethodValues);
+            console.log('tabbyResponsetabbyResponse', tabbyResponse);
             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
                 const customerId = res.locals.user._id;
                 const cartDetails = await cart_service_1.default.findCartPopulate({

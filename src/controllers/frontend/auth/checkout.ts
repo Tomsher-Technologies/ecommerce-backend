@@ -140,7 +140,7 @@ class CheckoutController extends BaseController {
                                 const paymentTransaction = await PaymentTransactionModel.create({
                                     transactionId: tabbyResponse.id,
                                     orderId: cartDetails._id,
-                                    data: '',
+                                    data: JSON.stringify(tabbyResponse),
                                     orderStatus: orderPaymentStatus.pending, // Pending
                                     createdAt: new Date(),
                                 });
@@ -218,6 +218,8 @@ class CheckoutController extends BaseController {
             }
 
             const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId, paymentMethod.paymentMethodValues);
+            console.log('tabbyResponsetabbyResponse', tabbyResponse);
+
             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
                 const customerId: any = res.locals.user._id;
                 const cartDetails: any = await CartService.findCartPopulate({
