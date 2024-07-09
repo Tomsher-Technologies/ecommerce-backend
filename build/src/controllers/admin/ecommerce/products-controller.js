@@ -25,7 +25,6 @@ const country_service_1 = __importDefault(require("../../../services/admin/setup
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const attributes_service_1 = __importDefault(require("../../../services/admin/ecommerce/attributes-service"));
 const products_1 = require("../../../utils/admin/products");
-const helpers_2 = require("../../../utils/helpers");
 const specification_service_1 = __importDefault(require("../../../services/admin/ecommerce/specification-service"));
 const products_2 = require("../../../constants/admin/excel/products");
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
@@ -391,10 +390,10 @@ class ProductsController extends base_controller_1.default {
                                 }
                                 for await (let data of jsonData) {
                                     const imageUrl = data.Image;
-                                    const productImage = await (0, helpers_2.uploadImageFromUrl)(imageUrl);
-                                    if (productImage == null) {
-                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index });
-                                    }
+                                    // const productImage: any = await uploadImageFromUrl(imageUrl)
+                                    // if (productImage == null) {
+                                    //     validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
+                                    // }
                                     if (data.Product_Title) {
                                         if (data.Description) {
                                             if (data.SKU) {
@@ -419,6 +418,7 @@ class ProductsController extends base_controller_1.default {
                                                                     countryData = await country_service_1.default.findCountryId({ countryTitle: data.Country });
                                                                     if (countryData) {
                                                                         countryId = countryData._id;
+                                                                        console.log("66666666666666666", countryId);
                                                                     }
                                                                 }
                                                                 if (data.Warehouse) {
@@ -498,10 +498,11 @@ class ProductsController extends base_controller_1.default {
                                                                 }
                                                                 const galleryImageArray = [];
                                                                 for (let i = 0; i < galleryImage.length; i++) {
-                                                                    const productImage = await (0, helpers_2.uploadImageFromUrl)(data[galleryImage[i]]);
-                                                                    if (productImage == null) {
-                                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index });
-                                                                    }
+                                                                    // const productImage: any = await uploadImageFromUrl(data[galleryImage[i]])
+                                                                    const productImage = data[galleryImage[i]];
+                                                                    // if (productImage == null) {
+                                                                    //     validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
+                                                                    // }
                                                                     galleryImageArray.push({
                                                                         galleryImageUrl: '/public/uploads/product/' + productImage,
                                                                     });
@@ -509,7 +510,7 @@ class ProductsController extends base_controller_1.default {
                                                                 var finalData = {
                                                                     productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                     slug: (0, helpers_1.slugify)(data.Product_Title),
-                                                                    productImageUrl: productImage ? '/public/uploads/product/' + productImage : '',
+                                                                    productImageUrl: data.Image,
                                                                     isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                     description: data.Description,
                                                                     longDescription: data.Long_Description,
@@ -538,7 +539,7 @@ class ProductsController extends base_controller_1.default {
                                                                 };
                                                                 const userData = res.locals.user;
                                                                 var productVariants = {
-                                                                    countryId: data.country ? countryId : await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
+                                                                    countryId: data.Country ? countryId : await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
                                                                     extraProductTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                     // slug: slugify(slugData),
                                                                     variantSku: data.SKU,
@@ -552,6 +553,7 @@ class ProductsController extends base_controller_1.default {
                                                                     isDefault: data.Is_Default ? data.Is_Default : 0,
                                                                     isExcel: true
                                                                 };
+                                                                // console.log("productVariantsproductVariants", productVariants);
                                                                 const shortTitleOfCountry = await country_model_1.default.findOne({ _id: await (0, helpers_1.getCountryIdWithSuperAdmin)(userData) });
                                                                 var countryForSlug;
                                                                 if (countryData && countryData.countryShortTitle) {
