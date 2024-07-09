@@ -34,25 +34,16 @@ const customerWalletTransactionsSchema = new mongoose_1.Schema({
     referredCustomerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'Customer',
-        // required: function(this: CustomerWalletTransactionsProps): boolean {
-        //     return this.referredCode !== '';
-        // },
         default: null
     },
     referrerCustomerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'Customer',
-        // required: function(this: CustomerWalletTransactionsProps): boolean {
-        //     return this.referredCode !== '';
-        // },
         default: null
     },
     orderId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'CartOrders',
-        required: function () {
-            return this.referredCode === '';
-        },
         default: null
     },
     earnType: {
@@ -95,19 +86,21 @@ customerWalletTransactionsSchema.pre('save', function (next) {
     if (!this.createdAt) {
         this.createdAt = now;
     }
+    // Conditional validation for orderId
+    if (!this.orderId && !this.referredCustomerId && !this.referredCode) {
+        return next(new Error('Either orderId or (referredCustomerId and referredCode) must be provided'));
+    }
+    // Conditional validation for referredCustomerId and referredCode
+    if (this.referredCustomerId && !this.referredCode) {
+        return next(new Error('referredCode must be provided when referredCustomerId is provided'));
+    }
     next();
 });
 customerWalletTransactionsSchema.path('orderId').validate(function (value) {
-    if (!value && !this.referredCode) {
-        throw new Error('Either orderId or referredCode must be provided');
+    if (!value && !this.referredCode && !this.referredCustomerId) {
+        throw new Error('Either orderId or (referredCustomerId and referredCode) must be provided');
     }
     return true;
-}, 'Either orderId or referredCode must be provided');
-customerWalletTransactionsSchema.path('referredCustomerId').validate(function (value) {
-    if (!value && !this.referredCode) {
-        throw new Error('Either referredCustomerId or referredCode must be provided');
-    }
-    return true;
-}, 'Either referredCustomerId or referredCode must be provided');
+}, 'Either orderId or (referredCustomerId and referredCode) must be provided');
 const CustomerWalletTransactionsModel = mongoose_1.default.model('CustomerWalletTransactions', customerWalletTransactionsSchema);
 exports.default = CustomerWalletTransactionsModel;

@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from 'mongoose';
-
 import { earnTypes } from '../../constants/wallet';
 
 export interface CustomerWalletTransactionsProps extends Document {
@@ -25,26 +24,17 @@ const customerWalletTransactionsSchema: Schema<CustomerWalletTransactionsProps> 
     referredCustomerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',
-        // required: function(this: CustomerWalletTransactionsProps): boolean {
-        //     return this.referredCode !== '';
-        // },
         default: null
     },
     referrerCustomerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',
-        // required: function(this: CustomerWalletTransactionsProps): boolean {
-        //     return this.referredCode !== '';
-        // },
         default: null
     },
     orderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CartOrders',
-        required: function(this: CustomerWalletTransactionsProps): boolean {
-            return this.referredCode === '';
-        },
-        default: null 
+        default: null
     },
     earnType: {
         type: String,
@@ -67,7 +57,7 @@ const customerWalletTransactionsSchema: Schema<CustomerWalletTransactionsProps> 
         type: Number,
         required: true
     },
-    status: {
+    status: { // 0 - pending, 1 - approved, 3 - rejcted
         type: String,
         required: true
     },
@@ -87,22 +77,26 @@ customerWalletTransactionsSchema.pre('save', function(next) {
     if (!this.createdAt) {
         this.createdAt = now;
     }
+
+    // Conditional validation for orderId
+    if (!this.orderId && !this.referredCustomerId && !this.referredCode) {
+        return next(new Error('Either orderId or (referredCustomerId and referredCode) must be provided'));
+    }
+
+    // Conditional validation for referredCustomerId and referredCode
+    if (this.referredCustomerId && !this.referredCode) {
+        return next(new Error('referredCode must be provided when referredCustomerId is provided'));
+    }
+
     next();
 });
 
 customerWalletTransactionsSchema.path('orderId').validate(function(value) {
-    if (!value && !this.referredCode) {
-        throw new Error('Either orderId or referredCode must be provided');
+    if (!value && !this.referredCode && !this.referredCustomerId) {
+        throw new Error('Either orderId or (referredCustomerId and referredCode) must be provided');
     }
     return true;
-}, 'Either orderId or referredCode must be provided');
-
-customerWalletTransactionsSchema.path('referredCustomerId').validate(function(value) {
-    if (!value && !this.referredCode) {
-        throw new Error('Either referredCustomerId or referredCode must be provided');
-    }
-    return true;
-}, 'Either referredCustomerId or referredCode must be provided');
+}, 'Either orderId or (referredCustomerId and referredCode) must be provided');
 
 const CustomerWalletTransactionsModel = mongoose.model<CustomerWalletTransactionsProps>('CustomerWalletTransactions', customerWalletTransactionsSchema);
 
