@@ -46,6 +46,7 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
             }
         }
+        console.log("limit", limit);
         const modifiedPipeline = {
             $lookup: {
                 from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
@@ -83,8 +84,6 @@ class ProductService {
                     ]
                 }
             },
-            ...(skip ? [{ $skip: skip }] : []),
-            ...(limit ? [{ $limit: limit }] : []),
         ];
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName, countryId);
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
@@ -131,6 +130,7 @@ class ProductService {
                 //     productData = collectionData.productData
                 // }
                 // productData = collectionData
+                collectionData.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
                 const lastPipelineModification = await this.productLanguage(hostName, collectionData);
                 productData = await product_model_1.default.aggregate(lastPipelineModification).exec();
             }
@@ -139,6 +139,7 @@ class ProductService {
             // }
         }
         else {
+            pipeline.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
             const lastPipelineModification = await this.productLanguage(hostName, pipeline);
             productData = await product_model_1.default.aggregate(lastPipelineModification).exec();
         }
@@ -462,17 +463,13 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     let query;
-                    for await (let data of collections.collectionsProducts) {
-                        query = {
-                            _id: { $in: [new mongoose_1.default.Types.ObjectId(data)] },
-                            status: "1"
-                        };
-                        // const language: any = await this.productLanguage(hostName)
-                        // const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
-                        // if (result && result.length > 0) {
-                        //     productData.push(result[0])
-                        // }
-                    }
+                    const objectIds = collections.collectionsProducts.map((id) => new mongoose_1.default.Types.ObjectId(id));
+                    // Construct the query
+                    query = {
+                        _id: { $in: objectIds },
+                        status: "1"
+                    };
+                    console.log("//////////////", query);
                     pipeline.push({
                         $match: query
                     });
