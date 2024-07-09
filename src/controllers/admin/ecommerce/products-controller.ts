@@ -723,7 +723,7 @@ class ProductsController extends BaseController {
                                                                                     ...productVariants,
                                                                                     slug: slugify(slugData)
                                                                                 }
-                                                                                const variant = await ProductVariantService.find({ slug: productVariants.slug })
+                                                                                const variant = await ProductVariantService.find({ slug: productVariants.slug, countryId: countryId })
                                                                                 if (!variant) {
                                                                                     const createVariant = await ProductVariantService.create(product._id, productVariants, userData)
                                                                                     if (createVariant) {

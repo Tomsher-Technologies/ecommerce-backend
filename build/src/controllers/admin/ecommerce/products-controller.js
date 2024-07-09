@@ -648,7 +648,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 ...productVariants,
                                                                                 slug: (0, helpers_1.slugify)(slugData)
                                                                             };
-                                                                            const variant = await product_variant_service_1.default.find({ slug: productVariants.slug });
+                                                                            const variant = await product_variant_service_1.default.find({ slug: productVariants.slug, countryId: countryId });
                                                                             if (!variant) {
                                                                                 const createVariant = await product_variant_service_1.default.create(product._id, productVariants, userData);
                                                                                 if (createVariant) {
