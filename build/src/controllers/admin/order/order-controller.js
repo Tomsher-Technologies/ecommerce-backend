@@ -10,6 +10,8 @@ const order_service_1 = __importDefault(require("../../../services/admin/order/o
 const mongoose_1 = __importDefault(require("mongoose"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_1 = require("../../../constants/cart");
+const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
+const website_setup_1 = require("../../../constants/website-setup");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -207,53 +209,53 @@ class OrdersController extends base_controller_1.default {
                     message: 'Order not fount'
                 });
             }
-            // Ensure that the order cannot go back to a previous status once delivered
-            if (orderDetails.orderStatus === '5' && ["1", "2", "3", "4", "9", "10", "13"].includes(orderStatus)) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Cannot change the status back to a previous state once delivered'
-                });
-            }
-            // Ensure that the order cannot be changed to Canceled after Delivered
-            if (orderDetails.orderStatus === '5' && orderStatus === '6') {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Cannot change the status to Canceled once delivered'
-                });
-            }
-            // Ensure that Returned status is only possible after Delivered
-            if (orderStatus === '7' && orderDetails.orderStatus !== '5') {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Returned status is only possible after Delivered'
-                });
-            }
-            if (orderStatus === '8' && orderDetails.orderStatus !== '7') {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Refunded status is only possible after Returned'
-                });
-            }
-            if (orderStatus === '12' && orderDetails.orderStatus !== '5') {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Completed status is only possible after Delivered'
-                });
-            }
-            // Ensure that the order cannot be changed from Completed to any other status
-            if (orderDetails.orderStatus === '12') {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Cannot change the status once it is completed'
-                });
-            }
-            // if (orderDetails.customerId) {
-            //     const walletsDetails = await settingsService.findOne({ countryId: orderDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
-            //     if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
-            //         console.log('walletsDetails', calculateWalletRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount));
-            //         // await CustomerWalletTransactionsModel.create({
-            //         //     customerId: orderDetails.customerId,
-            //         //     earnType: earnTypes.order,
-            //         //     walletAmount: walletsDetails.blockValues.orderAmount,
-            //         //     walletPoints: calculateRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount),
-            //         //     status: '1'
-            //         // });
-            //     }
+            // // Ensure that the order cannot go back to a previous status once delivered
+            // if (orderDetails.orderStatus === '5' && ["1", "2", "3", "4", "9", "10", "13"].includes(orderStatus)) {
+            //     return controller.sendErrorResponse(res, 200, {
+            //         message: 'Cannot change the status back to a previous state once delivered'
+            //     });
             // }
+            // // Ensure that the order cannot be changed to Canceled after Delivered
+            // if (orderDetails.orderStatus === '5' && orderStatus === '6') {
+            //     return controller.sendErrorResponse(res, 200, {
+            //         message: 'Cannot change the status to Canceled once delivered'
+            //     });
+            // }
+            // // Ensure that Returned status is only possible after Delivered
+            // if (orderStatus === '7' && orderDetails.orderStatus !== '5') {
+            //     return controller.sendErrorResponse(res, 200, {
+            //         message: 'Returned status is only possible after Delivered'
+            //     });
+            // }
+            // if (orderStatus === '8' && orderDetails.orderStatus !== '7') {
+            //     return controller.sendErrorResponse(res, 200, {
+            //         message: 'Refunded status is only possible after Returned'
+            //     });
+            // }
+            // if (orderStatus === '12' && orderDetails.orderStatus !== '5') {
+            //     return controller.sendErrorResponse(res, 200, {
+            //         message: 'Completed status is only possible after Delivered'
+            //     });
+            // }
+            // // Ensure that the order cannot be changed from Completed to any other status
+            // if (orderDetails.orderStatus === '12') {
+            //     return controller.sendErrorResponse(res, 200, {
+            //         message: 'Cannot change the status once it is completed'
+            //     });
+            // }
+            if (orderDetails.customerId) {
+                const walletsDetails = await settings_service_1.default.findOne({ countryId: orderDetails.countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.wallets });
+                if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
+                    console.log('walletsDetails', (0, helpers_1.calculateWalletRewardPoints)(walletsDetails.blockValues, orderDetails.totalAmount));
+                    // await CustomerWalletTransactionsModel.create({
+                    //     customerId: orderDetails.customerId,
+                    //     earnType: earnTypes.order,
+                    //     walletAmount: walletsDetails.blockValues.orderAmount,
+                    //     walletPoints: calculateRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount),
+                    //     status: '1'
+                    // });
+                }
+            }
             orderDetails.orderStatus = orderStatus;
             switch (orderStatus) {
                 case '1':
