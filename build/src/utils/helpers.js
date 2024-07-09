@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateWalletRewardPoints = exports.calculateRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -281,42 +281,29 @@ const calculateTotalDiscountAmountDifference = (totalAmount, discountType, disco
     return discountAmount;
 };
 exports.calculateTotalDiscountAmountDifference = calculateTotalDiscountAmountDifference;
-function calculateRewardPoints(wallet, totalOrderAmount) {
-    if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
-        return 0;
-    }
-    const orderAmount = Number(wallet.orderAmount);
-    const redeemPoints = Number(wallet.redeemPoints);
-    if (orderAmount <= 0 || redeemPoints <= 0) {
-        return 0;
-    }
-    const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
-    const totalRedeemPoints = numberOfTimesRedeemable * redeemPoints;
-    return totalRedeemPoints;
-}
-exports.calculateRewardPoints = calculateRewardPoints;
 function calculateWalletRewardPoints(wallet, totalOrderAmount) {
-    // console.log('wallet:', wallet);
     if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
         return { rewardPoints: 0, redeemableAmount: 0 };
     }
     const redeemAmount = Number(wallet.redeemAmount);
     const redeemPoints = Number(wallet.redeemPoints);
+    const orderAmount = Number(wallet.orderAmount);
     const minimumOrderAmount = Number(wallet.minimumOrderAmount);
     console.log('redeemAmount:', redeemAmount);
     console.log('redeemPoints:', redeemPoints);
+    console.log('orderAmount:', orderAmount);
     console.log('minimumOrderAmount:', minimumOrderAmount);
     console.log('totalOrderAmount:', totalOrderAmount);
-    if (isNaN(redeemAmount) || isNaN(redeemPoints) || isNaN(minimumOrderAmount) || redeemAmount <= 0 || redeemPoints <= 0 || totalOrderAmount < minimumOrderAmount) {
+    if (isNaN(redeemAmount) || isNaN(redeemPoints) || isNaN(orderAmount) || isNaN(minimumOrderAmount) || redeemAmount <= 0 || redeemPoints <= 0 || totalOrderAmount < minimumOrderAmount) {
         console.log('Invalid input values or totalOrderAmount is less than minimumOrderAmount');
         return { rewardPoints: 0, redeemableAmount: 0 };
     }
     let rewardPoints = 0;
     let redeemableAmount = 0;
     if (wallet.walletType === 'flat') {
-        const numberOfTimesRedeemable = Math.floor(totalOrderAmount / redeemAmount);
+        const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
         rewardPoints = numberOfTimesRedeemable * redeemPoints;
-        redeemableAmount = numberOfTimesRedeemable * redeemAmount;
+        redeemableAmount = numberOfTimesRedeemable * orderAmount;
     }
     else if (wallet.walletType === 'percent') {
         redeemableAmount = (totalOrderAmount * redeemAmount) / 100;
