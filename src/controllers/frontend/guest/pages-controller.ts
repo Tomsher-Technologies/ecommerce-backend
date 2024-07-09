@@ -18,6 +18,9 @@ class PageController extends BaseController {
 
                 let query: any = { _id: { $exists: true } };
                 const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+                console.log('countryId', countryId);
+
+                // let countryId = await CommonService.findOneCountrySubDomainWithId(hostName);
                 if (countryId) {
                     query = {
                         ...query,
@@ -45,7 +48,6 @@ class PageController extends BaseController {
                         validation: 'block and blockReference is missing! please check'
                     }, req);
                 }
-
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
