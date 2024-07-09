@@ -392,42 +392,49 @@ class CategoryService {
                 const parts = inputStr.split(/-(?![^()]*\))/);
                 return parts;
             }
+            console.log(slug);
 
             // Example usage
-            const catData = splitHyphenOutsideParentheses(categoryTitle);
+            const catData = splitHyphenOutsideParentheses(slug);
 
-            let parentSlug = null
+            console.log(".....sdsd.....", catData);
+
+            // console.log(".....sdsd.....", catData);
+
+
             let currentSlug = '';
             for (const data of catData) {
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
                 currentSlug += categorySlugify(data);
-                console.log("currentSlug", categorySlugify(currentSlug));
+                // console.log("fvdgdfgsd",currentSlug);
+                console.log("currentSlugcurrentSlug", currentSlug);
 
-                categoryResult = await this.findOneCategory({ slug: categorySlugify(currentSlug) });
+                categoryResult = await this.findOneCategory({ slug: currentSlug });
                 console.log("categoryResultcategoryResult", categoryResult);
 
                 if (categoryResult == null) {
-                    const titleData = splitHyphenOutsideParentheses(data);
-                    const lastItem = titleData[titleData.length - 1];
+                    const titleData = currentSlug.split('-');
+                    const lastItem = catData[catData.length - 1];
+                    catData.pop();
+                    const parentSlug = catData.join('-');
 
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
-                    parentSlug = categorySlugify(currentSlug);
-                    console.log("parentCategory", parentCategory);
 
                     const categoryData = {
                         categoryTitle: capitalizeWords(lastItem),
                         slug: categorySlugify(currentSlug),
                         parentCategory: parentCategory ? parentCategory._id : null,
-                        level: parentCategory ? Number(parentCategory.level) + 1 : '0',
+                        level: parentCategory ? catData.length.toString() : '0',
                         isExcel: true
                     };
+                    console.log("000000000000000000000000", categoryData);
 
                     await this.create(categoryData);
                 }
             }
-            const result: any = await this.findOneCategory({ slug: categorySlugify(categoryTitle) })
+            const result: any = await this.findOneCategory({ slug: slugify(categoryTitle) })
             if (result) {
                 return result
             }

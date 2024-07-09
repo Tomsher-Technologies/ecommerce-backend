@@ -448,10 +448,10 @@ class ProductsController extends BaseController {
 
                                 for await (let data of jsonData) {
                                     const imageUrl = data.Image;
-                                    const productImage: any = await uploadImageFromUrl(imageUrl)
-                                    if (productImage == null) {
-                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
-                                    }
+                                    // const productImage: any = await uploadImageFromUrl(imageUrl)
+                                    // if (productImage == null) {
+                                    //     validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
+                                    // }
                                     if (data.Product_Title) {
                                         if (data.Description) {
                                             if (data.SKU) {
@@ -476,6 +476,8 @@ class ProductsController extends BaseController {
                                                                     countryData = await CountryService.findCountryId({ countryTitle: data.Country })
                                                                     if (countryData) {
                                                                         countryId = countryData._id
+                                                                        console.log("66666666666666666", countryId);
+
                                                                     }
                                                                 }
 
@@ -562,10 +564,11 @@ class ProductsController extends BaseController {
                                                                 }
                                                                 const galleryImageArray = []
                                                                 for (let i = 0; i < galleryImage.length; i++) {
-                                                                    const productImage: any = await uploadImageFromUrl(data[galleryImage[i]])
-                                                                    if (productImage == null) {
-                                                                        validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
-                                                                    }
+                                                                    // const productImage: any = await uploadImageFromUrl(data[galleryImage[i]])
+                                                                    const productImage: any = data[galleryImage[i]]
+                                                                    // if (productImage == null) {
+                                                                    //     validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Image uploading failed , row :" + index })
+                                                                    // }
                                                                     galleryImageArray.push({
                                                                         galleryImageUrl: '/public/uploads/product/' + productImage,
                                                                     });
@@ -574,7 +577,7 @@ class ProductsController extends BaseController {
                                                                 var finalData: Partial<ProductsProps> = {
                                                                     productTitle: capitalizeWords(data.Product_Title),
                                                                     slug: slugify(data.Product_Title),
-                                                                    productImageUrl: productImage ? '/public/uploads/product/' + productImage : '',
+                                                                    productImageUrl: data.Image,
                                                                     isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                     description: data.Description,
                                                                     longDescription: data.Long_Description,
@@ -606,7 +609,7 @@ class ProductsController extends BaseController {
                                                                 const userData = res.locals.user
 
                                                                 var productVariants: any = {
-                                                                    countryId: data.country ? countryId : await getCountryIdWithSuperAdmin(userData),
+                                                                    countryId: data.Country ? countryId : await getCountryIdWithSuperAdmin(userData),
                                                                     extraProductTitle: capitalizeWords(data.Product_Title),
                                                                     // slug: slugify(slugData),
                                                                     variantSku: data.SKU,
@@ -620,6 +623,9 @@ class ProductsController extends BaseController {
                                                                     isDefault: data.Is_Default ? data.Is_Default : 0,
                                                                     isExcel: true
                                                                 }
+
+                                                                // console.log("productVariantsproductVariants", productVariants);
+
 
                                                                 const shortTitleOfCountry: any = await CountryModel.findOne({ _id: await getCountryIdWithSuperAdmin(userData) })
 
