@@ -59,7 +59,7 @@ const customerSchema = new mongoose_1.Schema({
             message: 'Phone number already exists'
         },
         minlength: [8, 'Phone must be at least 8 characters long'],
-        maxlength: [15, 'Phone must be at least 15 characters long'],
+        maxlength: [15, 'Phone must be at most 15 characters long'],
     },
     password: {
         type: String,
