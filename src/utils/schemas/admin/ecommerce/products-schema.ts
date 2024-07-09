@@ -438,8 +438,8 @@ export const productExcelSchema = zod.object({
     SKU: zod.any().optional(), // Assuming SKU is a string of digits
     Item_Type: zod.string(),
     Category: zod.string(),
-    Image: zod.string().url(),
-    Gallery_Image_1: zod.string().url().optional(),
+    Image: zod.string(),
+    Gallery_Image_1: zod.string().optional(),
     Unit: zod.any().optional(),
     Weight: zod.any().optional(),
     Brand: zod.string(),
