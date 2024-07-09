@@ -11,6 +11,7 @@ const product_model_1 = __importDefault(require("../../model/admin/ecommerce/pro
 const product_category_link_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-category-link-model"));
 const cart_order_model_1 = __importDefault(require("../../model/frontend/cart-order-model"));
 const payment_transaction_model_1 = __importDefault(require("../../model/frontend/payment-transaction-model"));
+const mongoose_1 = __importDefault(require("mongoose"));
 class CheckoutService {
     async paymentResponse(options = {}) {
         const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
@@ -23,7 +24,8 @@ class CheckoutService {
         }
         console.log('paymentDetails', paymentDetails);
         const cartDetails = await cart_order_model_1.default.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" });
-        console.log('cartDetails', cartDetails);
+        const newcartDetails = await cart_order_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(paymentDetails?.orderId) });
+        console.log('cartDetails', newcartDetails);
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
