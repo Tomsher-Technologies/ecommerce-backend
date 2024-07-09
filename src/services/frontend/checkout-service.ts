@@ -12,10 +12,11 @@ class CheckoutService {
 
     async paymentResponse(options: any = {}): Promise<any> {
         const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails = await PaymentTransactionModel.findOne({ ...(paymentMethod === paymentMethods.tabby ? paymentId : transactionId) });
-        console.log('paymentDetails', paymentDetails);
+        const paymentDetails = await PaymentTransactionModel.findOne(
+            paymentMethod === paymentMethods.tabby ? { paymentId } : { transactionId }
+        );
         console.log('options', options);
-
+        console.log('paymentDetails', paymentDetails);
         if (!paymentDetails) {
             return {
                 status: false,
