@@ -15,8 +15,7 @@ class CheckoutService {
         const paymentDetails = await PaymentTransactionModel.findOne(
             paymentMethod === paymentMethods.tabby ? { paymentId } : { transactionId }
         );
-        console.log('options', options);
-        console.log('paymentDetails', paymentDetails);
+ 
         if (!paymentDetails) {
             return {
                 status: false,
