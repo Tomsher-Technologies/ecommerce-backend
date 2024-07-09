@@ -21,6 +21,7 @@ class CheckoutService {
                 message: 'Payment transactions not found'
             };
         }
+        console.log('paymentDetails', paymentDetails);
         const cartDetails = await cart_order_model_1.default.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" });
         console.log('cartDetails', cartDetails);
         if (!cartDetails) {
