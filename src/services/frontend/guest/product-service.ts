@@ -50,6 +50,7 @@ class ProductService {
 
             }
         }
+        console.log("limit", limit);
 
         const modifiedPipeline = {
             $lookup: {
@@ -89,8 +90,7 @@ class ProductService {
                     ]
                 }
             },
-            ...(skip ? [{ $skip: skip }] : []),
-            ...(limit ? [{ $limit: limit }] : []),
+
 
         ];
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, countryId)
@@ -141,7 +141,8 @@ class ProductService {
                 //     productData = collectionData.productData
                 // }
                 // productData = collectionData
-
+                collectionData.push(...(skip ? [{ $skip: skip }] : []),
+                    ...(limit ? [{ $limit: limit }] : []))
                 const lastPipelineModification: any = await this.productLanguage(hostName, collectionData)
 
                 productData = await ProductsModel.aggregate(lastPipelineModification).exec();
@@ -153,6 +154,8 @@ class ProductService {
             // }
 
         } else {
+            pipeline.push(...(skip ? [{ $skip: skip }] : []),
+                ...(limit ? [{ $limit: limit }] : []))
             const lastPipelineModification: any = await this.productLanguage(hostName, pipeline)
             productData = await ProductsModel.aggregate(lastPipelineModification).exec();
         }
