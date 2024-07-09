@@ -13,6 +13,9 @@ class CheckoutService {
     async paymentResponse(options: any = {}): Promise<any> {
         const { transactionId, allPaymentResponseData, paymentStatus } = options;
         const paymentDetails = await PaymentTransactionModel.findOne({ transactionId });
+        console.log('paymentDetails', paymentDetails);
+        console.log('options', options);
+
         if (!paymentDetails) {
             return {
                 status: false,
@@ -161,7 +164,7 @@ class CheckoutService {
             }
 
             const orderId = await this.getNextSequenceValue();
-            
+
             cartUpdate = {
                 ...cartUpdate,
                 orderId: orderId,
