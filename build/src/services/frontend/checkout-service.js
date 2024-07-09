@@ -14,9 +14,9 @@ const payment_transaction_model_1 = __importDefault(require("../../model/fronten
 class CheckoutService {
     async paymentResponse(options = {}) {
         const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails = await payment_transaction_model_1.default.findOne({ ...(paymentMethod === cart_1.paymentMethods.tabby ? paymentId : transactionId) });
-        console.log('paymentDetails', paymentDetails);
+        const paymentDetails = await payment_transaction_model_1.default.findOne(paymentMethod === cart_1.paymentMethods.tabby ? { paymentId } : { transactionId });
         console.log('options', options);
+        console.log('paymentDetails', paymentDetails);
         if (!paymentDetails) {
             return {
                 status: false,
