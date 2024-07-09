@@ -50,7 +50,6 @@ class ProductService {
 
             }
         }
-        console.log("limit", limit);
 
         const modifiedPipeline = {
             $lookup: {
@@ -462,8 +461,6 @@ class ProductService {
                             for await (let result of results) {
                                 // console.log("result................:", { $match: { 'productCategory.category._id': result.categoryId } });
                                 // result.categoryId
-                                console.log("result................:", pipeline);
-
                                 // language = await this.productLanguage(hostName, pipeline)
 
                                 // const productResult = await this.findProductList({ language, getattribute: '1', getspecification: '1' })
@@ -512,8 +509,6 @@ class ProductService {
                         status: "1"
                     };
 
-
-                    console.log("//////////////", query);
 
                     pipeline.push({
                         $match: query

@@ -15,6 +15,8 @@ class CheckoutService {
     async paymentResponse(options = {}) {
         const { transactionId, allPaymentResponseData, paymentStatus } = options;
         const paymentDetails = await payment_transaction_model_1.default.findOne({ transactionId });
+        console.log('paymentDetails', paymentDetails);
+        console.log('options', options);
         if (!paymentDetails) {
             return {
                 status: false,

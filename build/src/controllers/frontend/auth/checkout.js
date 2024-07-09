@@ -265,7 +265,6 @@ class CheckoutController extends base_controller_1.default {
             res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentRetrieve)(payment_id, paymentMethod.paymentMethodValues);
-        console.log('tabbyResponse', tabbyResponse);
         if (tabbyResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
                 transactionId: payment_id, allPaymentResponseData: null,

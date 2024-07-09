@@ -46,7 +46,6 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
             }
         }
-        console.log("limit", limit);
         const modifiedPipeline = {
             $lookup: {
                 from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
@@ -424,7 +423,6 @@ class ProductService {
                             for await (let result of results) {
                                 // console.log("result................:", { $match: { 'productCategory.category._id': result.categoryId } });
                                 // result.categoryId
-                                console.log("result................:", pipeline);
                                 // language = await this.productLanguage(hostName, pipeline)
                                 // const productResult = await this.findProductList({ language, getattribute: '1', getspecification: '1' })
                                 pipeline.push({ $match: { 'productCategory.category._id': result.categoryId } });
@@ -469,7 +467,6 @@ class ProductService {
                         _id: { $in: objectIds },
                         status: "1"
                     };
-                    console.log("//////////////", query);
                     pipeline.push({
                         $match: query
                     });
