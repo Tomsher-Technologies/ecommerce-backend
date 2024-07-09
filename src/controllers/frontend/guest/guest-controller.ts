@@ -3,6 +3,8 @@ import 'module-alias/register'
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import path from 'path';
+// const ejs = require('ejs');
 
 import { forgotPasswordSchema, loginSchema, registerSchema, resendOtpSchema, resetPasswordFormSchema, verifyOtpSchema } from '../../../utils/schemas/frontend/guest/auth-schema';
 import { calculateWalletAmount, formatZodError, generateOTP } from '../../../utils/helpers';
@@ -18,10 +20,8 @@ import SettingsService from '../../../services/admin/setup/settings-service';
 import { etisalatSmsGateway } from '../../../lib/ethisalat-sms-gateway';
 import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/mail-chimp-sms-gateway';
-import path from 'path';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 
-const ejs = require('ejs');
 
 const controller = new BaseController();
 
@@ -107,13 +107,13 @@ class GuestController extends BaseController {
                     const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
 
 
-                    const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        const sendEmail = await mailChimpEmailGateway(newCustomer, data)
-                    })
+                    // const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
+                    //     if (err) {
+                    //         console.log(err);
+                    //         return;
+                    //     }
+                    //     const sendEmail = await mailChimpEmailGateway(newCustomer, data)
+                    // })
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -304,13 +304,13 @@ class GuestController extends BaseController {
                             const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
 
 
-                            const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
-                                if (err) {
-                                    console.log(err);
-                                    return;
-                                }
-                                const sendEmail = await mailChimpEmailGateway(optUpdatedCustomer, data)
-                            })
+                            // const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err: any, data: any) => {
+                            //     if (err) {
+                            //         console.log(err);
+                            //         return;
+                            //     }
+                            //     const sendEmail = await mailChimpEmailGateway(optUpdatedCustomer, data)
+                            // })
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: optUpdatedCustomer._id,
