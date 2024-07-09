@@ -22,6 +22,7 @@ class CheckoutService {
             };
         }
         const cartDetails = await cart_order_model_1.default.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" });
+        console.log('cartDetails', cartDetails);
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {

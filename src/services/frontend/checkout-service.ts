@@ -15,7 +15,7 @@ class CheckoutService {
         const paymentDetails = await PaymentTransactionModel.findOne(
             paymentMethod === paymentMethods.tabby ? { paymentId } : { transactionId }
         );
- 
+
         if (!paymentDetails) {
             return {
                 status: false,
@@ -24,6 +24,7 @@ class CheckoutService {
         }
 
         const cartDetails: any = await CartOrdersModel.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" })
+        console.log('cartDetails', cartDetails);
 
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
