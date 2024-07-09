@@ -3,11 +3,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface BannerProps extends Document {
     countryId: Schema.Types.ObjectId;
     bannerTitle: string;
+    bannerSubTitle: string;
     slug?: string;
     description: string;
     blocks: number
     bannerImages: Schema.Types.Mixed,
     page: string;
+    pageReference: string;
     linkType: string; // product, category, brand, custom
     link: string;
     position: number;
@@ -36,8 +38,12 @@ const bannerSchema: Schema<BannerProps> = new Schema({
         },
         minlength: [2, 'Banner title must be at least 2 characters long']
     },
+    bannerSubTitle: {
+        type: String
+    },
     description: {
         type: String,
+        default: ''
     },
     blocks: {
         type: Number,
@@ -49,6 +55,10 @@ const bannerSchema: Schema<BannerProps> = new Schema({
         required: true,
     },
     page: {
+        type: String,
+        required: true,
+    },
+    pageReference: {
         type: String,
         required: true,
     },

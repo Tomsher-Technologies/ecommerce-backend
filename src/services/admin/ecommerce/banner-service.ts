@@ -4,54 +4,25 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import BannerModel, { BannerProps } from '../../../model/admin/ecommerce/banner-model';
 import { handleFileUpload } from '../../../utils/helpers';
+import { pageReference } from '../../../constants/pages';
+import { bannerLookup, bannerProject } from '../../../utils/config/banner-config';
 
 
 class BannerService {
-    private lookup: any;
-    private project: any;
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { bannerId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$bannerId'] },
-                                    { $eq: ['$source', multiLanguageSources.ecommerce.banner] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
+    private sort: any;
 
-        this.project = {
-            $project: {
-                _id: 1,
-                countryId: 1,
-                bannerTitle: 1,
-                page: 1,
-                linkType: 1,
-                link: 1,
-                description: 1,
-                blocks: 1,
-                bannerImages: 1,
-                position: 1,
-                status: 1,
-                createdAt: 1,
-                languageValues: { $ifNull: ['$languageValues', []] }
-            }
+    constructor() {
+      
+        this.sort = {
+            $sort: { createdAt: 1 } // Sort by createdAt field in descending order
         }
     }
 
+
     async findAll(options: FilterOptionsProps = {}): Promise<BannerProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        const defaultSort = { createdAt: -1 };
+
+        const defaultSort = { createdAt: 1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {
@@ -64,9 +35,8 @@ class BannerService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.lookup,
-
-            this.project
+            bannerLookup,
+            bannerProject,
         ];
 
         return BannerModel.aggregate(pipeline).exec();
@@ -86,8 +56,8 @@ class BannerService {
         if (createdBanner) {
             const pipeline = [
                 { $match: { _id: createdBanner._id } },
-                this.lookup,
-                this.project
+                bannerLookup,
+                bannerProject
             ];
 
             const createdBannerWithValues = await BannerModel.aggregate(pipeline);
@@ -100,11 +70,11 @@ class BannerService {
 
     async findOne(bannerId: string): Promise<BannerProps | null> {
         if (bannerId) {
-            const objectId = new mongoose.Types.ObjectId(bannerId); 
+            const objectId = new mongoose.Types.ObjectId(bannerId);
             const pipeline = [
                 { $match: { _id: objectId } },
-                this.lookup,
-                this.project
+                bannerLookup,
+                bannerProject
             ];
 
             const bannerDataWithValues = await BannerModel.aggregate(pipeline);
@@ -124,8 +94,8 @@ class BannerService {
         if (updatedBannner) {
             const pipeline = [
                 { $match: { _id: updatedBannner._id } },
-                this.lookup,
-                this.project
+                bannerLookup,
+                bannerProject
             ];
 
             const updatedBannnerWithValues = await BannerModel.aggregate(pipeline);
@@ -144,7 +114,7 @@ class BannerService {
                 const bannerImagesUrl = await Promise.all(newBannerImages.map(async (newImage) => {
                     let bannerImageUrl = '';
                     if (newImage) {
-                    
+
                         index = this.getIndexFromFieldName(newImage.fieldname);
                         if (index !== -1 && oldBannerImages && index < oldBannerImages.length) {
                             // Update the corresponding element if index is found
@@ -155,7 +125,6 @@ class BannerService {
                         } else {
                             // Otherwise, upload a new image
                             bannerImageUrl = await handleFileUpload(req, null, newImage, 'bannerImageUrl', 'banner');
-                          
                         }
                     } else {
 
@@ -179,7 +148,6 @@ class BannerService {
                 // console.log('oldBannerImages', oldBannerImages);
                 return combinedImages;
             } else {
-           
                 return oldBannerImages;
             }
         } catch (error) {

@@ -4,6 +4,8 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
 
 import AttributesModel, { AttributesProps } from '../../../model/admin/ecommerce/attribute-model';
+import { capitalizeWords, slugify } from '../../../utils/helpers';
+import GeneralService from '../../../services/admin/general-service';
 
 
 class AttributesService {
@@ -30,7 +32,7 @@ class AttributesService {
                             $expr: {
                                 $and: [
                                     { $eq: ['$sourceId', '$$attributeId'] },
-                                    { $eq: ['$source', multiLanguageSources.ecommerce.attribute] },
+                                    { $eq: ['$source', multiLanguageSources.ecommerce.attributes] },
                                 ],
                             },
                         },
@@ -115,7 +117,7 @@ class AttributesService {
 
     async findOne(attributeId: string): Promise<AttributesProps | null> {
         if (attributeId) {
-            const objectId = new mongoose.Types.ObjectId(attributeId); 
+            const objectId = new mongoose.Types.ObjectId(attributeId);
             const pipeline = [
                 { $match: { _id: objectId } },
                 this.attributeDetailsLookup,
@@ -129,6 +131,55 @@ class AttributesService {
             return attributeDataWithValues[0];
         } else {
             return null;
+        }
+    }
+    async findOneAttribute(data: any): Promise<void | null> {
+        data = data.value
+        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.data.trim() });
+        if (resultAttribute) {
+            const attributeDetailResult: any = await this.findOneAttributeDetail(data, resultAttribute._id)
+
+            const result: any = {
+                attributeId: resultAttribute._id,
+                attributeDetailId: attributeDetailResult._id
+            }
+            return result
+        } else {
+            const attributeData = {
+                attributeTitle: capitalizeWords(data.data),
+                attributeType: data.type,
+                isExcel: true,
+                slug: slugify(data.data)
+            }
+            const attributeResult: any = await this.create(attributeData)
+
+            if (attributeResult) {
+                const attributeDetailResult: any = await this.findOneAttributeDetail(data, attributeResult._id)
+
+                const result: any = {
+                    attributeId: attributeResult._id,
+                    attributeDetailId: attributeDetailResult._id
+                }
+                return result
+            }
+        }
+    }
+
+    async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
+        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.name }, { attributeId: attributeId }] });
+        if (resultAttribute) {
+            return resultAttribute
+        } else {
+            const attributeData = {
+                attributeId: attributeId,
+                itemName: data.name,
+                itemValue: data.value,
+
+            }
+            const attributeResult: any = await AttributeDetailModel.create(attributeData);
+            if (attributeResult) {
+                return attributeResult
+            }
         }
     }
 
@@ -166,6 +217,7 @@ class AttributesService {
                         .map(entry => entry._id);
                     await AttributeDetailModel.deleteMany({ attributeId: attributeId, _id: { $in: attributeDetailIDsToRemove } });
                 }
+
                 const inventryPricingPromises = await Promise.all(attributeDetails.map(async (data: any) => {
                     const existingEntry = await AttributeDetailModel.findOne({ _id: data._id });
                     if (existingEntry) {

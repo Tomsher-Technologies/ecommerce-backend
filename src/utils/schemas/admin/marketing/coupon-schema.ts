@@ -27,10 +27,11 @@ export const couponSchema = zod.object({
         limitPerUser: zod.string().optional(),
         enableCouponUsageLimit: zod.boolean().optional(),
         couponUsageLimit: zod.string().optional(),
+        displayCoupon: zod.boolean().optional(),
     }),
 
     enableFreeShipping: zod.boolean().optional(),
-    discountDateRange: zod.array(zod.any(), {
+    discountDateRange: zod.array(zod.string(), {
         required_error: 'Discount Date is required'
     }).refine((val) => val.length > 0, {
         message: 'Discount Date must contain at least 1 element'

@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 
 import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
 import { bannerPositionSchema, bannerSchema, bannerStatusSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
-import { QueryParams } from '../../../utils/types/common';
+import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
@@ -19,13 +19,15 @@ class BannerController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '', countryId = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
 
-            const countryId = getCountryId(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
             if (status && status !== '') {
@@ -33,14 +35,27 @@ class BannerController extends BaseController {
             } else {
                 query.status = '1';
             }
-
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { bannerTitle: keywordRegex }
+                        { bannerTitle: keywordRegex },
+                        { page: keywordRegex },
+                        { pageReference: keywordRegex },
                     ],
                     ...query
+                } as any;
+            }
+
+            if (page) {
+                query = {
+                    ...query, page: page
+                } as any;
+            }
+
+            if (pageReference) {
+                query = {
+                    ...query, pageReference: pageReference
                 } as any;
             }
             const sort: any = {};
@@ -71,7 +86,7 @@ class BannerController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { countryId, bannerTitle, slug, page, linkType, link, position, description, blocks, languageValues, status } = validatedData.data;
+                const { countryId, bannerTitle, bannerSubTitle, slug, page, linkType, link, position, description, blocks, languageValues, status, pageReference } = validatedData.data;
                 const user = res.locals.user;
 
                 const mewBannerImages = (req as any).files.filter((file: any) =>
@@ -87,8 +102,10 @@ class BannerController extends BaseController {
                     const bannerData = {
                         countryId: countryId || getCountryId(user),
                         bannerTitle,
+                        bannerSubTitle,
                         slug: slug || slugify(bannerTitle),
                         page,
+                        pageReference,
                         linkType,
                         link,
                         position,
@@ -103,7 +120,7 @@ class BannerController extends BaseController {
                     const newBanner = await BannerService.create(bannerData);
                     if (newBanner) {
 
-                        if (languageValues && languageValues.length > 0) {
+                        if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
 
                             const languageValuesImages = (req as any).files.filter((file: any) =>
                                 file.fieldname &&
@@ -217,7 +234,7 @@ class BannerController extends BaseController {
                     if (updatedBanner) {
 
                         let newLanguageValues: any = []
-                        if (updatedBannerData.languageValues && updatedBannerData.languageValues.length > 0) {
+                        if (updatedBannerData.languageValues && Array.isArray(updatedBannerData.languageValues) && updatedBannerData.languageValues.length > 0) {
 
                             const languageValuesImages = (req as any).files.filter((file: any) =>
                                 file.fieldname &&

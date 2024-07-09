@@ -3,33 +3,14 @@ import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
-import { slugify } from '../../../utils/helpers';
+import { capitalizeWords, slugify } from '../../../utils/helpers';
+import { brandLookup } from '../../../utils/config/brand-config';
+import GeneralService from '../../../services/admin/general-service';
 
 
 class BrandsService {
 
-    private lookup: any;
-    constructor() {
-        this.lookup = {
-            $lookup: {
-                from: 'multilanguagefieleds', // Ensure 'from' field is included
-                let: { brandId: '$_id' },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $eq: ['$sourceId', '$$brandId'] },
-                                    { $eq: ['$source', multiLanguageSources.ecommerce.brands] },
-                                ],
-                            },
-                        },
-                    },
-                ],
-                as: 'languageValues',
-            },
-        };
-    }
+    constructor() { }
 
     async findAll(options: FilterOptionsProps = {}): Promise<BrandProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
@@ -46,7 +27,7 @@ class BrandsService {
             { $limit: limit },
             { $sort: finalSort },
 
-            this.lookup,
+            brandLookup,
         ];
 
         return BrandsModel.aggregate(pipeline).exec();
@@ -66,7 +47,7 @@ class BrandsService {
         if (createdBrand) {
             const pipeline = [
                 { $match: { _id: createdBrand._id } },
-                this.lookup,
+                brandLookup,
             ];
 
             const createdBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -82,7 +63,7 @@ class BrandsService {
             const objectId = new mongoose.Types.ObjectId(brandId);
             const pipeline = [
                 { $match: { _id: objectId } },
-                this.lookup,
+                brandLookup,
             ];
 
             const brandDataWithValues = await BrandsModel.aggregate(pipeline);
@@ -103,7 +84,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                this.lookup,
+                brandLookup,
             ];
 
             const updatedBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -121,14 +102,14 @@ class BrandsService {
         return BrandsModel.findOne(data);
     }
     async findBrandId(brandTitle: string): Promise<void | null> {
+        const slug = slugify(brandTitle);
 
-
-        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle });
+        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle.trim() });
         if (resultBrand) {
             return resultBrand
         } else {
             const brandData = {
-                brandTitle: brandTitle,
+                brandTitle: capitalizeWords(brandTitle),
                 slug: slugify(brandTitle),
                 isExcel: true
             }

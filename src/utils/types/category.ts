@@ -6,6 +6,11 @@ export interface CategoryQueryParams {
     sortorder?: string;
     keyword?: string;
     corporateGiftsPriority?: any;
+    unCollectionedCategories?: any;
     parentCategory?: string;
+    category?: any;
     categoryId?: any;
+    _id?: any;
+    slug?: any;
+    brand?: any;
 }

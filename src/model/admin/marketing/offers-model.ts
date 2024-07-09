@@ -12,7 +12,7 @@ export interface OffersProps extends Document {
     offerIN: string;
     buyQuantity: string;
     getQuantity: string;
-    offerDateRange: any;
+    offerDateRange: [Date, Date];
     status: string;
     createdBy?: string;
     createdAt?: Date;
@@ -86,7 +86,7 @@ const offersSchema: Schema<OffersProps> = new Schema({
         default: '',
     },
     offerDateRange: {
-        type: Schema.Types.Mixed,
+        type: [Date],
         required: true,
     },
     status: {

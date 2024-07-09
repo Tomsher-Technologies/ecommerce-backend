@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import multer from 'multer';
 
-import { configureMulter } from '../../../src/utils/file-uploads';
+import { configureMulter, configureMulterExcel } from '../../../src/utils/file-uploads';
 import authMiddleware from '../../../middleware/admin/auth-middleware';
 import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
 import { logResponseStatus } from '../../../src/components/response-status';
@@ -12,12 +12,13 @@ import ProductsController from '../../../src/controllers/admin/ecommerce/product
 const router: Router = express.Router();
 
 const { upload } = configureMulter('product', ['productImage',]);
+const { uploadExcel } = configureMulterExcel('product/excel', ['productExcel',]);
 
 router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findAll);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findOne);
-router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.single('file'), ProductsController.importProductExcel);
+router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('productExcel'), ProductsController.importProductExcel);
 router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), ProductsController.create)
 router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), logResponseStatus, ProductsController.update);
 router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);

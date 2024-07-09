@@ -19,13 +19,16 @@ class NavigationMenuController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-            if (countryId) {
-                query.countryId = countryId;
+
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
             if (status && status !== '') {
@@ -76,7 +79,6 @@ class NavigationMenuController extends BaseController {
                 if (countryId) {
                     const { languageId, websiteSetupId, status, blockValues, deviceType } = validatedData.data;
                     const user = res.locals.user;
-                    // const multiFiles: any = req.files
 
                     const menuData = {
                         countryId,
@@ -91,24 +93,45 @@ class NavigationMenuController extends BaseController {
 
                     let newNavigationMenu: any = [];
                     if (!languageId) {
-                        if (!websiteSetupId) {
-                            newNavigationMenu = await NavigationMenuService.create(menuData);
+                        const navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        if (navigationMenu) {
+                            newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
                         } else {
-                            const navigationMenu = await NavigationMenuService.findOne({ _id: websiteSetupId, countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
-                            if (navigationMenu) {
-                                newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
+                            if (!websiteSetupId) {
+                                newNavigationMenu = await NavigationMenuService.create(menuData);
                             } else {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Menu  items not found',
-                                }, req);
+                                if (blockValues && (blockValues?.length > 0)) {
+                                    newNavigationMenu = await NavigationMenuService.create(menuData);
+                                } else {
+                                    return controller.sendErrorResponse(res, 200, {
+                                        message: 'Menu  items not found',
+                                    }, req);
+                                }
                             }
                         }
+                        // if (!websiteSetupId) {
+                        //     newNavigationMenu = await NavigationMenuService.create(menuData);
+                        // } else {
+                        //     const navigationMenu = await NavigationMenuService.findOne({ _id: websiteSetupId, countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        //     if (navigationMenu) {
+                        //         newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
+                        //     } else {
+                        //         if (blockValues && (blockValues?.length > 0)) {
+                        //             newNavigationMenu = await NavigationMenuService.create(menuData);
+                        //         } else {
+                        //             return controller.sendErrorResponse(res, 200, {
+                        //                 message: 'Menu  items not found',
+                        //             }, req);
+                        //         }
+                        //     }
+                        // }
                     } else {
-                        if (websiteSetupId) {
-                            const languageValues = await GeneralService.multiLanguageFieledsManage(websiteSetupId, {
+                        const navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        if (navigationMenu) {
+                            const languageValues = await GeneralService.multiLanguageFieledsManage(navigationMenu._id, {
                                 languageId,
                                 source: multiLanguageSources.setup.websiteSetups,
-                                sourceId: websiteSetupId,
+                                sourceId: navigationMenu._id,
                                 languageValues: menuData
                             });
                             if (languageValues) {
@@ -173,7 +196,10 @@ class NavigationMenuController extends BaseController {
                     const languageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.setup.websiteSetups, navigationMenu._id, languageId)
                     if (languageValues) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: languageValues.languageValues,
+                            requestedData: {
+                                ...languageValues.languageValues,
+                                _id: navigationMenu._id
+                            },
                             message: 'Success'
                         });
                     } else {

@@ -3,4 +3,5 @@ export interface SettingFindOneWithCountryQueryParams {
     languageId?: string;
     block: string;
     blockReference: string;
+    languageSources?: string;
 }

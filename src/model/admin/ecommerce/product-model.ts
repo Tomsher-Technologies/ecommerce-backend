@@ -28,9 +28,17 @@ const productsSchema: Schema<ProductsProps> = new Schema({
             message: 'Slug must be unique'
         }
     },
+    starRating: {
+        type: Number,
+        required: true,
+        default: 0,
+        maxlength: [5, 'starRating must be at most 5 characters long']
+    },
     productImageUrl: {
         type: String,
-        required: true,
+        required: function () {
+            return !this.isExcel;
+        },
     },
     isVariant: {
         type: Number,
@@ -39,12 +47,11 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     description: {
         type: String,
         required: true,
-        minlength: [5, 'Description must be at least 5 characters long']
+        minlength: [10, 'Description must be at least 10 characters long']
     },
     longDescription: {
         type: String,
-        required: false,
-        minlength: [7, 'Long description must be at least 7 characters long']
+        // minlength: [7, 'Long description must be at least 7 characters long']
     },
     brand: {
         type: Schema.Types.ObjectId,
@@ -56,8 +63,9 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         default: ''
     },
     warehouse: {
-        type: String,
-        default: ''
+        type: Schema.Types.ObjectId,
+        ref: 'Warehouse',
+        default: null
     },
     measurements: {
         weight: {
@@ -114,14 +122,21 @@ const productsSchema: Schema<ProductsProps> = new Schema({
     },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     statusAt: {
         type: Date,
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
     createdBy: {
         type: String,
-        required: [true, 'Creator ID is required']
+        required: function () {
+            return !this.isExcel;
+        }
     },
     createdAt: {
         type: Date,

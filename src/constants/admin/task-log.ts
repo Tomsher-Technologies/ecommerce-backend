@@ -12,7 +12,15 @@ export const adminTaskLog = {
     },
     website: {
         collectionsProducts: 'collectionsproducts',
+        collectionsBrands: 'collectionsbrands',
+        collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigationmenu',
+        pages:{
+            home: 'home',
+            termsAndConditions:'terms-and-conditions',
+            privacyAndPolicy: 'privacy-and-policy',
+            contactUs: 'contact-us',
+        },
     },
     marketing: {
         coupons: 'coupons',
@@ -25,13 +33,16 @@ export const adminTaskLog = {
     },
     setup: {
         country: 'country',
+        paymentMethod: 'payment-method',
         languages: 'languages',
+        taxs: 'taxs',
         settings: {
             websitesettings: 'websitesettings'
         },
     },
     store: {
         warehouse: 'warehouse',
+        store: 'store',
     },
 
 }

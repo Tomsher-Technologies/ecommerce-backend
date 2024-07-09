@@ -14,7 +14,6 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
     if (token) {
       const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
-
       if (checkToken) {
         const user = await UserModel.findOne({ _id: checkToken.userId });
 
@@ -26,7 +25,7 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
           phone: user?.phone,
           status: user?.status,
         }
-        
+
         if (userData) {
           req.user = userData;
           res.locals.user = userData;

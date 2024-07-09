@@ -30,7 +30,7 @@ export const productSchema = zod.object({
     }).optional(),
     warehouse: zod.string().optional(),
     unit: zod.string().optional(),
-    description: zod.string({ required_error: 'Description is required', }).min(17, 'Description is should be 10 chars minimum'),
+    description: zod.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     longDescription: zod.string().optional(),
     productImage: zod.string().optional(),
     imageGallery: zod.any().optional(),
@@ -430,4 +430,77 @@ export const productStatusSchema = zod.object({
         })
 });
 
+
+export const productExcelSchema = zod.object({
+    Product_Title: zod.string().min(3),
+    Description: zod.string().min(10),
+    Long_Description: zod.string().optional(),
+    SKU: zod.any().optional(), // Assuming SKU is a string of digits
+    Item_Type: zod.string(),
+    Category: zod.string(),
+    Image: zod.string().url(),
+    Gallery_Image_1: zod.string().url().optional(),
+    Unit: zod.any().optional(),
+    Weight: zod.any().optional(),
+    Brand: zod.string(),
+    Warehouse: zod.string().optional(),
+    Price: zod.number(),
+    Quantity: zod.number().int().nonnegative().optional(),
+    Discount_Price: zod.number().optional(),
+    Cart_Min_Quantity: zod.number().int().optional(),
+    Cart_Max_Quantity: zod.number().int().optional(),
+    Meta_Title: zod.string().optional(),
+    Meta_Keywords: zod.string().optional(),
+    Meta_Description: zod.string().optional(),
+    Attribute_Option_1: zod.string().optional(),
+    Attribute_Name_1: zod.string().optional(),
+    Attribute_Type_1: zod.string().optional(),
+    Attribute_Value_1: zod.string().optional(),
+    Specification_Option_1: zod.string().optional(),
+    Specification_Name_1: zod.string().optional(),
+    Specification_Value_1: zod.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.Item_Type === 'variant') {
+        // Validation for Attribute_Option_1
+        if (!data.Attribute_Option_1 || !data.Attribute_Name_1 || !data.Attribute_Type_1) {
+
+            ctx.addIssue({
+                code: "custom",
+                message: 'Attribute_Option_1,Attribute_Name_1,Attribute_Type_1 is required when Item_Type is "variant"',
+                path: [data.Product_Title]
+
+            });
+        }
+    }
+
+    if (data.Attribute_Option_1) {
+        if (!data.Attribute_Name_1 || !data.Attribute_Type_1) {
+            ctx.addIssue({
+                code: "custom",
+                message: 'Attribute_Name_1 and Attribute_Type_1 are required when Attribute_Option_1 is provided',
+                path: [data.Product_Title]
+            });
+        }
+    }
+
+    // Validation for Specification_Option_1
+    if (data.Specification_Option_1 && !data.Specification_Name_1) {
+        ctx.addIssue({
+            code: "custom",
+            message: 'Specification_Name_1 is required when Specification_Option_1 is provided',
+            path: [data.Product_Title]
+        });
+    }
+
+    // if (data.Item_Type != 'config-item') {
+    //     if (!data.Quantity) {
+    //         ctx.addIssue({
+    //             code: "custom",
+    //             message: 'Quantity is required ',
+    //             path: [data.Product_Title]
+    //         });
+    //     }
+    // }
+    return true; // Return true if validation passes
+});
 

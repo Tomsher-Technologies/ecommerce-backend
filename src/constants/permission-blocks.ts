@@ -1,6 +1,10 @@
 
 
 export const permissionBlocks = {
+    dashboards: {
+        orders: 'orders',
+        dashboards: 'dashboards'
+    },
     ecommerce: {
         products: 'products',
         categories: 'categories',
@@ -11,17 +15,34 @@ export const permissionBlocks = {
         specifications: 'specifications'
 
     },
+    orders: {
+        orders: 'orders',
+    },
+    customers: {
+        customers: 'customers',
+        whishlists: 'whishlists',
+    },
+    reports: {
+        customerWiseReports: 'customerwisereports',
+        productWiseReports: 'productwisereports'
+    },
     website: {
         collectionsProducts: 'collectionsproducts',
+        collectionsBrands: 'collectionsbrands',
+        collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigation-menu',
+        pages: 'pages',
     },
     setup: {
         languages: 'languages',
+        taxs: 'taxs',
         country: 'country',
+        paymentMethod: 'paymentmethod',
         websitesetups: 'websitesetups',
     },
     stores: {
         warehouse: 'warehouse',
+        store: 'store',
     },
     account: {
         privilages: 'privilages',
@@ -31,5 +52,6 @@ export const permissionBlocks = {
     marketing: {
         coupons: 'coupons',
         offers: 'offers',
-    }
+    },
+
 }

@@ -5,11 +5,9 @@ import { checkValueExists, formatZodError, getCountryId, handleFileUpload, slugi
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { settingsFormSchema } from '../../../utils/schemas/admin/setup/basic-settings';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
-import { multiLanguageSources } from '../../../constants/multi-languages';
-import { SettingFindOneWithCountryQueryParams,  } from '../../../utils/types/settings';
+import { SettingFindOneWithCountryQueryParams, } from '../../../utils/types/settings';
 
 import BaseController from '../base-controller';
-import LanguagesService from '../../../services/admin/setup/languages-service';
 import SettingsService from '../../../services/admin/setup/settings-service';
 import GeneralService from '../../../services/admin/general-service';
 import mongoose from 'mongoose';
@@ -29,22 +27,25 @@ class SettingsController extends BaseController {
                 if (countryId && typeof countryId === 'string') {
                     countryId = decodeURIComponent(countryId).replace(/[^a-fA-F0-9]/g, '');
                 }
-                const { languageId, block, blockReference, websiteSetupId, blockValues, status } = validatedData.data;
+                const { languageId, block, blockReference, websiteSetupId, blockValues, status, languageSources, languageValues } = validatedData.data;
                 if ((checkValueExists(websiteSetup, block) && (checkValueExists(blockReferences, blockReference)))) {
                     const user = res.locals.user;
-                    
-                    const newFavIcon = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[favIcon]') && file.fieldname.includes('blockValues[favIcon]'));
-                    const newWebsiteLogo = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[websiteLogo]') && file.fieldname.includes('blockValues[websiteLogo]'));
-                 
+
+                    const newFavIcon = (req as any).files?.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[favIcon]') && file.fieldname.includes('blockValues[favIcon]'));
+                    const newWebsiteLogo = (req as any).files?.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[websiteLogo]') && file.fieldname.includes('blockValues[websiteLogo]'));
+
+                    if (blockReferences.basicDetailsSettings === blockReference) {
+                        delete blockValues.languageValues;
+                    }
 
                     const settingsData: Partial<any> = {
                         countryId: new mongoose.Types.ObjectId(countryId),
-                        block: websiteSetup.basicSettings,
+                        block,
                         blockReference,
                         blockValues: {
                             ...(blockReferences.websiteSettings === blockReference ? {
                                 primaryColor: blockValues.primaryColor,
-                                secondaryColor: blockValues.primaryColor,
+                                secondaryColor: blockValues.secondaryColor,
                                 websiteLogoUrl: (newWebsiteLogo && newWebsiteLogo.length > 0 ? true : false) ? handleFileUpload(req, null, newWebsiteLogo[0], 'websiteLogoUrl', 'basicsettings') : blockValues.favIconUrl,
                                 favIconUrl: (newFavIcon && newFavIcon.length > 0 ? true : false) ? handleFileUpload(req, null, newFavIcon[0], 'favIconUrl', 'basicsettings') : blockValues.websiteLogoUrl,
                             } : blockValues)
@@ -54,34 +55,36 @@ class SettingsController extends BaseController {
                         createdAt: new Date(),
                         updatedAt: new Date()
                     };
-                 
+
                     let newBasicSettings: any = [];
                     if (!languageId) {
-                        if (!websiteSetupId) {
+                        const websiteSettingResult = await SettingsService.findOne({ countryId: countryId, block: block, blockReference: blockReference });
+
+                        if (!websiteSettingResult) {
                             newBasicSettings = await SettingsService.create(settingsData);
                         } else {
-                            const websiteSettingResult = await SettingsService.findOne({ _id: websiteSetupId, countryId: countryId, block: block, blockReference: blockReference });
-                            if (websiteSettingResult) {
-                                newBasicSettings = await SettingsService.update(websiteSettingResult._id, settingsData);
-                            } else {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Website setup not found',
-                                }, req);
-                            }
+                            newBasicSettings = await SettingsService.update(websiteSettingResult._id, settingsData);
                         }
                     } else {
                         if (websiteSetupId) {
-                            const languageValues = await GeneralService.multiLanguageFieledsManage(websiteSetupId, {
-                                languageId,
-                                source: multiLanguageSources.setup.basicSettings,
-                                sourceId: websiteSetupId,
-                                languageValues: settingsData
-                            });
-                            if (languageValues) {
-                                newBasicSettings = languageValues?.languageValues
+                            if (languageSources && languageValues) {
+                                const languageValuesData = await GeneralService.multiLanguageFieledsManage(websiteSetupId, {
+                                    languageId,
+                                    source: languageSources,
+                                    sourceId: websiteSetupId,
+                                    languageValues: languageValues
+                                });
+
+                                if (languageValuesData) {
+                                    newBasicSettings = languageValuesData?.languageValues
+                                } else {
+                                    return controller.sendErrorResponse(res, 200, {
+                                        message: 'Something went wrong on when website setup insertion. Please try again!',
+                                    }, req);
+                                }
                             } else {
                                 return controller.sendErrorResponse(res, 200, {
-                                    message: 'Something went wrong on when website setup insertion. Please try again!',
+                                    message: 'language sources is missing',
                                 }, req);
                             }
                         } else {
@@ -139,12 +142,14 @@ class SettingsController extends BaseController {
         try {
             const countryId = req.params.id;
             if (countryId) {
-                const { websiteSetupId, languageId, block, blockReference } = req.query as unknown as SettingFindOneWithCountryQueryParams;
-                if (block && blockReference) {
+                const { websiteSetupId, languageId, block, blockReference, languageSources } = req.query as unknown as SettingFindOneWithCountryQueryParams;
+                if ((checkValueExists(websiteSetup, block) && (checkValueExists(blockReferences, blockReference)))) {
                     const websiteSettingData: any = await SettingsService.findOne({ countryId, block, blockReference });
 
-                    if (languageId && websiteSettingData) {
-                        const languageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.setup.websiteSetups, websiteSettingData._id, languageId)
+                    if (languageId && languageSources && websiteSettingData) {
+                        const languageValues = await GeneralService.findOneLanguageValues(languageSources, websiteSettingData._id, languageId);
+                        console.log('languageValues', languageValues);
+
                         if (languageValues) {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: languageValues.languageValues,

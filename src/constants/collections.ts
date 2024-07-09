@@ -9,7 +9,7 @@ export const collections = {
             },
             productgallaryimages: 'productgallaryimages',
             productcategorylinks: 'productcategorylinks',
-           
+
 
         },
         categories: 'categories',
@@ -20,7 +20,27 @@ export const collections = {
         specifications: 'specifications',
         seopages: 'seopages',
         attributedetails: 'attributedetails',
-        specificationdetails:'specificationdetails'
-
+        specificationdetails: 'specificationdetails',
+        offers: 'offers',
     },
+    multilanguagefieleds: 'multilanguagefieleds',
+    customer: {
+        customers: 'customers',
+        wishlists: 'wishlists',
+        customeraddresses: 'customeraddresses',
+    },
+    cart: {
+        cartorders: 'cartorders',
+        cartorderproducts: 'cartorderproducts',
+        paymentmethods: 'paymentmethods',
+    },
+    marketing: {
+        coupons: 'coupons'
+    },
+    stores: {
+        stores: 'stores'
+    },
+    setup: {
+        countries: 'countries'
+    }
 }

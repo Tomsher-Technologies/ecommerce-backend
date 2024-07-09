@@ -1,16 +1,18 @@
-import 'module-alias/register';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import 'module-alias/register';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, categorySlugify, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
 import { CategoryQueryParams } from '../../../utils/types/category';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import CategoryService from '../../../services/admin/ecommerce/category-service'
 import GeneralService from '../../../services/admin/general-service';
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
-import { multiLanguageSources } from '../../../constants/multi-languages';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import CollectionsCategoriesService from '../../../services/admin/website/collections-categories-service';
 
 
 const controller = new BaseController();
@@ -19,9 +21,10 @@ class CategoryController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as CategoryQueryParams;
+            const { unCollectionedCategories, page_size = 1, limit = '', status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', slug = '', category = '', categoryId = '', _id = '', parentCategory = '' } = req.query as CategoryQueryParams;
 
             let query: any = { _id: { $exists: true } };
+            let categoryIdCheck: any
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -40,6 +43,46 @@ class CategoryController extends BaseController {
                 } as any;
             }
 
+            if (categoryId) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(categoryId)
+                } as any;
+            }
+
+            if (_id) {
+                if (typeof _id === 'string') {
+                    query = {
+                        ...query, _id: new mongoose.Types.ObjectId(_id)
+                    } as any;
+                } else {
+                    const categoryIds = _id.map((id: any) => new mongoose.Types.ObjectId(id));
+                    categoryIdCheck = {
+                        _id: { $in: categoryIds }
+                    };
+                }
+            }
+            if (categoryIdCheck && (Object.keys(categoryIdCheck)).length > 0) {
+                query = {
+                    ...query, ...categoryIdCheck
+                } as any;
+            }
+            if (category) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(category)
+                } as any;
+            }
+            if (slug) {
+                query = {
+                    ...query, slug: slug
+                } as any;
+            }
+
+            if (parentCategory) {
+                query = {
+                    ...query, parentCategory: new mongoose.Types.ObjectId(parentCategory)
+                } as any;
+            }
+
             const keysToCheck: (keyof CategoryProps)[] = ['corporateGiftsPriority'];
             const filteredQuery = keysToCheck.reduce((result: any, key) => {
                 if (key in req.query) {
@@ -51,11 +94,24 @@ class CategoryController extends BaseController {
             if (Object.keys(filteredQuery).length > 0) {
                 for (const key in filteredQuery) {
                     if (filteredQuery[key] === '> 0') {
-                        filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
+                        filteredPriorityQuery[key] = { $gt: '0' }; // Set query for key greater than 0
                     } else if (filteredQuery[key] === '0') {
-                        filteredPriorityQuery[key] = 0; // Set query for key equal to 0
+                        filteredPriorityQuery[key] = '0'; // Set query for key equal to 0
                     } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                        filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
+                        filteredPriorityQuery[key] = { $lt: '0' }; // Set query for key less than 0
+                    }
+                }
+            }
+
+            if (unCollectionedCategories) {
+                const collection = await CollectionsCategoriesService.findOne(unCollectionedCategories);
+                // console.log('collection', collection, unCollectionedCategories);
+
+                if (collection) {
+                    const unCollectionedBrandIds = collection.collectionsCategories.map(id => new mongoose.Types.ObjectId(id));
+                    if (unCollectionedBrandIds.length > 0) {
+                        query._id = { $nin: unCollectionedBrandIds };
+                        query.status = '1';
                     }
                 }
             }
@@ -179,15 +235,15 @@ class CategoryController extends BaseController {
                     data = categoryTitle
                 }
                 else {
-                    data = category?.slug + "-" + categoryTitle
+                    data = category?.slug + "-" + categorySlugify(categoryTitle)
                 }
-                slugData = slugify(data, '_')
+                slugData = data
 
 
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
 
                 const categoryData = {
-                    categoryTitle: await GeneralService.capitalizeWords(categoryTitle),
+                    categoryTitle: capitalizeWords(categoryTitle),
                     slug: slugData || slug,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
                     description,
@@ -207,8 +263,8 @@ class CategoryController extends BaseController {
                         file.fieldname.includes('[categoryImage]')
                     );
 
-                    if (languageValues && languageValues?.length > 0) {
-                        await languageValues.map((languageValue: any, index: number) => {
+                    if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
+                        await languageValues?.map((languageValue: any, index: number) => {
 
                             let categoryImageUrl = ''
                             if (languageValuesImages?.length > 0) {
@@ -299,6 +355,7 @@ class CategoryController extends BaseController {
 
                     updatedCategoryData = {
                         ...updatedCategoryData,
+                        categoryTitle: capitalizeWords(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
                         level: updatedCategoryData.level,
                         slug: updatedCategoryData.slug,
@@ -323,7 +380,7 @@ class CategoryController extends BaseController {
                         );
 
                         let newLanguageValues: any = []
-                        if (updatedCategoryData.languageValues && updatedCategoryData.languageValues.length > 0) {
+                        if (updatedCategoryData.languageValues && Array.isArray(updatedCategoryData.languageValues) && updatedCategoryData.languageValues.length > 0) {
                             for (let i = 0; i < updatedCategoryData.languageValues.length; i++) {
                                 const languageValue = updatedCategoryData.languageValues[i];
                                 let categoryImageUrl = '';

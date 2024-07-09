@@ -1,4 +1,5 @@
-export interface BrandQueryParams {
+export type BrandQueryParams = {
+    _id: any;
     page_size?: string;
     limit?: string;
     status?: string;
@@ -6,4 +7,12 @@ export interface BrandQueryParams {
     sortorder?: string;
     keyword?: string;
     corporateGiftsPriority?: any;
+    unCollectionedBrands?: any;
+    brandId?: string;
+    brand?: any;
+    category?: any;
+    collectionproduct?: any;
+    collectionbrand?: any;
+    collectioncategory?: any
+    slug?: string;
 }

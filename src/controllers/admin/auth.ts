@@ -38,6 +38,8 @@ class AuthController extends BaseController {
                 return this.sendErrorResponse(res, 401, { message: 'Authentication failed. User not found.' });
             } else if (error.message === 'Invalid password.') {
                 return this.sendErrorResponse(res, 401, { message: 'Authentication failed. Invalid password.' });
+            } else if (error.message === 'User permission declined') {
+                return this.sendErrorResponse(res, 401, { message: 'User permission declined' });
             } else {
                 // console.error("Error during login:", error);
                 return this.sendErrorResponse(res, 500, { message: 'Internal Server Error' });

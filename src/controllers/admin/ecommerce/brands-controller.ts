@@ -1,7 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/brand-schema';
 import { QueryParams } from '../../../utils/types/common';
 import { BrandQueryParams } from '../../../utils/types/brands';
@@ -12,6 +12,8 @@ import BaseController from '../../../controllers/admin/base-controller';
 import BrandsService from '../../../services/admin/ecommerce/brands-service'
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 import GeneralService from '../../../services/admin/general-service';
+import mongoose from 'mongoose';
+import CollectionsBrandsService from '../../../services/admin/website/collections-brands-service';
 
 const controller = new BaseController();
 
@@ -19,9 +21,9 @@ class BrandsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = '', status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { _id, unCollectionedBrands, page_size = 1, limit = '', status = ['0', '1', '2'], slug = '', sortby = '', sortorder = '', keyword = '', brandId = '' } = req.query as BrandQueryParams;
             let query: any = { _id: { $exists: true } };
-
+            let brand: any
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
@@ -38,7 +40,36 @@ class BrandsController extends BaseController {
                 } as any;
             }
 
-            const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority'];
+            if (_id) {
+                if (typeof _id === 'string') {
+                    query = {
+                        ...query, _id: new mongoose.Types.ObjectId(_id)
+                    } as any;
+                } else {
+                    const brandIds = _id.map((id: any) => new mongoose.Types.ObjectId(id));
+                    brand = {
+                        _id: { $in: brandIds }
+                    };
+                }
+            }
+            if (slug) {
+                query = {
+                    ...query, slug: slug
+                } as any;
+            }
+
+            if (brand && (Object.keys(brand)).length > 0) {
+                query = {
+                    ...query, ...brand
+                } as any;
+            }
+            if (brandId) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(brandId)
+                } as any;
+            }
+
+            const keysToCheck: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
             const filteredQuery = keysToCheck.reduce((result: any, key) => {
                 if (key in req.query) {
                     result[key] = req.query[key];
@@ -49,11 +80,24 @@ class BrandsController extends BaseController {
             if (Object.keys(filteredQuery).length > 0) {
                 for (const key in filteredQuery) {
                     if (filteredQuery[key] === '> 0') {
-                        filteredPriorityQuery[key] = { $gt: 0 }; // Set query for key greater than 0
+                        filteredPriorityQuery[key] = { $gt: '0' }; // Set query for key greater than 0
                     } else if (filteredQuery[key] === '0') {
-                        filteredPriorityQuery[key] = 0; // Set query for key equal to 0
+                        filteredPriorityQuery[key] = '0'; // Set query for key equal to 0
                     } else if (filteredQuery[key] === '< 0' || filteredQuery[key] === null || filteredQuery[key] === undefined) {
-                        filteredPriorityQuery[key] = { $lt: 0 }; // Set query for key less than 0
+                        filteredPriorityQuery[key] = { $lt: '0' }; // Set query for key less than 0
+                    }
+                }
+            }
+
+            if (unCollectionedBrands) {
+                const collection = await CollectionsBrandsService.findOne(unCollectionedBrands);
+                // console.log('collection', collection, unCollectionedBrands);
+
+                if (collection) {
+                    const unCollectionedBrandIds = collection.collectionsBrands.map(id => new mongoose.Types.ObjectId(id));
+                    if (unCollectionedBrandIds.length > 0) {
+                        query._id = { $nin: unCollectionedBrandIds };
+                        query.status = '1';
                     }
                 }
             }
@@ -88,15 +132,17 @@ class BrandsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { brandTitle, slug, description,  metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues,status } = validatedData.data;
+                const { brandTitle, slug, description, metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
+                const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
 
                 const brandData: Partial<BrandProps> = {
-                    brandTitle,
+                    brandTitle: capitalizeWords(brandTitle),
                     slug: slug || slugify(brandTitle) as any,
                     brandImageUrl: handleFileUpload(req, null, (req.file || brandImage), 'brandImageUrl', 'brand'),
+                    brandBannerImageUrl: handleFileUpload(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                     description,
                     metaTitle: metaTitle as string,
                     metaDescription: metaDescription as string,
@@ -105,7 +151,7 @@ class BrandsController extends BaseController {
                     metaImageUrl: metaImage as string,
                     twitterTitle: twitterTitle as string,
                     twitterDescription: twitterDescription as string,
-                    ['status' as string] : status || '1',
+                    ['status' as string]: status || '1',
                     statusAt: new Date(),
                     createdBy: user._id,
                     createdAt: new Date(),
@@ -120,27 +166,40 @@ class BrandsController extends BaseController {
                         file.fieldname.startsWith('languageValues[') &&
                         file.fieldname.includes('[brandImage]')
                     );
+                    const languageValuesBannerImages = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[brandBannerImage]')
+                    );
 
-                    if (languageValues && languageValues.length > 0) {
-                        await languageValues.map((languageValue: any, index: number) => {
+                    if (languageValues && Array.isArray(languageValues) && languageValues.length > 0) {
+                        await languageValues?.map((languageValue: any, index: number) => {
 
                             let brandImageUrl = ''
                             if (languageValuesImages.length > 0) {
                                 brandImageUrl = handleFileUpload(req, null, languageValuesImages[index], `brandImageUrl`, 'brand');
                             }
+                            let brandBannerImageUrl = ''
+                            if (languageValuesBannerImages.length > 0) {
+                                brandBannerImageUrl = handleFileUpload(req, null, languageValuesBannerImages[index], `brandBannerImageUrl`, 'brand');
+                            }
 
-                            GeneralService.multiLanguageFieledsManage(newBrand._id, {
+                            const languageValues = GeneralService.multiLanguageFieledsManage(newBrand._id, {
                                 ...languageValue,
                                 languageValues: {
                                     ...languageValue.languageValues,
-                                    brandImageUrl
+                                    brandImageUrl,
+                                    brandBannerImageUrl
                                 }
                             })
                         })
                     }
 
                     return controller.sendSuccessResponse(res, {
-                        requestedData: newBrand,
+                        requestedData: {
+                            ...newBrand,
+                            languageValues: languageValues
+                        },
                         message: 'Brand created successfully!'
                     }, 200, { // task log
                         sourceFromId: newBrand._id,
@@ -167,6 +226,13 @@ class BrandsController extends BaseController {
                     message: 'Validation error',
                     validation: {
                         brandTitle: error.errors.brandTitle.properties.message
+                    }
+                }, req);
+            } else if (error && error.errors && error.errors.brandImageUrl && error.errors.brandImageUrl.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        brandImageUrl: error.errors.brandImageUrl.properties.message
                     }
                 }, req);
             }
@@ -203,11 +269,14 @@ class BrandsController extends BaseController {
                 const brandId = req.params.id;
                 if (brandId) {
                     const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
+                    const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
 
                     let updatedBrandData = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
+                        brandTitle: await capitalizeWords(updatedBrandData.brandTitle),
                         brandImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandImage), 'brandImageUrl', 'brand'),
+                        brandBannerImageUrl: handleFileUpload(req, await BrandsService.findOne(brandId), (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                         updatedAt: new Date()
                     };
 
@@ -219,12 +288,18 @@ class BrandsController extends BaseController {
                             file.fieldname.startsWith('languageValues[') &&
                             file.fieldname.includes('[brandImage]')
                         );
+                        const languageValuesBannerImages = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[brandBannerImage]')
+                        );
 
                         let newLanguageValues: any = []
                         if (updatedBrandData.languageValues && updatedBrandData.languageValues.length > 0) {
                             for (let i = 0; i < updatedBrandData.languageValues.length; i++) {
                                 const languageValue = updatedBrandData.languageValues[i];
                                 let brandImageUrl = '';
+                                let brandBannerImageUrl = '';
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
 
                                 if (languageValuesImages.length > 0 && matchingImage) {
@@ -232,6 +307,14 @@ class BrandsController extends BaseController {
                                     brandImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `brandImageUrl`, 'brand');
                                 } else {
                                     brandImageUrl = updatedBrandData.languageValues[i].languageValues?.brandImageUrl
+                                }
+                                const matchingBannerImage = languageValuesBannerImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesBannerImages.length > 0 && matchingBannerImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.brands, updatedBrand._id, languageValue.languageId);
+                                    brandBannerImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingBannerImage, `brandBannerImageUrl`, 'brand');
+                                } else {
+                                    brandBannerImageUrl = updatedBrandData.languageValues[i].languageValues?.brandBannerImageUrl
                                 }
 
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedBrand._id, {
@@ -360,7 +443,7 @@ class BrandsController extends BaseController {
             const validatedData = updateWebsitePrioritySchema.safeParse(req.body);
             if (validatedData.success) {
                 const { keyColumn, root, container1 } = validatedData.data;
-                const validKeys: (keyof BrandProps)[] = ['corporateGiftsPriority'];
+                const validKeys: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
 
                 if (validKeys.includes(keyColumn as keyof BrandProps)) {
                     let updatedBrandData = req.body;

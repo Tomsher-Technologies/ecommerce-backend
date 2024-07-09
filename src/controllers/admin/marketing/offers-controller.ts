@@ -15,9 +15,9 @@ class OffersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
-            
+
             const userData = await res.locals.user;
             const countryId = getCountryId(userData);
             if (countryId) {
@@ -66,31 +66,43 @@ class OffersController extends BaseController {
         try {
             const validatedData = offersSchema.safeParse(req.body);
 
-
             if (validatedData.success) {
-                const { countryId, offerTitle, slug, offerDescription, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
+                const { countryId, offerTitle, slug, offerDescription, offerIN, offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerDateRange, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const offerData = {
                     countryId: countryId || getCountryId(user),
-                    offerTitle, slug: slug || slugify(offerTitle), offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
-                    offerDescription, offersBy,
+                    offerTitle,
+                    slug: slug || slugify(offerTitle),
+                    offerImageUrl: handleFileUpload(req, null, req.file, 'offerImageUrl', 'offer'),
+                    offerDescription,
+                    offersBy,
+                    offerIN,
                     offerApplyValues: Array.isArray(offerApplyValues) ? offerApplyValues : stringToArray(offerApplyValues),
-                    offerType, buyQuantity, getQuantity,
+                    offerType,
+                    buyQuantity,
+                    getQuantity,
                     offerDateRange: Array.isArray(offerDateRange) ? offerDateRange : stringToArray(offerDateRange),
                     status: status || '1', createdBy: user._id, createdAt: new Date()
                 };
 
-                const newOffer = await OfferService.create(offerData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newOffer,
-                    message: 'Offer created successfully!'
-                }, 200, { // task log
-                    sourceFromId: newOffer._id,
-                    sourceFrom: adminTaskLog.marketing.offers,
-                    activity: adminTaskLogActivity.create,
-                    activityStatus: adminTaskLogStatus.success
-                });
+                const newOffer: any = await OfferService.create(offerData);
+                if (newOffer) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newOffer?.length > 0 ? newOffer[0] : newOffer,
+                        message: 'Offer created successfully!'
+                    }, 200, { // task log
+                        sourceFromId: newOffer._id,
+                        sourceFrom: adminTaskLog.marketing.offers,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: 'something went wrong!'
+                    }, req);
+                }
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -147,10 +159,10 @@ class OffersController extends BaseController {
                         updatedAt: new Date()
                     };
 
-                    const updatedOffer = await OfferService.update(offerId, updatedofferData);
+                    const updatedOffer: any = await OfferService.update(offerId, updatedofferData);
                     if (updatedOffer) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedOffer,
+                            requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
                             message: 'Offer updated successfully!'
                         }, 200, { // task log
                             sourceFromId: updatedOffer._id,
@@ -190,10 +202,10 @@ class OffersController extends BaseController {
                     let { status } = req.body;
                     const updatedOfferData = { status };
 
-                    const updatedOffer = await OfferService.update(offerId, updatedOfferData);
+                    const updatedOffer: any = await OfferService.update(offerId, updatedOfferData);
                     if (updatedOffer) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedOffer,
+                            requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
                             message: 'Offers status updated successfully!'
                         }, 200, { // task log
                             sourceFromId: updatedOffer._id,

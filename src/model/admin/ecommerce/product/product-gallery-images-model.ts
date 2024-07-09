@@ -24,7 +24,7 @@ const productGallaryImagesSchema: Schema<ProductGalleryImagesProps> = new Schema
     },
     status: {
         type: String,
-        default: ''
+        default: '1'
     },
     statusAt: {
         type: Date,

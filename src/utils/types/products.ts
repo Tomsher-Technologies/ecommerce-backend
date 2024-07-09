@@ -10,12 +10,14 @@ export interface ProductsProps extends Document {
     brand: Schema.Types.ObjectId;
     warehouse: Schema.Types.ObjectId;
     unit: string;
+    isExcel: boolean;
     measurements: {
         weight?: string;
         hight?: string;
         length?: string;
         width?: string;
     };
+    starRating: Number;
     tags: string;
     sku: string;
     deliveryDays: string;
@@ -38,10 +40,18 @@ export interface ProductsQueryParams {
     sortorder?: string;
     keyword?: string;
     productId?: string;
-    category?: string;
+    brandId?: string;
+    attributeId?: string;
+    attributeDetailId?: string;
+    specificationId?: string;
+    specificationDetailId?: string;
+    categoryId?: string;
+    fromDate?: string;
+    endDate?: string;
     newArrivalPriority?: any;
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;
+    countryId?: string;
 }
 
 export interface ProductVariantsProps {
@@ -59,4 +69,37 @@ export interface ProductVariantServiceCreateProps {
     slug: string;
     countryId: string;
     productVariants: ProductVariantsProps;
+}
+
+export interface ProductsFrontendQueryParams {
+    page_size?: string;
+    limit?: string;
+    status?: string;
+    sortby?: string;
+    sortorder?: string;
+    keyword?: string;
+    product?: string;
+    brand?: string;
+    attribute?: string;
+    attributeDetail?: string;
+    specification?: string;
+    specificationDetail?: string;
+    category?: string;
+    fromDate?: string;
+    endDate?: string;
+    newArrivalPriority?: any;
+    corporateGiftsPriority?: any;
+    unCollectionedProducts?: any;
+    collectionproduct?: any;
+    collectionbrand?: any;
+    collectioncategory?: any;
+    getimagegallery?: number;
+    getattribute?: number;
+    getspecification?: number;
+    categories?: any;
+    brands?: any;
+    offer?: any;
+    maxprice?: any;
+    minprice?: any;
+    discount?: any;
 }

@@ -2,7 +2,7 @@ import { FilterOptionsProps, pagination } from '../../../../components/paginatio
 
 import { ProductsProps } from '../../../../utils/types/products';
 import { UserDataProps } from '../../../../utils/types/common';
-import { getCountryId, } from '../../../../utils/helpers';
+import { getCountryId, getCountryIdWithSuperAdmin, slugify, } from '../../../../utils/helpers';
 
 import ProductVariantModel, { ProductVariantsProps } from '../../../../model/admin/ecommerce/product/product-variants-model';
 import ProductSpecificationModel from '../../../../model/admin/ecommerce/product/product-specification-model';
@@ -14,6 +14,8 @@ import AttributesModel from '../../../../model/admin/ecommerce/attribute-model';
 import GeneralService from '../../general-service';
 import SeoPageService from '../../seo-page-service';
 import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
+import { seoPage } from '../../../../constants/admin/seo-page';
+import CountryModel from '../../../../model/admin/setup/country-model';
 
 class ProductVariantService {
 
@@ -34,6 +36,7 @@ class ProductVariantService {
                 hsn: 1,
                 mpn: 1,
                 barcode: 1,
+                extraProductTitle: 1,
                 variantDescription: 1,
                 cartMinQuantity: 1,
                 cartMaxQuantity: 1,
@@ -64,10 +67,14 @@ class ProductVariantService {
 
         return ProductVariantModel.aggregate(pipeline).exec();
     }
-    async find(productId: string): Promise<ProductVariantsProps[]> {
-
-        const variantData = await ProductVariantModel.find({ productId: productId })
-        return variantData
+    async find(query: any): Promise<ProductVariantsProps | null> {
+        const variantData = await ProductVariantModel.findOne(query)
+        if (variantData) {
+            return variantData
+        }
+        else {
+            return null
+        }
     }
     async findVariant(productId: string, id: string): Promise<ProductVariantsProps[]> {
 
@@ -113,10 +120,11 @@ class ProductVariantService {
         const productVariantData = {
             productId: productId,
             slug: productVariants.slug,
-            countryId: productVariants.countryId || getCountryId(userData),
+            extraProductTitle: productVariants.extraProductTitle,
+            countryId: productVariants.countryId || await getCountryIdWithSuperAdmin(userData),
             variantSku: productVariants.variantSku,
             price: productVariants.price,
-            discountPrice: productVariants.discountPrice,
+            discountPrice: ((productVariants.discountPrice === null || (productVariants as any).discountPrice === 'null') ? 0 : Number(productVariants.discountPrice)),
             quantity: productVariants.quantity,
             isDefault: Number(productVariants.isDefault),
             variantDescription: productVariants.variantDescription,
@@ -129,7 +137,6 @@ class ProductVariantService {
         }
 
         const createdProductVariant = await ProductVariantModel.create(productVariantData);
-
         if (createdProductVariant) {
             const pipeline = [
                 { $match: { _id: createdProductVariant._id } },
@@ -140,9 +147,10 @@ class ProductVariantService {
             const createdProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
 
             return createdProductVariantWithValues[0];
-        } else {
-            return null;
         }
+        // else {
+        //     return null;
+        // }
     }
 
 
@@ -218,7 +226,6 @@ class ProductVariantService {
                             .map(entry => entry._id);
 
                         const deleteVariant = await ProductVariantModel.deleteMany({ productId: productdata._id, _id: { $in: variantIDsToRemove } });
-
                         if (deleteVariant) {
                             await GeneralService.deleteParentModel([
                                 {
@@ -240,32 +247,74 @@ class ProductVariantService {
 
                     }
                     if (variantDetail.productVariants) {
-                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any) => {
+                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any, index: number) => {
+                            // if (data._id != '') {
                             const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
+
                             if (existingEntry) {
                                 // Update existing document
                                 const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
-                                if (productVariantData) {
+                                if (productVariantData && productdata.isVariant === 1) {
+
                                     // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                    await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes)
+                                    await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id)
                                     // }
                                     // if (data.productSeo && data.productSeo.length > 0) {
-                                    await SeoPageService.seoPageService(productdata._id, data.productSeo)
+                                    await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
                                     // }
                                     // if (data.productSpecification && data.productSpecification.length > 0) {
-                                    await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification)
+                                    await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantDetail.productVariants[index]._id)
                                     // }
+                                } else {
+
+                                    await GeneralService.deleteParentModel([
+                                        {
+                                            variantId: variantDetail.productVariants[index]._id,
+                                            model: ProductVariantAttributesModel
+                                        },
+                                        {
+                                            variantId: variantDetail.productVariants[index]._id,
+                                            model: SeoPagesModel
+                                        },
+                                        {
+                                            variantId: variantDetail.productVariants[index]._id,
+                                            model: ProductSpecificationModel
+                                        },
+                                    ]);
                                 }
-                            } else {
+                            }
+                            else {
+
                                 var slugData
-                                if (data.extraProductTitle) {
-                                    slugData = productdata.slug + "-" + data.extraProductTitle + "-" + data.variantSku
-                                }
-                                else {
-                                    slugData = productdata.slug + "-" + data.variantSku
-                                }
+                                // if (data.extraProductTitle) {
+                                //     slugData = productdata.slug + "-" + data.extraProductTitle
+                                // }
+                                // else {
+                                //     slugData = productdata.slug
+                                // }
+                                const countryData: any = await CountryModel.findOne({ _id: variantDetail.countryId })
+
+                                slugData = productdata?.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1) // generate slug
+
                                 // Create new document
-                                await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugData }, userData);
+                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugify(slugData) }, userData);
+                                // console.log("variantData", variantData);
+
+                                if (variantData) {
+                                    if (variantData) {
+                                        // console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
+
+                                        // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+                                        await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantData._id)
+                                        // }
+                                        // if (data.productSeo && data.productSeo.length > 0) {
+                                        await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
+                                        // }
+                                        // if (data.productSpecification && data.productSpecification.length > 0) {
+                                        await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantData._id)
+                                        // }
+                                    }
+                                }
                             }
                         }));
 

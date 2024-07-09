@@ -67,7 +67,7 @@ class ProductSpecificationService {
 
                 });
 
-                let attributeValue: any = {};
+                let specificationValue: any = {};
                 if (existingEntries) {
 
                     const filter = {
@@ -93,8 +93,8 @@ class ProductSpecificationService {
                         new: true
                     };
 
-                    attributeValue = await ProductSpecificationModel.findOneAndUpdate(filter, update, options);
-                    return attributeValue
+                    specificationValue = await ProductSpecificationModel.findOneAndUpdate(filter, update, options);
+                    return specificationValue
 
                 } else {
 
@@ -111,10 +111,10 @@ class ProductSpecificationService {
                             createdAt: new Date()
                         };
 
-                        attributeValue = await ProductSpecificationModel.create(productSpecificationData);
+                        specificationValue = await ProductSpecificationModel.create(productSpecificationData);
 
                     }
-                    return { ...attributeValue }
+                    return specificationValue
 
 
                 }
@@ -124,6 +124,8 @@ class ProductSpecificationService {
                 return null
             }
         } catch {
+            console.log("error");
+
             return null
         }
     }
@@ -171,27 +173,32 @@ class ProductSpecificationService {
         return ProductSpecificationModel.findOneAndDelete({ _id: productSpecificationId });
     }
 
-    async productSpecificationService(productId: string | null, specificationDetails: any): Promise<ProductSpecificationProps[]> {
+    async productSpecificationService(productId: string | null, specificationDetails: any, variantId?: string): Promise<ProductSpecificationProps[]> {
         try {
             if (productId) {
+
                 const existingEntries = await ProductSpecificationModel.find({ productId: productId });
                 if (existingEntries) {
                     const specificationIDsToRemove = existingEntries
                         .filter(entry => !specificationDetails?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                         .map(entry => entry._id);
+                    await ProductSpecificationModel.deleteMany({ productId: productId, variantId: variantId, _id: { $in: specificationIDsToRemove } });
 
-                    await ProductSpecificationModel.deleteMany({ productId: productId, _id: { $in: specificationIDsToRemove } });
                 }
                 if (specificationDetails) {
                     const productSpecificationPromises = await Promise.all(specificationDetails.map(async (data: any) => {
-                        const existingEntry = await ProductSpecificationModel.findOne({ _id: data._id });
-                        if (existingEntry) {
-                            // Update existing document
-                            await ProductSpecificationModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
 
-                        } else {
-                            // Create new document
-                            await ProductSpecificationModel.create({ ...data, productId: productId });
+                        if (data.specificationId != '' && data.specificationDetailId != '' && data._id != '' && data?._id != 'undefined') {
+
+                            const existingEntry = await ProductSpecificationModel.findOne({ _id: data._id });
+                            if (existingEntry) {
+                                // Update existing document
+                                await ProductSpecificationModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
+                            }
+                            else {
+                                // Create new document
+                                await ProductSpecificationModel.create({ specificationId: data.specificationId, specificationDetailId: data.specificationDetailId, productId: productId, variantId: variantId });
+                            }
                         }
                     }));
 

@@ -2,11 +2,14 @@ import mongoose from 'mongoose';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { ZodError } from 'zod';
-import { access, constants } from 'fs';
 import { Request } from 'express';
 import fs from 'fs';
+import http from 'http';
+import https from 'https';
+import path from 'path';
 
 import ProductsService from '../services/admin/ecommerce/product-service';
+import CountryModel from '../model/admin/setup/country-model';
 
 type ZodValidationError = {
     path: (string | number)[];
@@ -18,6 +21,20 @@ export function getCountryId(userData: any): mongoose.Types.ObjectId | undefined
     if (userData && userData.userTypeID && userData.countryId) {
         if (userData.userTypeID.slug !== 'super-admin') {
             return new mongoose.Types.ObjectId(userData.countryId);
+        }
+    }
+    return undefined;
+}
+
+export async function getCountryIdWithSuperAdmin(userData: any): Promise<mongoose.Types.ObjectId | undefined> {
+
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose.Types.ObjectId(userData.countryId);
+        } else if (userData.userTypeID.slug === 'super-admin') {
+            const countryId: any = await CountryModel.findOne({ isOrigin: true })
+
+            return countryId._id
         }
     }
     return undefined;
@@ -35,7 +52,6 @@ export const formatZodError = (errors: ZodError['errors']): Record<string, strin
 
 
 export const handleFileUpload = (req: any, data: any, file: any, fieldName: string, folderPath: string) => {
-    console.log('req', file);
 
     if (data && data[fieldName]) {
         if (file) {
@@ -52,8 +68,6 @@ export const handleFileUpload = (req: any, data: any, file: any, fieldName: stri
             // console.log('file',file.filename);
             return `/public/uploads/${folderPath}/${file.filename}`; // Construct the URL using req.protocol and req.hostname
         } else {
-            console.log('herere', data);
-
             return null;
         }
     }
@@ -141,6 +155,12 @@ export const slugify = (text: string, slugDiff = '-'): string => {
         .trim(); // Trim leading and trailing spaces
 };
 
+export const categorySlugify = (text: string): string => {
+    return text.toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/-/g, '-')
+};
+
 export const isValidPriceFormat = (value: string): boolean => {
     const priceRegex = /^\d+(\.\d{1,2})?$/;
     return priceRegex.test(value);
@@ -169,3 +189,185 @@ export const getIndexFromFieldName = (fieldname: string, keyValue: string): numb
 export const checkValueExists = <T extends object>(obj: T, value: T[keyof T]): boolean => {
     return Object.values(obj).includes(value);
 };
+
+export const dateConvertPm = (input: string): Date => {
+    return new Date(`${input}T23:59:59.999Z`)
+};
+
+export function generateOTP(length: number): string {
+    if (length <= 0) {
+        throw new Error('Length must be a positive integer.');
+    }
+
+    let otp = '';
+    for (let i = 0; i < length; i++) {
+        const digit = Math.floor(Math.random() * 10); // Generate a random digit between 0 and 9
+        otp += digit.toString();
+    }
+
+    return otp;
+}
+
+export function calculateWalletAmount(earnPoints: number, referAndEarn: any) {
+    const earnAmount = parseFloat(referAndEarn.earnAmount);
+    const earnPointsForAmount = parseFloat(referAndEarn.earnPoints);
+
+    // Calculate the walletAmount
+    const walletAmount = (earnPoints / earnPointsForAmount) * earnAmount;
+
+    return walletAmount;
+}
+
+
+export const capitalizeWords = (sentence: any) => {
+    let capitalized = sentence?.replace(/\b\w/g, (char: any) => {
+        return char.toUpperCase();
+    });
+
+    // Remove trailing whitespace
+    capitalized = capitalized.trim();
+    return capitalized;
+}
+
+export const uploadImageFromUrl = async (imageUrl: any) => {
+    try {
+        // Determine if the URL is HTTP or HTTPS
+        const protocol = imageUrl.startsWith('https') ? https : http;
+
+        // Use the URL module to parse the imageUrl
+        const parsedUrl = new URL(imageUrl);
+
+        // Extract the filename from the URL or generate a unique filename
+        let filename: any = path.basename(parsedUrl.pathname);
+        if (!filename || filename === '/') {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            filename = `productImage - ${uniqueSuffix}.jpg`; // Example: Use .jpg as extension
+        }
+
+        // Define the path where the image will be saved
+        const outputPath = path.join(__dirname, '../../public/uploads/product/', filename);
+
+        // Ensure the directory exists
+        fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
+        // Create a writable stream to save the image
+        const writer = fs.createWriteStream(outputPath);
+
+        // Set a timeout for the HTTP/HTTPS request
+        const timeout = 10000; // 10 seconds
+
+        // Make the HTTP/HTTPS GET request to the image URL
+        const response = await new Promise((resolve, reject) => {
+            const req = protocol.get(imageUrl, { timeout }, (res) => {
+                // Check for non-200 status codes
+                if (res.statusCode !== 200) {
+                    reject(new Error(`Failed to get '${imageUrl}'(${res.statusCode})`));
+                    return;
+                }
+
+                res.pipe(writer);
+                writer.on('finish', () => resolve(filename));
+                writer.on('error', (err) => reject(new Error(`Writer error: ${err.message}`)));
+            });
+
+            req.on('error', (err) => reject(new Error(`Request error: ${err.message}`)));
+
+            // Handle request timeout
+            req.on('timeout', () => {
+                req.abort();
+                reject(new Error('Request timed out'));
+            });
+        });
+
+        return response; // Return the filename when download completes
+    } catch (error: any) {
+        console.error('Error downloading image:', error.message);
+        return null; // Return null if there's an error
+    }
+};
+
+export type DiscountType = 'amount' | 'percentage' | 'percent' | 'amount-off';
+
+export const calculateTotalDiscountAmountDifference = (
+    totalAmount: number,
+    discountType: DiscountType,
+    discountVal: number
+): number => {
+    let discountAmount: number;
+
+    if (discountType === 'amount' || discountType === 'amount-off') {
+        discountAmount = discountVal;
+    } else if (discountType === 'percent' || discountType === 'percentage') {
+        discountAmount = (discountVal / 100) * totalAmount;
+    } else {
+        discountAmount = 0;
+    }
+
+    return discountAmount;
+};
+
+export function calculateRewardPoints(wallet: { orderAmount: string, redeemPoints: string }, totalOrderAmount: number): number {
+    if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
+        return 0;
+    }
+
+    const orderAmount = Number(wallet.orderAmount);
+    const redeemPoints = Number(wallet.redeemPoints);
+
+    if (orderAmount <= 0 || redeemPoints <= 0) {
+        return 0;
+    }
+
+    const numberOfTimesRedeemable = Math.floor(totalOrderAmount / orderAmount);
+
+    const totalRedeemPoints = numberOfTimesRedeemable * redeemPoints;
+
+    return totalRedeemPoints;
+}
+
+type Wallet = {
+    redeemAmount: string;
+    redeemPoints: string;
+    walletType: string;
+    minimumOrderAmount: string;
+    minimumOrderRedeemAtTime: string;
+};
+
+
+export function calculateWalletRewardPoints(wallet: Wallet, totalOrderAmount: number) {
+    // console.log('wallet:', wallet);
+    if (!wallet || totalOrderAmount === undefined || totalOrderAmount === null) {
+        return { rewardPoints: 0, redeemableAmount: 0 };
+    }
+
+    const redeemAmount = Number(wallet.redeemAmount);
+    const redeemPoints = Number(wallet.redeemPoints);
+    const minimumOrderAmount = Number(wallet.minimumOrderAmount);
+
+    console.log('redeemAmount:', redeemAmount);
+    console.log('redeemPoints:', redeemPoints);
+    console.log('minimumOrderAmount:', minimumOrderAmount);
+    console.log('totalOrderAmount:', totalOrderAmount);
+
+    if (isNaN(redeemAmount) || isNaN(redeemPoints) || isNaN(minimumOrderAmount) || redeemAmount <= 0 || redeemPoints <= 0 || totalOrderAmount < minimumOrderAmount) {
+        console.log('Invalid input values or totalOrderAmount is less than minimumOrderAmount');
+        return { rewardPoints: 0, redeemableAmount: 0 };
+    }
+
+    let rewardPoints = 0;
+    let redeemableAmount = 0;
+
+    if (wallet.walletType === 'flat') {
+        const numberOfTimesRedeemable = Math.floor(totalOrderAmount / redeemAmount);
+        rewardPoints = numberOfTimesRedeemable * redeemPoints;
+        redeemableAmount = numberOfTimesRedeemable * redeemAmount;
+    } else if (wallet.walletType === 'percent') {
+        redeemableAmount = (totalOrderAmount * redeemAmount) / 100;
+        rewardPoints = (redeemableAmount * redeemPoints) / redeemAmount;
+    }
+
+    console.log('rewardPoints:', rewardPoints);
+    console.log('redeemableAmount:', redeemableAmount);
+
+    return { rewardPoints, redeemableAmount };
+}

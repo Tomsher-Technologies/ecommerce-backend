@@ -3,6 +3,8 @@ import SpecificationDetailModel from '../../../model/admin/ecommerce/specificati
 import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import SpecificationModel, { SpecificationProps } from '../../../model/admin/ecommerce/specifications-model';
+import { capitalizeWords, slugify } from '../../../utils/helpers';
+import GeneralService from '../../../services/admin/general-service';
 
 
 class SpecificationService {
@@ -149,7 +151,7 @@ class SpecificationService {
                 const existingEntries = await SpecificationDetailModel.find({ specificationId: specificationId });
                 if (existingEntries) {
                     const specificationDetailIDsToRemove = existingEntries
-                        .filter(entry => !specificationDetails.some((data: any) => data._id.toString() === entry._id.toString()))
+                        .filter(entry => !specificationDetails.some((data: any) => data._id === entry._id))
                         .map(entry => entry._id);
                     await SpecificationDetailModel.deleteMany({ specificationId: specificationId, _id: { $in: specificationDetailIDsToRemove } });
                 }
@@ -181,6 +183,57 @@ class SpecificationService {
     async destroy(specificationId: string): Promise<SpecificationProps | null> {
         return SpecificationModel.findOneAndDelete({ _id: specificationId });
     }
+
+    async findOneSpecification(data: any): Promise<void | null> {
+
+        const resultSpecification: any = await SpecificationModel.findOne({ specificationTitle: data.specificationTitle.trim() });
+
+        if (resultSpecification) {
+            const specificationDetailResult: any = await this.findOneSpecificationDetail(data, resultSpecification._id)
+
+            const result: any = {
+                specificationId: resultSpecification._id,
+                specificationDetailId: specificationDetailResult._id
+            }
+            return result
+        } else {
+            const specificationData = {
+                specificationTitle: capitalizeWords(data.specificationTitle),
+                isExcel: true,
+                slug: slugify(data.specificationTitle)
+
+            }
+            const specificationResult: any = await this.create(specificationData)
+            if (specificationResult) {
+                const specificationDetailResult: any = await this.findOneSpecificationDetail(data, specificationResult._id)
+
+                const result: any = {
+                    specificationId: specificationResult._id,
+                    specificationDetailId: specificationDetailResult._id
+                }
+                return result
+            }
+        }
+    }
+
+    async findOneSpecificationDetail(data: any, specificationId: string): Promise<void | null> {
+        const resultBrand: any = await SpecificationDetailModel.findOne({ $and: [{ itemName: data.itemName }, { specificationId: specificationId }] });
+        if (resultBrand) {
+            return resultBrand
+        } else {
+            const brandData = {
+                specificationId: specificationId,
+                itemName: data.itemName,
+                itemValue: data.itemValue,
+
+            }
+            const brandResult: any = await SpecificationDetailModel.create(brandData);
+            if (brandResult) {
+                return brandResult
+            }
+        }
+    }
+
 }
 
 export default new SpecificationService();

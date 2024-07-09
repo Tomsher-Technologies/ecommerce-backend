@@ -13,9 +13,13 @@ const isNonNegativeInteger = (val: any): boolean => {
 export const bannerSchema = zod.object({
     countryId: zod.string().optional(),
     bannerTitle: zod.string({ required_error: 'Banner title is required', }).min(2, 'Banner title is should be 2 chars minimum'),
+    bannerSubTitle: zod.string().optional(),
     slug: zod.any().optional(),
     page: zod.string().refine((val) => val.trim().length > 0, {
         message: 'Page must not be empty'
+    }),
+    pageReference: zod.string().refine((val) => val.trim().length > 0, {
+        message: 'Page reference must not be empty'
     }),
     description: zod.string().optional(),
     linkType: zod.string().refine((val) => val.trim().length > 0, {

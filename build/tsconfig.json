@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2020",
+    "moduleResolution": "Node",
+    "noImplicitAny": true,
+    "sourceMap": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "outDir": "build",
+    "strict": true,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "lib": ["es2020"],
+  "compileOnSave": true,
+  // "include": [
+  //   "src"
+  // ]
+}

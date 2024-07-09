@@ -13,7 +13,7 @@ export interface CouponProps extends Document {
     discountMaxRedeemAmount?: string;
     couponUsage?: any;
     enableFreeShipping?: boolean;
-    discountDateRange?: any;
+    discountDateRange?:  [Date, Date];
     status: string;
     createdBy?: string;
     createdAt?: Date;
@@ -84,6 +84,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
             limitPerUser: String,
             enableCouponUsageLimit: Boolean,
             couponUsageLimit: String,
+            displayCoupon: Boolean,
         },
         required: true,
     },
@@ -92,7 +93,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
         required: true,
     },
     discountDateRange: {
-        type: Schema.Types.Mixed,
+        type: [Date],
         required: true,
     },
     status: {

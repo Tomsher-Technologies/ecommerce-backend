@@ -13,16 +13,31 @@ const userSchema: Schema<UserTypeProps> = new Schema({
     userTypeName: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                const count = await this.model('UserType').countDocuments({ userTypeName: value });
+                return count === 0;
+            },
+            message: 'User Type Name be unique'
+        }
     },
     slug: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                const count = await this.model('UserType').countDocuments({ slug: value });
+                return count === 0;
+            },
+            message: 'slug be unique'
+        }
     },
     status: {
         type: String,
-        required: true
+        required: true,
+        default: '1'
     },
     createdBy: {
         type: String,

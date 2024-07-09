@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { collections } from '../../../constants/collections';
 
@@ -25,7 +26,7 @@ class OfferService {
                                 else: {
                                     $cond: {
                                         if: { $eq: ["$offersBy", "product"] },
-                                        then: collections.ecommerce.products,
+                                        then: collections.ecommerce.products.products,
                                         else: "defaultCollection",
                                     },
                                 },
@@ -56,6 +57,7 @@ class OfferService {
             }
         };
 
+
         this.categoriesLookup = {
             $lookup: {
                 from: collections.ecommerce.categories,
@@ -78,7 +80,7 @@ class OfferService {
 
         this.productsLookup = {
             $lookup: {
-                from: collections.ecommerce.products,
+                from: collections.ecommerce.products.products,
                 let: { offerApplyValues: '$offerApplyValues' },
                 pipeline: [
                     { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$offerApplyValues"] } } },
@@ -144,11 +146,32 @@ class OfferService {
     }
 
     async findOne(offerId: string): Promise<OffersProps | null> {
-        return OffersModel.findById(offerId);
+
+        const pipeline = [
+            { $match: { _id: mongoose.Types.ObjectId.createFromHexString(offerId) } },
+            this.offerAddFields,
+            this.brandLookup,
+            this.categoriesLookup,
+            this.productsLookup,
+            { $replaceRoot: this.offerReplacedNewRoot }
+        ];
+
+        const result: any = await OffersModel.aggregate(pipeline).exec();
+        return result
     }
 
     async update(offerId: string, offerData: any): Promise<OffersProps | null> {
-        return OffersModel.findByIdAndUpdate(offerId, offerData, { new: true, useFindAndModify: false });
+        const update: any = await OffersModel.findByIdAndUpdate(offerId, offerData, { new: true, useFindAndModify: false });
+        const pipeline = [
+            { $match: { _id: new mongoose.Types.ObjectId(update._id) } },
+            this.offerAddFields,
+            this.brandLookup,
+            this.categoriesLookup,
+            this.productsLookup,
+            { $replaceRoot: this.offerReplacedNewRoot }
+        ];
+        const result: any = await OffersModel.aggregate(pipeline).exec();
+        return result
     }
 
     async destroy(offerId: string): Promise<OffersProps | null> {
