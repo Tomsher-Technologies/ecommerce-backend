@@ -61,8 +61,10 @@ class ProductService {
                     {
                         $match: {
                             $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                            }
+                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)],
+                            },
+                            status: "1"
+
                         }
                     },
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
@@ -92,7 +94,7 @@ class ProductService {
 
 
         ];
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, countryId)
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, "", countryId)
 
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
@@ -479,17 +481,13 @@ class ProductService {
             collections = await CollectionsBrandsModel.findOne({ _id: products.collectionbrand })
             if (collections && collections.collectionsBrands) {
                 let query
-                for await (let data of collections.collectionsBrands) {
-                    query = {
-                        'brand._id': { $in: [new mongoose.Types.ObjectId(data)] },
-                        'status': "1"
-                    }
+                const brandObjectIds = collections.collectionsBrands.map((id: any) => new mongoose.Types.ObjectId(id));
 
-                    // const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
-                    // if (result && result.length > 0) {
-                    //     productData.push(result)
-                    // }
-                }
+                // Construct the query
+                query = {
+                    'brand._id': { $in: brandObjectIds },
+                    status: "1"
+                };
                 pipeline.push({
                     $match: query
                 })
