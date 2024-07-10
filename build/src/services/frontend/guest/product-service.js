@@ -56,8 +56,9 @@ class ProductService {
                     {
                         $match: {
                             $expr: {
-                                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
-                            }
+                                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)],
+                            },
+                            status: "1"
                         }
                     },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
@@ -84,7 +85,7 @@ class ProductService {
                 }
             },
         ];
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName, countryId);
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(offers, hostName, "", countryId);
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
             pipeline.push(offerCategory);
@@ -440,16 +441,12 @@ class ProductService {
             collections = await collections_brands_model_1.default.findOne({ _id: products.collectionbrand });
             if (collections && collections.collectionsBrands) {
                 let query;
-                for await (let data of collections.collectionsBrands) {
-                    query = {
-                        'brand._id': { $in: [new mongoose_1.default.Types.ObjectId(data)] },
-                        'status': "1"
-                    };
-                    // const result = await this.findProductList({ query, getattribute: '1', getspecification: '1', hostName })
-                    // if (result && result.length > 0) {
-                    //     productData.push(result)
-                    // }
-                }
+                const brandObjectIds = collections.collectionsBrands.map((id) => new mongoose_1.default.Types.ObjectId(id));
+                // Construct the query
+                query = {
+                    'brand._id': { $in: brandObjectIds },
+                    status: "1"
+                };
                 pipeline.push({
                     $match: query
                 });
