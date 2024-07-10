@@ -20,7 +20,7 @@ class CustomerService {
             addField,
             customerProject,
             { $match: query },
-            { $sort: finalSort },
+            { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
         ];

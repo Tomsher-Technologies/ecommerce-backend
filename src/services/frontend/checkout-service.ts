@@ -23,7 +23,6 @@ class CheckoutService {
             }
         }
         const cartDetails: any = await CartOrdersModel.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" })
-
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
