@@ -459,16 +459,14 @@ export const productExcelSchema = zod.object({
     Specification_Option_1: zod.string().optional(),
     Specification_Name_1: zod.string().optional(),
     Specification_Value_1: zod.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.Item_Type === 'variant') {
+}).superRefine((data: any, ctx) => {
+    if (data.Item_Type === 'variant' || data.Item_Type === 'config-item') {
         // Validation for Attribute_Option_1
         if (!data.Attribute_Option_1 || !data.Attribute_Name_1 || !data.Attribute_Type_1) {
-
             ctx.addIssue({
                 code: "custom",
-                message: 'Attribute_Option_1,Attribute_Name_1,Attribute_Type_1 is required when Item_Type is "variant"',
+                message: 'Attribute_Option_1, Attribute_Name_1, Attribute_Type_1 are required when Item_Type is "variant"',
                 path: [data.Product_Title]
-
             });
         }
     }
@@ -492,15 +490,25 @@ export const productExcelSchema = zod.object({
         });
     }
 
-    // if (data.Item_Type != 'config-item') {
-    //     if (!data.Quantity) {
-    //         ctx.addIssue({
-    //             code: "custom",
-    //             message: 'Quantity is required ',
-    //             path: [data.Product_Title]
-    //         });
-    //     }
-    // }
+
+    if (data.Discount_Price && data.Discount_Price > data.Price) {
+        ctx.addIssue({
+            code: "custom",
+            message: "Discount price cannot be greater than the price",
+            path: [data.Product_Title]
+        });
+    }
+
+    if (data.Discount_Price && data.Price <= data.Discount_Price) {
+        ctx.addIssue({
+            code: "custom",
+            message: "Price must be greater than the discount price",
+            path: [data.Product_Title]
+        });
+    }
+
+
     return true; // Return true if validation passes
 });
+
 

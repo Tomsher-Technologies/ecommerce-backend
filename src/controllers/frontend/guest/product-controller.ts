@@ -892,9 +892,20 @@ class ProductController extends BaseController {
 
 
                 if (sortby == "price") {
+                    console.log(sortby, sortorder);
+
                     productData.sort((a: any, b: any) => {
-                        const aPrice = a.productVariants[0]?.[sortby] || 0;
-                        const bPrice = b.productVariants[0]?.[sortby] || 0;
+                        const getPrice = (product: any) => {
+                            // Prioritize variants based on given conditions
+                            let variant = product.productVariants.find((v: any) => v.isDefault === 1 && v.quantity > 0) ||
+                                product.productVariants.find((v: any) => v.slug === product.slug && v.quantity > 0) ||
+                                product.productVariants.find((v: any) => v.quantity > 0) ||
+                                product.productVariants[0];
+                            return variant.price;
+                        };
+
+                        const aPrice = getPrice(a);
+                        const bPrice = getPrice(b);
 
                         if (sortorder === 'asc') {
                             return aPrice - bPrice;
