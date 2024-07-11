@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap, cartStatus } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
@@ -48,7 +48,7 @@ class CheckoutController extends BaseController {
                         $and: [
                             { customerId: customerId },
                             { countryId: countryData._id },
-                            { cartStatus: "1" }
+                            { cartStatus: cartStatus.active }
                         ],
                     },
                     hostName: req.get('origin'),
@@ -59,7 +59,7 @@ class CheckoutController extends BaseController {
                 }
 
                 let cartUpdate: any = {
-                    cartStatus: "1",
+                    cartStatus: cartStatus.active,
                     paymentMethodCharge: 0,
                     couponId: null,
                     totalCouponAmount: 0,
@@ -177,11 +177,10 @@ class CheckoutController extends BaseController {
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
-
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
-                    await CheckoutService.cartUpdation(updateCart, true)
+                    await CheckoutService.cartUpdation({ ...updateCart, products: cartDetails.products, customerDetails, paymentMethod }, true)
                 }
-
+              
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: updateCart._id,
@@ -289,7 +288,7 @@ class CheckoutController extends BaseController {
             res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
- 
+
         if (tabbyResponse.status) {
             const retValResponse = await CheckoutService.paymentResponse({
                 paymentMethod: paymentMethods.tabby,

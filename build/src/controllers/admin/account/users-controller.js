@@ -11,6 +11,7 @@ const task_log_1 = require("../../../../src/constants/admin/task-log");
 const user_service_1 = __importDefault(require("../../../services/admin/account/user-service"));
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const controller = new base_controller_1.default();
+// $2b$10$bRcggpnGJHBCLOc.TG/PG.1vVkFEqDME53bHg5z/OvTepBp3J.FzG
 class UserController extends base_controller_1.default {
     async findAll(req, res) {
         try {

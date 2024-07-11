@@ -345,3 +345,17 @@ export function calculateWalletRewardPoints(wallet: Wallet, totalOrderAmount: nu
 
     return { rewardPoints: Math.floor(rewardPoints), redeemableAmount: Number(redeemableAmount?.toFixed(2))};
 }
+
+export const calculateExpectedDeliveryDate = (orderStatusAt: string, commonDeliveryDays: number): string => {
+    const orderDate = new Date(orderStatusAt);
+    const expectedDeliveryDate = new Date(orderDate);
+  
+    expectedDeliveryDate.setDate(orderDate.getDate() + commonDeliveryDays);
+  
+    const year = expectedDeliveryDate.getFullYear();
+    const month = String(expectedDeliveryDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(expectedDeliveryDate.getDate()).padStart(2, '0');
+  
+    return `${year}-${month}-${day}`;
+  };
+  

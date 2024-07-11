@@ -9,8 +9,9 @@ export interface CartOrderProductProps extends Document {
     productCouponAmount: number;
     quantity: number;
     slug: string;
-    orderStatus: string;
     giftWrapAmount: number;
+    orderStatus: string;
+    orderStatusAt?: Date;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -60,11 +61,14 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         ref: 'Products',
         required: false
     },
-
     orderStatus: {
         type: String,
         required: true,
         default: '1'
+    },
+    orderStatusAt: {
+        type: Date,
+        default: null
     },
     createdAt: {
         type: Date,

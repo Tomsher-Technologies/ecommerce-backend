@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.calculateExpectedDeliveryDate = exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -306,3 +306,13 @@ function calculateWalletRewardPoints(wallet, totalOrderAmount) {
     return { rewardPoints: Math.floor(rewardPoints), redeemableAmount: Number(redeemableAmount?.toFixed(2)) };
 }
 exports.calculateWalletRewardPoints = calculateWalletRewardPoints;
+const calculateExpectedDeliveryDate = (orderStatusAt, commonDeliveryDays) => {
+    const orderDate = new Date(orderStatusAt);
+    const expectedDeliveryDate = new Date(orderDate);
+    expectedDeliveryDate.setDate(orderDate.getDate() + commonDeliveryDays);
+    const year = expectedDeliveryDate.getFullYear();
+    const month = String(expectedDeliveryDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(expectedDeliveryDate.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+exports.calculateExpectedDeliveryDate = calculateExpectedDeliveryDate;

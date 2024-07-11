@@ -93,12 +93,12 @@ class GuestController extends base_controller_1.default {
                     // })
                     // console.log("sendOtp", sendOtp);
                     const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
-                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err, data) => {
+                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err, template) => {
                         if (err) {
                             console.log(err);
                             return;
                         }
-                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(newCustomer, data);
+                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
                     });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -292,12 +292,12 @@ class GuestController extends base_controller_1.default {
                         if (optUpdatedCustomer) {
                             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                             const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
-                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err, data) => {
+                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err, template) => {
                                 if (err) {
                                     console.log(err);
                                     return;
                                 }
-                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(optUpdatedCustomer, data);
+                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Verification OTP' }, template);
                             });
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {

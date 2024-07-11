@@ -382,62 +382,49 @@ class CategoryService {
         let categoryResult = await this.findOneCategory({ slug: slug });
         if (categoryResult) {
             return categoryResult;
-        }
-        else {
-            // const catData = slug.split(/([^-]+)/g);
-
-
+        } else {
             function splitHyphenOutsideParentheses(inputStr: any) {
                 // Regular expression to split by hyphens not inside parentheses
                 const parts = inputStr.split(/-(?![^()]*\))/);
                 return parts;
             }
-            console.log(slug);
 
-            // Example usage
             const catData = splitHyphenOutsideParentheses(slug);
 
-            console.log(".....sdsd.....", catData);
-
-            // console.log(".....sdsd.....", catData);
-
-
             let currentSlug = '';
-            for (const data of catData) {
+            let parentCategory = null;
+            for await (const data of catData) {
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
-                currentSlug += categorySlugify(data);
-                // console.log("fvdgdfgsd",currentSlug);
-                console.log("currentSlugcurrentSlug", currentSlug);
 
+                currentSlug += categorySlugify(data);
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
-                console.log("categoryResultcategoryResult", categoryResult);
 
                 if (categoryResult == null) {
-                    const titleData = currentSlug.split('-');
-                    const lastItem = catData[catData.length - 1];
-                    catData.pop();
-                    const parentSlug = catData.join('-');
+                    const titleData = splitHyphenOutsideParentheses(currentSlug);
+                    const lastItem = data;
+                    const parentSlug = titleData.slice(0, -1).join('-');
 
-                    const parentCategory = await this.findOneCategory({ slug: parentSlug });
+                    if (parentSlug) {
+                        parentCategory = await this.findOneCategory({ slug: parentSlug });
+                    }
 
                     const categoryData = {
-                        categoryTitle: capitalizeWords(lastItem),
-                        slug: categorySlugify(currentSlug),
+                        categoryTitle: capitalizeWords(lastItem.replace(/_/g, ' ')),
+                        slug: currentSlug,
                         parentCategory: parentCategory ? parentCategory._id : null,
-                        level: parentCategory ? catData.length.toString() : '0',
+                        level: parentCategory ? (parseInt(parentCategory.level) + 1).toString() : '0',
                         isExcel: true
                     };
-                    console.log("000000000000000000000000", categoryData);
 
                     await this.create(categoryData);
+                    categoryResult = await this.findOneCategory({ slug: currentSlug });
+                } else {
+                    parentCategory = categoryResult;
                 }
             }
-            const result: any = await this.findOneCategory({ slug: slugify(categoryTitle) })
-            if (result) {
-                return result
-            }
+            return this.findOneCategory({ slug: slugify(categoryTitle) });
         }
     }
 

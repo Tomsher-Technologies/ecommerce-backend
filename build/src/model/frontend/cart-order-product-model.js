@@ -73,6 +73,10 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         required: true,
         default: '1'
     },
+    orderStatusAt: {
+        type: Date,
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

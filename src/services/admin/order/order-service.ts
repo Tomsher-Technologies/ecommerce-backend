@@ -7,9 +7,6 @@ import { productVariantsLookupValues } from '../../../utils/config/wishlist-conf
 
 class OrderService {
 
-    constructor() {
-
-    }
     async OrderList(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort } = frontendPagination(options.query || {}, options);
@@ -63,21 +60,31 @@ class OrderService {
         return createdCartWithValues;
     }
 
-    async orderStatusUpdate(orderId: string, orderData: any): Promise<CartOrderProps | null> {
+    async orderStatusUpdate(orderId: string, orderData: any, getCartProducts: string = '0'): Promise<CartOrderProps | null> {
         const updatedBrand = await CartOrderModel.findByIdAndUpdate(
             orderId,
             orderData,
             { new: true, useFindAndModify: false }
         );
-
+        const modifiedPipeline = {
+            $lookup: {
+                ...cartLookup.$lookup,
+                pipeline: [
+                    productLookup,
+                    { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+                    productVariantsLookupValues("1"),
+                    { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+                ]
+            }
+        };
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                cartLookup,
+                ...(getCartProducts === '1' ? [modifiedPipeline] : [cartLookup]),
                 paymentMethodLookup,
                 customerLookup,
                 orderListObjectLookup,
-                cartProject
+                ...(getCartProducts === '1' ? [cartDeatilProject] : [cartProject]),
             ];
 
             const updatedBrandWithValues = await CartOrderModel.aggregate(pipeline);

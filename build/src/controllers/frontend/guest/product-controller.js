@@ -766,9 +766,18 @@ class ProductController extends base_controller_1.default {
                     hostName: req.get('origin'),
                 });
                 if (sortby == "price") {
+                    console.log(sortby, sortorder);
                     productData.sort((a, b) => {
-                        const aPrice = a.productVariants[0]?.[sortby] || 0;
-                        const bPrice = b.productVariants[0]?.[sortby] || 0;
+                        const getPrice = (product) => {
+                            // Prioritize variants based on given conditions
+                            let variant = product.productVariants.find((v) => v.isDefault === 1 && v.quantity > 0) ||
+                                product.productVariants.find((v) => v.slug === product.slug && v.quantity > 0) ||
+                                product.productVariants.find((v) => v.quantity > 0) ||
+                                product.productVariants[0];
+                            return variant.price;
+                        };
+                        const aPrice = getPrice(a);
+                        const bPrice = getPrice(b);
                         if (sortorder === 'asc') {
                             return aPrice - bPrice;
                         }

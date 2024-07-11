@@ -16,10 +16,11 @@ class AuthService {
     async login(username, password) {
         try {
             const user = await user_model_1.default.findOne({ $and: [{ email: username }, { status: '1' }] }).populate('userTypeID', ['userTypeName', 'slug']);
-            console.log('user', user);
+            if (!user) {
+                throw new Error('Invalid user name or password!');
+            }
             if (user.userTypeID.slug != "super-admin") {
                 const userType = await user_type_model_1.default.findOne({ $and: [{ slug: user.userTypeID.slug }, { status: '1' }] });
-                console.log(userType);
                 if (!userType) {
                     throw new Error('User permission declined');
                 }

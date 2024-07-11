@@ -9,8 +9,6 @@ const cart_order_config_1 = require("../../../utils/config/cart-order-config");
 const product_config_1 = require("../../../utils/config/product-config");
 const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 class OrderService {
-    constructor() {
-    }
     async OrderList(options) {
         const { query, skip, limit, sort } = (0, pagination_1.frontendPagination)(options.query || {}, options);
         const { getAddress, getCartProducts } = options;
@@ -55,16 +53,27 @@ class OrderService {
         const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
         return createdCartWithValues;
     }
-    async orderStatusUpdate(orderId, orderData) {
+    async orderStatusUpdate(orderId, orderData, getCartProducts = '0') {
         const updatedBrand = await cart_order_model_1.default.findByIdAndUpdate(orderId, orderData, { new: true, useFindAndModify: false });
+        const modifiedPipeline = {
+            $lookup: {
+                ...cart_order_config_1.cartLookup.$lookup,
+                pipeline: [
+                    product_config_1.productLookup,
+                    { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+                    (0, wishlist_config_1.productVariantsLookupValues)("1"),
+                    { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+                ]
+            }
+        };
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                cart_order_config_1.cartLookup,
+                ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
                 cart_order_config_1.paymentMethodLookup,
                 cart_order_config_1.customerLookup,
                 cart_order_config_1.orderListObjectLookup,
-                cart_order_config_1.cartProject
+                ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
             ];
             const updatedBrandWithValues = await cart_order_model_1.default.aggregate(pipeline);
             return updatedBrandWithValues[0];
