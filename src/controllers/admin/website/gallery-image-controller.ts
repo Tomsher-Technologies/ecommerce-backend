@@ -77,7 +77,7 @@ class GalleryImageController extends BaseController {
 
                         const galleryImageData = {
                             galleryImageUrl: handleFileUpload(req, null, (req.file || galleryImage[i]), 'galleryImageUrl', 'galleryimages'),
-                            sourceFromId: sourceFromId,
+                            sourceFromId: sourceFromId === '' ? null : sourceFromId,
                             sourceFrom: sourceFrom,
                             page,
                             pageReference,
