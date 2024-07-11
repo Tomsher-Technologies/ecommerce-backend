@@ -99,7 +99,7 @@ class CheckoutController extends BaseController {
                 let paymentData = null
                 if (paymentMethod.slug !== paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
-                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
+                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
 
                         const tapResponse = await tapPaymentCreate(tapDefaultValues, paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
@@ -180,7 +180,7 @@ class CheckoutController extends BaseController {
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
                     await CheckoutService.cartUpdation({ ...updateCart, products: cartDetails.products, customerDetails, paymentMethod }, true)
                 }
-              
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: updateCart._id,

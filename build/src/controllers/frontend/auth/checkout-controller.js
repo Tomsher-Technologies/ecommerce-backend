@@ -90,7 +90,7 @@ class CheckoutController extends base_controller_1.default {
                 let paymentData = null;
                 if (paymentMethod.slug !== cart_1.paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.tap) {
-                        const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails);
+                        const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
                         const tapResponse = await (0, tap_payment_1.tapPaymentCreate)(tapDefaultValues, paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === cart_1.tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
                             const paymentTransaction = await payment_transaction_model_1.default.create({

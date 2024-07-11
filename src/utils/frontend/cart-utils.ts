@@ -3,7 +3,7 @@ import { CustomrProps } from "../../model/frontend/customers-model"
 import { PaymentMethodProps } from "../../model/admin/setup/payment-methods-model"
 import { CustomerAddressProps } from "../../model/frontend/customer-address-model"
 
-export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
+export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
 
     return {
         "amount": cartData.totalAmount,
@@ -34,7 +34,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { tota
             }
         },
         "merchant": {
-            "id": cartData._id
+            "id": paymentMethodValues.merchantCode
         },
         "source": {
             "id": "src_card"
