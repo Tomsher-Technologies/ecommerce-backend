@@ -14,12 +14,12 @@ const { upload } = configureMulter('galleryimages', ['galleryImage',]);
 
 router.use(authMiddleware);
 
-// router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.galleryimages, readOnly: 1 }), GalleryImagesController.findAll);
-// router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.galleryimages, writeOnly: 1 }), GalleryImagesController.findOne);
+router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.website.galleryimages, readOnly: 1 }), GalleryImagesController.findAll);
+router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.website.galleryimages, writeOnly: 1 }), GalleryImagesController.findOne);
 router.post('/', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.website.galleryimages, readOnly: 1 }), logResponseStatus, GalleryImagesController.create);
-// router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.galleryimages, writeOnly: 1 }), logResponseStatus, GalleryImagesController.update);
-// router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.galleryimages, writeOnly: 1 }), GalleryImagesController.statusChange);
-// router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.galleryimages }), GalleryImagesController.destroy);
+router.post('/:id', upload.any(), userPermissionMiddleware({ permissionBlock: permissionBlocks.website.galleryimages, writeOnly: 1 }), logResponseStatus, GalleryImagesController.update);
+router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.website.galleryimages, writeOnly: 1 }), GalleryImagesController.statusChange);
+router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.website.galleryimages }), GalleryImagesController.destroy);
 
 
 export default router;

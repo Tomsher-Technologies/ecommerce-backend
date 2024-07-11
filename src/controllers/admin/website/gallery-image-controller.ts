@@ -1,16 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, getCountryId, handleFileUpload, slugify } from '../../../utils/helpers';
+import { formatZodError, handleFileUpload } from '../../../utils/helpers';
 import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 import BaseController from '../base-controller';
-import GeneralService from '../../../services/admin/general-service';
-import mongoose from 'mongoose';
 import { galleryImageSchema } from '../../../utils/schemas/admin/ecommerce/gallery-image-schema';
 import GalleryImageService from '../../../services/admin/website/gallery-image-service'
-import { bannerSchema } from '../../../utils/schemas/admin/ecommerce/banner-schema';
 
 const controller = new BaseController();
 
@@ -20,14 +17,6 @@ class GalleryImageController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '', countryId = '' } = req.query as QueryParamsWithPage;
             let query: any = { _id: { $exists: true } };
-            const userData = await res.locals.user;
-
-            const country = getCountryId(userData);
-            if (country) {
-                query.countryId = country;
-            } else if (countryId) {
-                query.countryId = new mongoose.Types.ObjectId(countryId)
-            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -51,7 +40,7 @@ class GalleryImageController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
 
-            const banners = await GalleryImageService.findAll({
+            const galleryImages = await GalleryImageService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
@@ -59,12 +48,12 @@ class GalleryImageController extends BaseController {
             });
 
             return controller.sendSuccessResponse(res, {
-                requestedData: banners,
+                requestedData: galleryImages,
                 totalCount: await GalleryImageService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching banners' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching galleryImages' });
         }
     }
 
@@ -137,9 +126,9 @@ class GalleryImageController extends BaseController {
         try {
             const galleryImageId = req.params.id;
             if (galleryImageId) {
-                const banner = await GalleryImageService.findOne(galleryImageId);
+                const galleryImage = await GalleryImageService.findOne(galleryImageId);
                 return controller.sendSuccessResponse(res, {
-                    requestedData: banner,
+                    requestedData: galleryImage,
                     message: 'Success'
                 });
             } else {
@@ -154,49 +143,44 @@ class GalleryImageController extends BaseController {
 
     async update(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = bannerSchema.safeParse(req.body);
+            console.log(req.body);
+
+            const validatedData = galleryImageSchema.safeParse(req.body);
             if (validatedData.success) {
                 const galleryImageId = req.params.id;
                 if (galleryImageId) {
-                    const mewBannerImages = (req as any).files.filter((file: any) =>
-                        file.fieldname &&
-                        file.fieldname.startsWith('bannerImages[') &&
-                        file.fieldname.includes('[bannerImage]')
-                    );
+                    const galleryImage = (req as any).files.find((file: any) => file.fieldname === 'galleryImage');
 
-                    let bannerImages: any[] = []
-
-
-                    let updatedBannerData = req.body;
-                    updatedBannerData = {
-                        ...updatedBannerData,
-                        bannerImages: bannerImages,
+                    let updatedGalleryImageData = req.body;
+                    updatedGalleryImageData = {
+                        ...updatedGalleryImageData,
+                        galleryImageUrl: handleFileUpload(req, await GalleryImageService.findOne(galleryImageId), (req.file || galleryImage), 'galleryImageUrl', 'galleryimages'),
                         updatedAt: new Date()
                     };
 
-                    const updatedBanner: any = await GalleryImageService.update(galleryImageId, updatedBannerData);
-                    if (updatedBanner) {
+                    const updatedGalleryImage: any = await GalleryImageService.update(galleryImageId, updatedGalleryImageData);
+                    if (updatedGalleryImage) {
 
 
-                        const updatedBannerMapped = Object.keys(updatedBanner).reduce((mapped: any, key: string) => {
-                            mapped[key] = updatedBanner[key];
+                        const updatedGalleryImageMapped = Object.keys(updatedGalleryImage).reduce((mapped: any, key: string) => {
+                            mapped[key] = updatedGalleryImage[key];
                             return mapped;
                         }, {});
 
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
-                                ...updatedBannerMapped,
+                                ...updatedGalleryImageMapped,
                             },
-                            message: 'Banner updated successfully!'
+                            message: 'GalleryImage updated successfully!'
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
-                            message: 'Banner Id not found!',
+                            message: 'GalleryImage Id not found!',
                         }, req);
                     }
                 } else {
                     return controller.sendErrorResponse(res, 200, {
-                        message: 'Banner Id not found! Please try again with banner id',
+                        message: 'Banner Id not found! Please try again with galleryImage id',
                     }, req);
                 }
             } else {
@@ -214,7 +198,7 @@ class GalleryImageController extends BaseController {
 
     async statusChange(req: Request, res: Response): Promise<void> {
         try {
-            const validatedData = bannerSchema.safeParse(req.body);
+            const validatedData = galleryImageSchema.safeParse(req.body);
             if (validatedData.success) {
                 const galleryImageId = req.params.id;
                 if (galleryImageId) {
@@ -264,7 +248,7 @@ class GalleryImageController extends BaseController {
                     await GalleryImageService.destroy(galleryImageId);
 
                     return controller.sendSuccessResponse(res,
-                        { message: 'Banner deleted successfully!' },
+                        { message: 'Gallery Image deleted successfully!' },
                         200, { // task log
                         sourceFromId: galleryImageId,
                         sourceFrom: adminTaskLog.website.galleryimages,
@@ -278,7 +262,7 @@ class GalleryImageController extends BaseController {
                 }
             } else {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Banner id not found!',
+                    message: 'Gallery image id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'

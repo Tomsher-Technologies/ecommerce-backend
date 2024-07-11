@@ -54,9 +54,9 @@ class GalleryImageService {
         }
     }
 
-    async findOne(brandId: string): Promise<GalleryImagesProps | null> {
-        if (brandId) {
-            const objectId = new mongoose.Types.ObjectId(brandId);
+    async findOne(id: string): Promise<GalleryImagesProps | null> {
+        if (id) {
+            const objectId = new mongoose.Types.ObjectId(id);
             const pipeline = [
                 { $match: { _id: objectId } },
             ];
@@ -92,50 +92,7 @@ class GalleryImageService {
     async destroy(brandId: string): Promise<GalleryImagesProps | null> {
         return GalleryImageModel.findOneAndDelete({ _id: brandId });
     }
-    async findBrand(data: any): Promise<GalleryImagesProps | null> {
-        return GalleryImageModel.findOne(data);
-    }
-    async findBrandId(brandTitle: string): Promise<void | null> {
-        const slug = slugify(brandTitle);
 
-        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle.trim() });
-        if (resultBrand) {
-            return resultBrand
-        } else {
-            const brandData = {
-                brandTitle: capitalizeWords(brandTitle),
-                slug: slugify(brandTitle),
-                isExcel: true
-            }
-
-            const brandResult: any = await this.create(brandData)
-            if (brandResult) {
-                return brandResult
-            }
-        }
-    }
-
-
-    async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof GalleryImagesProps): Promise<void> {
-        try {
-            // Set columnKey to '0' for all documents initially
-            await GalleryImageModel.updateMany({ [columnKey]: { $gt: '0' } }, { [columnKey]: '0' });
-
-            if (container1 && container1.length > 0) {
-                // Loop through container1 and update [mode] for each corresponding document
-                for (let i = 0; i < container1.length; i++) {
-                    const brandId = container1[i];
-                    const brand = await GalleryImageModel.findById(brandId);
-                    if (brand) {
-                        (brand as any)[columnKey] = (i + 1).toString();
-                        await brand.save({ validateBeforeSave: false });
-                    }
-                }
-            }
-        } catch (error) {
-            throw new Error(error + 'Failed to update ' + columnKey);
-        }
-    }
 }
 
 export default new GalleryImageService();
