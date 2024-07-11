@@ -29,11 +29,11 @@ const gallaryImagesSchema: Schema<GalleryImagesProps> = new Schema({
 
     page: {
         type: String,
-        required: true,
+        default: null
     },
     pageReference: {
         type: String,
-        required: true,
+        default: null
     },
     status: {
         type: String,
