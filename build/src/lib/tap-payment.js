@@ -29,14 +29,14 @@ const tapPaymentCreate = async (tapDefaultValues, paymentMethodValues) => {
     }
 };
 exports.tapPaymentCreate = tapPaymentCreate;
-const tapPaymentRetrieve = async (tapId) => {
+const tapPaymentRetrieve = async (tapId, paymentMethodValues) => {
     try {
         const response = await fetch(`${process.env.TAP_API_URL}/${tapId}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": "Bearer sk_test_XKokBfNWv6FIYuTMg5sLPjhJ"
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
             },
             redirect: "follow",
             referrerPolicy: "no-referrer",

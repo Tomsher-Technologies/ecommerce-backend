@@ -30,6 +30,11 @@ const paymentTransactionSchema = new mongoose_1.Schema({
         ref: 'CartOrders',
         required: true,
     },
+    paymentMethodId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'PaymentMethods',
+        required: true,
+    },
     transactionId: {
         type: String,
         required: true,

@@ -15,17 +15,13 @@ import { blockReferences, websiteSetup } from '../../constants/website-setup';
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import { mailChimpEmailGateway } from '../../lib/mail-chimp-sms-gateway';
 import CustomerAddress from '../../model/frontend/customer-address-model';
-import { buildOrderPipeline, cartDeatilProject, cartLookup, customerLookup, orderListObjectLookup, paymentMethodLookup } from '../../utils/config/cart-order-config';
-import { productLookup } from '../../utils/config/product-config';
-import { productVariantsLookupValues, replaceProductLookupValues } from '../../utils/config/wishlist-config';
+import { buildOrderPipeline, } from '../../utils/config/cart-order-config';
+import { ObjectId } from 'mongoose';
 
 class CheckoutService {
 
-    async paymentResponse(options: any = {}): Promise<any> {
-        const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails = await PaymentTransactionModel.findOne(
-            paymentMethod === paymentMethods.tabby ? { paymentId } : { transactionId }
-        );
+    async paymentResponse(options: { paymentDetails: { _id: ObjectId, orderId: ObjectId } | null; allPaymentResponseData: any; paymentStatus: string; }): Promise<any> {
+        const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
 
         if (!paymentDetails) {
             return {

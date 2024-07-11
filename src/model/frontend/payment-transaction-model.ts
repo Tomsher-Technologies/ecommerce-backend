@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface PaymentTransactionModelProps extends Document {
     orderId: Schema.Types.ObjectId;
+    paymentMethodId: Schema.Types.ObjectId;
     transactionId: string;
     paymentId: string;
     data: any;
@@ -15,6 +16,11 @@ const paymentTransactionSchema: Schema<PaymentTransactionModelProps> = new Schem
     orderId: {
         type: Schema.Types.ObjectId,
         ref: 'CartOrders',
+        required: true,
+    },
+    paymentMethodId: {
+        type: Schema.Types.ObjectId,
+        ref: 'PaymentMethods',
         required: true,
     },
     transactionId: {

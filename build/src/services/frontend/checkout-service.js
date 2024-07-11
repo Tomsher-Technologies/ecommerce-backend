@@ -20,9 +20,8 @@ const mail_chimp_sms_gateway_1 = require("../../lib/mail-chimp-sms-gateway");
 const customer_address_model_1 = __importDefault(require("../../model/frontend/customer-address-model"));
 const cart_order_config_1 = require("../../utils/config/cart-order-config");
 class CheckoutService {
-    async paymentResponse(options = {}) {
-        const { transactionId, paymentId, paymentMethod, allPaymentResponseData, paymentStatus } = options;
-        const paymentDetails = await payment_transaction_model_1.default.findOne(paymentMethod === cart_1.paymentMethods.tabby ? { paymentId } : { transactionId });
+    async paymentResponse(options) {
+        const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
         if (!paymentDetails) {
             return {
                 status: false,
