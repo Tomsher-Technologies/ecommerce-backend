@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
-const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) => {
+const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, paymentMethodValues) => {
     return {
         "amount": cartData.totalAmount,
         "currency": countryData.currencyCode,
@@ -31,7 +31,7 @@ const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) =
             }
         },
         "merchant": {
-            "id": cartData._id
+            "id": paymentMethodValues.merchantCode
         },
         "source": {
             "id": "src_card"
