@@ -339,7 +339,7 @@ class CategoryService {
                 const parts = inputStr.split(/-(?![^()]*\))/);
                 return parts;
             }
-            const catData = splitHyphenOutsideParentheses(slug);
+            const catData = await splitHyphenOutsideParentheses(slug);
             let currentSlug = '';
             let parentCategory = null;
             for await (const data of catData) {
@@ -349,7 +349,7 @@ class CategoryService {
                 currentSlug += (0, helpers_1.categorySlugify)(data);
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
                 if (categoryResult == null) {
-                    const titleData = splitHyphenOutsideParentheses(currentSlug);
+                    const titleData = await splitHyphenOutsideParentheses(currentSlug);
                     const lastItem = data;
                     const parentSlug = titleData.slice(0, -1).join('-');
                     if (parentSlug) {
@@ -369,7 +369,10 @@ class CategoryService {
                     parentCategory = categoryResult;
                 }
             }
-            return this.findOneCategory({ slug: (0, helpers_1.slugify)(categoryTitle) });
+            const result = await this.findOneCategory({ slug: (0, helpers_1.categorySlugify)(categoryTitle) });
+            if (result) {
+                return result;
+            }
         }
     }
     async findParentCategory(parentCategory) {
