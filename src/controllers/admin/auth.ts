@@ -33,7 +33,6 @@ class AuthController extends BaseController {
             }
 
         } catch (error: any) {
-            console.log('akmal', error.message);
             if (error.message === 'Invalid user name.') {
                 return this.sendErrorResponse(res, 401, { message: 'Authentication failed. User not found.' });
             } else if (error.message === 'Invalid password.') {
@@ -41,8 +40,7 @@ class AuthController extends BaseController {
             } else if (error.message === 'User permission declined') {
                 return this.sendErrorResponse(res, 401, { message: 'User permission declined' });
             } else {
-                // console.error("Error during login:", error);
-                return this.sendErrorResponse(res, 500, { message: 'Internal Server Error' });
+                return this.sendErrorResponse(res, 500, { message: error?.message || 'Internal Server Error' });
             }
         }
     }

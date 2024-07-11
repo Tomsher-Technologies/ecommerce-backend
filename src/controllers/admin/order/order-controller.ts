@@ -1,7 +1,9 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
+import path from 'path';
+const ejs = require('ejs');
 
-import { calculateWalletRewardPoints, dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { calculateExpectedDeliveryDate, calculateWalletRewardPoints, dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import OrderService from '../../../services/admin/order/order-service'
@@ -15,6 +17,9 @@ import settingsService from '../../../services/admin/setup/settings-service';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 import { earnTypes } from '../../../constants/wallet';
 import CustomerService from '../../../services/frontend/customer-service';
+import { mailChimpEmailGateway } from '../../../lib/mail-chimp-sms-gateway';
+import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
+import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 
 const controller = new BaseController();
 
@@ -216,7 +221,6 @@ class OrdersController extends BaseController {
                 getCartProducts: '1',
                 hostName: req.get('origin'),
             })
-            console.log('orderDetails', orderDetails);
 
             if (orderDetails && orderDetails?.length > 0) {
                 return controller.sendSuccessResponse(res, {
@@ -295,9 +299,10 @@ class OrdersController extends BaseController {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+            let customerDetails: any = null;
             if (orderDetails.customerId) {
                 const walletTransactionDetails = await CustomerWalletTransactionsModel.findOne({ orderId: orderDetails._id })
-                const customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
+                customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
                 if (customerDetails) {
                     if (orderStatus === '5' && !walletTransactionDetails) {
                         const walletsDetails = await settingsService.findOne({ countryId: orderDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
@@ -337,24 +342,79 @@ class OrdersController extends BaseController {
 
 
             orderDetails.orderStatus = orderStatus;
+            const currentDate = new Date();
             switch (orderStatus) {
-                case '1': orderDetails.orderStatusAt = new Date(); break;
-                case '2': orderDetails.processingStatusAt = new Date(); break;
-                case '3': orderDetails.packedStatusAt = new Date(); break;
-                case '4': orderDetails.shippedStatusAt = new Date(); break;
-                case '5': orderDetails.deliveredStatusAt = new Date(); break;
-                case '6': orderDetails.canceledStatusAt = new Date(); break;
-                case '7': orderDetails.returnedStatusAt = new Date(); break;
-                case '8': orderDetails.refundedStatusAt = new Date(); break;
-                case '9': orderDetails.partiallyShippedStatusAt = new Date(); break;
-                case '10': orderDetails.onHoldStatusAt = new Date(); break;
-                case '11': orderDetails.failedStatusAt = new Date(); break;
-                case '12': orderDetails.completedStatusAt = new Date(); break;
-                case '13': orderDetails.pickupStatusAt = new Date(); break;
+                case '1': orderDetails.orderStatusAt = currentDate; break;
+                case '2': orderDetails.processingStatusAt = currentDate; break;
+                case '3': orderDetails.packedStatusAt = currentDate; break;
+                case '4': orderDetails.shippedStatusAt = currentDate; break;
+                case '5': orderDetails.deliveredStatusAt = currentDate; break;
+                case '6': orderDetails.canceledStatusAt = currentDate; break;
+                case '7': orderDetails.returnedStatusAt = currentDate; break;
+                case '8': orderDetails.refundedStatusAt = currentDate; break;
+                case '9': orderDetails.partiallyShippedStatusAt = currentDate; break;
+                case '10': orderDetails.onHoldStatusAt = currentDate; break;
+                case '11': orderDetails.failedStatusAt = currentDate; break;
+                case '12': orderDetails.completedStatusAt = currentDate; break;
+                case '13': orderDetails.pickupStatusAt = currentDate; break;
                 default: break;
             }
 
-            const updatedOrderDetails = await OrderService.orderStatusUpdate(orderDetails._id, orderDetails)
+            const updatedOrderDetails: any = await OrderService.orderStatusUpdate(orderDetails._id, orderDetails, '1');
+            if (!updatedOrderDetails) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Something went wrong!'
+                });
+            }
+            await CartOrderProductsModel.updateMany(
+                { cartId: orderDetails._id },
+                { $set: { orderStatus: orderStatus, orderStatusAt: currentDate } }
+            );
+            if (orderStatus === '4' || orderStatus === '5') {
+                let query: any = { _id: { $exists: true } };
+                query = {
+                    ...query,
+                    countryId: orderDetails.countryId,
+                    block: websiteSetup.basicSettings,
+                    blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings] },
+                    status: '1',
+                } as any;
+
+                const settingsDetails = await WebsiteSetupModel.find(query);
+                const defualtSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.defualtSettings);
+                const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+
+
+                let commonDeliveryDays = '8';
+                if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
+                    commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
+                }
+                const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails.orderStatusAt, Number(commonDeliveryDays))
+                ejs.renderFile(path.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
+                    firstName: customerDetails?.firstName,
+                    orderId: orderDetails.orderId,
+                    totalAmount: orderDetails.totalAmount,
+                    totalShippingAmount: orderDetails.totalShippingAmount,
+                    totalProductAmount: orderDetails.totalProductAmount,
+                    expectedDeliveryDate: expectedDeliveryDate,
+                    storeEmail: basicDetailsSettings?.storeEmail,
+                    products: updatedOrderDetails.products,
+                    shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                    shopLogo: `${process.env.SHOPLOGO}`,
+                    appUrl: `${process.env.APPURL}`
+                }, async (err: any, template: any) => {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                    await mailChimpEmailGateway({
+                        subject: orderStatusMessages[orderStatus],
+                        email: customerDetails?.email,
+                    }, template)
+                });
+            }
+            // console.log('aaaaaaaa', updatedOrderDetails);
+
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
                 message: orderStatusMessages[orderStatus] || 'Order status updated successfully!'

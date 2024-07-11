@@ -3,7 +3,7 @@ import express, {  Router } from 'express';
 import { logResponseStatus } from '../../../src/components/response-status';
 
 import CommonController from '../../../src/controllers/frontend/guest/common-controller';
-import checkoutController from '../../../src/controllers/frontend/auth/checkout';
+import checkoutController from '../../../src/controllers/frontend/auth/checkout-controller';
 const router: Router = express.Router();
 
 router.get('/countries', CommonController.findAllCountries);

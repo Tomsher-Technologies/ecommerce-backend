@@ -25,11 +25,8 @@ class CartService {
 
             }
         };
-
-
     }
     async findCart(data: any): Promise<CartOrderProps | null> {
-
         const createdCartWithValues = await CartOrderModel.find(data);
 
         return createdCartWithValues[0];
@@ -183,15 +180,12 @@ class CartService {
     async createCartProduct(data: any): Promise<CartOrderProductProps | null> {
 
         const cartData = await CartOrderProductsModel.create(data);
-
         if (cartData) {
             const pipeline = [
                 { $match: { _id: cartData._id } },
 
             ];
-
             const createdAttributeWithValues = await CartOrderProductsModel.aggregate(pipeline);
-
             return createdAttributeWithValues[0];
         } else {
             return null;
@@ -199,7 +193,6 @@ class CartService {
     }
 
     async updateCartProduct(_id: string, cartData: any): Promise<CartOrderProductProps | null> {
-
         const updatedCart = await CartOrderProductsModel.findOneAndUpdate(
             { _id: _id },
             cartData,
@@ -210,7 +203,6 @@ class CartService {
             const pipeline = [
                 { $match: { _id: updatedCart._id } },
             ];
-
             const updatedCartWithValues = await CartOrderProductsModel.aggregate(pipeline);
 
             return updatedCartWithValues[0];
@@ -220,7 +212,6 @@ class CartService {
     }
 
     async updateCartProductByCart(_id: any, cartData: any): Promise<CartOrderProductProps | null> {
-
         const updatedCart = await CartOrderProductsModel.findOneAndUpdate(
             _id,
             cartData,

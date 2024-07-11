@@ -12,7 +12,7 @@ import UserService from '../../../services/admin/account/user-service';
 import BaseController from '../../../controllers/admin/base-controller';
 
 const controller = new BaseController();
-
+// $2b$10$bRcggpnGJHBCLOc.TG/PG.1vVkFEqDME53bHg5z/OvTepBp3J.FzG
 class UserController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {

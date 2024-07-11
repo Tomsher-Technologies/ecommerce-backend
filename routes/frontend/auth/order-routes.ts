@@ -5,7 +5,7 @@ import { frontendAuthMiddleware } from '../../../middleware/frontend/frontend-au
 import OrderController from '../../../src/controllers/frontend/auth/order-controller';
 import { logResponseStatus } from '../../../src/components/response-status';
 import cartOrderController from '../../../src/controllers/frontend/cart-order-controller';
-import CheckoutController from '../../../src/controllers/frontend/auth/checkout';
+import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
 
 const router: Router = express.Router();
 

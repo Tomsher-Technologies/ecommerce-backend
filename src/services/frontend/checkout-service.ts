@@ -1,4 +1,7 @@
-import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, paymentMethods } from "../../constants/cart";
+import path from 'path';
+const ejs = require('ejs');
+
+import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
 import { DiscountType, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
@@ -7,6 +10,11 @@ import ProductsModel from "../../model/admin/ecommerce/product-model";
 import ProductCategoryLinkModel from "../../model/admin/ecommerce/product/product-category-link-model";
 import CartOrdersModel from "../../model/frontend/cart-order-model";
 import PaymentTransactionModel from "../../model/frontend/payment-transaction-model";
+import CustomerModel from '../../model/frontend/customers-model';
+import { blockReferences, websiteSetup } from '../../constants/website-setup';
+import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
+import { mailChimpEmailGateway } from '../../lib/mail-chimp-sms-gateway';
+import CustomerAddress from '../../model/frontend/customer-address-model';
 
 class CheckoutService {
 
@@ -39,7 +47,7 @@ class CheckoutService {
                 createdAt: new Date(),
             }, { new: true, useFindAndModify: false });
 
-            this.cartUpdation(cartDetails, true);
+            this.cartUpdation({ ...cartDetails, paymentMethod: paymentDetails }, true);
 
             if (updateTransaction) {
                 return {
@@ -77,8 +85,6 @@ class CheckoutService {
 
     async getNextSequenceValue(): Promise<string> {
         const maxOrder: any = await CartOrdersModel.find().sort({ orderId: -1 }).limit(1);
-        console.log('maxOrder', maxOrder);
-
         if (Array.isArray(maxOrder) && maxOrder.length > 0 && maxOrder[0].orderId) {
             const maxOrderId = maxOrder[0].orderId;
             const nextOrderId = (parseInt(maxOrderId, 10) + 1).toString().padStart(6, '0');
@@ -102,6 +108,7 @@ class CheckoutService {
             if (!paymentSuccess) {
                 cartUpdate = {
                     ...cartUpdate,
+                    cartStatus: cartStatus.active,
                     couponId: null,
                     paymentMethodId: null
                 }
@@ -181,6 +188,57 @@ class CheckoutService {
                     message: 'Cart updation failed'
                 }
             } else {
+                let cartProducts = cartDetails?.products || null
+                if (!cartProducts) {
+
+                }
+
+                if (cartProducts) {
+                    let customerDetails = cartDetails?.customerDetails || null;
+                    let paymentMethodDetails = cartDetails?.paymentMethod || null;
+                    if (!customerDetails) {
+                        customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
+                    }
+                    if (!paymentMethodDetails) {
+
+                    }
+                    let query: any = { _id: { $exists: true } };
+                    query = {
+                        ...query,
+                        countryId: cartDetails.countryId,
+                        block: websiteSetup.basicSettings,
+                        blockReference: blockReferences.basicDetailsSettings,
+                        status: '1',
+                    } as any;
+
+                    const basicDetailsSettings: any = await WebsiteSetupModel.find(query);
+                    const shippingAddressDetails: any = await CustomerAddress.findById(cartDetails.shippingId);
+                    // console.log('cartDetails', shippingAddressDetails);
+
+                    ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
+                        firstName: customerDetails?.firstName,
+                        orderId: orderId,
+                        totalAmount: cartUpdate.totalAmount,
+                        totalShippingAmount: cartDetails.totalShippingAmount,
+                        totalProductAmount: cartDetails.totalProductAmount,
+                        paymentMethod: paymentMethodDetails?.paymentMethodTitle,
+                        shippingAddressDetails,
+                        storeEmail: basicDetailsSettings?.blockValues?.storeEmail,
+                        products: cartProducts,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        appUrl: `${process.env.APPURL}`
+                    }, async (err: any, template: any) => {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        await mailChimpEmailGateway({
+                            subject: orderStatusMessages['1'],
+                            email: 'akmalvenghattu@gmail.com',
+                        }, template)
+                    });
+                }
                 return {
                     _id: cartDetails?._id,
                     orderId: orderId,

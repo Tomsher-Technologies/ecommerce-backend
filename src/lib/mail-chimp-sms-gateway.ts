@@ -28,17 +28,17 @@
 // }
 // import htmlContent from '../view/email-otp';
 
-export const mailChimpEmailGateway = async (ethisalatDefaultValues: any, template: any) => {
+export const mailChimpEmailGateway = async (emailDefaultValues: any, template: any) => {
     try {
         const payload = {
             key: `${process.env.MAILCHIMP_API_KEY}`,
             message: {
                 from_email: `${process.env.MAILCHIMP_API_EMAIL}`, // Replace with your actual sender email
-                subject: 'Verification OTP',
+                subject: emailDefaultValues.subject,
                 html: template,
                 to: [
                     {
-                        email: ethisalatDefaultValues.email, // Replace with the actual recipient email
+                        email: emailDefaultValues.email, // Replace with the actual recipient email
                         type: 'to'
                     }
                 ]

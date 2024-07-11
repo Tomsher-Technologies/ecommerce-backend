@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CartOrderProps extends Document {
+    countryId: Schema.Types.ObjectId;
     customerId: Schema.Types.ObjectId;
     guestUserId: string;
     orderId: string;
-    countryId: Schema.Types.ObjectId;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
     // paymentGatwayId: Schema.Types.ObjectId;
@@ -48,14 +48,14 @@ export interface CartOrderProps extends Document {
 }
 
 const cartOrderSchema: Schema<CartOrderProps> = new Schema({
-    customerId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Customer',
-        default: null
-    },
     countryId: {
         type: Schema.Types.ObjectId,
         ref: 'Countries',
+        default: null
+    },
+    customerId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Customer',
         default: null
     },
     orderId: {
