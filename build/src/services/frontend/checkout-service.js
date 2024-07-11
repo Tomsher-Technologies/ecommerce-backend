@@ -263,7 +263,7 @@ class CheckoutService {
                         }
                         await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
                             subject: cart_1.orderStatusMessages['1'],
-                            email: 'akmalvenghattu@gmail.com',
+                            email: customerDetails.email,
                         }, template);
                     });
                 }

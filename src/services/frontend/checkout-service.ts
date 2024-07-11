@@ -282,7 +282,7 @@ class CheckoutService {
                         }
                         await mailChimpEmailGateway({
                             subject: orderStatusMessages['1'],
-                            email: 'akmalvenghattu@gmail.com',
+                            email: customerDetails.email,
                         }, template)
                     });
                 }
