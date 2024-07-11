@@ -254,16 +254,16 @@ class CheckoutController extends BaseController {
     async tapSuccessResponse(req: Request, res: Response): Promise<any> {
         const { tap_id, data }: any = req.query
         if (!tap_id) {
-            res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
+            res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false
         }
         const paymentDetails = await PaymentTransactionModel.findOne({ transactionId: tap_id });
         if (!paymentDetails) {
-            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment transaction. Please contact administrator"); // failure
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
         const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId });
         if (!paymentMethod) {
-            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
         const tapResponse = await tapPaymentRetrieve(tap_id, paymentMethod.paymentMethodValues);
         if (tapResponse.status) {
@@ -275,14 +275,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=success`); // success
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://www.timehouse.store/order-response/${paymentDetails?.orderId}?status=${tapResponse?.status}`); // failure
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tapResponse?.status}`); // failure
             return false
         }
     }
@@ -290,16 +290,16 @@ class CheckoutController extends BaseController {
     async tabbySuccessResponse(req: Request, res: Response): Promise<any> {
         const { payment_id }: any = req.query
         if (!payment_id) {
-            res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
+            res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false
         }
         const paymentDetails = await PaymentTransactionModel.findOne({ paymentId: payment_id });
         if (!paymentDetails) {
-            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment transaction. Please contact administrator"); // failure
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
         const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId })
         if (!paymentMethod) {
-            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
 
@@ -312,14 +312,14 @@ class CheckoutController extends BaseController {
             });
 
             if (retValResponse.status) {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=success`); // success
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
                 return true
             } else {
-                res.redirect(`https://www.timehouse.store/order-response/${retValResponse?._id}?status=${tabbyResponse?.status}`); // failure
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tabbyResponse?.status}`); // failure
                 return false
             }
         } else {
-            res.redirect(`https://www.timehouse.store/order-response/${paymentDetails?.orderId}?status=${tabbyResponse?.status}`); // failure
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tabbyResponse?.status}`); // failure
             return false
         }
     }
