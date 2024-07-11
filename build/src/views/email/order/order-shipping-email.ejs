@@ -325,8 +325,8 @@
                                                             style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;">
                                                             <tr style="border-collapse:collapse;">
                                                                 <td class="es-m-p0l" align="center"
-                                                                    style="padding:0;Margin:0;"> <a
-                                                                        href="<%= appUrl %>" target="_blank"
+                                                                    style="padding:0;Margin:0;"> <a href="<%= appUrl %>"
+                                                                        target="_blank"
                                                                         style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;text-decoration:none;color:#000000;"><img
                                                                             src="<%= shopLogo %>"
                                                                             alt="<%= shopName %> Logo"
@@ -438,19 +438,19 @@
                                                                                     <tr
                                                                                         style="background:#eeeeee;font-size:12px;">
                                                                                         <td style="font-size:14px; color:#565656;font-weight: bold; border-top: 2px solid #e4e4e4; border-left: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4; text-align: center;font-family: sans-serif"
-                                                                                            width="25%">
+                                                                                            width="20%">
                                                                                             Code
                                                                                         </td>
                                                                                         <td style="font-size:14px; color:#565656;font-weight: bold;border-top: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;text-align: left;font-family: sans-serif"
-                                                                                            width="45%">
+                                                                                            width="35%">
                                                                                             Name
                                                                                         </td>
                                                                                         <td style="font-size:14px; color:#565656;font-weight: bold;border-top: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;text-align: center;font-family: sans-serif"
-                                                                                            width="10%">
+                                                                                            width="15%">
                                                                                             Quantity
                                                                                         </td>
                                                                                         <td style="font-size:14px; color:#565656;font-weight: bold;border-top: 2px solid #e4e4e4;border-right: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;text-align: center;font-family: sans-serif"
-                                                                                            width="20%">
+                                                                                            width="30%">
                                                                                             Status
                                                                                         </td>
                                                                                     </tr>
@@ -458,7 +458,7 @@
                                                                                     <% products.forEach(product=> { %>
                                                                                         <tr style="background:#fff;">
                                                                                             <td style="border-bottom: #e4e4e4 1px solid;text-align: center;font-family: sans-serif"
-                                                                                                width="25%">
+                                                                                                width="20%">
                                                                                                 <span
                                                                                                     style="font-size: 14px;text-align: center;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;">
                                                                                                     <%= product.productDetails.variantDetails.variantSku
@@ -466,7 +466,7 @@
                                                                                                 </span>
                                                                                             </td>
                                                                                             <td style="border-bottom: #e4e4e4 1px solid;text-align: left;font-family: sans-serif"
-                                                                                                width="25%">
+                                                                                                width="35%">
                                                                                                 <span
                                                                                                     style="font-size: 14px;text-align: left;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;">
                                                                                                     <%= product.productDetails.productTitle
@@ -474,7 +474,7 @@
                                                                                                 </span>
                                                                                             </td>
                                                                                             <td style="border-bottom: #e4e4e4 1px solid;text-align: center;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif"
-                                                                                                width="25%">
+                                                                                                width="15%">
                                                                                                 <span
                                                                                                     style="font-size: 14px;letter-spacing: -0.8px">
                                                                                                     <%= product.quantity
@@ -482,7 +482,7 @@
                                                                                                 </span>
                                                                                             </td>
                                                                                             <td style="border-bottom: #e4e4e4 1px solid;text-align: center;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif"
-                                                                                                width="25%">
+                                                                                                width="30%">
                                                                                                 <span
                                                                                                     style="font-size: 14px;letter-spacing: -0.8px">
                                                                                                     Shipped
@@ -548,7 +548,8 @@
                                             <p
                                                 style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
 
-                                                <%= shopName %> Team</p>
+                                                <%= shopName %> Team
+                                            </p>
                                             <p
                                                 style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
                                                 <br>
@@ -698,9 +699,12 @@
                                                                                 <p
                                                                                     style="font-family: sans-serif;font-size: 12px;">
                                                                                     <span style=" font-weight: 600;">800
-                                                                                        <%= shopName %></span> <a
+                                                                                        <%= shopName %>
+                                                                                    </span> <a
                                                                                         style="text-decoration: underline;color: #232323;"
-                                                                                        href="mailto:<%= storeEmail %>"><%= storeEmail %></a>
+                                                                                        href="mailto:<%= storeEmail %>">
+                                                                                        <%= storeEmail %>
+                                                                                    </a>
                                                                                 </p>
                                                                             </td>
                                                                         </tr>
@@ -713,8 +717,7 @@
                                                                         <tr>
                                                                             <td class="es-m-p0l" align="center"
                                                                                 style="padding:20px;"> <a
-                                                                                    href="<%= appUrl %>"
-                                                                                    target="_blank"
+                                                                                    href="<%= appUrl %>" target="_blank"
                                                                                     style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;text-decoration:none;color:#000000;"><img
                                                                                         src="<%= shopLogo %>"
                                                                                         alt="<%= shopName %> Logo"
