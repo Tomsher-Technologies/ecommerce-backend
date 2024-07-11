@@ -177,22 +177,18 @@ class CheckoutController extends BaseController {
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
-                console.log('updateCart', paymentMethod );
-
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
                     await CheckoutService.cartUpdation({ ...updateCart, products: cartDetails.products, customerDetails, paymentMethod }, true)
                 }
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                });
-                // return controller.sendSuccessResponse(res, {
-                //     requestedData: {
-                //         orderId: updateCart._id,
-                //         orderType: paymentMethod.slug,
-                //         paymentData
-                //     },
-                //     message: 'Order successfully Created!'
-                // }, 200);
+              
+                return controller.sendSuccessResponse(res, {
+                    requestedData: {
+                        orderId: updateCart._id,
+                        orderType: paymentMethod.slug,
+                        paymentData
+                    },
+                    message: 'Order successfully Created!'
+                }, 200);
 
             } else {
                 return controller.sendErrorResponse(res, 200, {

@@ -291,14 +291,9 @@
 -webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0;mso-line-height-rule: exactly;">
     <span
         style="display:none !important;font-size:0px;line-height:0;color:#FFFFFF;visibility:hidden;opacity:0;height:0;width:0;mso-hide:all;font-family:sans-serif">
-        Order Confirmed - Timehouse - Order No. {{order.numId}}
+        Order Confirmed - Timehouse - Order No. <%= orderId%>
         &nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;</span>
     <div class="es-wrapper-color" style="background-color:#EFEFEF;">
-        <!--[if gte mso 9]>
-    <v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
-      <v:fill type="tile" color="#efefef"></v:fill>
-    </v:background>
-  <![endif]-->
         <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0"
             style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;">
             <tr style="border-collapse:collapse;">
@@ -357,16 +352,13 @@
                                                         <table cellpadding="0" cellspacing="0" width="100%"
                                                             style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-position:left top;background-color:transparent;"
                                                             bgcolor="transparent">
-
                                                             <tr style="border-collapse:collapse;">
                                                                 <td align="center" bgcolor="transparent"
                                                                     style="padding:0;Margin:0;padding-bottom:20px;padding-top:30px;">
                                                                     <h2
                                                                         style="Margin:0;line-height:31px;mso-line-height-rule:exactly;font-size:24px;font-style:normal;font-weight:bold;color:#000000;font-family: sans-serif">
                                                                         Thank you for shopping with us!
-
                                                                     </h2>
-
                                                                 </td>
                                                             </tr>
                                                         </table>
@@ -400,26 +392,19 @@
                                                                             <%= firstName%>,
                                                                         </strong>
                                                                     </p>
-
                                                                     <p
                                                                         style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
                                                                         Your order has been confirmed. For your
                                                                         reference, your order number is
                                                                         <%= orderId%>.
-
-
                                                                     </p>
-
                                                                     <p
                                                                         style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
                                                                         <br>
                                                                     </p>
                                                                     <p
                                                                         style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
-
-
                                                                     </p>
-
                                                                     <p
                                                                         style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
                                                                         <br>
@@ -617,37 +602,54 @@
                                                                     style="font-size:14px; color:#565656;font-weight: bold;border-top: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif">
                                                                     Customer Email/Mobile
                                                                 </td>
-                                                                <td style="font-size:14px; color:#565656;font-weight: bold;border-top: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif">
+                                                                <td
+                                                                    style="font-size:14px; color:#565656;font-weight: bold;border-top: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif">
                                                                     Mode of Payment</td>
                                                             </tr>
 
                                                             <tr style="background:#fff;">
-                                                                <td style="border-bottom: #e4e4e4 1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
-                                                                    <%= shippingAddressDetails.name %>, 
-                                                                    <% if (shippingAddressDetails.addressType) { %>
-                                                                        <%= shippingAddressDetails.addressType %>
-                                                                    <% } else { %>
-                                                                        Home
-                                                                    <% } %>
-                                                                    <br>
-                                                                    <%= shippingAddressDetails.address1 %>
-                                                                    <br>
-                                                                    <% if (shippingAddressDetails.address2) { %>
-                                                                        <%= shippingAddressDetails.address2 %><br>
-                                                                    <% } %>
-                                                                    <%= shippingAddressDetails.city %>, <%= shippingAddressDetails.state %>, <%= shippingAddressDetails.country %>
+                                                                <td
+                                                                    style="border-bottom: #e4e4e4 1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
+                                                                    <%= shippingAddressDetails.name %>,
+                                                                        <% if (shippingAddressDetails.addressType) { %>
+                                                                            <%= shippingAddressDetails.addressType %>
+                                                                                <% } else { %>
+                                                                                    Home
+                                                                                    <% } %>
+                                                                                        <br>
+                                                                                        <%= shippingAddressDetails.address1
+                                                                                            %>
+                                                                                            <br>
+                                                                                            <% if
+                                                                                                (shippingAddressDetails.address2)
+                                                                                                { %>
+                                                                                                <%= shippingAddressDetails.address2
+                                                                                                    %><br>
+                                                                                                    <% } %>
+                                                                                                        <%= shippingAddressDetails.city
+                                                                                                            %>, <%=
+                                                                                                                shippingAddressDetails.state
+                                                                                                                %>, <%=
+                                                                                                                    shippingAddressDetails.country
+                                                                                                                    %>
                                                                 </td>
-                                                                <td style="border-bottom: #e4e4e4 1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
-                                                                    <%= account.email %> <br><br>
-                                                                    <%= shippingAddressDetails.phoneNumber %> <br><br>
-                                                                    <% if (shippingAddressDetails.landlineNumber) { %>
-                                                                        Alternative No: <%= shippingAddressDetails.landlineNumber %>
-                                                                    <% } %>
+                                                                <td
+                                                                    style="border-bottom: #e4e4e4 1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
+                                                                    <%= shippingAddressDetails.email %> <br><br>
+                                                                        <%= shippingAddressDetails.phoneNumber %>
+                                                                            <br><br>
+                                                                            <% if
+                                                                                (shippingAddressDetails.landlineNumber)
+                                                                                { %>
+                                                                                Alternative No: <%=
+                                                                                    shippingAddressDetails.landlineNumber
+                                                                                    %>
+                                                                                    <% } %>
                                                                 </td>
                                                                 <td
                                                                     style="border-bottom: #e4e4e4  1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
                                                                     <span>
-                                                                        Manual / {{order.billing.paymentMethod.type}}
+                                                                        <%= paymentMethod%>
                                                                     </span>
                                                                 </td>
                                                             </tr>
@@ -659,136 +661,125 @@
                                 </table>
                             </td>
                         </tr>
-                        {{#if order.shippingNote }}
-                        <tr style="border-collapse:collapse;">
-                            <td width="100%" valign="top" align="center" style="padding:0;Margin:0;">
-                                <table width="600" cellspacing="0" cellpadding="0"
-                                    style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;">
-
-                                    <tr>
-                                        <td valign="top">
-                                            <table cellpadding="0" cellspacing="0" border="0"
-                                                style="background:#fbfbfb;padding:0px;font: bold 14px arial; color:#232323;margin:5px 0 0 auto;"
-                                                width="100%" align="center">
-
-                                                <tr>
-                                                    <td colspan="4" style="padding: 0 5px">
-
-                                                        <table cellpadding="10" cellspacing="0" width="100%"
-                                                            style="padding-top: 20px;">
-                                                            <tr style="background:#eeeeee;font-size:12px;
-                                ">
-                                                                <td
-                                                                    style="font-size:14px; color:#565656;font-weight: bold; border-top: 2px solid #e4e4e4; border-left: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif ">
-                                                                    Order Comments</td>
-                                                            </tr>
-
-                                                            <tr style="background:#fff;">
-                                                                <td
-                                                                    style="border-bottom: #e4e4e4  1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
-                                                                    {{order.shippingNote}}
-                                                                </td>
-                                                            </tr>
-
-                                                        </table>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                        {{/if}}
-                        {{#if order.shipping.slot }}
-                        <tr style="border-collapse:collapse;">
-                            <td width="100%" valign="top" align="center" style="padding:0;Margin:0;">
-                                <table width="600" cellspacing="0" cellpadding="0"
-                                    style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;">
-
-                                    <tr>
-                                        <td valign="top">
-                                            <table cellpadding="0" cellspacing="0" border="0"
-                                                style="background:#fbfbfb;padding:0px;font: bold 14px arial; color:#232323;margin:5px 0 0 auto;"
-                                                width="100%" align="center">
-
-                                                <tr>
-                                                    <td colspan="4" style="padding: 0 5px">
-
-                                                        <table cellpadding="10" cellspacing="0" width="100%"
-                                                            style="padding-top: 20px;">
-                                                            <tr style="background:#eeeeee;font-size:12px;
-                                ">
-                                                                <td
-                                                                    style="font-size:14px; color:#565656;font-weight: bold; border-top: 2px solid #e4e4e4; border-left: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif ">
-                                                                    Delivery Date And Time</td>
-                                                            </tr>
-
-                                                            <tr style="background:#fff;">
-                                                                <td
-                                                                    style="border-bottom: #e4e4e4  1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
-                                                                    {{time24To12 order.shipping.slot.start}} To
-                                                                    {{time24To12 order.shipping.slot.end}}
-                                                                    ({{order.shipping.slot.date}})
-                                                                </td>
-                                                            </tr>
-
-                                                        </table>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                        {{/if}}
-                        <tr style="border-collapse:collapse;">
-                            <td align="center" style="padding-top:0px;Margin:0;">
-                                <table class="es-content-body" width="600" cellspacing="0" cellpadding="0"
-                                    bgcolor="#ffffff" align="center"
-                                    style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;">
+                        <% if (orderComments) { %>
+                            <tr style="border-collapse:collapse;">
+                                <td width="100%" valign="top" align="center" style="padding:0;Margin:0;">
+                                    <table width="600" cellspacing="0" cellpadding="0"
+                                        style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;">
+                                        <tr>
+                                            <td valign="top">
+                                                <table cellpadding="0" cellspacing="0" border="0"
+                                                    style="background:#fbfbfb;padding:0px;font: bold 14px arial; color:#232323;margin:5px 0 0 auto;"
+                                                    width="100%" align="center">
+                                                    <tr>
+                                                        <td colspan="4" style="padding: 0 5px">
+                                                            <table cellpadding="10" cellspacing="0" width="100%"
+                                                                style="padding-top: 20px;">
+                                                                <tr style="background:#eeeeee;font-size:12px; ">
+                                                                    <td
+                                                                        style="font-size:14px; color:#565656;font-weight: bold; border-top: 2px solid #e4e4e4; border-left: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif ">
+                                                                        Order Comments</td>
+                                                                </tr>
+                                                                <tr style="background:#fff;">
+                                                                    <td
+                                                                        style="border-bottom: #e4e4e4  1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
+                                                                        <%= orderComments%>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <% } %>
+                                <% if (expectedDeliveryDate) { %>
                                     <tr style="border-collapse:collapse;">
-                                        <td align="left"
-                                            style="padding:10px;Margin:0; padding-right: 15px; padding-left: 15px">
-                                            <p
-                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
-                                                We shall update you when your order is ready to be shipped.
-                                            </p>
+                                        <td width="100%" valign="top" align="center" style="padding:0;Margin:0;">
+                                            <table width="600" cellspacing="0" cellpadding="0"
+                                                style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;">
 
-                                            <br>
-                                            <p
-                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
-                                                For further assistance, please WhatsApp us at +971569145151 , or email
-                                                us at <%= storeEmail %>
+                                                <tr>
+                                                    <td valign="top">
+                                                        <table cellpadding="0" cellspacing="0" border="0"
+                                                            style="background:#fbfbfb;padding:0px;font: bold 14px arial; color:#232323;margin:5px 0 0 auto;"
+                                                            width="100%" align="center">
 
+                                                            <tr>
+                                                                <td colspan="4" style="padding: 0 5px">
 
+                                                                    <table cellpadding="10" cellspacing="0" width="100%"
+                                                                        style="padding-top: 20px;">
+                                                                        <tr
+                                                                            style="background:#eeeeee;font-size:12px;  ">
+                                                                            <td
+                                                                                style="font-size:14px; color:#565656;font-weight: bold; border-top: 2px solid #e4e4e4; border-left: 2px solid #e4e4e4;border-bottom: 2px solid #e4e4e4;font-family: sans-serif ">
+                                                                                Expected Delivery Date</td>
+                                                                        </tr>
 
-                                            </p>
-                                            <p
-                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
-                                                <br>
-                                            </p>
+                                                                        <tr style="background:#fff;">
+                                                                            <td
+                                                                                style="border-bottom: #e4e4e4  1px solid;font-size:12px;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif">
+                                                                                <%= expectedDeliveryDate%>
+                                                                            </td>
+                                                                        </tr>
 
-                                            <p
-                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
-                                                Thank You and Happy Shopping,
-                                            </p>
-                                            <p
-                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
-
-                                                Team <%= shopName %> Team</p>
-                                            <p
-                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
-                                                <br>
-                                            </p>
-
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
                                         </td>
                                     </tr>
+                                    <% } %>
+                                        <tr style="border-collapse:collapse;">
+                                            <td align="center" style="padding-top:0px;Margin:0;">
+                                                <table class="es-content-body" width="600" cellspacing="0"
+                                                    cellpadding="0" bgcolor="#ffffff" align="center"
+                                                    style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;">
+                                                    <tr style="border-collapse:collapse;">
+                                                        <td align="left"
+                                                            style="padding:10px;Margin:0; padding-right: 15px; padding-left: 15px">
+                                                            <p
+                                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
+                                                                We shall update you when your order is ready to be
+                                                                shipped.
+                                                            </p>
+                                                            <br>
+                                                            <p
+                                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
+                                                                For further assistance, please WhatsApp us at
+                                                                <%= storePhone %>
+                                                                    , or
+                                                                    email
+                                                                    us at <%= storeEmail %>
+                                                            </p>
+                                                            <p
+                                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
+                                                                <br>
+                                                            </p>
 
-                                </table>
-                            </td>
-                        </tr>
+                                                            <p
+                                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
+                                                                Thank You and Happy Shopping,
+                                                            </p>
+                                                            <p
+                                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
+                                                                Team <%= shopName %> Team</p>
+                                                            <p
+                                                                style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
+                                                                <br>
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
                     </table>
                 </td>
             </tr>

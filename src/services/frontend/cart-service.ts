@@ -222,7 +222,6 @@ class CartService {
             const pipeline = [
                 { $match: { _id: updatedCart._id } },
             ];
-
             const updatedCartWithValues = await CartOrderProductsModel.aggregate(pipeline);
 
             return updatedCartWithValues[0];

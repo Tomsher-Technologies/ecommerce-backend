@@ -1,31 +1,15 @@
 
-import { frontendPagination, pagination } from '../../../components/pagination';
+import { frontendPagination } from '../../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
 import { productLookup } from '../../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import { cartDeatilProject, cartLookup, cartProject, objectLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
-import { collections } from '../../../constants/collections';
+import { cartDeatilProject, cartLookup, cartProject, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
 
 
-class CartService {
+class OederService {
 
-    private cartLookup: any;
-
-    constructor() {
-        this.cartLookup = {
-            $lookup: {
-                from: 'cartorderproducts', // Collection name of AttributeDetailModel
-                localField: '_id', // Field in AttributesModel
-                foreignField: 'cartId', // Field in AttributeDetailModel
-                as: 'products',
-
-            }
-        };
-
-
-    }
     async orderList(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
@@ -41,7 +25,6 @@ class CartService {
         const languageData = await LanguagesModel.find().exec();
         const languageId = await getLanguageValueFromSubdomain(hostName, languageData)
 
-        // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
                 ...cartLookup.$lookup,
@@ -90,4 +73,4 @@ class CartService {
     }
 }
 
-export default new CartService();
+export default new OederService();

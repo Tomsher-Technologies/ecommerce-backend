@@ -1,4 +1,6 @@
 import { collections } from "../../constants/collections";
+import { productLookup } from "./product-config";
+import { productVariantsLookupValues } from "./wishlist-config";
 
 export const cartLookup = {
     $lookup: {
@@ -22,7 +24,7 @@ export const customerLookup = {
 
 export const couponLookup = {
     $lookup: {
-        from:  `${collections.marketing.coupons}`,
+        from: `${collections.marketing.coupons}`,
         localField: 'couponId',
         foreignField: '_id',
         as: 'couponDetails',
@@ -117,7 +119,6 @@ export const cartProject = {
         // billingId: 1,
         pickupStoreId: 1,
         // paymentMethodId: 1,
-        orderComments: 1,
         paymentMethodCharge: 1,
         rewardPoints: 1,
         rewardAmount: 1,
@@ -131,6 +132,7 @@ export const cartProject = {
         couponAmount: 1,
         totalGiftWrapAmount: 1,
         totalAmount: 1,
+        orderComments: 1,
         cartStatus: 1,
         orderStatus: 1,
         orderStatusAt: 1,
@@ -180,7 +182,6 @@ export const cartDeatilProject = {
         // shippingId: 1,
         // billingId: 1,
         pickupStoreId: 1,
-        orderComments: 1,
         paymentMethodCharge: 1,
         rewardPoints: 1,
         rewardAmount: 1,
@@ -194,6 +195,7 @@ export const cartDeatilProject = {
         couponAmount: 1,
         totalGiftWrapAmount: 1,
         totalAmount: 1,
+        orderComments: 1,
         cartStatus: 1,
         orderStatus: 1,
         orderStatusAt: 1,
@@ -253,6 +255,64 @@ export const productBrandLookupValues = {
             },
         ],
     },
-
-
 }
+
+export const buildOrderPipeline = (paymentMethodDetails: any, customerDetails: any, cartDetails: any) => {
+    let query: any = { _id: { $exists: true } };
+    query._id = cartDetails?._id;
+
+    const modifiedPipeline = {
+        $lookup: {
+            ...cartLookup.$lookup,
+            pipeline: [
+                productLookup,
+                { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+                productVariantsLookupValues("1"),
+                { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
+            ]
+        }
+    };
+
+    const pipeline: any[] = [
+        modifiedPipeline,
+        ...(paymentMethodDetails === null
+            ? [
+                paymentMethodLookup,
+                {
+                    $addFields: {
+                        paymentMethod: { $ifNull: [{ $arrayElemAt: ['$paymentMethodId', 0] }, null] }
+                    }
+                }
+            ]
+            : []
+        ),
+        ...(customerDetails === null
+            ? [
+                customerLookup,
+                {
+                    $addFields: {
+                        customer: { $ifNull: [{ $arrayElemAt: ['$customer', 0] }, null] }
+                    }
+                }
+            ]
+            : []
+        ),
+        { $match: query },
+        {
+            $project: {
+                _id: 1,
+                orderId: 1,
+                customerId: 1,
+                countryId: 1,
+                couponId: 1,
+                guestUserId: 1,
+                products: 1,
+                orderComments: 1,
+                ...(paymentMethodDetails === null ? { paymentMethod: 1 } : {}),
+                ...(customerDetails === null ? { customer: 1 } : {}),
+            }
+        }
+    ];
+
+    return pipeline;
+};
