@@ -32,6 +32,7 @@ exports.permissionBlocks = {
         collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigation-menu',
         pages: 'pages',
+        galleryimages: 'galleryimages'
     },
     setup: {
         languages: 'languages',

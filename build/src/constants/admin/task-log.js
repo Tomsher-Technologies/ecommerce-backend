@@ -23,6 +23,7 @@ exports.adminTaskLog = {
             privacyAndPolicy: 'privacy-and-policy',
             contactUs: 'contact-us',
         },
+        galleryimages: 'galleryimages'
     },
     marketing: {
         coupons: 'coupons',
