@@ -53,7 +53,7 @@ class GalleryImageController extends BaseController {
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching galleryImages' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching Gallery images' });
         }
     }
 
@@ -133,7 +133,7 @@ class GalleryImageController extends BaseController {
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Banner Id not found!',
+                    message: 'Gallery images Id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
@@ -154,14 +154,13 @@ class GalleryImageController extends BaseController {
                     let updatedGalleryImageData = req.body;
                     updatedGalleryImageData = {
                         ...updatedGalleryImageData,
+                        sourceFromId: updatedGalleryImageData.sourceFromId === '' ? null : updatedGalleryImageData.sourceFromId,
                         galleryImageUrl: handleFileUpload(req, await GalleryImageService.findOne(galleryImageId), (req.file || galleryImage), 'galleryImageUrl', 'galleryimages'),
                         updatedAt: new Date()
                     };
 
                     const updatedGalleryImage: any = await GalleryImageService.update(galleryImageId, updatedGalleryImageData);
                     if (updatedGalleryImage) {
-
-
                         const updatedGalleryImageMapped = Object.keys(updatedGalleryImage).reduce((mapped: any, key: string) => {
                             mapped[key] = updatedGalleryImage[key];
                             return mapped;
@@ -180,7 +179,7 @@ class GalleryImageController extends BaseController {
                     }
                 } else {
                     return controller.sendErrorResponse(res, 200, {
-                        message: 'Banner Id not found! Please try again with galleryImage id',
+                        message: 'Gallery images Id not found! Please try again with galleryImage id',
                     }, req);
                 }
             } else {
@@ -189,7 +188,7 @@ class GalleryImageController extends BaseController {
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
-        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+        } catch (error: any) { 
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating galleryImage'
             }, req);
@@ -203,27 +202,27 @@ class GalleryImageController extends BaseController {
                 const galleryImageId = req.params.id;
                 if (galleryImageId) {
                     let { status } = req.body;
-                    const updatedBannerData = { status };
+                    const updatedgalleryImagesData = { status };
 
-                    const updatedBanner = await GalleryImageService.update(galleryImageId, updatedBannerData);
-                    if (updatedBanner) {
+                    const updatedgalleryImages = await GalleryImageService.update(galleryImageId, updatedgalleryImagesData);
+                    if (updatedgalleryImages) {
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedBanner,
-                            message: 'Banner status updated successfully!'
+                            requestedData: updatedgalleryImages,
+                            message: 'Gallery images status updated successfully!'
                         }, 200, { // task log
-                            sourceFromId: updatedBanner._id,
+                            sourceFromId: updatedgalleryImages._id,
                             sourceFrom: adminTaskLog.website.galleryimages,
                             activity: adminTaskLogActivity.statusChange,
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
-                            message: 'Banner Id not found!',
+                            message: 'Gallery images Id not found!',
                         }, req);
                     }
                 } else {
                     return controller.sendErrorResponse(res, 200, {
-                        message: 'Banner Id not found! Please try again with galleryImage id',
+                        message: 'Gallery images Id not found! Please try again with galleryImage id',
                     }, req);
                 }
             } else {
@@ -232,7 +231,7 @@ class GalleryImageController extends BaseController {
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
-        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+        } catch (error: any) { 
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating galleryImage'
             }, req);
@@ -249,7 +248,7 @@ class GalleryImageController extends BaseController {
 
                     return controller.sendSuccessResponse(res,
                         { message: 'Gallery Image deleted successfully!' },
-                        200, { // task log
+                        200, { 
                         sourceFromId: galleryImageId,
                         sourceFrom: adminTaskLog.website.galleryimages,
                         activity: adminTaskLogActivity.delete,
