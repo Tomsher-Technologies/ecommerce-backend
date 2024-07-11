@@ -418,7 +418,6 @@ class ProductsController extends base_controller_1.default {
                                                                     countryData = await country_service_1.default.findCountryId({ countryTitle: data.Country });
                                                                     if (countryData) {
                                                                         countryId = countryData._id;
-                                                                        console.log("66666666666666666", countryId);
                                                                     }
                                                                 }
                                                                 if (data.Warehouse) {
@@ -650,7 +649,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 ...productVariants,
                                                                                 slug: (0, helpers_1.slugify)(slugData)
                                                                             };
-                                                                            const variant = await product_variant_service_1.default.find({ slug: productVariants.slug, countryId: countryId });
+                                                                            const variant = await product_variant_service_1.default.find({ slug: productVariants.slug, variantSku: data.SKU, countryId: productVariants.countryId });
                                                                             if (!variant) {
                                                                                 const createVariant = await product_variant_service_1.default.create(product._id, productVariants, userData);
                                                                                 if (createVariant) {
