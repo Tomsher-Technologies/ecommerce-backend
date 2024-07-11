@@ -10,17 +10,7 @@ const product_config_1 = require("../../../utils/config/product-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
-class CartService {
-    constructor() {
-        this.cartLookup = {
-            $lookup: {
-                from: 'cartorderproducts', // Collection name of AttributeDetailModel
-                localField: '_id', // Field in AttributesModel
-                foreignField: 'cartId', // Field in AttributeDetailModel
-                as: 'products',
-            }
-        };
-    }
+class OederService {
     async orderList(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
         const { getAddress, getCartProducts } = options;
@@ -32,7 +22,6 @@ class CartService {
         }
         const languageData = await language_model_1.default.find().exec();
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
                 ...cart_order_config_1.cartLookup.$lookup,
@@ -72,4 +61,4 @@ class CartService {
         // return CartOrderModel.findOne(data);
     }
 }
-exports.default = new CartService();
+exports.default = new OederService();

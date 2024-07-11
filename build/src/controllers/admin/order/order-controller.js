@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
+const path_1 = __importDefault(require("path"));
+const ejs = require('ejs');
 const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const order_service_1 = __importDefault(require("../../../services/admin/order/order-service"));
@@ -15,6 +17,9 @@ const settings_service_1 = __importDefault(require("../../../services/admin/setu
 const website_setup_1 = require("../../../constants/website-setup");
 const wallet_1 = require("../../../constants/wallet");
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
+const mail_chimp_sms_gateway_1 = require("../../../lib/mail-chimp-sms-gateway");
+const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
+const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -177,7 +182,6 @@ class OrdersController extends base_controller_1.default {
                 getCartProducts: '1',
                 hostName: req.get('origin'),
             });
-            console.log('orderDetails', orderDetails);
             if (orderDetails && orderDetails?.length > 0) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: orderDetails[0],
@@ -246,9 +250,10 @@ class OrdersController extends base_controller_1.default {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+            let customerDetails = null;
             if (orderDetails.customerId) {
                 const walletTransactionDetails = await customer_wallet_transaction_model_1.default.findOne({ orderId: orderDetails._id });
-                const customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
+                customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
                 if (customerDetails) {
                     if (orderStatus === '5' && !walletTransactionDetails) {
                         const walletsDetails = await settings_service_1.default.findOne({ countryId: orderDetails.countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.wallets });
@@ -287,49 +292,97 @@ class OrdersController extends base_controller_1.default {
                 }
             }
             orderDetails.orderStatus = orderStatus;
+            const currentDate = new Date();
             switch (orderStatus) {
                 case '1':
-                    orderDetails.orderStatusAt = new Date();
+                    orderDetails.orderStatusAt = currentDate;
                     break;
                 case '2':
-                    orderDetails.processingStatusAt = new Date();
+                    orderDetails.processingStatusAt = currentDate;
                     break;
                 case '3':
-                    orderDetails.packedStatusAt = new Date();
+                    orderDetails.packedStatusAt = currentDate;
                     break;
                 case '4':
-                    orderDetails.shippedStatusAt = new Date();
+                    orderDetails.shippedStatusAt = currentDate;
                     break;
                 case '5':
-                    orderDetails.deliveredStatusAt = new Date();
+                    orderDetails.deliveredStatusAt = currentDate;
                     break;
                 case '6':
-                    orderDetails.canceledStatusAt = new Date();
+                    orderDetails.canceledStatusAt = currentDate;
                     break;
                 case '7':
-                    orderDetails.returnedStatusAt = new Date();
+                    orderDetails.returnedStatusAt = currentDate;
                     break;
                 case '8':
-                    orderDetails.refundedStatusAt = new Date();
+                    orderDetails.refundedStatusAt = currentDate;
                     break;
                 case '9':
-                    orderDetails.partiallyShippedStatusAt = new Date();
+                    orderDetails.partiallyShippedStatusAt = currentDate;
                     break;
                 case '10':
-                    orderDetails.onHoldStatusAt = new Date();
+                    orderDetails.onHoldStatusAt = currentDate;
                     break;
                 case '11':
-                    orderDetails.failedStatusAt = new Date();
+                    orderDetails.failedStatusAt = currentDate;
                     break;
                 case '12':
-                    orderDetails.completedStatusAt = new Date();
+                    orderDetails.completedStatusAt = currentDate;
                     break;
                 case '13':
-                    orderDetails.pickupStatusAt = new Date();
+                    orderDetails.pickupStatusAt = currentDate;
                     break;
                 default: break;
             }
-            const updatedOrderDetails = await order_service_1.default.orderStatusUpdate(orderDetails._id, orderDetails);
+            const updatedOrderDetails = await order_service_1.default.orderStatusUpdate(orderDetails._id, orderDetails, '1');
+            if (!updatedOrderDetails) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Something went wrong!'
+                });
+            }
+            await cart_order_product_model_1.default.updateMany({ cartId: orderDetails._id }, { $set: { orderStatus: orderStatus, orderStatusAt: currentDate } });
+            if (orderStatus === '4' || orderStatus === '5') {
+                let query = { _id: { $exists: true } };
+                query = {
+                    ...query,
+                    countryId: orderDetails.countryId,
+                    block: website_setup_1.websiteSetup.basicSettings,
+                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings] },
+                    status: '1',
+                };
+                const settingsDetails = await website_setup_model_1.default.find(query);
+                const defualtSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.defualtSettings);
+                const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                let commonDeliveryDays = '8';
+                if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
+                    commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
+                }
+                const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails.orderStatusAt, Number(commonDeliveryDays));
+                ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
+                    firstName: customerDetails?.firstName,
+                    orderId: orderDetails.orderId,
+                    totalAmount: orderDetails.totalAmount,
+                    totalShippingAmount: orderDetails.totalShippingAmount,
+                    totalProductAmount: orderDetails.totalProductAmount,
+                    expectedDeliveryDate: expectedDeliveryDate,
+                    storeEmail: basicDetailsSettings?.storeEmail,
+                    products: updatedOrderDetails.products,
+                    shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                    shopLogo: `${process.env.SHOPLOGO}`,
+                    appUrl: `${process.env.APPURL}`
+                }, async (err, template) => {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                    await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                        subject: cart_1.orderStatusMessages[orderStatus],
+                        email: customerDetails?.email,
+                    }, template);
+                });
+            }
+            // console.log('aaaaaaaa', updatedOrderDetails);
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
                 message: cart_1.orderStatusMessages[orderStatus] || 'Order status updated successfully!'
