@@ -94,6 +94,7 @@ class CheckoutController extends base_controller_1.default {
                         const tapResponse = await (0, tap_payment_1.tapPaymentCreate)(tapDefaultValues, paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === cart_1.tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
                             const paymentTransaction = await payment_transaction_model_1.default.create({
+                                paymentMethodId,
                                 transactionId: tapResponse.id,
                                 orderId: cartDetails._id,
                                 data: '',
@@ -123,6 +124,7 @@ class CheckoutController extends base_controller_1.default {
                             const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentCreate)(tabbyDefaultValues, paymentMethod.paymentMethodValues);
                             if (tabbyResponse && tabbyResponse.payment) {
                                 const paymentTransaction = await payment_transaction_model_1.default.create({
+                                    paymentMethodId,
                                     transactionId: tabbyResponse.id,
                                     paymentId: tabbyResponse.payment.id,
                                     orderId: cartDetails._id,
@@ -234,11 +236,19 @@ class CheckoutController extends base_controller_1.default {
             res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
             return false;
         }
-        const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id);
+        const paymentDetails = await payment_transaction_model_1.default.findOne({ transactionId: tap_id });
+        if (!paymentDetails) {
+            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment transaction. Please contact administrator"); // failure
+        }
+        const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
+        if (!paymentMethod) {
+            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
+        }
+        const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id, paymentMethod.paymentMethodValues);
         if (tapResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
-                paymentMethod: cart_1.paymentMethods.tap,
-                transactionId: tap_id, allPaymentResponseData: data,
+                paymentDetails,
+                allPaymentResponseData: data,
                 paymentStatus: (tapResponse.status === cart_1.tapPaymentGatwayStatus.authorized || tapResponse.status === cart_1.tapPaymentGatwayStatus.captured) ?
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
             });
@@ -262,15 +272,19 @@ class CheckoutController extends base_controller_1.default {
             res.redirect("https://www.timehouse.store/order-response?status=failure"); // failure
             return false;
         }
-        const paymentMethod = await payment_methods_model_1.default.findOne({ slug: cart_1.paymentMethods.tabby });
+        const paymentDetails = await payment_transaction_model_1.default.findOne({ paymentId: payment_id });
+        if (!paymentDetails) {
+            res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment transaction. Please contact administrator"); // failure
+        }
+        const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
         if (!paymentMethod) {
             res.redirect("https://www.timehouse.store/order-response?status=failure&message=Payment method not found. Please contact administrator"); // failure
         }
         const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentRetrieve)(payment_id, paymentMethod.paymentMethodValues);
         if (tabbyResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
-                paymentMethod: cart_1.paymentMethods.tabby,
-                paymentId: payment_id, allPaymentResponseData: null,
+                paymentDetails,
+                allPaymentResponseData: tabbyResponse,
                 paymentStatus: (tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.closed) ?
                     cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
             });
