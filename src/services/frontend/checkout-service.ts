@@ -29,6 +29,9 @@ class CheckoutService {
                 message: 'Payment transactions not found'
             }
         }
+        console.log('paymentStatus', paymentStatus);
+        console.log('paymentDetails', paymentDetails);
+
         const cartDetails: any = await CartOrdersModel.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" })
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
@@ -38,6 +41,7 @@ class CheckoutService {
                 message: 'Active cart not found'
             }
         }
+        console.log('cartDetails', cartDetails);
         if (paymentStatus === orderPaymentStatus.success) {
             const updateTransaction = await PaymentTransactionModel.findByIdAndUpdate(
                 paymentDetails?._id, {
