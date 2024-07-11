@@ -15,12 +15,13 @@ export const adminTaskLog = {
         collectionsBrands: 'collectionsbrands',
         collectionsCategories: 'collectionscategories',
         navigationMenu: 'navigationmenu',
-        pages:{
+        pages: {
             home: 'home',
-            termsAndConditions:'terms-and-conditions',
+            termsAndConditions: 'terms-and-conditions',
             privacyAndPolicy: 'privacy-and-policy',
             contactUs: 'contact-us',
         },
+        galleryimages: 'galleryimages'
     },
     marketing: {
         coupons: 'coupons',

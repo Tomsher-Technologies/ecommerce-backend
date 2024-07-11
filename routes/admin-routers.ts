@@ -35,6 +35,7 @@ import CollectionBrandRoutes from './admin/website/collection-brand-routes';
 import CollectionCartegoryRoutes from './admin/website/collection-category-routes';
 import NavigationMenuRoutes from './admin/website/navigation-menu-routes';
 import DynamicPageRoutes from './admin/website/pages-routes';
+import GalleryImageRoutes from './admin/website/gallery-image-routes';
 
 // store
 import WarehouseRoutes from './admin/stores/warehouse-routes';
@@ -90,6 +91,7 @@ adminRouter.use('/website/collection-brands', CollectionBrandRoutes);
 adminRouter.use('/website/collection-categories', CollectionCartegoryRoutes);
 adminRouter.use('/website/navigation-menu', NavigationMenuRoutes);
 adminRouter.use('/website/pages', DynamicPageRoutes);
+adminRouter.use('/website/gallery-images', GalleryImageRoutes);
 
 // stores
 adminRouter.use('/stores/warehouse', WarehouseRoutes);
