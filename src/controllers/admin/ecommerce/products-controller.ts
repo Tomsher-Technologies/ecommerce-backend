@@ -476,8 +476,6 @@ class ProductsController extends BaseController {
                                                                     countryData = await CountryService.findCountryId({ countryTitle: data.Country })
                                                                     if (countryData) {
                                                                         countryId = countryData._id
-                                                                        console.log("66666666666666666", countryId);
-
                                                                     }
                                                                 }
 
@@ -729,7 +727,7 @@ class ProductsController extends BaseController {
                                                                                     ...productVariants,
                                                                                     slug: slugify(slugData)
                                                                                 }
-                                                                                const variant = await ProductVariantService.find({ slug: productVariants.slug, countryId: countryId })
+                                                                                const variant = await ProductVariantService.find({ slug: productVariants.slug, variantSku: data.SKU, countryId: productVariants.countryId })
                                                                                 if (!variant) {
                                                                                     const createVariant = await ProductVariantService.create(product._id, productVariants, userData)
                                                                                     if (createVariant) {
