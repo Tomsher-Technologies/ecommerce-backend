@@ -68,7 +68,7 @@ class GalleryImageController extends BaseController {
                 // console.log(galleryImage);
                 const galleryImage = (req as any).files.filter((file: any) =>
                     file.fieldname &&
-                    file.fieldname.startsWith('galleryImage[')
+                    file.fieldname.startsWith('galleryImage')
                 );
 
                 if (galleryImage?.length > 0) {
@@ -97,7 +97,7 @@ class GalleryImageController extends BaseController {
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
-                        validation: "Banner image is required"
+                        validation: "Gallery image is required"
                     }, req);
                 }
 
