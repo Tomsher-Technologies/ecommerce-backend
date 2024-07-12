@@ -17,9 +17,10 @@ import settingsService from '../../../services/admin/setup/settings-service';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 import { earnTypes } from '../../../constants/wallet';
 import CustomerService from '../../../services/frontend/customer-service';
-import { mailChimpEmailGateway } from '../../../lib/mail-chimp-sms-gateway';
+import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
+import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
 
 const controller = new BaseController();
 
@@ -428,6 +429,76 @@ class OrdersController extends BaseController {
 
         }
     }
+
+    async getInvoice(req: Request, res: Response): Promise<void> {
+        try {
+            const orderId = req.params.id;
+
+            const orderDetails: any = await OrderService.OrderList({
+                query: {
+                    _id: new mongoose.Types.ObjectId(orderId)
+                },
+                getAddress: '1',
+                getCartProducts: '1',
+                hostName: req.get('origin'),
+            });
+            if (orderDetails && orderDetails.length > 0) {
+                let websiteSettingsQuery: any = { _id: { $exists: true } };
+                websiteSettingsQuery = {
+                    ...websiteSettingsQuery,
+                    countryId: orderDetails[0].countryId,
+                    block: orderDetails[0].basicSettings,
+                    blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings] },
+                    status: '1',
+                } as any;
+
+                const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+                const defualtSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.defualtSettings);
+                const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+
+                let commonDeliveryDays = '6';
+                if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
+                    commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
+                }
+
+                const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
+
+                ejs.renderFile(path.join(__dirname, '../../../views/invoice', 'invoice-pdf.ejs'),
+                    {
+                        orderDetails: orderDetails[0],
+                        expectedDeliveryDate,
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        storePhone: basicDetailsSettings?.storePhone,
+                        storeAppartment: basicDetailsSettings?.storeAppartment,
+                        storeStreet: basicDetailsSettings?.storeStreet,
+                        storeCity: basicDetailsSettings?.storeCity,
+                        storeState: basicDetailsSettings?.storeState,
+                        storePostalCode: basicDetailsSettings?.storePostalCode,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        appUrl: `${process.env.APPURL}`
+                    },
+                    async (err: any, html: any) => {
+                        if (err) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Error generating invoice'
+                            });
+                        }
+                        await pdfGenerator(html, res)
+                    });
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not fount'
+                });
+            }
+        } catch (error) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Error generating invoice'
+            });
+        }
+    }
+
+
 
 
 }

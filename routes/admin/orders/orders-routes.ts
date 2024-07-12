@@ -8,6 +8,7 @@ import { permissionBlocks } from '../../../src/constants/permission-blocks';
 import OrdersController from '../../../src/controllers/admin/order/order-controller';
 
 const router: Router = express.Router();
+router.get('/invoice-detail/:id', OrdersController.getInvoice);
 
 router.use(authMiddleware);
 
