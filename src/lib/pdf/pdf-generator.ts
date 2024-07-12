@@ -8,7 +8,6 @@ interface PdfGeneratorOptions {
 
 export const pdfGenerator = async ({ html, res }: PdfGeneratorOptions) => {
     let browser: Browser | null = null;
-
     try {
         browser = await puppeteer.launch({
             headless: true,
