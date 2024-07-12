@@ -443,7 +443,7 @@ class OrdersController extends base_controller_1.default {
                             message: 'Error generating invoice'
                         });
                     }
-                    await (0, pdf_generator_1.pdfGenerator)(html, res);
+                    await (0, pdf_generator_1.pdfGenerator)({ html, res });
                 });
             }
             else {
