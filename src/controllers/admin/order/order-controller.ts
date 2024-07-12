@@ -463,7 +463,7 @@ class OrdersController extends BaseController {
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 
-                ejs.renderFile(path.join(__dirname, '../../../views/invoice', 'invoice-pdf.ejs'),
+                ejs.renderFile(path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
                     {
                         orderDetails: orderDetails[0],
                         expectedDeliveryDate,

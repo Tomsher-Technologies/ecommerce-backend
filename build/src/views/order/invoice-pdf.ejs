@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- <meta charset="UTF-8"> -->
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+  <title>Invoice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      /* width: 100%; */
+    }
+
+    .container {
+      /* width: 100%; */
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 10px;
+    }
+
+    .header img {
+      width: 150px;
+      height: auto;
+    }
+
+    .header h4 {
+      margin: 0;
+      font-size: 24px;
+      color: #343a40;
+    }
+
+    .header h6 {
+      margin: 5px 0 0 0;
+      font-size: 16px;
+      color: #868e96;
+    }
+
+    .title {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      color: #495057;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .column {
+      width: 45%;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid #dee2e6;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f3f5;
+      font-weight: bold;
+    }
+
+    .text-right-cell {
+      text-align: right;
+    }
+
+    .summary-row td {
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @media print {
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+      }
+
+      .container {
+        /* width: 100%; */
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 10px;
+      }
+
+      .header {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 5px;
+      }
+
+      .title {
+        margin: 10px 0;
+        font-size: 16px;
+      }
+
+      .row {
+        margin-bottom: 10px;
+      }
+
+      .column {
+        width: 48%;
+      }
+
+      table,
+      th,
+      td {
+        font-size: 12px;
+        border: 1px solid #000;
+      }
+
+      th,
+      td {
+        padding: 5px;
+      }
+
+      th {
+        background-color: #eee;
+      }
+
+      .summary-row td {
+        background-color: #ddd;
+      }
+
+      .btn {
+        display: none;
+      }
+
+      .footer {
+        margin-top: 10px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" id="invoice">
+    <div class="header">
+      <img src="<%= shopLogo%>" alt="Logo">
+      <div>
+        <h4>Order # <%= orderDetails.orderId %>
+        </h4>
+        <!-- <h6>GSTIN - 1234ABC5678XYZ</h6> -->
+      </div>
+    </div>
+
+    <div class="title">TAX INVOICE </div>
+
+    <div class="row">
+      <div class="column">
+        <strong>Store Address:</strong>
+        <p>
+          <%= shopName %><br>
+            <%= storeAppartment %><br>
+              <%= storeCity %>, <%= storeState %>, <%= storeStreet %><br>
+                    <%= storePostalCode %>
+        </p>
+      </div>
+      <div class="column text-right">
+        <strong>Shipped To:</strong>
+        <p>
+          <%= orderDetails.shippingAddress.name %><br>
+            <%= orderDetails.shippingAddress.address1 %>,<br>
+              <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
+                    orderDetails.shippingAddress.country %><br>
+                    Phone No. - <%= orderDetails.shippingAddress.phoneNumber %>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="column">
+        <strong>Payment Method:</strong>
+        <p>
+          <%= orderDetails.paymentMethod.paymentMethodTitle %>
+        </p>
+      </div>
+      <div class="column text-right">
+        <strong>Order Date:</strong>
+        <p>
+          <%= new Date(expectedDeliveryDate).toLocaleDateString() %>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="column">
+        <strong>Billed To:</strong>
+        <% if (orderDetails.billingAddress && orderDetails.billingAddress.name) { %>
+          <p>
+            <%= orderDetails.billingAddress.name %><br>
+              <%= orderDetails.billingAddress.address1 %>,<br>
+                <%= orderDetails.billingAddress.city %>, <%= orderDetails.billingAddress.state %>, <%=
+                      orderDetails.billingAddress.country %>
+          </p>
+          <% } else { %>
+            <p>
+              <%= orderDetails.shippingAddress.name %><br>
+                <%= orderDetails.shippingAddress.address1 %>,<br>
+                  <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
+                        orderDetails.shippingAddress.country %>
+            </p>
+            <% } %>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="column">
+        <strong>Shipping Note:</strong>
+        <p>
+          <%= orderDetails.orderComments %>
+        </p>
+      </div>
+    </div>
+
+    <hr>
+
+    <h3>Order summary</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Item</th>
+          <th>MRP</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th class="text-right-cell">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% orderDetails.products.forEach(product=> { %>
+          <tr>
+            <td>
+              <%= product.productDetails.sku %>
+            </td>
+            <td>
+              <%= product.productDetails.productTitle %>
+            </td>
+            <td>
+              <%= product.productDetails.variantDetails.price %>
+            </td>
+            <td>
+              <%= product.productAmount %>
+            </td>
+            <td>
+              <%= product.quantity %>
+            </td>
+            <td class="text-right-cell">
+              <%= product.productAmount %>
+            </td>
+          </tr>
+          <% }); %>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">Total MRP</td>
+              <td class="text-right-cell">AED <%= orderDetails.totalProductAmount %>
+              </td>
+            </tr>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">Discount</td>
+              <td class="text-right-cell">- AED <%= orderDetails.totalDiscountAmount %>
+              </td>
+            </tr>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">Sub Total</td>
+              <td class="text-right-cell">AED <%= orderDetails.totalAmount %>
+              </td>
+            </tr>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">VAT 5%</td>
+              <td class="text-right-cell">AED <%= (orderDetails.totalAmount * 0.05).toFixed(2) %>
+              </td>
+            </tr>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">COD Charges</td>
+              <td class="text-right-cell">AED <%= orderDetails.paymentMethodCharge %>
+              </td>
+            </tr>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">Delivery Charges</td>
+              <td class="text-right-cell">AED <%= orderDetails.totalShippingAmount %>
+              </td>
+            </tr>
+            <tr class="summary-row">
+              <td colspan="5" class="text-right-cell">Total</td>
+              <td class="text-right-cell">AED <%= (orderDetails.totalAmount * 1.05).toFixed(2) %>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="btn noprint" onclick="printDiv('invoice')">PRINT</button>
+    </div>
+  </div>
+
+  <script>
+    function printDiv(id) {
+      var printContents = document.getElementById(id).innerHTML;
+      var originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+    }
+  </script>
+</body>
+
+</html>

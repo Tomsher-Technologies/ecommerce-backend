@@ -21,6 +21,7 @@ import { etisalatSmsGateway } from '../../../lib/sms/ethisalat-sms-gateway';
 import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
+import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 
 
 const controller = new BaseController();
@@ -106,15 +107,23 @@ class GuestController extends BaseController {
 
                     const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
 
-
                     const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
                         { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err: any, template: any) => {
                             if (err) {
                                 console.log(err);
                                 return;
                             }
-                            const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+                            if (process.env.SHOPNAME === 'Timehouse') {
+                                const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+
+                            } else if (process.env.SHOPNAME === 'Homestyle') {
+                                const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+                            }
+
+
                         })
+
+
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
