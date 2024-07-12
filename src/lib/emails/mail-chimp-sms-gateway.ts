@@ -1,33 +1,3 @@
-// const mailchimp = require('@mailchimp/mailchimp_transactional')(`${process.env.MAILCHIMP_API_KEY}`);
-
-// export const mailChimpEmailGateway = async (mailChimpValues: any) => {
-//     try {
-//         const response = await mailchimp.messages.send({
-//             message: {
-//                 from_email: 'mail@timehouse.store', // Replace with your actual sender email
-//                 subject: 'Hello World',
-//                 text: 'This is a test email sent using Mailchimp Transactional Email API.',
-//                 to: [
-//                     {
-//                         email: mailChimpValues.email, // Replace with the actual recipient email
-//                         type: 'to'
-//                     }
-//                 ]
-//             }
-//         });
-
-//         if (!response.ok) {
-//             throw new Error(`HTTP error! status: ${response}`);
-//         }
-//         console.log("response :", response);
-//     } catch (error: any) {
-//         console.error('Error:', error.response, error.message);
-//         throw error;
-
-//     }
-// }
-// import htmlContent from '../view/email-otp';
-
 export const mailChimpEmailGateway = async (emailDefaultValues: any, template: any) => {
     try {
         const payload = {

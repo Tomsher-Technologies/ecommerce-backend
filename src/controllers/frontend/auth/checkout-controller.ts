@@ -9,9 +9,9 @@ import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
 import { checkoutSchema } from "../../../utils/schemas/frontend/auth/checkout-schema";
 import { formatZodError } from "../../../utils/helpers";
-import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from "../../../lib/tabby-payment";
+import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from "../../../lib/payment-gateway/tabby-payment";
 
-import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/tap-payment";
+import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/payment-gateway/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
 import { tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";

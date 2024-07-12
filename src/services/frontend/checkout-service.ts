@@ -13,7 +13,7 @@ import PaymentTransactionModel from "../../model/frontend/payment-transaction-mo
 import CustomerModel from '../../model/frontend/customers-model';
 import { blockReferences, websiteSetup } from '../../constants/website-setup';
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
-import { mailChimpEmailGateway } from '../../lib/mail-chimp-sms-gateway';
+import { mailChimpEmailGateway } from '../../lib/emails/mail-chimp-sms-gateway';
 import CustomerAddress from '../../model/frontend/customer-address-model';
 import { buildOrderPipeline, } from '../../utils/config/cart-order-config';
 import { ObjectId } from 'mongoose';

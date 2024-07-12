@@ -18,8 +18,9 @@ const customers_model_1 = __importDefault(require("../../../model/frontend/custo
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const customer_wallet_transaction_model_1 = __importDefault(require("../../../model/frontend/customer-wallet-transaction-model"));
 const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
-const mail_chimp_sms_gateway_1 = require("../../../lib/mail-chimp-sms-gateway");
+const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
+const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const controller = new base_controller_1.default();
 class GuestController extends base_controller_1.default {
     async register(req, res) {
@@ -98,7 +99,12 @@ class GuestController extends base_controller_1.default {
                             console.log(err);
                             return;
                         }
-                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                        }
                     });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {

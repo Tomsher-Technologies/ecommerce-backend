@@ -1,4 +1,4 @@
-import { tabbyPaymentGatwayStatus } from "../constants/cart";
+import { tabbyPaymentGatwayStatus } from "../../constants/cart";
 
 export const tabbyPaymentCreate = async (tabbyDefaultValues: any, paymentMethodValues: { secretKey: string; publicKey: string; testSecretKey: string; testPublicKey: string }) => {
     try {
