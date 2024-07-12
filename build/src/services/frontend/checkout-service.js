@@ -16,7 +16,7 @@ const payment_transaction_model_1 = __importDefault(require("../../model/fronten
 const customers_model_1 = __importDefault(require("../../model/frontend/customers-model"));
 const website_setup_1 = require("../../constants/website-setup");
 const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
-const mail_chimp_sms_gateway_1 = require("../../lib/mail-chimp-sms-gateway");
+const mail_chimp_sms_gateway_1 = require("../../lib/emails/mail-chimp-sms-gateway");
 const customer_address_model_1 = __importDefault(require("../../model/frontend/customer-address-model"));
 const cart_order_config_1 = require("../../utils/config/cart-order-config");
 class CheckoutService {
