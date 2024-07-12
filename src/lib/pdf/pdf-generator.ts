@@ -24,6 +24,8 @@ export const pdfGenerator = async (html: any, res: any) => {
         printBackground: true,
         margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
     });
+    
+    await page.close();
 
     await browser.close();
     res.set({
