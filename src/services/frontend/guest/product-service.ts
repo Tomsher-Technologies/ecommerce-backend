@@ -69,7 +69,6 @@ class ProductService {
                     },
                     ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
                     ...(getspecification === '1' ? [...productSpecificationLookup] : []),
-                    ...(getspecification === '1' ? [...productSpecificationLookup] : []),
                     ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
                 ]
             }
@@ -124,7 +123,7 @@ class ProductService {
                         }
                     }
                 }
-            }
+            },
         });
 
         if (offerPipeline && offerPipeline.length > 0) {
@@ -144,9 +143,15 @@ class ProductService {
                 // productData = collectionData
                 collectionData.push(...(skip ? [{ $skip: skip }] : []),
                     ...(limit ? [{ $limit: limit }] : []))
-                const lastPipelineModification: any = await this.productLanguage(hostName, collectionData)
+                const languageData = await LanguagesModel.find().exec();
+                var lastPipelineModification: any
+                const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
 
-                productData = await ProductsModel.aggregate(lastPipelineModification).exec();
+                if (languageId != null) {
+                    lastPipelineModification = await this.productLanguage(hostName, pipeline)
+                    pipeline = lastPipelineModification
+                }
+                productData = await ProductsModel.aggregate(pipeline).exec();
 
             }
             // else {
@@ -157,8 +162,19 @@ class ProductService {
         } else {
             pipeline.push(...(skip ? [{ $skip: skip }] : []),
                 ...(limit ? [{ $limit: limit }] : []))
-            const lastPipelineModification: any = await this.productLanguage(hostName, pipeline)
-            productData = await ProductsModel.aggregate(lastPipelineModification).exec();
+
+            const languageData = await LanguagesModel.find().exec();
+            var lastPipelineModification: any
+            const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
+
+            if (languageId != null) {
+                lastPipelineModification = await this.productLanguage(hostName, pipeline)
+                pipeline = lastPipelineModification
+            }
+            pipeline.push(productProject);
+
+            productData = await ProductsModel.aggregate(pipeline).exec();
+
         }
 
 
@@ -440,7 +456,7 @@ class ProductService {
             pipeline.push(productLookupWithLanguage);
             pipeline.push(productlanguageFieldsReplace);
         }
-        pipeline.push(productProject);
+        // pipeline.push(productProject);
         pipeline.push(productFinalProject);
 
         return pipeline
