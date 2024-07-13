@@ -28,14 +28,14 @@ const collectionBrandschema = new mongoose_1.Schema({
     collectionTitle: {
         type: String,
         required: true,
-        unique: false,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('CollectionsBrands').countDocuments({ collectionTitle: value });
-                return count === 0;
-            },
-            message: 'Collections brands code must be unique'
-        },
+        // unique: false,
+        // validate: {
+        //     validator: async function (this: any, value: string): Promise<boolean> {
+        //         const count = await this.model('CollectionsBrands').countDocuments({ collectionTitle: value });
+        //         return count === 0;
+        //     },
+        //     message: 'Collections brands code must be unique'
+        // },
         minlength: [2, 'Collections brands code must be at least 2 characters long'],
         index: true,
         sparse: true
