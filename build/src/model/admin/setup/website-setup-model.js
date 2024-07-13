@@ -28,8 +28,14 @@ const website_setup_1 = require("../../../constants/website-setup");
 const websiteSetupSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        required: true,
+        default: null,
         ref: 'Countries',
+        validate: {
+            validator: function (value) {
+                return this.blockReference !== website_setup_1.blockReferences.globalValues || (value !== null && value !== undefined);
+            },
+            message: 'countryId is required when blockReference is "global values"'
+        }
     },
     block: {
         type: String,
@@ -44,6 +50,7 @@ const websiteSetupSchema = new mongoose_1.Schema({
         type: String,
         default: '',
         enum: [
+            website_setup_1.blockReferences.globalValues,
             website_setup_1.blockReferences.desktopMenu,
             website_setup_1.blockReferences.mobileMenu,
             website_setup_1.blockReferences.basicDetailsSettings,

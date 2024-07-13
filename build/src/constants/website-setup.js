@@ -7,6 +7,7 @@ exports.websiteSetup = {
     pages: 'pages'
 };
 exports.blockReferences = {
+    globalValues: 'global-values',
     desktopMenu: 'desktop-menu',
     mobileMenu: 'mobile-menu',
     basicDetailsSettings: 'basic-details-settings',

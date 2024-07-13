@@ -18,6 +18,7 @@ import CollectionsBrandsModel from '../../../model/admin/website/collections-bra
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
 import CommonService from '../../../services/frontend/guest/common-service';
+import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 
 
 class ProductService {
@@ -183,64 +184,44 @@ class ProductService {
 
     async findAllAttributes(options: any): Promise<ProductsProps[]> {
         const { query, hostName } = pagination(options.query || {}, options);
-        const { products } = options
-
-
+        const { collectionId } = options
         var attributeDetail: any = []
-        let productData: any = [];
-        let collection: any
-        const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
 
-        const modifiedPipeline = {
-            $lookup: {
-                from: `${collections.ecommerce.products.productvariants.productvariants}`,
-                localField: '_id',
-                foreignField: 'productId',
-                as: 'productVariants',
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)],
-                            },
-                            status: "1"
-
-                        }
-                    },
-                    ...productVariantAttributesLookup,
-                ]
+        let pipeline: any[] = [];
+        let collectionPipeline: any = false;
+        if (collectionId) {
+            collectionPipeline = await this.collection(collectionId, hostName, pipeline);
+            if (collectionPipeline && collectionPipeline.pipeline) {
+                pipeline = collectionPipeline.pipeline
             }
-        };
-        let pipeline: any[] = [
-            modifiedPipeline,
-            productCategoryLookup,
-            brandLookup,
-            brandObject,
-            { $match: query }
-        ]
-
-        if (products) {
-            pipeline = await this.collection(products, hostName, pipeline)
         }
 
+        pipeline = [
+            ...(((query['productCategory.category._id']) || (collectionId && collectionId.collectioncategory)) ? [productCategoryLookup] : []),
+            ...(((query['brand._id'] || query['brand.slug']) || (collectionId && collectionId.collectionbrand)) ? [brandLookup] : []),
+            ...(((query['brand._id '] || query['brand.slug']) || (collectionId && collectionId.collectionbrand)) ? [brandObject] : []),
+            { $match: query }
+        ];
 
-        productData = await ProductsModel.aggregate(pipeline).exec();
+        let productIds: any[] = [];
+        if (collectionId && collectionId.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
+            productIds = collectionPipeline.productIds;
+        } else {
+            const productData = await ProductsModel.aggregate(pipeline).exec();
+            productIds = productData?.map((product: any) => product?._id);
+        }
 
-        const attributeArray: any = []
-        if (productData) {
-            for await (let product of productData) {
-                for await (let variant of product.productVariants) {
-                    for await (let attribute of variant.productVariantAttributes) {
-                        if (!attributeArray.map((attr: any) => attr.toString()).includes(attribute.attributeId.toString())) {
-                            attributeArray.push(attribute.attributeId);
-                        }
-                    }
-                }
-            }
-            for await (let attribute of attributeArray) {
-                const query = { _id: attribute }
+        if (productIds && productIds?.length > 0) {
+            const productVariantAttributesResult = await ProductVariantAttributesModel.aggregate([
+                { $match: { productId: { $in: productIds } } },
+                { $group: { _id: null, attributeIds: { $push: "$attributeId" } } },
+                { $project: { _id: 0, attributeIds: 1 } }
+            ]);
+
+            const productVariantAttributes = productVariantAttributesResult.length ? productVariantAttributesResult[0].attributeIds : [];
+            if (productVariantAttributes && productVariantAttributes?.length > 0) {
                 let attributePipeline: any[] = [
-                    { $match: query },
+                    { $match: { _id: { $in: productVariantAttributes } } },
                     attributeDetailsLookup,
                     attributeProject,
                 ];
@@ -250,9 +231,12 @@ class ProductService {
                 if (languageId != null) {
                     attributePipeline = await this.attributeLanguage(hostName, attributePipeline)
                 }
-                attributeDetail = await AttributesModel.aggregate(attributePipeline).exec()
 
+                attributePipeline.push(productFinalProject);
+                attributeDetail = await AttributesModel.aggregate(attributePipeline).exec()
             }
+
+
         }
         return attributeDetail
     }
@@ -290,9 +274,6 @@ class ProductService {
             pipeline.push(attributeLanguageFieldsReplace);
             pipeline.push(attributeDetailLanguageFieldsReplace)
         }
-
-        pipeline.push(attributeProject);
-        pipeline.push(productFinalProject);
 
         return pipeline
     }
@@ -464,64 +445,70 @@ class ProductService {
         return pipeline
     }
 
-    async collection(products: any, hostName: any, pipeline?: any): Promise<void | any> {
+    async collection(collectionId: any, hostName: any, pipeline?: any): Promise<void | any> {
         var collections: any
-
-        if (products && products.collectioncategory) {
-
-            collections = await CollectionsCategoriesModel.findOne({ _id: products.collectioncategory })
+        let returnData = {
+            pipeline: null,
+            categoryIds: false,
+            brandIds: false,
+            productIds: false,
+        }
+        if (collectionId && collectionId.collectioncategory) {
+            collections = await CollectionsCategoriesModel.findOne({ _id: collectionId.collectioncategory })
             if (collections && collections.collectionsCategories) {
                 if (collections.collectionsCategories.length > 0) {
-                    for await (let categoryId of collections.collectionsCategories) {
-                        pipeline.push({
-                            $in: {
-                                'productCategory.category._id': new mongoose.Types.ObjectId(categoryId),
-                                status: "1"
-                            }
-                        })
+                    const categoryIds = collections.collectionsCategories.map((categoryId: any) => new mongoose.Types.ObjectId(categoryId));
+                    pipeline.push({
+                        $match: {
+                            'productCategory.category._id': { $in: categoryIds },
+                            status: "1"
+                        }
+                    })
+                    return returnData = {
+                        ...returnData,
+                        pipeline,
+                        categoryIds
                     }
                 }
             }
-            return pipeline
 
-        } else if (products && products.collectionbrand) {
-            collections = await CollectionsBrandsModel.findOne({ _id: products.collectionbrand })
+        } else if (collectionId && collectionId.collectionbrand) {
+            collections = await CollectionsBrandsModel.findOne({ _id: collectionId.collectionbrand })
             if (collections && collections.collectionsBrands) {
-                let query
-                const brandObjectIds = collections.collectionsBrands.map((id: any) => new mongoose.Types.ObjectId(id));
-
-                // Construct the query
-                query = {
-                    'brand._id': { $in: brandObjectIds },
-                    status: "1"
-                };
+                const brandIds = collections.collectionsBrands.map((brandId: any) => new mongoose.Types.ObjectId(brandId));
                 pipeline.push({
-                    $match: query
-                })
-                return pipeline
-            }
-        } else if (products && products.collectionproduct) {
-            collections = await CollectionsProductsModel.findOne({ _id: products.collectionproduct })
-
-            if (collections && collections.collectionsProducts) {
-                if (collections.collectionsProducts.length > 0) {
-                    let query
-                    const objectIds = collections.collectionsProducts.map((id: any) => new mongoose.Types.ObjectId(id));
-
-                    // Construct the query
-                    query = {
-                        _id: { $in: objectIds },
+                    $match: {
+                        'brand._id': { $in: brandIds },
                         status: "1"
-                    };
-
-
-                    pipeline.push({
-                        $match: query
-                    })
+                    }
+                })
+                return returnData = {
+                    ...returnData,
+                    pipeline,
+                    brandIds
                 }
             }
-            return pipeline
+        } else if (collectionId && collectionId.collectionproduct) {
+            collections = await CollectionsProductsModel.findOne({ _id: collectionId.collectionproduct })
+            if (collections && collections.collectionsProducts) {
+                if (collections.collectionsProducts.length > 0) {
+                    const productIds = collections.collectionsProducts.map((productId: any) => new mongoose.Types.ObjectId(productId));
+                    pipeline.push({
+                        $match: {
+                            _id: { $in: productIds },
+                            status: "1"
+                        }
+                    });
+                    return returnData = {
+                        ...returnData,
+                        pipeline,
+                        productIds
+                    }
+                }
+            }
         }
+
+        return false
     }
 }
 

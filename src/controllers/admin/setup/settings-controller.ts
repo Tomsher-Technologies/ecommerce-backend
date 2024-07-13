@@ -39,7 +39,7 @@ class SettingsController extends BaseController {
                     }
 
                     const settingsData: Partial<any> = {
-                        countryId: new mongoose.Types.ObjectId(countryId),
+                        countryId: blockReference !== 'global-values' ? new mongoose.Types.ObjectId(countryId) : null,
                         block,
                         blockReference,
                         blockValues: {

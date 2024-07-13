@@ -57,6 +57,15 @@ export const productVariantAttributesLookup = [
     }
 ];
 
+export const productvariantattributesWithProductIdLookup = {
+    $lookup: {
+        from: `${collections.ecommerce.products.productvariants.productvariantattributes}`,
+        localField: 'productId',
+        foreignField: '_id',
+        as: 'productDetails',
+    }
+};
+
 export const addFieldsProductVariantAttributes = {
     $addFields: {
         productVariantAttributes: {

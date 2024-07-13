@@ -17,9 +17,9 @@ const collections_1 = require("../../../constants/collections");
 const offer_config_1 = require("../../../utils/config/offer-config");
 const collections_products_model_1 = __importDefault(require("../../../model/admin/website/collections-products-model"));
 const collections_brands_model_1 = __importDefault(require("../../../model/admin/website/collections-brands-model"));
-const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 class ProductService {
     async findProductList(productOption) {
         var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
@@ -158,76 +158,51 @@ class ProductService {
         return productData;
     }
     async findAllAttributes(options) {
-        const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
-        const { products } = options;
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
+        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
+        const { collectionId } = options;
         var attributeDetail = [];
-        let productData = [];
-        let collection;
-        if (products) {
-            collection = await this.collection(products, hostName);
-        }
-        if (collection && collection.productData) {
-            productData = collection.productData;
-        }
-        else if (collection && collection.collectionsBrands) {
-            for await (let data of collection.collectionsBrands) {
-                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
-                const result = await product_model_1.default.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0]);
-                }
+        let pipeline = [];
+        let collectionPipeline = false;
+        if (collectionId) {
+            collectionPipeline = await this.collection(collectionId, hostName, pipeline);
+            if (collectionPipeline && collectionPipeline.pipeline) {
+                pipeline = collectionPipeline.pipeline;
             }
+        }
+        pipeline = [
+            ...(((query['productCategory.category._id']) || (collectionId && collectionId.collectioncategory)) ? [product_config_1.productCategoryLookup] : []),
+            ...(((query['brand._id'] || query['brand.slug']) || (collectionId && collectionId.collectionbrand)) ? [product_config_1.brandLookup] : []),
+            ...(((query['brand._id '] || query['brand.slug']) || (collectionId && collectionId.collectionbrand)) ? [product_config_1.brandObject] : []),
+            { $match: query }
+        ];
+        let productIds = [];
+        if (collectionId && collectionId.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
+            productIds = collectionPipeline.productIds;
         }
         else {
-            productData = await this.findProductList({ query, getattribute: '1' });
+            const productData = await product_model_1.default.aggregate(pipeline).exec();
+            productIds = productData?.map((product) => product?._id);
         }
-        const attributeArray = [];
-        if (productData) {
-            for await (let product of productData) {
-                for await (let variant of product.productVariants) {
-                    for await (let attribute of variant.productVariantAttributes) {
-                        if (!attributeArray.map((attr) => attr.toString()).includes(attribute.attributeId.toString())) {
-                            attributeArray.push(attribute.attributeId);
-                        }
-                    }
-                }
-            }
-            for await (let attribute of attributeArray) {
-                const query = { _id: attribute };
-                let pipeline = [
-                    { $match: query },
-                    { $sort: finalSort },
+        if (productIds && productIds?.length > 0) {
+            const productVariantAttributesResult = await product_variant_attribute_model_1.default.aggregate([
+                { $match: { productId: { $in: productIds } } },
+                { $group: { _id: null, attributeIds: { $push: "$attributeId" } } },
+                { $project: { _id: 0, attributeIds: 1 } }
+            ]);
+            const productVariantAttributes = productVariantAttributesResult.length ? productVariantAttributesResult[0].attributeIds : [];
+            if (productVariantAttributes && productVariantAttributes?.length > 0) {
+                let attributePipeline = [
+                    { $match: { _id: { $in: productVariantAttributes } } },
                     attribute_config_1.attributeDetailsLookup,
                     attribute_config_1.attributeProject,
                 ];
-                const attributeData = await attribute_model_1.default.aggregate(pipeline).exec();
-                const language = await this.attributeLanguage(hostName, pipeline);
-                const data = await attribute_model_1.default.aggregate(language).exec();
-                if (data.length > 0) {
-                    for (let j = 0; j < data[0].attributeValues.length; j++) {
-                        if (Array.isArray(data[0].attributeValues[j].itemName) && data[0].attributeValues[j].itemName.length > 1) {
-                            if (data[0].attributeValues[j].itemName[j] == undefined) {
-                                data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
-                            }
-                            else {
-                                data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName[j];
-                            }
-                        }
-                        else if (data[0].attributeValues[j].itemName.length > 1) {
-                            data[0].attributeValues[j].itemName = data[0].attributeValues[j].itemName;
-                        }
-                        else {
-                            data[0].attributeValues[j].itemName = attributeData[0].attributeValues[j].itemName;
-                        }
-                    }
-                    await attributeDetail.push(data[0]);
+                const languageData = await language_model_1.default.find().exec();
+                const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+                if (languageId != null) {
+                    attributePipeline = await this.attributeLanguage(hostName, attributePipeline);
                 }
+                attributePipeline.push(product_config_1.productFinalProject);
+                attributeDetail = await attribute_model_1.default.aggregate(attributePipeline).exec();
             }
         }
         return attributeDetail;
@@ -264,8 +239,6 @@ class ProductService {
             pipeline.push(attribute_config_1.attributeLanguageFieldsReplace);
             pipeline.push(attribute_config_1.attributeDetailLanguageFieldsReplace);
         }
-        pipeline.push(attribute_config_1.attributeProject);
-        pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
     async findAllSpecifications(options) {
@@ -422,67 +395,70 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async collection(products, hostName, pipeline) {
+    async collection(collectionId, hostName, pipeline) {
         var collections;
-        var productData = [];
-        if (products && products.collectioncategory) {
-            collections = await collections_categories_model_1.default.findOne({ _id: products.collectioncategory });
+        let returnData = {
+            pipeline: null,
+            categoryIds: false,
+            brandIds: false,
+            productIds: false,
+        };
+        if (collectionId && collectionId.collectioncategory) {
+            collections = await collections_categories_model_1.default.findOne({ _id: collectionId.collectioncategory });
             if (collections && collections.collectionsCategories) {
-                var language;
                 if (collections.collectionsCategories.length > 0) {
-                    for await (let data of collections.collectionsCategories) {
-                        const results = await product_category_link_model_1.default.find({ categoryId: new mongoose_1.default.Types.ObjectId(data) });
-                        if (results && results.length > 0) {
-                            for await (let result of results) {
-                                // console.log("result................:", { $match: { 'productCategory.category._id': result.categoryId } });
-                                // result.categoryId
-                                // language = await this.productLanguage(hostName, pipeline)
-                                // const productResult = await this.findProductList({ language, getattribute: '1', getspecification: '1' })
-                                pipeline.push({ $match: { 'productCategory.category._id': result.categoryId } });
-                                // if (productResult) {
-                                //     productData.push(productResult[0])
-                                // }
-                            }
+                    const categoryIds = collections.collectionsCategories.map((categoryId) => new mongoose_1.default.Types.ObjectId(categoryId));
+                    pipeline.push({
+                        $match: {
+                            'productCategory.category._id': { $in: categoryIds },
+                            status: "1"
                         }
-                    }
+                    });
+                    return returnData = {
+                        ...returnData,
+                        pipeline,
+                        categoryIds
+                    };
                 }
             }
-            return pipeline;
         }
-        else if (products && products.collectionbrand) {
-            collections = await collections_brands_model_1.default.findOne({ _id: products.collectionbrand });
+        else if (collectionId && collectionId.collectionbrand) {
+            collections = await collections_brands_model_1.default.findOne({ _id: collectionId.collectionbrand });
             if (collections && collections.collectionsBrands) {
-                let query;
-                const brandObjectIds = collections.collectionsBrands.map((id) => new mongoose_1.default.Types.ObjectId(id));
-                // Construct the query
-                query = {
-                    'brand._id': { $in: brandObjectIds },
-                    status: "1"
-                };
+                const brandIds = collections.collectionsBrands.map((brandId) => new mongoose_1.default.Types.ObjectId(brandId));
                 pipeline.push({
-                    $match: query
+                    $match: {
+                        'brand._id': { $in: brandIds },
+                        status: "1"
+                    }
                 });
-                return pipeline;
+                return returnData = {
+                    ...returnData,
+                    pipeline,
+                    brandIds
+                };
             }
         }
-        else if (products && products.collectionproduct) {
-            collections = await collections_products_model_1.default.findOne({ _id: products.collectionproduct });
+        else if (collectionId && collectionId.collectionproduct) {
+            collections = await collections_products_model_1.default.findOne({ _id: collectionId.collectionproduct });
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
-                    let query;
-                    const objectIds = collections.collectionsProducts.map((id) => new mongoose_1.default.Types.ObjectId(id));
-                    // Construct the query
-                    query = {
-                        _id: { $in: objectIds },
-                        status: "1"
-                    };
+                    const productIds = collections.collectionsProducts.map((productId) => new mongoose_1.default.Types.ObjectId(productId));
                     pipeline.push({
-                        $match: query
+                        $match: {
+                            _id: { $in: productIds },
+                            status: "1"
+                        }
                     });
+                    return returnData = {
+                        ...returnData,
+                        pipeline,
+                        productIds
+                    };
                 }
             }
-            return pipeline;
         }
+        return false;
     }
 }
 exports.default = new ProductService();

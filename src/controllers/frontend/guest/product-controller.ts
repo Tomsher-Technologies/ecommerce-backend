@@ -19,11 +19,7 @@ class ProductController extends BaseController {
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
-            // let getspecification = ''
-            // let getattribute = ''
             let getSeo = '1'
-            let getBrand = '1'
-            let getCategory = '1'
             let query: any = { _id: { $exists: true } };
             let collectionProductsData: any;
             let discountValue: any;
@@ -333,7 +329,7 @@ class ProductController extends BaseController {
         try {
             const productId: any = req.params.slug;
             const variantSku: any = req.params.sku;
-            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
+            const { getattribute = '' } = req.query as ProductsFrontendQueryParams;
             let query: any = {}
             if (productId) {
                 if (variantSku) {
@@ -473,18 +469,16 @@ class ProductController extends BaseController {
 
     async findAllAttributes(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'attributeTitle', sortorder = 'asc' } = req.query as ProductsFrontendQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as ProductsFrontendQueryParams;
 
             let query: any = { _id: { $exists: true } };
-            let products: any;
+            let collectionId: any;
             const orConditionsForcategory: any = [];
 
             query.status = '1';
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                
                 if (category) {
-
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     var findcategory
                     if (isObjectId) {
@@ -529,20 +523,20 @@ class ProductController extends BaseController {
                 }
 
                 if (collectionproduct) {
-                    products = {
-                        ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    collectionId = {
+                        ...collectionId, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
                     }
                 }
 
                 if (collectionbrand) {
-                    products = {
-                        ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    collectionId = {
+                        ...collectionId, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
                     }
                 }
 
                 if (collectioncategory) {
-                    products = {
-                        ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    collectionId = {
+                        ...collectionId, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
                     }
                 }
 
@@ -556,7 +550,7 @@ class ProductController extends BaseController {
                 const attributes: any = await ProductService.findAllAttributes({
                     hostName: req.get('origin'),
                     query,
-                    products,
+                    collectionId,
                 });
 
                 attributes.sort((a: any, b: any) => {
