@@ -63,7 +63,6 @@ class ProductService {
                     },
                     ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
                     ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
-                    ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
                     ...(getimagegallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
                 ]
             }
@@ -114,7 +113,7 @@ class ProductService {
                         }
                     }
                 }
-            }
+            },
         });
         if (offerPipeline && offerPipeline.length > 0) {
             pipeline.push(offerPipeline[0]);
@@ -131,8 +130,14 @@ class ProductService {
                 // }
                 // productData = collectionData
                 collectionData.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
-                const lastPipelineModification = await this.productLanguage(hostName, collectionData);
-                productData = await product_model_1.default.aggregate(lastPipelineModification).exec();
+                const languageData = await language_model_1.default.find().exec();
+                var lastPipelineModification;
+                const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+                if (languageId != null) {
+                    lastPipelineModification = await this.productLanguage(hostName, pipeline);
+                    pipeline = lastPipelineModification;
+                }
+                productData = await product_model_1.default.aggregate(pipeline).exec();
             }
             // else {
             //     productData = collectionData
@@ -140,8 +145,15 @@ class ProductService {
         }
         else {
             pipeline.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
-            const lastPipelineModification = await this.productLanguage(hostName, pipeline);
-            productData = await product_model_1.default.aggregate(lastPipelineModification).exec();
+            const languageData = await language_model_1.default.find().exec();
+            var lastPipelineModification;
+            const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+            if (languageId != null) {
+                lastPipelineModification = await this.productLanguage(hostName, pipeline);
+                pipeline = lastPipelineModification;
+            }
+            pipeline.push(product_config_1.productProject);
+            productData = await product_model_1.default.aggregate(pipeline).exec();
         }
         return productData;
     }
@@ -406,7 +418,7 @@ class ProductService {
             pipeline.push(productLookupWithLanguage);
             pipeline.push(product_config_1.productlanguageFieldsReplace);
         }
-        pipeline.push(product_config_1.productProject);
+        // pipeline.push(productProject);
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }

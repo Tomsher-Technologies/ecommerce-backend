@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pageReference = exports.page = void 0;
 exports.page = [
     { value: 'home', label: "Home" },
+    { value: 'header', label: "Header" },
+    { value: 'footer', label: "Footer" },
     { value: 'product-list', label: "Product List" },
     { value: 'product-details', label: "Product Details" },
     { value: 'cart', label: "Cart" },
