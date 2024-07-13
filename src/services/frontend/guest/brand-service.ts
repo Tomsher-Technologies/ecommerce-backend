@@ -96,36 +96,35 @@ class BrandService {
         const languageData = await LanguagesModel.find().exec();
         const languageId = getLanguageValueFromSubdomain(hostName, languageData);
         if (languageId) {
-            if (languageId) {
-                const brandLookupWithLanguage = {
-                    ...brandLookup,
-                    $lookup: {
-                        ...brandLookup.$lookup,
-                        pipeline: brandLookup.$lookup.pipeline.map((stage: any) => {
-                            if (stage.$match && stage.$match.$expr) {
-                                return {
-                                    ...stage,
-                                    $match: {
-                                        ...stage.$match,
-                                        $expr: {
-                                            ...stage.$match.$expr,
-                                            $and: [
-                                                ...stage.$match.$expr.$and,
-                                                { $eq: ['$languageId', languageId] },
-                                            ]
-                                        }
+            const brandLookupWithLanguage = {
+                ...brandLookup,
+                $lookup: {
+                    ...brandLookup.$lookup,
+                    pipeline: brandLookup.$lookup.pipeline.map((stage: any) => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] },
+                                        ]
                                     }
-                                };
-                            }
-                            return stage;
-                        })
-                    }
-                };
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
 
-                pipeline.push(brandLookupWithLanguage);
+            pipeline.push(brandLookupWithLanguage);
 
-                pipeline.push(brandLanguageFieldsReplace);
-            }
+            pipeline.push(brandLanguageFieldsReplace);
+
         }
 
         pipeline.push(brandProject);
