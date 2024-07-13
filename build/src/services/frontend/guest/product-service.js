@@ -20,9 +20,10 @@ const collections_brands_model_1 = __importDefault(require("../../../model/admin
 const collections_categories_model_1 = __importDefault(require("../../../model/admin/website/collections-categories-model"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
+const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, getSeo, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, hostName, offers } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -31,12 +32,6 @@ class ProductService {
             finalSort = defaultSort;
         }
         const countryId = await common_service_1.default.findOneCountrySubDomainWithId(hostName);
-        // if (countryId) {
-        //     query = {
-        //         ...query,
-        //         'productVariants.countryId': new mongoose.Types.ObjectId(countryId)
-        //     } as any;
-        // }
         if (discount) {
             const discountArray = await discount.split(",");
             console.log("discount", discountArray);
@@ -61,8 +56,8 @@ class ProductService {
                             status: "1"
                         }
                     },
-                    ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
-                    ...(getspecification === '1' ? [...product_config_1.productSpecificationLookup] : []),
+                    ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...product_config_1.productVariantAttributesLookup] : []),
+                    ...((getspecification === '1' || query['productVariants.productSpecification.specificationDetail._id'] || query['productVariants.productSpecification.specificationDetail.itemName']) ? [...product_config_1.productSpecificationLookup] : []),
                     ...(getimagegallery === '1' ? [product_config_1.variantImageGalleryLookup] : []),
                 ]
             }
@@ -97,7 +92,6 @@ class ProductService {
             const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
             pipeline.push(offerProduct);
         }
-        // Combine offers into a single array field 'offer', prioritizing categoryOffers, then brandOffers, then productOffers
         pipeline.push({
             $addFields: {
                 offer: {
@@ -119,62 +113,49 @@ class ProductService {
             pipeline.push(offerPipeline[0]);
         }
         let productData = [];
+        let collectionPipeline = false;
         if (collectionProductsData) {
-            const collectionData = await this.collection(collectionProductsData, hostName, pipeline);
-            // if (collectionData && collectionData.productData) {
-            //     productData = collectionData.productData
-            // }
-            if (collectionData && collectionData) {
-                // for await (let data of collectionData.collectionsBrands) {
-                //     productData = collectionData.productData
-                // }
-                // productData = collectionData
-                collectionData.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
-                const languageData = await language_model_1.default.find().exec();
-                var lastPipelineModification;
-                const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-                if (languageId != null) {
-                    lastPipelineModification = await this.productLanguage(hostName, pipeline);
-                    pipeline = lastPipelineModification;
-                }
-                productData = await product_model_1.default.aggregate(pipeline).exec();
-            }
-            // else {
-            //     productData = collectionData
-            // }
+            collectionPipeline = await this.collection(collectionProductsData, hostName, pipeline);
         }
-        else {
-            pipeline.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
-            const languageData = await language_model_1.default.find().exec();
-            var lastPipelineModification;
-            const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-            if (languageId != null) {
-                lastPipelineModification = await this.productLanguage(hostName, pipeline);
-                pipeline = lastPipelineModification;
-            }
-            pipeline.push(product_config_1.productProject);
-            productData = await product_model_1.default.aggregate(pipeline).exec();
+        if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: collectionPipeline.categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
+        if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
+            pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+        }
+        if (collectionProductsData && collectionProductsData.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
+            pipeline.push({ $match: { '_id': { $in: collectionPipeline.productIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+        }
+        pipeline.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
+        const languageData = await language_model_1.default.find().exec();
+        var lastPipelineModification;
+        const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+        if (languageId != null) {
+            lastPipelineModification = await this.productLanguage(hostName, pipeline);
+            pipeline = lastPipelineModification;
+        }
+        pipeline.push(product_config_1.productProject);
+        productData = await product_model_1.default.aggregate(pipeline).exec();
         return productData;
     }
     async findAllAttributes(options) {
-        const { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
+        let { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
         const { collectionId } = options;
-        var attributeDetail = [];
         let pipeline = [];
         let collectionPipeline = false;
         if (collectionId) {
             collectionPipeline = await this.collection(collectionId, hostName, pipeline);
-            if (collectionPipeline && collectionPipeline.pipeline) {
-                pipeline = collectionPipeline.pipeline;
-            }
         }
-        pipeline = [
-            ...(((query['productCategory.category._id']) || (collectionId && collectionId.collectioncategory)) ? [product_config_1.productCategoryLookup] : []),
-            ...(((query['brand._id'] || query['brand.slug']) || (collectionId && collectionId.collectionbrand)) ? [product_config_1.brandLookup] : []),
-            ...(((query['brand._id '] || query['brand.slug']) || (collectionId && collectionId.collectionbrand)) ? [product_config_1.brandObject] : []),
-            { $match: query }
-        ];
+        if (((query['productCategory.category._id']) || (collectionId && collectionId.collectioncategory))) {
+            pipeline.push(product_config_1.productCategoryLookup);
+        }
+        if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: collectionPipeline.categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+        }
+        if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
+            pipeline.push({ $match: { 'brand': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+        }
+        pipeline.push({ $match: query });
         let productIds = [];
         if (collectionId && collectionId.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
             productIds = collectionPipeline.productIds;
@@ -183,17 +164,49 @@ class ProductService {
             const productData = await product_model_1.default.aggregate(pipeline).exec();
             productIds = productData?.map((product) => product?._id);
         }
+        var attributeDetail = [];
         if (productIds && productIds?.length > 0) {
-            const productVariantAttributesResult = await product_variant_attribute_model_1.default.aggregate([
+            const productVariantAttributeDetailIdResult = await product_variant_attribute_model_1.default.aggregate([
                 { $match: { productId: { $in: productIds } } },
-                { $group: { _id: null, attributeIds: { $push: "$attributeId" } } },
-                { $project: { _id: 0, attributeIds: 1 } }
+                { $group: { _id: null, attributeDetailIds: { $push: "$attributeDetailId" } } },
+                { $project: { _id: 0, attributeDetailIds: 1 } }
             ]);
-            const productVariantAttributes = productVariantAttributesResult.length ? productVariantAttributesResult[0].attributeIds : [];
-            if (productVariantAttributes && productVariantAttributes?.length > 0) {
+            const productVariantAttributesDetailIds = productVariantAttributeDetailIdResult.length ? productVariantAttributeDetailIdResult[0].attributeDetailIds : [];
+            if (productVariantAttributesDetailIds && productVariantAttributesDetailIds?.length > 0) {
                 let attributePipeline = [
-                    { $match: { _id: { $in: productVariantAttributes } } },
                     attribute_config_1.attributeDetailsLookup,
+                    { $unwind: '$attributeValues' },
+                    { $match: { 'attributeValues._id': { $in: productVariantAttributesDetailIds }, status: "1" } },
+                    {
+                        $group: {
+                            _id: '$_id',
+                            attributeTitle: { $first: '$attributeTitle' },
+                            slug: { $first: '$slug' },
+                            status: { $first: '$status' },
+                            attributeValues: { $push: '$attributeValues' }
+                        }
+                    },
+                    {
+                        $project: {
+                            attributeTitle: 1,
+                            attributeValues: 1,
+                            slug: 1,
+                            status: 1,
+                            itemNameLowerCase: {
+                                $map: {
+                                    input: "$attributeValues",
+                                    as: "spec",
+                                    in: {
+                                        $toLower: {
+                                            $ifNull: ["$$spec.itemName", ""]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    { $sort: { 'itemNameLowerCase': 1 } },
+                    attribute_config_1.attributeProject,
                     attribute_config_1.attributeProject,
                 ];
                 const languageData = await language_model_1.default.find().exec();
@@ -242,84 +255,83 @@ class ProductService {
         return pipeline;
     }
     async findAllSpecifications(options) {
-        const { query, hostName, products, sort } = options;
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
+        const { query, hostName, collectionId } = options;
         var specificationDetail = [];
-        let productData = [];
-        let collection;
-        if (products) {
-            collection = await this.collection(products, hostName);
+        let pipeline = [];
+        let collectionPipeline = false;
+        if (collectionId) {
+            collectionPipeline = await this.collection(collectionId, hostName, pipeline);
         }
-        if (collection && collection.productData) {
-            productData = collection.productData;
+        if (((query['productCategory.category._id']) || (collectionId && collectionId.collectioncategory))) {
+            pipeline.push(product_config_1.productCategoryLookup);
         }
-        else if (collection && collection.collectionsBrands) {
-            for await (let data of collection.collectionsBrands) {
-                const language = await this.productLanguage(hostName, { brand: new mongoose_1.default.Types.ObjectId(data) });
-                const result = await product_model_1.default.aggregate(language).exec();
-                if (result && result.length > 0) {
-                    productData.push(result[0]);
-                }
-            }
+        if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: collectionPipeline.categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+        }
+        if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
+            pipeline.push({ $match: { 'brand': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+        }
+        pipeline.push({ $match: query });
+        let productIds = [];
+        if (collectionId && collectionId.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
+            productIds = collectionPipeline.productIds;
         }
         else {
-            productData = await this.findProductList({ query, getspecification: '1' });
+            const productData = await product_model_1.default.aggregate(pipeline).exec();
+            productIds = productData?.map((product) => product?._id);
         }
-        const specificationArray = [];
-        if (productData) {
-            for await (let product of productData) {
-                for await (let variant of product.productVariants) {
-                    for await (let specification of variant.productSpecification) {
-                        if (!specificationArray.map((spec) => spec.toString()).includes(specification.specificationId.toString())) {
-                            specificationArray.push(specification.specificationId);
-                        }
-                    }
-                }
-            }
-            for await (let product of productData) {
-                for await (let specification of product.productSpecification) {
-                    if (!specificationArray.map((spec) => spec.toString()).includes(specification.specificationId.toString())) {
-                        specificationArray.push(specification.specificationId);
-                    }
-                }
-            }
-            for await (let specification of specificationArray) {
-                const query = { _id: specification };
-                let pipeline = [
-                    { $match: query },
+        var specificationDetail = [];
+        if (productIds && productIds?.length > 0) {
+            const productSpecificationDetailsResult = await product_specification_model_1.default.aggregate([
+                { $match: { productId: { $in: productIds } } },
+                { $group: { _id: null, specificationDetailIds: { $push: "$specificationDetailId" } } },
+                { $project: { _id: 0, specificationDetailIds: 1 } }
+            ]);
+            const productSpecificationDetailIds = productSpecificationDetailsResult.length ? productSpecificationDetailsResult[0].specificationDetailIds : [];
+            if (productSpecificationDetailIds && productSpecificationDetailIds?.length > 0) {
+                let specificationPipeline = [
                     specification_config_1.specificationDetailsLookup,
+                    { $unwind: '$specificationValues' },
+                    { $match: { 'specificationValues._id': { $in: productSpecificationDetailIds }, status: "1" } },
+                    {
+                        $group: {
+                            _id: '$_id',
+                            specificationTitle: { $first: '$specificationTitle' },
+                            slug: { $first: '$slug' },
+                            status: { $first: '$status' },
+                            specificationValues: { $push: '$specificationValues' }
+                        }
+                    },
+                    {
+                        $project: {
+                            specificationValues: 1,
+                            specificationTitle: 1,
+                            slug: 1,
+                            status: 1,
+                            itemNameLowerCase: {
+                                $map: {
+                                    input: "$specificationValues",
+                                    as: "spec",
+                                    in: {
+                                        $toLower: {
+                                            $ifNull: ["$$spec.itemName", ""]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    { $sort: { 'itemNameLowerCase': 1 } },
                     specification_config_1.specificationProject,
-                    { $sort: finalSort },
+                    product_config_1.productFinalProject
                 ];
-                const specificationData = await specifications_model_1.default.aggregate(pipeline).exec();
-                const language = await this.specificationLanguage(hostName, pipeline);
-                const data = await specifications_model_1.default.aggregate(language).exec();
-                if (data && data.length > 0) {
-                    for (let j = 0; j < data[0].specificationValues.length; j++) {
-                        if (Array.isArray(data[0].specificationValues[j].itemName) && data[0].specificationValues[j].itemName.length > 1) {
-                            if (specificationData && specificationData.length > 0 && data[0].specificationValues[j].itemName[j] == undefined) {
-                                data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
-                            }
-                            else {
-                                data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName[j];
-                            }
-                        }
-                        else if (data[0].specificationValues[j].itemName.length > 1) {
-                            data[0].specificationValues[j].itemName = data[0].specificationValues[j].itemName;
-                        }
-                        else {
-                            if (specificationData && specificationData.length > 0) {
-                                data[0].specificationValues[j].itemName = specificationData[0].specificationValues[j].itemName;
-                            }
-                        }
-                    }
-                    await specificationDetail.push(data[0]);
+                const languageData = await language_model_1.default.find().exec();
+                const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+                if (languageId != null) {
+                    specificationPipeline = await this.attributeLanguage(hostName, specificationPipeline);
                 }
+                specificationPipeline.push(product_config_1.productFinalProject);
+                specificationDetail = await specifications_model_1.default.aggregate(specificationPipeline).exec();
             }
         }
         return specificationDetail;
@@ -356,8 +368,6 @@ class ProductService {
             pipeline.push(specification_config_1.specificationLanguageFieldsReplace);
             pipeline.push(specification_config_1.specificationDetailLanguageFieldsReplace);
         }
-        pipeline.push(specification_config_1.specificationProject);
-        pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
     async productLanguage(hostName, pipeline) {
@@ -395,7 +405,8 @@ class ProductService {
         pipeline.push(product_config_1.productFinalProject);
         return pipeline;
     }
-    async collection(collectionId, hostName, pipeline) {
+    async collection(collectionId, hostName, pipeline, countryIdVal) {
+        const countryId = countryIdVal || await common_service_1.default.findOneCountrySubDomainWithId(hostName);
         var collections;
         let returnData = {
             pipeline: null,
@@ -404,16 +415,10 @@ class ProductService {
             productIds: false,
         };
         if (collectionId && collectionId.collectioncategory) {
-            collections = await collections_categories_model_1.default.findOne({ _id: collectionId.collectioncategory });
+            collections = await collections_categories_model_1.default.findOne({ _id: collectionId.collectioncategory, countryId });
             if (collections && collections.collectionsCategories) {
                 if (collections.collectionsCategories.length > 0) {
                     const categoryIds = collections.collectionsCategories.map((categoryId) => new mongoose_1.default.Types.ObjectId(categoryId));
-                    pipeline.push({
-                        $match: {
-                            'productCategory.category._id': { $in: categoryIds },
-                            status: "1"
-                        }
-                    });
                     return returnData = {
                         ...returnData,
                         pipeline,
@@ -423,24 +428,17 @@ class ProductService {
             }
         }
         else if (collectionId && collectionId.collectionbrand) {
-            collections = await collections_brands_model_1.default.findOne({ _id: collectionId.collectionbrand });
+            collections = await collections_brands_model_1.default.findOne({ _id: collectionId.collectionbrand, countryId });
             if (collections && collections.collectionsBrands) {
                 const brandIds = collections.collectionsBrands.map((brandId) => new mongoose_1.default.Types.ObjectId(brandId));
-                pipeline.push({
-                    $match: {
-                        'brand._id': { $in: brandIds },
-                        status: "1"
-                    }
-                });
                 return returnData = {
                     ...returnData,
-                    pipeline,
                     brandIds
                 };
             }
         }
         else if (collectionId && collectionId.collectionproduct) {
-            collections = await collections_products_model_1.default.findOne({ _id: collectionId.collectionproduct });
+            collections = await collections_products_model_1.default.findOne({ _id: collectionId.collectionproduct, countryId });
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     const productIds = collections.collectionsProducts.map((productId) => new mongoose_1.default.Types.ObjectId(productId));
