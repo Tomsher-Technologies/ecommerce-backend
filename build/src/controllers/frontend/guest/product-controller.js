@@ -306,16 +306,16 @@ class ProductController extends base_controller_1.default {
                         }
                     });
                 }
-                const totalProductData = await product_service_1.default.findProductList({
-                    query,
-                    collectionProductsData,
-                    discount,
-                    offers,
-                    hostName: req.get('origin'),
-                });
+                // const totalProductData: any = await ProductService.findProductList({
+                //     query,
+                //     collectionProductsData,
+                //     discount,
+                //     offers,
+                //     hostName: req.get('origin'),
+                // });
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: totalProductData?.length || 0,
+                    // totalCount: totalProductData?.length || 0,
                     message: 'Success!'
                 }, 200);
             }

@@ -75,34 +75,32 @@ class BrandService {
         const languageData = await language_model_1.default.find().exec();
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         if (languageId) {
-            if (languageId) {
-                const brandLookupWithLanguage = {
-                    ...brand_config_1.brandLookup,
-                    $lookup: {
-                        ...brand_config_1.brandLookup.$lookup,
-                        pipeline: brand_config_1.brandLookup.$lookup.pipeline.map((stage) => {
-                            if (stage.$match && stage.$match.$expr) {
-                                return {
-                                    ...stage,
-                                    $match: {
-                                        ...stage.$match,
-                                        $expr: {
-                                            ...stage.$match.$expr,
-                                            $and: [
-                                                ...stage.$match.$expr.$and,
-                                                { $eq: ['$languageId', languageId] },
-                                            ]
-                                        }
+            const brandLookupWithLanguage = {
+                ...brand_config_1.brandLookup,
+                $lookup: {
+                    ...brand_config_1.brandLookup.$lookup,
+                    pipeline: brand_config_1.brandLookup.$lookup.pipeline.map((stage) => {
+                        if (stage.$match && stage.$match.$expr) {
+                            return {
+                                ...stage,
+                                $match: {
+                                    ...stage.$match,
+                                    $expr: {
+                                        ...stage.$match.$expr,
+                                        $and: [
+                                            ...stage.$match.$expr.$and,
+                                            { $eq: ['$languageId', languageId] },
+                                        ]
                                     }
-                                };
-                            }
-                            return stage;
-                        })
-                    }
-                };
-                pipeline.push(brandLookupWithLanguage);
-                pipeline.push(brand_config_1.brandLanguageFieldsReplace);
-            }
+                                }
+                            };
+                        }
+                        return stage;
+                    })
+                }
+            };
+            pipeline.push(brandLookupWithLanguage);
+            pipeline.push(brand_config_1.brandLanguageFieldsReplace);
         }
         pipeline.push(brand_config_1.brandProject);
         pipeline.push(brand_config_1.brandFinalProject);
