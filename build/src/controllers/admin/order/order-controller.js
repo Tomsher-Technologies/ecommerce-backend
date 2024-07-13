@@ -412,13 +412,23 @@ class OrdersController extends base_controller_1.default {
                 websiteSettingsQuery = {
                     ...websiteSettingsQuery,
                     countryId: orderDetails[0].countryId,
-                    block: orderDetails[0].basicSettings,
+                    block: website_setup_1.websiteSetup.basicSettings,
                     blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings] },
                     status: '1',
                 };
                 const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                if (!settingsDetails) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Settings details not fount'
+                    });
+                }
                 const defualtSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.defualtSettings);
                 const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                if (!basicDetailsSettings) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Basic details settings not fount'
+                    });
+                }
                 let commonDeliveryDays = '6';
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;

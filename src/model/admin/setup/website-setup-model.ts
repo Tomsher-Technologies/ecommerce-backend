@@ -17,8 +17,14 @@ export interface WebsiteSetupProps extends Document {
 const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
-        required: true,
+        default: null,
         ref: 'Countries',
+        validate: {
+            validator: function(this: WebsiteSetupProps, value: Schema.Types.ObjectId) {
+                return this.blockReference !== blockReferences.globalValues || (value !== null && value !== undefined);
+            },
+            message: 'countryId is required when blockReference is "global values"'
+        }
     },
     block: {
         type: String,
@@ -33,6 +39,7 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
         type: String,
         default: '',
         enum: [
+            blockReferences.globalValues,
             blockReferences.desktopMenu,
             blockReferences.mobileMenu,
             blockReferences.basicDetailsSettings,

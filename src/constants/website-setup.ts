@@ -7,6 +7,7 @@ export const websiteSetup = {
 }
 
 export const blockReferences = {
+    globalValues: 'global-values',
     desktopMenu: 'desktop-menu',
     mobileMenu: 'mobile-menu',
     basicDetailsSettings: 'basic-details-settings',

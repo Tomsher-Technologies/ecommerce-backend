@@ -33,7 +33,7 @@ class SettingsController extends base_controller_1.default {
                         delete blockValues.languageValues;
                     }
                     const settingsData = {
-                        countryId: new mongoose_1.default.Types.ObjectId(countryId),
+                        countryId: blockReference !== 'global-values' ? new mongoose_1.default.Types.ObjectId(countryId) : null,
                         block,
                         blockReference,
                         blockValues: {

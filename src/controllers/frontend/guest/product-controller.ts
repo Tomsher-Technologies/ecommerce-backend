@@ -16,16 +16,10 @@ import { frontendSpecificationLookup } from '../../../utils/config/specification
 const controller = new BaseController();
 
 class ProductController extends BaseController {
-   
-
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
-            // let getspecification = ''
-            // let getattribute = ''
             let getSeo = '1'
-            let getBrand = '1'
-            let getCategory = '1'
             let query: any = { _id: { $exists: true } };
             let collectionProductsData: any;
             let discountValue: any;
@@ -308,16 +302,16 @@ class ProductController extends BaseController {
                         }
                     });
                 }
-                const totalProductData: any = await ProductService.findProductList({
-                    query,
-                    collectionProductsData,
-                    discount,
-                    offers,
-                    hostName: req.get('origin'),
-                });
+                // const totalProductData: any = await ProductService.findProductList({
+                //     query,
+                //     collectionProductsData,
+                //     discount,
+                //     offers,
+                //     hostName: req.get('origin'),
+                // });
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: totalProductData?.length || 0,
+                    // totalCount: totalProductData?.length || 0,
                     message: 'Success!'
                 }, 200);
             } else {
@@ -335,7 +329,7 @@ class ProductController extends BaseController {
         try {
             const productId: any = req.params.slug;
             const variantSku: any = req.params.sku;
-            const { getattribute = '', getspecification = '', getimagegallery = '' } = req.query as ProductsFrontendQueryParams;
+            const { getattribute = '' } = req.query as ProductsFrontendQueryParams;
             let query: any = {}
             if (productId) {
                 if (variantSku) {
@@ -475,64 +469,45 @@ class ProductController extends BaseController {
 
     async findAllAttributes(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'attributeTitle', sortorder = 'asc' } = req.query as ProductsFrontendQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as ProductsFrontendQueryParams;
 
             let query: any = { _id: { $exists: true } };
-            let products: any;
+            let collectionId: any;
             const orConditionsForcategory: any = [];
 
             query.status = '1';
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const sort: any = {};
-                if (sortby && sortorder) {
-                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
-                }
                 if (category) {
-
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-
+                    var findcategory
                     if (isObjectId) {
                         orConditionsForcategory.push({ "productCategory.category._id": new mongoose.Types.ObjectId(category) });
-                        const findcategory = await CategoryModel.findOne({ _id: category }, '_id');
-                        if (findcategory && findcategory._id) {
-                            async function fetchCategoryAndChildren(categoryId: any) {
-                                const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
-                                const categoryIds = categoriesData.map(category => category._id);
-
-                                for (let childId of categoryIds) {
-                                    orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                    await fetchCategoryAndChildren(childId);
-                                }
-                            }
-                            await fetchCategoryAndChildren(findcategory._id);
-                            orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
-                        } else {
-                            query = {
-                                ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
-                            }
-                        }
+                        findcategory = await CategoryModel.findOne({ _id: category }, '_id');
                     } else {
                         orConditionsForcategory.push({ "productCategory.category.slug": category });
-                        const findcategory = await CategoryModel.findOne({ slug: category }, '_id');
-                        if (findcategory && findcategory._id) {
-                            async function fetchCategoryAndChildren(categoryId: any) {
-                                const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
-                                const categoryIds = categoriesData.map(category => category._id);
-                                for (let childId of categoryIds) {
-                                    orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                    await fetchCategoryAndChildren(childId);
-                                }
+                        findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+                    }
+
+                    if (findcategory && findcategory._id) {
+                        async function fetchCategoryAndChildren(categoryId: any) {
+                            const categoriesData = await CategoryModel.find({ parentCategory: categoryId }, '_id');
+                            const categoryIds = categoriesData.map(category => category._id);
+
+                            for (let childId of categoryIds) {
+                                orConditionsForcategory.push({ "productCategory.category._id": childId });
+                                await fetchCategoryAndChildren(childId);
                             }
-                            await fetchCategoryAndChildren(findcategory._id);
-                            orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
-                        } else {
-                            query = {
-                                ...query, "productCategory.category.slug": category
-                            };
+                        }
+                        await fetchCategoryAndChildren(findcategory._id);
+                        orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
+                    } else {
+                        query = {
+                            ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
                         }
                     }
                 }
+
                 if (brand) {
                     const keywordRegex = new RegExp(brand, 'i');
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
@@ -548,20 +523,20 @@ class ProductController extends BaseController {
                 }
 
                 if (collectionproduct) {
-                    products = {
-                        ...products, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    collectionId = {
+                        ...collectionId, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
                     }
                 }
 
                 if (collectionbrand) {
-                    products = {
-                        ...products, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    collectionId = {
+                        ...collectionId, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
                     }
                 }
 
                 if (collectioncategory) {
-                    products = {
-                        ...products, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    collectionId = {
+                        ...collectionId, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
                     }
                 }
 
@@ -575,8 +550,7 @@ class ProductController extends BaseController {
                 const attributes: any = await ProductService.findAllAttributes({
                     hostName: req.get('origin'),
                     query,
-                    products,
-                    sort
+                    collectionId,
                 });
 
                 attributes.sort((a: any, b: any) => {
