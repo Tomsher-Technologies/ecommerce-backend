@@ -16,8 +16,6 @@ import { frontendSpecificationLookup } from '../../../utils/config/specification
 const controller = new BaseController();
 
 class ProductController extends BaseController {
-   
-
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
@@ -308,16 +306,16 @@ class ProductController extends BaseController {
                         }
                     });
                 }
-                const totalProductData: any = await ProductService.findProductList({
-                    query,
-                    collectionProductsData,
-                    discount,
-                    offers,
-                    hostName: req.get('origin'),
-                });
+                // const totalProductData: any = await ProductService.findProductList({
+                //     query,
+                //     collectionProductsData,
+                //     discount,
+                //     offers,
+                //     hostName: req.get('origin'),
+                // });
                 return controller.sendSuccessResponse(res, {
                     requestedData: productData,
-                    totalCount: totalProductData?.length || 0,
+                    // totalCount: totalProductData?.length || 0,
                     message: 'Success!'
                 }, 200);
             } else {
