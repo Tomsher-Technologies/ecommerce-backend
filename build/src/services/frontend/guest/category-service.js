@@ -9,7 +9,6 @@ const language_model_1 = __importDefault(require("../../../model/admin/setup/lan
 const category_config_1 = require("../../../utils/config/category-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 class CategoryService {
-    constructor() { }
     async findAll(options = {}) {
         const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
         const defaultSort = { createdAt: -1 };

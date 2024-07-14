@@ -504,10 +504,6 @@ class ProductController extends BaseController {
                         query = {
                             ...query, "productCategory.category._id": { $in: categoryIds }
                         }
-                    } else {
-                        query = {
-                            ...query, "productCategory.category._id": new mongoose.Types.ObjectId(category)
-                        }
                     }
                 }
                 if (brand) {
