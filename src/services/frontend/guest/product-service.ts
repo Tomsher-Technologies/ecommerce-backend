@@ -245,7 +245,6 @@ class ProductService {
                     },
                     { $sort: { 'itemNameLowerCase': 1 } },
                     attributeProject,
-                    attributeProject,
                 ];
 
                 const languageData = await LanguagesModel.find().exec();

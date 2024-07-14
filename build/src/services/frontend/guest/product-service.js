@@ -223,7 +223,6 @@ class ProductService {
                     },
                     { $sort: { 'itemNameLowerCase': 1 } },
                     attribute_config_1.attributeProject,
-                    attribute_config_1.attributeProject,
                 ];
                 const languageData = await language_model_1.default.find().exec();
                 const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);

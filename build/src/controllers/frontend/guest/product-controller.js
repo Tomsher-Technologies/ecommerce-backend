@@ -495,11 +495,6 @@ class ProductController extends base_controller_1.default {
                             ...query, "productCategory.category._id": { $in: categoryIds }
                         };
                     }
-                    else {
-                        query = {
-                            ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
-                        };
-                    }
                 }
                 if (brand) {
                     const keywordRegex = new RegExp(brand, 'i');

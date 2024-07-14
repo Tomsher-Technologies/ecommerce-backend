@@ -10,66 +10,45 @@ const language_model_1 = __importDefault(require("../../../model/admin/setup/lan
 const brand_config_1 = require("../../../utils/config/brand-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const product_service_1 = __importDefault(require("./product-service"));
+const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
+const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 class BrandService {
     constructor() { }
-    async findAll(options = {}, products) {
-        const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
+    async findAll(options = {}, collectionId) {
+        const { query, hostName, } = (0, pagination_1.pagination)(options.query || {}, options);
+        let pipeline = [];
+        let collectionPipeline = false;
+        if (collectionId) {
+            collectionPipeline = await product_service_1.default.collection(collectionId, hostName, pipeline);
         }
-        let pipeline = [
-            { $match: query },
-            { $sort: finalSort },
-        ];
-        if (query._id || query.slug) {
-            const language = await this.brandLanguage(hostName, pipeline);
-            const data = await brands_model_1.default.aggregate(language).exec();
-            return data;
+        if (collectionId && collectionId.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
+            const brandIds = await product_model_1.default.find({
+                _id: { $in: collectionPipeline.productIds.map((productId) => productId) }
+            }).select('brand');
+            pipeline = [{
+                    $match: {
+                        '_id': { $in: brandIds.map((brandId) => brandId.brand) }
+                    }
+                }];
         }
-        var productData = [];
-        var brandDetail = [];
-        const collection = await product_service_1.default.collection(products, hostName);
-        if (collection && collection.productData) {
-            productData = collection.productData;
-        }
-        else if (collection && collection.collectionsBrands) {
-            for await (let brand of collection.collectionsBrands) {
-                pipeline = pipeline.filter(stage => !stage['$match'] || !stage['$match']._id);
-                pipeline.push({ '$match': { _id: new mongoose_1.default.Types.ObjectId(brand) } });
-                const language = await this.brandLanguage(hostName, pipeline);
-                const data = await brands_model_1.default.aggregate(language).exec();
-                if (!brandDetail.includes(data[0]._id)) {
-                    await brandDetail.push(data[0]);
-                }
+        if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
+            const categoryProductsIds = await product_category_link_model_1.default.find({ categoryId: { $in: collectionPipeline.categoryIds } }).select('productId');
+            if (categoryProductsIds && categoryProductsIds.length > 0) {
+                const brandIds = await product_model_1.default.find({ _id: { $in: categoryProductsIds.map((categoryProductsId) => categoryProductsId.productId) } }).select('brand');
+                pipeline.push({ $match: { '_id': { $in: brandIds.map((brandId) => brandId.brand) } } });
             }
         }
-        else {
-            productData = await product_service_1.default.findProductList({ query, getCategory: '1', getBrand: '1' });
+        if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
+            pipeline.push({ $match: { '_id': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
-        const brandArray = [];
-        if (productData) {
-            for await (let product of productData) {
-                const isPresent = await brandArray.some((objId) => objId.equals(product.brand._id));
-                if (!isPresent) {
-                    await brandArray.push(product.brand._id);
-                }
-            }
-            for await (let brand of brandArray) {
-                const query = { _id: brand };
-                let pipeline = [
-                    { $match: query },
-                ];
-                const language = await this.brandLanguage(hostName, pipeline);
-                const data = await brands_model_1.default.aggregate(language).exec();
-                if (!brandDetail.includes(data[0]._id)) {
-                    await brandDetail.push(data[0]);
-                }
-            }
+        pipeline.push({ $match: query });
+        const languageData = await language_model_1.default.find().exec();
+        const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+        if (languageId != null) {
+            pipeline = await this.brandLanguage(hostName, pipeline);
         }
-        return brandDetail;
+        const data = await brands_model_1.default.aggregate(pipeline).exec();
+        return data;
     }
     async brandLanguage(hostName, pipeline) {
         const languageData = await language_model_1.default.find().exec();
@@ -102,8 +81,8 @@ class BrandService {
             pipeline.push(brandLookupWithLanguage);
             pipeline.push(brand_config_1.brandLanguageFieldsReplace);
         }
-        pipeline.push(brand_config_1.brandProject);
-        pipeline.push(brand_config_1.brandFinalProject);
+        // pipeline.push(brandProject);
+        // pipeline.push(brandFinalProject);
         return pipeline;
     }
 }

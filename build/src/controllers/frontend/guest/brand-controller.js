@@ -8,80 +8,63 @@ const base_controller_1 = __importDefault(require("../../../controllers/admin/ba
 const brand_service_1 = __importDefault(require("../../../services/frontend/guest/brand-service"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
+const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
+const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const controller = new base_controller_1.default();
 class BrandController extends base_controller_1.default {
     async findAllBrand(req, res) {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', sortby = 'brandTitle', sortorder = 'asc' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
             let query = {};
-            const orConditionsForcategory = [];
             query.status = '1';
-            let products;
+            let collectionId;
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                const sort = {};
-                if (sortby && sortorder) {
-                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
-                }
                 if (!brand) {
                     if (category) {
-                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                        if (isObjectId) {
-                            orConditionsForcategory.push({ "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category) });
-                            const findcategory = await category_model_1.default.findOne({ _id: category }, '_id');
-                            if (findcategory && findcategory._id) {
-                                async function fetchCategoryAndChildren(categoryId) {
-                                    const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
-                                    const categoryIds = categoriesData.map(category => category._id);
-                                    for (let childId of categoryIds) {
-                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                        await fetchCategoryAndChildren(childId);
-                                    }
-                                }
-                                await fetchCategoryAndChildren(findcategory._id);
-                                orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
-                            }
-                            else {
-                                query = {
-                                    ...query, "productCategory.category._id": new mongoose_1.default.Types.ObjectId(category)
-                                };
-                            }
+                        const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                        var findcategory;
+                        if (categoryIsObjectId) {
+                            findcategory = { _id: category };
                         }
                         else {
-                            orConditionsForcategory.push({ "productCategory.category.slug": category });
-                            const findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
-                            if (findcategory && findcategory._id) {
-                                async function fetchCategoryAndChildren(categoryId) {
-                                    const categoriesData = await category_model_1.default.find({ parentCategory: categoryId }, '_id');
-                                    const categoryIds = categoriesData.map(category => category._id);
-                                    for (let childId of categoryIds) {
-                                        orConditionsForcategory.push({ "productCategory.category._id": childId });
-                                        await fetchCategoryAndChildren(childId);
-                                    }
+                            findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                        }
+                        if (findcategory && findcategory._id) {
+                            let categoryIds = [findcategory._id];
+                            async function fetchCategoryAndChildren(categoryId) {
+                                let queue = [categoryId];
+                                while (queue.length > 0) {
+                                    const currentCategoryId = queue.shift();
+                                    const categoriesData = await category_model_1.default.find({ parentCategory: currentCategoryId }, '_id');
+                                    const childCategoryIds = categoriesData.map(category => category._id);
+                                    queue.push(...childCategoryIds);
+                                    categoryIds.push(...childCategoryIds);
                                 }
-                                await fetchCategoryAndChildren(findcategory._id);
-                                orConditionsForcategory.push({ "productCategory.category._id": findcategory._id });
                             }
-                            else {
+                            await fetchCategoryAndChildren(findcategory._id);
+                            const categoryProductsIds = await product_category_link_model_1.default.find({ categoryId: { $in: categoryIds } }).select('productId');
+                            if (categoryProductsIds && categoryProductsIds.length > 0) {
+                                const brandIds = await product_model_1.default.find({ _id: { $in: categoryProductsIds.map((categoryProductsId) => categoryProductsId.productId) } }).select('brand');
                                 query = {
-                                    ...query, "productCategory.category.slug": category
+                                    ...query, "_id": { $in: brandIds.map((brandId) => brandId.brand) }
                                 };
                             }
                         }
                     }
                     if (collectionproduct) {
-                        products = {
-                            ...products, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                        collectionId = {
+                            ...collectionId, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
                         };
                     }
                     if (collectionbrand) {
-                        products = {
-                            ...products, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                        collectionId = {
+                            ...collectionId, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
                         };
                     }
                     if (collectioncategory) {
-                        products = {
-                            ...products, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                        collectionId = {
+                            ...collectionId, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
                         };
                     }
                 }
@@ -98,17 +81,10 @@ class BrandController extends base_controller_1.default {
                         };
                     }
                 }
-                if (orConditionsForcategory.length > 0) {
-                    query.$and = [];
-                    query.$and.push({
-                        $or: orConditionsForcategory
-                    });
-                }
                 const brands = await brand_service_1.default.findAll({
                     hostName: req.get('origin'),
                     query,
-                    sort
-                }, products);
+                }, collectionId);
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,
                     message: 'Success!'
