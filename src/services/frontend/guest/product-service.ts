@@ -54,7 +54,7 @@ class ProductService {
                 foreignField: 'productId',
                 as: 'productVariants',
                 pipeline: [
-                    ...((!query['productVariants._id'] || !query['productVariants.slug']) ? [
+                    // ...((!query['productVariants._id'] || !query['productVariants.slug']) ? [
                         {
                             $match: {
                                 $expr: {
@@ -62,13 +62,14 @@ class ProductService {
                                 },
                                 status: "1"
                             }
-                        }
-                    ] : []),
+                        },
+                    // ] : []),
                     {
                         $project: {
                             _id: 1,
                             countryId: 1,
                             slug: 1,
+                            variantSku: 1,
                             extraProductTitle: 1,
                             variantDescription: 1,
                             cartMaxQuantity: 1,

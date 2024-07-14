@@ -324,7 +324,7 @@ class ProductController extends base_controller_1.default {
             if (productId) {
                 if (variantSku) {
                     query = {
-                        ...query, 'productVariants.variantSku': variantSku
+                        ...query, 'productVariants.variantSku': new RegExp(variantSku, 'i')
                     };
                 }
                 const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
@@ -378,6 +378,7 @@ class ProductController extends base_controller_1.default {
                         variantId: null
                     }));
                 }
+                console.log('productDetails', productDetails);
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         product: {
