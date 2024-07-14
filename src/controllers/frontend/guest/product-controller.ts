@@ -263,6 +263,7 @@ class ProductController extends BaseController {
                     }
                 }
                 const productData: any = await ProductService.findProductList({
+                    countryId,
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
                     query,
@@ -333,7 +334,9 @@ class ProductController extends BaseController {
                 let variantDetails: any = null;
                 if (checkProductIdOrSlug) {
                     query = {
-                        ...query, 'productVariants._id': new mongoose.Types.ObjectId(productId)
+                        ...query,
+                        'productVariants._id': new mongoose.Types.ObjectId(productId),
+                        'status': '1'
                     }
                     variantDetails = await ProductVariantsModel.findOne({
                         _id: new mongoose.Types.ObjectId(productId),
@@ -341,19 +344,23 @@ class ProductController extends BaseController {
                     });
                 } else {
                     query = {
-                        ...query, 'productVariants.slug': productId
+                        ...query,
+                        'productVariants.slug': productId,
+                        'status': '1'
                     }
                     variantDetails = await ProductVariantsModel.findOne({
                         slug: productId,
                         countryId
                     });
                 }
+
                 if (!variantDetails) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Product not found!',
                     });
                 }
                 const productDetails: any = await ProductService.findProductList({
+                    countryId,
                     query,
                     getattribute,
                     hostName: req.get('origin'),
@@ -362,16 +369,18 @@ class ProductController extends BaseController {
                     variantId: variantDetails._id
                 }).select('-createdAt -statusAt -status');
                 if (!imageGallery?.length) { // Check if imageGallery is empty
-                    imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId }).select('-createdAt -statusAt -status');
+                    imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status');
                 }
                 let productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
                     variantId: variantDetails._id
                 }));
                 if (!productSpecification?.length) {
                     productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
-                        productId: variantDetails.productId
+                        productId: variantDetails.productId,
+                        variantId: null
                     }));
                 }
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         product: {

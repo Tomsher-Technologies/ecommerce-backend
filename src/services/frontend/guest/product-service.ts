@@ -11,21 +11,22 @@ import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, 
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import { collections } from '../../../constants/collections';
 import { ProductsProps } from '../../../utils/types/products';
+import { offers } from '../../../constants/offers';
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
 
 import CollectionsProductsModel from '../../../model/admin/website/collections-products-model';
 import CollectionsBrandsModel from '../../../model/admin/website/collections-brands-model';
-import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import CollectionsCategoriesModel from '../../../model/admin/website/collections-categories-model';
 import CommonService from '../../../services/frontend/guest/common-service';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
+import OffersModel from '../../../model/admin/marketing/offers-model';
 
 
 class ProductService {
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getattribute, getspecification, hostName, offers } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
@@ -34,7 +35,7 @@ class ProductService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
+        // const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
 
         if (discount) {
             const discountArray: any = await discount.split(",")
@@ -53,13 +54,27 @@ class ProductService {
                 foreignField: 'productId',
                 as: 'productVariants',
                 pipeline: [
+                    ...((!query['productVariants._id'] || !query['productVariants.slug']) ? [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+                                },
+                                status: "1"
+                            }
+                        }
+                    ] : []),
                     {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)],
-                            },
-                            status: "1"
-
+                        $project: {
+                            _id: 1,
+                            countryId: 1,
+                            slug: 1,
+                            extraProductTitle: 1,
+                            variantDescription: 1,
+                            cartMaxQuantity: 1,
+                            discountPrice: 1,
+                            price: 1,
+                            quantity: 1,
                         }
                     },
                     ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...productVariantAttributesLookup] : []),
@@ -155,6 +170,7 @@ class ProductService {
         productData = await ProductsModel.aggregate(pipeline).exec();
         return productData
     }
+
 
     async findAllAttributes(options: any): Promise<ProductsProps[]> {
         let { query, hostName } = pagination(options.query || {}, options);

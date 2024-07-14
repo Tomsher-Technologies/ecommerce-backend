@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { collections } from '../../../constants/collections';
+import { offers } from '../../../constants/offers';
 
 import OffersModel, { OffersProps } from '../../../model/admin/marketing/offers-model';
 
@@ -17,15 +18,15 @@ class OfferService {
             $addFields: {
                 collectionName: {
                     $cond: {
-                        if: { $eq: ["$offersBy", "brand"] },
+                        if: { $eq: ["$offersBy", offers.brand] },
                         then: collections.ecommerce.brands,
                         else: {
                             $cond: {
-                                if: { $eq: ["$offersBy", "category"] },
+                                if: { $eq: ["$offersBy", offers.category] },
                                 then: collections.ecommerce.categories,
                                 else: {
                                     $cond: {
-                                        if: { $eq: ["$offersBy", "product"] },
+                                        if: { $eq: ["$offersBy", offers.product] },
                                         then: collections.ecommerce.products.products,
                                         else: "defaultCollection",
                                     },

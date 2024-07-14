@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
 const collections_1 = require("../../../constants/collections");
+const offers_1 = require("../../../constants/offers");
 const offers_model_1 = __importDefault(require("../../../model/admin/marketing/offers-model"));
 class OfferService {
     constructor() {
@@ -13,15 +14,15 @@ class OfferService {
             $addFields: {
                 collectionName: {
                     $cond: {
-                        if: { $eq: ["$offersBy", "brand"] },
+                        if: { $eq: ["$offersBy", offers_1.offers.brand] },
                         then: collections_1.collections.ecommerce.brands,
                         else: {
                             $cond: {
-                                if: { $eq: ["$offersBy", "category"] },
+                                if: { $eq: ["$offersBy", offers_1.offers.category] },
                                 then: collections_1.collections.ecommerce.categories,
                                 else: {
                                     $cond: {
-                                        if: { $eq: ["$offersBy", "product"] },
+                                        if: { $eq: ["$offersBy", offers_1.offers.product] },
                                         then: collections_1.collections.ecommerce.products.products,
                                         else: "defaultCollection",
                                     },
