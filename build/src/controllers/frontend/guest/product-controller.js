@@ -259,6 +259,7 @@ class ProductController extends base_controller_1.default {
                     }
                 }
                 const productData = await product_service_1.default.findProductList({
+                    countryId,
                     page: parseInt(page_size),
                     limit: parseInt(limit),
                     query,
@@ -331,7 +332,9 @@ class ProductController extends base_controller_1.default {
                 let variantDetails = null;
                 if (checkProductIdOrSlug) {
                     query = {
-                        ...query, 'productVariants._id': new mongoose_1.default.Types.ObjectId(productId)
+                        ...query,
+                        'productVariants._id': new mongoose_1.default.Types.ObjectId(productId),
+                        'status': '1'
                     };
                     variantDetails = await product_variants_model_1.default.findOne({
                         _id: new mongoose_1.default.Types.ObjectId(productId),
@@ -340,7 +343,9 @@ class ProductController extends base_controller_1.default {
                 }
                 else {
                     query = {
-                        ...query, 'productVariants.slug': productId
+                        ...query,
+                        'productVariants.slug': productId,
+                        'status': '1'
                     };
                     variantDetails = await product_variants_model_1.default.findOne({
                         slug: productId,
@@ -353,6 +358,7 @@ class ProductController extends base_controller_1.default {
                     });
                 }
                 const productDetails = await product_service_1.default.findProductList({
+                    countryId,
                     query,
                     getattribute,
                     hostName: req.get('origin'),
@@ -361,14 +367,15 @@ class ProductController extends base_controller_1.default {
                     variantId: variantDetails._id
                 }).select('-createdAt -statusAt -status');
                 if (!imageGallery?.length) { // Check if imageGallery is empty
-                    imageGallery = await product_gallery_images_model_1.default.find({ productID: variantDetails.productId }).select('-createdAt -statusAt -status');
+                    imageGallery = await product_gallery_images_model_1.default.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status');
                 }
                 let productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
                     variantId: variantDetails._id
                 }));
                 if (!productSpecification?.length) {
                     productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
-                        productId: variantDetails.productId
+                        productId: variantDetails.productId,
+                        variantId: null
                     }));
                 }
                 return controller.sendSuccessResponse(res, {

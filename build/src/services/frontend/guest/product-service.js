@@ -23,7 +23,7 @@ const product_variant_attribute_model_1 = __importDefault(require("../../../mode
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getattribute, getspecification, hostName, offers } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -31,7 +31,7 @@ class ProductService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(hostName);
+        // const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
         if (discount) {
             const discountArray = await discount.split(",");
             console.log("discount", discountArray);
@@ -48,12 +48,27 @@ class ProductService {
                 foreignField: 'productId',
                 as: 'productVariants',
                 pipeline: [
+                    ...((!query['productVariants._id'] || !query['productVariants.slug']) ? [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
+                                },
+                                status: "1"
+                            }
+                        }
+                    ] : []),
                     {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)],
-                            },
-                            status: "1"
+                        $project: {
+                            _id: 1,
+                            countryId: 1,
+                            slug: 1,
+                            extraProductTitle: 1,
+                            variantDescription: 1,
+                            cartMaxQuantity: 1,
+                            discountPrice: 1,
+                            price: 1,
+                            quantity: 1,
                         }
                     },
                     ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...product_config_1.productVariantAttributesLookup] : []),

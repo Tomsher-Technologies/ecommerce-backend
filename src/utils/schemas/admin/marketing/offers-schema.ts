@@ -1,4 +1,5 @@
 import { z as zod } from 'zod';
+import { offers } from '../../../../constants/offers';
 
 export const offersSchema = zod.object({
     _id: zod.string().optional(),
@@ -22,7 +23,7 @@ export const offersSchema = zod.object({
     offerImage: zod.any({ required_error: 'Offer image is required' }).nullable(),
     status: zod.string().optional(),
 }).superRefine(({ offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerIN }, ctx) => {
-    if (((offersBy === 'product') || (offersBy === 'category') || (offersBy === 'brand'))) {
+    if (((offersBy === offers.product) || (offersBy === offers.category) || (offersBy === offers.brand))) {
         if (offerApplyValues?.length === 0) {
             ctx.addIssue({
                 code: "custom",

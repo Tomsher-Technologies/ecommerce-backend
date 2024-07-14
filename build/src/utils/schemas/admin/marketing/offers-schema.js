@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.offerStatusSchema = exports.offersSchema = void 0;
 const zod_1 = require("zod");
+const offers_1 = require("../../../../constants/offers");
 exports.offersSchema = zod_1.z.object({
     _id: zod_1.z.string().optional(),
     countryId: zod_1.z.string().optional(),
@@ -23,7 +24,7 @@ exports.offersSchema = zod_1.z.object({
     offerImage: zod_1.z.any({ required_error: 'Offer image is required' }).nullable(),
     status: zod_1.z.string().optional(),
 }).superRefine(({ offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerIN }, ctx) => {
-    if (((offersBy === 'product') || (offersBy === 'category') || (offersBy === 'brand'))) {
+    if (((offersBy === offers_1.offers.product) || (offersBy === offers_1.offers.category) || (offersBy === offers_1.offers.brand))) {
         if (offerApplyValues?.length === 0) {
             ctx.addIssue({
                 code: "custom",
