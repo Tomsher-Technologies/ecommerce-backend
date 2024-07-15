@@ -40,11 +40,6 @@ class OrdersController extends BaseController {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
-            // if (status && status !== '') {
-            //     query.status = { $in: Array.isArray(status) ? status : [status] };
-            // } else {
-            //     query.cartStatus = '1';
-            // }
 
             query = { cartStatus: { $ne: "1" } }
 
@@ -184,9 +179,7 @@ class OrdersController extends BaseController {
                     ...(cartFromDate && { $gte: new Date(cartFromDate) }),
                     ...(cartEndDate && { $lte: dateConvertPm(cartEndDate) })
                 };
-
             }
-
 
             const sort: any = {};
             if (sortby && sortorder) {
@@ -199,10 +192,14 @@ class OrdersController extends BaseController {
                 query,
                 sort
             });
-
+            const totalCount = await OrderService.OrderList({
+                page: parseInt(page_size as string),
+                query,
+                getTotalCount: true
+            })
             return controller.sendSuccessResponse(res, {
                 requestedData: order,
-                // totalCount: await CouponService.getTotalCount(query),
+                totalCount: totalCount.length,
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
