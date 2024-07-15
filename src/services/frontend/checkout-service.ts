@@ -17,6 +17,7 @@ import { mailChimpEmailGateway } from '../../lib/emails/mail-chimp-sms-gateway';
 import CustomerAddress from '../../model/frontend/customer-address-model';
 import { buildOrderPipeline, } from '../../utils/config/cart-order-config';
 import { ObjectId } from 'mongoose';
+import TaxsModel from '../../model/admin/setup/tax-model';
 
 class CheckoutService {
 
@@ -251,6 +252,7 @@ class CheckoutService {
                     }
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
+                    const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId })
 
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
@@ -278,7 +280,8 @@ class CheckoutService {
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
-                        appUrl: `${process.env.APPURL}`
+                        appUrl: `${process.env.APPURL}`,
+                        tax: tax
                     }, async (err: any, template: any) => {
                         if (err) {
                             console.log(err);

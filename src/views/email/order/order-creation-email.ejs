@@ -523,6 +523,15 @@
                                                                                     </td>
                                                                                 </tr>
 
+                                                                                <tr>
+                                                                                    <td style="font-family: sans-serif">
+                                                                                        <%=tax.taxTitle%>:
+                                                                                    </td>
+                                                                                    <td
+                                                                                        style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
+                                                                                        <%=tax.taxPercentage%>%
+                                                                                    </td>
+                                                                                </tr>
                                                                                 <!-- 
                                                                                 {{#if order.billing.invoice.coupon}}
                                                                                 <tr>
@@ -563,7 +572,7 @@
                                                                                         style="color:#211f81; font-weight:bold;font-family: sans-serif">
                                                                                         Total Order Amount: <span
                                                                                             style="color: lightgray; font-size: 12px;">(Inclusive
-                                                                                            of VAT)</span>
+                                                                                            of <%=tax.taxTitle%>)</span>
                                                                                     </td>
                                                                                     <td
                                                                                         style=" text-align: right; color:  #211f81; font-weight:bold;font-family: sans-serif; white-space: nowrap;">
