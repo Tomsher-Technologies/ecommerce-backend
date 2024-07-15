@@ -81,6 +81,10 @@ const categorySchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
+    metaKeywords: {
+        type: String,
+        default: ''
+    },
     metaImageUrl: {
         type: String,
         default: ''

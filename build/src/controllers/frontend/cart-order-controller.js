@@ -17,6 +17,7 @@ const customer_wishlist_servicel_1 = __importDefault(require("../../services/fro
 const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
 const website_setup_1 = require("../../constants/website-setup");
 const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
+const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
     async createCartOrder(req, res) {
@@ -121,6 +122,7 @@ class CartController extends base_controller_1.default {
                     var cartOrderData;
                     const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings });
                     const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                    const tax = await tax_model_1.default.findOne({ countryId: country });
                     if (existingCart) {
                         const existingCartProduct = await cart_service_1.default.findCartProduct({
                             $and: [
@@ -201,6 +203,7 @@ class CartController extends base_controller_1.default {
                             totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
                             giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0;
                         }
+                        const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
                         cartOrderData = {
                             customerId: customer,
@@ -219,12 +222,11 @@ class CartController extends base_controller_1.default {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: shippingCharge,
+                            totalShippingAmount: finalShippingCharge,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
-                            // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount,
+                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
                             totalAmount: totalAmountOfProduct + shippingCharge + giftWrapcharge
                         };
                         newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
@@ -274,6 +276,7 @@ class CartController extends base_controller_1.default {
                         singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
                         totalDiscountAmountOfProduct = singleProductDiscountTotal;
                         totalAmountOfProduct = singleProductTotal;
+                        const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
@@ -291,12 +294,12 @@ class CartController extends base_controller_1.default {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: shippingCharge,
+                            totalShippingAmount: finalShippingCharge,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount,
+                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
                             totalAmount: totalAmountOfProduct + shippingCharge,
                         };
                         newCartOrder = await cart_service_1.default.create(cartOrderData);
@@ -492,6 +495,11 @@ class CartController extends base_controller_1.default {
                         var giftWrapCharge;
                         if (giftWrapAmount.blockValues.enableGiftWrap == true) {
                             giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge);
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 500, {
+                                message: 'Giftwrap option is currently unavailable'
+                            });
                         }
                         if (existingCartProduct.giftWrapAmount != 0) {
                             await cart_service_1.default.updateCartProductByCart(existingCartProduct._id, { giftWrapAmount: 0 });

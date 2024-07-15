@@ -9,6 +9,7 @@ const product_gallery_images_model_1 = __importDefault(require("../../../model/a
 const inventry_pricing_model_1 = __importDefault(require("../../../model/admin/ecommerce/inventry-pricing-model"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const product_config_1 = require("../../../utils/config/product-config");
+const common_config_1 = require("../../../utils/config/common-config");
 const multi_languages_1 = require("../../../constants/multi-languages");
 const collections_1 = require("../../../constants/collections");
 class ProductsService {
@@ -82,8 +83,6 @@ class ProductsService {
                 }
             ];
             const data = await product_model_1.default.aggregate(pipeline).exec();
-            // const totalCount = await ProductsModel.countDocuments(query);
-            // console.log(totalCount);
             if (data.length > 0) {
                 return data[0].count;
             }
@@ -97,15 +96,7 @@ class ProductsService {
         return product_model_1.default.findOne(productData);
     }
     async create(productData) {
-        console.log("errrrrrrrrrrrr12333rrrrrrrrrrrrrr");
         return product_model_1.default.create(productData);
-        // console.log("ddddddddddddddddr", data);
-        // if (data) {
-        //     return data
-        // } else {
-        //     console.log("errrrrrrrrrrrrrrrrrrrrrrrrrr");
-        //     return null
-        // }
     }
     async findOne(productId) {
         try {
@@ -118,8 +109,8 @@ class ProductsService {
                     product_config_1.imageLookup,
                     product_config_1.brandLookup,
                     product_config_1.brandObject,
-                    product_config_1.seoLookup,
-                    product_config_1.seoObject,
+                    (0, common_config_1.seoLookup)('productSeo'),
+                    product_config_1.productSeoObject,
                     this.multilanguageFieldsLookup,
                     product_config_1.specificationsLookup
                 ];

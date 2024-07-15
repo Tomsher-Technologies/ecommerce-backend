@@ -10,7 +10,7 @@ const product_config_1 = require("../../../utils/config/product-config");
 const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 class OrderService {
     async OrderList(options) {
-        const { query, skip, limit, sort } = (0, pagination_1.frontendPagination)(options.query || {}, options);
+        const { query, skip, limit, sort, getTotalCount } = (0, pagination_1.pagination)(options.query || {}, options);
         const { getAddress, getCartProducts } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -33,21 +33,21 @@ class OrderService {
             }
         };
         const pipeline = [
-            ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
-            ...(getCartProducts ? [cart_order_config_1.couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
-            cart_order_config_1.paymentMethodLookup,
-            cart_order_config_1.customerLookup,
-            cart_order_config_1.orderListObjectLookup,
-            ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
-            ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
+            ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
+            ...((!getTotalCount && getCartProducts) ? [cart_order_config_1.couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
+            ...(!getTotalCount ? [cart_order_config_1.paymentMethodLookup, cart_order_config_1.customerLookup, cart_order_config_1.orderListObjectLookup] : []),
+            ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
+            ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
             { $match: query },
-            { $sort: finalSort },
-            ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
+            ...((!getTotalCount && getCartProducts === '1') ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
         ];
-        if (skip) {
+        if (!getTotalCount) {
+            pipeline.push({ $sort: finalSort });
+        }
+        if (!getTotalCount && skip) {
             pipeline.push({ $skip: skip });
         }
-        if (limit) {
+        if (!getTotalCount && limit) {
             pipeline.push({ $limit: limit });
         }
         const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);

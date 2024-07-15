@@ -14,7 +14,6 @@ import GeneralService from '../../../services/admin/general-service';
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import CollectionsCategoriesService from '../../../services/admin/website/collections-categories-service';
 
-
 const controller = new BaseController();
 
 class CategoryController extends BaseController {
@@ -270,7 +269,6 @@ class CategoryController extends BaseController {
 
                     if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
-
                             let categoryImageUrl = ''
                             if (languageValuesImages?.length > 0) {
                                 categoryImageUrl = handleFileUpload(req
@@ -325,7 +323,6 @@ class CategoryController extends BaseController {
         }
     }
 
-
     async findOne(req: Request, res: Response): Promise<void> {
         try {
             const categoryId = req.params.id;
@@ -340,7 +337,7 @@ class CategoryController extends BaseController {
                     message: 'Category Id not found!',
                 });
             }
-        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+        } catch (error: any) { 
             controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }

@@ -11,7 +11,15 @@ exports.categorySchema = zod_1.z.object({
     languageValues: zod_1.z.any().optional(),
     status: zod_1.z.string().optional(),
     slug: zod_1.z.any().optional(),
-    level: zod_1.z.any().optional()
+    level: zod_1.z.any().optional(),
+    metaTitle: zod_1.z.string().optional(),
+    metaKeywords: zod_1.z.string().optional(),
+    metaDescription: zod_1.z.string().optional(),
+    ogTitle: zod_1.z.string().optional(),
+    ogDescription: zod_1.z.string().optional(),
+    metaImageUrl: zod_1.z.string().optional(),
+    twitterTitle: zod_1.z.string().optional(),
+    twitterDescription: zod_1.z.string().optional(),
 }).nonstrict();
 exports.updateWebsitePrioritySchema = zod_1.z.object({
     keyColumn: zod_1.z.string({ required_error: 'Key column is required', }).min(2, 'Key column is should be 2 chars minimum'),

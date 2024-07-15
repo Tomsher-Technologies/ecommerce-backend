@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.seoObject = exports.seoLookup = exports.productCategoryLookup = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productLookup = {
@@ -355,22 +355,7 @@ exports.productCategoryLookup = {
             }]
     }
 };
-exports.seoLookup = {
-    $lookup: {
-        from: `${collections_1.collections.ecommerce.seopages}`,
-        let: { productId: '$_id' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: { $eq: ['$pageId', '$$productId'] },
-                    'pageReferenceId': null
-                }
-            }
-        ],
-        as: 'productSeo',
-    },
-};
-exports.seoObject = {
+exports.productSeoObject = {
     $addFields: {
         productSeo: { $arrayElemAt: ['$productSeo', 0] }
     }

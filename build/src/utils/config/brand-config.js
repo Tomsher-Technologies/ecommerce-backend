@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.brandFinalProject = exports.brandProject = exports.brandLanguageFieldsReplace = exports.brandLookup = void 0;
+exports.brandFinalProject = exports.brandProject = exports.brandLanguageFieldsReplace = exports.multilanguagefieledsBrandLookup = void 0;
 const multi_languages_1 = require("../../constants/multi-languages");
-exports.brandLookup = {
+exports.multilanguagefieledsBrandLookup = {
     $lookup: {
         from: 'multilanguagefieleds', // Ensure 'from' field is included
         let: { brandId: '$_id' },

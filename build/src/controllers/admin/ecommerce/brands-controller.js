@@ -122,7 +122,7 @@ class BrandsController extends base_controller_1.default {
             const validatedData = brand_schema_1.brandSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { brandTitle, slug, description, metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
+                const { brandTitle, slug, description, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
                 const brandImage = req.files.find((file) => file.fieldname === 'brandImage');
                 const brandBannerImage = req.files.find((file) => file.fieldname === 'brandBannerImage');
@@ -133,6 +133,7 @@ class BrandsController extends base_controller_1.default {
                     brandBannerImageUrl: (0, helpers_1.handleFileUpload)(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                     description,
                     metaTitle: metaTitle,
+                    metaKeywords: metaKeywords,
                     metaDescription: metaDescription,
                     ogTitle: ogTitle,
                     ogDescription: ogDescription,

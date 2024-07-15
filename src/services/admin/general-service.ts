@@ -1,12 +1,7 @@
-import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
-import AdminTaskLogModel from "../../model/admin/task-log";
 import os from 'os';
 
-// Get network interfaces
-const networkInterfaces = os.networkInterfaces();
-
-// Iterate through each network interface
-
+import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
+import AdminTaskLogModel from "../../model/admin/task-log";
 export interface AdminTaskLogProps {
     sourceFromId: string;
     sourceFrom: string;
