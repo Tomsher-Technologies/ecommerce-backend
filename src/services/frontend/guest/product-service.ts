@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, variantLookup, productVariantAttributesLookup, addFieldsProductVariantAttributes, productSpecificationLookup, addFieldsProductSpecification, productSeoLookup, addFieldsProductSeo, variantImageGalleryLookup, specificationsLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, productVariantAttributesLookup, productSpecificationLookup, variantImageGalleryLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import { collections } from '../../../constants/collections';
@@ -55,14 +55,14 @@ class ProductService {
                 as: 'productVariants',
                 pipeline: [
                     // ...((!query['productVariants._id'] || !query['productVariants.slug']) ? [
-                        {
-                            $match: {
-                                $expr: {
-                                    $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                                },
-                                status: "1"
-                            }
-                        },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+                            },
+                            status: "1"
+                        }
+                    },
                     // ] : []),
                     {
                         $project: {

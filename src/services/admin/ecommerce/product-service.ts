@@ -6,13 +6,13 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
 import mongoose from 'mongoose';
-import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSpecificationAdminLookup, productVariantAttributesAdminLookup, seoLookup, seoObject, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoObject, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
+import { seoLookup } from '../../../utils/config/common-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { collections } from '../../../constants/collections';
 
 class ProductsService {
     private multilanguageFieldsLookup: any;
-
 
     constructor() {
         this.multilanguageFieldsLookup = {
@@ -89,8 +89,6 @@ class ProductsService {
                 }
             ];
             const data: any = await ProductsModel.aggregate(pipeline).exec();
-            // const totalCount = await ProductsModel.countDocuments(query);
-            // console.log(totalCount);
             if (data.length > 0) {
                 return data[0].count;
 
@@ -106,21 +104,7 @@ class ProductsService {
     }
 
     async create(productData: any): Promise<ProductsProps | null> {
-        console.log("errrrrrrrrrrrr12333rrrrrrrrrrrrrr");
-
-
         return ProductsModel.create(productData);
-
-        // console.log("ddddddddddddddddr", data);
-
-        // if (data) {
-
-        //     return data
-        // } else {
-        //     console.log("errrrrrrrrrrrrrrrrrrrrrrrrrr");
-
-        //     return null
-        // }
     }
 
     async findOne(productId: string): Promise<ProductsProps | null> {
@@ -135,8 +119,8 @@ class ProductsService {
                     imageLookup,
                     brandLookup,
                     brandObject,
-                    seoLookup,
-                    seoObject,
+                    seoLookup('productSeo'),
+                    productSeoObject,
                     this.multilanguageFieldsLookup,
                     specificationsLookup
                 ];

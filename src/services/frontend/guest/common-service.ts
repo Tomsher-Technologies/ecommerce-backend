@@ -5,7 +5,7 @@ import { FilterOptionsProps, pagination } from "../../../components/pagination";
 import { multiLanguageSources } from "../../../constants/multi-languages";
 import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsReplace } from "../../../utils/config/slider-config";
 import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
-import { brandFinalProject, brandLanguageFieldsReplace, brandLookup } from "../../../utils/config/brand-config";
+import { brandFinalProject } from "../../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
 import { addFieldsProductSpecification, addFieldsProductVariantAttributes, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productSpecificationLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";

@@ -12,6 +12,7 @@ export interface BrandProps extends Document {
     statusAt?: Date;
     isExcel: Boolean;
     metaTitle?: string;
+    metaKeywords?: string;
     metaDescription?: string;
     metaImageUrl?: string;
     ogTitle?: string;
@@ -70,6 +71,10 @@ const brandSchema: Schema<BrandProps> = new Schema({
     },
     statusAt: {
         type: Date,
+        default: ''
+    },
+    metaKeywords: {
+        type: String,
         default: ''
     },
     metaTitle: {

@@ -372,22 +372,8 @@ export const productCategoryLookup = {
     }
 };
 
-export const seoLookup = {
-    $lookup: {
-        from: `${collections.ecommerce.seopages}`,
-        let: { productId: '$_id' },
-        pipeline: [
-            {
-                $match: {
-                    $expr: { $eq: ['$pageId', '$$productId'] },
-                    'pageReferenceId': null
-                }
-            }
-        ],
-        as: 'productSeo',
-    },
-};
-export const seoObject = {
+
+export const productSeoObject = {
     $addFields: {
         productSeo: { $arrayElemAt: ['$productSeo', 0] }
     }

@@ -11,6 +11,7 @@ export interface CategoryProps extends Document {
     isExcel: Boolean;
     level: string;
     metaTitle?: string;
+    metaKeywords?: string;
     metaDescription?: string;
     metaImageUrl?: string;
     ogTitle?: string;
@@ -78,6 +79,10 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         default: ''
     },
     metaTitle: {
+        type: String,
+        default: ''
+    },
+    metaKeywords: {
         type: String,
         default: ''
     },

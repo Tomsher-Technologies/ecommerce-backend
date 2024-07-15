@@ -1,12 +1,11 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import BrandModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
+import BrandModel from '../../../model/admin/ecommerce/brands-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import { brandProject, brandLookup, brandFinalProject, brandLanguageFieldsReplace } from "../../../utils/config/brand-config";
+import { multilanguagefieledsBrandLookup, brandLanguageFieldsReplace } from "../../../utils/config/brand-config";
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import ProductService from './product-service';
-import { productCategoryLookup } from '../../../utils/config/product-config';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 
@@ -56,10 +55,10 @@ class BrandService {
         const languageId = getLanguageValueFromSubdomain(hostName, languageData);
         if (languageId) {
             const brandLookupWithLanguage = {
-                ...brandLookup,
+                ...multilanguagefieledsBrandLookup,
                 $lookup: {
-                    ...brandLookup.$lookup,
-                    pipeline: brandLookup.$lookup.pipeline.map((stage: any) => {
+                    ...multilanguagefieledsBrandLookup.$lookup,
+                    pipeline: multilanguagefieledsBrandLookup.$lookup.pipeline.map((stage: any) => {
                         if (stage.$match && stage.$match.$expr) {
                             return {
                                 ...stage,
