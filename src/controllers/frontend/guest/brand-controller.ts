@@ -20,7 +20,6 @@ class BrandController extends BaseController {
             let collectionId: any
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-
                 if (!brand) {
                     if (category) {
                         const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
@@ -30,7 +29,6 @@ class BrandController extends BaseController {
                         } else {
                             findcategory = await CategoryModel.findOne({ slug: category }, '_id');
                         }
-
                         if (findcategory && findcategory._id) {
                             let categoryIds: any[] = [findcategory._id];
                             async function fetchCategoryAndChildren(categoryId: any) {
@@ -70,7 +68,6 @@ class BrandController extends BaseController {
                         }
                     }
                 }
-
                 if (brand) {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
                     if (isObjectId) {
@@ -83,12 +80,10 @@ class BrandController extends BaseController {
                         }
                     }
                 }
-
                 const brands = await BrandService.findAll({
                     hostName: req.get('origin'),
                     query,
                 }, collectionId);
-
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,
                     message: 'Success!'

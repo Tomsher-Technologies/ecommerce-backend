@@ -7,6 +7,14 @@ export const brandSchema = zod.object({
     brandBannerImageUrl: zod.string().optional(),
     brandImage: zod.any({ required_error: 'Brand image is required' }).nullable(),
     languageValues: zod.any().optional(),
+    metaTitle: zod.string().optional(),
+    metaKeywords: zod.string().optional(),
+    metaDescription: zod.string().optional(),
+    ogTitle: zod.string().optional(),
+    ogDescription: zod.string().optional(),
+    metaImageUrl: zod.string().optional(),
+    twitterTitle: zod.string().optional(),
+    twitterDescription: zod.string().optional(),
 }).nonstrict();
 
 export const updateWebsitePrioritySchema = zod.object({

@@ -19,6 +19,7 @@ const website_setup_model_1 = __importDefault(require("../../model/admin/setup/w
 const mail_chimp_sms_gateway_1 = require("../../lib/emails/mail-chimp-sms-gateway");
 const customer_address_model_1 = __importDefault(require("../../model/frontend/customer-address-model"));
 const cart_order_config_1 = require("../../utils/config/cart-order-config");
+const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
 class CheckoutService {
     async paymentResponse(options) {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
@@ -233,6 +234,7 @@ class CheckoutService {
                         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                     }
                     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
+                    const tax = await tax_model_1.default.findOne({ countryId: cartDetails.countryId });
                     ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
@@ -259,7 +261,8 @@ class CheckoutService {
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
-                        appUrl: `${process.env.APPURL}`
+                        appUrl: `${process.env.APPURL}`,
+                        tax: tax
                     }, async (err, template) => {
                         if (err) {
                             console.log(err);

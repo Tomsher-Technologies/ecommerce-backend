@@ -13,10 +13,10 @@ import ProductVariantsModel from '../../model/admin/ecommerce/product/product-va
 import { addToWishlistSchema } from '../../utils/schemas/frontend/auth/wishlist-schema';
 import CustomerWishlistCountryService from '../../services/frontend/auth/customer-wishlist-servicel'
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
-import { blockReferences, websiteSetup } from '../../constants/website-setup';
+import { blockReferences } from '../../constants/website-setup';
 import { QueryParams } from '../../utils/types/common';
-import CartOrdersModel from '../../model/frontend/cart-order-model';
 import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
+import TaxsModel from '../../model/admin/setup/tax-model';
 
 const controller = new BaseController();
 
@@ -144,6 +144,7 @@ class CartController extends BaseController {
                     var cartOrderData
                     const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings })
                     const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                    const tax: any = await TaxsModel.findOne({ countryId: country })
 
                     if (existingCart) {
                         const existingCartProduct: any = await CartService.findCartProduct({
@@ -231,9 +232,9 @@ class CartController extends BaseController {
                             giftWrapcharge = existingCartProduct.giftWrapAmount > 0 ? existingCartProduct.giftWrapAmount : 0
 
                         }
+                        const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
 
                         // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
@@ -251,12 +252,11 @@ class CartController extends BaseController {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: shippingCharge,
+                            totalShippingAmount: finalShippingCharge,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
-                            // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount,
+                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
                             totalAmount: totalAmountOfProduct + shippingCharge + giftWrapcharge
                         };
 
@@ -317,6 +317,8 @@ class CartController extends BaseController {
 
                         totalDiscountAmountOfProduct = singleProductDiscountTotal
                         totalAmountOfProduct = singleProductTotal
+
+                        const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
@@ -334,12 +336,12 @@ class CartController extends BaseController {
                             totalProductAmount: totalAmountOfProduct,
                             totalReturnedProduct,
                             totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: shippingCharge,
+                            totalShippingAmount: finalShippingCharge,
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount,
+                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
                             totalAmount: totalAmountOfProduct + shippingCharge,
                         };
 
@@ -548,6 +550,10 @@ class CartController extends BaseController {
                         var giftWrapCharge: any
                         if (giftWrapAmount.blockValues.enableGiftWrap == true) {
                             giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge)
+                        } else {
+                            return controller.sendErrorResponse(res, 500, {
+                                message: 'Giftwrap option is currently unavailable'
+                            });
                         }
 
                         if (existingCartProduct.giftWrapAmount != 0) {

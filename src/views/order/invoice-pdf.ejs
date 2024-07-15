@@ -322,8 +322,11 @@
               </td>
             </tr>
             <tr class="summary-row">
-              <td colspan="5" class="text-right-cell">VAT 5%</td>
-              <td class="text-right-cell">AED <%= (orderDetails.totalAmount * 0.05).toFixed(2) %>
+              <td colspan="5" class="text-right-cell">
+                <%=tax.taxTitle%>
+                  <%=tax.taxPercentage%>%
+              </td>
+              <td class="text-right-cell">AED <%= orderDetails.totalTaxAmount %>
               </td>
             </tr>
             <tr class="summary-row">
@@ -338,7 +341,7 @@
             </tr>
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Total</td>
-              <td class="text-right-cell">AED <%= (orderDetails.totalAmount * 1.05).toFixed(2) %>
+              <td class="text-right-cell">AED <%= orderDetails.totalAmount %>
               </td>
             </tr>
       </tbody>

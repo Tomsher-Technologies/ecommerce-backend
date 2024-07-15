@@ -55,10 +55,10 @@ class BrandService {
         const languageId = (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         if (languageId) {
             const brandLookupWithLanguage = {
-                ...brand_config_1.brandLookup,
+                ...brand_config_1.multilanguagefieledsBrandLookup,
                 $lookup: {
-                    ...brand_config_1.brandLookup.$lookup,
-                    pipeline: brand_config_1.brandLookup.$lookup.pipeline.map((stage) => {
+                    ...brand_config_1.multilanguagefieledsBrandLookup.$lookup,
+                    pipeline: brand_config_1.multilanguagefieledsBrandLookup.$lookup.pipeline.map((stage) => {
                         if (stage.$match && stage.$match.$expr) {
                             return {
                                 ...stage,

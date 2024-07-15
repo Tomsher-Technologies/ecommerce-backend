@@ -21,6 +21,7 @@ import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gatewa
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
+import TaxsModel from '../../../model/admin/setup/tax-model';
 
 const controller = new BaseController();
 
@@ -40,11 +41,6 @@ class OrdersController extends BaseController {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
-            // if (status && status !== '') {
-            //     query.status = { $in: Array.isArray(status) ? status : [status] };
-            // } else {
-            //     query.cartStatus = '1';
-            // }
 
             query = { cartStatus: { $ne: "1" } }
 
@@ -184,9 +180,7 @@ class OrdersController extends BaseController {
                     ...(cartFromDate && { $gte: new Date(cartFromDate) }),
                     ...(cartEndDate && { $lte: dateConvertPm(cartEndDate) })
                 };
-
             }
-
 
             const sort: any = {};
             if (sortby && sortorder) {
@@ -199,10 +193,14 @@ class OrdersController extends BaseController {
                 query,
                 sort
             });
-
+            const totalCount = await OrderService.OrderList({
+                page: parseInt(page_size as string),
+                query,
+                getTotalCount: true
+            })
             return controller.sendSuccessResponse(res, {
                 requestedData: order,
-                // totalCount: await CouponService.getTotalCount(query),
+                totalCount: totalCount.length,
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
@@ -390,6 +388,8 @@ class OrdersController extends BaseController {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
+                const tax = await TaxsModel.findOne({ countryId: orderDetails.countryId })
+
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails.orderStatusAt, Number(commonDeliveryDays))
                 ejs.renderFile(path.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
                     firstName: customerDetails?.firstName,
@@ -402,7 +402,8 @@ class OrdersController extends BaseController {
                     products: updatedOrderDetails.products,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
-                    appUrl: `${process.env.APPURL}`
+                    appUrl: `${process.env.APPURL}`,
+                    tax: tax
                 }, async (err: any, template: any) => {
                     if (err) {
                         console.log(err);
@@ -471,6 +472,7 @@ class OrdersController extends BaseController {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
+                const tax = await TaxsModel.findOne({ countryId: orderDetails[0].countryId })
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 
@@ -487,7 +489,8 @@ class OrdersController extends BaseController {
                         storePostalCode: basicDetailsSettings?.storePostalCode,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
-                        appUrl: `${process.env.APPURL}`
+                        appUrl: `${process.env.APPURL}`,
+                        tax: tax
                     },
                     async (err: any, html: any) => {
                         if (err) {

@@ -55,10 +55,11 @@ class TaxsController extends base_controller_1.default {
             const validatedData = tax_shema_1.taxSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { taxTitle, slug, taxPercentage } = validatedData.data;
+                const { taxTitle, slug, taxPercentage, countryId } = validatedData.data;
                 const user = res.locals.user;
                 const taxData = {
                     taxTitle,
+                    countryId: countryId || (0, helpers_1.getCountryId)(user),
                     slug: slug || (0, helpers_1.slugify)(taxTitle),
                     taxPercentage,
                     status: '1', // active

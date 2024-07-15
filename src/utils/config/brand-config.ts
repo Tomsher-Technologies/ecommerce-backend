@@ -1,6 +1,6 @@
 import { multiLanguageSources } from "../../constants/multi-languages";
 
-export const brandLookup = {
+export const multilanguagefieledsBrandLookup = {
     $lookup: {
         from: 'multilanguagefieleds', // Ensure 'from' field is included
         let: { brandId: '$_id' },

@@ -36,7 +36,7 @@ export const permissionBlocks = {
     },
     setup: {
         languages: 'languages',
-        taxs: 'taxs',
+        tax: 'tax',
         country: 'country',
         paymentMethod: 'paymentmethod',
         websitesetups: 'websitesetups',

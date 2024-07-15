@@ -21,6 +21,7 @@ const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gat
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
+const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-model"));
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -35,11 +36,6 @@ class OrdersController extends base_controller_1.default {
             else if (countryId) {
                 query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
-            // if (status && status !== '') {
-            //     query.status = { $in: Array.isArray(status) ? status : [status] };
-            // } else {
-            //     query.cartStatus = '1';
-            // }
             query = { cartStatus: { $ne: "1" } };
             // { customerId: customerDetails._id },
             // { countryId: countryData._id },
@@ -162,9 +158,14 @@ class OrdersController extends base_controller_1.default {
                 query,
                 sort
             });
+            const totalCount = await order_service_1.default.OrderList({
+                page: parseInt(page_size),
+                query,
+                getTotalCount: true
+            });
             return controller.sendSuccessResponse(res, {
                 requestedData: order,
-                // totalCount: await CouponService.getTotalCount(query),
+                totalCount: totalCount.length,
                 message: 'Success!'
             }, 200);
         }
@@ -359,6 +360,7 @@ class OrdersController extends base_controller_1.default {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
+                const tax = await tax_model_1.default.findOne({ countryId: orderDetails.countryId });
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails.orderStatusAt, Number(commonDeliveryDays));
                 ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
                     firstName: customerDetails?.firstName,
@@ -371,7 +373,8 @@ class OrdersController extends base_controller_1.default {
                     products: updatedOrderDetails.products,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
-                    appUrl: `${process.env.APPURL}`
+                    appUrl: `${process.env.APPURL}`,
+                    tax: tax
                 }, async (err, template) => {
                     if (err) {
                         console.log(err);
@@ -433,6 +436,7 @@ class OrdersController extends base_controller_1.default {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
+                const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].countryId });
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
                 ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
                     orderDetails: orderDetails[0],
@@ -446,7 +450,8 @@ class OrdersController extends base_controller_1.default {
                     storePostalCode: basicDetailsSettings?.storePostalCode,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
-                    appUrl: `${process.env.APPURL}`
+                    appUrl: `${process.env.APPURL}`,
+                    tax: tax
                 }, async (err, html) => {
                     if (err) {
                         return controller.sendErrorResponse(res, 200, {

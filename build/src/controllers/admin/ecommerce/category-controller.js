@@ -202,12 +202,8 @@ class CategoryController extends base_controller_1.default {
         try {
             const validatedData = category_schema_1.categorySchema.safeParse(req.body);
             if (validatedData.success) {
-                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, languageValues } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues } = validatedData.data;
                 const user = res.locals.user;
-                // let parentCategory = validatedData.data.parentCategory;
-                // if (parentCategory === '') {
-                //     parentCategory = ''; // Convert empty string to null
-                // }
                 const category = parentCategory ? await category_service_1.default.findParentCategory(parentCategory) : null;
                 var slugData;
                 var data = [];
@@ -229,6 +225,15 @@ class CategoryController extends base_controller_1.default {
                     parentCategory: parentCategory ? parentCategory : null,
                     level: category?.level ? parseInt(category?.level) + 1 : '0',
                     createdBy: user._id,
+                    metaTitle: metaTitle,
+                    metaKeywords: metaKeywords,
+                    metaDescription: metaDescription,
+                    ogTitle: ogTitle,
+                    ogDescription: ogDescription,
+                    metaImageUrl: metaImage,
+                    twitterTitle: twitterTitle,
+                    twitterDescription: twitterDescription,
+                    ['status']: status || '1',
                 };
                 const newCategory = await category_service_1.default.create(categoryData);
                 if (newCategory) {
@@ -269,7 +274,10 @@ class CategoryController extends base_controller_1.default {
                 }
             }
             else {
-                console.log('res', req.file);
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                }, req);
             }
         }
         catch (error) {
@@ -302,7 +310,7 @@ class CategoryController extends base_controller_1.default {
                 });
             }
         }
-        catch (error) { // Explicitly specify the type of 'error' as 'any'
+        catch (error) {
             controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }

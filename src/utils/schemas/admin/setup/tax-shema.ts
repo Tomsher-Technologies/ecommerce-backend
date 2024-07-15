@@ -1,9 +1,10 @@
 import { z as zod } from 'zod';
 
 export const taxSchema = zod.object({
+    countryId: zod.string({ required_error: 'countryId is required', }),
     taxTitle: zod.string({ required_error: 'Tax title is required', }).min(3, 'Tax title is should be 3 chars minimum'),
-    taxPercentage: zod.string({ required_error: 'Tax percentage is required', }).min(2, 'Tax percentage is should be 2 chars minimum'),
-}).nonstrict(); 
+    taxPercentage: zod.string({ required_error: 'Tax percentage is required', })
+}).nonstrict();
 
 
 export const taxStatusSchema = zod.object({

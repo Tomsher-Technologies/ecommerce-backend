@@ -14,7 +14,6 @@ import GeneralService from '../../../services/admin/general-service';
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import CollectionsCategoriesService from '../../../services/admin/website/collections-categories-service';
 
-
 const controller = new BaseController();
 
 class CategoryController extends BaseController {
@@ -221,13 +220,9 @@ class CategoryController extends BaseController {
             const validatedData = categorySchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, languageValues } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
-                // let parentCategory = validatedData.data.parentCategory;
-                // if (parentCategory === '') {
-                //     parentCategory = ''; // Convert empty string to null
-                // }
                 const category = parentCategory ? await CategoryService.findParentCategory(parentCategory) : null;
                 var slugData
                 var data: any = []
@@ -252,6 +247,15 @@ class CategoryController extends BaseController {
                     parentCategory: parentCategory ? parentCategory : null,
                     level: category?.level ? parseInt(category?.level) + 1 : '0',
                     createdBy: user._id,
+                    metaTitle: metaTitle as string,
+                    metaKeywords: metaKeywords as string,
+                    metaDescription: metaDescription as string,
+                    ogTitle: ogTitle as string,
+                    ogDescription: ogDescription as string,
+                    metaImageUrl: metaImage as string,
+                    twitterTitle: twitterTitle as string,
+                    twitterDescription: twitterDescription as string,
+                    ['status' as string]: status || '1',
                 };
 
                 const newCategory = await CategoryService.create(categoryData);
@@ -265,7 +269,6 @@ class CategoryController extends BaseController {
 
                     if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
-
                             let categoryImageUrl = ''
                             if (languageValuesImages?.length > 0) {
                                 categoryImageUrl = handleFileUpload(req
@@ -299,10 +302,11 @@ class CategoryController extends BaseController {
                     }, req);
                 }
 
-
             } else {
-                console.log('res', (req as any).file);
-
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
+                }, req);
             }
         } catch (error: any) {
             if (error && error.errors && error.errors.categoryTitle && error.errors.categoryTitle.properties) {
@@ -319,7 +323,6 @@ class CategoryController extends BaseController {
         }
     }
 
-
     async findOne(req: Request, res: Response): Promise<void> {
         try {
             const categoryId = req.params.id;
@@ -334,7 +337,7 @@ class CategoryController extends BaseController {
                     message: 'Category Id not found!',
                 });
             }
-        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+        } catch (error: any) { 
             controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }

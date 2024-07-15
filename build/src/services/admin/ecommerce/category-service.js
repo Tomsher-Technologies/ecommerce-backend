@@ -10,17 +10,6 @@ const category_model_1 = __importDefault(require("../../../model/admin/ecommerce
 const helpers_1 = require("../../../utils/helpers");
 class CategoryService {
     constructor() {
-        this.graphLookUp = {
-            $graphLookup: {
-                from: 'categories',
-                startWith: '$_id',
-                connectFromField: '_id',
-                connectToField: 'parentCategory',
-                as: 'subCategories',
-                maxDepth: 10, // Specify the maximum depth
-                depthField: 'level', // Optional, if you want to track the depth
-            }
-        };
         this.parentCategoryLookup = {
             $lookup: {
                 from: 'categories',
@@ -71,6 +60,14 @@ class CategoryService {
                 level: 1,
                 status: 1,
                 createdAt: 1,
+                metaTitle: 1,
+                metaKeywords: 1,
+                metaDescription: 1,
+                metaImageUrl: 1,
+                ogTitle: 1,
+                ogDescription: 1,
+                twitterTitle: 1,
+                twitterDescription: 1,
                 subCategories: {
                     $ifNull: ['$subCategories', []]
                 },
@@ -130,48 +127,6 @@ class CategoryService {
         }));
         return categories;
     }
-    // async findAllCategories(): Promise<CategoryProps[] | null> {
-    //     try {
-    //         const pipeline = [
-    //             {
-    //                 $match: { parentCategory: { $exists: false } } // Find root categories
-    //             },
-    //             {
-    //                 $graphLookup: {
-    //                     from: "categories",
-    //                     startWith: "$_id",
-    //                     connectFromField: "_id",
-    //                     connectToField: "parentCategory",
-    //                     as: "subCategories",
-    //                     maxDepth: 1 // Limit depth to 1 level
-    //                 }
-    //             },
-    //             {
-    //                 $addFields: {
-    //                     subCategories: {
-    //                         $map: {
-    //                             input: "$subCategories",
-    //                             as: "subcategory",
-    //                             in: {
-    //                                 $mergeObjects: [
-    //                                     "$$subcategory",
-    //                                     {
-    //                                         subCategories: [] // Empty array to limit to one level
-    //                                     }
-    //                                 ]
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         ];
-    //         const categoriesWithSubcategories = await CategoryModel.aggregate(pipeline);
-    //         return categoriesWithSubcategories;
-    //     } catch (error) {
-    //         console.error("Error finding categories:", error);
-    //         return null;
-    //     }
-    // }
     async findAllChilledCategories(query) {
         try {
             const rootCategories = await category_model_1.default.find(query); // Find root categories
@@ -223,17 +178,6 @@ class CategoryService {
     async getParentChilledCategory(query) {
         return category_model_1.default.find(query);
     }
-    // async findCategory(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
-    //     const { query, skip, limit, sort } = pagination(options.query || {}, options);
-    //     const defaultSort = { createdAt: -1 };
-    //     let finalSort = sort || defaultSort;
-    //     const sortKeys = Object.keys(finalSort);
-    //     if (sortKeys.length === 0) {
-    //         finalSort = defaultSort;
-    //     }
-    //     let pipeline: any[] =[{ $project: { parentCategory: 1 } }]
-    //     return CategoryModel.aggregate(pipeline).exec();
-    // }
     async create(categoryData) {
         const createdCategory = await category_model_1.default.create(categoryData);
         if (createdCategory) {
@@ -272,61 +216,6 @@ class CategoryService {
     async findOneCategory(data) {
         return category_model_1.default.findOne(data);
     }
-    // async findCategoryId(categoryTitle: string): Promise<void | null> {
-    //     const slug = slugify(categoryTitle)
-    //     const categoryResult: any = await this.findOneCategory({ slug: slug });
-    //     if (categoryResult) {
-    //         return categoryResult
-    //     }
-    //     else {
-    //         const catData = categoryTitle.split('-');
-    //         let slug: any
-    //         for (let data = 0; data < catData.length; data++) {
-    //             if (slug == undefined) {
-    //                 slug = catData[data]
-    //                 const categoryResult: any = await this.findOneCategory({ slug: slug });
-    //                 if (!categoryResult) {
-    //                     const categoryData = {
-    //                         categoryTitle:capitalizeWords(categoryTitle),
-    //                         slug: slugify(categoryTitle),
-    //                         parentCategory: null,
-    //                         level: '0',
-    //                         isExcel: true
-    //                     }
-    //                     await this.create(categoryData);
-    //                 }
-    //             }
-    //             else {
-    //                 slug = slug + "-" + catData[data]
-    //                 const categoryResult: any = await this.findOneCategory({ slug: slug });
-    //                 if (categoryResult) {
-    //                 }
-    //                 else {
-    //                     var titleData = slug.split('-')
-    //                     const lastItem = titleData[titleData.length - 1];
-    //                     titleData.pop();
-    //                     const resultString = titleData.join('-');
-    //                     const result: any = await this.findOneCategory({ slug: resultString });
-    //                     const categoryData = {
-    //                         categoryTitle:capitalizeWords(lastItem),
-    //                         slug: slugify(slug),
-    //                         parentCategory: result._id,
-    //                         level: titleData.length.toString(),
-    //                         isExcel: true
-    //                     }
-    //                     await this.create(categoryData);
-    //                 }
-    //             }
-    //             const categoryResult: any = await this.findOneCategory({ slug: slugify(categoryTitle) })
-    //             if (categoryResult) {
-    //                 return categoryResult
-    //             }
-    //         }
-    //     }
-    // }
-    // async findOne(categoryId: string): Promise<CategoryProps | null> {
-    //     return CategoryModel.findById(categoryId);
-    // }
     async findCategoryId(categoryTitle) {
         const slug = (0, helpers_1.categorySlugify)(categoryTitle);
         let categoryResult = await this.findOneCategory({ slug: slug });
@@ -335,7 +224,6 @@ class CategoryService {
         }
         else {
             function splitHyphenOutsideParentheses(inputStr) {
-                // Regular expression to split by hyphens not inside parentheses
                 const parts = inputStr.split(/-(?![^()]*\))/);
                 return parts;
             }
@@ -378,17 +266,6 @@ class CategoryService {
     async findParentCategory(parentCategory) {
         return category_model_1.default.findOne({ _id: parentCategory });
     }
-    // async findAllCategories(): Promise<CategoryProps | null> {
-    //     const pipeline = [
-    //         this.parentCategoryLookup
-    //     ];
-    //     const categoryDataWithValues: any = await CategoryModel.aggregate(pipeline).match({ level: "0" });
-    //     if (categoryDataWithValues) {
-    //         return categoryDataWithValues
-    //     } else {
-    //         return null
-    //     }
-    // }
     async update(categoryId, categoryData) {
         const updatedCategory = await category_model_1.default.findByIdAndUpdate(categoryId, categoryData, { new: true, useFindAndModify: false });
         if (updatedCategory) {
@@ -408,10 +285,8 @@ class CategoryService {
     }
     async updateWebsitePriority(container1, columnKey) {
         try {
-            // Set columnKey to '0' for all documents initially
             await category_model_1.default.updateMany({ [columnKey]: { $gt: '0' } }, { [columnKey]: '0' });
             if (container1 && container1.length > 0) {
-                // Loop through container1 and update [mode] for each corresponding document
                 for (let i = 0; i < container1.length; i++) {
                     const categoryId = container1[i];
                     const category = await category_model_1.default.findById(categoryId);

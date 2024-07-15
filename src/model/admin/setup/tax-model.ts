@@ -17,24 +17,16 @@ const taxSchema: Schema<TaxProps> = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'Countries',
+        unique: true
     },
     taxTitle: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Taxs').countDocuments({ taxTitle: value });
-                return count === 0;
-            },
-            message: 'Tax title must be unique'
-        },
         minlength: [3, 'Tax title must be at least 3 characters long']
     },
     slug: {
         type: String,
         required: true,
-        unique: true
     },
     taxPercentage: {
         type: String,

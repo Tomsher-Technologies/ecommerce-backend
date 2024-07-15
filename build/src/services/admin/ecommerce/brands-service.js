@@ -5,9 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
-const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
-const helpers_1 = require("../../../utils/helpers");
 const brand_config_1 = require("../../../utils/config/brand-config");
+const common_config_1 = require("../../../utils/config/common-config");
+const helpers_1 = require("../../../utils/helpers");
+const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 class BrandsService {
     constructor() { }
     async findAll(options = {}) {
@@ -23,7 +24,8 @@ class BrandsService {
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
-            brand_config_1.brandLookup,
+            (0, common_config_1.seoLookup)('brandSeo'),
+            brand_config_1.multilanguagefieledsBrandLookup,
         ];
         return brands_model_1.default.aggregate(pipeline).exec();
     }
@@ -41,7 +43,7 @@ class BrandsService {
         if (createdBrand) {
             const pipeline = [
                 { $match: { _id: createdBrand._id } },
-                brand_config_1.brandLookup,
+                brand_config_1.multilanguagefieledsBrandLookup,
             ];
             const createdBrandWithValues = await brands_model_1.default.aggregate(pipeline);
             return createdBrandWithValues[0];
@@ -55,7 +57,7 @@ class BrandsService {
             const objectId = new mongoose_1.default.Types.ObjectId(brandId);
             const pipeline = [
                 { $match: { _id: objectId } },
-                brand_config_1.brandLookup,
+                brand_config_1.multilanguagefieledsBrandLookup,
             ];
             const brandDataWithValues = await brands_model_1.default.aggregate(pipeline);
             return brandDataWithValues[0];
@@ -69,7 +71,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                brand_config_1.brandLookup,
+                brand_config_1.multilanguagefieledsBrandLookup,
             ];
             const updatedBrandWithValues = await brands_model_1.default.aggregate(pipeline);
             return updatedBrandWithValues[0];

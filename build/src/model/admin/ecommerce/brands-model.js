@@ -73,6 +73,10 @@ const brandSchema = new mongoose_1.Schema({
         type: Date,
         default: ''
     },
+    metaKeywords: {
+        type: String,
+        default: ''
+    },
     metaTitle: {
         type: String,
         default: ''

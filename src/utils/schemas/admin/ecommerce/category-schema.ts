@@ -9,7 +9,15 @@ export const categorySchema = zod.object({
     languageValues: zod.any().optional(),
     status: zod.string().optional(),
     slug: zod.any().optional(),
-    level: zod.any().optional()
+    level: zod.any().optional(),
+    metaTitle: zod.string().optional(),
+    metaKeywords: zod.string().optional(),
+    metaDescription: zod.string().optional(),
+    ogTitle: zod.string().optional(),
+    ogDescription: zod.string().optional(),
+    metaImageUrl: zod.string().optional(),
+    twitterTitle: zod.string().optional(),
+    twitterDescription: zod.string().optional(),
 }).nonstrict();
 
 

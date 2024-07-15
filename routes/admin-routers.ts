@@ -36,6 +36,7 @@ import CollectionCartegoryRoutes from './admin/website/collection-category-route
 import NavigationMenuRoutes from './admin/website/navigation-menu-routes';
 import DynamicPageRoutes from './admin/website/pages-routes';
 import GalleryImageRoutes from './admin/website/gallery-image-routes';
+import TaxRoutes from './admin/setup/tax-routes';
 
 // store
 import WarehouseRoutes from './admin/stores/warehouse-routes';
@@ -84,6 +85,7 @@ adminRouter.use('/setup/country', CountryRoutes);
 adminRouter.use('/setup/payment-method', PaymentMethodRoutes);
 adminRouter.use('/setup/languages', LanguagesRoutes);
 adminRouter.use('/setup/website-settings', SetingsRoutes);
+adminRouter.use('/setup/tax', TaxRoutes);
 
 //admin website 
 adminRouter.use('/website/collection-products', CollectionProductRoutes);

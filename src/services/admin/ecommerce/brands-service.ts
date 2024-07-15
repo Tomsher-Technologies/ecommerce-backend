@@ -1,11 +1,10 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
-import { multiLanguageSources } from '../../../constants/multi-languages';
+import { multilanguagefieledsBrandLookup } from '../../../utils/config/brand-config';
+import { seoLookup } from '../../../utils/config/common-config';
+import { capitalizeWords, slugify } from '../../../utils/helpers';
 
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
-import { capitalizeWords, slugify } from '../../../utils/helpers';
-import { brandLookup } from '../../../utils/config/brand-config';
-import GeneralService from '../../../services/admin/general-service';
 
 
 class BrandsService {
@@ -26,8 +25,8 @@ class BrandsService {
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
-
-            brandLookup,
+            seoLookup('brandSeo'),
+            multilanguagefieledsBrandLookup,
         ];
 
         return BrandsModel.aggregate(pipeline).exec();
@@ -47,7 +46,7 @@ class BrandsService {
         if (createdBrand) {
             const pipeline = [
                 { $match: { _id: createdBrand._id } },
-                brandLookup,
+                multilanguagefieledsBrandLookup,
             ];
 
             const createdBrandWithValues = await BrandsModel.aggregate(pipeline);
@@ -63,7 +62,7 @@ class BrandsService {
             const objectId = new mongoose.Types.ObjectId(brandId);
             const pipeline = [
                 { $match: { _id: objectId } },
-                brandLookup,
+                multilanguagefieledsBrandLookup,
             ];
 
             const brandDataWithValues = await BrandsModel.aggregate(pipeline);
@@ -84,7 +83,7 @@ class BrandsService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                brandLookup,
+                multilanguagefieledsBrandLookup,
             ];
 
             const updatedBrandWithValues = await BrandsModel.aggregate(pipeline);

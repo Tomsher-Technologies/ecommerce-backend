@@ -132,7 +132,7 @@ class BrandsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { brandTitle, slug, description, metaTitle, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
+                const { brandTitle, slug, description, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
@@ -145,6 +145,7 @@ class BrandsController extends BaseController {
                     brandBannerImageUrl: handleFileUpload(req, null, (req.file || brandBannerImage), 'brandBannerImageUrl', 'brand'),
                     description,
                     metaTitle: metaTitle as string,
+                    metaKeywords: metaKeywords as string,
                     metaDescription: metaDescription as string,
                     ogTitle: ogTitle as string,
                     ogDescription: ogDescription as string,
@@ -214,7 +215,6 @@ class BrandsController extends BaseController {
                     }, req);
                 }
             } else {
-
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)

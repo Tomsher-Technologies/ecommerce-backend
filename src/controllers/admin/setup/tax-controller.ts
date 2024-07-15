@@ -1,14 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { formatZodError, slugify } from '../../../utils/helpers';
+import { formatZodError, getCountryId, slugify } from '../../../utils/helpers';
 import { taxSchema, taxStatusSchema } from '../../../utils/schemas/admin/setup/tax-shema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import { QueryParams } from '../../../utils/types/common';
 
 import BaseController from '../base-controller';
 import TaxsService from '../../../services/admin/setup/tax-service';
-import { TaxProps } from '../../../model/admin/setup/tax-model';
 
 const controller = new BaseController();
 
@@ -62,11 +61,12 @@ class TaxsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { taxTitle, slug, taxPercentage } = validatedData.data;
+                const { taxTitle, slug, taxPercentage, countryId } = validatedData.data;
                 const user = res.locals.user;
 
-                const taxData: Partial<TaxProps> = {
+                const taxData = {
                     taxTitle,
+                    countryId: countryId || getCountryId(user),
                     slug: slug || slugify(taxTitle) as any,
                     taxPercentage,
                     status: '1', // active
