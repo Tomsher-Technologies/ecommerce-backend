@@ -9,6 +9,7 @@ import BrandController from '../../../src/controllers/frontend/guest/brand-contr
 const router: Router = express.Router();
 
 router.get('/category', logResponseStatus, CategoryController.findAllCategory);
+router.get('/find-category/:slug', logResponseStatus, CategoryController.findOne);
 router.get('/brand', logResponseStatus, BrandController.findAllBrand);
 router.get('/attribute', logResponseStatus, ProductController.findAllAttributes);
 router.get('/specification', logResponseStatus, ProductController.findAllSpecifications);

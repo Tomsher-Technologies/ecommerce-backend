@@ -60,5 +60,25 @@ class CategoryController extends base_controller_1.default {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
         }
     }
+    async findOne(req, res) {
+        try {
+            const categoryId = req.params.slug;
+            if (categoryId) {
+                const category = await category_service_1.default.findOne(categoryId, req.get('origin'));
+                controller.sendSuccessResponse(res, {
+                    requestedData: category,
+                    message: 'Success'
+                });
+            }
+            else {
+                controller.sendErrorResponse(res, 200, {
+                    message: 'Category Id not found!',
+                });
+            }
+        }
+        catch (error) {
+            controller.sendErrorResponse(res, 500, { message: error.message });
+        }
+    }
 }
 exports.default = new CategoryController();

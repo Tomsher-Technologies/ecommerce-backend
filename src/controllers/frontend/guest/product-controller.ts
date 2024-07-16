@@ -380,7 +380,6 @@ class ProductController extends BaseController {
                         variantId: null
                     }));
                 }
-                console.log('productDetails', productDetails);
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: {

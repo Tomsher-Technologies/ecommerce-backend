@@ -378,7 +378,6 @@ class ProductController extends base_controller_1.default {
                         variantId: null
                     }));
                 }
-                console.log('productDetails', productDetails);
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         product: {

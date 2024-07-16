@@ -47,6 +47,7 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
             blockReferences.defualtSettings,
             blockReferences.shipmentSettings,
             blockReferences.enableFeatures,
+            blockReferences.socialMedia,
             blockReferences.wallets,
             blockReferences.referAndEarn,
             blockReferences.home,

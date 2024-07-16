@@ -52,14 +52,16 @@ const categorySchema = new mongoose_1.Schema({
         required: function () {
             // Require description field if isExcel is not true
             return !this.isExcel;
-        }
+        },
+        default: '',
     },
     categoryImageUrl: {
         type: String,
         required: function () {
             // Require categoryImageUrl field if isExcel is not true
             return !this.isExcel;
-        }
+        },
+        default: '',
     },
     isExcel: {
         type: Boolean,

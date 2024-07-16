@@ -294,6 +294,9 @@ class OrdersController extends base_controller_1.default {
                 }
             }
             orderDetails.orderStatus = orderStatus;
+            if (orderStatus === '12' || orderStatus === '5') {
+                orderDetails.cartStatus == cart_1.cartStatus.delivered;
+            }
             const currentDate = new Date();
             switch (orderStatus) {
                 case '1':
@@ -343,7 +346,12 @@ class OrdersController extends base_controller_1.default {
                     message: 'Something went wrong!'
                 });
             }
-            await cart_order_product_model_1.default.updateMany({ cartId: orderDetails._id }, { $set: { orderStatus: orderStatus, orderStatusAt: currentDate } });
+            await cart_order_product_model_1.default.updateMany({ cartId: orderDetails._id }, {
+                $set: {
+                    orderStatus: orderStatus,
+                    orderStatusAt: currentDate
+                }
+            });
             if (orderStatus === '4' || orderStatus === '5') {
                 let query = { _id: { $exists: true } };
                 query = {
@@ -360,7 +368,7 @@ class OrdersController extends base_controller_1.default {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
-                const tax = await tax_model_1.default.findOne({ countryId: orderDetails.countryId });
+                const tax = await tax_model_1.default.findOne({ countryId: orderDetails.countryId, status: "1" });
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails.orderStatusAt, Number(commonDeliveryDays));
                 ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
                     firstName: customerDetails?.firstName,
@@ -436,7 +444,7 @@ class OrdersController extends base_controller_1.default {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
-                const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].countryId });
+                const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].countryId, status: "1" });
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
                 ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
                     orderDetails: orderDetails[0],

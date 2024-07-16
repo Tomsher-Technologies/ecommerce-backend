@@ -10,6 +10,7 @@ const category_controller_1 = __importDefault(require("../../../src/controllers/
 const brand_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/brand-controller"));
 const router = express_1.default.Router();
 router.get('/category', response_status_1.logResponseStatus, category_controller_1.default.findAllCategory);
+router.get('/find-category/:slug', response_status_1.logResponseStatus, category_controller_1.default.findOne);
 router.get('/brand', response_status_1.logResponseStatus, brand_controller_1.default.findAllBrand);
 router.get('/attribute', response_status_1.logResponseStatus, product_controller_1.default.findAllAttributes);
 router.get('/specification', response_status_1.logResponseStatus, product_controller_1.default.findAllSpecifications);
