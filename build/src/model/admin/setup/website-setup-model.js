@@ -59,6 +59,7 @@ const websiteSetupSchema = new mongoose_1.Schema({
             website_setup_1.blockReferences.shipmentSettings,
             website_setup_1.blockReferences.enableFeatures,
             website_setup_1.blockReferences.socialMedia,
+            website_setup_1.blockReferences.appUrls,
             website_setup_1.blockReferences.wallets,
             website_setup_1.blockReferences.referAndEarn,
             website_setup_1.blockReferences.home,

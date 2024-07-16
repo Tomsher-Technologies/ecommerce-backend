@@ -105,10 +105,56 @@ class GuestController extends BaseController {
                     // })
                     // console.log("sendOtp", sendOtp);
 
-                    const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
+                    let websiteSettingsQuery: any = { _id: { $exists: true } };
+                    websiteSettingsQuery = {
+                        ...websiteSettingsQuery,
+                        countryId: newCustomer.countryId,
+                        block: websiteSetup.basicSettings,
+                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
+                        status: '1',
+                    } as any;
 
+                    const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+                    if (!settingsDetails) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Settings details not fount'
+                        });
+                    }
+                    const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
+
+                    if (!basicDetailsSettings) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Basic details settings not fount'
+                        });
+                    }
+
+                    if (!socialMedia) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Social media settings not fount'
+                        });
+                    }
+
+                    if (!appUrls) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'App url settings not fount'
+                        });
+                    }
                     const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
-                        { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err: any, template: any) => {
+                        {
+                            otp: newCustomer.otp,
+                            firstName: newCustomer.firstName,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            socialMedia,
+                            appUrls,
+                            subject: 'Verification OTP',
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shopName: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`
+                        },
+                        async (err: any, template: any) => {
                             if (err) {
                                 console.log(err);
                                 return;
@@ -119,11 +165,7 @@ class GuestController extends BaseController {
                             } else if (process.env.SHOPNAME === 'Homestyle') {
                                 const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                             }
-
-
                         })
-
-
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -191,6 +233,68 @@ class GuestController extends BaseController {
                         };
                         const updatedCustomer = await CustomerService.update(existingUser?.id, updateCustomerOtp);
                         if (updatedCustomer) {
+
+                            let websiteSettingsQuery: any = { _id: { $exists: true } };
+                            websiteSettingsQuery = {
+                                ...websiteSettingsQuery,
+                                countryId: updatedCustomer.countryId,
+                                block: websiteSetup.basicSettings,
+                                blockReference: { $in: [blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
+                                status: '1',
+                            } as any;
+
+                            const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+                            if (!settingsDetails) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Settings details not fount'
+                                });
+                            }
+                            const basicDetailsSettings = await settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                            const socialMedia = await settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                            const appUrls = await settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
+
+                            if (!basicDetailsSettings) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Basic details settings not fount'
+                                });
+                            }
+
+                            if (!socialMedia) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Social media settings not fount'
+                                });
+                            }
+
+                            if (!appUrls) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'App url settings not fount'
+                                });
+                            }
+
+                            const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
+                                {
+                                    otp: updatedCustomer.otp,
+                                    firstName: updatedCustomer.firstName,
+                                    storeEmail: basicDetailsSettings?.storeEmail,
+                                    storePhone: basicDetailsSettings?.storePhone,
+                                    socialMedia,
+                                    appUrls,
+                                    subject: 'Password Reset Confirmation',
+                                    shopLogo: `${process.env.SHOPLOGO}`,
+                                    shopName: `${process.env.SHOPNAME}`,
+                                    appUrl: `${process.env.APPURL}`
+                                }, async (err: any, template: any) => {
+                                    if (err) {
+                                        console.log(err);
+                                        return;
+                                    }
+                                    if (process.env.SHOPNAME === 'Timehouse') {
+                                        const sendEmail = await mailChimpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
+
+                                    } else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
+                                    }
+                                })
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: updatedCustomer._id,
@@ -199,7 +303,7 @@ class GuestController extends BaseController {
                                     phone: updatedCustomer.phone,
                                     otpType
                                 },
-                                message: `Otp successfully sended on ${otpType}`
+                                message: `OTP successfully sent to ${otpType}`
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {
@@ -311,17 +415,69 @@ class GuestController extends BaseController {
                         if (optUpdatedCustomer) {
                             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
-                            const websiteSettings: any = await WebsiteSetupModel.findOne({ countryId: countryId, blockReference: blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
+                            let websiteSettingsQuery: any = { _id: { $exists: true } };
+                            websiteSettingsQuery = {
+                                ...websiteSettingsQuery,
+                                countryId: optUpdatedCustomer.countryId,
+                                block: websiteSetup.basicSettings,
+                                blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
+                                status: '1',
+                            } as any;
 
+                            const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+                            if (!settingsDetails) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Settings details not fount'
+                                });
+                            }
+                            const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                            const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                            const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
 
+                            if (!basicDetailsSettings) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Basic details settings not fount'
+                                });
+                            }
+
+                            if (!socialMedia) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Social media settings not fount'
+                                });
+                            }
+
+                            if (!appUrls) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'App url settings not fount'
+                                });
+                            }
                             const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
-                                { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err: any, template: any) => {
+
+                                {
+                                    otp: optUpdatedCustomer.otp,
+                                    firstName: optUpdatedCustomer.firstName,
+                                    storeEmail: basicDetailsSettings?.storeEmail,
+                                    storePhone: basicDetailsSettings?.storePhone,
+                                    socialMedia,
+                                    appUrls,
+                                    subject: 'Resent verification OTP',
+                                    shopLogo: `${process.env.SHOPLOGO}`,
+                                    shopName: `${process.env.SHOPNAME}`,
+                                    appUrl: `${process.env.APPURL}`
+                                },
+                                async (err: any, template: any) => {
                                     if (err) {
                                         console.log(err);
                                         return;
                                     }
-                                    const sendEmail = await mailChimpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Verification OTP' }, template)
+                                    if (process.env.SHOPNAME === 'Timehouse') {
+                                        const sendEmail = await mailChimpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
+
+                                    } else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
+                                    }
                                 })
+
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: optUpdatedCustomer._id,
@@ -329,7 +485,7 @@ class GuestController extends BaseController {
                                     email: optUpdatedCustomer.email,
                                     phone: optUpdatedCustomer.phone,
                                 },
-                                message: 'Otp successfully sent'
+                                message: 'OTP successfully sent'
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {

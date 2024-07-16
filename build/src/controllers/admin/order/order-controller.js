@@ -424,7 +424,7 @@ class OrdersController extends base_controller_1.default {
                     ...websiteSettingsQuery,
                     countryId: orderDetails[0].countryId,
                     block: website_setup_1.websiteSetup.basicSettings,
-                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings] },
+                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia] },
                     status: '1',
                 };
                 const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);

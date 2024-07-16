@@ -16,6 +16,7 @@ exports.blockReferences = {
     shipmentSettings: 'shipment-settings',
     enableFeatures: 'enable-features',
     socialMedia: 'social-media',
+    appUrls: 'app-urls',
     wallets: 'wallets',
     referAndEarn: 'refer-and-earn',
     home: 'home',

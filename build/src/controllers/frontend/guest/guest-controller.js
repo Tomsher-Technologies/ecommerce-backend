@@ -93,8 +93,50 @@ class GuestController extends base_controller_1.default {
                     //     "message": "Hello from Etisalat SMS Gateway!"
                     // })
                     // console.log("sendOtp", sendOtp);
-                    const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
-                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), { otp: newCustomer.otp, firstName: newCustomer.firstName, websiteSettings }, async (err, template) => {
+                    let websiteSettingsQuery = { _id: { $exists: true } };
+                    websiteSettingsQuery = {
+                        ...websiteSettingsQuery,
+                        countryId: newCustomer.countryId,
+                        block: website_setup_1.websiteSetup.basicSettings,
+                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                        status: '1',
+                    };
+                    const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                    if (!settingsDetails) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Settings details not fount'
+                        });
+                    }
+                    const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                    if (!basicDetailsSettings) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Basic details settings not fount'
+                        });
+                    }
+                    if (!socialMedia) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Social media settings not fount'
+                        });
+                    }
+                    if (!appUrls) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'App url settings not fount'
+                        });
+                    }
+                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                        otp: newCustomer.otp,
+                        firstName: newCustomer.firstName,
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        storePhone: basicDetailsSettings?.storePhone,
+                        socialMedia,
+                        appUrls,
+                        subject: 'Verification OTP',
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shopName: `${process.env.SHOPNAME}`,
+                        appUrl: `${process.env.APPURL}`
+                    }, async (err, template) => {
                         if (err) {
                             console.log(err);
                             return;
@@ -172,6 +214,61 @@ class GuestController extends base_controller_1.default {
                         };
                         const updatedCustomer = await customer_service_1.default.update(existingUser?.id, updateCustomerOtp);
                         if (updatedCustomer) {
+                            let websiteSettingsQuery = { _id: { $exists: true } };
+                            websiteSettingsQuery = {
+                                ...websiteSettingsQuery,
+                                countryId: updatedCustomer.countryId,
+                                block: website_setup_1.websiteSetup.basicSettings,
+                                blockReference: { $in: [website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                                status: '1',
+                            };
+                            const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                            if (!settingsDetails) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Settings details not fount'
+                                });
+                            }
+                            const basicDetailsSettings = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                            const socialMedia = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                            const appUrls = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                            if (!basicDetailsSettings) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Basic details settings not fount'
+                                });
+                            }
+                            if (!socialMedia) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Social media settings not fount'
+                                });
+                            }
+                            if (!appUrls) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'App url settings not fount'
+                                });
+                            }
+                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                                otp: updatedCustomer.otp,
+                                firstName: updatedCustomer.firstName,
+                                storeEmail: basicDetailsSettings?.storeEmail,
+                                storePhone: basicDetailsSettings?.storePhone,
+                                socialMedia,
+                                appUrls,
+                                subject: 'Password Reset Confirmation',
+                                shopLogo: `${process.env.SHOPLOGO}`,
+                                shopName: `${process.env.SHOPNAME}`,
+                                appUrl: `${process.env.APPURL}`
+                            }, async (err, template) => {
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
+                                if (process.env.SHOPNAME === 'Timehouse') {
+                                    const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                }
+                                else if (process.env.SHOPNAME === 'Homestyle') {
+                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                }
+                            });
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: updatedCustomer._id,
@@ -180,7 +277,7 @@ class GuestController extends base_controller_1.default {
                                     phone: updatedCustomer.phone,
                                     otpType
                                 },
-                                message: `Otp successfully sended on ${otpType}`
+                                message: `OTP successfully sent to ${otpType}`
                             });
                         }
                         else {
@@ -297,13 +394,60 @@ class GuestController extends base_controller_1.default {
                         });
                         if (optUpdatedCustomer) {
                             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-                            const websiteSettings = await website_setup_model_1.default.findOne({ countryId: countryId, blockReference: website_setup_1.blockReferences.basicDetailsSettings }, { blockValues: 1, _id: 0 });
-                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), { otp: optUpdatedCustomer.otp, firstName: optUpdatedCustomer.firstName, websiteSettings }, async (err, template) => {
+                            let websiteSettingsQuery = { _id: { $exists: true } };
+                            websiteSettingsQuery = {
+                                ...websiteSettingsQuery,
+                                countryId: optUpdatedCustomer.countryId,
+                                block: website_setup_1.websiteSetup.basicSettings,
+                                blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                                status: '1',
+                            };
+                            const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                            if (!settingsDetails) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Settings details not fount'
+                                });
+                            }
+                            const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                            const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                            const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                            if (!basicDetailsSettings) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Basic details settings not fount'
+                                });
+                            }
+                            if (!socialMedia) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Social media settings not fount'
+                                });
+                            }
+                            if (!appUrls) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'App url settings not fount'
+                                });
+                            }
+                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                                otp: optUpdatedCustomer.otp,
+                                firstName: optUpdatedCustomer.firstName,
+                                storeEmail: basicDetailsSettings?.storeEmail,
+                                storePhone: basicDetailsSettings?.storePhone,
+                                socialMedia,
+                                appUrls,
+                                subject: 'Resent verification OTP',
+                                shopLogo: `${process.env.SHOPLOGO}`,
+                                shopName: `${process.env.SHOPNAME}`,
+                                appUrl: `${process.env.APPURL}`
+                            }, async (err, template) => {
                                 if (err) {
                                     console.log(err);
                                     return;
                                 }
-                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Verification OTP' }, template);
+                                if (process.env.SHOPNAME === 'Timehouse') {
+                                    const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                }
+                                else if (process.env.SHOPNAME === 'Homestyle') {
+                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                }
                             });
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
@@ -312,7 +456,7 @@ class GuestController extends base_controller_1.default {
                                     email: optUpdatedCustomer.email,
                                     phone: optUpdatedCustomer.phone,
                                 },
-                                message: 'Otp successfully sent'
+                                message: 'OTP successfully sent'
                             });
                         }
                         else {

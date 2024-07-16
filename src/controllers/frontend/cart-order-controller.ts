@@ -257,7 +257,7 @@ class CartController extends BaseController {
                             totalWalletAmount,
                             codAmount,
                             totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
-                            totalAmount: totalAmountOfProduct + shippingCharge + giftWrapcharge
+                            totalAmount: totalAmountOfProduct + finalShippingCharge + giftWrapcharge
                         };
 
 
@@ -342,7 +342,7 @@ class CartController extends BaseController {
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
-                            totalAmount: totalAmountOfProduct + shippingCharge,
+                            totalAmount: totalAmountOfProduct + finalShippingCharge,
                         };
 
                         newCartOrder = await CartService.create(cartOrderData);
