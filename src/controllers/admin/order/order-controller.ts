@@ -388,7 +388,7 @@ class OrdersController extends BaseController {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
-                const tax = await TaxsModel.findOne({ countryId: orderDetails.countryId })
+                const tax = await TaxsModel.findOne({ countryId: orderDetails.countryId, status: "1" })
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails.orderStatusAt, Number(commonDeliveryDays))
                 ejs.renderFile(path.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
@@ -472,7 +472,7 @@ class OrdersController extends BaseController {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
-                const tax = await TaxsModel.findOne({ countryId: orderDetails[0].countryId })
+                const tax = await TaxsModel.findOne({ countryId: orderDetails[0].countryId, status: "1" })
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 

@@ -252,7 +252,7 @@ class CheckoutService {
                     }
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
-                    const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId })
+                    const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
 
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,

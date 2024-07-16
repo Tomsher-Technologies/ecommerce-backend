@@ -311,17 +311,21 @@
               <td class="text-right-cell">AED <%= orderDetails.totalProductAmount %>
               </td>
             </tr>
-            <tr class="summary-row">
+            <% if (orderDetails.totalDiscountAmount > 0) { %>
+              <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Discount</td>
-              <td class="text-right-cell">- AED <%= orderDetails.totalDiscountAmount %>
+              <td class="text-right-cell"> AED <%= orderDetails.totalDiscountAmount %>
               </td>
             </tr>
+            <% } %>
+
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Sub Total</td>
               <td class="text-right-cell">AED <%= orderDetails.totalAmount %>
               </td>
             </tr>
-            <tr class="summary-row">
+            <% if (tax && tax.taxPercentage > 0) { %>
+              <tr class="summary-row">
               <td colspan="5" class="text-right-cell">
                 <%=tax.taxTitle%>
                   <%=tax.taxPercentage%>%
@@ -329,16 +333,24 @@
               <td class="text-right-cell">AED <%= orderDetails.totalTaxAmount %>
               </td>
             </tr>
+            <% } %>
+
+            <% if (orderDetails.paymentMethodCharge > 0) { %>
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">COD Charges</td>
               <td class="text-right-cell">AED <%= orderDetails.paymentMethodCharge %>
               </td>
             </tr>
+            <% } %>
+
+            <% if (orderDetails.totalShippingAmount > 0) { %>
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Delivery Charges</td>
               <td class="text-right-cell">AED <%= orderDetails.totalShippingAmount %>
               </td>
             </tr>
+            <% } %>
+
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Total</td>
               <td class="text-right-cell">AED <%= orderDetails.totalAmount %>
