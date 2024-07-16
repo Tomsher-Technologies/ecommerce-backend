@@ -227,7 +227,7 @@ class CartController extends base_controller_1.default {
                             totalWalletAmount,
                             codAmount,
                             totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
-                            totalAmount: totalAmountOfProduct + shippingCharge + giftWrapcharge
+                            totalAmount: totalAmountOfProduct + finalShippingCharge + giftWrapcharge
                         };
                         newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
                         if (newCartOrder) {
@@ -300,7 +300,7 @@ class CartController extends base_controller_1.default {
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
-                            totalAmount: totalAmountOfProduct + shippingCharge,
+                            totalAmount: totalAmountOfProduct + finalShippingCharge,
                         };
                         newCartOrder = await cart_service_1.default.create(cartOrderData);
                         if (newCartOrder) {
