@@ -110,21 +110,6 @@ class GuestController extends base_controller_1.default {
                     const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
                     const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
                     const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                    if (!basicDetailsSettings) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Basic details settings not fount'
-                        });
-                    }
-                    if (!socialMedia) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Social media settings not fount'
-                        });
-                    }
-                    if (!appUrls) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'App url settings not fount'
-                        });
-                    }
                     const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
                         otp: newCustomer.otp,
                         firstName: newCustomer.firstName,
@@ -231,21 +216,6 @@ class GuestController extends base_controller_1.default {
                             const basicDetailsSettings = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
                             const socialMedia = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
                             const appUrls = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                            if (!basicDetailsSettings) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Basic details settings not fount'
-                                });
-                            }
-                            if (!socialMedia) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Social media settings not fount'
-                                });
-                            }
-                            if (!appUrls) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'App url settings not fount'
-                                });
-                            }
                             const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
                                 otp: updatedCustomer.otp,
                                 firstName: updatedCustomer.firstName,
@@ -411,21 +381,6 @@ class GuestController extends base_controller_1.default {
                             const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
                             const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
                             const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                            if (!basicDetailsSettings) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Basic details settings not fount'
-                                });
-                            }
-                            if (!socialMedia) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Social media settings not fount'
-                                });
-                            }
-                            if (!appUrls) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'App url settings not fount'
-                                });
-                            }
                             const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
                                 otp: optUpdatedCustomer.otp,
                                 firstName: optUpdatedCustomer.firstName,

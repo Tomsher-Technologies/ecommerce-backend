@@ -123,24 +123,6 @@ class GuestController extends BaseController {
                     const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
                     const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
                     const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                    if (!basicDetailsSettings) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Basic details settings not fount'
-                        });
-                    }
-
-                    if (!socialMedia) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Social media settings not fount'
-                        });
-                    }
-
-                    if (!appUrls) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'App url settings not fount'
-                        });
-                    }
                     const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
                         {
                             otp: newCustomer.otp,
@@ -252,24 +234,6 @@ class GuestController extends BaseController {
                             const basicDetailsSettings = await settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
                             const socialMedia = await settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
                             const appUrls = await settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                            if (!basicDetailsSettings) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Basic details settings not fount'
-                                });
-                            }
-
-                            if (!socialMedia) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Social media settings not fount'
-                                });
-                            }
-
-                            if (!appUrls) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'App url settings not fount'
-                                });
-                            }
 
                             const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
                                 {
@@ -434,23 +398,6 @@ class GuestController extends BaseController {
                             const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
                             const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
 
-                            if (!basicDetailsSettings) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Basic details settings not fount'
-                                });
-                            }
-
-                            if (!socialMedia) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Social media settings not fount'
-                                });
-                            }
-
-                            if (!appUrls) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'App url settings not fount'
-                                });
-                            }
                             const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
 
                                 {
