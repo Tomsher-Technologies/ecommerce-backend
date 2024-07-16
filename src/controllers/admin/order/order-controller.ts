@@ -339,7 +339,6 @@ class OrdersController extends BaseController {
                 }
             }
 
-
             orderDetails.orderStatus = orderStatus;
             if (orderStatus === '12' || orderStatus === '5') {
                 orderDetails.cartStatus == cartStatus.delivered

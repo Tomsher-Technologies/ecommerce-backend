@@ -119,11 +119,7 @@ class GuestController extends BaseController {
                             } else if (process.env.SHOPNAME === 'Homestyle') {
                                 const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                             }
-
-
                         })
-
-
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -199,7 +195,7 @@ class GuestController extends BaseController {
                                     phone: updatedCustomer.phone,
                                     otpType
                                 },
-                                message: `Otp successfully sended on ${otpType}`
+                                message: `OTP successfully sent to ${otpType}`
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {
@@ -329,7 +325,7 @@ class GuestController extends BaseController {
                                     email: optUpdatedCustomer.email,
                                     phone: optUpdatedCustomer.phone,
                                 },
-                                message: 'Otp successfully sent'
+                                message: 'OTP successfully sent'
                             });
                         } else {
                             return controller.sendErrorResponse(res, 200, {
