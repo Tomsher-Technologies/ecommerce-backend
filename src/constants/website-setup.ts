@@ -15,6 +15,7 @@ export const blockReferences = {
     defualtSettings: 'defualt-settings',
     shipmentSettings: 'shipment-settings',
     enableFeatures: 'enable-features',
+    socialMedia: 'social-media',
     wallets: 'wallets',
     referAndEarn: 'refer-and-earn',
     home: 'home',

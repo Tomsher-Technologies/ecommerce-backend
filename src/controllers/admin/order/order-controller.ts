@@ -11,7 +11,7 @@ import OrderService from '../../../services/admin/order/order-service'
 import mongoose from 'mongoose';
 import { OrderQueryParams } from '../../../utils/types/order';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';
-import { orderStatusArray, orderStatusMessages } from '../../../constants/cart';
+import { cartStatus, orderStatusArray, orderStatusMessages } from '../../../constants/cart';
 import CustomerWalletTransactionsModel from '../../../model/frontend/customer-wallet-transaction-model';
 import settingsService from '../../../services/admin/setup/settings-service';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
@@ -341,6 +341,9 @@ class OrdersController extends BaseController {
 
 
             orderDetails.orderStatus = orderStatus;
+            if (orderStatus === '12' || orderStatus === '5') {
+                orderDetails.cartStatus == cartStatus.delivered
+            }
             const currentDate = new Date();
             switch (orderStatus) {
                 case '1': orderDetails.orderStatusAt = currentDate; break;
@@ -367,7 +370,12 @@ class OrdersController extends BaseController {
             }
             await CartOrderProductsModel.updateMany(
                 { cartId: orderDetails._id },
-                { $set: { orderStatus: orderStatus, orderStatusAt: currentDate } }
+                {
+                    $set: {
+                        orderStatus: orderStatus,
+                        orderStatusAt: currentDate
+                    }
+                }
             );
             if (orderStatus === '4' || orderStatus === '5') {
                 let query: any = { _id: { $exists: true } };

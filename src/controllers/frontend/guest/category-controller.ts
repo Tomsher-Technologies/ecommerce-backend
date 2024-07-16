@@ -21,7 +21,6 @@ class CategoryController extends BaseController {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 query.status = '1';
-
                 if (category) {
                     const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                     if (isObjectId) {
@@ -58,6 +57,25 @@ class CategoryController extends BaseController {
             }
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
+        }
+    }
+
+    async findOne(req: Request, res: Response): Promise<void> {
+        try {
+            const categoryId = req.params.slug;
+            if (categoryId) {
+                const category = await CategoryService.findOne(categoryId, req.get('origin'));
+                controller.sendSuccessResponse(res, {
+                    requestedData: category,
+                    message: 'Success'
+                });
+            } else {
+                controller.sendErrorResponse(res, 200, {
+                    message: 'Category Id not found!',
+                });
+            }
+        } catch (error: any) {
+            controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
 

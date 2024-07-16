@@ -1,10 +1,10 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { categoryProject, categoryLookup, categoryFinalProject, categoryLanguageFieldsReplace } from "../../../utils/config/category-config";
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
-
 
 class CategoryService {
 
@@ -71,6 +71,27 @@ class CategoryService {
         pipeline.push(categoryFinalProject);
 
         return pipeline
+    }
+
+    async findOne(category: string, hostName: string | undefined): Promise<CategoryProps | null> {
+        try {
+            if (!category) return null;
+            const pipeline: any[] = [];
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+            if (isObjectId) {
+                pipeline.push({ $match: { _id: new mongoose.Types.ObjectId(category) } });
+            } else {
+                pipeline.push({ $match: { slug: category } });
+            }
+    
+            const categoryLanguageLookup: any = await this.categoryLanguage(hostName, pipeline);
+            const categoryDetails = await CategoryModel.aggregate(categoryLanguageLookup).exec();
+    
+            return categoryDetails[0] || null;
+        } catch (error) {
+            console.error('Error in findOne:', error);
+            return null;
+        }
     }
 }
 

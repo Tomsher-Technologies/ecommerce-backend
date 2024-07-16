@@ -53,14 +53,16 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         required: function () {
             // Require description field if isExcel is not true
             return !this.isExcel;
-        }
+        },
+        default: '',
     },
     categoryImageUrl: {
         type: String,
         required: function () {
             // Require categoryImageUrl field if isExcel is not true
             return !this.isExcel;
-        }
+        },
+        default: '',
     },
     isExcel: {
         type: Boolean,
@@ -71,7 +73,7 @@ const categorySchema: Schema<CategoryProps> = new Schema({
         default: '0',
     },
     corporateGiftsPriority: {
-        type: String,
+        type: String,   
         default: '0'
     },
     type: {

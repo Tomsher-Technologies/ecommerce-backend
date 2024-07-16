@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
@@ -67,6 +68,27 @@ class CategoryService {
         pipeline.push(category_config_1.categoryProject);
         pipeline.push(category_config_1.categoryFinalProject);
         return pipeline;
+    }
+    async findOne(category, hostName) {
+        try {
+            if (!category)
+                return null;
+            const pipeline = [];
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+            if (isObjectId) {
+                pipeline.push({ $match: { _id: new mongoose_1.default.Types.ObjectId(category) } });
+            }
+            else {
+                pipeline.push({ $match: { slug: category } });
+            }
+            const categoryLanguageLookup = await this.categoryLanguage(hostName, pipeline);
+            const categoryDetails = await category_model_1.default.aggregate(categoryLanguageLookup).exec();
+            return categoryDetails[0] || null;
+        }
+        catch (error) {
+            console.error('Error in findOne:', error);
+            return null;
+        }
     }
 }
 exports.default = new CategoryService();
