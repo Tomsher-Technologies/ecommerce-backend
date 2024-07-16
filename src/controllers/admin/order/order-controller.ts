@@ -456,7 +456,7 @@ class OrdersController extends BaseController {
                     ...websiteSettingsQuery,
                     countryId: orderDetails[0].countryId,
                     block: websiteSetup.basicSettings,
-                    blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings] },
+                    blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia] },
                     status: '1',
                 } as any;
 
