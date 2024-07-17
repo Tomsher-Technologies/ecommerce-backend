@@ -15,6 +15,8 @@ const product_gallery_images_model_1 = __importDefault(require("../../../model/a
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 const specification_config_1 = require("../../../utils/config/specification-config");
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
+const attribute_config_1 = require("../../../utils/config/attribute-config");
+const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllProducts(req, res) {
@@ -334,28 +336,13 @@ class ProductController extends base_controller_1.default {
                     query = {
                         ...query,
                         'productVariants._id': new mongoose_1.default.Types.ObjectId(productId),
-                        'status': '1'
                     };
-                    variantDetails = await product_variants_model_1.default.findOne({
-                        _id: new mongoose_1.default.Types.ObjectId(productId),
-                        countryId
-                    });
                 }
                 else {
                     query = {
                         ...query,
                         'productVariants.slug': productId,
-                        'status': '1'
                     };
-                    variantDetails = await product_variants_model_1.default.findOne({
-                        slug: productId,
-                        countryId
-                    });
-                }
-                if (!variantDetails) {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Product not found!',
-                    });
                 }
                 const productDetails = await product_service_1.default.findProductList({
                     countryId,
@@ -363,6 +350,22 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     hostName: req.get('origin'),
                 });
+                if (productDetails && productDetails.length === 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product not found!',
+                    });
+                }
+                if (productDetails[0].productVariants && productDetails[0].productVariants.length === 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product variant not found!',
+                    });
+                }
+                variantDetails = productDetails[0].productVariants[0];
+                if (!variantDetails) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product not found!',
+                    });
+                }
                 let imageGallery = await product_gallery_images_model_1.default.find({
                     variantId: variantDetails._id
                 }).select('-createdAt -statusAt -status');
@@ -378,10 +381,22 @@ class ProductController extends base_controller_1.default {
                         variantId: null
                     }));
                 }
+                let allProductVariantAttributes = [];
+                let allProductVariants = [];
+                if (getattribute === '1') {
+                    allProductVariants = await product_variants_model_1.default.find({
+                        productId: variantDetails.productId,
+                    }).select('_id productId variantSku slug isDefault quantity').exec();
+                    allProductVariantAttributes = await product_variant_attribute_model_1.default.aggregate((0, attribute_config_1.frontendVariantAttributesLookup)({
+                        variantId: variantDetails._id
+                    }));
+                }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         product: {
                             ...productDetails[0],
+                            allProductVariants,
+                            allProductVariantAttributes,
                             imageGallery: imageGallery || [],
                             productSpecification: productSpecification || [],
                         },

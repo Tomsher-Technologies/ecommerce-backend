@@ -14,6 +14,8 @@ import ProductSpecificationModel from '../../../model/admin/ecommerce/product/pr
 import { collections } from '../../../constants/collections';
 import { frontendSpecificationLookup } from '../../../utils/config/specification-config';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
+import { frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
+import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 const controller = new BaseController();
 
 class ProductController extends BaseController {
@@ -336,28 +338,12 @@ class ProductController extends BaseController {
                     query = {
                         ...query,
                         'productVariants._id': new mongoose.Types.ObjectId(productId),
-                        'status': '1'
                     }
-                    variantDetails = await ProductVariantsModel.findOne({
-                        _id: new mongoose.Types.ObjectId(productId),
-                        countryId
-                    });
                 } else {
                     query = {
                         ...query,
                         'productVariants.slug': productId,
-                        'status': '1'
                     }
-                    variantDetails = await ProductVariantsModel.findOne({
-                        slug: productId,
-                        countryId
-                    });
-                }
-
-                if (!variantDetails) {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Product not found!',
-                    });
                 }
                 const productDetails: any = await ProductService.findProductList({
                     countryId,
@@ -365,6 +351,24 @@ class ProductController extends BaseController {
                     getattribute,
                     hostName: req.get('origin'),
                 });
+
+                if (productDetails && productDetails.length === 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product not found!',
+                    });
+                }
+                if (productDetails[0].productVariants && productDetails[0].productVariants.length === 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product variant not found!',
+                    });
+                }
+                variantDetails = productDetails[0].productVariants[0];
+                if (!variantDetails) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Product not found!',
+                    });
+                }
+
                 let imageGallery = await ProductGalleryImagesModel.find({
                     variantId: variantDetails._id
                 }).select('-createdAt -statusAt -status');
@@ -381,10 +385,25 @@ class ProductController extends BaseController {
                     }));
                 }
 
+                let allProductVariantAttributes: any[] = [];
+                let allProductVariants: any[] = [];
+
+                if (getattribute === '1') {
+                    allProductVariants = await ProductVariantsModel.find({
+                        productId: variantDetails.productId,
+                    }).select('_id productId variantSku slug isDefault quantity').exec();
+
+                    allProductVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
+                        variantId: variantDetails._id
+                    }));
+                }
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         product: {
                             ...productDetails[0],
+                            allProductVariants,
+                            allProductVariantAttributes,
                             imageGallery: imageGallery || [],
                             productSpecification: productSpecification || [],
                         },

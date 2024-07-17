@@ -46,6 +46,21 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
             }
         }
+        
+        const variantLookupMatch: any = {
+            $expr: {
+                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
+            },
+            status: "1"
+        };
+
+        if (query['productVariants._id']) {
+            variantLookupMatch._id = query['productVariants._id'];
+        }
+
+        if (query['productVariants.slug']) {
+            variantLookupMatch.slug = query['productVariants.slug'];
+        }
 
         const modifiedPipeline = {
             $lookup: {
@@ -54,20 +69,12 @@ class ProductService {
                 foreignField: 'productId',
                 as: 'productVariants',
                 pipeline: [
-                    // ...((!query['productVariants._id'] || !query['productVariants.slug']) ? [
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                            },
-                            status: "1"
-                        }
-                    },
-                    // ] : []),
+                    { $match: variantLookupMatch },
                     {
                         $project: {
                             _id: 1,
                             countryId: 1,
+                            productId: 1,
                             slug: 1,
                             variantSku: 1,
                             extraProductTitle: 1,
@@ -101,8 +108,6 @@ class ProductService {
                     ]
                 }
             },
-
-
         ];
         const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, "", countryId)
 

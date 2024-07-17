@@ -4,6 +4,7 @@ exports.specificationStatusSchema = exports.specificationSchema = void 0;
 const zod_1 = require("zod");
 exports.specificationSchema = zod_1.z.object({
     specificationTitle: zod_1.z.string({ required_error: 'Specification title is required', }).min(2, 'Specification title is should be 2 chars minimum'),
+    specificationDisplayName: zod_1.z.string().optional(),
     SpecificationValues: zod_1.z.array(zod_1.z.unknown()).optional(),
     languageValues: zod_1.z.any().optional(),
 }).nonstrict();

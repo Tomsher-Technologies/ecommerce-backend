@@ -46,9 +46,9 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
                 { 'brand.brandTitle': keywordRegex },
                 { 'productCategory.category.slug': keywordRegex },
                 { 'brand.slug': keywordRegex },
+                { 'productVariants.slug': keywordRegex },
                 { 'productVariants.variantSku': keywordRegex },
                 { 'productVariants.extraProductTitle': keywordRegex }
-
             ],
             ...query
         } as any;
