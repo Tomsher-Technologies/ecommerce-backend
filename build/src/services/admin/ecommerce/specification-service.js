@@ -41,6 +41,7 @@ class SpecificationService {
             $project: {
                 _id: 1,
                 specificationTitle: 1,
+                specificationDisplayTitle: 1,
                 slug: 1,
                 status: 1,
                 createdAt: 1,
@@ -178,6 +179,7 @@ class SpecificationService {
         else {
             const specificationData = {
                 specificationTitle: (0, helpers_1.capitalizeWords)(data.specificationTitle),
+                specificationDisplayName: data.specificationDisplayName,
                 isExcel: true,
                 slug: (0, helpers_1.slugify)(data.specificationTitle)
             };

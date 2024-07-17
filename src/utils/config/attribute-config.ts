@@ -1,8 +1,9 @@
+import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages"
 
 export const attributeDetailsLookup = {
     $lookup: {
-        from: 'attributedetails', // Collection name of AttributeDetailModel
+        from: `${collections.ecommerce.attributedetails}`, // Collection name of AttributeDetailModel
         localField: '_id', // Field in AttributesModel
         foreignField: 'attributeId', // Field in AttributeDetailModel
         as: 'attributeValues'
@@ -94,4 +95,45 @@ export const attributeProject = {
         }
 
     }
+}
+
+export const frontendVariantAttributesLookup = (match: any) => {
+    return [
+        {
+            $match: match
+        },
+        {
+            $lookup: {
+                from: `${collections.ecommerce.attributes}`,
+                localField: 'attributeId',
+                foreignField: '_id',
+                as: 'attribute'
+            }
+        },
+        {
+            $unwind: "$attribute"
+        },
+        {
+            $lookup: {
+                from: `${collections.ecommerce.attributedetails}`,
+                localField: 'attributeDetailId',
+                foreignField: '_id',
+                as: 'attributeDetail'
+            }
+        },
+        {
+            $unwind: "$attributeDetail"
+        },
+        {
+            $project: {
+                _id: 1, 
+                variantId: 1,
+                attributeId: '$attribute._id',
+                attributeTitle: '$attribute.attributeTitle',
+                slug: '$attribute.slug',
+                attributeType: '$attribute.attributeType',
+                attributeDetail: 1
+            }
+        }
+    ]
 }

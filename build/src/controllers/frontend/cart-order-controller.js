@@ -120,7 +120,7 @@ class CartController extends base_controller_1.default {
                         }
                     }
                     var cartOrderData;
-                    const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings });
+                    const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });
                     const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
                     const tax = await tax_model_1.default.findOne({ countryId: country });
                     if (existingCart) {

@@ -57,9 +57,10 @@ class SpecificationController extends base_controller_1.default {
             const validatedData = specification_schema_1.specificationSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { specificationTitle, specificationValues, languageValues } = validatedData.data;
+                const { specificationTitle, specificationValues, languageValues, specificationDisplayName } = validatedData.data;
                 const specificationData = {
                     specificationTitle: (0, helpers_1.capitalizeWords)(specificationTitle),
+                    specificationDisplayName: specificationDisplayName,
                     status: '1',
                     slug: (0, helpers_1.slugify)(specificationTitle),
                     createdAt: new Date(),
@@ -93,6 +94,7 @@ class SpecificationController extends base_controller_1.default {
                         requestedData: {
                             _id: newSpecification._id,
                             specificationTitle: newSpecification.specificationTitle,
+                            specificationDisplayName: newSpecification.specificationDisplayName,
                             specificationValues: specificationDetailsValues,
                             languageValues: languageValues,
                             status: newSpecification.status
@@ -185,6 +187,7 @@ class SpecificationController extends base_controller_1.default {
                                 requestedData: {
                                     _id: updatedSpecification._id,
                                     specificationTitle: updatedSpecification.specificationTitle,
+                                    specificationDisplayName: updatedSpecification.specificationDisplayName,
                                     specificationValues: newValue,
                                     languageValues: newLanguageValues
                                 },
