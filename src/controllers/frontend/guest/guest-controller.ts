@@ -143,10 +143,14 @@ class GuestController extends BaseController {
                             }
                             if (process.env.SHOPNAME === 'Timehouse') {
                                 const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
-
                             } else if (process.env.SHOPNAME === 'Homestyle') {
                                 const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+                            } else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+                            } else if (process.env.SHOPNAME === 'Smartbaby') {
+                                const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                             }
+
                         })
 
                     return controller.sendSuccessResponse(res, {
@@ -256,6 +260,12 @@ class GuestController extends BaseController {
                                         const sendEmail = await mailChimpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
 
                                     } else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
+                                    }
+                                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                        const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
+                                    }
+                                    else if (process.env.SHOPNAME === 'Smartbaby') {
                                         const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
                                     }
                                 })
@@ -421,6 +431,12 @@ class GuestController extends BaseController {
                                         const sendEmail = await mailChimpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
 
                                     } else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
+                                    }
+                                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                        const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
+                                    }
+                                    else if (process.env.SHOPNAME === 'Smartbaby') {
                                         const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
                                     }
                                 })
