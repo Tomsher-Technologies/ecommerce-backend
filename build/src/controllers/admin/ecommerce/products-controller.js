@@ -445,6 +445,7 @@ class ProductsController extends base_controller_1.default {
                                                                 const specificationOption = [];
                                                                 const specificationValue = [];
                                                                 const specificationName = [];
+                                                                const specificationDispalyName = [];
                                                                 const galleryImage = [];
                                                                 for (const columnName in data) {
                                                                     if (columnName.startsWith('Attribute_Option')) {
@@ -475,6 +476,10 @@ class ProductsController extends base_controller_1.default {
                                                                     if (columnName.startsWith('Specification_Value')) {
                                                                         const index = columnName.split('_')[2];
                                                                         specificationValue[index] = data[columnName];
+                                                                    }
+                                                                    if (columnName.startsWith('Specification_Display_Name')) {
+                                                                        const index = columnName.split('_')[3];
+                                                                        specificationDispalyName[index] = data[columnName];
                                                                     }
                                                                     // if (columnName.startsWith('Specification_Value')) {
                                                                     //     specificationValue.push(columnName);
@@ -511,22 +516,22 @@ class ProductsController extends base_controller_1.default {
                                                                     }
                                                                 }
                                                                 const specificationCombinedArray = [];
-                                                                // console.log("specificationValuespecificationValue", specificationValue);
                                                                 for (let index in specificationOption) {
                                                                     let option = specificationOption[index];
                                                                     let name = specificationName[index];
                                                                     let value = specificationValue[index];
+                                                                    let displayName = specificationDispalyName[index];
                                                                     // Only add if both option and name exist
                                                                     if (option && name) {
-                                                                        specificationCombinedArray.push({ data: option, name: name, value: value });
+                                                                        specificationCombinedArray.push({ data: option, name: name, value: value, displayName: displayName });
                                                                     }
                                                                     else {
-                                                                        specificationCombinedArray.push({ data: option || undefined, name: name || undefined, value: value || undefined });
+                                                                        specificationCombinedArray.push({ data: option || undefined, name: name || undefined, value: value || undefined, displayName: displayName || undefined });
                                                                     }
                                                                 }
                                                                 for await (let value of specificationCombinedArray) {
                                                                     if (value && value.data && value.name) {
-                                                                        const specifications = await specification_service_1.default.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value });
+                                                                        const specifications = await specification_service_1.default.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value, specificationDisplayName: value.displayName });
                                                                         specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId });
                                                                     }
                                                                 }

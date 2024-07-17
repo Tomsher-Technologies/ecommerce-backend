@@ -392,10 +392,11 @@ class ProductController extends BaseController {
                     allProductVariants = await ProductVariantsModel.find({
                         productId: variantDetails.productId,
                     }).select('_id productId variantSku slug isDefault quantity').exec();
-
-                    allProductVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
-                        variantId: variantDetails._id
-                    }));
+                    if (allProductVariants && allProductVariants.length > 0) {
+                        allProductVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
+                            productId: variantDetails.productId
+                        }));
+                    }
                 }
 
                 return controller.sendSuccessResponse(res, {
