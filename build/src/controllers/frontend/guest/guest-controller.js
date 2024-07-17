@@ -132,6 +132,12 @@ class GuestController extends base_controller_1.default {
                         else if (process.env.SHOPNAME === 'Homestyle') {
                             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
                         }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                        }
                     });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -236,6 +242,12 @@ class GuestController extends base_controller_1.default {
                                     const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
                                 }
                                 else if (process.env.SHOPNAME === 'Homestyle') {
+                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                }
+                                else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                }
+                                else if (process.env.SHOPNAME === 'Smartbaby') {
                                     const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
                                 }
                             });
@@ -401,6 +413,12 @@ class GuestController extends base_controller_1.default {
                                     const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
                                 }
                                 else if (process.env.SHOPNAME === 'Homestyle') {
+                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                }
+                                else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                }
+                                else if (process.env.SHOPNAME === 'Smartbaby') {
                                     const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
                                 }
                             });

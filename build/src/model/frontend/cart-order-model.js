@@ -38,7 +38,16 @@ const cartOrderSchema = new mongoose_1.Schema({
     orderId: {
         type: String,
         default: null,
-        unique: true
+        unique: false,
+        validate: {
+            validator: async function (value) {
+                if (value === null)
+                    return true;
+                const count = await this.model('CartOrders').countDocuments({ orderId: value });
+                return count === 0;
+            },
+            message: 'orderId must be unique'
+        }
     },
     couponId: {
         type: mongoose_1.Schema.Types.ObjectId,

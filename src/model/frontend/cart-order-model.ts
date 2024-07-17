@@ -61,7 +61,15 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     orderId: {
         type: String,
         default: null,
-        unique: true
+        unique: false,
+        validate: {
+            validator: async function (this: any, value: string): Promise<boolean> {
+                if (value === null) return true;
+                const count = await this.model('CartOrders').countDocuments({ orderId: value });
+                return count === 0;
+            },
+            message: 'orderId must be unique'
+        }
     },
     couponId: {
         type: Schema.Types.ObjectId,
