@@ -2,7 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface SpecificationProps extends Document {
     specificationTitle: string;
-    enableTab:string;
+    specificationDisplayName: string;
+    enableTab: string;
     slug: string;
     status: string;
     createdAt?: Date;
@@ -33,12 +34,15 @@ const specificationSchema: Schema<SpecificationProps> = new Schema({
             },
             message: 'Slug must be unique'
         }
-    },  
+    },
+    specificationDisplayName: {
+        type: String,
+    },
     enableTab: {
         type: String,
         required: true,
         default: "0"
-    },  
+    },
     status: {
         type: String,
         required: true,

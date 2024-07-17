@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.attributeProject = exports.attributeDetailLanguageFieldsReplace = exports.attributeLanguageFieldsReplace = exports.attributeLookup = exports.attributeDetailsLookup = void 0;
+exports.frontendVariantAttributesLookup = exports.attributeProject = exports.attributeDetailLanguageFieldsReplace = exports.attributeLanguageFieldsReplace = exports.attributeLookup = exports.attributeDetailsLookup = void 0;
+const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.attributeDetailsLookup = {
     $lookup: {
-        from: 'attributedetails', // Collection name of AttributeDetailModel
+        from: `${collections_1.collections.ecommerce.attributedetails}`, // Collection name of AttributeDetailModel
         localField: '_id', // Field in AttributesModel
         foreignField: 'attributeId', // Field in AttributeDetailModel
         as: 'attributeValues'
@@ -89,3 +90,44 @@ exports.attributeProject = {
         }
     }
 };
+const frontendVariantAttributesLookup = (match) => {
+    return [
+        {
+            $match: match
+        },
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.attributes}`,
+                localField: 'attributeId',
+                foreignField: '_id',
+                as: 'attribute'
+            }
+        },
+        {
+            $unwind: "$attribute"
+        },
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.attributedetails}`,
+                localField: 'attributeDetailId',
+                foreignField: '_id',
+                as: 'attributeDetail'
+            }
+        },
+        {
+            $unwind: "$attributeDetail"
+        },
+        {
+            $project: {
+                _id: 1,
+                variantId: 1,
+                attributeId: '$attribute._id',
+                attributeTitle: '$attribute.attributeTitle',
+                slug: '$attribute.slug',
+                attributeType: '$attribute.attributeType',
+                attributeDetail: 1
+            }
+        }
+    ];
+};
+exports.frontendVariantAttributesLookup = frontendVariantAttributesLookup;
