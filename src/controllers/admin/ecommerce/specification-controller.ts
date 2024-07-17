@@ -66,10 +66,11 @@ class SpecificationController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { specificationTitle, specificationValues, languageValues } = validatedData.data;
+                const { specificationTitle, specificationValues, languageValues, specificationDisplayName } = validatedData.data;
 
                 const specificationData: Partial<SpecificationProps> = {
                     specificationTitle: capitalizeWords(specificationTitle),
+                    specificationDisplayName: specificationDisplayName,
                     status: '1',
                     slug: slugify(specificationTitle),
                     createdAt: new Date(),
@@ -107,6 +108,7 @@ class SpecificationController extends BaseController {
                         requestedData: {
                             _id: newSpecification._id,
                             specificationTitle: newSpecification.specificationTitle,
+                            specificationDisplayName: newSpecification.specificationDisplayName,
                             specificationValues: specificationDetailsValues,
                             languageValues: languageValues,
                             status: newSpecification.status
@@ -203,6 +205,7 @@ class SpecificationController extends BaseController {
                                 requestedData: {
                                     _id: updatedSpecification._id,
                                     specificationTitle: updatedSpecification.specificationTitle,
+                                    specificationDisplayName: updatedSpecification.specificationDisplayName,
                                     specificationValues: newValue,
                                     languageValues: newLanguageValues
                                 },

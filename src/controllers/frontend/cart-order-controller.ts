@@ -142,7 +142,8 @@ class CartController extends BaseController {
                         }
                     }
                     var cartOrderData
-                    const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings })
+                    const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: country })
+
                     const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
                     const tax: any = await TaxsModel.findOne({ countryId: country })
 
@@ -319,6 +320,7 @@ class CartController extends BaseController {
                         totalAmountOfProduct = singleProductTotal
 
                         const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
+
                         cartOrderData = {
                             customerId: customer,
                             guestUserId: guestUser,
