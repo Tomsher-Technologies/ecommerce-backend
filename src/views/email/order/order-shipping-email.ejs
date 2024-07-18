@@ -548,7 +548,7 @@
                                             <p
                                                 style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif">
 
-                                                <%= shopName %> Team
+                                                Team <%= shopName %>
                                             </p>
                                             <p
                                                 style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;">
@@ -587,109 +587,155 @@
                                                         style="padding:0;Margin:0;">
                                                         <table width="100%" cellspacing="0" cellpadding="0"
                                                             style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;">
-                                                            <tr>
-                                                                <td style="margin: 0%; padding: 0%;">
-                                                                    <table width="100%" cellspacing="0" cellpadding="0"
-                                                                        style="border-top: 2px dotted #232323;">
-                                                                        <tr>
-                                                                            <td style="margin: 0%; padding: 0%;">
-                                                                                <p
-                                                                                    style="Margin:0 20px;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif;margin-top: 20px; ">
-                                                                                    40+ Brands, 52+ Stores, 4 Countries,
-                                                                                    experience the endless possibilities
-                                                                                    with Time House App,
-                                                                                    DOWNLOAD NOW! And enjoy exclusive
-                                                                                    offer, discounts , coupons and so
-                                                                                    much more.
-                                                                                </p>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </td>
-                                                            </tr>
-                                                            <!-- <tr>
+                                                            <% if(shopDescription) { %>
+                                                                <tr>
+                                                                    <td style="margin: 0%; padding: 0%;">
+                                                                        <table width="100%" cellspacing="0"
+                                                                            cellpadding="0"
+                                                                            style="border-top: 2px dotted #232323;">
+                                                                            <tr>
+                                                                                <td
+                                                                                    style="margin: 0%; padding: 0%;">
+                                                                                    <p class="textContainer"
+                                                                                        style="Margin:0 20px;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;line-height:21px;color:#333333;font-family: sans-serif;margin-top: 20px; ">
+                                                                                        <%= shopDescription %>
+                                                                                    </p>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                                <% } %>
+                                                            <% if (appUrls) { %>
+                                                                <tr>
 
-                                                                <td align="center">
-                                                                    <table class="es-table-not-adapt es-social"
-                                                                        cellspacing="0" cellpadding="0"
-                                                                        style="margin-top:30px;">
-                                                                        <td align="center" style="padding-right:5px">
-                                                                            <a href="https://play.google.com/store/apps/details?id=com.app.timehouse"
-                                                                                target="_blank"
-                                                                                style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
-                                                                                    title="Play Store"
-                                                                                    src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/HJpZEweNUVryCZVPgVU4/other/image-QXxk1vOA.png"
-                                                                                    alt="Play Store" width="104"
-                                                                                    height="34"
-                                                                                    style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
+                                                                    <td align="center">
+                                                                        <table
+                                                                            class="es-table-not-adapt es-social"
+                                                                            cellspacing="0" cellpadding="0"
+                                                                            style="margin-top:30px;">
+                                                                            <% if (appUrls.android) { %>
+                                                                                <td align="center"
+                                                                                    style="padding-right:5px">
+                                                                                    <a href="<%= appUrls.android %>"
+                                                                                        target="_blank"
+                                                                                        style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
+                                                                                            title="Play Store"
+                                                                                            src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/HJpZEweNUVryCZVPgVU4/other/image-QXxk1vOA.png"
+                                                                                            alt="Play Store"
+                                                                                            width="104"
+                                                                                            height="34"
+                                                                                            style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
 
 
+
+                                                                                </td>
+                                                                                <% } %>
+                                                                                    <% if(appUrls.iosAppStore){
+                                                                                        %>
+                                                                                        <td align="center"
+                                                                                            style="padding-left:5px">
+                                                                                            <a href="<%= appUrls.iosAppStore %>"
+                                                                                                target="_blank"
+                                                                                                style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;"><img
+                                                                                                    title="Apple Store"
+                                                                                                    src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/HJpZEweNUVryCZVPgVU4/other/image-FKjDZuBu.png
+                " alt="Apple Store" width="104" height="34" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
+                                                                                        </td>
+                                                                                        <% } %>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                                <% } %>
+                                                                    <tr>
+                                                                        <td align="center">
+                                                                            <table
+                                                                                class="es-table-not-adapt es-social"
+                                                                                cellspacing="0"
+                                                                                cellpadding="0"
+                                                                                style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;margin-top: 10px;">
+                                                                                <% if (socialMedia) { %>
+
+                                                                                    <tr
+                                                                                        style="border-collapse:collapse;">
+                                                                                        <% if
+                                                                                            (socialMedia.facebook)
+                                                                                            { %>
+
+                                                                                            <td valign="top"
+                                                                                                align="center"
+                                                                                                style="padding:0;Margin:0;padding:5px;">
+                                                                                                <a href="<%= socialMedia.facebook %>"
+                                                                                                    style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
+                                                                                                        title="Facebook"
+                                                                                                        src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/Bk6JufuvPNBkRyuMdvwN/other/image-r1uVF2dxH.png"
+                                                                                                        alt="Fb"
+                                                                                                        width="24"
+                                                                                                        height="24"
+                                                                                                        style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
+                                                                                            </td>
+                                                                                            <% } %>
+                                                                                                <% if
+                                                                                                    (socialMedia.whatsapp)
+                                                                                                    { %>
+                                                                                                    <td valign="top"
+                                                                                                        align="center"
+                                                                                                        style="padding:0;Margin:0;padding:5px;">
+                                                                                                        <a href="https://api.whatsapp.com/send?phone=<%= socialMedia.whatsapp %>&text=Hi%20There!"
+                                                                                                            target="_blank"
+                                                                                                            style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
+                                                                                                                title="Whatsapp"
+                                                                                                                src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/Bk6JufuvPNBkRyuMdvwN/other/image-HkBO4tndlH.png"
+                                                                                                                alt="Whatsapp"
+                                                                                                                width="24"
+                                                                                                                height="24"
+                                                                                                                style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
+                                                                                                    </td>
+                                                                                                    <% } %>
+                                                                                                        <% if
+                                                                                                            (socialMedia.email)
+                                                                                                            {
+                                                                                                            %>
+                                                                                                            <td valign="top"
+                                                                                                                align="center"
+                                                                                                                style="padding:0;Margin:0;padding:5px;">
+                                                                                                                <a href="mailto:<%= socialMedia.email %>"
+                                                                                                                    target="_blank"
+                                                                                                                    style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
+                                                                                                                        title="Email"
+                                                                                                                        src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/Bk6JufuvPNBkRyuMdvwN/other/image-BJMO4K3ugr.png"
+                                                                                                                        alt="Email"
+                                                                                                                        width="24"
+                                                                                                                        height="24"
+                                                                                                                        style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
+                                                                                                            </td>
+                                                                                                            <% }
+                                                                                                                %>
+                                                                                                                <% if
+                                                                                                                    (socialMedia.instagram)
+                                                                                                                    {
+                                                                                                                    %>
+                                                                                                                    <td valign="top"
+                                                                                                                        align="center"
+                                                                                                                        style="padding:0;Margin:0;padding:5px;">
+                                                                                                                        <a href="<%= socialMedia.instagram %>"
+                                                                                                                            target="_blank"
+                                                                                                                            style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
+                                                                                                                                title="instagram"
+                                                                                                                                src="https://resources.commerceup.io/?key=https://prod-admin-images.s3.ap-south-1.amazonaws.com/XHsG5SWkmD6jeeKznyMV/other/image-SNGnCevXM.png&width=600&png=true&resourceKey=XHsG5SWkmD6jeeKznyMV"
+                                                                                                                                alt="Instagram"
+                                                                                                                                width="24"
+                                                                                                                                height="24"
+                                                                                                                                style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
+                                                                                                                    </td>
+                                                                                                                    <% }
+                                                                                                                        %>
+                                                                                    </tr>
+                                                                                    <% } %>
+                                                                            </table>
 
                                                                         </td>
-                                                                        <td align="center" style="padding-left:5px">
-                                                                            <a href="https://apps.apple.com/ae/app/timehouse-branded-watches/id1599282430"
-                                                                                target="_blank"
-                                                                                style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;"><img
-                                                                                    title="Apple Store" src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/HJpZEweNUVryCZVPgVU4/other/image-FKjDZuBu.png
-                            " alt="Apple Store" width="104" height="34" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
-                                                                        </td>
-                                                                    </table>
-                                                                </td>
-                                                            </tr> -->
-                                                            <!-- <tr>
-                                                                <td align="center">
-                                                                    <table class="es-table-not-adapt es-social"
-                                                                        cellspacing="0" cellpadding="0"
-                                                                        style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;margin-top: 10px;">
-                                                                        <tr style="border-collapse:collapse;">
-                                                                            <td valign="top" align="center"
-                                                                                style="padding:0;Margin:0;padding:5px;">
-                                                                                <a href="https://www.facebook.com/timehousecompany/"
-                                                                                    style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
-                                                                                        title="Facebook"
-                                                                                        src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/Bk6JufuvPNBkRyuMdvwN/other/image-r1uVF2dxH.png"
-                                                                                        alt="Fb" width="24" height="24"
-                                                                                        style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
-                                                                            </td>
-
-                                                                            <td valign="top" align="center"
-                                                                                style="padding:0;Margin:0;padding:5px;">
-                                                                                <a href="https://api.whatsapp.com/send?phone=+971%2056%20914%205151&text=Hi%20There!"
-                                                                                    target="_blank"
-                                                                                    style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
-                                                                                        title="Whatsapp"
-                                                                                        src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/Bk6JufuvPNBkRyuMdvwN/other/image-HkBO4tndlH.png"
-                                                                                        alt="Whatsapp" width="24"
-                                                                                        height="24"
-                                                                                        style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
-                                                                            </td>
-                                                                            <td valign="top" align="center"
-                                                                                style="padding:0;Margin:0;padding:5px;">
-                                                                                <a href="mailto:<%= storeEmail %>"
-                                                                                    target="_blank"
-                                                                                    style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
-                                                                                        title="Email"
-                                                                                        src="https://prod-admin-images.s3.ap-south-1.amazonaws.com/Bk6JufuvPNBkRyuMdvwN/other/image-BJMO4K3ugr.png"
-                                                                                        alt="Email" width="24"
-                                                                                        height="24"
-                                                                                        style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
-                                                                            </td>
-                                                                            <td valign="top" align="center"
-                                                                                style="padding:0;Margin:0;padding:5px;">
-                                                                                <a href="https://instagram.com/timehouseuae?utm_medium=copy_link"
-                                                                                    target="_blank"
-                                                                                    style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:12px;text-decoration:none;color:#000000;"><img
-                                                                                        title="instagram"
-                                                                                        src="https://resources.commerceup.io/?key=https://prod-admin-images.s3.ap-south-1.amazonaws.com/XHsG5SWkmD6jeeKznyMV/other/image-SNGnCevXM.png&width=600&png=true&resourceKey=XHsG5SWkmD6jeeKznyMV"
-                                                                                        alt="Instagram" width="24"
-                                                                                        height="24"
-                                                                                        style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"></a>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-
-                                                                </td>
-                                                            </tr> -->
+                                                                    </tr>
                                                             <tr>
                                                                 <td align="center">
                                                                     <table class="es-table-not-adapt es-social"

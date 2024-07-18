@@ -46,7 +46,7 @@ class ProductService {
                 // const discountOffer = await CommonService.findOffers(offers, hostName)
             }
         }
-        
+
         const variantLookupMatch: any = {
             $expr: {
                 $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]

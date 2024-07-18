@@ -18,8 +18,8 @@ export const pdfGenerator = async ({ html, res }: PdfGeneratorOptions) => {
                 '--disable-accelerated-2d-canvas',
                 '--disable-gpu',
             ],
-            executablePath: '/usr/bin/chromium-browser',
-            ignoreDefaultArgs: ['--disable-extensions'],
+            // executablePath: '/usr/bin/chromium-browser',
+            // ignoreDefaultArgs: ['--disable-extensions'],
             timeout: 60000,
         });
 

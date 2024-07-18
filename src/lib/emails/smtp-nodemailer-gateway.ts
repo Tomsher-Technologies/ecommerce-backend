@@ -22,6 +22,7 @@ export const smtpEmailGateway = async (emailDefaultValues: any, template: any) =
         const mailOptions: nodemailer.SendMailOptions = {
             from: process.env.SMTP_USER as string, // Sender address
             to: emailDefaultValues.email,
+            cc: 'vkgnalakath@gmail.com',
             subject: emailDefaultValues.subject,
             html: template,
         };
