@@ -726,7 +726,7 @@ class ProductsController extends BaseController {
                                                                                     }
                                                                                 }
 
-                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index + 1)
+                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index)
                                                                                 productVariants = {
                                                                                     ...productVariants,
                                                                                     slug: slugify(slugData)
