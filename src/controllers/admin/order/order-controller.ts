@@ -404,13 +404,15 @@ class OrdersController extends BaseController {
                     ...query,
                     countryId: orderDetails.countryId,
                     block: websiteSetup.basicSettings,
-                    blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings] },
+                    blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
                     status: '1',
                 } as any;
 
                 const settingsDetails = await WebsiteSetupModel.find(query);
                 const defualtSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.defualtSettings);
                 const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
 
 
                 let commonDeliveryDays = '8';
@@ -431,7 +433,10 @@ class OrdersController extends BaseController {
                     products: updatedOrderDetails.products,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
+                    shopDescription: basicDetailsSettings?.shopDescription,
                     appUrl: `${process.env.APPURL}`,
+                    socialMedia,
+                    appUrls,
                     tax: tax
                 }, async (err: any, template: any) => {
                     if (err) {

@@ -19,6 +19,7 @@ import { buildOrderPipeline, } from '../../utils/config/cart-order-config';
 import { ObjectId } from 'mongoose';
 import TaxsModel from '../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
+import { smtpEmailGateway } from '../../lib/emails/smtp-nodemailer-gateway';
 
 class CheckoutService {
 
@@ -245,13 +246,15 @@ class CheckoutService {
                         ...websiteSettingsQuery,
                         countryId: cartDetails.countryId,
                         block: websiteSetup.basicSettings,
-                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings] },
+                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
                         status: '1',
                     } as any;
 
                     const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
                     const defualtSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.defualtSettings);
                     const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
 
                     const shippingAddressDetails: any = await CustomerAddress.findById(cartDetails.shippingId);
 
@@ -284,8 +287,11 @@ class CheckoutService {
                             email: customerDetails.email
                         },
                         expectedDeliveryDate,
+                        socialMedia,
+                        appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
+                        shopDescription: basicDetailsSettings?.shopDescription,
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
@@ -293,12 +299,33 @@ class CheckoutService {
                         tax: tax
                     }, async (err: any, template: any) => {
                         if (err) {
-                            console.log(err);
                         }
-                        await mailChimpEmailGateway({
-                            subject: orderStatusMessages['1'],
-                            email: customerDetails.email,
-                        }, template)
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            const sendEmail = await mailChimpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+
+                            }, template)
+
+                        } else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                            }, template)
+
+                        }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                            }, template)
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                            }, template)
+                        }
                     });
                 }
                 return {
