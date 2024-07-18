@@ -641,7 +641,7 @@ class ProductsController extends base_controller_1.default {
                                                                                         const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
                                                                                     }
                                                                                 }
-                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index + 1);
+                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index);
                                                                                 productVariants = {
                                                                                     ...productVariants,
                                                                                     slug: (0, helpers_1.slugify)(slugData)

@@ -17,7 +17,7 @@ import { networkPaymentGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tap
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
-import { networkAccessToken, networkCreateOrder } from "../../../lib/payment-gateway/network-payments";
+import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from "../../../lib/payment-gateway/network-payments";
 
 const controller = new BaseController();
 
@@ -167,8 +167,6 @@ class CheckoutController extends BaseController {
                     } else if (paymentMethod && paymentMethod.slug == paymentMethods.network) {
                         if (paymentMethod.paymentMethodValues) {
                             const networkResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
-                            console.log('networkResponse', networkResponse);
-
                             if (networkResponse && networkResponse.access_token) {
                                 const networkDefaultValues = networkPaymentGatwayDefaultValues(countryData, {
                                     ...cartUpdate,
@@ -185,10 +183,10 @@ class CheckoutController extends BaseController {
                                 if (networkResult && networkResult._links && networkResult._links.payment) {
                                     const paymentTransaction = await PaymentTransactionModel.create({
                                         paymentMethodId,
-                                        transactionId: networkResponse._id,
-                                        paymentId: networkResponse.reference,
+                                        transactionId: networkResult._id,
+                                        paymentId: networkResult.reference,
                                         orderId: cartDetails._id,
-                                        data: JSON.stringify(networkResponse),
+                                        data: JSON.stringify(networkResult),
                                         orderStatus: networkResult.pending, // Pending
                                         createdAt: new Date(),
                                     });
@@ -199,7 +197,6 @@ class CheckoutController extends BaseController {
                                 } else {
                                     return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
-
                             } else {
                                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
@@ -333,6 +330,45 @@ class CheckoutController extends BaseController {
             }
         } else {
             res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tapResponse?.status}`); // failure
+            return false
+        }
+    }
+
+    async networkPaymentResponse(req: Request, res: Response): Promise<any> {
+        const { tap_id, data }: any = req.query
+        if (!tap_id) {
+            res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
+            return false
+        }
+        const paymentDetails = await PaymentTransactionModel.findOne({ transactionId: tap_id });
+        if (!paymentDetails) {
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
+        }
+        const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId });
+        if (!paymentMethod) {
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
+        }
+        const networkAccesTokenResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
+        if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
+            const networkResponse = await networkCreateOrderStatus(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues);
+            console.log('networkResponse',networkResponse);
+            
+            // const retValResponse = await CheckoutService.paymentResponse({
+            //     paymentDetails,
+            //     allPaymentResponseData: data,
+            //     paymentStatus: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
+            //         orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
+            // });
+
+            // if (retValResponse.status) {
+            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
+            //     return true
+            // } else {
+            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
+            //     return false
+            // }
+        } else {
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=failure&message=Payment transaction. Please contact administrator`); // failure
             return false
         }
     }

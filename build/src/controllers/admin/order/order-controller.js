@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const path_1 = __importDefault(require("path"));
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const order_service_1 = __importDefault(require("../../../services/admin/order/order-service"));
@@ -23,6 +24,7 @@ const cart_order_product_model_1 = __importDefault(require("../../../model/front
 const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
 const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-model"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
+const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -379,12 +381,18 @@ class OrdersController extends base_controller_1.default {
                     ...query,
                     countryId: orderDetails.countryId,
                     block: website_setup_1.websiteSetup.basicSettings,
-                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings] },
+                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
                     status: '1',
                 };
                 const settingsDetails = await website_setup_model_1.default.find(query);
                 const defualtSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.defualtSettings);
                 const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                const options = {
+                    wordwrap: 130,
+                    // ...
+                };
                 let commonDeliveryDays = '8';
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
@@ -402,17 +410,40 @@ class OrdersController extends base_controller_1.default {
                     products: updatedOrderDetails.products,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
+                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                     appUrl: `${process.env.APPURL}`,
+                    socialMedia,
+                    appUrls,
                     tax: tax
                 }, async (err, template) => {
                     if (err) {
                         console.log(err);
                         return;
                     }
-                    await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                        subject: cart_1.orderStatusMessages[orderStatus],
-                        email: customerDetails?.email,
-                    }, template);
+                    if (process.env.SHOPNAME === 'Timehouse') {
+                        await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                            subject: cart_1.orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template);
+                    }
+                    else if (process.env.SHOPNAME === 'Homestyle') {
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                            subject: cart_1.orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template);
+                    }
+                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                            subject: cart_1.orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template);
+                    }
+                    else if (process.env.SHOPNAME === 'Smartbaby') {
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                            subject: cart_1.orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template);
+                    }
                 });
             }
             // console.log('aaaaaaaa', updatedOrderDetails);

@@ -23,6 +23,6 @@ router.get('/tap-failure-response', checkoutController.tapSuccessResponse);
 router.get('/tabby-success-response', checkoutController.tabbySuccessResponse);
 router.get('/tabby-failure-response', checkoutController.tabbySuccessResponse);
 
-router.get('/network-payment-response', checkoutController.tabbySuccessResponse);
+router.get('/network-payment-response', checkoutController.networkPaymentResponse);
 
 export default router;
