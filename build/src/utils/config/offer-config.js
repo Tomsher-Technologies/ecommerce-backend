@@ -11,7 +11,12 @@ const offerProductPopulation = (getOfferList, offerApplied) => {
                     cond: {
                         $and: [
                             { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                            { $in: ["$_id", offerApplied.products] } // Match product ID
+                            {
+                                $in: [
+                                    "$_id",
+                                    { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }
+                                ]
+                            }
                         ]
                     }
                 }
@@ -39,7 +44,7 @@ const offerCategoryPopulation = (getOfferList, offerApplied) => {
                                                 input: "$productCategory.category",
                                                 as: "cat",
                                                 cond: {
-                                                    $in: ["$$cat._id", offerApplied.categories]
+                                                    $in: ["$$cat._id", { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }]
                                                 }
                                             }
                                         }
@@ -65,7 +70,13 @@ const offerBrandPopulation = (getOfferList, offerApplied) => {
                     cond: {
                         $and: [
                             { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                            { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                            // { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                            {
+                                $in: [
+                                    "$brand._id",
+                                    { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }
+                                ]
+                            }
                         ]
                     }
                 }

@@ -20,6 +20,7 @@ const mail_chimp_sms_gateway_1 = require("../../lib/emails/mail-chimp-sms-gatewa
 const customer_address_model_1 = __importDefault(require("../../model/frontend/customer-address-model"));
 const cart_order_config_1 = require("../../utils/config/cart-order-config");
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
+const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 class CheckoutService {
     async paymentResponse(options) {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
@@ -214,6 +215,13 @@ class CheckoutService {
                     }
                 }
                 if (cartProducts) {
+                    const updateProductVariant = cartProducts.map((products) => ({
+                        updateOne: {
+                            filter: { _id: products.variantId },
+                            update: { $inc: { quantity: -products.quantity } },
+                        }
+                    }));
+                    await product_variants_model_1.default.bulkWrite(updateProductVariant);
                     if (customerDetails === null) {
                         customerDetails = await customers_model_1.default.findOne({ _id: cartDetails.customerId });
                     }

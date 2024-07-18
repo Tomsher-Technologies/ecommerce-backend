@@ -22,6 +22,7 @@ const website_setup_model_1 = __importDefault(require("../../../model/admin/setu
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
 const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-model"));
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -252,6 +253,16 @@ class OrdersController extends base_controller_1.default {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+            if (orderDetails.orderStatus === '11') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status once it is failed'
+                });
+            }
+            if (orderDetails.orderStatus === '8') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status once it is refunded'
+                });
+            }
             let customerDetails = null;
             if (orderDetails.customerId) {
                 const walletTransactionDetails = await customer_wallet_transaction_model_1.default.findOne({ orderId: orderDetails._id });
@@ -352,6 +363,16 @@ class OrdersController extends base_controller_1.default {
                     orderStatusAt: currentDate
                 }
             });
+            if (orderStatus === '11' || orderStatus === '7') { // return products
+                const cartProducts = await cart_order_product_model_1.default.find({ cartId: orderDetails._id }).select('variantId quantity');
+                const updateProductVariant = cartProducts.map((products) => ({
+                    updateOne: {
+                        filter: { _id: products.variantId },
+                        update: { $inc: { quantity: products.quantity } },
+                    }
+                }));
+                await product_variants_model_1.default.bulkWrite(updateProductVariant);
+            }
             if (orderStatus === '4' || orderStatus === '5') {
                 let query = { _id: { $exists: true } };
                 query = {
