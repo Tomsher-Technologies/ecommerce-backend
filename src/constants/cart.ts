@@ -103,3 +103,7 @@ export const tabbyPaymentGatwaySuccessStatus = {
     rejected: 'REJECTED', //is retuned when a customer is rejected during Tabby Checkout 
     expired: 'EXPIRED', // is used when a customer cancels a payment or when Tabby doesn't receive a successfully paid transaction after timeout.
 }
+export const networkPaymentGatwayStatus = {
+    purchased: 'PURCHASED',
+    failed: 'FAILED',
+}
