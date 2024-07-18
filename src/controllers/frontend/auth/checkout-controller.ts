@@ -13,10 +13,11 @@ import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from 
 
 import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/payment-gateway/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
-import { tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
+import { networkPaymentGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
+import { networkAccessToken, networkCreateOrder } from "../../../lib/payment-gateway/network-payments";
 
 const controller = new BaseController();
 
@@ -158,6 +159,55 @@ class CheckoutController extends BaseController {
                                 paymentData = {
                                     transactionId: tabbyResponse.id,
                                     ...tabbyResponse.configuration.available_products
+                                }
+                            }
+                        } else {
+                            return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
+                        }
+                    } else if (paymentMethod && paymentMethod.slug == paymentMethods.network) {
+                        if (paymentMethod.paymentMethodValues) {
+                            const networkResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
+                            console.log('networkResponse', networkResponse);
+
+                            if (networkResponse && networkResponse.access_token) {
+                                const networkDefaultValues = networkPaymentGatwayDefaultValues(countryData, {
+                                    ...cartUpdate,
+                                    _id: cartDetails._id,
+                                    orderComments: cartDetails.orderComments,
+                                    cartStatusAt: cartDetails.cartStatusAt,
+                                    totalDiscountAmount: cartDetails.totalDiscountAmount,
+                                    totalShippingAmount: cartDetails.totalShippingAmount,
+                                    totalTaxAmount: cartDetails.totalTaxAmount,
+                                    products: cartDetails?.products
+                                },
+                                    customerDetails);
+                                const networkResult = await networkCreateOrder(networkDefaultValues, networkResponse.access_token, paymentMethod.paymentMethodValues);
+                                if (networkResult && networkResult._links && networkResult._links.payment) {
+                                    const paymentTransaction = await PaymentTransactionModel.create({
+                                        paymentMethodId,
+                                        transactionId: networkResponse._id,
+                                        paymentId: networkResponse.reference,
+                                        orderId: cartDetails._id,
+                                        data: JSON.stringify(networkResponse),
+                                        orderStatus: networkResult.pending, // Pending
+                                        createdAt: new Date(),
+                                    });
+                                    if (!paymentTransaction) {
+                                        return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                    }
+                                    paymentData = { paymentRedirectionUrl: networkResult._links.payment?.href }
+                                } else {
+                                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+
+                            } else {
+                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                            }
+
+                            if (networkResponse && networkResponse.configuration && networkResponse.configuration.available_products && networkResponse.configuration.available_products.installments?.length > 0) {
+                                paymentData = {
+                                    transactionId: networkResponse.id,
+                                    ...networkResponse.configuration.available_products
                                 }
                             }
                         } else {

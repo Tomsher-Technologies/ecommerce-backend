@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
+exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
 const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, paymentMethodValues) => {
     return {
         "amount": cartData.totalAmount,
@@ -157,3 +157,20 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
     };
 };
 exports.tabbyPaymentGatwayDefaultValues = tabbyPaymentGatwayDefaultValues;
+const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) => {
+    return {
+        "action": "PURCHASE",
+        "amount": {
+            "currencyCode": countryData.currencyCode,
+            "value": cartData.totalAmount
+        },
+        "emailAddress": customerDetails.email,
+        "billingAddress": {
+            "firstName": customerDetails.firstName,
+        },
+        "merchantAttributes": {
+            "redirectUrl": "https://api.timehouse.store/api/common/network-payment-response"
+        }
+    };
+};
+exports.networkPaymentGatwayDefaultValues = networkPaymentGatwayDefaultValues;
