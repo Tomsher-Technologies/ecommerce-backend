@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
+exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -92,4 +92,8 @@ exports.tabbyPaymentGatwaySuccessStatus = {
     closed: 'CLOSED', // "authorized" and "closed" mark the succesfully approved and captured payments accordingly
     rejected: 'REJECTED', //is retuned when a customer is rejected during Tabby Checkout 
     expired: 'EXPIRED', // is used when a customer cancels a payment or when Tabby doesn't receive a successfully paid transaction after timeout.
+};
+exports.networkPaymentGatwayStatus = {
+    purchased: 'PURCHASED',
+    failed: 'FAILED',
 };

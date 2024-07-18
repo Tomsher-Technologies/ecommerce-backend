@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap, cartStatus } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap, cartStatus, networkPaymentGatwayStatus } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
@@ -335,12 +335,14 @@ class CheckoutController extends BaseController {
     }
 
     async networkPaymentResponse(req: Request, res: Response): Promise<any> {
-        const { tap_id, data }: any = req.query
-        if (!tap_id) {
+        const { ref, data }: any = req.query
+        if (!ref) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false
         }
-        const paymentDetails = await PaymentTransactionModel.findOne({ transactionId: tap_id });
+
+        const paymentDetails = await PaymentTransactionModel.findOne({ paymentId: ref });
+
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
@@ -348,25 +350,35 @@ class CheckoutController extends BaseController {
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
+
         const networkAccesTokenResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
         if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
-            const networkResponse = await networkCreateOrderStatus(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues);
-            console.log('networkResponse',networkResponse);
-            
-            // const retValResponse = await CheckoutService.paymentResponse({
-            //     paymentDetails,
-            //     allPaymentResponseData: data,
-            //     paymentStatus: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
-            //         orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
-            // });
+            const networkResponse = await networkCreateOrderStatus(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues, ref);
+            if (!networkResponse) {
+                res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
+                return false
+            }
+            if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
+                const status = networkResponse._embedded.payment[0].state;
+                console.log('networkResponse', networkResponse._embedded);
+                const retValResponse = await CheckoutService.paymentResponse({
+                    paymentDetails,
+                    allPaymentResponseData: data,
+                    paymentStatus: (status === networkPaymentGatwayStatus.purchased) ?
+                        orderPaymentStatus.success : ((status === networkPaymentGatwayStatus.failed) ? orderPaymentStatus.failure : orderPaymentStatus.failure)
+                });
+                if (retValResponse.status) {
+                    res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
+                    return true
+                } else {
+                    res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${status}`); // failure
+                    return false
+                }
+            } else {
+                res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
+                return false
+            }
 
-            // if (retValResponse.status) {
-            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
-            //     return true
-            // } else {
-            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
-            //     return false
-            // }
         } else {
             res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=failure&message=Payment transaction. Please contact administrator`); // failure
             return false

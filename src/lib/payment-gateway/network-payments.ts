@@ -27,7 +27,7 @@ export const networkAccessToken = async (paymentMethodValues: { liveApiKey: stri
     }
 }
 
-export const networkCreateOrder = async (networkDefaultValues: any, accessToken: string,paymentMethodValues: { liveReference: string; }) => {
+export const networkCreateOrder = async (networkDefaultValues: any, accessToken: string, paymentMethodValues: { liveReference: string; }) => {
     try {
         const response = await fetch(`${process.env.NETWORK_API_URL_ORDER}/${paymentMethodValues.liveReference}/orders`, {
             method: "POST",
@@ -56,9 +56,9 @@ export const networkCreateOrder = async (networkDefaultValues: any, accessToken:
     }
 }
 
-export const networkCreateOrderStatus = async (networkDefaultValues: any, accessToken: string,paymentMethodValues: { liveReference: string; }) => {
+export const networkCreateOrderStatus = async (accessToken: string, paymentMethodValues: { liveReference: string; }, paymentId: string) => {
     try {
-        const response = await fetch(`${process.env.NETWORK_API_URL_ORDER}/${paymentMethodValues.liveReference}/orders`, {
+        const response = await fetch(`${process.env.NETWORK_API_URL_ORDER}/${paymentMethodValues.liveReference}/orders/${paymentId}`, {
             method: "GET",
             mode: "cors",
             cache: "no-cache",

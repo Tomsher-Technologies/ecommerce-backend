@@ -316,12 +316,12 @@ class CheckoutController extends base_controller_1.default {
         }
     }
     async networkPaymentResponse(req, res) {
-        const { tap_id, data } = req.query;
-        if (!tap_id) {
+        const { ref, data } = req.query;
+        if (!ref) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false;
         }
-        const paymentDetails = await payment_transaction_model_1.default.findOne({ transactionId: tap_id });
+        const paymentDetails = await payment_transaction_model_1.default.findOne({ paymentId: ref });
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
@@ -331,21 +331,33 @@ class CheckoutController extends base_controller_1.default {
         }
         const networkAccesTokenResponse = await (0, network_payments_1.networkAccessToken)(paymentMethod.paymentMethodValues);
         if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
-            const networkResponse = await (0, network_payments_1.networkCreateOrderStatus)(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues);
-            console.log('networkResponse', networkResponse);
-            // const retValResponse = await CheckoutService.paymentResponse({
-            //     paymentDetails,
-            //     allPaymentResponseData: data,
-            //     paymentStatus: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
-            //         orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
-            // });
-            // if (retValResponse.status) {
-            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
-            //     return true
-            // } else {
-            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
-            //     return false
-            // }
+            const networkResponse = await (0, network_payments_1.networkCreateOrderStatus)(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues, ref);
+            if (!networkResponse) {
+                res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
+                return false;
+            }
+            if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
+                const status = networkResponse._embedded.payment[0].state;
+                console.log('networkResponse', networkResponse._embedded);
+                const retValResponse = await checkout_service_1.default.paymentResponse({
+                    paymentDetails,
+                    allPaymentResponseData: data,
+                    paymentStatus: (status === cart_1.networkPaymentGatwayStatus.purchased) ?
+                        cart_1.orderPaymentStatus.success : ((status === cart_1.networkPaymentGatwayStatus.failed) ? cart_1.orderPaymentStatus.failure : cart_1.orderPaymentStatus.failure)
+                });
+                if (retValResponse.status) {
+                    res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
+                    return true;
+                }
+                else {
+                    res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${status}`); // failure
+                    return false;
+                }
+            }
+            else {
+                res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
+                return false;
+            }
         }
         else {
             res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=failure&message=Payment transaction. Please contact administrator`); // failure

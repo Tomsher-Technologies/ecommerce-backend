@@ -56,9 +56,9 @@ const networkCreateOrder = async (networkDefaultValues, accessToken, paymentMeth
     }
 };
 exports.networkCreateOrder = networkCreateOrder;
-const networkCreateOrderStatus = async (networkDefaultValues, accessToken, paymentMethodValues) => {
+const networkCreateOrderStatus = async (accessToken, paymentMethodValues, paymentId) => {
     try {
-        const response = await fetch(`${process.env.NETWORK_API_URL_ORDER}/${paymentMethodValues.liveReference}/orders`, {
+        const response = await fetch(`${process.env.NETWORK_API_URL_ORDER}/${paymentMethodValues.liveReference}/orders/${paymentId}`, {
             method: "GET",
             mode: "cors",
             cache: "no-cache",
