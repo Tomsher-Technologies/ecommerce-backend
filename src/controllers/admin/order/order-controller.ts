@@ -22,6 +22,7 @@ import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
 import TaxsModel from '../../../model/admin/setup/tax-model';
+import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 
 const controller = new BaseController();
 
@@ -298,6 +299,17 @@ class OrdersController extends BaseController {
                     message: 'Cannot change the status once it is completed'
                 });
             }
+
+            if (orderDetails.orderStatus === '11') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status once it is failed'
+                });
+            }
+            if (orderDetails.orderStatus === '8') {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status once it is refunded'
+                });
+            }
             let customerDetails: any = null;
             if (orderDetails.customerId) {
                 const walletTransactionDetails = await CustomerWalletTransactionsModel.findOne({ orderId: orderDetails._id })
@@ -376,6 +388,16 @@ class OrdersController extends BaseController {
                     }
                 }
             );
+            if (orderStatus === '11' || orderStatus === '7') { // return products
+                const cartProducts = await CartOrderProductsModel.find({ cartId: orderDetails._id }).select('variantId quantity');
+                const updateProductVariant: any = cartProducts.map((products: any) => ({
+                    updateOne: {
+                        filter: { _id: products.variantId },
+                        update: { $inc: { quantity: products.quantity } },
+                    }
+                }));
+                await ProductVariantsModel.bulkWrite(updateProductVariant);
+            }
             if (orderStatus === '4' || orderStatus === '5') {
                 let query: any = { _id: { $exists: true } };
                 query = {

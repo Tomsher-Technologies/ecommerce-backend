@@ -41,7 +41,7 @@ class SpecificationService {
             $project: {
                 _id: 1,
                 specificationTitle: 1,
-                specificationDisplayTitle: 1,
+                specificationDisplayName: 1,
                 slug: 1,
                 status: 1,
                 createdAt: 1,

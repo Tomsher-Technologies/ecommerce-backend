@@ -18,6 +18,7 @@ import CustomerAddress from '../../model/frontend/customer-address-model';
 import { buildOrderPipeline, } from '../../utils/config/cart-order-config';
 import { ObjectId } from 'mongoose';
 import TaxsModel from '../../model/admin/setup/tax-model';
+import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
 
 class CheckoutService {
 
@@ -227,6 +228,14 @@ class CheckoutService {
                 }
 
                 if (cartProducts) {
+                    const updateProductVariant = cartProducts.map((products: any) => ({
+                        updateOne: {
+                            filter: { _id: products.variantId },
+                            update: { $inc: { quantity: -products.quantity } },
+                        }
+                    }));
+                    await ProductVariantsModel.bulkWrite(updateProductVariant);
+
                     if (customerDetails === null) {
                         customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
                     }

@@ -131,6 +131,7 @@ exports.productSpecificationLookup = [
                         },
                         variantId: { $first: "$variantId" },
                         specificationTitle: { $first: "$specification.specificationTitle" },
+                        specificationDisplayName: { $first: "$specification.specificationDisplayName" },
                         enableTab: { $first: "$specification.enableTab" },
                         slug: { $first: "$specification.slug" },
                         specificationDetails: { $push: "$specificationDetail" }
@@ -142,6 +143,7 @@ exports.productSpecificationLookup = [
                         variantId: 1,
                         specificationId: '$specification._id',
                         specificationTitle: '$specification.specificationTitle',
+                        specificationDisplayName: '$specification.specificationDisplayName',
                         enableTab: '$specification.enableTab',
                         slug: '$specification.slug',
                         specificationDetail: '$specificationDetail'
