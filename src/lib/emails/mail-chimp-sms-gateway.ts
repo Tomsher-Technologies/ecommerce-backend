@@ -1,17 +1,31 @@
 export const mailChimpEmailGateway = async (emailDefaultValues: any, template: any) => {
     try {
+        const toRecipients = [];
+
+        if (emailDefaultValues.email) {
+            toRecipients.push({
+                email: emailDefaultValues.email,
+                type: 'to'
+            });
+        }
+
+        // Add CC recipients if provided
+        if (emailDefaultValues.ccmail) {
+            const ccRecipients = emailDefaultValues.ccmail.map((bccEmail: string) => ({
+                email: bccEmail,
+                type: 'bcc'
+            }));
+            toRecipients.push(...ccRecipients);
+        }
+        console.log(toRecipients);
+
         const payload = {
             key: `${process.env.MAILCHIMP_API_KEY}`,
             message: {
                 from_email: `${process.env.MAILCHIMP_API_EMAIL}`, // Replace with your actual sender email
                 subject: emailDefaultValues.subject,
                 html: template,
-                to: [
-                    {
-                        email: emailDefaultValues.email, // Replace with the actual recipient email
-                        type: 'to'
-                    }
-                ]
+                to: toRecipients
             }
         };
 
