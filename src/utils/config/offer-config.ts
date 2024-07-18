@@ -11,7 +11,12 @@ export const offerProductPopulation = (getOfferList: any, offerApplied: any) => 
                     cond: {
                         $and: [
                             { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                            { $in: ["$_id", offerApplied.products] } // Match product ID
+                            {
+                                $in: [
+                                    "$_id",
+                                    { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }
+                                ]
+                            }
                         ]
                     }
                 }
@@ -39,7 +44,7 @@ export const offerCategoryPopulation = (getOfferList: any, offerApplied: any) =>
                                                 input: "$productCategory.category",
                                                 as: "cat",
                                                 cond: {
-                                                    $in: ["$$cat._id", offerApplied.categories]
+                                                    $in: ["$$cat._id", { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }]
                                                 }
                                             }
                                         }
@@ -64,7 +69,13 @@ export const offerBrandPopulation = (getOfferList: any, offerApplied: any) => {
                     cond: {
                         $and: [
                             { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                            { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                            // { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                            {
+                                $in: [
+                                    "$brand._id",
+                                    { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }
+                                ]
+                            }
                         ]
                     }
                 }
