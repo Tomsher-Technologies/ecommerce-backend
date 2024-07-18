@@ -1,5 +1,6 @@
 import path from 'path';
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 
 import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
 import { DiscountType, calculateExpectedDeliveryDate, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
@@ -266,6 +267,11 @@ class CheckoutService {
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
                     const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
 
+                    const options = {
+                        wordwrap: 130,
+                        // ...
+                    };
+
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
@@ -291,7 +297,7 @@ class CheckoutService {
                         appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
-                        shopDescription: basicDetailsSettings?.shopDescription,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
@@ -304,13 +310,14 @@ class CheckoutService {
                             const sendEmail = await mailChimpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
-
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
                             }, template)
 
                         } else if (process.env.SHOPNAME === 'Homestyle') {
                             const sendEmail = await smtpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
                             }, template)
 
                         }
@@ -318,12 +325,14 @@ class CheckoutService {
                             const sendEmail = await smtpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
                             }, template)
                         }
                         else if (process.env.SHOPNAME === 'Smartbaby') {
                             const sendEmail = await smtpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
                             }, template)
                         }
                     });

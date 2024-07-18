@@ -2,6 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 
 import { calculateExpectedDeliveryDate, calculateWalletRewardPoints, dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 
@@ -23,6 +24,7 @@ import CartOrderProductsModel from '../../../model/frontend/cart-order-product-m
 import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
 import TaxsModel from '../../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
+import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 
 const controller = new BaseController();
 
@@ -414,6 +416,11 @@ class OrdersController extends BaseController {
                 const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
                 const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
 
+                const options = {
+                    wordwrap: 130,
+                    // ...
+                };
+
 
                 let commonDeliveryDays = '8';
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
@@ -433,7 +440,7 @@ class OrdersController extends BaseController {
                     products: updatedOrderDetails.products,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
-                    shopDescription: basicDetailsSettings?.shopDescription,
+                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                     appUrl: `${process.env.APPURL}`,
                     socialMedia,
                     appUrls,
@@ -443,10 +450,33 @@ class OrdersController extends BaseController {
                         console.log(err);
                         return;
                     }
-                    await mailChimpEmailGateway({
-                        subject: orderStatusMessages[orderStatus],
-                        email: customerDetails?.email,
-                    }, template)
+                    if (process.env.SHOPNAME === 'Timehouse') {
+                        await mailChimpEmailGateway({
+                            subject: orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template)
+
+                    } else if (process.env.SHOPNAME === 'Homestyle') {
+                        const sendEmail = await smtpEmailGateway({
+                            subject: orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template)
+
+                    }
+                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                        const sendEmail = await smtpEmailGateway({
+                            subject: orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template)
+                    }
+                    else if (process.env.SHOPNAME === 'Smartbaby') {
+                        const sendEmail = await smtpEmailGateway({
+                            subject: orderStatusMessages[orderStatus],
+                            email: customerDetails?.email,
+                        }, template)
+                    }
+
+
                 });
             }
             // console.log('aaaaaaaa', updatedOrderDetails);
