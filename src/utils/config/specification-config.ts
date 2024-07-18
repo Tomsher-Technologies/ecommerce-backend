@@ -129,6 +129,7 @@ export const frontendSpecificationLookup = (match: any) => {
                 variantId: 1,
                 specificationId: '$specification._id',
                 specificationTitle: '$specification.specificationTitle',
+                specificationDisplayName: '$specification.specificationDisplayName',
                 enableTab: '$specification.enableTab',
                 slug: '$specification.slug',
                 specificationDetail: '$specificationDetail'
