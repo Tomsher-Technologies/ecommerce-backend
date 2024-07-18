@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 const cart_1 = require("../../constants/cart");
 const helpers_1 = require("../../utils/helpers");
 const coupon_service_1 = __importDefault(require("./auth/coupon-service"));
@@ -20,6 +21,8 @@ const mail_chimp_sms_gateway_1 = require("../../lib/emails/mail-chimp-sms-gatewa
 const customer_address_model_1 = __importDefault(require("../../model/frontend/customer-address-model"));
 const cart_order_config_1 = require("../../utils/config/cart-order-config");
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
+const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
+const smtp_nodemailer_gateway_1 = require("../../lib/emails/smtp-nodemailer-gateway");
 class CheckoutService {
     async paymentResponse(options) {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
@@ -214,6 +217,13 @@ class CheckoutService {
                     }
                 }
                 if (cartProducts) {
+                    const updateProductVariant = cartProducts.map((products) => ({
+                        updateOne: {
+                            filter: { _id: products.variantId },
+                            update: { $inc: { quantity: -products.quantity } },
+                        }
+                    }));
+                    await product_variants_model_1.default.bulkWrite(updateProductVariant);
                     if (customerDetails === null) {
                         customerDetails = await customers_model_1.default.findOne({ _id: cartDetails.customerId });
                     }
@@ -222,12 +232,14 @@ class CheckoutService {
                         ...websiteSettingsQuery,
                         countryId: cartDetails.countryId,
                         block: website_setup_1.websiteSetup.basicSettings,
-                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings] },
+                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
                         status: '1',
                     };
                     const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
                     const defualtSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.defualtSettings);
                     const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
                     const shippingAddressDetails = await customer_address_model_1.default.findById(cartDetails.shippingId);
                     let commonDeliveryDays = '6';
                     if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
@@ -235,6 +247,10 @@ class CheckoutService {
                     }
                     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
                     const tax = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
+                    const options = {
+                        wordwrap: 130,
+                        // ...
+                    };
                     ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
@@ -256,8 +272,11 @@ class CheckoutService {
                             email: customerDetails.email
                         },
                         expectedDeliveryDate,
+                        socialMedia,
+                        appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
@@ -265,12 +284,35 @@ class CheckoutService {
                         tax: tax
                     }, async (err, template) => {
                         if (err) {
-                            console.log(err);
                         }
-                        await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                            subject: cart_1.orderStatusMessages['1'],
-                            email: customerDetails.email,
-                        }, template);
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                                subject: cart_1.orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template);
+                        }
                     });
                 }
                 return {

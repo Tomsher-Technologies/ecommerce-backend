@@ -3,18 +3,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.mailChimpEmailGateway = void 0;
 const mailChimpEmailGateway = async (emailDefaultValues, template) => {
     try {
+        const toRecipients = [];
+        if (emailDefaultValues.email) {
+            toRecipients.push({
+                email: emailDefaultValues.email,
+                type: 'to'
+            });
+        }
+        // Add CC recipients if provided
+        if (emailDefaultValues.ccmail) {
+            const ccRecipients = emailDefaultValues.ccmail.map((bccEmail) => ({
+                email: bccEmail,
+                type: 'bcc'
+            }));
+            toRecipients.push(...ccRecipients);
+        }
+        console.log(toRecipients);
         const payload = {
             key: `${process.env.MAILCHIMP_API_KEY}`,
             message: {
                 from_email: `${process.env.MAILCHIMP_API_EMAIL}`, // Replace with your actual sender email
                 subject: emailDefaultValues.subject,
                 html: template,
-                to: [
-                    {
-                        email: emailDefaultValues.email, // Replace with the actual recipient email
-                        type: 'to'
-                    }
-                ]
+                to: toRecipients
             }
         };
         const response = await fetch(`${process.env.MAILCHIMP_API_URL}`, {

@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 
 import { forgotPasswordSchema, loginSchema, registerSchema, resendOtpSchema, resetPasswordFormSchema, verifyOtpSchema } from '../../../utils/schemas/frontend/guest/auth-schema';
 import { calculateWalletAmount, formatZodError, generateOTP } from '../../../utils/helpers';
@@ -26,6 +27,10 @@ import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 
 const controller = new BaseController();
 
+const options = {
+    wordwrap: 130,
+    // ...
+};
 class GuestController extends BaseController {
 
     async register(req: Request, res: Response): Promise<void> {
@@ -129,6 +134,7 @@ class GuestController extends BaseController {
                             firstName: newCustomer.firstName,
                             storeEmail: basicDetailsSettings?.storeEmail,
                             storePhone: basicDetailsSettings?.storePhone,
+                            shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                             socialMedia,
                             appUrls,
                             subject: 'Verification OTP',
@@ -245,6 +251,7 @@ class GuestController extends BaseController {
                                     firstName: updatedCustomer.firstName,
                                     storeEmail: basicDetailsSettings?.storeEmail,
                                     storePhone: basicDetailsSettings?.storePhone,
+                                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                                     socialMedia,
                                     appUrls,
                                     subject: 'Password Reset Confirmation',
@@ -415,6 +422,7 @@ class GuestController extends BaseController {
                                     firstName: optUpdatedCustomer.firstName,
                                     storeEmail: basicDetailsSettings?.storeEmail,
                                     storePhone: basicDetailsSettings?.storePhone,
+                                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                                     socialMedia,
                                     appUrls,
                                     subject: 'Resent verification OTP',

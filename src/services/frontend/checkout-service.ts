@@ -1,5 +1,6 @@
 import path from 'path';
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 
 import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
 import { DiscountType, calculateExpectedDeliveryDate, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
@@ -18,6 +19,8 @@ import CustomerAddress from '../../model/frontend/customer-address-model';
 import { buildOrderPipeline, } from '../../utils/config/cart-order-config';
 import { ObjectId } from 'mongoose';
 import TaxsModel from '../../model/admin/setup/tax-model';
+import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
+import { smtpEmailGateway } from '../../lib/emails/smtp-nodemailer-gateway';
 
 class CheckoutService {
 
@@ -227,6 +230,14 @@ class CheckoutService {
                 }
 
                 if (cartProducts) {
+                    const updateProductVariant = cartProducts.map((products: any) => ({
+                        updateOne: {
+                            filter: { _id: products.variantId },
+                            update: { $inc: { quantity: -products.quantity } },
+                        }
+                    }));
+                    await ProductVariantsModel.bulkWrite(updateProductVariant);
+
                     if (customerDetails === null) {
                         customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
                     }
@@ -236,13 +247,15 @@ class CheckoutService {
                         ...websiteSettingsQuery,
                         countryId: cartDetails.countryId,
                         block: websiteSetup.basicSettings,
-                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings] },
+                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
                         status: '1',
                     } as any;
 
                     const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
                     const defualtSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.defualtSettings);
                     const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
 
                     const shippingAddressDetails: any = await CustomerAddress.findById(cartDetails.shippingId);
 
@@ -253,6 +266,11 @@ class CheckoutService {
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
                     const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
+
+                    const options = {
+                        wordwrap: 130,
+                        // ...
+                    };
 
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
@@ -275,8 +293,11 @@ class CheckoutService {
                             email: customerDetails.email
                         },
                         expectedDeliveryDate,
+                        socialMedia,
+                        appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
@@ -284,12 +305,36 @@ class CheckoutService {
                         tax: tax
                     }, async (err: any, template: any) => {
                         if (err) {
-                            console.log(err);
                         }
-                        await mailChimpEmailGateway({
-                            subject: orderStatusMessages['1'],
-                            email: customerDetails.email,
-                        }, template)
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            const sendEmail = await mailChimpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template)
+
+                        } else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template)
+
+                        }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template)
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderStatusMessages['1'],
+                                email: customerDetails.email,
+                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                            }, template)
+                        }
                     });
                 }
                 return {

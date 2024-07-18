@@ -54,7 +54,8 @@ exports.couponDeviceType = {
 exports.paymentMethods = {
     cashOnDelivery: "cash-on-delivery",
     tap: "tap",
-    tabby: "tabby"
+    tabby: "tabby",
+    network: "network"
 };
 exports.couponDiscountType = {
     percentage: 'percentage',

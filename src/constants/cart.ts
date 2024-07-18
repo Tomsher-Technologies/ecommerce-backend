@@ -20,7 +20,7 @@ export const orderStatusArray = [
     { value: '13', label: "Pickup" }
 ];
 
-export const orderStatusMessages: { [key: string]: string }  = {
+export const orderStatusMessages: { [key: string]: string } = {
     '1': 'Order received successfully!',
     '2': 'Order is now being processed!',
     '3': 'Order has been packed!',
@@ -58,7 +58,8 @@ export const couponDeviceType = {
 export const paymentMethods = {
     cashOnDelivery: "cash-on-delivery",
     tap: "tap",
-    tabby: "tabby"
+    tabby: "tabby",
+    network: "network"
 }
 
 export const couponDiscountType = {

@@ -179,4 +179,21 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
     }
 }
 
+export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
+    return {
+        "action": "PURCHASE",
+        "amount": {
+            "currencyCode": countryData.currencyCode,
+            "value": cartData.totalAmount
+        },
+        "emailAddress": customerDetails.email,
+        "billingAddress": {
+            "firstName": customerDetails.firstName,
+        },
+        "merchantAttributes": {
+            "redirectUrl": "https://api.timehouse.store/api/common/network-payment-response"
+        }
+    }
+}
+
 

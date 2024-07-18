@@ -8,6 +8,7 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const path_1 = __importDefault(require("path"));
 const ejs = require('ejs');
+const { convert } = require('html-to-text');
 const auth_schema_1 = require("../../../utils/schemas/frontend/guest/auth-schema");
 const helpers_1 = require("../../../utils/helpers");
 const website_setup_1 = require("../../../constants/website-setup");
@@ -22,6 +23,10 @@ const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gat
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
 const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const controller = new base_controller_1.default();
+const options = {
+    wordwrap: 130,
+    // ...
+};
 class GuestController extends base_controller_1.default {
     async register(req, res) {
         try {
@@ -115,6 +120,7 @@ class GuestController extends base_controller_1.default {
                         firstName: newCustomer.firstName,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                         socialMedia,
                         appUrls,
                         subject: 'Verification OTP',
@@ -227,6 +233,7 @@ class GuestController extends base_controller_1.default {
                                 firstName: updatedCustomer.firstName,
                                 storeEmail: basicDetailsSettings?.storeEmail,
                                 storePhone: basicDetailsSettings?.storePhone,
+                                shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                                 socialMedia,
                                 appUrls,
                                 subject: 'Password Reset Confirmation',
@@ -398,6 +405,7 @@ class GuestController extends base_controller_1.default {
                                 firstName: optUpdatedCustomer.firstName,
                                 storeEmail: basicDetailsSettings?.storeEmail,
                                 storePhone: basicDetailsSettings?.storePhone,
+                                shopDescription: convert(basicDetailsSettings?.shopDescription, options),
                                 socialMedia,
                                 appUrls,
                                 subject: 'Resent verification OTP',

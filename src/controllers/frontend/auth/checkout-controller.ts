@@ -13,10 +13,11 @@ import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from 
 
 import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/payment-gateway/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
-import { tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
+import { networkPaymentGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
+import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from "../../../lib/payment-gateway/network-payments";
 
 const controller = new BaseController();
 
@@ -163,6 +164,52 @@ class CheckoutController extends BaseController {
                         } else {
                             return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
                         }
+                    } else if (paymentMethod && paymentMethod.slug == paymentMethods.network) {
+                        if (paymentMethod.paymentMethodValues) {
+                            const networkResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
+                            if (networkResponse && networkResponse.access_token) {
+                                const networkDefaultValues = networkPaymentGatwayDefaultValues(countryData, {
+                                    ...cartUpdate,
+                                    _id: cartDetails._id,
+                                    orderComments: cartDetails.orderComments,
+                                    cartStatusAt: cartDetails.cartStatusAt,
+                                    totalDiscountAmount: cartDetails.totalDiscountAmount,
+                                    totalShippingAmount: cartDetails.totalShippingAmount,
+                                    totalTaxAmount: cartDetails.totalTaxAmount,
+                                    products: cartDetails?.products
+                                },
+                                    customerDetails);
+                                const networkResult = await networkCreateOrder(networkDefaultValues, networkResponse.access_token, paymentMethod.paymentMethodValues);
+                                if (networkResult && networkResult._links && networkResult._links.payment) {
+                                    const paymentTransaction = await PaymentTransactionModel.create({
+                                        paymentMethodId,
+                                        transactionId: networkResult._id,
+                                        paymentId: networkResult.reference,
+                                        orderId: cartDetails._id,
+                                        data: JSON.stringify(networkResult),
+                                        orderStatus: networkResult.pending, // Pending
+                                        createdAt: new Date(),
+                                    });
+                                    if (!paymentTransaction) {
+                                        return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                    }
+                                    paymentData = { paymentRedirectionUrl: networkResult._links.payment?.href }
+                                } else {
+                                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+                            } else {
+                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                            }
+
+                            if (networkResponse && networkResponse.configuration && networkResponse.configuration.available_products && networkResponse.configuration.available_products.installments?.length > 0) {
+                                paymentData = {
+                                    transactionId: networkResponse.id,
+                                    ...networkResponse.configuration.available_products
+                                }
+                            }
+                        } else {
+                            return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
+                        }
                     }
                 } else {
                     const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings });
@@ -283,6 +330,45 @@ class CheckoutController extends BaseController {
             }
         } else {
             res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tapResponse?.status}`); // failure
+            return false
+        }
+    }
+
+    async networkPaymentResponse(req: Request, res: Response): Promise<any> {
+        const { tap_id, data }: any = req.query
+        if (!tap_id) {
+            res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
+            return false
+        }
+        const paymentDetails = await PaymentTransactionModel.findOne({ transactionId: tap_id });
+        if (!paymentDetails) {
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
+        }
+        const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId });
+        if (!paymentMethod) {
+            res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
+        }
+        const networkAccesTokenResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
+        if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
+            const networkResponse = await networkCreateOrderStatus(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues);
+            console.log('networkResponse',networkResponse);
+            
+            // const retValResponse = await CheckoutService.paymentResponse({
+            //     paymentDetails,
+            //     allPaymentResponseData: data,
+            //     paymentStatus: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
+            //         orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
+            // });
+
+            // if (retValResponse.status) {
+            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
+            //     return true
+            // } else {
+            //     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tapResponse?.status}`); // failure
+            //     return false
+            // }
+        } else {
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=failure&message=Payment transaction. Please contact administrator`); // failure
             return false
         }
     }

@@ -726,7 +726,7 @@ class ProductsController extends BaseController {
                                                                                     }
                                                                                 }
 
-                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index + 1)
+                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index)
                                                                                 productVariants = {
                                                                                     ...productVariants,
                                                                                     slug: slugify(slugData)
@@ -797,7 +797,7 @@ class ProductsController extends BaseController {
                                                                                     slug: slugify(slugData)
                                                                                 }
 
-                                                                                const variant = await ProductVariantService.find({ $or: [{ slug: slugify(slugData), variantSku: data.SKU, countryId: productVariants.countryId }] })
+                                                                                const variant = await ProductVariantService.find({ $or: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
 
                                                                                 if (!variant) {
                                                                                     const createVariant = await ProductVariantService.create(product._id, productVariants, userData)

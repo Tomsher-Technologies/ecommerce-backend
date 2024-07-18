@@ -59,6 +59,23 @@ const productVariantsSchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
+    price: {
+        type: Number,
+        required: function () {
+            return !this.isExcel;
+        }
+    },
+    discountPrice: {
+        type: Number,
+        default: 0
+    },
+    quantity: {
+        type: Number,
+        required: function () {
+            return !this.isExcel;
+        },
+        default: 0
+    },
     cartMinQuantity: {
         type: String,
         default: ''
@@ -82,23 +99,6 @@ const productVariantsSchema = new mongoose_1.Schema({
     isExcel: {
         type: Boolean,
         default: false
-    },
-    price: {
-        type: Number,
-        required: function () {
-            return !this.isExcel;
-        }
-    },
-    quantity: {
-        type: Number,
-        required: function () {
-            return !this.isExcel;
-        },
-        default: 0
-    },
-    discountPrice: {
-        type: Number,
-        default: 0
     },
     isDefault: {
         type: Number,
