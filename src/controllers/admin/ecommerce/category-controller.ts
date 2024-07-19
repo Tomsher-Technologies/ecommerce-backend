@@ -220,7 +220,7 @@ class CategoryController extends BaseController {
             const validatedData = categorySchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const category = parentCategory ? await CategoryService.findParentCategory(parentCategory) : null;
@@ -337,7 +337,7 @@ class CategoryController extends BaseController {
                     message: 'Category Id not found!',
                 });
             }
-        } catch (error: any) { 
+        } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
