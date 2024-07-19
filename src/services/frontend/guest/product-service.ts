@@ -26,7 +26,7 @@ import OffersModel from '../../../model/admin/marketing/offers-model';
 class ProductService {
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getattribute, getspecification, hostName, offers } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
@@ -96,8 +96,7 @@ class ProductService {
             { $sort: finalSort },
             modifiedPipeline,
             productCategoryLookup,
-            brandLookup,
-            brandObject,
+            ...(getbrand === '1' ? [brandLookup, brandObject] : []),
             ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             {

@@ -55,7 +55,7 @@ class CustomerWishlistCountryService {
                         then: "$productDetails.categoryOffers",
                         else: {
                             $cond: {
-                                if: "$brandOffers",
+                                if: "$productDetails.brandOffers",
                                 then: "$productDetails.brandOffers",
                                 else: "$productDetails.productOffers"
                             }

@@ -372,6 +372,9 @@ class CommonService {
                         }
                     }
                 });
+                productPipeline.push({ $unset: "categoryOffers" });
+                productPipeline.push({ $unset: "brandOffers" });
+                productPipeline.push({ $unset: "productOffers" });
                 const language = await product_service_1.default.productLanguage(hostName, productPipeline);
                 const productData = await product_model_1.default.aggregate(language).exec();
                 collection.collectionsProducts = productData;
@@ -460,19 +463,6 @@ class CommonService {
                 collection.collectionsCategories = categoryData;
             }
         }
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers_1.offers.category);
-        const firstCategoryCollection = categoryCollectionData[0];
-        getOfferList.forEach((offerItem) => {
-            firstCategoryCollection.collectionsCategories.map((category) => {
-                const matchingOffer = offerItem.offerApplyValues.includes(category._id.toString());
-                if (matchingOffer) {
-                    category.offer = offerItem;
-                }
-                else {
-                    category.offer = {};
-                }
-            });
-        });
         return categoryCollectionData;
     }
     async findCollectionBrands(options) {
@@ -555,19 +545,6 @@ class CommonService {
                 collection.collectionsBrands = brandData;
             }
         }
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers_1.offers.brand);
-        const firstBrandCollection = brandCollectionData[0];
-        getOfferList.forEach((offerItem) => {
-            firstBrandCollection.collectionsBrands.forEach((brand) => {
-                const matchingOffer = offerItem.offerApplyValues.includes(brand._id.toString());
-                if (matchingOffer) {
-                    brand.offer = offerItem;
-                }
-                else {
-                    brand.offer = {}; // Ensure brand.offer is defined, even if no matching offer
-                }
-            });
-        });
         return brandCollectionData;
     }
     async findOffers(offer, hostName, offersBy, defaultCountryId) {

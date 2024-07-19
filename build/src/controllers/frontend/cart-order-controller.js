@@ -10,7 +10,6 @@ const offers_1 = require("../../constants/offers");
 const base_controller_1 = __importDefault(require("../admin/base-controller"));
 const cart_service_1 = __importDefault(require("../../services/frontend/cart-service"));
 const common_service_1 = __importDefault(require("../../services/frontend/guest/common-service"));
-const product_service_1 = __importDefault(require("../../services/frontend/guest/product-service"));
 const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-schema");
 const customer_wishlist_servicel_1 = __importDefault(require("../../services/frontend/auth/customer-wishlist-servicel"));
@@ -18,6 +17,10 @@ const website_setup_model_1 = __importDefault(require("../../model/admin/setup/w
 const website_setup_1 = require("../../constants/website-setup");
 const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
+const offer_config_1 = require("../../utils/config/offer-config");
+const mongoose_1 = __importDefault(require("mongoose"));
+const product_model_1 = __importDefault(require("../../model/admin/ecommerce/product-model"));
+const product_config_1 = require("../../utils/config/product-config");
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
     async createCartOrder(req, res) {
@@ -76,34 +79,58 @@ class CartController extends base_controller_1.default {
                             ]
                         });
                     }
-                    const offerProduct = await product_service_1.default.findProductList({
-                        query: {
-                            $and: [
-                                {
-                                    $or: [
-                                        { 'productVariants._id': variantId },
-                                        { 'productVariants.slug': slug },
-                                    ]
-                                },
-                                { 'productVariants.countryId': country }
-                            ]
+                    let pipeline = [
+                        product_config_1.productCategoryLookup,
+                        product_config_1.brandLookup,
+                        product_config_1.brandObject,
+                        { $match: { _id: new mongoose_1.default.Types.ObjectId(productVariantData.productId) } },
+                    ];
+                    const { getOfferList, offerApplied } = await common_service_1.default.findOffers(0, req.get('origin'), "", country);
+                    // let pipeline: any[] = []
+                    if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+                        const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
+                        pipeline.push(offerCategory);
+                    }
+                    if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                        const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
+                        pipeline.push(offerBrand);
+                    }
+                    if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                        const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
+                        pipeline.push(offerProduct);
+                    }
+                    pipeline.push({
+                        $addFields: {
+                            offer: {
+                                $cond: {
+                                    if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
+                                    then: { $arrayElemAt: ["$categoryOffers", 0] },
+                                    else: {
+                                        $cond: {
+                                            if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
+                                            then: { $arrayElemAt: ["$brandOffers", 0] },
+                                            else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
+                                        }
+                                    }
+                                }
+                            }
                         },
-                        hostName: req.get('origin'),
                     });
+                    const offerProduct = await product_model_1.default.aggregate(pipeline);
                     let offerAmount = 0;
                     let singleProductTotal = 0;
                     let singleProductDiscountTotal = 0;
                     if (offerProduct && offerProduct?.length > 0) {
-                        for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
-                            if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
-                                if (offerProduct[0].offer.offerType == offers_1.offerTypes.percent) {
-                                    offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
-                                }
-                                if (offerProduct[0].offer.offerType == offers_1.offerTypes.amountOff) {
-                                    offerAmount = offerProduct[0].offer.offerIN;
-                                }
-                            }
+                        // for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
+                        // if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
+                        if (offerProduct[0].offer.offerType == offers_1.offerTypes.percent) {
+                            offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
                         }
+                        if (offerProduct[0].offer.offerType == offers_1.offerTypes.amountOff) {
+                            offerAmount = offerProduct[0].offer.offerIN;
+                        }
+                        // }
+                        // }
                     }
                     if (productVariantData && productVariantData.quantity <= 0) {
                         return controller.sendErrorResponse(res, 200, {
@@ -226,7 +253,7 @@ class CartController extends base_controller_1.default {
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
-                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
+                            totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
                             totalAmount: totalAmountOfProduct + finalShippingCharge + giftWrapcharge
                         };
                         newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
@@ -299,7 +326,7 @@ class CartController extends base_controller_1.default {
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
+                            totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
                             totalAmount: totalAmountOfProduct + finalShippingCharge,
                         };
                         newCartOrder = await cart_service_1.default.create(cartOrderData);
