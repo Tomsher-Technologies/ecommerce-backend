@@ -53,7 +53,9 @@ class CheckoutController extends BaseController {
                         ],
                     },
                     hostName: req.get('origin'),
-                })
+                });
+                const variantIds = cartDetails.products.map((product: any) => product.variantId);
+                // go to product variant model check 
 
                 if (!cartDetails) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
