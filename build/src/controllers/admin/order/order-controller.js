@@ -25,6 +25,7 @@ const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
 const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-model"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
+const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -497,6 +498,7 @@ class OrdersController extends base_controller_1.default {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
                 const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].countryId, status: "1" });
+                const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].countryId }, 'currencyCode');
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
                 ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
                     orderDetails: orderDetails[0],
@@ -511,7 +513,8 @@ class OrdersController extends base_controller_1.default {
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
                     appUrl: `${process.env.APPURL}`,
-                    tax: tax
+                    tax: tax,
+                    currencyCode: currencyCode?.currencyCode
                 }, async (err, html) => {
                     if (err) {
                         return controller.sendErrorResponse(res, 200, {

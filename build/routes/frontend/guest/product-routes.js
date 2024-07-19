@@ -17,4 +17,5 @@ router.get('/specification', response_status_1.logResponseStatus, product_contro
 router.get('/product-detail/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetail);
 router.get('/product-detail-seo/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSeo);
 router.get('/product-list', response_status_1.logResponseStatus, product_controller_1.default.findAllProducts);
+router.get('/related-products', response_status_1.logResponseStatus, product_controller_1.default.relatedProducts);
 exports.default = router;

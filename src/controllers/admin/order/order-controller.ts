@@ -25,6 +25,7 @@ import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
 import TaxsModel from '../../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
+import CountryModel from '../../../model/admin/setup/country-model';
 
 const controller = new BaseController();
 
@@ -537,6 +538,7 @@ class OrdersController extends BaseController {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
                 const tax = await TaxsModel.findOne({ countryId: orderDetails[0].countryId, status: "1" })
+                const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].countryId }, 'currencyCode')
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 
@@ -554,7 +556,8 @@ class OrdersController extends BaseController {
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
                         appUrl: `${process.env.APPURL}`,
-                        tax: tax
+                        tax: tax,
+                        currencyCode: currencyCode?.currencyCode
                     },
                     async (err: any, html: any) => {
                         if (err) {

@@ -18,6 +18,8 @@ import PaymentTransactionModel from "../../../model/frontend/payment-transaction
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
 import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from "../../../lib/payment-gateway/network-payments";
+import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
+import ProductsModel from "../../../model/admin/ecommerce/product-model";
 
 const controller = new BaseController();
 
@@ -53,7 +55,41 @@ class CheckoutController extends BaseController {
                         ],
                     },
                     hostName: req.get('origin'),
-                })
+                });
+                const variantIds = cartDetails.products.map((product: any) => product.variantId);
+                // go to product variant model check 
+                const variantQuantities = cartDetails.products.reduce((calculateQuantity: any, product: any) => {
+                    calculateQuantity[product.variantId.toString()] = product.quantity;
+                    return calculateQuantity;
+                }, {});
+
+                const productVariants = await ProductVariantsModel.find({
+                    _id: { $in: variantIds }
+                });
+                const errorArray: any = []
+                for (const variant of productVariants) {
+                    const requiredQuantity = variantQuantities[variant._id.toString()];
+                    var productTitle
+                    if (variant.extraProductTitle) {
+                        productTitle = variant.extraProductTitle
+                    }
+                    else {
+                        const product: any = await ProductsModel.findOne({ _id: variant.productId }, 'productTitle')
+                        productTitle = product.productTitle
+                    }
+                    if (variant.quantity = 0) {
+                        errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' })
+                    } else if (variant.quantity < requiredQuantity) {
+                        errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' })
+                    }
+                }
+
+                if (errorArray.length > 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        validation: errorArray,
+                        message: 'Validation error',
+                    });
+                }
 
                 if (!cartDetails) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
