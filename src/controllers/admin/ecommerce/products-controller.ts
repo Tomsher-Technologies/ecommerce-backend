@@ -610,6 +610,9 @@ class ProductsController extends BaseController {
 
 
                                                                 const galleryImageArray = []
+                                                                galleryImageArray.push({
+                                                                    galleryImageUrl: data.Image
+                                                                })
                                                                 for (let i = 0; i < galleryImage.length; i++) {
                                                                     // const productImage: any = await uploadImageFromUrl(data[galleryImage[i]])
                                                                     const productImage: any = data[galleryImage[i]]
@@ -620,6 +623,7 @@ class ProductsController extends BaseController {
                                                                         galleryImageUrl: productImage,
                                                                     });
                                                                 }
+
 
                                                                 var finalData: Partial<ProductsProps> = {
                                                                     productTitle: capitalizeWords(data.Product_Title),
@@ -846,11 +850,9 @@ class ProductsController extends BaseController {
                                                                                 else {
 
                                                                                     const updateProduct = await ProductVariantService.update(variant._id, productVariants)
-                                                                                    console.log("updateProduct", updateProduct);
 
                                                                                     if (updateProduct) {
                                                                                         const data = await ProductGalleryImagesModel.deleteMany({ variantId: variant._id });
-                                                                                        console.log("12345", data);
 
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                             for await (const galleryImage of galleryImageArray) {
@@ -859,7 +861,6 @@ class ProductsController extends BaseController {
                                                                                                     ...galleryImage
                                                                                                 }
                                                                                                 const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-                                                                                                console.log("fsfdfdsgalleryImagesgalleryImages", galleryImages);
 
                                                                                             }
                                                                                         }
