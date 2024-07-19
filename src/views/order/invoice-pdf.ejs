@@ -312,20 +312,20 @@
           <% }); %>
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Total MRP</td>
-              <td class="text-right-cell">AED <%= orderDetails.totalProductAmount %>
+              <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalProductAmount %>
               </td>
             </tr>
             <% if (orderDetails.totalDiscountAmount> 0) { %>
               <tr class="summary-row">
                 <td colspan="5" class="text-right-cell">Discount</td>
-                <td class="text-right-cell"> AED <%= orderDetails.totalDiscountAmount %>
+                <td class="text-right-cell"> <%=currencyCode %> <%= orderDetails.totalDiscountAmount %>
                 </td>
               </tr>
               <% } %>
 
                 <tr class="summary-row">
                   <td colspan="5" class="text-right-cell">Sub Total</td>
-                  <td class="text-right-cell">AED <%= orderDetails.totalAmount %>
+                  <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
                   </td>
                 </tr>
                 <% if (tax && tax.taxPercentage> 0) { %>
@@ -334,7 +334,7 @@
                       <%=tax.taxTitle%>
                         <%=tax.taxPercentage%>%
                     </td>
-                    <td class="text-right-cell">AED <%= orderDetails.totalTaxAmount %>
+                    <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalTaxAmount %>
                     </td>
                   </tr>
                   <% } %>
@@ -342,7 +342,7 @@
                     <% if (orderDetails.paymentMethodCharge> 0) { %>
                       <tr class="summary-row">
                         <td colspan="5" class="text-right-cell">COD Charges</td>
-                        <td class="text-right-cell">AED <%= orderDetails.paymentMethodCharge %>
+                        <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.paymentMethodCharge %>
                         </td>
                       </tr>
                       <% } %>
@@ -350,14 +350,14 @@
                         <% if (orderDetails.totalShippingAmount> 0) { %>
                           <tr class="summary-row">
                             <td colspan="5" class="text-right-cell">Delivery Charges</td>
-                            <td class="text-right-cell">AED <%= orderDetails.totalShippingAmount %>
+                            <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalShippingAmount %>
                             </td>
                           </tr>
                           <% } %>
 
                             <tr class="summary-row">
                               <td colspan="5" class="text-right-cell">Total</td>
-                              <td class="text-right-cell">AED <%= orderDetails.totalAmount %>
+                              <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
                               </td>
                             </tr>
       </tbody>

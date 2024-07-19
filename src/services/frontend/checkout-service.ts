@@ -309,14 +309,14 @@ class CheckoutService {
                             const sendEmail = await mailChimpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template)
 
                         } else if (process.env.SHOPNAME === 'Homestyle') {
                             const sendEmail = await smtpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template)
 
                         }
@@ -324,14 +324,14 @@ class CheckoutService {
                             const sendEmail = await smtpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template)
                         }
                         else if (process.env.SHOPNAME === 'Smartbaby') {
                             const sendEmail = await smtpEmailGateway({
                                 subject: orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template)
                         }
                     });
