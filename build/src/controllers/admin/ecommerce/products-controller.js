@@ -538,6 +538,9 @@ class ProductsController extends base_controller_1.default {
                                                                 // console.log("sdgdfsdfsdgsd", specificationData);
                                                                 // console.log("specificationCombinedArray", specificationCombinedArray);
                                                                 const galleryImageArray = [];
+                                                                galleryImageArray.push({
+                                                                    galleryImageUrl: data.Image
+                                                                });
                                                                 for (let i = 0; i < galleryImage.length; i++) {
                                                                     // const productImage: any = await uploadImageFromUrl(data[galleryImage[i]])
                                                                     const productImage = data[galleryImage[i]];
@@ -749,10 +752,8 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                             else {
                                                                                 const updateProduct = await product_variant_service_1.default.update(variant._id, productVariants);
-                                                                                console.log("updateProduct", updateProduct);
                                                                                 if (updateProduct) {
                                                                                     const data = await product_gallery_images_model_1.default.deleteMany({ variantId: variant._id });
-                                                                                    console.log("12345", data);
                                                                                     if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                         for await (const galleryImage of galleryImageArray) {
                                                                                             const galleryImageData = {
@@ -760,7 +761,6 @@ class ProductsController extends base_controller_1.default {
                                                                                                 ...galleryImage
                                                                                             };
                                                                                             const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                            console.log("fsfdfdsgalleryImagesgalleryImages", galleryImages);
                                                                                         }
                                                                                     }
                                                                                 }
