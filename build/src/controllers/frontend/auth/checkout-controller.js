@@ -21,6 +21,8 @@ const payment_transaction_model_1 = __importDefault(require("../../../model/fron
 const checkout_service_1 = __importDefault(require("../../../services/frontend/checkout-service"));
 const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
 const network_payments_1 = require("../../../lib/payment-gateway/network-payments");
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
+const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
@@ -51,6 +53,39 @@ class CheckoutController extends base_controller_1.default {
                     },
                     hostName: req.get('origin'),
                 });
+                const variantIds = cartDetails.products.map((product) => product.variantId);
+                // go to product variant model check 
+                const variantQuantities = cartDetails.products.reduce((calculateQuantity, product) => {
+                    calculateQuantity[product.variantId.toString()] = product.quantity;
+                    return calculateQuantity;
+                }, {});
+                const productVariants = await product_variants_model_1.default.find({
+                    _id: { $in: variantIds }
+                });
+                const errorArray = [];
+                for (const variant of productVariants) {
+                    const requiredQuantity = variantQuantities[variant._id.toString()];
+                    var productTitle;
+                    if (variant.extraProductTitle) {
+                        productTitle = variant.extraProductTitle;
+                    }
+                    else {
+                        const product = await product_model_1.default.findOne({ _id: variant.productId }, 'productTitle');
+                        productTitle = product.productTitle;
+                    }
+                    if (variant.quantity = 0) {
+                        errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' });
+                    }
+                    else if (variant.quantity < requiredQuantity) {
+                        errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' });
+                    }
+                }
+                if (errorArray.length > 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        validation: errorArray,
+                        message: 'Validation error',
+                    });
+                }
                 if (!cartDetails) {
                     return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
                 }

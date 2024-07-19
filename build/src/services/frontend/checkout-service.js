@@ -289,28 +289,28 @@ class CheckoutService {
                             const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
                                 subject: cart_1.orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template);
                         }
                         else if (process.env.SHOPNAME === 'Homestyle') {
                             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
                                 subject: cart_1.orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template);
                         }
                         else if (process.env.SHOPNAME === 'Beyondfresh') {
                             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
                                 subject: cart_1.orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template);
                         }
                         else if (process.env.SHOPNAME === 'Smartbaby') {
                             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
                                 subject: cart_1.orderStatusMessages['1'],
                                 email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail, socialMedia.email]
+                                ccmail: [basicDetailsSettings?.storeEmail]
                             }, template);
                         }
                     });

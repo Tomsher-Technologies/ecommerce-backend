@@ -12,7 +12,7 @@ class OrderService {
     async OrderList(options) {
         const { query, skip, limit, sort, getTotalCount } = (0, pagination_1.pagination)(options.query || {}, options);
         const { getAddress, getCartProducts } = options;
-        const defaultSort = { createdAt: -1 };
+        const defaultSort = { orderStatusAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {

@@ -466,7 +466,7 @@ class ProductController extends BaseController {
 
             const productDetails = await ProductsModel.findOne({
                 _id: variantDetails.productId
-            }).select('_id productTitle slug longDescription productImageUrl');
+            }).select('_id productTitle slug description productImageUrl');
 
             if (!productDetails) {
                 return controller.sendErrorResponse(res, 200, {
@@ -690,5 +690,65 @@ class ProductController extends BaseController {
         }
     }
 
+    async relatedProducts(req: Request, res: Response): Promise<void> {
+        const { categories = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+        let query: any = { _id: { $exists: true } };
+
+        if (categories) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Error',
+                validation: 'Category id is rquired'
+            }, req);
+        }
+        const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Error',
+                validation: 'Country is missing'
+            }, req);
+        }
+        const categoryArray = categories.split(',')
+        let categoryIds = null;
+        for await (let category of categoryArray) {
+            const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+            var findcategory
+            if (categoryIsObjectId) {
+                findcategory = { _id: category };
+            } else {
+                findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+            }
+            if (findcategory && findcategory._id) {
+                categoryIds = [findcategory._id];
+                async function fetchCategoryAndChildren(categoryId: any) {
+                    let queue = [categoryId];
+                    while (queue.length > 0) {
+                        const currentCategoryId = queue.shift();
+                        const categoriesData = await CategoryModel.find({ parentCategory: currentCategoryId }, '_id');
+                        const childCategoryIds = categoriesData.map(category => category._id);
+                        queue.push(...childCategoryIds);
+                        categoryIds.push(...childCategoryIds);
+                    }
+                }
+                await fetchCategoryAndChildren(findcategory._id);
+            }
+        }
+        query = {
+            ...query,
+            "productCategory.category._id": { $in: categoryIds },
+            status: '1'
+        }
+
+        const productData: any = await ProductService.findProductList({
+            countryId,
+            query,
+            getattribute,
+            getspecification,
+            hostName: req.get('origin'),
+        });
+        return controller.sendSuccessResponse(res, {
+            requestedData: productData,
+            message: 'Success!'
+        }, 200);
+    }
 }
 export default new ProductController();
