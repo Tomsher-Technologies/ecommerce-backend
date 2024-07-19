@@ -122,12 +122,14 @@ class CartController extends base_controller_1.default {
                     let singleProductDiscountTotal = 0;
                     if (offerProduct && offerProduct?.length > 0) {
                         // for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
-                        // if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
-                        if (offerProduct[0].offer.offerType == offers_1.offerTypes.percent) {
-                            offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
-                        }
-                        if (offerProduct[0].offer.offerType == offers_1.offerTypes.amountOff) {
-                            offerAmount = offerProduct[0].offer.offerIN;
+                        if (offerProduct[0].offer && offerProduct[0].offer.offerType) {
+                            // if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
+                            if (offerProduct[0].offer.offerType == offers_1.offerTypes.percent) {
+                                offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
+                            }
+                            if (offerProduct[0].offer.offerType == offers_1.offerTypes.amountOff) {
+                                offerAmount = offerProduct[0].offer.offerIN;
+                            }
                         }
                         // }
                         // }
