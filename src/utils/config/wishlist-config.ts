@@ -68,8 +68,12 @@ export const wishlistOfferProductPopulation = (getOfferList: any, offerApplied: 
                             cond: {
                                 $and: [
                                     { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                                    { $in: ["$productId", offerApplied.products] } // Match product ID
-                                ]
+                                    {
+                                        $in: [
+                                            "$productDetails._id",
+                                            { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }
+                                        ]
+                                    }]
                             }
                         }
                     },
@@ -92,7 +96,12 @@ export const wishlistOfferBrandPopulation = (getOfferList: any, offerApplied: an
                             cond: {
                                 $and: [
                                     { $in: ["$$offer._id", offerApplied.offerId] }, // Match offer ID
-                                    { $in: ["$brand._id", offerApplied.brands] } // Match brand ID
+                                    {
+                                        $in: [
+                                            "$productDetails.brand",
+                                            { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }
+                                        ]
+                                    }
                                 ]
                             }
                         }
@@ -124,7 +133,7 @@ export const wishlistOfferCategory = (getOfferList: any, offerApplied: any) => {
                                                         input: "$productDetails.productCategory.category",
                                                         as: "cat",
                                                         cond: {
-                                                            $in: ["$$cat._id", offerApplied.categories]
+                                                            $in: ["$$cat._id", { $map: { input: "$$offer.offerApplyValues", as: "id", in: { $toObjectId: "$$id" } } }]
                                                         }
                                                     }
                                                 }

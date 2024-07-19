@@ -7,9 +7,6 @@ import { addFieldsProductVariantAttributes, brandLookup, brandObject, productCat
 import { getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
 import LanguagesModel from '../../model/admin/setup/language-model';
 import commonService from './guest/common-service';
-import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../utils/config/offer-config';
-
-
 
 class CartService {
 
@@ -88,7 +85,6 @@ class CartService {
 
         }
 
-
         modifiedPipeline.$lookup.pipeline.push({
             $addFields: {
                 'productDetails.offer': {
@@ -97,7 +93,7 @@ class CartService {
                         then: "$productDetails.categoryOffers",
                         else: {
                             $cond: {
-                                if: "$brandOffers",
+                                if: "$productDetails.brandOffers",
                                 then: "$productDetails.brandOffers",
                                 else: "$productDetails.productOffers"
                             }

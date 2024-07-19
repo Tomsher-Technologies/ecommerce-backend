@@ -17,6 +17,10 @@ import { blockReferences } from '../../constants/website-setup';
 import { QueryParams } from '../../utils/types/common';
 import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
 import TaxsModel from '../../model/admin/setup/tax-model';
+import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../utils/config/offer-config';
+import mongoose from 'mongoose';
+import ProductsModel from '../../model/admin/ecommerce/product-model';
+import { brandLookup, brandObject, productCategoryLookup } from '../../utils/config/product-config';
 
 const controller = new BaseController();
 
@@ -92,37 +96,66 @@ class CartController extends BaseController {
                         });
                     }
 
-                    const offerProduct: any = await productService.findProductList({
-                        query: {
-                            $and: [
-                                {
-                                    $or: [
-                                        { 'productVariants._id': variantId },
-                                        { 'productVariants.slug': slug },
-                                    ]
-                                },
-                                { 'productVariants.countryId': country }
-                            ]
+                    let pipeline: any[] = [
+                        productCategoryLookup,
 
+                        brandLookup,
+                        brandObject,
+                        { $match: { _id: new mongoose.Types.ObjectId(productVariantData.productId) } },
+
+                    ];
+
+                    const { getOfferList, offerApplied } = await CommonService.findOffers(0, req.get('origin'), "", country)
+                    // let pipeline: any[] = []
+
+                    if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
+                        const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
+                        pipeline.push(offerCategory);
+                    }
+                    if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                        const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
+                        pipeline.push(offerBrand);
+                    }
+                    if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                        const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
+                        pipeline.push(offerProduct)
+                    }
+                    pipeline.push({
+                        $addFields: {
+                            offer: {
+                                $cond: {
+                                    if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
+                                    then: { $arrayElemAt: ["$categoryOffers", 0] },
+                                    else: {
+                                        $cond: {
+                                            if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
+                                            then: { $arrayElemAt: ["$brandOffers", 0] },
+                                            else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
+                                        }
+                                    }
+                                }
+                            }
                         },
-                        hostName: req.get('origin'),
-                    })
+                    });
+
+                    const offerProduct: any = await ProductsModel.aggregate(pipeline)
+
                     let offerAmount = 0
                     let singleProductTotal = 0
                     let singleProductDiscountTotal = 0;
 
                     if (offerProduct && offerProduct?.length > 0) {
-                        for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
+                        // for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
 
-                            if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
-                                if (offerProduct[0].offer.offerType == offerTypes.percent) {
-                                    offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
-                                }
-                                if (offerProduct[0].offer.offerType == offerTypes.amountOff) {
-                                    offerAmount = offerProduct[0].offer.offerIN
-                                }
-                            }
+                        // if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
+                        if (offerProduct[0].offer.offerType == offerTypes.percent) {
+                            offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct[0].offer.offerIN / 100)) : (productVariantData.price * (offerProduct[0].offer.offerIN / 100));
                         }
+                        if (offerProduct[0].offer.offerType == offerTypes.amountOff) {
+                            offerAmount = offerProduct[0].offer.offerIN
+                        }
+                        // }
+                        // }
                     }
 
                     if (productVariantData && productVariantData.quantity <= 0) {
@@ -257,7 +290,7 @@ class CartController extends BaseController {
                             totalCouponAmount,
                             totalWalletAmount,
                             codAmount,
-                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
+                            totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
                             totalAmount: totalAmountOfProduct + finalShippingCharge + giftWrapcharge
                         };
 
@@ -343,7 +376,7 @@ class CartController extends BaseController {
                             totalWalletAmount,
                             codAmount,
                             // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount: tax ? (tax.taxPercentage / 100) * totalAmountOfProduct : 0,
+                            totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
                             totalAmount: totalAmountOfProduct + finalShippingCharge,
                         };
 

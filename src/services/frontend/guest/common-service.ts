@@ -419,6 +419,10 @@ class CommonService {
                         }
                     }
                 });
+                productPipeline.push({ $unset: "categoryOffers" })
+                productPipeline.push({ $unset: "brandOffers" })
+                productPipeline.push({ $unset: "productOffers" })
+
 
                 const language: any = await ProductService.productLanguage(hostName, productPipeline)
 
@@ -526,20 +530,6 @@ class CommonService {
             }
         }
 
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.category)
-        const firstCategoryCollection = categoryCollectionData[0];
-
-        getOfferList.forEach((offerItem: any) => {
-            firstCategoryCollection.collectionsCategories.map((category: any) => {
-                const matchingOffer = offerItem.offerApplyValues.includes(category._id.toString());
-                if (matchingOffer) {
-                    category.offer = offerItem;
-                } else {
-                    category.offer = {};
-                }
-            });
-        })
-
         return categoryCollectionData;
     }
     async findCollectionBrands(options: any) {
@@ -635,20 +625,6 @@ class CommonService {
                 collection.collectionsBrands = brandData;
             }
         }
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName, offers.brand)
-
-        const firstBrandCollection = brandCollectionData[0];
-
-        getOfferList.forEach((offerItem: any) => {
-            firstBrandCollection.collectionsBrands.forEach((brand: any) => {
-                const matchingOffer = offerItem.offerApplyValues.includes(brand._id.toString());
-                if (matchingOffer) {
-                    brand.offer = offerItem;
-                } else {
-                    brand.offer = {}; // Ensure brand.offer is defined, even if no matching offer
-                }
-            });
-        })
 
         return brandCollectionData;
     }

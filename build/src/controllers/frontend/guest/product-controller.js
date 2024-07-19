@@ -672,7 +672,7 @@ class ProductController extends base_controller_1.default {
     async relatedProducts(req, res) {
         const { categories = '', getattribute = '', getspecification = '' } = req.query;
         let query = { _id: { $exists: true } };
-        if (categories) {
+        if (!categories) {
             return controller.sendErrorResponse(res, 200, {
                 message: 'Error',
                 validation: 'Category id is rquired'
@@ -686,34 +686,27 @@ class ProductController extends base_controller_1.default {
             }, req);
         }
         const categoryArray = categories.split(',');
-        let categoryIds = null;
-        for await (let category of categoryArray) {
+        let categoryIds = [];
+        let categorySlugs = [];
+        for (const category of categoryArray) {
             const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-            var findcategory;
             if (categoryIsObjectId) {
-                findcategory = { _id: category };
+                categoryIds.push(new mongoose_1.default.Types.ObjectId(category));
             }
             else {
-                findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
+                categorySlugs.push(category);
             }
-            if (findcategory && findcategory._id) {
-                categoryIds = [findcategory._id];
-                async function fetchCategoryAndChildren(categoryId) {
-                    let queue = [categoryId];
-                    while (queue.length > 0) {
-                        const currentCategoryId = queue.shift();
-                        const categoriesData = await category_model_1.default.find({ parentCategory: currentCategoryId }, '_id');
-                        const childCategoryIds = categoriesData.map(category => category._id);
-                        queue.push(...childCategoryIds);
-                        categoryIds.push(...childCategoryIds);
-                    }
-                }
-                await fetchCategoryAndChildren(findcategory._id);
-            }
+        }
+        const categoryQuery = {};
+        if (categoryIds.length > 0) {
+            categoryQuery["productCategory.category._id"] = { $in: categoryIds };
+        }
+        if (categorySlugs.length > 0) {
+            categoryQuery["productCategory.category.slug"] = { $in: categorySlugs };
         }
         query = {
             ...query,
-            "productCategory.category._id": { $in: categoryIds },
+            ...categoryQuery,
             status: '1'
         };
         const productData = await product_service_1.default.findProductList({
@@ -721,6 +714,7 @@ class ProductController extends base_controller_1.default {
             query,
             getattribute,
             getspecification,
+            getbrand: '0',
             hostName: req.get('origin'),
         });
         return controller.sendSuccessResponse(res, {

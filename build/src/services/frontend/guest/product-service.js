@@ -23,7 +23,7 @@ const product_variant_attribute_model_1 = __importDefault(require("../../../mode
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getattribute, getspecification, hostName, offers } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -86,8 +86,7 @@ class ProductService {
             { $sort: finalSort },
             modifiedPipeline,
             product_config_1.productCategoryLookup,
-            product_config_1.brandLookup,
-            product_config_1.brandObject,
+            ...(getbrand === '1' ? [product_config_1.brandLookup, product_config_1.brandObject] : []),
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
             {
