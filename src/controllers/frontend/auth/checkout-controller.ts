@@ -212,9 +212,10 @@ class CheckoutController extends BaseController {
                         }
                     }
                 } else {
-                    const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings });
+                    const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings, countryId: cartDetails.countryId });
                     cartUpdate = {
                         ...cartUpdate,
+                        totalAmount: (cartUpdate.totalAmount + (codAmount?.blockValues?.codCharge || 0)),
                         paymentMethodCharge: codAmount?.blockValues?.codCharge || 0,
                         cartStatus: "2",
                         orderStatus: orderStatusMap['1'].value,
