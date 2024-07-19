@@ -26,7 +26,6 @@ class CheckoutService {
 
     async paymentResponse(options: { paymentDetails: { _id: ObjectId, orderId: ObjectId } | null; allPaymentResponseData: any; paymentStatus: string; }): Promise<any> {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
-
         if (!paymentDetails) {
             return {
                 status: false,

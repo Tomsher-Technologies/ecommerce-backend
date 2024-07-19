@@ -202,7 +202,7 @@ class CategoryController extends base_controller_1.default {
         try {
             const validatedData = category_schema_1.categorySchema.safeParse(req.body);
             if (validatedData.success) {
-                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
                 const category = parentCategory ? await category_service_1.default.findParentCategory(parentCategory) : null;
                 var slugData;
