@@ -215,7 +215,7 @@ class CheckoutController extends BaseController {
                     const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings, countryId: cartDetails.countryId });
                     cartUpdate = {
                         ...cartUpdate,
-                        totalAmount: (cartUpdate.totalAmount + (codAmount?.blockValues?.codCharge || 0)),
+                        totalAmount: (cartUpdate.totalAmount + Number(codAmount?.blockValues?.codCharge || 0)),
                         paymentMethodCharge: codAmount?.blockValues?.codCharge || 0,
                         cartStatus: "2",
                         orderStatus: orderStatusMap['1'].value,
