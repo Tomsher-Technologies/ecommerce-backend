@@ -74,7 +74,6 @@ class ProductsController extends base_controller_1.default {
                     file.fieldname.startsWith('galleryImage['));
                 const allCountryData = await country_service_1.default.findAll();
                 const slugAndSkuData = await (0, products_1.defaultSLugAndSkuSettings)(variants, allCountryData, productTitle);
-                console.log("slugAndSkuDataslugAndSkuData", slugAndSkuData);
                 if (slugAndSkuData && slugAndSkuData.slug && slugAndSkuData.variantSku) {
                     const productData = {
                         productTitle: (0, helpers_1.capitalizeWords)(productTitle),

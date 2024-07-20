@@ -91,7 +91,6 @@ class ProductsController extends BaseController {
                 );
                 const allCountryData: any = await CountryService.findAll()
                 const slugAndSkuData = await defaultSLugAndSkuSettings(variants, allCountryData, productTitle)
-                console.log("slugAndSkuDataslugAndSkuData", slugAndSkuData);
 
                 if (slugAndSkuData && slugAndSkuData.slug && slugAndSkuData.variantSku) {
                     const productData: Partial<ProductsProps> = {
