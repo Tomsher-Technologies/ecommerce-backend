@@ -49,9 +49,12 @@ class CouponService {
             if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
                 return {
                     status: false,
-                    message: `The coupon will apply with a minimum purchase of ${Number(couponDetails.minPurchaseValue)}`
+                    message: `The coupon applies with a minimum purchase of ${couponDetails.minPurchaseValue}. Your total is ${cartDetails.totalAmount}.`
                 };
             }
+            console.log('abcd', cartDetails.totalAmount < Number(couponDetails.minPurchaseValue));
+            console.log('totalAmount', cartDetails.totalAmount);
+            console.log('minPurchaseValue', Number(couponDetails.minPurchaseValue));
             // Check if the totalCouponAmount exceeds discountMaxRedeemAmount for carts with status not equal to '1'
             const totalCouponAmountResult = await cart_order_model_1.default.aggregate([
                 { $match: { cartStatus: '1', customerId: user._id } },
@@ -142,7 +145,7 @@ class CouponService {
             // If all checks pass, return successful verification
             return {
                 status: true,
-                message: 'This coupon has been successfully verified',
+                message: 'Coupon applied successfully',
                 requestedData: couponDetails
             };
         }
