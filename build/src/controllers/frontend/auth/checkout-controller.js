@@ -361,10 +361,12 @@ class CheckoutController extends base_controller_1.default {
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
+        console.log('networkResponse', paymentDetails);
         const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
+        // console.log('networkResponse', paymentMethod.paymentMethodValues);
         const networkAccesTokenResponse = await (0, network_payments_1.networkAccessToken)(paymentMethod.paymentMethodValues);
         if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
             const networkResponse = await (0, network_payments_1.networkCreateOrderStatus)(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues, ref);

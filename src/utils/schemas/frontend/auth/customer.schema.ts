@@ -57,8 +57,8 @@ export const customerAddressSchema = zod.object({
         message: "Address line 1 is required"
     }),
     address2: zod.string().optional(),
-    phoneNumber: zod.string({ required_error: "Phone number is required" }).regex(/^\d{10}$/, {
-        message: "Phone number must be 10 digits",
+    phoneNumber: zod.string({ required_error: "Phone number is required" }).regex(/^\d{9,}$/, {
+        message: "Phone number must be at least 9 digits",
     }),
     landlineNumber: zod.string().optional(),
     state: zod.string({ required_error: "State is required" }).min(1, {
@@ -71,12 +71,15 @@ export const customerAddressSchema = zod.object({
     zipCode: zod.string().optional(),
     longitude: zod.union([
         zod.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
-        zod.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Invalid longitude format" })
-    ]),
+        zod.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Please select the address" })
+    ]).optional(),
     latitude: zod.union([
         zod.number().min(-90).max(90, { message: "Invalid latitude; must be between -90 and 90 degrees" }),
-        zod.string().regex(/^(\-?\d{1,2}(\.\d+)?)$/, { message: "Invalid latitude format" })
-    ]),
+        zod.string().regex(/^(\-?\d{1,2}(\.\d+)?)$/, { message: "Please select the address" })
+    ]).optional(),
     status: zod.string().optional(),
+}).refine((data) => data.longitude !== undefined || data.latitude !== undefined, {
+    message: "Please select the address (either longitude or latitude must be provided)",
+    path: ["longitude"], // This will set the error on the longitude field
 });
 
