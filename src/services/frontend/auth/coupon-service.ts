@@ -64,11 +64,10 @@ class CouponService {
                 };
             }
 
-
             if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
                 return {
                     status: false,
-                    message: `The coupon applies with a minimum purchase of ${couponDetails.minPurchaseValue}`
+                    message: `The coupon will apply with a minimum purchase of ${Number(couponDetails.minPurchaseValue)}`
                 };
             }
 
