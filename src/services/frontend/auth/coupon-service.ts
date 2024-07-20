@@ -68,12 +68,9 @@ class CouponService {
             if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
                 return {
                     status: false,
-                    message: `The coupon applies with a minimum purchase of ${couponDetails.minPurchaseValue}. Your total is ${cartDetails.totalAmount}.`
+                    message: `The coupon applies with a minimum purchase of ${couponDetails.minPurchaseValue}`
                 };
             }
-            console.log('abcd', cartDetails.totalAmount < Number(couponDetails.minPurchaseValue));
-            console.log('totalAmount', cartDetails.totalAmount);
-            console.log('minPurchaseValue', Number(couponDetails.minPurchaseValue));
 
             // Check if the totalCouponAmount exceeds discountMaxRedeemAmount for carts with status not equal to '1'
             const totalCouponAmountResult = await CartOrdersModel.aggregate([
