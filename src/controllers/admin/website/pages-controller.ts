@@ -31,15 +31,24 @@ class PageController extends BaseController {
                 const { block, blockReference, websiteSetupId, blockValues, status, languageSources, languageValues } = validatedData.data;
                 if ((checkValueExists(websiteSetup, block) && (checkValueExists(blockReferences, blockReference)))) {
                     const user = res.locals.user;
-                    let aboutImageUrl
-                    let aboutImageUrl2
+                    let aboutImageUrl= (blockValues as any)?.aboutImageUrl || '';
+                    let aboutImageUrl2= (blockValues as any)?.aboutImageUrl2 || '';
+                    let contactImageUrl = (blockValues as any)?.contactImageUrl || '';
+                    let contactImageUrl2= (blockValues as any)?.contactImageUrl2 || '';
                     if (req.files) {
                         const aboutImage = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage]'));
                         const aboutImage2 = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage2]'));
 
-                        aboutImageUrl = handleFileUpload(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website')
-                        aboutImageUrl2 = handleFileUpload(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website')
+                        aboutImageUrl = handleFileUpload(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website') || (blockValues as any)?.aboutImageUrl;
+                        aboutImageUrl2 = handleFileUpload(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website') || (blockValues as any)?.aboutImageUrl2;
+
+                        const contactImage = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[contactImage]'));
+                        const contactImage2 = (req as any).files.filter((file: any) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[contactImage2]'));
+
+                        contactImageUrl = handleFileUpload(req, null, contactImage?.length > 0 ? contactImage[0] : null, 'contactImageUrl', 'website') || (blockValues as any)?.contactImageUrl;
+                        contactImageUrl2 = handleFileUpload(req, null, contactImage2?.length > 0 ? contactImage2[0] : null, 'contactImageUrl2', 'website') || (blockValues as any)?.contactImageUrl2
                     }
+
                     const pagesData: Partial<any> = {
                         countryId: new mongoose.Types.ObjectId(countryId),
                         block,
@@ -47,7 +56,9 @@ class PageController extends BaseController {
                         blockValues: {
                             ...blockValues,
                             ...(blockReferences.aboutUs === blockReference && aboutImageUrl !== null && aboutImageUrl !== '' ? { aboutImageUrl } : {}),
-                            ...(blockReferences.aboutUs === blockReference && aboutImageUrl2 !== null && aboutImageUrl2 !== '' ? { aboutImageUrl2 } : {})
+                            ...(blockReferences.aboutUs === blockReference && aboutImageUrl2 !== null && aboutImageUrl2 !== '' ? { aboutImageUrl2 } : {}),
+                            ...(blockReferences.contactUs === blockReference && contactImageUrl !== null && contactImageUrl !== '' ? { contactImageUrl } : {}),
+                            ...(blockReferences.contactUs === blockReference && contactImageUrl2 !== null && contactImageUrl2 !== '' ? { contactImageUrl2 } : {})
                         },
                         status: status || '1', // active
                         createdBy: user._id,

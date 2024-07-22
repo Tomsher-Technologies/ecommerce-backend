@@ -37,7 +37,6 @@ export const verifyOtpSchema = zod.object({
     email: zod.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
     phone: zod.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
         message: 'Phone number should contain only numbers and be at least 9 digits long',
-        path: ['phone']
     }).optional(),
 }).superRefine(({ otpType, email, phone }, ctx) => {
     if (otpType === 'email') {

@@ -3,11 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const ejs = require('ejs');
+const { convert } = require('html-to-text');
 const helpers_1 = require("../../../utils/helpers");
 const website_setup_1 = require("../../../constants/website-setup");
+const contact_us_schema_1 = require("../../../utils/schemas/frontend/auth/contact-us-schema");
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const pages_service_1 = __importDefault(require("../../../services/frontend/guest/pages-service"));
+const contact_us_service_1 = __importDefault(require("../../../services/frontend/guest/contact-us-service"));
+const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
+const path_1 = __importDefault(require("path"));
+const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
+const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const controller = new base_controller_1.default();
 class PageController extends base_controller_1.default {
     async findPagesData(req, res) {
@@ -53,6 +61,97 @@ class PageController extends base_controller_1.default {
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+    async contactUsSubmit(req, res) {
+        const validatedData = contact_us_schema_1.contactUsSchema.safeParse(req.body);
+        if (!validatedData.success) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+                validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+            });
+        }
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Country is missing',
+            });
+        }
+        const { name, email, phone, subject, message } = validatedData.data;
+        const customerId = res.locals?.user?._id || null;
+        const insertContactUsData = {
+            customerId,
+            countryId,
+            name,
+            email,
+            phone,
+            subject,
+            message
+        };
+        const contactUs = await contact_us_service_1.default.create(insertContactUsData);
+        if (contactUs) {
+            let websiteSettingsQuery = { _id: { $exists: true } };
+            websiteSettingsQuery = {
+                ...websiteSettingsQuery,
+                countryId,
+                block: website_setup_1.websiteSetup.basicSettings,
+                blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                status: '1',
+            };
+            const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+            if (settingsDetails) {
+                const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-contact-us.ejs'), {
+                    subject,
+                    name,
+                    email,
+                    phone,
+                    message,
+                    storeEmail: basicDetailsSettings?.storeEmail,
+                    storePhone: basicDetailsSettings?.storePhone,
+                    shopDescription: convert(basicDetailsSettings?.shopDescription, {
+                        wordwrap: 130,
+                    }),
+                    socialMedia,
+                    appUrls,
+                    shopLogo: `${process.env.SHOPLOGO}`,
+                    shopName: `${process.env.SHOPNAME}`,
+                    appUrl: `${process.env.APPURL}`
+                }, async (err, template) => {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                    const emailValues = {
+                        subject,
+                        email,
+                        ccmail: [basicDetailsSettings?.storeEmail]
+                    };
+                    if (process.env.SHOPNAME === 'Timehouse') {
+                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
+                    }
+                    else if (process.env.SHOPNAME === 'Homestyle') {
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
+                    }
+                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
+                    }
+                    else if (process.env.SHOPNAME === 'Smartbaby') {
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
+                    }
+                });
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: contactUs,
+                message: 'Success!'
+            }, 200);
+        }
+        else {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Something went wrong! Please try again',
+            });
         }
     }
 }

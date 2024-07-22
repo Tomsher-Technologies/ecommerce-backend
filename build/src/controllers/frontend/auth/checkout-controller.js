@@ -76,7 +76,7 @@ class CheckoutController extends base_controller_1.default {
                     if (variant.quantity == 0) {
                         errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' });
                     }
-                    if (variant.quantity <= requiredQuantity) {
+                    else if (variant.quantity <= requiredQuantity) {
                         errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' });
                     }
                 }

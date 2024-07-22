@@ -1,11 +1,20 @@
 import { Request, Response, response } from 'express';
+const ejs = require('ejs');
+const { convert } = require('html-to-text');
+
 import { CommonQueryParams } from '../../../utils/types/frontend/common';
-import { checkValueExists } from '../../../utils/helpers';
-import { blockReferences, websiteSetup as websiteSetupObjects } from '../../../constants/website-setup';
+import { checkValueExists, formatZodError } from '../../../utils/helpers';
+import { blockReferences, websiteSetup, websiteSetup as websiteSetupObjects } from '../../../constants/website-setup';
+import { contactUsSchema } from '../../../utils/schemas/frontend/auth/contact-us-schema';
 
 import BaseController from "../../admin/base-controller";
 import CommonService from '../../../services/frontend/guest/common-service';
 import PagesService from '../../../services/frontend/guest/pages-service';
+import ContactUsService from '../../../services/frontend/guest/contact-us-service';
+import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
+import path from 'path';
+import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
+import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 
 const controller = new BaseController();
 
@@ -55,6 +64,98 @@ class PageController extends BaseController {
             }
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+
+    async contactUsSubmit(req: Request, res: Response): Promise<void> {
+        const validatedData = contactUsSchema.safeParse(req.body);
+        if (!validatedData.success) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+                validation: formatZodError(validatedData.error.errors)
+            });
+        }
+        const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Country is missing',
+            });
+        }
+        const { name, email, phone, subject, message } = validatedData.data;
+        const customerId: any = res.locals?.user?._id || null;
+
+        const insertContactUsData = {
+            customerId,
+            countryId,
+            name,
+            email,
+            phone,
+            subject,
+            message
+        }
+        const contactUs = await ContactUsService.create(insertContactUsData);
+        if (contactUs) {
+            let websiteSettingsQuery: any = { _id: { $exists: true } };
+            websiteSettingsQuery = {
+                ...websiteSettingsQuery,
+                countryId,
+                block: websiteSetup.basicSettings,
+                blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
+                status: '1',
+            } as any;
+
+            const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+            if (settingsDetails) {
+                const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
+                const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-contact-us.ejs'),
+                    {
+                        subject,
+                        name,
+                        email,
+                        phone,
+                        message,
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        storePhone: basicDetailsSettings?.storePhone,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, {
+                            wordwrap: 130,
+                        }),
+                        socialMedia,
+                        appUrls,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shopName: `${process.env.SHOPNAME}`,
+                        appUrl: `${process.env.APPURL}`
+                    },
+                    async (err: any, template: any) => {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        const emailValues = {
+                            subject,
+                            email,
+                            ccmail: [basicDetailsSettings?.storeEmail]
+                        }
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            const sendEmail = await mailChimpEmailGateway(emailValues, template);
+                        } else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await smtpEmailGateway(emailValues, template);
+                        } else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await smtpEmailGateway(emailValues, template);
+                        } else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await smtpEmailGateway(emailValues, template);
+                        }
+                    })
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: contactUs,
+                message: 'Success!'
+            }, 200);
+        } else {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Something went wrong! Please try again',
+            });
         }
     }
 

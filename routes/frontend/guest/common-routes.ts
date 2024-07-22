@@ -3,7 +3,8 @@ import express, {  Router } from 'express';
 import { logResponseStatus } from '../../../src/components/response-status';
 
 import CommonController from '../../../src/controllers/frontend/guest/common-controller';
-import checkoutController from '../../../src/controllers/frontend/auth/checkout-controller';
+import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
+import PagesController from '../../../src/controllers/frontend/guest/pages-controller';
 const router: Router = express.Router();
 
 router.get('/countries', CommonController.findAllCountries);
@@ -16,13 +17,14 @@ router.get('/collection-categories', CommonController.findCollectionCategories);
 router.get('/collection-brands', CommonController.findCollectionBrands);
 router.get('/payment-methods', CommonController.findPaymentMethods);
 router.get('/stores', CommonController.findAllStores);
+router.post('/contact-us-submit', PagesController.contactUsSubmit);
 
-router.get('/tap-success-response', checkoutController.tapSuccessResponse);
-router.get('/tap-failure-response', checkoutController.tapSuccessResponse);
+router.get('/tap-success-response', CheckoutController.tapSuccessResponse);
+router.get('/tap-failure-response', CheckoutController.tapSuccessResponse);
 
-router.get('/tabby-success-response', checkoutController.tabbySuccessResponse);
-router.get('/tabby-failure-response', checkoutController.tabbySuccessResponse);
+router.get('/tabby-success-response', CheckoutController.tabbySuccessResponse);
+router.get('/tabby-failure-response', CheckoutController.tabbySuccessResponse);
 
-router.get('/network-payment-response', checkoutController.networkPaymentResponse);
+router.get('/network-payment-response', CheckoutController.networkPaymentResponse);
 
 export default router;

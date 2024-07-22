@@ -28,13 +28,19 @@ class PageController extends base_controller_1.default {
                 const { block, blockReference, websiteSetupId, blockValues, status, languageSources, languageValues } = validatedData.data;
                 if (((0, helpers_1.checkValueExists)(website_setup_1.websiteSetup, block) && ((0, helpers_1.checkValueExists)(website_setup_1.blockReferences, blockReference)))) {
                     const user = res.locals.user;
-                    let aboutImageUrl;
-                    let aboutImageUrl2;
+                    let aboutImageUrl = blockValues?.aboutImageUrl || '';
+                    let aboutImageUrl2 = blockValues?.aboutImageUrl2 || '';
+                    let contactImageUrl = blockValues?.contactImageUrl || '';
+                    let contactImageUrl2 = blockValues?.contactImageUrl2 || '';
                     if (req.files) {
                         const aboutImage = req.files.filter((file) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage]'));
                         const aboutImage2 = req.files.filter((file) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[aboutImage2]'));
-                        aboutImageUrl = (0, helpers_1.handleFileUpload)(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website');
-                        aboutImageUrl2 = (0, helpers_1.handleFileUpload)(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website');
+                        aboutImageUrl = (0, helpers_1.handleFileUpload)(req, null, aboutImage?.length > 0 ? aboutImage[0] : null, 'aboutImageUrl', 'website') || blockValues?.aboutImageUrl;
+                        aboutImageUrl2 = (0, helpers_1.handleFileUpload)(req, null, aboutImage2?.length > 0 ? aboutImage2[0] : null, 'aboutImageUrl2', 'website') || blockValues?.aboutImageUrl2;
+                        const contactImage = req.files.filter((file) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[contactImage]'));
+                        const contactImage2 = req.files.filter((file) => file.fieldname && file.fieldname.startsWith('blockValues[') && file.fieldname.includes('[contactImage2]'));
+                        contactImageUrl = (0, helpers_1.handleFileUpload)(req, null, contactImage?.length > 0 ? contactImage[0] : null, 'contactImageUrl', 'website') || blockValues?.contactImageUrl;
+                        contactImageUrl2 = (0, helpers_1.handleFileUpload)(req, null, contactImage2?.length > 0 ? contactImage2[0] : null, 'contactImageUrl2', 'website') || blockValues?.contactImageUrl2;
                     }
                     const pagesData = {
                         countryId: new mongoose_1.default.Types.ObjectId(countryId),
@@ -43,7 +49,9 @@ class PageController extends base_controller_1.default {
                         blockValues: {
                             ...blockValues,
                             ...(website_setup_1.blockReferences.aboutUs === blockReference && aboutImageUrl !== null && aboutImageUrl !== '' ? { aboutImageUrl } : {}),
-                            ...(website_setup_1.blockReferences.aboutUs === blockReference && aboutImageUrl2 !== null && aboutImageUrl2 !== '' ? { aboutImageUrl2 } : {})
+                            ...(website_setup_1.blockReferences.aboutUs === blockReference && aboutImageUrl2 !== null && aboutImageUrl2 !== '' ? { aboutImageUrl2 } : {}),
+                            ...(website_setup_1.blockReferences.contactUs === blockReference && contactImageUrl !== null && contactImageUrl !== '' ? { contactImageUrl } : {}),
+                            ...(website_setup_1.blockReferences.contactUs === blockReference && contactImageUrl2 !== null && contactImageUrl2 !== '' ? { contactImageUrl2 } : {})
                         },
                         status: status || '1', // active
                         createdBy: user._id,
