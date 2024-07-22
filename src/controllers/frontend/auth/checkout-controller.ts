@@ -80,7 +80,7 @@ class CheckoutController extends BaseController {
                     if (variant.quantity == 0) {
                         errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' })
                     }
-                    else if (variant.quantity <= requiredQuantity) {
+                    if (variant.quantity <= requiredQuantity) {
                         errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' })
                     }
                 }
@@ -384,7 +384,7 @@ class CheckoutController extends BaseController {
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
-        console.log('networkResponse', paymentDetails);
+        console.log('networkResponse',paymentDetails);
 
         const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId });
         if (!paymentMethod) {
