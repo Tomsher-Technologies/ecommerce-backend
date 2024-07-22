@@ -66,12 +66,23 @@ class CartController extends BaseController {
                     query,
                     hostName: req.get('origin'),
                 });
-                const productVariantData = productVariant[0].productVariants[0]
 
-                if (!productVariantData) {
-                    return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
+                if (productVariant && productVariant.length === 0) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Product not found!' });
                 }
 
+                if (productVariant[0].productVariants && productVariant[0].productVariants.length === 0) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Product details are not found!' });
+                }
+                const productVariantData = productVariant[0].productVariants[0]
+
+                if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: "Item Out of stock"
+                    });
+
+                }
                 if (customer || guestUser) {
                     var existingCart: any
 
@@ -112,14 +123,6 @@ class CartController extends BaseController {
                         }
                         // }
                         // }
-                    }
-
-                    if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Validation error',
-                            validation: "Item Out of stock"
-                        });
-
                     }
 
                     var cartOrderData

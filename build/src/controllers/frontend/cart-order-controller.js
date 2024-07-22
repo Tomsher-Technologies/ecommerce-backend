@@ -55,9 +55,18 @@ class CartController extends base_controller_1.default {
                     query,
                     hostName: req.get('origin'),
                 });
+                if (productVariant && productVariant.length === 0) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Product not found!' });
+                }
+                if (productVariant[0].productVariants && productVariant[0].productVariants.length === 0) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Product details are not found!' });
+                }
                 const productVariantData = productVariant[0].productVariants[0];
-                if (!productVariantData) {
-                    return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
+                if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: "Item Out of stock"
+                    });
                 }
                 if (customer || guestUser) {
                     var existingCart;
@@ -97,12 +106,6 @@ class CartController extends base_controller_1.default {
                         }
                         // }
                         // }
-                    }
-                    if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Validation error',
-                            validation: "Item Out of stock"
-                        });
                     }
                     var cartOrderData;
                     const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });

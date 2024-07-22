@@ -82,7 +82,7 @@ class PageController extends BaseController {
             });
         }
         const { name, email, phone, subject, message } = validatedData.data;
-        const customerId: any = res.locals?.user?._id || null;
+        const customerId: any = res.locals.user || null;
 
         const insertContactUsData = {
             customerId,

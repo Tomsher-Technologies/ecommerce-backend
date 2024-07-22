@@ -18,7 +18,6 @@ frontendRouter.use('/auth', auth_routes_1.default);
 frontendRouter.use('/common', common_routes_1.default);
 frontendRouter.use('/product', product_routes_1.default);
 frontendRouter.use('/wishlist', wishlist_routes_1.default);
-frontendRouter.use('/pages/contact-us-submit', pages_controller_1.default.contactUsSubmit);
 frontendRouter.use('/pages/:slug', pages_controller_1.default.findPagesData);
 frontendRouter.use('/cart', cart_routes_1.default);
 frontendRouter.use('/coupons', coupon_routes_1.default);

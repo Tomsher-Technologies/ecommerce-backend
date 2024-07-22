@@ -16,7 +16,6 @@ frontendRouter.use('/auth', GuestRoutes);
 frontendRouter.use('/common', CommonRoutes);
 frontendRouter.use('/product', ProductRoutes);
 frontendRouter.use('/wishlist', WishlistRoutes);
-frontendRouter.use('/pages/contact-us-submit', PagesController.contactUsSubmit);
 frontendRouter.use('/pages/:slug', PagesController.findPagesData);
 frontendRouter.use('/cart', CartRoutes);
 frontendRouter.use('/coupons', CouponRoutes);
