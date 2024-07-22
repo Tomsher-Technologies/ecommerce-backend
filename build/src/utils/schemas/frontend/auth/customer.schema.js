@@ -12,7 +12,6 @@ exports.updateCustomerSchema = zod_1.z.object({
     firstName: zod_1.z.string({ required_error: 'First name is required', }).min(3, 'First name is should be 3 chars minimum'),
     phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
         message: 'Phone number should contain only numbers and be at least 9 digits long',
-        path: ['phone']
     }),
 });
 exports.changePassword = zod_1.z.object({

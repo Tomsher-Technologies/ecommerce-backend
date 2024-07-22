@@ -56,6 +56,12 @@ class PagesService {
         else if ((blockReference === website_setup_1.blockReferences.termsAndConditions) || (blockReference === website_setup_1.blockReferences.privacyAndPolicy)) {
             pipeline.push(pages_config_1.pageTermsAndPrivacyAddFieldsStage);
         }
+        else if (blockReference === website_setup_1.blockReferences.aboutUs) {
+            pipeline.push(pages_config_1.pageAboutUsAddFieldsStage);
+        }
+        else if (blockReference === website_setup_1.blockReferences.contactUs) {
+            pipeline.push(pages_config_1.pageContsctUsAddFieldsStage);
+        }
         pipeline.push(pages_config_1.pageFinalProject);
         pipeline.push(pages_config_1.replaceRootStage);
         const pageData = await website_setup_model_1.default.aggregate(pipeline).exec();

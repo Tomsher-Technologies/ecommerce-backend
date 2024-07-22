@@ -118,6 +118,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: Number,
         default: 0
     },
+    totalProductOriginalPrice: {
+        type: Number,
+        default: 0
+    },
     totalProductAmount: {
         type: Number,
         default: 0

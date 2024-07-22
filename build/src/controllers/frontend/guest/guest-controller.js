@@ -25,7 +25,6 @@ const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-g
 const controller = new base_controller_1.default();
 const options = {
     wordwrap: 130,
-    // ...
 };
 class GuestController extends base_controller_1.default {
     async register(req, res) {
@@ -107,44 +106,41 @@ class GuestController extends base_controller_1.default {
                         status: '1',
                     };
                     const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
-                    if (!settingsDetails) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Settings details not fount'
+                    if (settingsDetails) {
+                        const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                        const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                        const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                        const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                            otp: newCustomer.otp,
+                            firstName: newCustomer.firstName,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                            socialMedia,
+                            appUrls,
+                            subject: 'Verification OTP',
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shopName: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`
+                        }, async (err, template) => {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+                            if (process.env.SHOPNAME === 'Timehouse') {
+                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Homestyle') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Smartbaby') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
                         });
                     }
-                    const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
-                        otp: newCustomer.otp,
-                        firstName: newCustomer.firstName,
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        storePhone: basicDetailsSettings?.storePhone,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
-                        socialMedia,
-                        appUrls,
-                        subject: 'Verification OTP',
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopName: `${process.env.SHOPNAME}`,
-                        appUrl: `${process.env.APPURL}`
-                    }, async (err, template) => {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
-                        }
-                    });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: newCustomer._id,
@@ -220,44 +216,41 @@ class GuestController extends base_controller_1.default {
                                 status: '1',
                             };
                             const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
-                            if (!settingsDetails) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Settings details not fount'
+                            if (settingsDetails) {
+                                const basicDetailsSettings = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                                const socialMedia = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                                const appUrls = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                                const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                                    otp: updatedCustomer.otp,
+                                    firstName: updatedCustomer.firstName,
+                                    storeEmail: basicDetailsSettings?.storeEmail,
+                                    storePhone: basicDetailsSettings?.storePhone,
+                                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                                    socialMedia,
+                                    appUrls,
+                                    subject: 'Password Reset Confirmation',
+                                    shopLogo: `${process.env.SHOPLOGO}`,
+                                    shopName: `${process.env.SHOPNAME}`,
+                                    appUrl: `${process.env.APPURL}`
+                                }, async (err, template) => {
+                                    if (err) {
+                                        console.log(err);
+                                        return;
+                                    }
+                                    if (process.env.SHOPNAME === 'Timehouse') {
+                                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                    }
+                                    else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                    }
+                                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                    }
+                                    else if (process.env.SHOPNAME === 'Smartbaby') {
+                                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
+                                    }
                                 });
                             }
-                            const basicDetailsSettings = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                            const socialMedia = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                            const appUrls = await settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
-                                otp: updatedCustomer.otp,
-                                firstName: updatedCustomer.firstName,
-                                storeEmail: basicDetailsSettings?.storeEmail,
-                                storePhone: basicDetailsSettings?.storePhone,
-                                shopDescription: convert(basicDetailsSettings?.shopDescription, options),
-                                socialMedia,
-                                appUrls,
-                                subject: 'Password Reset Confirmation',
-                                shopLogo: `${process.env.SHOPLOGO}`,
-                                shopName: `${process.env.SHOPNAME}`,
-                                appUrl: `${process.env.APPURL}`
-                            }, async (err, template) => {
-                                if (err) {
-                                    console.log(err);
-                                    return;
-                                }
-                                if (process.env.SHOPNAME === 'Timehouse') {
-                                    const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
-                                }
-                                else if (process.env.SHOPNAME === 'Homestyle') {
-                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
-                                }
-                                else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
-                                }
-                                else if (process.env.SHOPNAME === 'Smartbaby') {
-                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template);
-                                }
-                            });
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: updatedCustomer._id,
@@ -392,44 +385,41 @@ class GuestController extends base_controller_1.default {
                                 status: '1',
                             };
                             const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
-                            if (!settingsDetails) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Settings details not fount'
+                            if (settingsDetails) {
+                                const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                                const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                                const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                                const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                                    otp: optUpdatedCustomer.otp,
+                                    firstName: optUpdatedCustomer.firstName,
+                                    storeEmail: basicDetailsSettings?.storeEmail,
+                                    storePhone: basicDetailsSettings?.storePhone,
+                                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                                    socialMedia,
+                                    appUrls,
+                                    subject: 'Resent verification OTP',
+                                    shopLogo: `${process.env.SHOPLOGO}`,
+                                    shopName: `${process.env.SHOPNAME}`,
+                                    appUrl: `${process.env.APPURL}`
+                                }, async (err, template) => {
+                                    if (err) {
+                                        console.log(err);
+                                        return;
+                                    }
+                                    if (process.env.SHOPNAME === 'Timehouse') {
+                                        const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                    }
+                                    else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                    }
+                                    else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                    }
+                                    else if (process.env.SHOPNAME === 'Smartbaby') {
+                                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
+                                    }
                                 });
                             }
-                            const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                            const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                            const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                            const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
-                                otp: optUpdatedCustomer.otp,
-                                firstName: optUpdatedCustomer.firstName,
-                                storeEmail: basicDetailsSettings?.storeEmail,
-                                storePhone: basicDetailsSettings?.storePhone,
-                                shopDescription: convert(basicDetailsSettings?.shopDescription, options),
-                                socialMedia,
-                                appUrls,
-                                subject: 'Resent verification OTP',
-                                shopLogo: `${process.env.SHOPLOGO}`,
-                                shopName: `${process.env.SHOPNAME}`,
-                                appUrl: `${process.env.APPURL}`
-                            }, async (err, template) => {
-                                if (err) {
-                                    console.log(err);
-                                    return;
-                                }
-                                if (process.env.SHOPNAME === 'Timehouse') {
-                                    const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
-                                }
-                                else if (process.env.SHOPNAME === 'Homestyle') {
-                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
-                                }
-                                else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
-                                }
-                                else if (process.env.SHOPNAME === 'Smartbaby') {
-                                    const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template);
-                                }
-                            });
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     userId: optUpdatedCustomer._id,

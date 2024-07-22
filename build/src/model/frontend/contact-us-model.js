@@ -24,63 +24,48 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const cartOrderProductSchema = new mongoose_1.Schema({
-    cartId: {
+const contactUsSchema = new mongoose_1.Schema({
+    countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'CartOrders',
+        ref: 'Countries',
+        required: [true, 'Country is required'],
+    },
+    customerId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Customer',
         default: null
     },
-    slug: {
+    name: {
         type: String,
-        required: false,
+        required: [true, 'Name is required'],
+        minlength: [1, 'Name is required'],
     },
-    quantity: {
-        type: Number,
-        required: true,
-        default: 1
-    },
-    productOriginalPrice: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    productAmount: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    productDiscountAmount: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    productCouponAmount: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    giftWrapAmount: {
-        type: Number,
-        default: 0
-    },
-    variantId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
-        required: false
-    },
-    productId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
-        required: false
-    },
-    orderStatus: {
+    email: {
         type: String,
-        required: true,
-        default: '1'
+        required: [true, 'Email is required'],
+        match: [/.+@.+\..+/, 'Please provide a valid email address'],
     },
-    orderStatusAt: {
-        type: Date,
-        default: null
+    phone: {
+        type: String,
+        required: [true, 'Phone number is required'],
+        validate: {
+            validator: (value) => /^\d+$/.test(value) && value.length >= 9,
+            message: 'Phone number should contain only numbers and be at least 9 digits long',
+        },
+    },
+    subject: {
+        type: String,
+        required: [true, 'Subject is required'],
+        minlength: [3, 'Please enter at least 3 characters for the subject'],
+    },
+    message: {
+        type: String,
+        required: [true, 'Message is required'],
+        minlength: [3, 'Please enter at least 3 characters for the message'],
+    },
+    status: {
+        type: String,
+        default: '1' // Pending
     },
     createdAt: {
         type: Date,
@@ -91,5 +76,5 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const CartOrderProductsModel = mongoose_1.default.model('CartOrderProducts', cartOrderProductSchema);
-exports.default = CartOrderProductsModel;
+const ContactUsModel = mongoose_1.default.model('ContactUs', contactUsSchema);
+exports.default = ContactUsModel;

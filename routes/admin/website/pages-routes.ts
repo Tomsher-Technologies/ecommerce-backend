@@ -9,7 +9,7 @@ import PagesController from '../../../src/controllers/admin/website/pages-contro
 
 const router: Router = express.Router();
 
-const { upload } = configureMulter('website', ['aboutImage','aboutImage2']);
+const { upload } = configureMulter('website', ['aboutImage', 'aboutImage2', 'contactImage', 'contactImage2']);
 
 router.use(authMiddleware);
 
