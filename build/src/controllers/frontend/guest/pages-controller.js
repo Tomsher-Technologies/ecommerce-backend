@@ -78,7 +78,7 @@ class PageController extends base_controller_1.default {
             });
         }
         const { name, email, phone, subject, message } = validatedData.data;
-        const customerId = res.locals?.user?._id || null;
+        const customerId = res.locals.user || null;
         const insertContactUsData = {
             customerId,
             countryId,
