@@ -294,16 +294,19 @@ class CheckoutController extends BaseController {
     async tabbyCheckoutRetrieveDetails(req: Request, res: Response): Promise<any> {
         try {
             const tabbyId = req.params.tabby;
+            const paymentDetails: any = await PaymentTransactionModel.findOne({ transactionId: tabbyId });
+            if (!paymentDetails) {
+                return controller.sendErrorResponse(res, 500, { message: 'Payment details not found' });
+            }
 
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
             }
-            const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby })
+            const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby, countryId: countryData._id })
             if (!paymentMethod) {
                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
             }
-
             const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId, paymentMethod.paymentMethodValues);
 
             if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
@@ -329,7 +332,6 @@ class CheckoutController extends BaseController {
             }
 
         } catch (error: any) {
-
             return controller.sendErrorResponse(res, 200, {
                 message: error.message || 'Some error occurred while get tabby payment details',
             });
@@ -342,7 +344,7 @@ class CheckoutController extends BaseController {
             res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false
         }
-        const paymentDetails = await PaymentTransactionModel.findOne({ transactionId: tap_id });
+        const paymentDetails: any = await PaymentTransactionModel.findOne({ transactionId: tap_id });
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
@@ -351,6 +353,11 @@ class CheckoutController extends BaseController {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
         const tapResponse = await tapPaymentRetrieve(tap_id, paymentMethod.paymentMethodValues);
+        await PaymentTransactionModel.findByIdAndUpdate(
+            paymentDetails._id,
+            { $set: { data: tapResponse } },
+            { new: true, runValidators: true }
+        );
         if (tapResponse.status) {
             const retValResponse = await CheckoutService.paymentResponse({
                 paymentDetails,
@@ -379,12 +386,11 @@ class CheckoutController extends BaseController {
             return false
         }
 
-        const paymentDetails = await PaymentTransactionModel.findOne({ paymentId: ref });
+        const paymentDetails: any = await PaymentTransactionModel.findOne({ paymentId: ref });
 
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
-        console.log('networkResponse',paymentDetails);
 
         const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId });
         if (!paymentMethod) {
@@ -399,9 +405,13 @@ class CheckoutController extends BaseController {
                 res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
                 return false
             }
+            await PaymentTransactionModel.findByIdAndUpdate(
+                paymentDetails._id,
+                { $set: { data: networkResponse } },
+                { new: true, runValidators: true }
+            );
             if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
                 const status = networkResponse._embedded.payment[0].state;
-                console.log('networkResponse', networkResponse._embedded);
                 const retValResponse = await CheckoutService.paymentResponse({
                     paymentDetails,
                     allPaymentResponseData: data,
@@ -432,7 +442,7 @@ class CheckoutController extends BaseController {
             res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false
         }
-        const paymentDetails = await PaymentTransactionModel.findOne({ paymentId: payment_id });
+        const paymentDetails: any = await PaymentTransactionModel.findOne({ paymentId: payment_id });
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
@@ -441,7 +451,11 @@ class CheckoutController extends BaseController {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
-
+        await PaymentTransactionModel.findByIdAndUpdate(
+            paymentDetails._id,
+            { $set: { data: tabbyResponse } },
+            { new: true, runValidators: true }
+        );
         if (tabbyResponse.status) {
             const retValResponse = await CheckoutService.paymentResponse({
                 paymentDetails,

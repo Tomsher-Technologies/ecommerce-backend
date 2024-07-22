@@ -278,11 +278,15 @@ class CheckoutController extends base_controller_1.default {
     async tabbyCheckoutRetrieveDetails(req, res) {
         try {
             const tabbyId = req.params.tabby;
+            const paymentDetails = await payment_transaction_model_1.default.findOne({ transactionId: tabbyId });
+            if (!paymentDetails) {
+                return controller.sendErrorResponse(res, 500, { message: 'Payment details not found' });
+            }
             let countryData = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
             }
-            const paymentMethod = await payment_methods_model_1.default.findOne({ slug: cart_1.paymentMethods.tabby });
+            const paymentMethod = await payment_methods_model_1.default.findOne({ slug: cart_1.paymentMethods.tabby, countryId: countryData._id });
             if (!paymentMethod) {
                 return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
             }
@@ -330,6 +334,7 @@ class CheckoutController extends base_controller_1.default {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
         const tapResponse = await (0, tap_payment_1.tapPaymentRetrieve)(tap_id, paymentMethod.paymentMethodValues);
+        await payment_transaction_model_1.default.findByIdAndUpdate(paymentDetails._id, { $set: { data: tapResponse } }, { new: true, runValidators: true });
         if (tapResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
                 paymentDetails,
@@ -361,7 +366,6 @@ class CheckoutController extends base_controller_1.default {
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment transaction. Please contact administrator`); // failure
         }
-        console.log('networkResponse', paymentDetails);
         const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
@@ -374,9 +378,9 @@ class CheckoutController extends base_controller_1.default {
                 res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
                 return false;
             }
+            await payment_transaction_model_1.default.findByIdAndUpdate(paymentDetails._id, { $set: { data: networkResponse } }, { new: true, runValidators: true });
             if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
                 const status = networkResponse._embedded.payment[0].state;
-                console.log('networkResponse', networkResponse._embedded);
                 const retValResponse = await checkout_service_1.default.paymentResponse({
                     paymentDetails,
                     allPaymentResponseData: data,
@@ -417,6 +421,7 @@ class CheckoutController extends base_controller_1.default {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
         const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentRetrieve)(payment_id, paymentMethod.paymentMethodValues);
+        await payment_transaction_model_1.default.findByIdAndUpdate(paymentDetails._id, { $set: { data: tabbyResponse } }, { new: true, runValidators: true });
         if (tabbyResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
                 paymentDetails,
