@@ -77,8 +77,8 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                 "updated_at": cartData.cartStatusAt,
                 "reference_id": cartData._id,
                 "items": cartData?.products?.map((product) => ({
-                    "title": product.productDetails.productTitle,
-                    "description": product.productDetails.description,
+                    "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+                    "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
                     "quantity": product.quantity,
                     "unit_price": product.productAmount / product.quantity,
                     "discount_amount": "0.00",
@@ -112,8 +112,8 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                         "zip": shippingAddressdetails?.zipCode
                     },
                     "items": cartData?.products?.map((product) => ({
-                        "title": product.productDetails.productTitle,
-                        "description": product.productDetails.description,
+                        "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+                        "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
                         "quantity": product.quantity,
                         "unit_price": product.productAmount / product.quantity,
                         "discount_amount": "0.00",
@@ -174,26 +174,26 @@ const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetail
     };
 };
 exports.networkPaymentGatwayDefaultValues = networkPaymentGatwayDefaultValues;
-const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) => {
+const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, shippingAddressdetails, billingAddressdetails) => {
     return {
         "total_amount": {
             "amount": 300,
-            "currency": countryData.currencyCode
+            "currency": "AED"
         },
         "shipping_amount": {
             "amount": 0,
-            "currency": countryData.currencyCode
+            "currency": "AED"
         },
         "tax_amount": {
             "amount": 0,
-            "currency": countryData.currencyCode
+            "currency": "AED"
         },
         "order_reference_id": "1231234123-abda-fdfe--afd31241",
-        "order_number": "S12356",
+        "order_number": "",
         "discount": {
             "amount": {
                 "amount": 200,
-                "currency": countryData.currencyCode
+                "currency": "AED"
             },
             "name": "Christmas 2020"
         },
@@ -206,19 +206,19 @@ const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails
                 "quantity": 1,
                 "discount_amount": {
                     "amount": 100,
-                    "currency": countryData.currencyCode
+                    "currency": "AED"
                 },
                 "tax_amount": {
                     "amount": 10,
-                    "currency": countryData.currencyCode
+                    "currency": "AED"
                 },
                 "unit_price": {
                     "amount": 490,
-                    "currency": countryData.currencyCode
+                    "currency": "AED"
                 },
                 "total_amount": {
                     "amount": 100,
-                    "currency": countryData.currencyCode
+                    "currency": "AED"
                 }
             }
         ],
@@ -260,41 +260,7 @@ const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails
         },
         "platform": "platform name here",
         "is_mobile": false,
-        "locale": "en_US",
-        "risk_assessment": {
-            "customer_age": 22,
-            "customer_dob": "31-01-2000",
-            "customer_gender": "Male",
-            "customer_nationality": "AE",
-            "is_premium_customer": true,
-            "is_existing_customer": true,
-            "is_guest_user": true,
-            "account_creation_date": "31-01-2019",
-            "platform_account_creation_date": "string",
-            "date_of_first_transaction": "31-01-2019",
-            "is_card_on_file": true,
-            "is_COD_customer": true,
-            "has_delivered_order": true,
-            "is_phone_verified": true,
-            "is_fraudulent_customer": true,
-            "total_ltv": 501.5,
-            "total_order_count": 12,
-            "order_amount_last3months": 301.5,
-            "order_count_last3months": 2,
-            "last_order_date": "31-01-2021",
-            "last_order_amount": 301.5,
-            "reward_program_enrolled": true,
-            "reward_program_points": 300,
-            "phone_verified": false
-        },
-        "additional_data": {
-            "delivery_method": "home delivery",
-            "pickup_store": "Store A",
-            "store_code": "Store code A",
-            "vendor_amount": 0,
-            "merchant_settlement_amount": 0,
-            "vendor_reference_code": "AZ1234"
-        }
+        "locale": "en_US"
     };
 };
 exports.tamaraPaymentGatwayDefaultValues = tamaraPaymentGatwayDefaultValues;

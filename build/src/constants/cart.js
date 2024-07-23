@@ -53,8 +53,10 @@ exports.couponDeviceType = {
 };
 exports.paymentMethods = {
     cashOnDelivery: "cash-on-delivery",
+    cardOnDelivery: "card-on-delivery",
     tap: "tap",
     tabby: "tabby",
+    tamara: "tamara",
     network: "network"
 };
 exports.couponDiscountType = {
@@ -70,8 +72,11 @@ exports.orderPaymentStatus = {
 };
 exports.orderTypes = {
     tap: "tap",
+    network: "network",
     tabby: "tabby",
+    tamara: "tamara",
     cashOnDelivery: "cash-on-delivery",
+    cardOnDelivery: "card-on-delivery",
 };
 exports.tapPaymentGatwayStatus = {
     initiated: 'INITIATED', // Tap will provide the payment URL(transaction.url) to process the payment. The customer should be redirected to this URL to complete the payment.

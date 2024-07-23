@@ -95,8 +95,8 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
                 "reference_id": cartData._id,
                 "items": cartData?.products?.map((product: any) => (
                     {
-                        "title": product.productDetails.productTitle,
-                        "description": product.productDetails.description,
+                        "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+                        "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
                         "quantity": product.quantity,
                         "unit_price": product.productAmount / product.quantity,
                         "discount_amount": "0.00",
@@ -133,8 +133,8 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
                     },
                     "items": cartData?.products?.map((product: any) => (
                         {
-                            "title": product.productDetails.productTitle,
-                            "description": product.productDetails.description,
+                            "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+                            "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
                             "quantity": product.quantity,
                             "unit_price": product.productAmount / product.quantity,
                             "discount_amount": "0.00",
@@ -196,128 +196,109 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
     }
 }
 
-export const tamaraPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
+export const tamaraPaymentGatwayDefaultValues = (
+    countryData: any,
+    cartData: {
+        totalAmount: number,
+        totalTaxAmount: number,
+        totalDiscountAmount: number,
+        totalShippingAmount: number,
+        _id: ObjectId,
+        orderComments: string;
+        cartStatusAt: Date | null;
+        products: any,
+    },
+    customerDetails: CustomrProps,
+    shippingAddressdetails: CustomerAddressProps,
+    billingAddressdetails: CustomerAddressProps,
+) => {
     return {
-        "total_amount": {
-            "amount": 300,
-            "currency": countryData.currencyCode
-        },
-        "shipping_amount": {
-            "amount": 0,
-            "currency": countryData.currencyCode
-        },
-        "tax_amount": {
-            "amount": 0,
-            "currency": countryData.currencyCode
-        },
-        "order_reference_id": "1231234123-abda-fdfe--afd31241",
-        "order_number": "S12356",
-        "discount": {
-            "amount": {
-                "amount": 200,
-                "currency": countryData.currencyCode
-            },
-            "name": "Christmas 2020"
-        },
-        "items": [
-            {
-                "name": "Lego City 8601",
-                "type": "Digital",
-                "reference_id": "123",
-                "sku": "SA-12436",
-                "quantity": 1,
-                "discount_amount": {
-                    "amount": 100,
-                    "currency": countryData.currencyCode
-                },
-                "tax_amount": {
-                    "amount": 10,
-                    "currency": countryData.currencyCode
-                },
-                "unit_price": {
-                    "amount": 490,
-                    "currency": countryData.currencyCode
-                },
-                "total_amount": {
-                    "amount": 100,
-                    "currency": countryData.currencyCode
-                }
-            }
-        ],
-        "consumer": {
-            "email": "customer@email.com",
-            "first_name": "Mona",
-            "last_name": "Lisa",
-            "phone_number": "0568982559"
-        },
-        "country_code": "AE",
-        "description": "lorem ipsum dolor",
-        "merchant_url": {
-            "cancel": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/cancel",
-            "failure": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/fail",
-            "success": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/success",
-            "notification": "https://store-demo.com/payments/tamarapay"
-        },
-        "payment_type": "PAY_BY_INSTALMENTS",
-        "instalments": 3,
-        "billing_address": {
-            "city": "Dubai",
-            "country_code": "AE",
-            "first_name": "Mona",
-            "last_name": "Lisa",
-            "line1": "3764 Al Urubah Rd",
-            "line2": "string",
-            "phone_number": "0568982559",
-            "region": "As Sulimaniyah"
-        },
-        "shipping_address": {
-            "city": "Riyadh",
-            "country_code": "AE",
-            "first_name": "Mona",
-            "last_name": "Lisa",
-            "line1": "3764 Al Urubah Rd",
-            "line2": "string",
-            "phone_number": "0568982559",
-            "region": "As Sulimaniyah"
-        },
-        "platform": "platform name here",
-        "is_mobile": false,
-        "locale": "en_US",
-        "risk_assessment": {
-            "customer_age": 22,
-            "customer_dob": "31-01-2000",
-            "customer_gender": "Male",
-            "customer_nationality": "AE",
-            "is_premium_customer": true,
-            "is_existing_customer": true,
-            "is_guest_user": true,
-            "account_creation_date": "31-01-2019",
-            "platform_account_creation_date": "string",
-            "date_of_first_transaction": "31-01-2019",
-            "is_card_on_file": true,
-            "is_COD_customer": true,
-            "has_delivered_order": true,
-            "is_phone_verified": true,
-            "is_fraudulent_customer": true,
-            "total_ltv": 501.5,
-            "total_order_count": 12,
-            "order_amount_last3months": 301.5,
-            "order_count_last3months": 2,
-            "last_order_date": "31-01-2021",
-            "last_order_amount": 301.5,
-            "reward_program_enrolled": true,
-            "reward_program_points": 300,
-            "phone_verified": false
-        },
-        "additional_data": {
-            "delivery_method": "home delivery",
-            "pickup_store": "Store A",
-            "store_code": "Store code A",
-            "vendor_amount": 0,
-            "merchant_settlement_amount": 0,
-            "vendor_reference_code": "AZ1234"
-        }
+  "total_amount": {
+    "amount": 300,
+    "currency": "AED"
+  },
+  "shipping_amount": {
+    "amount": 0,
+    "currency": "AED"
+  },
+  "tax_amount": {
+    "amount": 0,
+    "currency": "AED"
+  },
+  "order_reference_id": "1231234123-abda-fdfe--afd31241",
+  "order_number": "",
+  "discount": {
+    "amount": {
+      "amount": 200,
+      "currency": "AED"
+    },
+    "name": "Christmas 2020"
+  },
+  "items": [
+    {
+      "name": "Lego City 8601",
+      "type": "Digital",
+      "reference_id": "123",
+      "sku": "SA-12436",
+      "quantity": 1,
+      "discount_amount": {
+        "amount": 100,
+        "currency": "AED"
+      },
+      "tax_amount": {
+        "amount": 10,
+        "currency": "AED"
+      },
+      "unit_price": {
+        "amount": 490,
+        "currency": "AED"
+      },
+      "total_amount": {
+        "amount": 100,
+        "currency": "AED"
+      }
     }
+  ],
+  "consumer": {
+    "email": "customer@email.com",
+    "first_name": "Mona",
+    "last_name": "Lisa",
+    "phone_number": "0568982559"
+  },
+  "country_code": "AE",
+  "description": "lorem ipsum dolor",
+  "merchant_url": {
+    "cancel": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/cancel",
+    "failure": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/fail",
+    "success": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/success",
+    "notification": "https://store-demo.com/payments/tamarapay"
+  },
+  "payment_type": "PAY_BY_INSTALMENTS",
+  "instalments": 3,
+  "billing_address": {
+    "city": "Dubai",
+    "country_code": "AE",
+    "first_name": "Mona",
+    "last_name": "Lisa",
+    "line1": "3764 Al Urubah Rd",
+    "line2": "string",
+    "phone_number": "0568982559",
+    "region": "As Sulimaniyah"
+  },
+  "shipping_address": {
+    "city": "Riyadh",
+    "country_code": "AE",
+    "first_name": "Mona",
+    "last_name": "Lisa",
+    "line1": "3764 Al Urubah Rd",
+    "line2": "string",
+    "phone_number": "0568982559",
+    "region": "As Sulimaniyah"
+  },
+  "platform": "platform name here",
+  "is_mobile": false,
+  "locale": "en_US"
+}
 }
 
 

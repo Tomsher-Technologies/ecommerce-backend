@@ -13,13 +13,14 @@ import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from 
 
 import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/payment-gateway/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
-import { networkPaymentGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
+import { networkPaymentGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tamaraPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
 import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from "../../../lib/payment-gateway/network-payments";
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
+import { tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
 
 const controller = new BaseController();
 
@@ -30,7 +31,7 @@ class CheckoutController extends BaseController {
             const customerId: any = res.locals.user._id;
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
-                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
             const validatedData = checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
@@ -38,12 +39,12 @@ class CheckoutController extends BaseController {
 
                 const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
                 if (!customerDetails) {
-                    return controller.sendErrorResponse(res, 500, { message: 'User is not found' });
+                    return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
                 }
 
                 const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentMethodId })
                 if (!paymentMethod) {
-                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
+                    return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, payment method is not found' });
                 }
 
                 const cartDetails: any = await CartService.findCartPopulate({
@@ -93,7 +94,7 @@ class CheckoutController extends BaseController {
                 }
 
                 if (!cartDetails) {
-                    return controller.sendErrorResponse(res, 500, { message: 'Cart not found!' });
+                    return controller.sendErrorResponse(res, 200, { message: 'Cart not found!' });
                 }
 
                 let cartUpdate: any = {
@@ -150,16 +151,15 @@ class CheckoutController extends BaseController {
                                 createdAt: new Date(),
                             });
                             if (!paymentTransaction) {
-                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
                             paymentData = { paymentRedirectionUrl: tapResponse.transaction.url }
                         }
 
-                    } else if (paymentMethod && paymentMethod.slug == paymentMethods.tabby) {
+                    } else if (paymentMethod && (paymentMethod.slug == paymentMethods.tamara || paymentMethod.slug == paymentMethods.tabby)) {
                         if (paymentMethod.paymentMethodValues) {
                             const shippingAddressDetails: any = await CustomerAddress.findById(shippingId);
-                            // const cartProductsDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails._id });
-                            const tabbyDefaultValues = tabbyPaymentGatwayDefaultValues(countryData, {
+                            const setPaymentDefualtValues = {
                                 ...cartUpdate,
                                 _id: cartDetails._id,
                                 orderComments: cartDetails.orderComments,
@@ -168,38 +168,81 @@ class CheckoutController extends BaseController {
                                 totalShippingAmount: cartDetails.totalShippingAmount,
                                 totalTaxAmount: cartDetails.totalTaxAmount,
                                 products: cartDetails?.products
-                            },
-                                customerDetails,
-                                paymentMethod,
-                                shippingAddressDetails);
-
-                            const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
-
-                            if (tabbyResponse && tabbyResponse.payment) {
-                                const paymentTransaction = await PaymentTransactionModel.create({
-                                    paymentMethodId,
-                                    transactionId: tabbyResponse.id,
-                                    paymentId: tabbyResponse.payment.id,
-                                    orderId: cartDetails._id,
-                                    data: JSON.stringify(tabbyResponse),
-                                    orderStatus: orderPaymentStatus.pending, // Pending
-                                    createdAt: new Date(),
-                                });
-                                if (!paymentTransaction) {
-                                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
-                                }
-                            } else {
-                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
 
-                            if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
-                                paymentData = {
-                                    transactionId: tabbyResponse.id,
-                                    ...tabbyResponse.configuration.available_products
+                            if (paymentMethod.slug == paymentMethods.tamara) {
+                                let billingAddressDetails: any = null
+                                if (billingId) {
+                                    billingAddressDetails = await CustomerAddress.findById(billingId);
+                                }
+
+                                const tamaraDefaultValues = tamaraPaymentGatwayDefaultValues(
+                                    countryData,
+                                    setPaymentDefualtValues,
+                                    customerDetails,
+                                    shippingAddressDetails,
+                                    billingAddressDetails
+                                );
+
+                                const tamaraResponse = await tamaraCheckout(tamaraDefaultValues, paymentMethod.paymentMethodValues);
+                                if (!tamaraResponse) {
+                                    return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+                                if (tamaraResponse.order_id && tamaraResponse.checkout_url) {
+                                    const paymentTransaction = await PaymentTransactionModel.create({
+                                        paymentMethodId,
+                                        transactionId: tamaraResponse.order_id,
+                                        paymentId: tamaraResponse.checkout_id.id,
+                                        orderId: cartDetails._id,
+                                        data: JSON.stringify(tamaraResponse),
+                                        orderStatus: orderPaymentStatus.pending, // Pending
+                                        createdAt: new Date(),
+                                    });
+                                    if (!paymentTransaction) {
+                                        return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                    }
+
+                                    paymentData = {
+                                        paymentRedirectionUrl: tamaraResponse.checkout_url
+                                    }
+
+                                } else {
+                                    return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+                            } else if (paymentMethod.slug == paymentMethods.tabby) {
+                                const tabbyDefaultValues = tabbyPaymentGatwayDefaultValues(countryData, setPaymentDefualtValues,
+                                    customerDetails,
+                                    paymentMethod,
+                                    shippingAddressDetails);
+
+                                const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
+
+                                if (tabbyResponse && tabbyResponse.payment) {
+                                    const paymentTransaction = await PaymentTransactionModel.create({
+                                        paymentMethodId,
+                                        transactionId: tabbyResponse.id,
+                                        paymentId: tabbyResponse.payment.id,
+                                        orderId: cartDetails._id,
+                                        data: JSON.stringify(tabbyResponse),
+                                        orderStatus: orderPaymentStatus.pending, // Pending
+                                        createdAt: new Date(),
+                                    });
+                                    if (!paymentTransaction) {
+                                        return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                    }
+                                } else {
+                                    return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                }
+
+                                if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
+                                    paymentData = {
+                                        transactionId: tabbyResponse.id,
+                                        ...tabbyResponse.configuration.available_products
+                                    }
                                 }
                             }
                         } else {
-                            return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
+                            return controller.sendErrorResponse(res, 200, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
                         }
                     } else if (paymentMethod && paymentMethod.slug == paymentMethods.network) {
                         if (paymentMethod.paymentMethodValues) {
@@ -228,14 +271,14 @@ class CheckoutController extends BaseController {
                                         createdAt: new Date(),
                                     });
                                     if (!paymentTransaction) {
-                                        return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                        return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                     }
                                     paymentData = { paymentRedirectionUrl: networkResult._links.payment?.href }
                                 } else {
-                                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                    return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
                             } else {
-                                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
+                                return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                             }
 
                             if (networkResponse && networkResponse.configuration && networkResponse.configuration.available_products && networkResponse.configuration.available_products.installments?.length > 0) {
@@ -245,7 +288,7 @@ class CheckoutController extends BaseController {
                                 }
                             }
                         } else {
-                            return controller.sendErrorResponse(res, 500, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
+                            return controller.sendErrorResponse(res, 200, { message: 'Payment method values is incorrect. Please connect with cutomer care or try another payment methods' });
                         }
                     }
                 } else {
@@ -262,7 +305,7 @@ class CheckoutController extends BaseController {
 
                 const updateCart = await CartService.update(cartDetails._id, cartUpdate)
                 if (!updateCart) {
-                    return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, Cart updation is failed. Please try again' });
+                    return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
                     await CheckoutService.cartUpdation({ ...updateCart, products: cartDetails.products, customerDetails, paymentMethod }, true)
@@ -296,16 +339,16 @@ class CheckoutController extends BaseController {
             const tabbyId = req.params.tabby;
             const paymentDetails: any = await PaymentTransactionModel.findOne({ transactionId: tabbyId });
             if (!paymentDetails) {
-                return controller.sendErrorResponse(res, 500, { message: 'Payment details not found' });
+                return controller.sendErrorResponse(res, 200, { message: 'Payment details not found' });
             }
 
             let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
             if (!countryData) {
-                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
             const paymentMethod: any = await PaymentMethodModel.findOne({ slug: paymentMethods.tabby, countryId: countryData._id })
             if (!paymentMethod) {
-                return controller.sendErrorResponse(res, 500, { message: 'Something went wrong, payment method is not found' });
+                return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, payment method is not found' });
             }
             const tabbyResponse = await tabbyCheckoutRetrieve(tabbyId, paymentMethod.paymentMethodValues);
 
