@@ -150,7 +150,7 @@ class PageController extends BaseController {
             }
             return controller.sendSuccessResponse(res, {
                 requestedData: contactUs,
-                message: 'Success!'
+                message: 'Thank you for reaching out! We have received your message and will get back to you shortly'
             }, 200);
         } else {
             return controller.sendErrorResponse(res, 200, {

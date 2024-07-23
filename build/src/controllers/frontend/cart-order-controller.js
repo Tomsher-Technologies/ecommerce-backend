@@ -503,16 +503,23 @@ class CartController extends base_controller_1.default {
                             const cartUpdate = await cart_service_1.default.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount + giftWrapCharge), totalAmount: (cart.totalAmount + giftWrapCharge) });
                             console.log(cartUpdate);
                         }
-                        const resultCart = await cart_service_1.default.findCartPopulate({
-                            query: {
-                                $or: [
-                                    { $and: [{ customerId: customer }, { countryId: country }] },
-                                    { $and: [{ guestUserId: guestUser }, { countryId: country }] },
-                                ],
-                                cartStatus: "1"
-                            },
-                            hostName: req.get('origin'),
-                        });
+                        var resultCart;
+                        if (customer) {
+                            resultCart = await cart_service_1.default.findCartPopulate({
+                                query: {
+                                    customerId: customer, countryId: country, cartStatus: "1"
+                                },
+                                hostName: req.get('origin')
+                            });
+                        }
+                        else {
+                            resultCart = await cart_service_1.default.findCartPopulate({
+                                query: {
+                                    guestUserId: guestUser, countryId: country, cartStatus: "1"
+                                },
+                                hostName: req.get('origin')
+                            });
+                        }
                         return controller.sendSuccessResponse(res, {
                             requestedData: resultCart,
                             message: 'gift wrap added successfully!'
