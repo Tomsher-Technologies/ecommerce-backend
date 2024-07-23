@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
+exports.tamaraPaymentGatwayDefaultValues = exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
 const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, paymentMethodValues) => {
     return {
         "amount": cartData.totalAmount,
@@ -42,10 +42,10 @@ const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, p
             "time": 100
         },
         "post": {
-            "url": "https://api.timehouse.store/api/common/tap-success-response"
+            "url": `${process.env.APP_API_URL}/api/common/tap-success-response`
         },
         "redirect": {
-            "url": "https://api.timehouse.store/api/common/tap-success-response"
+            "url": `${process.env.APP_API_URL}/api/common/tap-success-response`
         }
     };
 };
@@ -77,8 +77,8 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                 "updated_at": cartData.cartStatusAt,
                 "reference_id": cartData._id,
                 "items": cartData?.products?.map((product) => ({
-                    "title": product.productDetails.productTitle,
-                    "description": product.productDetails.description,
+                    "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+                    "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
                     "quantity": product.quantity,
                     "unit_price": product.productAmount / product.quantity,
                     "discount_amount": "0.00",
@@ -112,8 +112,8 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                         "zip": shippingAddressdetails?.zipCode
                     },
                     "items": cartData?.products?.map((product) => ({
-                        "title": product.productDetails.productTitle,
-                        "description": product.productDetails.description,
+                        "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+                        "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
                         "quantity": product.quantity,
                         "unit_price": product.productAmount / product.quantity,
                         "discount_amount": "0.00",
@@ -150,9 +150,9 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
         "lang": "en",
         "merchant_code": paymentMethod.paymentMethodValues?.merchantCode?.toUpperCase(),
         "merchant_urls": {
-            "success": "https://api.timehouse.store/api/common/tabby-success-response",
-            "cancel": "https://api.timehouse.store/api/common/tabby-success-response",
-            "failure": "https://api.timehouse.store/api/common/tabby-success-response"
+            "success": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "cancel": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "failure": `${process.env.APP_API_URL}/api/common/tabby-success-response`
         }
     };
 };
@@ -169,8 +169,96 @@ const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetail
             "firstName": customerDetails.firstName,
         },
         "merchantAttributes": {
-            "redirectUrl": "https://api.timehouse.store/api/common/network-payment-response"
+            "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`
         }
     };
 };
 exports.networkPaymentGatwayDefaultValues = networkPaymentGatwayDefaultValues;
+const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, shippingAddressdetails, billingAddressdetails) => {
+    return {
+        "total_amount": {
+            "amount": cartData.totalAmount,
+            "currency": countryData.currencyCode
+        },
+        "shipping_amount": {
+            "amount": cartData.totalShippingAmount,
+            "currency": countryData.currencyCode
+        },
+        "tax_amount": {
+            "amount": cartData.totalTaxAmount,
+            "currency": countryData.currencyCode
+        },
+        "order_reference_id": cartData._id,
+        "order_number": "",
+        "discount": {
+            "amount": {
+                "amount": cartData.totalDiscountAmount,
+                "currency": countryData.currencyCode
+            },
+            "name": "Christmas 2020"
+        },
+        "items": cartData?.products?.map((product) => ({
+            "name": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+            "type": "Digital",
+            "reference_id": product._id, // order product id
+            "sku": product.productDetails?.variantDetails?.variantSku,
+            "quantity": product.quantity,
+            "discount_amount": {
+                "amount": product.productDetails?.variantDetails?.price - (product.productAmount / product.quantity),
+                "currency": countryData.currencyCode
+            },
+            "tax_amount": {
+                "amount": 0,
+                "currency": countryData.currencyCode
+            },
+            "unit_price": {
+                "amount": product.productDetails?.variantDetails?.price,
+                "currency": countryData.currencyCode
+            },
+            "total_amount": {
+                "amount": product.productAmount,
+                "currency": countryData.currencyCode
+            }
+        })),
+        "consumer": {
+            "email": customerDetails.email,
+            "first_name": customerDetails.firstName,
+            "last_name": customerDetails.firstName,
+            "phone_number": customerDetails.phone
+        },
+        "country_code": "AE",
+        "description": "lorem ipsum dolor",
+        "merchant_url": {
+            "success": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "cancel": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "failure": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "notification": "https://store-demo.com/payments/tamarapay"
+        },
+        "payment_type": "PAY_BY_INSTALMENTS",
+        "instalments": 3,
+        "billing_address": {
+            "city": billingAddressdetails?.city,
+            "country_code": "AE",
+            "first_name": billingAddressdetails?.name,
+            "last_name": billingAddressdetails?.name,
+            "line1": billingAddressdetails?.address1,
+            "line2": billingAddressdetails?.address2,
+            "phone_number": billingAddressdetails?.phoneNumber,
+            "region": billingAddressdetails?.street
+        },
+        "shipping_address": {
+            "city": shippingAddressdetails?.city,
+            "country_code": "AE",
+            "first_name": shippingAddressdetails?.name,
+            "last_name": shippingAddressdetails?.name,
+            "line1": shippingAddressdetails?.address1,
+            "line2": shippingAddressdetails?.address2,
+            "phone_number": shippingAddressdetails?.phoneNumber,
+            "region": shippingAddressdetails?.street
+        },
+        "platform": "Time House",
+        "is_mobile": false,
+        "locale": "en_US"
+    };
+};
+exports.tamaraPaymentGatwayDefaultValues = tamaraPaymentGatwayDefaultValues;

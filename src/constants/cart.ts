@@ -57,8 +57,10 @@ export const couponDeviceType = {
 
 export const paymentMethods = {
     cashOnDelivery: "cash-on-delivery",
+    cardOnDelivery: "card-on-delivery",
     tap: "tap",
     tabby: "tabby",
+    tamara: "tamara",
     network: "network"
 }
 
@@ -77,8 +79,11 @@ export const orderPaymentStatus = {
 
 export const orderTypes = {
     tap: "tap",
+    network: "network",
     tabby: "tabby",
+    tamara: "tamara",
     cashOnDelivery: "cash-on-delivery",
+    cardOnDelivery: "card-on-delivery",
 }
 
 export const tapPaymentGatwayStatus = {

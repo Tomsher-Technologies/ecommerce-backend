@@ -19,7 +19,6 @@ export const networkAccessToken = async (paymentMethodValues: { liveApiKey: stri
         }
         const responseData = await response.json();
 
-
         return responseData;
     } catch (error) {
         console.error('Error:', error);
