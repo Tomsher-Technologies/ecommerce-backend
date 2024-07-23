@@ -37,7 +37,7 @@ class CheckoutController extends BaseController {
             if (validatedData.success) {
                 const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
 
-                const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
+                const customerDetails: any = await CustomerModel.findOne({ _id: customerId, isVerified: true });
                 if (!customerDetails) {
                     return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
                 }
