@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.networkCreateOrderStatus = exports.networkCreateOrder = exports.networkAccessToken = void 0;
 const networkAccessToken = async (paymentMethodValues) => {
     try {
-        const response = await fetch(`${process.env.NETWORK_API_URL_ACCESS_TOKEN}`, {
+        const response = await fetch(`${process.env.APP_API_URL}`, {
             method: "POST",
             mode: "cors",
             cache: "no-cache",
