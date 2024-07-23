@@ -35,7 +35,6 @@ class GuestController extends BaseController {
     async register(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = registerSchema.safeParse(req.body);
-
             if (validatedData.success) {
                 const { email, firstName, phone, password, referralCode, otpType } = validatedData.data;
                 let referralCodeWithCustomerData: any = null;

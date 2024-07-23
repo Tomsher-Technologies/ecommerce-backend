@@ -37,9 +37,12 @@ class CheckoutController extends BaseController {
             if (validatedData.success) {
                 const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
 
-                const customerDetails: any = await CustomerModel.findOne({ _id: customerId, isVerified: true });
-                if (!customerDetails) {
-                    return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
+                const customerDetails = await CustomerModel.findOne({ _id: customerId });
+                if (!customerDetails || !customerDetails.isVerified) {
+                    const message = !customerDetails
+                        ? 'User is not found'
+                        : 'User is not verified';
+                    return controller.sendErrorResponse(res, 200, { message });
                 }
 
                 const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentMethodId })
@@ -108,20 +111,17 @@ class CheckoutController extends BaseController {
                     paymentMethodId: paymentMethod._id,
                     orderStatusAt: null,
                 }
-                if (couponCode && deviceType) {
+                if (!customerDetails?.isGuest && couponCode && deviceType) {
                     const query = {
                         countryId: countryData._id,
                         couponCode,
                     } as any;
-
                     const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType });
                     if (couponDetails?.status) {
-
                         cartUpdate = {
                             ...cartUpdate,
                             couponId: couponDetails?.requestedData._id,
                         }
-
                     } else {
                         return controller.sendErrorResponse(res, 200, {
                             message: couponDetails?.message,

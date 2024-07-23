@@ -33,9 +33,7 @@ class CouponService {
     }
     async checkCouponCode(options: CheckCouponOptions): Promise<CheckValues> {
         const { query, user, deviceType } = options;
-
         const currentDate = new Date();
-
         try {
             const cartDetails = await CartService.findOneCart({
                 cartStatus: '1',
