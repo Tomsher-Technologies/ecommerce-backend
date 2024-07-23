@@ -268,9 +268,9 @@ export const tamaraPaymentGatwayDefaultValues = (
         "country_code": "AE",
         "description": "lorem ipsum dolor",
         "merchant_url": {
-            "success": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
-            "cancel": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
-            "failure": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "success": `${process.env.APP_API_URL}/api/common/tamara-payment-response`,
+            "cancel": `${process.env.APP_API_URL}/api/common/tamara-payment-response`,
+            "failure": `${process.env.APP_API_URL}/api/common/tamara-payment-response`,
             "notification": "https://store-demo.com/payments/tamarapay"
         },
         "payment_type": "PAY_BY_INSTALMENTS",
