@@ -1,6 +1,6 @@
 export const networkAccessToken = async (paymentMethodValues: { liveApiKey: string; }) => {
     try {
-        const response = await fetch(`${process.env.APP_API_URL}`, {
+        const response = await fetch(`${process.env.NETWORK_API_URL_ACCESS_TOKEN}`, {
             method: "POST",
             mode: "cors",
             cache: "no-cache",

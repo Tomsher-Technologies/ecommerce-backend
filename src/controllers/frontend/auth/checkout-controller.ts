@@ -246,7 +246,10 @@ class CheckoutController extends BaseController {
                         }
                     } else if (paymentMethod && paymentMethod.slug == paymentMethods.network) {
                         if (paymentMethod.paymentMethodValues) {
+                            console.log('networkResponse',paymentMethod.paymentMethodValues);
                             const networkResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
+                            console.log('networkResponse',networkResponse);
+                            
                             if (networkResponse && networkResponse.access_token) {
                                 const networkDefaultValues = networkPaymentGatwayDefaultValues(countryData, {
                                     ...cartUpdate,
