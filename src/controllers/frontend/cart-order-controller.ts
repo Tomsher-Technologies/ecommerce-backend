@@ -563,17 +563,25 @@ class CartController extends BaseController {
 
                         }
 
-                        const resultCart: any = await CartService.findCartPopulate({
-                            query: {
-                                $or: [
-                                    { $and: [{ customerId: customer }, { countryId: country }] },
-                                    { $and: [{ guestUserId: guestUser }, { countryId: country }] },
-                                ],
-                                cartStatus: "1"
-                            },
-                            hostName: req.get('origin'),
+                        var resultCart: any
+                        if (customer) {
+                            resultCart = await CartService.findCartPopulate({
+                                query: {
+                                    customerId: customer, countryId: country, cartStatus: "1"
+                                },
+                                hostName: req.get('origin')
+                            });
+                        } else {
+                            resultCart = await CartService.findCartPopulate({
+                                query: {
+                                    guestUserId: guestUser, countryId: country, cartStatus: "1"
+                                },
+                                hostName: req.get('origin')
+                            });
+                        }
 
-                        });
+
+
                         return controller.sendSuccessResponse(res, {
                             requestedData: resultCart,
                             message: 'gift wrap added successfully!'
