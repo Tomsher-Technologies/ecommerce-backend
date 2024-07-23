@@ -23,6 +23,7 @@ import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
+import { bulkSmsGateway } from '../../../lib/sms/bulk-sms-gateway';
 
 
 const controller = new BaseController();
@@ -145,6 +146,7 @@ class GuestController extends BaseController {
                                     const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                                 } else if (process.env.SHOPNAME === 'Homestyle') {
                                     const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+                                    const sendsms = await bulkSmsGateway({ ...newCustomer.toObject(), message: 'Welcome to HomeStyle! Your OTP for registration is ' + newCustomer.otp + '. Please enter this code to complete your signup.' })
                                 } else if (process.env.SHOPNAME === 'Beyondfresh') {
                                     const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                                 } else if (process.env.SHOPNAME === 'Smartbaby') {
@@ -274,6 +276,7 @@ class GuestController extends BaseController {
                                     const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                                 } else if (process.env.SHOPNAME === 'Homestyle') {
                                     const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
+                                    const sendsms = await bulkSmsGateway({ ...newCustomer.toObject(), message: 'Welcome to HomeStyle! Your OTP is ' + newCustomer.otp + '. Please enter this code to complete your signup.' })
                                 } else if (process.env.SHOPNAME === 'Beyondfresh') {
                                     const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                                 } else if (process.env.SHOPNAME === 'Smartbaby') {
@@ -388,6 +391,7 @@ class GuestController extends BaseController {
 
                                         } else if (process.env.SHOPNAME === 'Homestyle') {
                                             const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
+                                            const sendsms = await bulkSmsGateway({ ...updatedCustomer.toObject(), message: 'Your OTP for password reset is: ' + updatedCustomer.otp + '. Please use this code to proceed with resetting your password.' })
                                         }
                                         else if (process.env.SHOPNAME === 'Beyondfresh') {
                                             const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: 'Password Reset Confirmation' }, template)
@@ -556,6 +560,7 @@ class GuestController extends BaseController {
 
                                         } else if (process.env.SHOPNAME === 'Homestyle') {
                                             const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
+                                            const sendsms = await bulkSmsGateway({ ...optUpdatedCustomer.toObject(), message: 'Your OTP is ' + optUpdatedCustomer.otp + '. Please use this code to complete your verification.' })
                                         }
                                         else if (process.env.SHOPNAME === 'Beyondfresh') {
                                             const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: 'Resent verification OTP' }, template)
