@@ -177,88 +177,86 @@ exports.networkPaymentGatwayDefaultValues = networkPaymentGatwayDefaultValues;
 const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, shippingAddressdetails, billingAddressdetails) => {
     return {
         "total_amount": {
-            "amount": 300,
-            "currency": "AED"
+            "amount": cartData.totalAmount,
+            "currency": countryData.currencyCode
         },
         "shipping_amount": {
-            "amount": 0,
-            "currency": "AED"
+            "amount": cartData.totalShippingAmount,
+            "currency": countryData.currencyCode
         },
         "tax_amount": {
-            "amount": 0,
-            "currency": "AED"
+            "amount": cartData.totalTaxAmount,
+            "currency": countryData.currencyCode
         },
-        "order_reference_id": "1231234123-abda-fdfe--afd31241",
+        "order_reference_id": cartData._id,
         "order_number": "",
         "discount": {
             "amount": {
-                "amount": 200,
-                "currency": "AED"
+                "amount": cartData.totalDiscountAmount,
+                "currency": countryData.currencyCode
             },
             "name": "Christmas 2020"
         },
-        "items": [
-            {
-                "name": "Lego City 8601",
-                "type": "Digital",
-                "reference_id": "123",
-                "sku": "SA-12436",
-                "quantity": 1,
-                "discount_amount": {
-                    "amount": 100,
-                    "currency": "AED"
-                },
-                "tax_amount": {
-                    "amount": 10,
-                    "currency": "AED"
-                },
-                "unit_price": {
-                    "amount": 490,
-                    "currency": "AED"
-                },
-                "total_amount": {
-                    "amount": 100,
-                    "currency": "AED"
-                }
+        "items": cartData?.products?.map((product) => ({
+            "name": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
+            "type": "Digital",
+            "reference_id": product._id, // order product id
+            "sku": product.productDetails?.variantDetails?.variantSku,
+            "quantity": product.quantity,
+            "discount_amount": {
+                "amount": product.productDetails?.variantDetails?.price - (product.productAmount / product.quantity),
+                "currency": countryData.currencyCode
+            },
+            "tax_amount": {
+                "amount": 0,
+                "currency": countryData.currencyCode
+            },
+            "unit_price": {
+                "amount": product.productDetails?.variantDetails?.price,
+                "currency": countryData.currencyCode
+            },
+            "total_amount": {
+                "amount": product.productAmount,
+                "currency": countryData.currencyCode
             }
-        ],
+        })),
         "consumer": {
-            "email": "customer@email.com",
-            "first_name": "Mona",
-            "last_name": "Lisa",
-            "phone_number": "0568982559"
+            "email": customerDetails.email,
+            "first_name": customerDetails.firstName,
+            "last_name": customerDetails.firstName,
+            "phone_number": customerDetails.phone
         },
         "country_code": "AE",
         "description": "lorem ipsum dolor",
         "merchant_url": {
-            "cancel": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/cancel",
-            "failure": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/fail",
-            "success": "http://awesome-qa-tools.s3-website.me-south-1.amazonaws.com/#/success",
+            "success": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "cancel": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
+            "failure": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
             "notification": "https://store-demo.com/payments/tamarapay"
         },
         "payment_type": "PAY_BY_INSTALMENTS",
         "instalments": 3,
         "billing_address": {
-            "city": "Dubai",
+            "city": billingAddressdetails?.city,
             "country_code": "AE",
-            "first_name": "Mona",
-            "last_name": "Lisa",
-            "line1": "3764 Al Urubah Rd",
-            "line2": "string",
-            "phone_number": "0568982559",
-            "region": "As Sulimaniyah"
+            "first_name": billingAddressdetails?.name,
+            "last_name": billingAddressdetails?.name,
+            "line1": billingAddressdetails?.address1,
+            "line2": billingAddressdetails?.address2,
+            "phone_number": billingAddressdetails?.phoneNumber,
+            "region": billingAddressdetails?.street
         },
         "shipping_address": {
-            "city": "Riyadh",
+            "city": shippingAddressdetails?.city,
             "country_code": "AE",
-            "first_name": "Mona",
-            "last_name": "Lisa",
-            "line1": "3764 Al Urubah Rd",
-            "line2": "string",
-            "phone_number": "0568982559",
-            "region": "As Sulimaniyah"
+            "first_name": shippingAddressdetails?.name,
+            "last_name": shippingAddressdetails?.name,
+            "line1": shippingAddressdetails?.address1,
+            "line2": shippingAddressdetails?.address2,
+            "phone_number": shippingAddressdetails?.phoneNumber,
+            "region": shippingAddressdetails?.street
         },
-        "platform": "platform name here",
+        "platform": "Time House",
         "is_mobile": false,
         "locale": "en_US"
     };

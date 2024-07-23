@@ -222,7 +222,9 @@ class CheckoutController extends base_controller_1.default {
                     }
                     else if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.network) {
                         if (paymentMethod.paymentMethodValues) {
+                            console.log('networkResponse', paymentMethod.paymentMethodValues);
                             const networkResponse = await (0, network_payments_1.networkAccessToken)(paymentMethod.paymentMethodValues);
+                            console.log('networkResponse', networkResponse);
                             if (networkResponse && networkResponse.access_token) {
                                 const networkDefaultValues = (0, cart_utils_1.networkPaymentGatwayDefaultValues)(countryData, {
                                     ...cartUpdate,
