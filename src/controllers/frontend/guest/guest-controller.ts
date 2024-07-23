@@ -276,7 +276,7 @@ class GuestController extends BaseController {
                                     const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                                 } else if (process.env.SHOPNAME === 'Homestyle') {
                                     const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
-                                    const sendsms = await bulkSmsGateway({ ...newCustomer.toObject(), message: 'Welcome to HomeStyle! Your OTP is ' + newCustomer.otp + '. Please enter this code to complete your signup.' })
+                                    const sendsms = await bulkSmsGateway({ ...newCustomer.toObject(), message: 'Welcome to HomeStyle! Your OTP is ' + newCustomer.otp })
                                 } else if (process.env.SHOPNAME === 'Beyondfresh') {
                                     const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template)
                                 } else if (process.env.SHOPNAME === 'Smartbaby') {
