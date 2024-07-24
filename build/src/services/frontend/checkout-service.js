@@ -179,18 +179,22 @@ class CheckoutService {
                     updateTotalCouponAmount(totalAmount, couponAmount, discountType);
                 }
             }
+            let cartProducts = cartDetails?.products || null;
+            let customerDetails = cartDetails?.customerDetails || null;
+            let paymentMethodDetails = cartDetails?.paymentMethod || null;
+            if (customerDetails === null) {
+                customerDetails = await customers_model_1.default.findOne({ _id: cartDetails.customerId });
+            }
             const orderId = await this.getNextSequenceValue();
             cartUpdate = {
                 ...cartUpdate,
                 orderId: orderId,
                 cartStatus: cart_1.cartStatus.order,
+                isGuest: customerDetails.isGuest ?? false,
                 orderStatus: cart_1.orderStatusMap['1'].value,
                 processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
             };
-            let cartProducts = cartDetails?.products || null;
-            let customerDetails = cartDetails?.customerDetails || null;
-            let paymentMethodDetails = cartDetails?.paymentMethod || null;
             const updateCart = await cart_service_1.default.update(cartDetails?._id, cartUpdate);
             if (!updateCart) {
                 return {
@@ -224,9 +228,6 @@ class CheckoutService {
                         }
                     }));
                     await product_variants_model_1.default.bulkWrite(updateProductVariant);
-                    if (customerDetails === null) {
-                        customerDetails = await customers_model_1.default.findOne({ _id: cartDetails.customerId });
-                    }
                     let websiteSettingsQuery = { _id: { $exists: true } };
                     websiteSettingsQuery = {
                         ...websiteSettingsQuery,

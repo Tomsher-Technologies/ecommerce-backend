@@ -280,6 +280,7 @@ class CheckoutController extends base_controller_1.default {
                         paymentMethodCharge: codAmount?.blockValues?.codCharge || 0,
                         cartStatus: "2",
                         orderStatus: cart_1.orderStatusMap['1'].value,
+                        isGuest: customerDetails.isGuest ?? false,
                         orderStatusAt: new Date(),
                     };
                 }

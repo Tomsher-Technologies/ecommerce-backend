@@ -29,15 +29,12 @@ class CustomerService {
     }
     async generateReferralCode(firstName) {
         const namePart = firstName.slice(0, 3).toUpperCase();
-        // Initialize the sequence number
         let sequenceNumber = 1;
         let uniqueCodeFound = false;
         let referralCode = '';
-        // Loop until a unique referral code is found
         while (!uniqueCodeFound) {
             const sequencePart = sequenceNumber.toString().padStart(4, '0');
             referralCode = `${namePart}${sequencePart}`;
-            // Check if this referral code already exists
             const existingCustomer = await customers_model_1.default.findOne({ referralCode: referralCode }).exec();
             if (!existingCustomer) {
                 uniqueCodeFound = true;
