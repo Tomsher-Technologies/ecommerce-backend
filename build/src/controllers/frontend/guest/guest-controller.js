@@ -728,11 +728,13 @@ class GuestController extends base_controller_1.default {
                     if (user) {
                         const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
                         if (isPasswordValid) {
+                            const updateData = {
+                                lastLoggedAt: new Date()
+                            };
                             if (user?.isGuest) {
-                                customer_service_1.default.update(user._id, {
-                                    isGuest: false
-                                });
+                                updateData.isGuest = false;
                             }
+                            await customer_service_1.default.update(user._id, updateData);
                             const token = jsonwebtoken_1.default.sign({
                                 userId: user._id,
                                 email: user.email,

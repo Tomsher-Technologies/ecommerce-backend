@@ -154,6 +154,10 @@ const customerSchema = new mongoose_1.Schema({
         required: true,
         default: '1'
     },
+    lastLoggedAt: {
+        type: Date,
+        default: Date.now
+    },
     createdAt: {
         type: Date,
     },
