@@ -4,21 +4,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
+const mongoose_1 = __importDefault(require("mongoose"));
 const helpers_1 = require("../../utils/helpers");
 const cart_schema_1 = require("../../utils/schemas/frontend/guest/cart-schema");
 const offers_1 = require("../../constants/offers");
 const base_controller_1 = __importDefault(require("../admin/base-controller"));
-const cart_service_1 = __importDefault(require("../../services/frontend/cart-service"));
+const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-schema");
+const website_setup_1 = require("../../constants/website-setup");
 const common_service_1 = __importDefault(require("../../services/frontend/guest/common-service"));
 const product_service_1 = __importDefault(require("../../services/frontend/guest/product-service"));
-const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
-const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-schema");
+const cart_service_1 = __importDefault(require("../../services/frontend/cart-service"));
 const customer_wishlist_servicel_1 = __importDefault(require("../../services/frontend/auth/customer-wishlist-servicel"));
-const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
-const website_setup_1 = require("../../constants/website-setup");
+const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
+const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const cart_order_model_1 = __importDefault(require("../../model/frontend/cart-order-model"));
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
@@ -30,6 +30,9 @@ class CartController extends base_controller_1.default {
             if (validatedData.success) {
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
                 let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                if (!country) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                }
                 let newCartOrder;
                 let newCartOrderProduct;
                 let totalAmountOfProduct = 0;

@@ -36,9 +36,12 @@ class CheckoutController extends base_controller_1.default {
             const validatedData = checkout_schema_1.checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
                 const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
-                const customerDetails = await customers_model_1.default.findOne({ _id: customerId, isVerified: true });
-                if (!customerDetails) {
-                    return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
+                const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
+                if (!customerDetails || !customerDetails.isVerified) {
+                    const message = !customerDetails
+                        ? 'User is not found'
+                        : 'User is not verified';
+                    return controller.sendErrorResponse(res, 200, { message });
                 }
                 const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentMethodId });
                 if (!paymentMethod) {
@@ -101,7 +104,7 @@ class CheckoutController extends base_controller_1.default {
                     paymentMethodId: paymentMethod._id,
                     orderStatusAt: null,
                 };
-                if (couponCode && deviceType) {
+                if (!customerDetails?.isGuest && couponCode && deviceType) {
                     const query = {
                         countryId: countryData._id,
                         couponCode,

@@ -162,16 +162,13 @@ const customerSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-// Pre-save hook to remove the unique index from the phone, email, and referralCode fields if isGuest is true
 customerSchema.pre('save', async function (next) {
     if (this.isGuest) {
-        // Remove the unique index for phone, email, and referralCode if isGuest is true
         this.schema.path('phone').options.unique = false;
         this.schema.path('email').options.unique = false;
         this.schema.path('referralCode').options.unique = false;
     }
     else {
-        // Ensure the unique index for phone, email, and referralCode if isGuest is false
         this.schema.path('phone').options.unique = true;
         this.schema.path('email').options.unique = true;
         this.schema.path('referralCode').options.unique = true;

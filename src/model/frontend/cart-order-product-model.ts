@@ -22,7 +22,6 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     cartId: {
         type: Schema.Types.ObjectId,
         ref: 'CartOrders',
-        default: null
     },
     slug: {
         type: String,

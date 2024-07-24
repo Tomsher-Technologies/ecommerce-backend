@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
+const customer_config_1 = require("../../../utils/config/customer-config");
 const product_config_1 = require("../../../utils/config/product-config");
 const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 class OrderService {
@@ -38,6 +39,13 @@ class OrderService {
             ...(!getTotalCount ? [cart_order_config_1.paymentMethodLookup, cart_order_config_1.customerLookup, cart_order_config_1.orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
             ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
+            customer_config_1.countriesLookup,
+            {
+                $unwind: {
+                    path: "$country",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
             { $match: query },
             ...((!getTotalCount && getCartProducts === '1') ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
         ];

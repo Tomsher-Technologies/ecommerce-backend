@@ -28,7 +28,6 @@ const cartOrderSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Countries',
-        default: null
     },
     customerId: {
         type: mongoose_1.Schema.Types.ObjectId,

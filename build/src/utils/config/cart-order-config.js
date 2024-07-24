@@ -46,10 +46,9 @@ const shippingAndBillingLookup = (localField, alias) => [
             as: alias
         }
     },
-    // Optionally unwin if you expect a single address
     {
         $unwind: {
-            path: '$shippingAddress',
+            path: `$${alias}`,
             preserveNullAndEmptyArrays: true
         }
     },
@@ -101,7 +100,7 @@ exports.cartProject = {
         _id: 1,
         orderId: 1,
         customerId: 1,
-        countryId: 1,
+        // countryId: 1,
         couponId: 1,
         guestUserId: 1,
         // shippingId: 1,
@@ -149,6 +148,9 @@ exports.cartProject = {
         customer: {
             $ifNull: ['$customer', null]
         },
+        country: {
+            $ifNull: ['$country', null]
+        },
         shippingAddress: {
             $ifNull: ['$shippingAddress', null]
         },
@@ -161,8 +163,8 @@ exports.cartDeatilProject = {
     $project: {
         _id: 1,
         orderId: 1,
-        customerId: 1,
-        countryId: 1,
+        // customerId: 1,
+        // countryId: 1,
         couponId: 1,
         guestUserId: 1,
         // shippingId: 1,
@@ -212,6 +214,12 @@ exports.cartDeatilProject = {
         },
         couponDetails: {
             $ifNull: ['$couponDetails', null]
+        },
+        customer: {
+            $ifNull: ['$customer', null]
+        },
+        country: {
+            $ifNull: ['$country', null]
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]
