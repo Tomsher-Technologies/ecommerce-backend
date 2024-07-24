@@ -208,10 +208,10 @@ class CategoryController extends base_controller_1.default {
                 var slugData;
                 var data = [];
                 if (!parentCategory) {
-                    data = categoryTitle;
+                    data = (0, helpers_1.categorySlugifyManually)(categoryTitle);
                 }
                 else {
-                    data = category?.slug + "-" + (0, helpers_1.categorySlugify)(categoryTitle);
+                    data = category?.slug + "-" + (0, helpers_1.categorySlugifyManually)(categoryTitle);
                 }
                 slugData = data;
                 const categoryImage = (req?.file) || req.files.find((file) => file.fieldname === 'categoryImage');
