@@ -28,3 +28,27 @@ export const tamaraCheckout = async (tamaraDefaultValues: any, paymentMethodValu
         throw error;
     }
 }
+
+export const tamaraAutoriseOrder = async (orderId: string, paymentMethodValues: { liveApiKey: string; }) => {
+    try {
+        const response = await fetch(`${process.env.TAMARA_API_URL}/orders/${orderId}/authorise`, {
+            method: "POST",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin",
+            headers: {
+                "Authorization": `Bearer ${paymentMethodValues.liveApiKey}`
+            },
+            redirect: "follow",
+            referrerPolicy: "no-referrer",
+        });
+        if (!response) {
+            throw new Error(`HTTP error! status: ${JSON.stringify(response)}`);
+        }
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}

@@ -5,6 +5,7 @@ import CommonService from "../../../services/frontend/guest/common-service";
 import CouponService from "../../../services/frontend/auth/coupon-service";
 import { applyCouponSchema } from "../../../utils/schemas/frontend/auth/coupon.schema";
 import { formatZodError } from "../../../utils/helpers";
+import CustomerModel from "../../../model/frontend/customers-model";
 
 const controller = new BaseController();
 
@@ -15,7 +16,7 @@ class CouponController extends BaseController {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 let query: any = { _id: { $exists: true } };
-                const currentDate = new Date(); 
+                const currentDate = new Date();
                 query = {
                     ...query,
                     countryId,
@@ -63,9 +64,18 @@ class CouponController extends BaseController {
                         } as any;
 
                         const user = res.locals.user;
+                        const customerDetails = await CustomerModel.findOne({ _id: user });
+                        if (!customerDetails || customerDetails?.isGuest === true || !customerDetails?.isVerified) {
+                            const message = !customerDetails
+                                ? 'User is not found'
+                                : customerDetails.isGuest === true
+                                    ? 'User is a guest and not eligible'
+                                    : 'User is not verified';
+                            return controller.sendErrorResponse(res, 200, { message });
+                        }
                         const couponDetails: any = await CouponService.checkCouponCode({ query, user, deviceType });
                         if (couponDetails?.status) {
-                            
+
                             return controller.sendSuccessResponse(res, {
                                 requestedData: couponDetails?.requestedData,
                                 message: couponDetails.message

@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
 import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
-import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap, cartStatus, networkPaymentGatwayStatus } from "../../../constants/cart";
+import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap, cartStatus, networkPaymentGatwayStatus, tamaraPaymentGatwayStatus } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
@@ -20,7 +20,7 @@ import CustomerAddress from "../../../model/frontend/customer-address-model";
 import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from "../../../lib/payment-gateway/network-payments";
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
-import { tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
+import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
 
 const controller = new BaseController();
 
@@ -37,9 +37,12 @@ class CheckoutController extends BaseController {
             if (validatedData.success) {
                 const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
 
-                const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
-                if (!customerDetails) {
-                    return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
+                const customerDetails = await CustomerModel.findOne({ _id: customerId });
+                if (!customerDetails || !customerDetails.isVerified) {
+                    const message = !customerDetails
+                        ? 'User is not found'
+                        : 'User is not verified';
+                    return controller.sendErrorResponse(res, 200, { message });
                 }
 
                 const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentMethodId })
@@ -108,20 +111,17 @@ class CheckoutController extends BaseController {
                     paymentMethodId: paymentMethod._id,
                     orderStatusAt: null,
                 }
-                if (couponCode && deviceType) {
+                if (!customerDetails?.isGuest && couponCode && deviceType) {
                     const query = {
                         countryId: countryData._id,
                         couponCode,
                     } as any;
-
                     const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType });
                     if (couponDetails?.status) {
-
                         cartUpdate = {
                             ...cartUpdate,
                             couponId: couponDetails?.requestedData._id,
                         }
-
                     } else {
                         return controller.sendErrorResponse(res, 200, {
                             message: couponDetails?.message,
@@ -175,7 +175,6 @@ class CheckoutController extends BaseController {
                                 if (billingId) {
                                     billingAddressDetails = await CustomerAddress.findById(billingId);
                                 }
-
                                 const tamaraDefaultValues = tamaraPaymentGatwayDefaultValues(
                                     countryData,
                                     setPaymentDefualtValues,
@@ -183,7 +182,6 @@ class CheckoutController extends BaseController {
                                     shippingAddressDetails,
                                     billingAddressDetails
                                 );
-
                                 const tamaraResponse = await tamaraCheckout(tamaraDefaultValues, paymentMethod.paymentMethodValues);
                                 if (!tamaraResponse) {
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
@@ -192,7 +190,7 @@ class CheckoutController extends BaseController {
                                     const paymentTransaction = await PaymentTransactionModel.create({
                                         paymentMethodId,
                                         transactionId: tamaraResponse.order_id,
-                                        paymentId: tamaraResponse.checkout_id.id,
+                                        paymentId: tamaraResponse.checkout_id,
                                         orderId: cartDetails._id,
                                         data: JSON.stringify(tamaraResponse),
                                         orderStatus: orderPaymentStatus.pending, // Pending
@@ -201,11 +199,9 @@ class CheckoutController extends BaseController {
                                     if (!paymentTransaction) {
                                         return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                     }
-
                                     paymentData = {
                                         paymentRedirectionUrl: tamaraResponse.checkout_url
                                     }
-
                                 } else {
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
@@ -216,7 +212,6 @@ class CheckoutController extends BaseController {
                                     shippingAddressDetails);
 
                                 const tabbyResponse = await tabbyPaymentCreate(tabbyDefaultValues, paymentMethod.paymentMethodValues);
-
                                 if (tabbyResponse && tabbyResponse.payment) {
                                     const paymentTransaction = await PaymentTransactionModel.create({
                                         paymentMethodId,
@@ -246,10 +241,7 @@ class CheckoutController extends BaseController {
                         }
                     } else if (paymentMethod && paymentMethod.slug == paymentMethods.network) {
                         if (paymentMethod.paymentMethodValues) {
-                            console.log('networkResponse',paymentMethod.paymentMethodValues);
                             const networkResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
-                            console.log('networkResponse',networkResponse);
-                            
                             if (networkResponse && networkResponse.access_token) {
                                 const networkDefaultValues = networkPaymentGatwayDefaultValues(countryData, {
                                     ...cartUpdate,
@@ -442,8 +434,6 @@ class CheckoutController extends BaseController {
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
-        // console.log('networkResponse', paymentMethod.paymentMethodValues);
-
         const networkAccesTokenResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
         if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
             const networkResponse = await networkCreateOrderStatus(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues, ref);
@@ -461,7 +451,7 @@ class CheckoutController extends BaseController {
                 const retValResponse = await CheckoutService.paymentResponse({
                     paymentDetails,
                     allPaymentResponseData: data,
-                    paymentStatus: (status === networkPaymentGatwayStatus.purchased) ?
+                    paymentStatus: (status !== networkPaymentGatwayStatus.failed) ?
                         orderPaymentStatus.success : ((status === networkPaymentGatwayStatus.failed) ? orderPaymentStatus.failure : orderPaymentStatus.failure)
                 });
                 if (retValResponse.status) {
@@ -507,7 +497,7 @@ class CheckoutController extends BaseController {
                 paymentDetails,
                 allPaymentResponseData: tabbyResponse,
                 paymentStatus: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
-                    orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : orderPaymentStatus.expired)
+                    orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
             });
 
             if (retValResponse.status) {
@@ -519,6 +509,49 @@ class CheckoutController extends BaseController {
             }
         } else {
             res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tabbyResponse?.status}`); // failure
+            return false
+        }
+    }
+    async tamaraSuccessResponse(req: Request, res: Response): Promise<any> {
+        const { orderId, paymentStatus }: any = req.query
+        if (!orderId) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}`); // failure
+            return false
+        }
+        const paymentDetails: any = await PaymentTransactionModel.findOne({ transactionId: orderId });
+        if (!paymentDetails) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Payment transaction. Please contact administrator`); // failure
+        }
+        const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId })
+        if (!paymentMethod) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Payment method not found. Please contact administrator`); // failure
+        }
+        const tamaraResponse = await tamaraAutoriseOrder(orderId, paymentMethod.paymentMethodValues);
+        if (!tamaraResponse) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Tamara autorise not completed. Please contact administrator`); // failure
+        }
+        await PaymentTransactionModel.findByIdAndUpdate(
+            paymentDetails._id,
+            { $set: { data: tamaraResponse } },
+            { new: true, runValidators: true }
+        );
+        if (tamaraResponse.status) {
+            const retValResponse = await CheckoutService.paymentResponse({
+                paymentDetails,
+                allPaymentResponseData: tamaraResponse,
+                paymentStatus: (tamaraResponse.status === tamaraPaymentGatwayStatus.authorised || tamaraResponse.status === tamaraPaymentGatwayStatus.approved) ?
+                    orderPaymentStatus.success : ((tamaraResponse.status === tamaraPaymentGatwayStatus.declined) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
+            });
+
+            if (retValResponse.status) {
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
+                return true
+            } else {
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tamaraResponse?.status}`); // failure
+                return false
+            }
+        } else {
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tamaraResponse?.status}`); // failure
             return false
         }
     }

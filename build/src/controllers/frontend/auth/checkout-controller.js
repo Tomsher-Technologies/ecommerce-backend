@@ -36,7 +36,7 @@ class CheckoutController extends base_controller_1.default {
             const validatedData = checkout_schema_1.checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
                 const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
-                const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
+                const customerDetails = await customers_model_1.default.findOne({ _id: customerId, isVerified: true });
                 if (!customerDetails) {
                     return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
                 }
@@ -171,7 +171,7 @@ class CheckoutController extends base_controller_1.default {
                                     const paymentTransaction = await payment_transaction_model_1.default.create({
                                         paymentMethodId,
                                         transactionId: tamaraResponse.order_id,
-                                        paymentId: tamaraResponse.checkout_id.id,
+                                        paymentId: tamaraResponse.checkout_id,
                                         orderId: cartDetails._id,
                                         data: JSON.stringify(tamaraResponse),
                                         orderStatus: cart_1.orderPaymentStatus.pending, // Pending
@@ -222,9 +222,7 @@ class CheckoutController extends base_controller_1.default {
                     }
                     else if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.network) {
                         if (paymentMethod.paymentMethodValues) {
-                            console.log('networkResponse', paymentMethod.paymentMethodValues);
                             const networkResponse = await (0, network_payments_1.networkAccessToken)(paymentMethod.paymentMethodValues);
-                            console.log('networkResponse', networkResponse);
                             if (networkResponse && networkResponse.access_token) {
                                 const networkDefaultValues = (0, cart_utils_1.networkPaymentGatwayDefaultValues)(countryData, {
                                     ...cartUpdate,
@@ -406,7 +404,6 @@ class CheckoutController extends base_controller_1.default {
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
-        // console.log('networkResponse', paymentMethod.paymentMethodValues);
         const networkAccesTokenResponse = await (0, network_payments_1.networkAccessToken)(paymentMethod.paymentMethodValues);
         if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
             const networkResponse = await (0, network_payments_1.networkCreateOrderStatus)(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues, ref);
@@ -420,7 +417,7 @@ class CheckoutController extends base_controller_1.default {
                 const retValResponse = await checkout_service_1.default.paymentResponse({
                     paymentDetails,
                     allPaymentResponseData: data,
-                    paymentStatus: (status === cart_1.networkPaymentGatwayStatus.purchased) ?
+                    paymentStatus: (status !== cart_1.networkPaymentGatwayStatus.failed) ?
                         cart_1.orderPaymentStatus.success : ((status === cart_1.networkPaymentGatwayStatus.failed) ? cart_1.orderPaymentStatus.failure : cart_1.orderPaymentStatus.failure)
                 });
                 if (retValResponse.status) {
@@ -463,7 +460,7 @@ class CheckoutController extends base_controller_1.default {
                 paymentDetails,
                 allPaymentResponseData: tabbyResponse,
                 paymentStatus: (tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.closed) ?
-                    cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? tabbyResponse.cancelled : cart_1.orderPaymentStatus.expired)
+                    cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? cart_1.orderPaymentStatus.cancelled : cart_1.orderPaymentStatus.expired)
             });
             if (retValResponse.status) {
                 res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
@@ -476,6 +473,46 @@ class CheckoutController extends base_controller_1.default {
         }
         else {
             res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tabbyResponse?.status}`); // failure
+            return false;
+        }
+    }
+    async tamaraSuccessResponse(req, res) {
+        const { orderId, paymentStatus } = req.query;
+        if (!orderId) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}`); // failure
+            return false;
+        }
+        const paymentDetails = await payment_transaction_model_1.default.findOne({ transactionId: orderId });
+        if (!paymentDetails) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Payment transaction. Please contact administrator`); // failure
+        }
+        const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
+        if (!paymentMethod) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Payment method not found. Please contact administrator`); // failure
+        }
+        const tamaraResponse = await (0, tamara_payments_1.tamaraAutoriseOrder)(orderId, paymentMethod.paymentMethodValues);
+        if (!tamaraResponse) {
+            res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Tamara autorise not completed. Please contact administrator`); // failure
+        }
+        await payment_transaction_model_1.default.findByIdAndUpdate(paymentDetails._id, { $set: { data: tamaraResponse } }, { new: true, runValidators: true });
+        if (tamaraResponse.status) {
+            const retValResponse = await checkout_service_1.default.paymentResponse({
+                paymentDetails,
+                allPaymentResponseData: tamaraResponse,
+                paymentStatus: (tamaraResponse.status === cart_1.tamaraPaymentGatwayStatus.authorised || tamaraResponse.status === cart_1.tamaraPaymentGatwayStatus.approved) ?
+                    cart_1.orderPaymentStatus.success : ((tamaraResponse.status === cart_1.tamaraPaymentGatwayStatus.declined) ? cart_1.orderPaymentStatus.cancelled : cart_1.orderPaymentStatus.expired)
+            });
+            if (retValResponse.status) {
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
+                return true;
+            }
+            else {
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tamaraResponse?.status}`); // failure
+                return false;
+            }
+        }
+        else {
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tamaraResponse?.status}`); // failure
             return false;
         }
     }

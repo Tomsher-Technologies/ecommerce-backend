@@ -112,3 +112,11 @@ export const networkPaymentGatwayStatus = {
     purchased: 'PURCHASED',
     failed: 'FAILED',
 }
+
+export const tamaraPaymentGatwayStatus = {
+    new: 'new',
+    declined: 'declined',
+    expired: 'expired',
+    approved: 'approved',
+    authorised: 'authorised',
+}

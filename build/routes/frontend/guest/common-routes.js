@@ -23,5 +23,6 @@ router.get('/tap-success-response', checkout_controller_1.default.tapSuccessResp
 router.get('/tap-failure-response', checkout_controller_1.default.tapSuccessResponse);
 router.get('/tabby-success-response', checkout_controller_1.default.tabbySuccessResponse);
 router.get('/tabby-failure-response', checkout_controller_1.default.tabbySuccessResponse);
+router.get('/tamara-payment-response', checkout_controller_1.default.tamaraSuccessResponse);
 router.get('/network-payment-response', checkout_controller_1.default.networkPaymentResponse);
 exports.default = router;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isValidEmail = exports.resetPasswordFormSchema = exports.forgotPasswordSchema = exports.resendOtpSchema = exports.verifyOtpSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.isValidEmail = exports.resetPasswordFormSchema = exports.forgotPasswordSchema = exports.resendOtpSchema = exports.verifyOtpSchema = exports.loginSchema = exports.guestRegisterSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 exports.registerSchema = zod_1.z.object({
     email: zod_1.z.string({ required_error: 'Email is required', }).email('Please provide a valid email address'),
@@ -23,6 +23,14 @@ exports.registerSchema = zod_1.z.object({
         });
     }
 });
+exports.guestRegisterSchema = zod_1.z.object({
+    email: zod_1.z.string({ required_error: 'Email is required', }).email('Please provide a valid email address'),
+    otpType: zod_1.z.enum(['phone', 'email'], {
+        required_error: 'Otp type is required',
+        invalid_type_error: 'Otp type must be either "phone" or "email"',
+    }),
+    phone: zod_1.z.string().min(7, { message: 'Phone number must be at least 8 characters long' }).max(15).refine(value => value.trim() !== '', { message: 'Phone number cannot be empty' }).refine(value => /^[0-9]+$/.test(value), { message: 'Phone number must contain only numerals' }),
+});
 exports.loginSchema = zod_1.z.object({
     email: zod_1.z.string({ required_error: 'Email is required', }).email('Please provide a valid email address'),
     password: zod_1.z.string({ required_error: 'password is required' }).min(6, 'Password too short - should be 6 chars minimum')
@@ -32,7 +40,7 @@ exports.verifyOtpSchema = zod_1.z.object({
         required_error: 'Otp type is required',
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
-    otp: zod_1.z.string({ required_error: 'Otp  is required' }).min(6, 'Otp  should be 6 chars minimum').max(6, 'Otp  should be 6 chars maximum'),
+    otp: zod_1.z.string({ required_error: 'Otp  is required' }).min(4, 'Otp  should be 6 chars minimum').max(6, 'Otp  should be 6 chars maximum'),
     email: zod_1.z.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
     phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
         message: 'Phone number should contain only numbers and be at least 9 digits long',
@@ -119,7 +127,7 @@ exports.forgotPasswordSchema = zod_1.z.object({
 });
 exports.resetPasswordFormSchema = zod_1.z.object({
     email: zod_1.z.string().email({ message: 'Invalid email address' }).min(5, { message: 'Email address must be at least 5 characters long' }).max(255).refine(value => value.trim() !== '', { message: 'Email address cannot be empty' }),
-    otp: zod_1.z.string().min(6, { message: 'Otp must be at least 6 characters long' }).max(6).refine(value => value.trim() !== '', { message: 'Otp address cannot be empty' }),
+    otp: zod_1.z.string().min(4, { message: 'Otp must be at least 6 characters long' }).max(6).refine(value => value.trim() !== '', { message: 'Otp address cannot be empty' }),
     password: zod_1.z.string().min(6, { message: 'Password must be at least 6 characters long' }),
     confirmPassword: zod_1.z.string().min(6, { message: 'Confirm password must be at least 6 characters long' }),
 }).superRefine(({ confirmPassword, password }, ctx) => {

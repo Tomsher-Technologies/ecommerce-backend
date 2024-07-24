@@ -51,7 +51,7 @@ class GuestController extends base_controller_1.default {
                     firstName,
                     phone,
                     password: await bcrypt_1.default.hash(password, 10),
-                    otp: (0, helpers_1.generateOTP)(6),
+                    otp: (0, helpers_1.generateOTP)(4),
                     otpExpiry,
                     referralCode: generatedReferralCode,
                     status: '1',
@@ -147,9 +147,139 @@ class GuestController extends base_controller_1.default {
                             // otp: newCustomer.otp,
                             email: newCustomer.email,
                             phone: newCustomer.phone,
-                            referralCode
+                            isVerified: newCustomer.isVerified
                         },
-                        message: 'Customer created successfully!'
+                        message: 'Customer created successfully!.'
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'This user cant register! Please try again',
+                    });
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                });
+            }
+        }
+        catch (error) {
+            if (error && error.errors && error.errors.email && error.errors.email.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        email: error.errors.email.properties.message
+                    }
+                });
+            }
+            else if (error && error.errors && error.errors.phone && error.errors.phone.properties) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: {
+                        phone: error.errors.phone.properties.message
+                    }
+                });
+            }
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while creating customer'
+            });
+        }
+    }
+    async guestRegister(req, res) {
+        try {
+            const validatedData = auth_schema_1.guestRegisterSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const { email, phone, otpType } = validatedData.data;
+                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                const currentDate = new Date();
+                const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
+                let newCustomer = await customers_model_1.default.findOne({
+                    $and: [
+                        { $or: [{ email }, { phone }] }
+                    ]
+                });
+                if (!newCustomer) {
+                    const customerData = {
+                        countryId,
+                        firstName: "Guest",
+                        email,
+                        phone,
+                        otp: (0, helpers_1.generateOTP)(4),
+                        otpExpiry,
+                        isGuest: true,
+                        status: '1',
+                        failureAttemptsCount: 0,
+                        guestRegisterCount: 1,
+                        createdAt: new Date()
+                    };
+                    newCustomer = await customer_service_1.default.create(customerData);
+                }
+                else {
+                    newCustomer = await customer_service_1.default.update(newCustomer._id, {
+                        guestRegisterCount: (newCustomer.guestRegisterCount + 1),
+                        isGuest: true,
+                        otp: (0, helpers_1.generateOTP)(4),
+                        otpExpiry,
+                        failureAttemptsCount: 0,
+                    });
+                }
+                if (newCustomer) {
+                    let websiteSettingsQuery = { _id: { $exists: true } };
+                    websiteSettingsQuery = {
+                        ...websiteSettingsQuery,
+                        countryId: newCustomer.countryId,
+                        block: website_setup_1.websiteSetup.basicSettings,
+                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                        status: '1',
+                    };
+                    const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                    if (settingsDetails) {
+                        const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                        const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                        const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                        const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                            otp: newCustomer.otp,
+                            firstName: newCustomer.firstName,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                            socialMedia,
+                            appUrls,
+                            subject: 'Verification OTP',
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shopName: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`
+                        }, async (err, template) => {
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+                            if (process.env.SHOPNAME === 'Timehouse') {
+                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Homestyle') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Smartbaby') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: 'Verification OTP' }, template);
+                            }
+                        });
+                    }
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            userId: newCustomer._id,
+                            email: newCustomer.email,
+                            phone: newCustomer.phone,
+                            isVerified: newCustomer.isVerified,
+                            isGuest: newCustomer.isGuest,
+                            guestRegisterCount: newCustomer.guestRegisterCount,
+                        },
+                        message: 'Customer created successfully! An OTP has been sent to your email for verification.'
                     });
                 }
                 else {
@@ -202,7 +332,7 @@ class GuestController extends base_controller_1.default {
                         const currentDate = new Date();
                         const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
                         const updateCustomerOtp = {
-                            otp: (0, helpers_1.generateOTP)(6),
+                            otp: (0, helpers_1.generateOTP)(4),
                             otpExpiry,
                         };
                         const updatedCustomer = await customer_service_1.default.update(existingUser?.id, updateCustomerOtp);
@@ -371,7 +501,7 @@ class GuestController extends base_controller_1.default {
                         const currentDate = new Date();
                         const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
                         const optUpdatedCustomer = await customer_service_1.default.update(customerData._id, {
-                            otp: (0, helpers_1.generateOTP)(6),
+                            otp: (0, helpers_1.generateOTP)(4),
                             otpExpiry,
                         });
                         if (optUpdatedCustomer) {
@@ -479,43 +609,47 @@ class GuestController extends base_controller_1.default {
                             if (checkValidOtp.otpExpiry && currentTime <= checkValidOtp.otpExpiry) {
                                 const updatedCustomer = await customer_service_1.default.update(existingUser?.id, { isVerified: true, failureAttemptsCount: 0 });
                                 if (updatedCustomer) {
-                                    const checkReferredCode = await customer_wallet_transaction_model_1.default.findOne({
-                                        referredCustomerId: updatedCustomer._id,
-                                        status: '0',
-                                        referralCode: { $ne: '' }
-                                    });
-                                    if (checkReferredCode) {
-                                        const referrerCustomer = await customer_wallet_transaction_model_1.default.findByIdAndUpdate(checkReferredCode._id, {
-                                            status: '1'
-                                        });
-                                        const referredCustomer = await customer_wallet_transaction_model_1.default.findOne({
-                                            referrerCustomerId: checkReferredCode.customerId,
+                                    if (!updatedCustomer?.isGuest) {
+                                        const checkReferredCode = await customer_wallet_transaction_model_1.default.findOne({
+                                            referredCustomerId: updatedCustomer._id,
                                             status: '0',
                                             referralCode: { $ne: '' }
                                         });
-                                        if (referrerCustomer) {
-                                            const referrerCustomerData = await customer_service_1.default.findOne({ _id: referrerCustomer?.customerId });
-                                            if (referrerCustomerData) {
-                                                await customer_service_1.default.update(referrerCustomerData?._id, { totalRewardPoint: (referrerCustomerData.totalRewardPoint + referrerCustomer.walletPoints), totalWalletAmount: (referrerCustomerData.totalWalletAmount + referrerCustomer.walletAmount) });
-                                            }
-                                        }
-                                        if (referredCustomer) {
-                                            await customer_wallet_transaction_model_1.default.findByIdAndUpdate(referredCustomer._id, {
+                                        if (checkReferredCode) {
+                                            const referrerCustomer = await customer_wallet_transaction_model_1.default.findByIdAndUpdate(checkReferredCode._id, {
                                                 status: '1'
                                             });
-                                            const referredCustomerData = await customer_service_1.default.findOne({ _id: referredCustomer?.customerId });
-                                            if (referredCustomerData) {
-                                                await customer_service_1.default.update(referredCustomerData?._id, { totalRewardPoint: (referredCustomerData.totalRewardPoint + referredCustomer.walletPoints), totalWalletAmount: (referredCustomerData.totalWalletAmount + referredCustomer.walletAmount) });
+                                            const referredCustomer = await customer_wallet_transaction_model_1.default.findOne({
+                                                referrerCustomerId: checkReferredCode.customerId,
+                                                status: '0',
+                                                referralCode: { $ne: '' }
+                                            });
+                                            if (referrerCustomer) {
+                                                const referrerCustomerData = await customer_service_1.default.findOne({ _id: referrerCustomer?.customerId });
+                                                if (referrerCustomerData) {
+                                                    await customer_service_1.default.update(referrerCustomerData?._id, { totalRewardPoint: (referrerCustomerData.totalRewardPoint + referrerCustomer.walletPoints), totalWalletAmount: (referrerCustomerData.totalWalletAmount + referrerCustomer.walletAmount) });
+                                                }
+                                            }
+                                            if (referredCustomer) {
+                                                await customer_wallet_transaction_model_1.default.findByIdAndUpdate(referredCustomer._id, {
+                                                    status: '1'
+                                                });
+                                                const referredCustomerData = await customer_service_1.default.findOne({ _id: referredCustomer?.customerId });
+                                                if (referredCustomerData) {
+                                                    await customer_service_1.default.update(referredCustomerData?._id, { totalRewardPoint: (referredCustomerData.totalRewardPoint + referredCustomer.walletPoints), totalWalletAmount: (referredCustomerData.totalWalletAmount + referredCustomer.walletAmount) });
+                                                }
                                             }
                                         }
                                     }
-                                    const token = jsonwebtoken_1.default.sign({
+                                    const payload = {
                                         userId: updatedCustomer._id,
                                         email: updatedCustomer.email,
                                         phone: updatedCustomer.phone,
                                         firstName: updatedCustomer.firstName,
-                                        totalWalletAmount: updatedCustomer.totalWalletAmount,
-                                    }, `${process.env.TOKEN_SECRET_KEY}`);
+                                        ...(updatedCustomer.isGuest ? {} : { totalWalletAmount: updatedCustomer.totalWalletAmount })
+                                    };
+                                    const expiresIn = updatedCustomer.isGuest ? '2h' : '10y';
+                                    const token = jsonwebtoken_1.default.sign(payload, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn });
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
@@ -524,10 +658,11 @@ class GuestController extends base_controller_1.default {
                                             email: updatedCustomer.email,
                                             phone: updatedCustomer.phone,
                                             isVerified: updatedCustomer.isVerified,
-                                            referralCode: updatedCustomer.referralCode,
+                                            isGuest: updatedCustomer.isGuest,
+                                            ...(updatedCustomer.isGuest ? {} : { referralCode: updatedCustomer.referralCode }),
                                             status: updatedCustomer.status
                                         },
-                                        message: 'Customer otp successfully verified'
+                                        message: 'Customer OTP successfully verified'
                                     });
                                 }
                                 else {

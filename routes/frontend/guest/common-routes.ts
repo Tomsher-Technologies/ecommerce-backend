@@ -1,7 +1,5 @@
 import express, {  Router } from 'express';
 
-import { logResponseStatus } from '../../../src/components/response-status';
-
 import CommonController from '../../../src/controllers/frontend/guest/common-controller';
 import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
 import PagesController from '../../../src/controllers/frontend/guest/pages-controller';
@@ -24,6 +22,8 @@ router.get('/tap-failure-response', CheckoutController.tapSuccessResponse);
 
 router.get('/tabby-success-response', CheckoutController.tabbySuccessResponse);
 router.get('/tabby-failure-response', CheckoutController.tabbySuccessResponse);
+
+router.get('/tamara-payment-response', CheckoutController.tamaraSuccessResponse);
 
 router.get('/network-payment-response', CheckoutController.networkPaymentResponse);
 

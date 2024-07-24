@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -101,4 +101,11 @@ exports.tabbyPaymentGatwaySuccessStatus = {
 exports.networkPaymentGatwayStatus = {
     purchased: 'PURCHASED',
     failed: 'FAILED',
+};
+exports.tamaraPaymentGatwayStatus = {
+    new: 'new',
+    declined: 'declined',
+    expired: 'expired',
+    approved: 'approved',
+    authorised: 'authorised',
 };
