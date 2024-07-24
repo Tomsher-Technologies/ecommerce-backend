@@ -20,6 +20,7 @@ export interface CustomrProps extends Document {
     resetPasswordCount: number;
     isExcel: boolean;
     status: string;
+    lastLoggedAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -150,6 +151,10 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         type: String,
         required: true,
         default: '1'
+    },
+    lastLoggedAt: {
+        type: Date,
+        default: Date.now
     },
     createdAt: {
         type: Date,

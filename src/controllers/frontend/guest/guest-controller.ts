@@ -743,11 +743,14 @@ class GuestController extends BaseController {
                     if (user) {
                         const isPasswordValid = await bcrypt.compare(password, user.password);
                         if (isPasswordValid) {
+                            const updateData: Partial<any> = {
+                                lastLoggedAt: new Date()
+                            };
                             if (user?.isGuest) {
-                                CustomerService.update(user._id, {
-                                    isGuest: false
-                                });
+                                updateData.isGuest = false;
                             }
+                            await CustomerService.update(user._id, updateData);
+
                             const token: string = jwt.sign({
                                 userId: user._id,
                                 email: user.email,
