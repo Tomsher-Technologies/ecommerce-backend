@@ -188,19 +188,25 @@ class CheckoutService {
                 }
             }
 
+          
+
+            let cartProducts = cartDetails?.products || null
+            let customerDetails = cartDetails?.customerDetails || null;
+            let paymentMethodDetails = cartDetails?.paymentMethod || null;
+            
+            if (customerDetails === null) {
+                customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
+            }
             const orderId = await this.getNextSequenceValue();
             cartUpdate = {
                 ...cartUpdate,
                 orderId: orderId,
                 cartStatus: cartStatus.order,
+                isGuest: customerDetails.isGuest ?? false,
                 orderStatus: orderStatusMap['1'].value,
                 processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
             } as any;
-
-            let cartProducts = cartDetails?.products || null
-            let customerDetails = cartDetails?.customerDetails || null;
-            let paymentMethodDetails = cartDetails?.paymentMethod || null;
 
             const updateCart = await CartService.update(cartDetails?._id, cartUpdate)
             if (!updateCart) {
@@ -236,10 +242,6 @@ class CheckoutService {
                         }
                     }));
                     await ProductVariantsModel.bulkWrite(updateProductVariant);
-
-                    if (customerDetails === null) {
-                        customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
-                    }
 
                     let websiteSettingsQuery: any = { _id: { $exists: true } };
                     websiteSettingsQuery = {

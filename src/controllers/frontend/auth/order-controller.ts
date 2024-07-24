@@ -1,14 +1,11 @@
 import BaseController from "../../admin/base-controller";
 import { Request, Response, query } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
-import CartService from '../../../services/frontend/cart-service';
-import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import CustomerModel from "../../../model/frontend/customers-model";
 import mongoose from "mongoose";
 import OrderService from "../../../services/frontend/auth/order-service";
 
 const controller = new BaseController();
-
 class OrderController extends BaseController {
 
     async orderList(req: Request, res: Response): Promise<void> {
@@ -28,6 +25,7 @@ class OrderController extends BaseController {
                     $and: [
                         { customerId: customerDetails._id },
                         { countryId: countryData._id },
+                        { isGuest: customerDetails.isGuest ?? false},
                         { cartStatus: { $ne: "1" } }
                     ],
 
@@ -35,8 +33,6 @@ class OrderController extends BaseController {
                 hostName: req.get('origin'),
                 getCartProducts: '1',
             });
-            console.log('order', order);
-
             if (order) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: order,

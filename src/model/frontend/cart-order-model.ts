@@ -44,6 +44,7 @@ export interface CartOrderProps extends Document {
     pickupStatusAt?: Date;
     deliverStatusAt?: Date;
     createdBy?: string;
+    isGuest: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -229,6 +230,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     deliverStatusAt: {
         type: Date,
         default: null
+    },
+    isGuest: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,

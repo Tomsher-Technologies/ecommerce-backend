@@ -26,13 +26,13 @@ class OrderController extends base_controller_1.default {
                     $and: [
                         { customerId: customerDetails._id },
                         { countryId: countryData._id },
+                        { isGuest: customerDetails.isGuest ?? false },
                         { cartStatus: { $ne: "1" } }
                     ],
                 },
                 hostName: req.get('origin'),
                 getCartProducts: '1',
             });
-            console.log('order', order);
             if (order) {
                 return controller.sendSuccessResponse(res, {
                     requestedData: order,

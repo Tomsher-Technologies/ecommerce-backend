@@ -207,6 +207,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: Date,
         default: null
     },
+    isGuest: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now

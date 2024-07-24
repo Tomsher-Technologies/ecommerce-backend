@@ -294,6 +294,7 @@ class CheckoutController extends BaseController {
                         paymentMethodCharge: codAmount?.blockValues?.codCharge || 0,
                         cartStatus: "2",
                         orderStatus: orderStatusMap['1'].value,
+                        isGuest: customerDetails.isGuest ?? false,
                         orderStatusAt: new Date(),
                     }
                 }

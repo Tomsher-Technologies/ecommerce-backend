@@ -94,14 +94,14 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         required: function (this: CustomrProps) {
             return !this.isGuest;
         },
-        validate: {
-            validator: async function (this: CustomrProps, value: string): Promise<boolean> {
-                if (this.isGuest || !value) return true;
-                const count = await this.model('Customer').countDocuments({ referralCode: value });
-                return count === 0;
-            },
-            message: 'Referral code already exists'
-        },
+        // validate: {
+        //     validator: async function (this: CustomrProps, value: string): Promise<boolean> {
+        //         if (this.isGuest || !value) return true;
+        //         const count = await this.model('Customer').countDocuments({ referralCode: value });
+        //         return count === 0;
+        //     },
+        //     message: 'Referral code already exists'
+        // },
     },
     isExcel: {
         type: Boolean,
