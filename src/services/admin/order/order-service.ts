@@ -1,6 +1,8 @@
 import { pagination } from '../../../components/pagination';
+import { ADDRESS_MODES } from '../../../constants/customer';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import { cartDeatilProject, cartLookup, cartProject, couponLookup, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
+import { countriesLookup } from '../../../utils/config/customer-config';
 import { productLookup } from '../../../utils/config/product-config';
 import { productVariantsLookupValues } from '../../../utils/config/wishlist-config';
 
@@ -32,13 +34,19 @@ class OrderService {
                 ]
             }
         };
-
         const pipeline: any[] = [
             ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cartLookup]),
             ...((!getTotalCount && getCartProducts) ? [couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
             ...(!getTotalCount ? [paymentMethodLookup, customerLookup, orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
+            countriesLookup,
+            {
+                $unwind: {
+                    path: "$country",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
             { $match: query },
             ...((!getTotalCount && getCartProducts === '1') ? [cartDeatilProject] : [cartProject]),
         ];

@@ -4,12 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
-const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 const product_config_1 = require("../../../utils/config/product-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
-const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 class OederService {
     async orderList(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);

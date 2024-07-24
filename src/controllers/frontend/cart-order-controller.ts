@@ -1,26 +1,24 @@
 import 'module-alias/register';
-import { Request, Response, query } from 'express';
+import mongoose from 'mongoose';
+import { Request, Response, } from 'express';
 
 import { formatZodError } from '../../utils/helpers';
 import { cartProductSchema, cartSchema } from '../../utils/schemas/frontend/guest/cart-schema';
-import { offerTypes, offers } from '../../constants/offers';
+import { offerTypes, } from '../../constants/offers';
 
 import BaseController from '../admin/base-controller';
-import CartService from '../../services/frontend/cart-service'
-import CommonService from '../../services/frontend/guest/common-service'
-import ProductService from '../../services/frontend/guest/product-service';
-import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
 import { addToWishlistSchema } from '../../utils/schemas/frontend/auth/wishlist-schema';
-import CustomerWishlistCountryService from '../../services/frontend/auth/customer-wishlist-servicel'
-import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import { blockReferences } from '../../constants/website-setup';
 import { QueryParams } from '../../utils/types/common';
+
+import CommonService from '../../services/frontend/guest/common-service'
+import ProductService from '../../services/frontend/guest/product-service';
+import CartService from '../../services/frontend/cart-service'
+import CustomerWishlistCountryService from '../../services/frontend/auth/customer-wishlist-servicel'
+import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
 import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
+import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import TaxsModel from '../../model/admin/setup/tax-model';
-import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../utils/config/offer-config';
-import mongoose from 'mongoose';
-import ProductsModel from '../../model/admin/ecommerce/product-model';
-import { brandLookup, brandObject, productCategoryLookup } from '../../utils/config/product-config';
 import CartOrdersModel from '../../model/frontend/cart-order-model';
 
 const controller = new BaseController();
@@ -29,7 +27,6 @@ class CartController extends BaseController {
 
 
     async createCartOrder(req: Request, res: Response): Promise<void> {
-
         try {
             const validatedData = cartSchema.safeParse(req.body);
             const customer = res.locals.user;
@@ -39,6 +36,9 @@ class CartController extends BaseController {
                 const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
 
                 let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+                if (!country) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                }
                 let newCartOrder;
                 let newCartOrderProduct: any;
 
