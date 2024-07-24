@@ -674,9 +674,12 @@ class GuestController extends BaseController {
                                         firstName: updatedCustomer.firstName,
                                         ...(updatedCustomer.isGuest ? {} : { totalWalletAmount: updatedCustomer.totalWalletAmount })
                                     };
-                                    const expiresIn = updatedCustomer.isGuest ? '2h' : '10y';
+                                    const expiresIn = updatedCustomer.isGuest ? '1h' : '10y';
                                     const token: string = jwt.sign(payload, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn });
 
+                                    await CustomerService.update(updatedCustomer._id, {
+                                        lastLoggedAt: new Date()
+                                    });
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
@@ -686,6 +689,7 @@ class GuestController extends BaseController {
                                             phone: updatedCustomer.phone,
                                             isVerified: updatedCustomer.isVerified,
                                             isGuest: updatedCustomer.isGuest,
+                                            lastLoggedAt: updatedCustomer?.lastLoggedAt || new Date(),
                                             ...(updatedCustomer.isGuest ? {} : { referralCode: updatedCustomer.referralCode }),
                                             status: updatedCustomer.status
                                         },
@@ -816,6 +820,7 @@ class GuestController extends BaseController {
                                     status: user.status,
                                     isVerified: user.isVerified,
                                     referralCode: user.referralCode,
+                                    lastLoggedAt: user?.lastLoggedAt || new Date(),
                                     otpType: 'phone'
                                 },
                                 message: 'Customer login successfully!'

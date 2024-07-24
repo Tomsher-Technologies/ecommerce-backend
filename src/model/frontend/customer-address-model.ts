@@ -19,6 +19,7 @@ export interface CustomerAddressProps extends Document {
     longitude: string;
     latitude: string;
     isExcel: Boolean;
+    isGuest: Boolean;
     status: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -127,6 +128,10 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
         }
     },
     isExcel: {
+        type: Boolean,
+        default: false
+    },
+    isGuest: {
         type: Boolean,
         default: false
     },
