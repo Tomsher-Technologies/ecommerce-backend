@@ -45,7 +45,8 @@ class CustomerController extends base_controller_1.default {
         query = {
             ...query,
             status: '1',
-            customerId: currentUser._id
+            customerId: currentUser._id,
+            isGuest: currentUser.isGuest ?? false,
         };
         if (addressMode) {
             query = {
@@ -201,7 +202,7 @@ class CustomerController extends base_controller_1.default {
                 return await CustomerController.updateExistingAddress(addressId, req.body, res);
             }
             else {
-                return await CustomerController.createNewAddress(currentUser._id, { addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
+                return await CustomerController.createNewAddress(currentUser._id, { isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
             }
         }
         catch (error) {
@@ -272,7 +273,7 @@ class CustomerController extends base_controller_1.default {
             await customer_address_model_1.default.updateMany({ customerId: existingAddress.customerId, _id: { $ne: addressId } }, { defaultAddress: false });
         }
         updatedData.updatedAt = new Date();
-        const updatedAddress = await customer_service_1.default.updateCustomerAddress(existingAddress.id, updatedData);
+        const updatedAddress = await customer_service_1.default.updateCustomerAddress(existingAddress.id, { ...updatedData, isGuest: existingAddress.isGuest });
         if (updatedAddress) {
             controller.sendSuccessResponse(res, { requestedData: updatedAddress, message: "Address updated successfully" }, 200);
         }

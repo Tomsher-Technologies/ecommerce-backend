@@ -157,8 +157,13 @@ export const slugify = (text: string, slugDiff = '-'): string => {
 
 export const categorySlugify = (text: string): string => {
     return text.toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/-/g, '-')
+        .replace(/[(){}\[\]]/g, '_')  // Replace (), [], {} with underscores
+        .replace(/[^\w\s-]/g, '')      // Remove remaining special characters except spaces and hyphens
+        .replace(/\s+/g, '_')          // Replace spaces with underscores
+        .replace(/_+/g, '_')           // Replace multiple underscores with a single underscore
+        .replace(/_+$/, '');           // Remove trailing underscores
+                // .replace(/-/g, '_')                // Replace hyphens with underscores
+
 };
 
 export const isValidPriceFormat = (value: string): boolean => {
@@ -219,15 +224,11 @@ export function calculateWalletAmount(earnPoints: number, referAndEarn: any) {
 }
 
 
-export const capitalizeWords = (sentence: any) => {
-    let capitalized = sentence?.replace(/\b\w/g, (char: any) => {
-        return char.toUpperCase();
-    });
+export const capitalizeWords = (sentence: string): string => {
+    if (!sentence) return ""; // Handle null or undefined inputs
 
-    // Remove trailing whitespace
-    capitalized = capitalized.trim();
-    return capitalized;
-}
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+};
 
 export const uploadImageFromUrl = async (imageUrl: any) => {
     try {
@@ -343,19 +344,18 @@ export function calculateWalletRewardPoints(wallet: Wallet, totalOrderAmount: nu
         rewardPoints = (redeemableAmount * redeemPoints) / redeemAmount;
     }
 
-    return { rewardPoints: Math.floor(rewardPoints), redeemableAmount: Number(redeemableAmount?.toFixed(2))};
+    return { rewardPoints: Math.floor(rewardPoints), redeemableAmount: Number(redeemableAmount?.toFixed(2)) };
 }
 
 export const calculateExpectedDeliveryDate = (orderStatusAt: string, commonDeliveryDays: number): string => {
     const orderDate = new Date(orderStatusAt);
     const expectedDeliveryDate = new Date(orderDate);
-  
+
     expectedDeliveryDate.setDate(orderDate.getDate() + commonDeliveryDays);
-  
+
     const year = expectedDeliveryDate.getFullYear();
     const month = String(expectedDeliveryDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based
     const day = String(expectedDeliveryDate.getDate()).padStart(2, '0');
-  
+
     return `${year}-${month}-${day}`;
-  };
-  
+};

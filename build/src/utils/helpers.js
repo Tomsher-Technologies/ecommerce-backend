@@ -154,8 +154,12 @@ const slugify = (text, slugDiff = '-') => {
 exports.slugify = slugify;
 const categorySlugify = (text) => {
     return text.toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/-/g, '-');
+        .replace(/[(){}\[\]]/g, '_') // Replace (), [], {} with underscores
+        .replace(/[^\w\s-]/g, '') // Remove remaining special characters except spaces and hyphens
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .replace(/_+/g, '_') // Replace multiple underscores with a single underscore
+        .replace(/_+$/, ''); // Remove trailing underscores
+    // .replace(/-/g, '_')                // Replace hyphens with underscores
 };
 exports.categorySlugify = categorySlugify;
 const isValidPriceFormat = (value) => {
@@ -212,12 +216,9 @@ function calculateWalletAmount(earnPoints, referAndEarn) {
 }
 exports.calculateWalletAmount = calculateWalletAmount;
 const capitalizeWords = (sentence) => {
-    let capitalized = sentence?.replace(/\b\w/g, (char) => {
-        return char.toUpperCase();
-    });
-    // Remove trailing whitespace
-    capitalized = capitalized.trim();
-    return capitalized;
+    if (!sentence)
+        return ""; // Handle null or undefined inputs
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1);
 };
 exports.capitalizeWords = capitalizeWords;
 const uploadImageFromUrl = async (imageUrl) => {

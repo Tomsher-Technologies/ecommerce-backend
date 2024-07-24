@@ -654,8 +654,11 @@ class GuestController extends base_controller_1.default {
                                         firstName: updatedCustomer.firstName,
                                         ...(updatedCustomer.isGuest ? {} : { totalWalletAmount: updatedCustomer.totalWalletAmount })
                                     };
-                                    const expiresIn = updatedCustomer.isGuest ? '2h' : '10y';
+                                    const expiresIn = updatedCustomer.isGuest ? '1h' : '10y';
                                     const token = jsonwebtoken_1.default.sign(payload, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn });
+                                    await customer_service_1.default.update(updatedCustomer._id, {
+                                        lastLoggedAt: new Date()
+                                    });
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
@@ -665,6 +668,7 @@ class GuestController extends base_controller_1.default {
                                             phone: updatedCustomer.phone,
                                             isVerified: updatedCustomer.isVerified,
                                             isGuest: updatedCustomer.isGuest,
+                                            lastLoggedAt: updatedCustomer?.lastLoggedAt || new Date(),
                                             ...(updatedCustomer.isGuest ? {} : { referralCode: updatedCustomer.referralCode }),
                                             status: updatedCustomer.status
                                         },
@@ -799,6 +803,7 @@ class GuestController extends base_controller_1.default {
                                     status: user.status,
                                     isVerified: user.isVerified,
                                     referralCode: user.referralCode,
+                                    lastLoggedAt: user?.lastLoggedAt || new Date(),
                                     otpType: 'phone'
                                 },
                                 message: 'Customer login successfully!'

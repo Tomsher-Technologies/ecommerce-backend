@@ -131,6 +131,10 @@ const customerAddressSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false
     },
+    isGuest: {
+        type: Boolean,
+        default: false
+    },
     status: {
         type: String,
         required: true,

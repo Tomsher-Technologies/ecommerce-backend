@@ -86,13 +86,13 @@ class DashboardService {
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
 
-        today.setHours(59, 59, 59, 0);
+        yesterday.setHours(0, 0, 0, 0);
 
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        const todayOrders = await CartOrderModel.find({ $and: [{ createdAt: { $gte: today, $lt: tomorrow } }, { cartStatus: { $ne: "1" } }] });
-        const yesterdayOrders = await CartOrderModel.find({ $and: [{ createdAt: { $gte: yesterday, $lt: today } }, { cartStatus: { $ne: "1" } }] });
+        const todayOrders = await CartOrderModel.find({ $and: [{ orderStatusAt: { $gte: today, $lt: tomorrow } }, { cartStatus: { $ne: "1" } }] });
+        const yesterdayOrders = await CartOrderModel.find({ $and: [{ orderStatusAt: { $gte: yesterday, $lt: today } }, { cartStatus: { $ne: "1" } }] });
 
         const todaySales = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         const yesterdaySales = yesterdayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -121,7 +121,7 @@ class DashboardService {
             {
                 $group: {
                     _id: {
-                        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                        $dateToString: { format: "%Y-%m-%d", date: "$orderStatusAt" }
                     },
                     totalSales: { $sum: "$totalAmount" }
                 }
@@ -161,7 +161,7 @@ class DashboardService {
             {
                 $group: {
                     _id: {
-                        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                        $dateToString: { format: "%Y-%m-%d", date: "$orderStatusAt" }
                     },
                     totalOrders: { $sum: 1 }
                 }
