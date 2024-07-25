@@ -10,7 +10,7 @@ const product_config_1 = require("../../../utils/config/product-config");
 const wishlist_config_1 = require("../../../utils/config/wishlist-config");
 const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const common_service_1 = __importDefault(require("../guest/common-service"));
-class CustomerWishlistCountryService {
+class CustomerWishlistService {
     async findAll(options = {}) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
@@ -100,4 +100,4 @@ class CustomerWishlistCountryService {
         return customer_wishlist_model_1.default.findOneAndDelete({ _id: wishlistId });
     }
 }
-exports.default = new CustomerWishlistCountryService();
+exports.default = new CustomerWishlistService();

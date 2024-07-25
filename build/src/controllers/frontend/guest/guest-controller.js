@@ -24,6 +24,8 @@ const customer_wallet_transaction_model_1 = __importDefault(require("../../../mo
 const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
 const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const controller = new base_controller_1.default();
 const options = {
     wordwrap: 130,
@@ -659,6 +661,18 @@ class GuestController extends base_controller_1.default {
                                     await customer_service_1.default.update(updatedCustomer._id, {
                                         lastLoggedAt: new Date()
                                     });
+                                    if (updatedCustomer?.isGuest) {
+                                        const existingCart = await cart_order_model_1.default.findOne({ customerId: updatedCustomer._id, cartStatus: '1' });
+                                        if (existingCart) {
+                                            await cart_order_model_1.default.findOneAndDelete({ _id: existingCart._id });
+                                            await cart_order_product_model_1.default.deleteMany({ cartId: existingCart._id });
+                                        }
+                                        const uuid = req.header('User-Token');
+                                        const guestUserCart = await cart_order_model_1.default.findOne({ guestUserId: uuid });
+                                        if (guestUserCart) {
+                                            await cart_order_model_1.default.findOneAndUpdate({ customerId: updatedCustomer._id, isGuest: true, guestUserId: null });
+                                        }
+                                    }
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
@@ -672,7 +686,7 @@ class GuestController extends base_controller_1.default {
                                             ...(updatedCustomer.isGuest ? {} : { referralCode: updatedCustomer.referralCode }),
                                             status: updatedCustomer.status
                                         },
-                                        message: 'Customer OTP successfully verified'
+                                        message: 'Customer OTP successfully verified.'
                                     });
                                 }
                                 else {

@@ -9,6 +9,7 @@ const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const coupon_model_1 = __importDefault(require("../../../model/admin/marketing/coupon-model"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const cart_service_1 = __importDefault(require("../../../services/frontend/cart-service"));
 class CouponService {
     async findAll(options) {
@@ -19,13 +20,17 @@ class CouponService {
         return coupon_model_1.default.aggregate(pipeline).exec();
     }
     async checkCouponCode(options) {
-        const { query, user, deviceType } = options;
+        const { query, user, deviceType, uuid } = options;
         const currentDate = new Date();
         try {
-            const cartDetails = await cart_service_1.default.findOneCart({
-                cartStatus: '1',
-                customerId: user._id
-            });
+            let cartQuery = { cartStatus: '1' };
+            if (user && user._id) {
+                cartQuery.customerId = user._id;
+            }
+            if (uuid) {
+                cartQuery.guestUserId = uuid;
+            }
+            const cartDetails = await cart_service_1.default.findOneCart(cartQuery);
             if (!cartDetails) {
                 return {
                     status: false,
@@ -53,8 +58,15 @@ class CouponService {
                 };
             }
             // Check if the totalCouponAmount exceeds discountMaxRedeemAmount for carts with status not equal to '1'
+            const totalCouponAmounQuery = { cartStatus: '1' };
+            if (user && user._id) {
+                totalCouponAmounQuery.customerId = user._id;
+            }
+            if (uuid) {
+                totalCouponAmounQuery.guestUserId = uuid;
+            }
             const totalCouponAmountResult = await cart_order_model_1.default.aggregate([
-                { $match: { cartStatus: '1', customerId: user._id } },
+                { $match: totalCouponAmounQuery },
                 { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
             ]);
             const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
@@ -65,7 +77,7 @@ class CouponService {
                 };
             }
             if (![cart_1.couponTypes.entireOrders].includes(couponDetails.couponType)) {
-                const cartProductDetails = await cart_service_1.default.findAllCart({ cartId: cartDetails._id });
+                const cartProductDetails = await cart_order_product_model_1.default.find({ cartId: cartDetails._id });
                 const productIds = cartProductDetails.map((product) => product.productId.toString());
                 const applicableCouponApplyValues = couponDetails.couponApplyValues;
                 if (couponDetails.couponType === cart_1.couponTypes.forProduct) {
@@ -106,7 +118,16 @@ class CouponService {
             }
             // Check if the coupon is only for new users
             if (couponDetails.couponUsage.onlyForNewUser) {
-                const checkCart = await cart_service_1.default.findOneCart({ cartStatus: { $ne: '1' }, customerId: user._id });
+                const onlyForNewUserQuery = { cartStatus: { $ne: '1' } };
+                if (user && user._id) {
+                    onlyForNewUserQuery.customerId = user._id;
+                    onlyForNewUserQuery.isGuest = false;
+                }
+                else if (uuid) {
+                    onlyForNewUserQuery.guestUserId = uuid;
+                    onlyForNewUserQuery.isGuest = true;
+                }
+                const checkCart = await cart_service_1.default.findOneCart(onlyForNewUserQuery);
                 if (checkCart) {
                     return {
                         status: false,
@@ -116,10 +137,16 @@ class CouponService {
             }
             // Check coupon usage limit per user
             if (couponDetails.couponUsage.enableCouponUsageLimit) {
-                const usageCount = await cart_order_model_1.default.countDocuments({
-                    customerId: user._id,
-                    couponId: couponDetails._id,
-                });
+                const usageCountQuery = {
+                    couponId: couponDetails._id
+                };
+                if (user && user._id) {
+                    usageCountQuery.customerId = user._id;
+                }
+                else if (uuid) {
+                    usageCountQuery.guestUserId = uuid;
+                }
+                const usageCount = await cart_order_model_1.default.countDocuments(usageCountQuery);
                 if (usageCount >= Number(couponDetails.couponUsage.couponUsageLimit)) {
                     return {
                         status: false,

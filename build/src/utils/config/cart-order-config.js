@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartLookup = void 0;
+exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
-exports.cartLookup = {
+exports.cartProductsLookup = {
     $lookup: {
         from: `${collections_1.collections.cart.cartorderproducts}`,
         localField: '_id',
@@ -252,7 +252,7 @@ const buildOrderPipeline = (paymentMethodDetails, customerDetails, cartDetails) 
     query._id = cartDetails?._id;
     const modifiedPipeline = {
         $lookup: {
-            ...exports.cartLookup.$lookup,
+            ...exports.cartProductsLookup.$lookup,
             pipeline: [
                 product_config_1.productLookup,
                 { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -302,3 +302,92 @@ const buildOrderPipeline = (paymentMethodDetails, customerDetails, cartDetails) 
     return pipeline;
 };
 exports.buildOrderPipeline = buildOrderPipeline;
+const cartOrderGroupSumAggregate = (customerCart, guestUserCartId) => {
+    return [
+        {
+            $match: {
+                $or: [
+                    { _id: guestUserCartId },
+                    { _id: customerCart }
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalProductAmount: { $sum: "$totalProductAmount" },
+                totalProductOriginalPrice: { $sum: "$totalProductOriginalPrice" },
+                totalGiftWrapAmount: { $sum: "$totalGiftWrapAmount" },
+                totalDiscountAmount: { $sum: "$totalDiscountAmount" },
+                totalAmount: { $sum: { $add: ["$totalDiscountAmount", "$totalGiftWrapAmount", "$totalProductAmount"] } }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                totalProductOriginalPrice: 1,
+                totalProductAmount: 1,
+                totalGiftWrapAmount: 1,
+                totalDiscountAmount: 1,
+                totalAmount: 1
+            }
+        }
+    ];
+};
+exports.cartOrderGroupSumAggregate = cartOrderGroupSumAggregate;
+const cartOrderProductsGroupSumAggregate = (customerCart, guestUserCartId) => {
+    return [
+        {
+            $match: {
+                $or: [
+                    { cartId: guestUserCartId },
+                    { cartId: customerCart }
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    cartId: "$cartId",
+                    variantId: "$variantId"
+                },
+                cartId: { $first: "$cartId" },
+                slug: { $first: "$slug" },
+                quantity: { $sum: "$quantity" },
+                productOriginalPrice: { $sum: "$productOriginalPrice" },
+                productAmount: { $sum: "$productAmount" },
+                productDiscountAmount: { $sum: "$productDiscountAmount" },
+                productCouponAmount: { $sum: "$productCouponAmount" },
+                giftWrapAmount: { $sum: "$giftWrapAmount" }
+            }
+        },
+        {
+            $group: {
+                _id: "$_id.variantId",
+                cartId: { $first: "$cartId" },
+                slug: { $first: "$slug" },
+                quantity: { $sum: "$quantity" },
+                productOriginalPrice: { $sum: "$productOriginalPrice" },
+                productAmount: { $sum: "$productAmount" },
+                productDiscountAmount: { $sum: "$productDiscountAmount" },
+                productCouponAmount: { $sum: "$productCouponAmount" },
+                giftWrapAmount: { $sum: "$giftWrapAmount" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                cartId: 1,
+                variantId: "$_id",
+                slug: 1,
+                quantity: 1,
+                productOriginalPrice: 1,
+                productAmount: 1,
+                productDiscountAmount: 1,
+                productCouponAmount: 1,
+                giftWrapAmount: 1
+            }
+        }
+    ];
+};
+exports.cartOrderProductsGroupSumAggregate = cartOrderProductsGroupSumAggregate;

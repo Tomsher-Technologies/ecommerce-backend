@@ -8,7 +8,6 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const coupon_service_1 = __importDefault(require("../../../services/frontend/auth/coupon-service"));
 const coupon_schema_1 = require("../../../utils/schemas/frontend/auth/coupon.schema");
 const helpers_1 = require("../../../utils/helpers");
-const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const controller = new base_controller_1.default();
 class CouponController extends base_controller_1.default {
     async findAllCoupon(req, res) {
@@ -59,16 +58,17 @@ class CouponController extends base_controller_1.default {
                             couponCode,
                         };
                         const user = res.locals.user;
-                        const customerDetails = await customers_model_1.default.findOne({ _id: user });
-                        if (!customerDetails || customerDetails?.isGuest === true || !customerDetails?.isVerified) {
-                            const message = !customerDetails
-                                ? 'User is not found'
-                                : customerDetails.isGuest === true
-                                    ? 'User is a guest and not eligible'
-                                    : 'User is not verified';
-                            return controller.sendErrorResponse(res, 200, { message });
-                        }
-                        const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user, deviceType });
+                        // const customerDetails = await CustomerModel.findOne({ _id: user });
+                        // if (!customerDetails || customerDetails?.isGuest === true || !customerDetails?.isVerified) {
+                        //     const message = !customerDetails
+                        //         ? 'User is not found'
+                        //         : customerDetails.isGuest === true
+                        //             ? 'User is a guest and not eligible'
+                        //             : 'User is not verified';
+                        //     return controller.sendErrorResponse(res, 200, { message });
+                        // }
+                        const uuid = req.header('User-Token');
+                        const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user, deviceType, uuid });
                         if (couponDetails?.status) {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: couponDetails?.requestedData,

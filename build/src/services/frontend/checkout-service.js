@@ -9,7 +9,6 @@ const { convert } = require('html-to-text');
 const cart_1 = require("../../constants/cart");
 const helpers_1 = require("../../utils/helpers");
 const coupon_service_1 = __importDefault(require("./auth/coupon-service"));
-const cart_service_1 = __importDefault(require("./cart-service"));
 const product_model_1 = __importDefault(require("../../model/admin/ecommerce/product-model"));
 const product_category_link_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-category-link-model"));
 const cart_order_model_1 = __importDefault(require("../../model/frontend/cart-order-model"));
@@ -23,6 +22,7 @@ const cart_order_config_1 = require("../../utils/config/cart-order-config");
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
 const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 const smtp_nodemailer_gateway_1 = require("../../lib/emails/smtp-nodemailer-gateway");
+const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
 class CheckoutService {
     async paymentResponse(options) {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
@@ -121,7 +121,7 @@ class CheckoutService {
                     couponId: null,
                     paymentMethodId: null
                 };
-                await cart_service_1.default.update(cartDetails?._id, cartUpdate);
+                await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
                 return {
                     _id: cartDetails?._id,
                     orderId: null,
@@ -131,7 +131,7 @@ class CheckoutService {
             }
             const couponDetails = await coupon_service_1.default.findOne({ _id: cartDetails?.couponId });
             if (couponDetails) {
-                const cartProductDetails = await cart_service_1.default.findAllCart({ cartId: cartDetails?._id });
+                const cartProductDetails = await cart_order_product_model_1.default.find({ cartId: cartDetails?._id });
                 const productIds = cartProductDetails.map((product) => product.productId.toString());
                 const couponAmount = couponDetails?.discountAmount;
                 const discountType = couponDetails.discountType;
@@ -195,7 +195,7 @@ class CheckoutService {
                 processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
             };
-            const updateCart = await cart_service_1.default.update(cartDetails?._id, cartUpdate);
+            const updateCart = await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
