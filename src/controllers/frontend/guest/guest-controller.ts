@@ -26,6 +26,8 @@ import { etisalatSmsGateway } from '../../../lib/sms/ethisalat-sms-gateway';
 import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
+import CartOrdersModel from '../../../model/frontend/cart-order-model';
+import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 
 
 const controller = new BaseController();
@@ -680,8 +682,27 @@ class GuestController extends BaseController {
                                     await CustomerService.update(updatedCustomer._id, {
                                         lastLoggedAt: new Date()
                                     });
+                                    let redirectToCart = false;
+                                    let returnMessage = 'Customer OTP successfully verified.';
+                                    if (updatedCustomer?.isGuest) {
+                                        const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1', isGuest: false });
+                                        if (existingCart) {
+                                            const uuid = req.header('User-Token');
+                                            console.log(existingCart);
+                                            console.log(uuid);
+                                            
+                                            // await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
+                                            // await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
+                                            // const guestUserCart = await CartOrdersModel.findOne({ guestUserId: uuid });
+                                            // if (guestUserCart) {
+                                            //     await CartOrdersModel.findOneAndUpdate({   customerId: updatedCustomer._id })
+                                            // }
+                                        }
+                                    }
+
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
+                                            redirectToCart,
                                             token,
                                             userId: updatedCustomer._id,
                                             firstName: updatedCustomer.firstName,
@@ -693,7 +714,7 @@ class GuestController extends BaseController {
                                             ...(updatedCustomer.isGuest ? {} : { referralCode: updatedCustomer.referralCode }),
                                             status: updatedCustomer.status
                                         },
-                                        message: 'Customer OTP successfully verified'
+                                        message: returnMessage
                                     });
                                 } else {
                                     return controller.sendErrorResponse(res, 200, {

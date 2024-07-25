@@ -20,6 +20,7 @@ import CartOrderProductsModel from '../../model/frontend/cart-order-product-mode
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import TaxsModel from '../../model/admin/setup/tax-model';
 import CartOrdersModel from '../../model/frontend/cart-order-model';
+import CustomerModel from '../../model/frontend/customers-model';
 
 const controller = new BaseController();
 
@@ -94,6 +95,16 @@ class CartController extends BaseController {
                                 { cartStatus: '1' }
                             ]
                         });
+                        if (existingCart) {
+                            const existingCustomer = await CustomerModel.findOne({ _id: customer });
+                            console.log('existingCustomer', existingCart);
+
+                            // if (existingCustomer && existingCustomer.isGuest !== existingCart.isGuest) {
+                            //     await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
+                            //     await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
+                            //     existingCart=null
+                            // }
+                        }
                     } else {
                         existingCart = await CartService.findCart({
                             $and: [
@@ -256,7 +267,8 @@ class CartController extends BaseController {
                             totalShippingAmount: finalShippingCharge,
                             totalGiftWrapAmount: totalGiftWrapAmount,
                             totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
-                            totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount
+                            totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount,
+                            isGuest: customer ? false : true
                         };
 
 
@@ -329,6 +341,7 @@ class CartController extends BaseController {
                             // codAmount: Number(codAmount.blockValues.codCharge),
                             totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
                             totalAmount: totalAmountOfProduct + finalShippingCharge,
+                            isGuest: customer ? false : true
                         };
 
                         newCartOrder = await CartService.create(cartOrderData);
@@ -615,8 +628,10 @@ class CartController extends BaseController {
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (!country) {
+                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+            }
             let query
-
 
             if (guestUser && customer) {
                 const guestUserCart: any = await CartService.findCart({
@@ -681,19 +696,18 @@ class CartController extends BaseController {
                         }
                     ]);
 
-                    // console.log("cartProduct", cartProduct);
                     const update = await CartService.updateCartProduct(cartProduct._id, {
                         quantity: cartProduct.quantity,
                         productAmount: cartProduct.productAmount,
                         productDiscountAmount: cartProduct.productDiscountAmount,
-
                     })
                 }
 
                 if (guestUserCart) {
-                    const update = await CartService.update(guestUserCart._id, { customerId: customer })
-                    const destroy = await CartOrdersModel.deleteMany({ cartId: guestUserCart._id })
-                    console.log(";//////////////////", destroy);
+                    const update = await CartService.update(guestUserCart._id, { customerId: customer, guestUserId: null, isGuest: customer ? false : true });
+                    if(update){
+                       await CartOrdersModel.deleteMany({ cartId: guestUserCart._id })
+                    }
                 }
 
                 const cartProductsaggregation: any = await CartOrdersModel.aggregate([
@@ -728,22 +742,18 @@ class CartController extends BaseController {
                         totalGiftWrapAmount: cartProductsaggregation.totalGiftWrapAmount,
                         totalDiscountAmount: cartProductsaggregation.totalDiscountAmount,
                         totalAmount: cartProductsaggregation.totalAmount,
-                        guestUserId: guestUser,
-                        customerId: customer
+                        guestUserId: null,
+                        customerId: customer,
+                        isGuest: customer ? false : true
                     },
                 )
-
-
-
-
-            }
+           }
 
             if (guestUser && !customer) {
                 query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] }
             }
             else {
                 query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] }
-
             }
 
 

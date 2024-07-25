@@ -79,6 +79,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     guestUserId: {
         type: String,
+        default: null
         // unique: true
     },
     shippingId: {
@@ -233,7 +234,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     isGuest: {
         type: Boolean,
-        default: false
+        default: true
     },
     createdAt: {
         type: Date,

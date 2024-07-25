@@ -7,10 +7,10 @@ import CouponController from '../../../src/controllers/frontend/auth/coupon-cont
 
 const router: Router = express.Router();
 
-router.use(frontendAuthMiddleware);
+// router.use(frontendAuthMiddleware);
 
-router.get('/', logResponseStatus, CouponController.findAllCoupon);
-router.post('/apply-coupon/:couponcode', logResponseStatus, CouponController.applyCoupon);
+router.get('/', CouponController.findAllCoupon);
+router.post('/apply-coupon/:couponcode', CouponController.applyCoupon);
 
 
 export default router;
