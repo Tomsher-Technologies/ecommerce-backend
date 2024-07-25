@@ -24,6 +24,7 @@ const network_payments_1 = require("../../../lib/payment-gateway/network-payment
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const tamara_payments_1 = require("../../../lib/payment-gateway/tamara-payments");
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
@@ -57,6 +58,10 @@ class CheckoutController extends base_controller_1.default {
                     },
                     hostName: req.get('origin'),
                 });
+                if (!cartDetails) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Current cart is missing, please add items and try agin' });
+                }
+                const uuid = req.header('User-Token');
                 const variantIds = cartDetails.products.map((product) => product.variantId);
                 // go to product variant model check 
                 const variantQuantities = cartDetails.products.reduce((calculateQuantity, product) => {
@@ -94,6 +99,7 @@ class CheckoutController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 200, { message: 'Cart not found!' });
                 }
                 let cartUpdate = {
+                    orderUuid: uuid,
                     cartStatus: cart_1.cartStatus.active,
                     paymentMethodCharge: 0,
                     couponId: null,
@@ -109,7 +115,7 @@ class CheckoutController extends base_controller_1.default {
                         countryId: countryData._id,
                         couponCode,
                     };
-                    const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user: customerId, deviceType });
+                    const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user: customerId, deviceType, uuid });
                     if (couponDetails?.status) {
                         cartUpdate = {
                             ...cartUpdate,
@@ -284,7 +290,7 @@ class CheckoutController extends base_controller_1.default {
                         orderStatusAt: new Date(),
                     };
                 }
-                const updateCart = await cart_service_1.default.update(cartDetails._id, cartUpdate);
+                const updateCart = await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }

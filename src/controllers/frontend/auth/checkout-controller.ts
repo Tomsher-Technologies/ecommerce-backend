@@ -21,6 +21,7 @@ import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
+import CartOrdersModel from "../../../model/frontend/cart-order-model";
 
 const controller = new BaseController();
 
@@ -60,6 +61,10 @@ class CheckoutController extends BaseController {
                     },
                     hostName: req.get('origin'),
                 });
+                if (!cartDetails) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Current cart is missing, please add items and try agin' });
+                }
+                const uuid = req.header('User-Token');
                 const variantIds = cartDetails.products.map((product: any) => product.variantId);
                 // go to product variant model check 
                 const variantQuantities = cartDetails.products.reduce((calculateQuantity: any, product: any) => {
@@ -101,6 +106,7 @@ class CheckoutController extends BaseController {
                 }
 
                 let cartUpdate: any = {
+                    orderUuid: uuid,
                     cartStatus: cartStatus.active,
                     paymentMethodCharge: 0,
                     couponId: null,
@@ -116,7 +122,7 @@ class CheckoutController extends BaseController {
                         countryId: countryData._id,
                         couponCode,
                     } as any;
-                    const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType });
+                    const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType, uuid });
                     if (couponDetails?.status) {
                         cartUpdate = {
                             ...cartUpdate,
@@ -299,7 +305,7 @@ class CheckoutController extends BaseController {
                     }
                 }
 
-                const updateCart = await CartService.update(cartDetails._id, cartUpdate)
+                const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }

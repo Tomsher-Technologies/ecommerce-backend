@@ -9,10 +9,11 @@ import CheckoutController from '../../../src/controllers/frontend/auth/checkout-
 
 const router: Router = express.Router();
 
+router.get('/:id', OrderController.getOrder);
+
 router.use(frontendAuthMiddleware);
 
 router.get('/order-list', logResponseStatus, OrderController.orderList);
-router.get('/:id', logResponseStatus, OrderController.getOrder);
 router.post('/move-to-wishlist', logResponseStatus, cartOrderController.moveToWishlist);
 router.post('/checkout', logResponseStatus, CheckoutController.checkout);
 router.get('/checkout/retrieve-checkout-tabby/:tabby', logResponseStatus, CheckoutController.tabbyCheckoutRetrieveDetails);

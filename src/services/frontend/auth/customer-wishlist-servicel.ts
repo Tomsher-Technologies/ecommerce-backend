@@ -9,7 +9,7 @@ import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domai
 import commonService from '../guest/common-service';
 
 
-class CustomerWishlistCountryService {
+class CustomerWishlistService {
     async findAll(options: FilterOptionsProps = {}): Promise<CustomerWishlistModelProps[]> {
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
@@ -171,4 +171,4 @@ class CustomerWishlistCountryService {
     // }
 }
 
-export default new CustomerWishlistCountryService();
+export default new CustomerWishlistService();

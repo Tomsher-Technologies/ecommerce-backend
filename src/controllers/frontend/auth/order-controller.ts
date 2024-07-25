@@ -25,7 +25,7 @@ class OrderController extends BaseController {
                     $and: [
                         { customerId: customerDetails._id },
                         { countryId: countryData._id },
-                        { isGuest: customerDetails.isGuest ?? false},
+                        { isGuest: customerDetails.isGuest ?? false },
                         { cartStatus: { $ne: "1" } }
                     ],
 
@@ -57,30 +57,41 @@ class OrderController extends BaseController {
         try {
             const customerId: any = res.locals.user;
             const orderId = req.params.id;
+            const uuid = req.header('User-Token');
+            const origin = req.get('origin');
 
-            let countryData = await CommonService.findOneCountrySubDomainWithId(req.get('origin'), true);
+            let countryData = await CommonService.findOneCountrySubDomainWithId(origin, true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
-            const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
-            if (!customerDetails) {
-                return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
-            }
-            //offer - specification
-            const order: any = await OrderService.orderList({
-                query: {
-                    $and: [
-                        { customerId: customerDetails._id },
-                        { countryId: countryData._id },
-                        // { cartStatus: "2" },
-                        { _id: new mongoose.Types.ObjectId(orderId) }
-                    ],
 
-                },
-                hostName: req.get('origin'),
+            if (!customerId && !uuid) {
+                return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
+            }
+
+            const query: any = {
+                $and: [
+                    { countryId: countryData._id },
+                    { _id: new mongoose.Types.ObjectId(orderId) }
+                ]
+            };
+
+            if (customerId) {
+                const customerDetails: any = await CustomerModel.findOne({ _id: customerId });
+                if (!customerDetails) {
+                    return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
+                }
+                query.customerId = customerId;
+            } else if (uuid) {
+                query.orderUuid = uuid;
+            }
+
+            const order: any = await OrderService.orderList({
+                query,
+                hostName: origin,
                 getAddress: '1',
                 getCartProducts: '1',
-            })
+            });
 
             if (order && order.length > 0) {
                 return controller.sendSuccessResponse(res, {
@@ -89,17 +100,16 @@ class OrderController extends BaseController {
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Order not fount'
+                    message: 'Order not found'
                 });
             }
-
         } catch (error: any) {
             return controller.sendErrorResponse(res, 200, {
-                message: 'Order not fount'
+                message: 'An error occurred while fetching the order'
             });
-
         }
     }
+
 
 }
 

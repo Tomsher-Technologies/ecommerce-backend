@@ -55,7 +55,12 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     guestUserId: {
         type: String,
+        default: null
         // unique: true
+    },
+    orderUuid: {
+        type: String,
+        default: null
     },
     shippingId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -209,7 +214,7 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     isGuest: {
         type: Boolean,
-        default: false
+        default: true
     },
     createdAt: {
         type: Date,

@@ -5,6 +5,7 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 
 import CouponModel from '../../../model/admin/marketing/coupon-model';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';
+import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 import { CustomerWishlistModelProps } from '../../../model/frontend/customer-wishlist-model';
 import CartService from "../../../services/frontend/cart-service";
 
@@ -12,6 +13,7 @@ interface CheckCouponOptions {
     query: Record<string, any>;
     user: { _id: string };
     deviceType: string;
+    uuid: string | undefined;
 }
 
 interface CheckValues {
@@ -32,13 +34,18 @@ class CouponService {
         return CouponModel.aggregate(pipeline).exec();
     }
     async checkCouponCode(options: CheckCouponOptions): Promise<CheckValues> {
-        const { query, user, deviceType } = options;
+        const { query, user, deviceType, uuid } = options;
         const currentDate = new Date();
         try {
-            const cartDetails = await CartService.findOneCart({
-                cartStatus: '1',
-                customerId: user._id
-            });
+            let cartQuery: any = { cartStatus: '1' };
+            if (user && user._id) {
+                cartQuery.customerId = user._id;
+            }
+            if (uuid) {
+                cartQuery.guestUserId = uuid;
+            }
+
+            const cartDetails = await CartService.findOneCart(cartQuery);
             if (!cartDetails) {
                 return {
                     status: false,
@@ -70,13 +77,18 @@ class CouponService {
             }
 
             // Check if the totalCouponAmount exceeds discountMaxRedeemAmount for carts with status not equal to '1'
+            const totalCouponAmounQuery: any = { cartStatus: '1' };
+            if (user && user._id) {
+                totalCouponAmounQuery.customerId = user._id;
+            }
+            if (uuid) {
+                totalCouponAmounQuery.guestUserId = uuid;
+            }
             const totalCouponAmountResult = await CartOrdersModel.aggregate([
-                { $match: { cartStatus: '1', customerId: user._id } },
+                { $match: totalCouponAmounQuery },
                 { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
             ]);
-
             const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
-
             if (totalCouponAmount >= Number(couponDetails.discountMaxRedeemAmount)) {
                 return {
                     status: false,
@@ -85,7 +97,7 @@ class CouponService {
             }
 
             if (![couponTypes.entireOrders].includes(couponDetails.couponType)) {
-                const cartProductDetails = await CartService.findAllCart({ cartId: cartDetails._id });
+                const cartProductDetails = await CartOrderProductsModel.find({ cartId: cartDetails._id });
                 const productIds = cartProductDetails.map((product: any) => product.productId.toString());
                 const applicableCouponApplyValues = couponDetails.couponApplyValues;
 
@@ -126,7 +138,15 @@ class CouponService {
 
             // Check if the coupon is only for new users
             if (couponDetails.couponUsage.onlyForNewUser) {
-                const checkCart = await CartService.findOneCart({ cartStatus: { $ne: '1' }, customerId: user._id });
+                const onlyForNewUserQuery: any = { cartStatus: { $ne: '1' } };
+                if (user && user._id) {
+                    onlyForNewUserQuery.customerId = user._id;
+                    onlyForNewUserQuery.isGuest = false;
+                } else if (uuid) {
+                    onlyForNewUserQuery.guestUserId = uuid;
+                    onlyForNewUserQuery.isGuest = true;
+                }
+                const checkCart = await CartService.findOneCart(onlyForNewUserQuery);
                 if (checkCart) {
                     return {
                         status: false,
@@ -137,11 +157,15 @@ class CouponService {
 
             // Check coupon usage limit per user
             if (couponDetails.couponUsage.enableCouponUsageLimit) {
-                const usageCount = await CartOrdersModel.countDocuments({
-                    customerId: user._id,
-                    couponId: couponDetails._id,
-                });
-
+                const usageCountQuery: any = {
+                    couponId: couponDetails._id
+                };
+                if (user && user._id) {
+                    usageCountQuery.customerId = user._id;
+                } else if (uuid) {
+                    usageCountQuery.guestUserId = uuid;
+                }
+                const usageCount = await CartOrdersModel.countDocuments(usageCountQuery);
                 if (usageCount >= Number(couponDetails.couponUsage.couponUsageLimit)) {
                     return {
                         status: false,

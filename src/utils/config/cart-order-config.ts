@@ -2,7 +2,7 @@ import { collections } from "../../constants/collections";
 import { productLookup } from "./product-config";
 import { productVariantsLookupValues } from "./wishlist-config";
 
-export const cartLookup = {
+export const cartProductsLookup = {
     $lookup: {
         from: `${collections.cart.cartorderproducts}`,
         localField: '_id',
@@ -272,7 +272,7 @@ export const buildOrderPipeline = (paymentMethodDetails: any, customerDetails: a
 
     const modifiedPipeline = {
         $lookup: {
-            ...cartLookup.$lookup,
+            ...cartProductsLookup.$lookup,
             pipeline: [
                 productLookup,
                 { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -325,3 +325,94 @@ export const buildOrderPipeline = (paymentMethodDetails: any, customerDetails: a
 
     return pipeline;
 };
+
+
+export const cartOrderGroupSumAggregate = (customerCart: string, guestUserCartId: string) => {
+
+    return [
+        {
+            $match: {
+                $or: [
+                    { _id: guestUserCartId },
+                    { _id: customerCart }
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalProductAmount: { $sum: "$totalProductAmount" },
+                totalProductOriginalPrice: { $sum: "$totalProductOriginalPrice" },
+                totalGiftWrapAmount: { $sum: "$totalGiftWrapAmount" },
+                totalDiscountAmount: { $sum: "$totalDiscountAmount" },
+                totalAmount: { $sum: { $add: ["$totalDiscountAmount", "$totalGiftWrapAmount", "$totalProductAmount"] } }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                totalProductOriginalPrice: 1,
+                totalProductAmount: 1,
+                totalGiftWrapAmount: 1,
+                totalDiscountAmount: 1,
+                totalAmount: 1
+            }
+        }
+    ]
+}
+
+export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUserCartId: string) => {
+    return [
+        {
+            $match: {
+                $or: [
+                    { cartId: guestUserCartId },
+                    { cartId: customerCart }
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    cartId: "$cartId",
+                    variantId: "$variantId"
+                },
+                cartId: { $first: "$cartId" },
+                slug: { $first: "$slug" },
+                quantity: { $sum: "$quantity" },
+                productOriginalPrice: { $sum: "$productOriginalPrice" },
+                productAmount: { $sum: "$productAmount" },
+                productDiscountAmount: { $sum: "$productDiscountAmount" },
+                productCouponAmount: { $sum: "$productCouponAmount" },
+                giftWrapAmount: { $sum: "$giftWrapAmount" }
+            }
+        },
+        {
+            $group: {
+                _id: "$_id.variantId",
+                cartId: { $first: "$cartId" },
+                slug: { $first: "$slug" },
+                quantity: { $sum: "$quantity" },
+                productOriginalPrice: { $sum: "$productOriginalPrice" },
+                productAmount: { $sum: "$productAmount" },
+                productDiscountAmount: { $sum: "$productDiscountAmount" },
+                productCouponAmount: { $sum: "$productCouponAmount" },
+                giftWrapAmount: { $sum: "$giftWrapAmount" }
+            }
+        },
+        {
+            $project: {
+                _id: 0, 
+                cartId: 1,
+                variantId: "$_id",
+                slug: 1,
+                quantity: 1,
+                productOriginalPrice: 1,
+                productAmount: 1,
+                productDiscountAmount: 1,
+                productCouponAmount: 1,
+                giftWrapAmount: 1
+            }
+        }
+    ];
+}

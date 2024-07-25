@@ -3,8 +3,7 @@ import { frontendPagination } from '../../../components/pagination';
 import { multilanguageFieldsLookup, productVariantsLookupValues, replaceProductLookupValues, wishlistProductCategoryLookup } from '../../../utils/config/wishlist-config';
 import { productLookup } from '../../../utils/config/product-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
-import { cartDeatilProject, cartLookup, cartProject, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
-import { ADDRESS_MODES } from '../../../constants/customer';
+import { cartDeatilProject, cartProductsLookup, cartProject, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup } from '../../../utils/config/cart-order-config';
 
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
@@ -28,7 +27,7 @@ class OederService {
 
         const modifiedPipeline = {
             $lookup: {
-                ...cartLookup.$lookup,
+                ...cartProductsLookup.$lookup,
                 pipeline: [
                     productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -46,7 +45,7 @@ class OederService {
         };
 
         const pipeline: any[] = [
-            ...(getCartProducts === '1' ? [modifiedPipeline] : [cartLookup]),
+            ...(getCartProducts === '1' ? [modifiedPipeline] : [cartProductsLookup]),
             ...(getAddress === '1' ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
             ...(getAddress === '1' ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
             paymentMethodLookup,

@@ -56,25 +56,34 @@ class OrderController extends base_controller_1.default {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
-            let countryData = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'), true);
+            const uuid = req.header('User-Token');
+            const origin = req.get('origin');
+            let countryData = await common_service_1.default.findOneCountrySubDomainWithId(origin, true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
             }
-            const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
-            if (!customerDetails) {
-                return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
+            if (!customerId && !uuid) {
+                return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }
-            //offer - specification
+            const query = {
+                $and: [
+                    { countryId: countryData._id },
+                    { _id: new mongoose_1.default.Types.ObjectId(orderId) }
+                ]
+            };
+            if (customerId) {
+                const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
+                if (!customerDetails) {
+                    return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
+                }
+                query.customerId = customerId;
+            }
+            else if (uuid) {
+                query.orderUuid = uuid;
+            }
             const order = await order_service_1.default.orderList({
-                query: {
-                    $and: [
-                        { customerId: customerDetails._id },
-                        { countryId: countryData._id },
-                        // { cartStatus: "2" },
-                        { _id: new mongoose_1.default.Types.ObjectId(orderId) }
-                    ],
-                },
-                hostName: req.get('origin'),
+                query,
+                hostName: origin,
                 getAddress: '1',
                 getCartProducts: '1',
             });
@@ -86,13 +95,13 @@ class OrderController extends base_controller_1.default {
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Order not fount'
+                    message: 'Order not found'
                 });
             }
         }
         catch (error) {
             return controller.sendErrorResponse(res, 200, {
-                message: 'Order not fount'
+                message: 'An error occurred while fetching the order'
             });
         }
     }

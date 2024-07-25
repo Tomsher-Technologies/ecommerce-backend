@@ -21,7 +21,7 @@ class OrderService {
         }
         const modifiedPipeline = {
             $lookup: {
-                ...cart_order_config_1.cartLookup.$lookup,
+                ...cart_order_config_1.cartProductsLookup.$lookup,
                 pipeline: [
                     product_config_1.productLookup,
                     // productBrandLookupValues,
@@ -34,7 +34,7 @@ class OrderService {
             }
         };
         const pipeline = [
-            ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
+            ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cart_order_config_1.cartProductsLookup]),
             ...((!getTotalCount && getCartProducts) ? [cart_order_config_1.couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
             ...(!getTotalCount ? [cart_order_config_1.paymentMethodLookup, cart_order_config_1.customerLookup, cart_order_config_1.orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
@@ -65,7 +65,7 @@ class OrderService {
         const updatedBrand = await cart_order_model_1.default.findByIdAndUpdate(orderId, orderData, { new: true, useFindAndModify: false });
         const modifiedPipeline = {
             $lookup: {
-                ...cart_order_config_1.cartLookup.$lookup,
+                ...cart_order_config_1.cartProductsLookup.$lookup,
                 pipeline: [
                     product_config_1.productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -77,7 +77,7 @@ class OrderService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
+                ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartProductsLookup]),
                 cart_order_config_1.paymentMethodLookup,
                 cart_order_config_1.customerLookup,
                 cart_order_config_1.orderListObjectLookup,

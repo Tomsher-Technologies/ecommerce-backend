@@ -24,7 +24,7 @@ class OederService {
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
         const modifiedPipeline = {
             $lookup: {
-                ...cart_order_config_1.cartLookup.$lookup,
+                ...cart_order_config_1.cartProductsLookup.$lookup,
                 pipeline: [
                     product_config_1.productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -40,7 +40,7 @@ class OederService {
             }
         };
         const pipeline = [
-            ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartLookup]),
+            ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartProductsLookup]),
             ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
             ...(getAddress === '1' ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
             cart_order_config_1.paymentMethodLookup,

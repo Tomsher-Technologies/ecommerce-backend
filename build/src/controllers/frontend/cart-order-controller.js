@@ -11,6 +11,7 @@ const offers_1 = require("../../constants/offers");
 const base_controller_1 = __importDefault(require("../admin/base-controller"));
 const wishlist_schema_1 = require("../../utils/schemas/frontend/auth/wishlist-schema");
 const website_setup_1 = require("../../constants/website-setup");
+const cart_order_config_1 = require("../../utils/config/cart-order-config");
 const common_service_1 = __importDefault(require("../../services/frontend/guest/common-service"));
 const product_service_1 = __importDefault(require("../../services/frontend/guest/product-service"));
 const cart_service_1 = __importDefault(require("../../services/frontend/cart-service"));
@@ -22,543 +23,15 @@ const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model")
 const cart_order_model_1 = __importDefault(require("../../model/frontend/cart-order-model"));
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
-    async createCartOrder(req, res) {
+    async findUserCart(req, res) {
         try {
-            const validatedData = cart_schema_1.cartSchema.safeParse(req.body);
-            const customer = res.locals.user;
-            const guestUser = res.locals.uuid;
-            if (validatedData.success) {
-                const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
-                let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-                if (!country) {
-                    return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
-                }
-                let newCartOrder;
-                let newCartOrderProduct;
-                let totalAmountOfProduct = 0;
-                let totalDiscountAmountOfProduct = 0;
-                let quantityProduct = 1;
-                let totalProductOriginalPrice = 0;
-                let totalGiftWrapAmount = 0;
-                let query = {};
-                if (variantId) {
-                    query = {
-                        ...query,
-                        'productVariants._id': new mongoose_1.default.Types.ObjectId(variantId),
-                    };
-                }
-                else {
-                    query = {
-                        ...query,
-                        'productVariants.slug': slug,
-                    };
-                }
-                const productVariant = await product_service_1.default.findProductList({
-                    countryId: country,
-                    query,
-                    hostName: req.get('origin'),
-                });
-                if (productVariant && productVariant.length === 0) {
-                    return controller.sendErrorResponse(res, 200, { message: 'Product not found!' });
-                }
-                if (productVariant[0].productVariants && productVariant[0].productVariants.length === 0) {
-                    return controller.sendErrorResponse(res, 200, { message: 'Product details are not found!' });
-                }
-                const productVariantData = productVariant[0].productVariants[0];
-                if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: "Item Out of stock"
-                    });
-                }
-                if (customer || guestUser) {
-                    var existingCart;
-                    if (customer) {
-                        existingCart = await cart_service_1.default.findCart({
-                            $and: [
-                                { customerId: customer },
-                                { countryId: country },
-                                { cartStatus: '1' }
-                            ]
-                        });
-                    }
-                    else {
-                        existingCart = await cart_service_1.default.findCart({
-                            $and: [
-                                { guestUserId: guestUser },
-                                { countryId: country },
-                                { cartStatus: '1' }
-                            ]
-                        });
-                    }
-                    const offerProduct = productVariant[0].offer;
-                    let offerAmount = 0;
-                    let singleProductTotal = 0;
-                    let singleProductOriginalTotal = 0;
-                    let singleProductDiscountTotal = 0;
-                    if (offerProduct) {
-                        // for (let i = 0; i < offerProduct[0].productVariants.length; i++) {
-                        if (offerProduct && offerProduct.offerType) {
-                            // if (productVariantData._id.toString() === offerProduct[0].productVariants[i]._id.toString()) {
-                            if (offerProduct.offerType == offers_1.offerTypes.percent) {
-                                offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct.offerIN / 100)) : (productVariantData.price * (offerProduct.offerIN / 100));
-                            }
-                            if (offerProduct.offerType == offers_1.offerTypes.amountOff) {
-                                offerAmount = offerProduct.offerIN;
-                            }
-                        }
-                        // }
-                        // }
-                    }
-                    var cartOrderData;
-                    const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });
-                    const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
-                    const tax = await tax_model_1.default.findOne({ countryId: country });
-                    if (existingCart) {
-                        const existingCartProduct = await cart_service_1.default.findCartProduct({
-                            $and: [
-                                { cartId: existingCart._id },
-                                { variantId: productVariantData._id }
-                            ]
-                        });
-                        if (!existingCartProduct) {
-                            quantityProduct = quantity;
-                            totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + offerAmount ? (offerAmount * quantity) : (productVariantData.price - productVariantData.discountPrice) * quantity;
-                            totalAmountOfProduct = existingCart.totalProductAmount + (totalDiscountAmountOfProduct > 0 ? ((productVariantData.price - totalDiscountAmountOfProduct) * quantity) : (productVariantData?.price * quantity));
-                        }
-                        if (quantity != 0 && quantityChange == true && existingCartProduct) {
-                            quantityProduct = quantity;
-                        }
-                        else if (quantity != 0 && quantityChange == true) {
-                            quantityProduct = quantity;
-                        }
-                        else if (quantity == 1) {
-                            quantityProduct = existingCartProduct ? existingCartProduct?.quantity + 1 : quantity;
-                        }
-                        else if (quantity > 1) {
-                            quantityProduct = quantity;
-                        }
-                        else if (quantity == 0) {
-                            if (existingCartProduct) {
-                                const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
-                                if (deletedData) {
-                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - existingCartProduct.productDiscountAmount;
-                                    totalProductOriginalPrice = existingCart?.totalProductOriginalPrice - existingCartProduct.productOriginalPrice;
-                                    totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount;
-                                    const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
-                                    var giftWrapCharge;
-                                    if (giftWrapAmount && giftWrapAmount.blockValues && giftWrapAmount.blockValues.enableGiftWrap && giftWrapAmount.blockValues.enableGiftWrap == true) {
-                                        giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge);
-                                    }
-                                    const removeGiftWrapAmount = existingCartProduct.giftWrapAmount;
-                                    const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
-                                    const cartUpdate = await cart_service_1.default.update(existingCartProduct.cartId, {
-                                        totalProductAmount: totalAmountOfProduct,
-                                        totalProductOriginalPrice: totalProductOriginalPrice,
-                                        totalDiscountAmount: totalDiscountAmountOfProduct,
-                                        totalShippingAmount: finalShippingCharge,
-                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount - removeGiftWrapAmount,
-                                        totalAmount: (totalAmountOfProduct + (existingCart.totalGiftWrapAmount - removeGiftWrapAmount)) + finalShippingCharge,
-                                    });
-                                    const checkCartProducts = await cart_service_1.default.findAllCart({ cartId: existingCartProduct.cartId });
-                                    if (checkCartProducts && checkCartProducts.length == 0) {
-                                        const deletedData = await cart_service_1.default.destroy(existingCartProduct.cartId);
-                                    }
-                                    const cart = await cart_service_1.default.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') });
-                                    return controller.sendSuccessResponse(res, {
-                                        requestedData: {
-                                            ...cart
-                                        },
-                                        message: 'Product removed successfully!'
-                                    });
-                                }
-                                else {
-                                    return controller.sendErrorResponse(res, 500, {
-                                        message: 'Somethng went wrong on Product removed!'
-                                    });
-                                }
-                            }
-                            else {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Something went wrong: the product is not in the cart.'
-                                });
-                            }
-                        }
-                        if (productVariantData && productVariantData.quantity < quantityProduct) {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Validation error',
-                                validation: "The quantity of the product exceeds the available stock."
-                            });
-                        }
-                        if (productVariantData && productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
-                            if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) < quantityProduct) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Validation error',
-                                    validation: "Cart minimum quantity is " + productVariantData.cartMinQuantity + " and Cart maximum quantity " + productVariantData.cartMaxQuantity
-                                });
-                            }
-                        }
-                        // }
-                        singleProductTotal = offerAmount > 0 ? ((productVariantData.discountPrice > 0) ? (productVariantData.discountPrice - offerAmount) : (productVariantData.price - offerAmount)) : (productVariantData.discountPrice ? productVariantData.discountPrice : productVariantData.price);
-                        singleProductTotal *= quantityProduct;
-                        singleProductOriginalTotal = quantityProduct * productVariantData.price;
-                        singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
-                        let giftWrapcharge = 0;
-                        if (!existingCartProduct) {
-                            totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + singleProductDiscountTotal;
-                            totalAmountOfProduct = existingCart.totalProductAmount + singleProductTotal;
-                            totalProductOriginalPrice = existingCart.totalProductOriginalPrice + singleProductOriginalTotal;
-                            totalGiftWrapAmount = existingCart.totalGiftWrapAmount;
-                        }
-                        else {
-                            totalDiscountAmountOfProduct = existingCart.totalDiscountAmount - (existingCartProduct.productDiscountAmount) + singleProductDiscountTotal;
-                            totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
-                            totalGiftWrapAmount = existingCart.totalGiftWrapAmount > 0 ? existingCart.totalGiftWrapAmount : 0;
-                            totalProductOriginalPrice = existingCart.totalProductOriginalPrice - (existingCartProduct.productOriginalPrice) + singleProductOriginalTotal;
-                        }
-                        const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
-                        // const codAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.defualtSettings })
-                        cartOrderData = {
-                            customerId: customer,
-                            guestUserId: guestUser,
-                            countryId: country,
-                            cartStatus: '1',
-                            orderStatus: '0',
-                            totalProductOriginalPrice: totalProductOriginalPrice,
-                            totalProductAmount: totalAmountOfProduct,
-                            totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: finalShippingCharge,
-                            totalGiftWrapAmount: totalGiftWrapAmount,
-                            totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
-                            totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount
-                        };
-                        newCartOrder = await cart_service_1.default.update(existingCart._id, cartOrderData);
-                        if (newCartOrder) {
-                            const existingProduct = await cart_service_1.default.findCartProduct({
-                                $and: [
-                                    { cartId: newCartOrder._id },
-                                    { variantId: productVariantData._id }
-                                ]
-                            });
-                            const cartOrderProductData = {
-                                cartId: newCartOrder._id,
-                                customerId: customer,
-                                variantId: productVariantData._id,
-                                productId: productVariantData.productId,
-                                quantity: quantityProduct,
-                                productAmount: singleProductTotal,
-                                productOriginalPrice: singleProductOriginalTotal,
-                                productDiscountAmount: singleProductDiscountTotal,
-                                slug: productVariantData.slug,
-                                orderStatus,
-                                createdAt: new Date(),
-                                updatedAt: new Date()
-                            };
-                            if (existingProduct) {
-                                // if (quantityChange == true) {
-                                //     cartOrderProductData.productAmount = singleProductTotal
-                                // } else {
-                                //     cartOrderProductData.productAmount = existingProduct.productAmount > 0 ? (existingProduct.productAmount + singleProductTotal) : singleProductTotal
-                                // }
-                                // console.log("*********************", cartOrderProductData);
-                                newCartOrderProduct = await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
-                            }
-                            else {
-                                // console.log("********dffdfdf*************", cartOrderProductData);
-                                newCartOrderProduct = await cart_service_1.default.createCartProduct(cartOrderProductData);
-                            }
-                        }
-                    }
-                    else {
-                        singleProductTotal = offerAmount > 0 ? ((productVariantData.discountPrice > 0) ? (productVariantData.discountPrice - offerAmount) : (productVariantData.price - offerAmount)) : (productVariantData.discountPrice ? productVariantData.discountPrice : productVariantData.price);
-                        singleProductTotal *= quantityProduct;
-                        singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
-                        singleProductOriginalTotal = productVariantData.price * quantityProduct;
-                        totalDiscountAmountOfProduct = singleProductDiscountTotal;
-                        totalAmountOfProduct = singleProductTotal;
-                        totalProductOriginalPrice = singleProductOriginalTotal;
-                        const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
-                        cartOrderData = {
-                            customerId: customer,
-                            guestUserId: guestUser,
-                            countryId: country,
-                            cartStatus: '1',
-                            orderStatus: '0',
-                            totalProductOriginalPrice: totalProductOriginalPrice,
-                            totalProductAmount: totalAmountOfProduct,
-                            totalDiscountAmount: totalDiscountAmountOfProduct,
-                            totalShippingAmount: finalShippingCharge,
-                            // codAmount: Number(codAmount.blockValues.codCharge),
-                            totalTaxAmount: tax ? ((tax.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
-                            totalAmount: totalAmountOfProduct + finalShippingCharge,
-                        };
-                        newCartOrder = await cart_service_1.default.create(cartOrderData);
-                        if (newCartOrder) {
-                            const cartOrderProductData = {
-                                cartId: newCartOrder._id,
-                                customerId: customer,
-                                variantId: productVariantData._id,
-                                productId: productVariantData.productId,
-                                productDiscountAmount: singleProductDiscountTotal,
-                                quantity: quantityProduct,
-                                productOriginalPrice: singleProductOriginalTotal,
-                                productAmount: singleProductTotal,
-                                slug: productVariantData.slug,
-                                orderStatus,
-                                createdAt: new Date(),
-                                updatedAt: new Date()
-                            };
-                            newCartOrderProduct = await cart_service_1.default.createCartProduct(cartOrderProductData);
-                        }
-                    }
-                    if (newCartOrder) {
-                        const products = await cart_service_1.default.findCartPopulate({
-                            query: { _id: newCartOrder._id, cartStatus: "1" }, hostName: req.get('origin'),
-                        });
-                        return controller.sendSuccessResponse(res, {
-                            requestedData: {
-                                ...products
-                            },
-                            message: 'Cart updated successfully!'
-                        }, 200);
-                    }
-                }
-                else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Error',
-                        validation: 'Something went wrong! Cart order could not be inserted. Please try again'
-                    });
-                }
-            }
-            else {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
-                });
-            }
-        }
-        catch (error) {
-            // console.log("*********errorr", error);
-            return controller.sendErrorResponse(res, 200, {
-                message: error.message || 'Some error occurred while creating cart order',
-            });
-        }
-    }
-    async moveToWishlist(req, res) {
-        try {
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            if (countryId) {
-                const validatedData = wishlist_schema_1.addToWishlistSchema.safeParse(req.body);
-                if (validatedData.success) {
-                    const { slug, sku } = validatedData.data;
-                    const productVariantData = await product_variants_model_1.default.findOne({
-                        countryId,
-                        variantSku: sku,
-                        slug
-                    });
-                    const user = res.locals.user;
-                    if (productVariantData) {
-                        const cart = await cart_service_1.default.findCartPopulate({
-                            query: {
-                                $or: [
-                                    { $and: [{ customerId: user }, { countryId: countryId }] },
-                                ],
-                                cartStatus: "1"
-                            },
-                            hostName: req.get('origin'),
-                        });
-                        if (cart) {
-                            const whishlistData = await customer_wishlist_servicel_1.default.findOne({
-                                userId: user._id,
-                                countryId,
-                            });
-                            if (whishlistData) {
-                                return controller.sendSuccessResponse(res, {
-                                    requestedData: {},
-                                    message: 'Product added successfully!'
-                                });
-                            }
-                            else {
-                                const whishlistInsertData = {
-                                    countryId,
-                                    userId: user._id,
-                                    productId: productVariantData.productId,
-                                    variantId: productVariantData._id,
-                                    slug: productVariantData.slug,
-                                    variantSku: productVariantData.variantSku
-                                };
-                                const insertData = await customer_wishlist_servicel_1.default.create(whishlistInsertData);
-                                if (insertData) {
-                                    const deletedDataFromCart = await cart_service_1.default.destroyCartProduct(productVariantData._id);
-                                    const cartUpdate = await cart_service_1.default.update(cart._id, { totalProductAmount: (cart.totalProductAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)), totalAmount: (cart.totalAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)) });
-                                    return controller.sendSuccessResponse(res, {
-                                        requestedData: insertData,
-                                        message: 'Wishlist added successfully!'
-                                    });
-                                }
-                                else {
-                                    return controller.sendErrorResponse(res, 500, {
-                                        message: 'Somethng went wrong on wishlist add!'
-                                    });
-                                }
-                            }
-                        }
-                        else {
-                            return controller.sendErrorResponse(res, 500, {
-                                message: 'Cart not found!'
-                            });
-                        }
-                    }
-                    else {
-                        return controller.sendErrorResponse(res, 500, {
-                            message: 'Product not found!'
-                        });
-                    }
-                }
-                else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
-                    });
-                }
-            }
-            else {
-                return controller.sendErrorResponse(res, 500, {
-                    message: 'Country is missing'
-                });
-            }
-        }
-        catch (error) {
-            return controller.sendErrorResponse(res, 500, {
-                message: error.message || 'Some error occurred while add to wishlist'
-            });
-        }
-    }
-    async addGiftWrap(req, res) {
-        try {
-            const customer = res.locals.user;
-            const guestUser = res.locals.uuid;
+            const { page_size = 1, limit = 20, sortby = '', sortorder = '' } = req.query;
             let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (!country) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
             }
-            const validatedData = cart_schema_1.cartProductSchema.safeParse(req.body);
-            if (!validatedData.success) {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Validation error',
-                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
-                });
-            }
-            const { variantId, slug } = validatedData.data;
-            const productVariantData = await product_variants_model_1.default.findOne({
-                $and: [
-                    {
-                        $or: [
-                            { _id: variantId },
-                            { slug: slug }
-                        ]
-                    }, { countryId: country }
-                ]
-            });
-            if (!productVariantData) {
-                return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
-            }
-            var cart;
-            if (customer && !guestUser) {
-                cart = await cart_order_model_1.default.findOne({
-                    customerId: customer,
-                    cartStatus: "1",
-                    countryId: country
-                });
-            }
-            else if (guestUser) {
-                cart = await cart_order_model_1.default.findOne({
-                    guestUserId: guestUser,
-                    cartStatus: "1",
-                    countryId: country
-                });
-            }
-            if (cart) {
-                const existingCartProduct = await cart_service_1.default.findCartProduct({
-                    $or: [
-                        { $and: [{ cartId: cart._id }, { variantId: variantId }] },
-                        { $and: [{ cartId: cart._id }, { slug: slug }] }
-                    ]
-                });
-                if (existingCartProduct) {
-                    const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
-                    if (giftWrapAmount) {
-                        var giftWrapCharge;
-                        if (giftWrapAmount.blockValues.enableGiftWrap == true) {
-                            giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge);
-                        }
-                        else {
-                            return controller.sendErrorResponse(res, 500, {
-                                message: 'Giftwrap option is currently unavailable'
-                            });
-                        }
-                        if (existingCartProduct.giftWrapAmount != 0) {
-                            await cart_service_1.default.updateCartProductByCart(existingCartProduct._id, { giftWrapAmount: 0 });
-                            const cartUpdate = await cart_service_1.default.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount - giftWrapCharge), totalAmount: (cart.totalAmount - giftWrapCharge) });
-                        }
-                        else {
-                            const updateCart = await cart_service_1.default.updateCartProductByCart(existingCartProduct._id, { giftWrapAmount: giftWrapCharge });
-                            const cartUpdate = await cart_service_1.default.update(cart._id, { totalGiftWrapAmount: (cart.totalGiftWrapAmount + giftWrapCharge), totalAmount: (cart.totalAmount + giftWrapCharge) });
-                            console.log(cartUpdate);
-                        }
-                        var resultCart;
-                        if (customer) {
-                            resultCart = await cart_service_1.default.findCartPopulate({
-                                query: {
-                                    customerId: customer, countryId: country, cartStatus: "1"
-                                },
-                                hostName: req.get('origin')
-                            });
-                        }
-                        else {
-                            resultCart = await cart_service_1.default.findCartPopulate({
-                                query: {
-                                    guestUserId: guestUser, countryId: country, cartStatus: "1"
-                                },
-                                hostName: req.get('origin')
-                            });
-                        }
-                        return controller.sendSuccessResponse(res, {
-                            requestedData: resultCart,
-                            message: 'gift wrap added successfully!'
-                        });
-                    }
-                    else {
-                        return controller.sendErrorResponse(res, 500, {
-                            message: 'Giftwrap option is currently unavailable'
-                        });
-                    }
-                }
-                else {
-                    return controller.sendErrorResponse(res, 500, {
-                        message: 'Cart Product not found!'
-                    });
-                }
-            }
-            else {
-                return controller.sendErrorResponse(res, 500, {
-                    message: 'Cart not found!'
-                });
-            }
-        }
-        catch (error) {
-            return controller.sendErrorResponse(res, 500, {
-                message: error.message || 'Some error occurred while add to gift wrap'
-            });
-        }
-    }
-    async findUserCart(req, res) {
-        try {
-            const { page_size = 1, limit = 20, sortby = '', sortorder = '' } = req.query;
             const customer = res.locals.user;
             const guestUser = res.locals.uuid;
-            let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            let query;
             if (guestUser && customer) {
                 const guestUserCart = await cart_service_1.default.findCart({
                     $and: [
@@ -572,102 +45,89 @@ class CartController extends base_controller_1.default {
                     $and: [
                         { customerId: customer },
                         { countryId: country },
-                        { cartStatus: '1' }
+                        { cartStatus: '1' },
+                        { isGuest: false }
                     ]
                 });
-                if (guestUserCart || customerCart) {
-                    const cartProduct = await cart_order_product_model_1.default.aggregate([
-                        {
-                            $match: {
-                                $or: [
-                                    { cartId: guestUserCart?._id },
-                                    { cartId: customerCart?._id }
-                                ]
-                            }
-                        },
-                        {
-                            $group: {
-                                _id: "$_id",
-                                cartId: { $first: "$cartId" },
-                                slug: { $first: "$slug" },
-                                quantity: { $sum: "$quantity" },
-                                productOriginalPrice: { $sum: "$productOriginalPrice" },
-                                productAmount: { $sum: "$productAmount" },
-                                productDiscountAmount: { $sum: "$productDiscountAmount" },
-                                productCouponAmount: { $first: "$productCouponAmount" },
-                                giftWrapAmount: { $first: "$giftWrapAmount" },
-                                productId: { $first: "$productId" },
-                                orderStatus: { $first: "$orderStatus" },
-                                createdAt: { $first: "$createdAt" },
-                                updatedAt: { $first: "$updatedAt" },
-                            }
-                        },
-                        {
-                            $project: {
-                                _id: 1,
-                                cartId: 1,
-                                slug: 1,
-                                quantity: 1,
-                                productAmount: 1,
-                                productDiscountAmount: 1,
-                                productCouponAmount: 1,
-                                productOriginalPrice: 1,
-                                giftWrapAmount: 1,
-                                variantId: "$_id",
-                                productId: 1,
-                                orderStatus: 1,
-                                createdAt: 1,
-                                updatedAt: 1,
-                            }
-                        }
-                    ]);
-                    // console.log("cartProduct", cartProduct);
-                    const update = await cart_service_1.default.updateCartProduct(cartProduct._id, {
-                        quantity: cartProduct.quantity,
-                        productAmount: cartProduct.productAmount,
-                        productDiscountAmount: cartProduct.productDiscountAmount,
-                    });
-                }
                 if (guestUserCart) {
-                    const update = await cart_service_1.default.update(guestUserCart._id, { customerId: customer });
-                    const destroy = await cart_order_model_1.default.deleteMany({ cartId: guestUserCart._id });
-                    console.log(";//////////////////", destroy);
-                }
-                const cartProductsaggregation = await cart_order_model_1.default.aggregate([
-                    { $match: { cartId: customerCart?._id } },
-                    { $unwind: "$products" }, // Unwind the array field named "products"
-                    {
-                        $group: {
-                            _id: "$_id",
-                            totalProductAmount: { $sum: "$products.productAmount" },
-                            totalProductOriginalPrice: { $sum: "$products.totalProductOriginalPrice" },
-                            totalGiftWrapAmount: { $sum: "$products.totalGiftWrapAmount" },
-                            totalDiscountAmount: { $sum: "$products.productDiscountAmount" },
-                            totalAmount: { $sum: { $add: ["$products.productDiscountAmount", "$products.totalGiftWrapAmount", "$products.productAmount"] } }
-                        }
-                    },
-                    {
-                        $project: {
-                            _id: 1,
-                            totalProductOriginalPrice: 1,
-                            totalProductAmount: 1,
-                            totalGiftWrapAmount: 1,
-                            totalDiscountAmount: 1,
-                            totalAmount: 1
+                    let isMergeCart = true;
+                    if (!customerCart) {
+                        await cart_order_model_1.default.findOneAndUpdate(guestUserCart?._id, {
+                            customerId: new mongoose_1.default.Types.ObjectId(customer),
+                            guestUserId: null,
+                            isGuest: false
+                        });
+                        isMergeCart = false;
+                    }
+                    if (isMergeCart) {
+                        const cartProductDetails = await cart_order_product_model_1.default.aggregate((0, cart_order_config_1.cartOrderProductsGroupSumAggregate)(customerCart?._id, guestUserCart?._id));
+                        if (cartProductDetails && cartProductDetails.length > 0) {
+                            const bulkOps = cartProductDetails.flatMap((detail) => [
+                                {
+                                    updateOne: {
+                                        filter: {
+                                            variantId: detail.variantId,
+                                            cartId: detail.cartId
+                                        },
+                                        update: {
+                                            $set: {
+                                                cartId: customerCart?._id,
+                                                quantity: detail.quantity,
+                                                productAmount: detail.productAmount,
+                                                productDiscountAmount: detail.productDiscountAmount,
+                                                productOriginalPrice: detail.productOriginalPrice,
+                                                productCouponAmount: detail.productCouponAmount,
+                                                giftWrapAmount: detail.giftWrapAmount
+                                            }
+                                        },
+                                        upsert: true
+                                    }
+                                },
+                                {
+                                    deleteMany: {
+                                        filter: {
+                                            cartId: guestUserCart?._id,
+                                            variantId: detail.variantId
+                                        }
+                                    }
+                                }
+                            ]);
+                            const updateCartProduct = await cart_order_product_model_1.default.bulkWrite(bulkOps);
+                            if (updateCartProduct) {
+                                const cartMergeDetails = await cart_order_model_1.default.aggregate((0, cart_order_config_1.cartOrderGroupSumAggregate)(customerCart?._id, guestUserCart?._id));
+                                if (cartMergeDetails.length > 0) {
+                                    const bulkOps = [];
+                                    const mergedData = cartMergeDetails[0];
+                                    bulkOps.push({
+                                        updateOne: {
+                                            filter: { _id: customerCart?._id },
+                                            update: {
+                                                $set: {
+                                                    totalProductOriginalPrice: mergedData.totalProductOriginalPrice,
+                                                    totalProductAmount: mergedData.totalProductAmount,
+                                                    totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
+                                                    totalDiscountAmount: mergedData.totalDiscountAmount,
+                                                    totalAmount: mergedData.totalAmount
+                                                }
+                                            },
+                                            upsert: true
+                                        }
+                                    });
+                                    if (bulkOps.length > 0) {
+                                        await cart_order_model_1.default.bulkWrite(bulkOps);
+                                        const deleteGuestCart = await cart_order_model_1.default.findOneAndDelete(guestUserCart._id);
+                                        if (deleteGuestCart) {
+                                            await cart_order_product_model_1.default.deleteMany({ cartId: guestUserCart._id });
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                ]);
-                const updateCart = await cart_service_1.default.update(customerCart?._id, {
-                    totalProductOriginalPrice: cartProductsaggregation.totalProductOriginalPrice,
-                    totalProductAmount: cartProductsaggregation.totalProductAmount,
-                    totalGiftWrapAmount: cartProductsaggregation.totalGiftWrapAmount,
-                    totalDiscountAmount: cartProductsaggregation.totalDiscountAmount,
-                    totalAmount: cartProductsaggregation.totalAmount,
-                    guestUserId: guestUser,
-                    customerId: customer
-                });
+                }
             }
-            if (guestUser && !customer) {
+            let query;
+            if (!customer && guestUser) {
                 query = { $and: [{ guestUserId: guestUser }, { countryId: country }, { cartStatus: '1' }] };
             }
             else {
@@ -702,7 +162,488 @@ class CartController extends base_controller_1.default {
             });
         }
     }
-    async addWalletPoint(req, res) {
+    async createCartOrder(req, res) {
+        try {
+            const validatedData = cart_schema_1.cartSchema.safeParse(req.body);
+            if (validatedData.success) {
+                let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                if (!country) {
+                    return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+                }
+                const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
+                let newCartOrder;
+                let totalAmountOfProduct = 0;
+                let totalDiscountAmountOfProduct = 0;
+                let quantityProduct = quantity || 1;
+                let totalProductOriginalPrice = 0;
+                let totalGiftWrapAmount = 0;
+                let query = {};
+                if (variantId) {
+                    query = {
+                        ...query,
+                        'productVariants._id': new mongoose_1.default.Types.ObjectId(variantId),
+                    };
+                }
+                else {
+                    query = {
+                        ...query,
+                        'productVariants.slug': slug,
+                    };
+                }
+                const productVariant = await product_service_1.default.findProductList({
+                    countryId: country,
+                    query,
+                    hostName: req.get('origin'),
+                    getLanguageValues: '0'
+                });
+                if (productVariant && productVariant.length === 0) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Product not found!' });
+                }
+                if (productVariant[0].productVariants && productVariant[0].productVariants.length === 0) {
+                    return controller.sendErrorResponse(res, 200, { message: 'Product details are not found!' });
+                }
+                const productVariantData = productVariant[0].productVariants[0];
+                if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: "Item Out of stock"
+                    });
+                }
+                const customer = res.locals.user || null;
+                const guestUser = res.locals.uuid || null;
+                if (!customer && !guestUser) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error',
+                        validation: 'Something went wrong! Cart order could not be inserted. Please try again'
+                    });
+                }
+                let existingCart;
+                if (customer) {
+                    existingCart = await cart_order_model_1.default.findOne({
+                        $and: [
+                            { customerId: customer },
+                            { countryId: country },
+                            { cartStatus: '1' }
+                        ]
+                    });
+                }
+                else {
+                    existingCart = await cart_order_model_1.default.findOne({
+                        $and: [
+                            { guestUserId: guestUser },
+                            { countryId: country },
+                            { cartStatus: '1' }
+                        ]
+                    });
+                }
+                const offerProduct = productVariant[0].offer;
+                let offerAmount = 0;
+                let singleProductTotal = 0;
+                let singleProductOriginalTotal = 0;
+                let singleProductDiscountTotal = 0;
+                var cartOrderData;
+                const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });
+                const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                const taxDetails = await tax_model_1.default.findOne({ countryId: country });
+                if (offerProduct) {
+                    if (offerProduct && offerProduct.offerType) {
+                        if (offerProduct.offerType == offers_1.offerTypes.percent) {
+                            offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct.offerIN / 100)) : (productVariantData.price * (offerProduct.offerIN / 100));
+                        }
+                        if (offerProduct.offerType == offers_1.offerTypes.amountOff) {
+                            offerAmount = offerProduct.offerIN;
+                        }
+                    }
+                }
+                singleProductTotal = offerAmount > 0 ? ((productVariantData.discountPrice > 0) ? (productVariantData.discountPrice - offerAmount) : (productVariantData.price - offerAmount)) : (productVariantData.discountPrice ? productVariantData.discountPrice : productVariantData.price);
+                if (existingCart) {
+                    const existingCartProduct = await cart_order_product_model_1.default.findOne({
+                        $and: [
+                            { cartId: existingCart._id },
+                            { variantId: productVariantData._id }
+                        ]
+                    });
+                    if (quantity === 1) {
+                        quantityProduct = existingCartProduct ? (quantityChange ? quantity : existingCartProduct.quantity + 1) : quantity;
+                    }
+                    else if (quantity == 0) {
+                        if (existingCartProduct) {
+                            const deletedData = await cart_service_1.default.destroyCartProduct(existingCartProduct._id);
+                            if (deletedData) {
+                                const checkCartProducts = await cart_order_product_model_1.default.find({ cartId: existingCartProduct.cartId });
+                                if (checkCartProducts && checkCartProducts.length == 0) {
+                                    const deletedData = await cart_service_1.default.destroy(existingCartProduct.cartId);
+                                }
+                                else {
+                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - existingCartProduct.productDiscountAmount;
+                                    totalProductOriginalPrice = existingCart?.totalProductOriginalPrice - existingCartProduct.productOriginalPrice;
+                                    totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount;
+                                    const removeGiftWrapAmount = existingCartProduct.giftWrapAmount;
+                                    const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                    const cartUpdate = await cart_order_model_1.default.findByIdAndUpdate(existingCartProduct.cartId, {
+                                        totalProductAmount: totalAmountOfProduct,
+                                        totalProductOriginalPrice: totalProductOriginalPrice,
+                                        totalDiscountAmount: totalDiscountAmountOfProduct,
+                                        totalShippingAmount: finalShippingCharge,
+                                        totalGiftWrapAmount: existingCart.totalGiftWrapAmount - removeGiftWrapAmount,
+                                        totalAmount: (totalAmountOfProduct + (existingCart.totalGiftWrapAmount - removeGiftWrapAmount)) + finalShippingCharge,
+                                    }, { new: true, useFindAndModify: false });
+                                }
+                                const cart = await cart_service_1.default.findCartPopulate({ query: { _id: existingCartProduct.cartId, cartStatus: "1" }, hostName: req.get('origin') });
+                                return controller.sendSuccessResponse(res, {
+                                    requestedData: {
+                                        ...cart
+                                    },
+                                    message: 'Product removed successfully!'
+                                });
+                            }
+                            else {
+                                return controller.sendErrorResponse(res, 500, {
+                                    message: 'Somethng went wrong on Product removed!'
+                                });
+                            }
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Something went wrong: the product is not in the cart.'
+                            });
+                        }
+                    }
+                    if (productVariantData.quantity < quantityProduct) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Validation error',
+                            validation: "The quantity of the product exceeds the available stock."
+                        });
+                    }
+                    if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
+                        if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) < quantityProduct) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Validation error',
+                                validation: `Cart minimum quantity is ${productVariantData.cartMinQuantity} and Cart maximum quantity ${productVariantData.cartMaxQuantity}`
+                            });
+                        }
+                    }
+                    singleProductTotal *= quantityProduct;
+                    singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
+                    singleProductOriginalTotal = quantityProduct * productVariantData.price;
+                    if (!existingCartProduct) {
+                        totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + singleProductDiscountTotal;
+                        totalAmountOfProduct = existingCart.totalProductAmount + singleProductTotal;
+                        totalProductOriginalPrice = existingCart.totalProductOriginalPrice + singleProductOriginalTotal;
+                        totalGiftWrapAmount = existingCart.totalGiftWrapAmount;
+                    }
+                    else {
+                        totalDiscountAmountOfProduct = existingCart.totalDiscountAmount - (existingCartProduct.productDiscountAmount) + singleProductDiscountTotal;
+                        totalAmountOfProduct = existingCart.totalProductAmount - (existingCartProduct.productAmount) + singleProductTotal;
+                        totalGiftWrapAmount = existingCart.totalGiftWrapAmount > 0 ? existingCart.totalGiftWrapAmount : 0;
+                        totalProductOriginalPrice = existingCart.totalProductOriginalPrice - (existingCartProduct.productOriginalPrice) + singleProductOriginalTotal;
+                    }
+                    const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                    cartOrderData = {
+                        customerId: customer,
+                        guestUserId: customer ? null : guestUser,
+                        countryId: country,
+                        cartStatus: '1',
+                        orderStatus: '0',
+                        totalProductOriginalPrice: totalProductOriginalPrice,
+                        totalProductAmount: totalAmountOfProduct,
+                        totalDiscountAmount: totalDiscountAmountOfProduct,
+                        totalShippingAmount: finalShippingCharge,
+                        totalGiftWrapAmount: totalGiftWrapAmount,
+                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount,
+                        isGuest: customer ? false : true
+                    };
+                    newCartOrder = await cart_order_model_1.default.findByIdAndUpdate(existingCart._id, cartOrderData, { new: true, useFindAndModify: false });
+                    if (newCartOrder) {
+                        const cartOrderProductData = {
+                            cartId: newCartOrder._id,
+                            customerId: customer,
+                            variantId: productVariantData._id,
+                            productId: productVariantData.productId,
+                            quantity: quantityProduct,
+                            productAmount: singleProductTotal,
+                            productOriginalPrice: singleProductOriginalTotal,
+                            productDiscountAmount: singleProductDiscountTotal,
+                            slug: productVariantData.slug,
+                            orderStatus,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        };
+                        const existingProduct = await cart_order_product_model_1.default.findOne({
+                            $and: [
+                                { cartId: newCartOrder._id },
+                                { variantId: productVariantData._id }
+                            ]
+                        });
+                        if (existingProduct) {
+                            await cart_service_1.default.updateCartProduct(existingProduct._id, cartOrderProductData);
+                        }
+                        else {
+                            await cart_service_1.default.createCartProduct(cartOrderProductData);
+                        }
+                    }
+                }
+                else {
+                    singleProductTotal *= quantityProduct;
+                    singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
+                    singleProductOriginalTotal = productVariantData.price * quantityProduct;
+                    totalDiscountAmountOfProduct = singleProductDiscountTotal;
+                    totalAmountOfProduct = singleProductTotal;
+                    totalProductOriginalPrice = singleProductOriginalTotal;
+                    const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                    cartOrderData = {
+                        customerId: customer,
+                        guestUserId: customer ? null : guestUser,
+                        countryId: country,
+                        cartStatus: '1',
+                        orderStatus: '0',
+                        totalProductOriginalPrice: totalProductOriginalPrice,
+                        totalProductAmount: totalAmountOfProduct,
+                        totalDiscountAmount: totalDiscountAmountOfProduct,
+                        totalShippingAmount: finalShippingCharge,
+                        // codAmount: Number(codAmount.blockValues.codCharge),
+                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalAmount: totalAmountOfProduct + finalShippingCharge,
+                        isGuest: customer ? false : true
+                    };
+                    newCartOrder = await cart_service_1.default.createCart(cartOrderData);
+                    if (newCartOrder) {
+                        const cartOrderProductData = {
+                            cartId: newCartOrder._id,
+                            customerId: customer,
+                            variantId: productVariantData._id,
+                            productId: productVariantData.productId,
+                            productDiscountAmount: singleProductDiscountTotal,
+                            quantity: quantityProduct,
+                            productOriginalPrice: singleProductOriginalTotal,
+                            productAmount: singleProductTotal,
+                            slug: productVariantData.slug,
+                            orderStatus,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        };
+                        await cart_service_1.default.createCartProduct(cartOrderProductData);
+                    }
+                }
+                if (newCartOrder) {
+                    const products = await cart_service_1.default.findCartPopulate({
+                        query: { _id: newCartOrder._id, cartStatus: "1" }, hostName: req.get('origin'),
+                    });
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: {
+                            ...products
+                        },
+                        message: 'Cart updated successfully!'
+                    }, 200);
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                });
+            }
+        }
+        catch (error) {
+            // console.log("*********errorr", error);
+            return controller.sendErrorResponse(res, 200, {
+                message: error.message || 'Some error occurred while creating cart order',
+            });
+        }
+    }
+    async moveToWishlist(req, res) {
+        try {
+            const validatedData = wishlist_schema_1.addToWishlistSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                if (!countryId) {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Country is missing'
+                    });
+                }
+                const { slug, sku } = validatedData.data;
+                const productVariantData = await product_variants_model_1.default.findOne({
+                    countryId,
+                    variantSku: sku,
+                    slug
+                });
+                if (!productVariantData) {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Product not found!'
+                    });
+                }
+                const user = res.locals.user;
+                const cartDetails = await cart_order_model_1.default.findOne({
+                    $or: [
+                        { $and: [{ customerId: user }, { countryId: countryId }] },
+                    ],
+                    cartStatus: "1"
+                });
+                if (cartDetails) {
+                    const whishlistData = await customer_wishlist_servicel_1.default.findOne({
+                        userId: user._id,
+                        countryId,
+                    });
+                    if (whishlistData) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: {},
+                            message: 'Product added successfully!'
+                        });
+                    }
+                    else {
+                        const whishlistInsertData = {
+                            countryId,
+                            userId: user._id,
+                            productId: productVariantData.productId,
+                            variantId: productVariantData._id,
+                            slug: productVariantData.slug,
+                            variantSku: productVariantData.variantSku
+                        };
+                        const insertData = await customer_wishlist_servicel_1.default.create(whishlistInsertData);
+                        if (insertData) {
+                            const deletedDataFromCart = await cart_service_1.default.destroyCartProduct(productVariantData._id);
+                            if (deletedDataFromCart) {
+                                const checkCartProducts = await cart_order_product_model_1.default.find({ cartId: deletedDataFromCart.cartId });
+                                if (checkCartProducts.length == 0) {
+                                    await cart_order_product_model_1.default.findOneAndDelete({ _id: deletedDataFromCart.cartId });
+                                }
+                                else {
+                                    const cartUpdate = await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, {
+                                        totalProductAmount: (cartDetails.totalProductAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)),
+                                        totalAmount: (cartDetails.totalAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)),
+                                        totalProductOriginalPrice: (cartDetails.totalProductOriginalPrice - (deletedDataFromCart.productOriginalPrice * deletedDataFromCart.quantity)),
+                                    }, { new: true, useFindAndModify: false });
+                                }
+                            }
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: insertData,
+                                message: 'Wishlist added successfully!'
+                            });
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 500, {
+                                message: 'Somethng went wrong on wishlist add!'
+                            });
+                        }
+                    }
+                }
+                else {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Cart not found!'
+                    });
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                });
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while add to wishlist'
+            });
+        }
+    }
+    async addGiftWrap(req, res) {
+        try {
+            let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (!country) {
+                return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
+            }
+            const validatedData = cart_schema_1.cartProductSchema.safeParse(req.body);
+            if (!validatedData.success) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                });
+            }
+            const { variantId, slug } = validatedData.data;
+            const productVariantData = await product_variants_model_1.default.findOne({
+                $and: [
+                    {
+                        $or: [
+                            { _id: variantId },
+                            { slug: slug }
+                        ]
+                    }, { countryId: country }
+                ]
+            });
+            if (!productVariantData) {
+                return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
+            }
+            var cartDetails;
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
+            const query = {
+                cartStatus: "1",
+                countryId: country
+            };
+            if (customer || guestUser) {
+                if (customer) {
+                    query['customerId'] = customer;
+                }
+                else if (guestUser) {
+                    query['guestUserId'] = guestUser;
+                }
+                cartDetails = await cart_order_model_1.default.findOne(query);
+            }
+            if (cartDetails) {
+                const existingCartProduct = await cart_service_1.default.findCartProduct({
+                    $or: [
+                        { $and: [{ cartId: cartDetails._id }, { variantId: variantId }] },
+                        { $and: [{ cartId: cartDetails._id }, { slug: slug }] }
+                    ]
+                });
+                if (existingCartProduct) {
+                    const giftWrapAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.enableFeatures });
+                    if (giftWrapAmount) {
+                        var giftWrapCharge;
+                        if (giftWrapAmount.blockValues.enableGiftWrap == true) {
+                            giftWrapCharge = Number(giftWrapAmount.blockValues.giftWrapCharge);
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 500, {
+                                message: 'Giftwrap option is currently unavailable'
+                            });
+                        }
+                        const giftWrapUpdateAmount = existingCartProduct.giftWrapAmount ? -giftWrapCharge : giftWrapCharge;
+                        await cart_service_1.default.updateCartProductByCart(existingCartProduct._id, { giftWrapAmount: existingCartProduct.giftWrapAmount ? 0 : giftWrapCharge });
+                        await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, {
+                            totalGiftWrapAmount: cartDetails.totalGiftWrapAmount + giftWrapUpdateAmount,
+                            totalAmount: cartDetails.totalAmount + giftWrapUpdateAmount
+                        }, { new: true, useFindAndModify: false });
+                        const resultCart = await cart_service_1.default.findCartPopulate({ query });
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: resultCart,
+                            message: 'gift wrap added successfully!'
+                        });
+                    }
+                    else {
+                        return controller.sendErrorResponse(res, 500, {
+                            message: 'Giftwrap option is currently unavailable'
+                        });
+                    }
+                }
+                else {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Cart Product not found!'
+                    });
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Cart not found!'
+                });
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while add to gift wrap'
+            });
+        }
     }
 }
 exports.default = new CartController();

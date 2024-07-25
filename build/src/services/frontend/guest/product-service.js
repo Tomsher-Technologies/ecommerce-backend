@@ -23,7 +23,7 @@ const product_variant_attribute_model_1 = __importDefault(require("../../../mode
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -146,12 +146,14 @@ class ProductService {
             pipeline.push({ $match: { '_id': { $in: collectionPipeline.productIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
         pipeline.push(...(skip ? [{ $skip: skip }] : []), ...(limit ? [{ $limit: limit }] : []));
-        const languageData = await language_model_1.default.find().exec();
-        var lastPipelineModification;
-        const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        if (languageId != null) {
-            lastPipelineModification = await this.productLanguage(hostName, pipeline);
-            pipeline = lastPipelineModification;
+        if (getLanguageValues === '1') {
+            const languageData = await language_model_1.default.find().exec();
+            var lastPipelineModification;
+            const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
+            if (languageId != null) {
+                lastPipelineModification = await this.productLanguage(hostName, pipeline);
+                pipeline = lastPipelineModification;
+            }
         }
         pipeline.push(product_config_1.productProject);
         productData = await product_model_1.default.aggregate(pipeline).exec();

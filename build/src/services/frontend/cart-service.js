@@ -99,82 +99,27 @@ class CartService {
             pipeline.push({ $limit: limit });
         }
         const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
-        // console.log("createdCartWithValues", createdCartWithValues);
         return createdCartWithValues[0];
-        // return CartOrderModel.findOne(data);
     }
-    async create(data) {
+    async createCart(data) {
         const cartData = await cart_order_model_1.default.create(data);
-        if (cartData) {
-            const pipeline = [
-                { $match: { _id: cartData._id } },
-            ];
-            const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
-            return createdCartWithValues[0];
-        }
-        else {
-            return null;
-        }
-    }
-    async update(cartId, cartData) {
-        const updatedCart = await cart_order_model_1.default.findByIdAndUpdate(cartId, cartData, { new: true, useFindAndModify: false });
-        if (updatedCart) {
-            const pipeline = [
-                { $match: { _id: updatedCart._id } },
-                this.cartLookup
-            ];
-            const updatedCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
-            return updatedCartWithValues[0];
-        }
-        else {
-            return null;
-        }
+        return cartData;
     }
     async findCartProduct(data) {
         const createdAttributeWithValues = await cart_order_product_model_1.default.findOne(data);
         return createdAttributeWithValues;
     }
-    async findAllCart(data) {
-        return cart_order_product_model_1.default.find(data);
-    }
     async createCartProduct(data) {
         const cartData = await cart_order_product_model_1.default.create(data);
-        if (cartData) {
-            const pipeline = [
-                { $match: { _id: cartData._id } },
-            ];
-            const createdAttributeWithValues = await cart_order_product_model_1.default.aggregate(pipeline);
-            return createdAttributeWithValues[0];
-        }
-        else {
-            return null;
-        }
+        return cartData;
     }
     async updateCartProduct(_id, cartData) {
         const updatedCart = await cart_order_product_model_1.default.findOneAndUpdate({ _id: _id }, cartData, { new: true, useFindAndModify: false });
-        if (updatedCart) {
-            const pipeline = [
-                { $match: { _id: updatedCart._id } },
-            ];
-            const updatedCartWithValues = await cart_order_product_model_1.default.aggregate(pipeline);
-            return updatedCartWithValues[0];
-        }
-        else {
-            return null;
-        }
+        return updatedCart;
     }
     async updateCartProductByCart(_id, cartData) {
         const updatedCart = await cart_order_product_model_1.default.findOneAndUpdate(_id, cartData, { new: true, useFindAndModify: false });
-        if (updatedCart) {
-            const pipeline = [
-                { $match: { _id: updatedCart._id } },
-            ];
-            const updatedCartWithValues = await cart_order_product_model_1.default.aggregate(pipeline);
-            return updatedCartWithValues[0];
-        }
-        else {
-            return null;
-        }
+        return updatedCart;
     }
     async findOneCart(query) {
         return cart_order_model_1.default.findOne(query);
