@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import 'module-alias/register';
 
-import { capitalizeWords, categorySlugify, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, categorySlugify, categorySlugifyManually, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
 import { CategoryQueryParams } from '../../../utils/types/category';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -227,10 +227,10 @@ class CategoryController extends BaseController {
                 var slugData
                 var data: any = []
                 if (!parentCategory) {
-                    data = categoryTitle
+                    data = categorySlugifyManually(categoryTitle)
                 }
                 else {
-                    data = category?.slug + "-" + categorySlugify(categoryTitle)
+                    data = category?.slug + "-" + categorySlugifyManually(categoryTitle)
                 }
                 slugData = data
 
