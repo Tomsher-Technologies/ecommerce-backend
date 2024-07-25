@@ -64,16 +64,17 @@ class CouponController extends BaseController {
                         } as any;
 
                         const user = res.locals.user;
-                        const customerDetails = await CustomerModel.findOne({ _id: user });
-                        if (!customerDetails || customerDetails?.isGuest === true || !customerDetails?.isVerified) {
-                            const message = !customerDetails
-                                ? 'User is not found'
-                                : customerDetails.isGuest === true
-                                    ? 'User is a guest and not eligible'
-                                    : 'User is not verified';
-                            return controller.sendErrorResponse(res, 200, { message });
-                        }
-                        const couponDetails: any = await CouponService.checkCouponCode({ query, user, deviceType });
+                        // const customerDetails = await CustomerModel.findOne({ _id: user });
+                        // if (!customerDetails || customerDetails?.isGuest === true || !customerDetails?.isVerified) {
+                        //     const message = !customerDetails
+                        //         ? 'User is not found'
+                        //         : customerDetails.isGuest === true
+                        //             ? 'User is a guest and not eligible'
+                        //             : 'User is not verified';
+                        //     return controller.sendErrorResponse(res, 200, { message });
+                        // }
+                        const uuid = req.header('User-Token');
+                        const couponDetails: any = await CouponService.checkCouponCode({ query, user, deviceType, uuid });
                         if (couponDetails?.status) {
 
                             return controller.sendSuccessResponse(res, {

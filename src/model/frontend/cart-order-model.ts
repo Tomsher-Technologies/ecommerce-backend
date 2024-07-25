@@ -4,6 +4,7 @@ export interface CartOrderProps extends Document {
     countryId: Schema.Types.ObjectId;
     customerId: Schema.Types.ObjectId;
     guestUserId: string;
+    orderUuid: string;
     orderId: string;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
@@ -81,6 +82,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: String,
         default: null
         // unique: true
+    },
+    orderUuid: {
+        type: String,
+        default: null
     },
     shippingId: {
         type: Schema.Types.ObjectId,

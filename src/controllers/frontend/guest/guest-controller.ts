@@ -682,27 +682,21 @@ class GuestController extends BaseController {
                                     await CustomerService.update(updatedCustomer._id, {
                                         lastLoggedAt: new Date()
                                     });
-                                    let redirectToCart = false;
-                                    let returnMessage = 'Customer OTP successfully verified.';
                                     if (updatedCustomer?.isGuest) {
-                                        const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1', isGuest: false });
+                                        const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1'});
                                         if (existingCart) {
-                                            const uuid = req.header('User-Token');
-                                            console.log(existingCart);
-                                            console.log(uuid);
-                                            
-                                            // await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
-                                            // await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
-                                            // const guestUserCart = await CartOrdersModel.findOne({ guestUserId: uuid });
-                                            // if (guestUserCart) {
-                                            //     await CartOrdersModel.findOneAndUpdate({   customerId: updatedCustomer._id })
-                                            // }
+                                            await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
+                                            await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
+                                        }
+                                        const uuid = req.header('User-Token');
+                                        const guestUserCart = await CartOrdersModel.findOne({ guestUserId: uuid });
+                                        if (guestUserCart) {
+                                            await CartOrdersModel.findOneAndUpdate({ customerId: updatedCustomer._id, isGuest: true, guestUserId: null })
                                         }
                                     }
 
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
-                                            redirectToCart,
                                             token,
                                             userId: updatedCustomer._id,
                                             firstName: updatedCustomer.firstName,
@@ -714,7 +708,7 @@ class GuestController extends BaseController {
                                             ...(updatedCustomer.isGuest ? {} : { referralCode: updatedCustomer.referralCode }),
                                             status: updatedCustomer.status
                                         },
-                                        message: returnMessage
+                                        message: 'Customer OTP successfully verified.'
                                     });
                                 } else {
                                     return controller.sendErrorResponse(res, 200, {

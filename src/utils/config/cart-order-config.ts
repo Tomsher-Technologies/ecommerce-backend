@@ -362,7 +362,6 @@ export const cartOrderGroupSumAggregate = (customerCart: string, guestUserCartId
 }
 
 export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUserCartId: string) => {
-
     return [
         {
             $match: {
@@ -374,30 +373,46 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
         },
         {
             $group: {
-                _id: "$_id",
+                _id: {
+                    cartId: "$cartId",
+                    variantId: "$variantId"
+                },
                 cartId: { $first: "$cartId" },
                 slug: { $first: "$slug" },
                 quantity: { $sum: "$quantity" },
                 productOriginalPrice: { $sum: "$productOriginalPrice" },
                 productAmount: { $sum: "$productAmount" },
                 productDiscountAmount: { $sum: "$productDiscountAmount" },
-                productCouponAmount: { $first: "$productCouponAmount" },
-                giftWrapAmount: { $first: "$giftWrapAmount" },
-                variantId: { $first: "$variantId" },
+                productCouponAmount: { $sum: "$productCouponAmount" },
+                giftWrapAmount: { $sum: "$giftWrapAmount" }
             }
         },
         {
             $group: {
-                _id: "$variantId",
-                cartId: { $first: customerCart },
+                _id: "$_id.variantId",
+                cartId: { $first: "$cartId" },
                 slug: { $first: "$slug" },
                 quantity: { $sum: "$quantity" },
                 productOriginalPrice: { $sum: "$productOriginalPrice" },
                 productAmount: { $sum: "$productAmount" },
                 productDiscountAmount: { $sum: "$productDiscountAmount" },
                 productCouponAmount: { $sum: "$productCouponAmount" },
-                giftWrapAmount: { $sum: "$giftWrapAmount" },
+                giftWrapAmount: { $sum: "$giftWrapAmount" }
             }
         },
-    ]
+        {
+            $project: {
+                _id: 0, 
+                cartId: 1,
+                variantId: "$_id",
+                slug: 1,
+                quantity: 1,
+                productOriginalPrice: 1,
+                productAmount: 1,
+                productDiscountAmount: 1,
+                productCouponAmount: 1,
+                giftWrapAmount: 1
+            }
+        }
+    ];
 }

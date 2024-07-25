@@ -10,17 +10,17 @@ import BaseController from '../admin/base-controller';
 import { addToWishlistSchema } from '../../utils/schemas/frontend/auth/wishlist-schema';
 import { blockReferences } from '../../constants/website-setup';
 import { QueryParams } from '../../utils/types/common';
+import { cartOrderGroupSumAggregate, cartOrderProductsGroupSumAggregate } from '../../utils/config/cart-order-config';
 
 import CommonService from '../../services/frontend/guest/common-service'
 import ProductService from '../../services/frontend/guest/product-service';
 import CartService from '../../services/frontend/cart-service'
-import CustomerWishlistCountryService from '../../services/frontend/auth/customer-wishlist-servicel'
+import CustomerWishlistService from '../../services/frontend/auth/customer-wishlist-servicel'
 import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
 import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import TaxsModel from '../../model/admin/setup/tax-model';
 import CartOrdersModel from '../../model/frontend/cart-order-model';
-import { cartOrderGroupSumAggregate, cartOrderProductsGroupSumAggregate } from '../../utils/config/cart-order-config';
 
 const controller = new BaseController();
 
@@ -29,12 +29,12 @@ class CartController extends BaseController {
     async findUserCart(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 20, sortby = '', sortorder = '' } = req.query as QueryParams;
-            const customer = res.locals.user;
-            const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (!country) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
             }
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
             if (guestUser && customer) {
                 const guestUserCart: any = await CartService.findCart({
                     $and: [
@@ -48,49 +48,80 @@ class CartController extends BaseController {
                     $and: [
                         { customerId: customer },
                         { countryId: country },
-                        { cartStatus: '1' }
+                        { cartStatus: '1' },
+                        { isGuest: false }
                     ]
                 });
                 if (guestUserCart) {
-                    const cartProductDetails: any = await CartOrderProductsModel.aggregate(cartOrderProductsGroupSumAggregate(customerCart?._id, guestUserCart?._id));
-                    if (cartProductDetails && cartProductDetails.length > 0) {
-                        const bulkOps = cartProductDetails.map((detail: any) => ({
-                            updateOne: {
-                                filter: { cartId: detail.cartId },
-                                update: {
-                                    quantity: detail.quantity,
-                                    productAmount: detail.productAmount,
-                                    productDiscountAmount: detail.productDiscountAmount,
-                                    productOriginalPrice: detail.productOriginalPrice
-                                }
-                            }
-                        }));
-                        const updateCartProduct = await CartOrderProductsModel.bulkWrite(bulkOps);
-                        if (updateCartProduct) {
-                            const cartMergeDetails: any = await CartOrdersModel.aggregate(cartOrderGroupSumAggregate(customerCart?._id, guestUserCart?._id));
-                            if (cartMergeDetails.length > 0) {
-                                const bulkOps = [];
-                                const mergedData = cartMergeDetails[0];
-                                bulkOps.push({
+                    let isMergeCart = true;
+                    if (!customerCart) {
+                        await CartOrdersModel.findOneAndUpdate(guestUserCart?._id, {
+                            customerId: new mongoose.Types.ObjectId(customer),
+                            guestUserId: null,
+                            isGuest: false
+                        });
+                        isMergeCart = false;
+                    }
+                    if (isMergeCart) {
+                        const cartProductDetails: any = await CartOrderProductsModel.aggregate(cartOrderProductsGroupSumAggregate(customerCart?._id, guestUserCart?._id));
+                        if (cartProductDetails && cartProductDetails.length > 0) {
+                            const bulkOps = cartProductDetails.flatMap((detail: any) => [
+                                {
                                     updateOne: {
-                                        filter: { _id: customerCart?._id },
+                                        filter: {
+                                            variantId: detail.variantId,
+                                            cartId: detail.cartId
+                                        },
                                         update: {
                                             $set: {
-                                                totalProductOriginalPrice: mergedData.totalProductOriginalPrice,
-                                                totalProductAmount: mergedData.totalProductAmount,
-                                                totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
-                                                totalDiscountAmount: mergedData.totalDiscountAmount,
-                                                totalAmount: mergedData.totalAmount
+                                                cartId: customerCart?._id,
+                                                quantity: detail.quantity,
+                                                productAmount: detail.productAmount,
+                                                productDiscountAmount: detail.productDiscountAmount,
+                                                productOriginalPrice: detail.productOriginalPrice,
+                                                productCouponAmount: detail.productCouponAmount,
+                                                giftWrapAmount: detail.giftWrapAmount
                                             }
                                         },
                                         upsert: true
                                     }
-                                });
-                                if (bulkOps.length > 0) {
-                                    await CartOrdersModel.bulkWrite(bulkOps);
-                                    const deleteGuestCart = await CartOrdersModel.findOneAndDelete(guestUserCart._id);
-                                    if (deleteGuestCart) {
-                                        await CartOrderProductsModel.deleteMany({ cartId: guestUserCart._id })
+                                },
+                                {
+                                    deleteMany: {
+                                        filter: {
+                                            cartId: guestUserCart?._id,
+                                            variantId: detail.variantId
+                                        }
+                                    }
+                                }
+                            ]);
+                            const updateCartProduct = await CartOrderProductsModel.bulkWrite(bulkOps);
+                            if (updateCartProduct) {
+                                const cartMergeDetails: any = await CartOrdersModel.aggregate(cartOrderGroupSumAggregate(customerCart?._id, guestUserCart?._id));
+                                if (cartMergeDetails.length > 0) {
+                                    const bulkOps = [];
+                                    const mergedData = cartMergeDetails[0];
+                                    bulkOps.push({
+                                        updateOne: {
+                                            filter: { _id: customerCart?._id },
+                                            update: {
+                                                $set: {
+                                                    totalProductOriginalPrice: mergedData.totalProductOriginalPrice,
+                                                    totalProductAmount: mergedData.totalProductAmount,
+                                                    totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
+                                                    totalDiscountAmount: mergedData.totalDiscountAmount,
+                                                    totalAmount: mergedData.totalAmount
+                                                }
+                                            },
+                                            upsert: true
+                                        }
+                                    });
+                                    if (bulkOps.length > 0) {
+                                        await CartOrdersModel.bulkWrite(bulkOps);
+                                        const deleteGuestCart = await CartOrdersModel.findOneAndDelete(guestUserCart._id);
+                                        if (deleteGuestCart) {
+                                            await CartOrderProductsModel.deleteMany({ cartId: guestUserCart._id })
+                                        }
                                     }
                                 }
                             }
@@ -136,16 +167,13 @@ class CartController extends BaseController {
     async createCartOrder(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = cartSchema.safeParse(req.body);
-            const customer = res.locals.user;
-            const guestUser = res.locals.uuid;
-
             if (validatedData.success) {
-                const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
-
                 let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
                 if (!country) {
                     return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
                 }
+                const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
+
                 let newCartOrder;
                 let totalAmountOfProduct = 0;
                 let totalDiscountAmountOfProduct = 0;
@@ -165,7 +193,6 @@ class CartController extends BaseController {
                         'productVariants.slug': slug,
                     }
                 }
-
                 const productVariant: any = await ProductService.findProductList({
                     countryId: country,
                     query,
@@ -188,7 +215,8 @@ class CartController extends BaseController {
                         validation: "Item Out of stock"
                     });
                 }
-
+                const customer = res.locals.user || null;
+                const guestUser = res.locals.uuid || null;
                 if (!customer && !guestUser) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
@@ -318,7 +346,7 @@ class CartController extends BaseController {
 
                     cartOrderData = {
                         customerId: customer,
-                        guestUserId: guestUser,
+                        guestUserId: customer ? null : guestUser,
                         countryId: country,
                         cartStatus: '1',
                         orderStatus: '0',
@@ -439,83 +467,87 @@ class CartController extends BaseController {
 
     async moveToWishlist(req: Request, res: Response): Promise<void> {
         try {
-            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-            if (countryId) {
-                const validatedData = addToWishlistSchema.safeParse(req.body);
-                if (validatedData.success) {
-                    const { slug, sku } = validatedData.data;
-                    const productVariantData = await ProductVariantsModel.findOne({
-                        countryId,
-                        variantSku: sku,
-                        slug
-                    });
-                    const user = res.locals.user;
-
-                    if (productVariantData) {
-                        const cart: any = await CartOrdersModel.findOne({
-                            $or: [
-                                { $and: [{ customerId: user }, { countryId: countryId }] },
-                            ],
-                            cartStatus: "1"
-                        });
-                        if (cart) {
-                            const whishlistData = await CustomerWishlistCountryService.findOne({
-                                userId: user._id,
-                                countryId,
-                            });
-                            if (whishlistData) {
-                                return controller.sendSuccessResponse(res, {
-                                    requestedData: {},
-                                    message: 'Product added successfully!'
-                                });
-                            } else {
-                                const whishlistInsertData = {
-                                    countryId,
-                                    userId: user._id,
-                                    productId: productVariantData.productId,
-                                    variantId: productVariantData._id,
-                                    slug: productVariantData.slug,
-                                    variantSku: productVariantData.variantSku
-                                }
-                                const insertData = await CustomerWishlistCountryService.create(whishlistInsertData);
-                                if (insertData) {
-                                    const deletedDataFromCart: any = await CartService.destroyCartProduct(productVariantData._id)
-                                    const cartUpdate: any = await CartOrdersModel.findByIdAndUpdate(cart._id,
-                                        {
-                                            totalProductAmount: (cart.totalProductAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)),
-                                            totalAmount: (cart.totalAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity))
-                                        }, { new: true, useFindAndModify: false });
-
-                                    return controller.sendSuccessResponse(res, {
-                                        requestedData: insertData,
-                                        message: 'Wishlist added successfully!'
-                                    });
-                                } else {
-                                    return controller.sendErrorResponse(res, 500, {
-                                        message: 'Somethng went wrong on wishlist add!'
-                                    });
-                                }
-                            }
-                        } else {
-                            return controller.sendErrorResponse(res, 500, {
-                                message: 'Cart not found!'
-                            });
-                        }
-                    } else {
-                        return controller.sendErrorResponse(res, 500, {
-                            message: 'Product not found!'
-                        });
-                    }
-                } else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: formatZodError(validatedData.error.errors)
+            const validatedData = addToWishlistSchema.safeParse(req.body);
+            if (validatedData.success) {
+                const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+                if (!countryId) {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Country is missing'
                     });
                 }
 
+                const { slug, sku } = validatedData.data;
+                const productVariantData = await ProductVariantsModel.findOne({
+                    countryId,
+                    variantSku: sku,
+                    slug
+                });
+                if (!productVariantData) {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Product not found!'
+                    });
+                }
+                const user = res.locals.user;
+                const cartDetails: any = await CartOrdersModel.findOne({
+                    $or: [
+                        { $and: [{ customerId: user }, { countryId: countryId }] },
+                    ],
+                    cartStatus: "1"
+                });
+                if (cartDetails) {
+                    const whishlistData = await CustomerWishlistService.findOne({
+                        userId: user._id,
+                        countryId,
+                    });
+                    if (whishlistData) {
+                        return controller.sendSuccessResponse(res, {
+                            requestedData: {},
+                            message: 'Product added successfully!'
+                        });
+                    } else {
+                        const whishlistInsertData = {
+                            countryId,
+                            userId: user._id,
+                            productId: productVariantData.productId,
+                            variantId: productVariantData._id,
+                            slug: productVariantData.slug,
+                            variantSku: productVariantData.variantSku
+                        }
+                        const insertData = await CustomerWishlistService.create(whishlistInsertData);
+                        if (insertData) {
+                            const deletedDataFromCart: any = await CartService.destroyCartProduct(productVariantData._id);
+                            if (deletedDataFromCart) {
+                                const checkCartProducts = await CartOrderProductsModel.find({ cartId: deletedDataFromCart.cartId })
+                                if (checkCartProducts.length == 0) {
+                                    await CartOrderProductsModel.findOneAndDelete({ _id: deletedDataFromCart.cartId })
+                                } else {
+                                    const cartUpdate: any = await CartOrdersModel.findByIdAndUpdate(cartDetails._id,
+                                        {
+                                            totalProductAmount: (cartDetails.totalProductAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)),
+                                            totalAmount: (cartDetails.totalAmount - (deletedDataFromCart.productAmount * deletedDataFromCart.quantity)),
+                                            totalProductOriginalPrice: (cartDetails.totalProductOriginalPrice - (deletedDataFromCart.productOriginalPrice * deletedDataFromCart.quantity)),
+                                        }, { new: true, useFindAndModify: false });
+                                }
+                            }
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: insertData,
+                                message: 'Wishlist added successfully!'
+                            });
+                        } else {
+                            return controller.sendErrorResponse(res, 500, {
+                                message: 'Somethng went wrong on wishlist add!'
+                            });
+                        }
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 500, {
+                        message: 'Cart not found!'
+                    });
+                }
             } else {
-                return controller.sendErrorResponse(res, 500, {
-                    message: 'Country is missing'
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Validation error',
+                    validation: formatZodError(validatedData.error.errors)
                 });
             }
         } catch (error: any) {
@@ -527,8 +559,6 @@ class CartController extends BaseController {
 
     async addGiftWrap(req: Request, res: Response): Promise<void> {
         try {
-            const customer = res.locals.user;
-            const guestUser = res.locals.uuid;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (!country) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
@@ -541,7 +571,6 @@ class CartController extends BaseController {
                 });
             }
             const { variantId, slug } = validatedData.data;
-
             const productVariantData = await ProductVariantsModel.findOne({
                 $and: [
                     {
@@ -555,29 +584,28 @@ class CartController extends BaseController {
             if (!productVariantData) {
                 return controller.sendErrorResponse(res, 500, { message: 'Product not found!' });
             }
-            var cart: any
-            if (customer && !guestUser) {
-                cart = await CartOrdersModel.findOne({
-                    customerId: customer,
-                    cartStatus: "1",
-                    countryId: country
-                });
-            } else if (guestUser) {
-                cart = await CartOrdersModel.findOne({
-                    guestUserId: guestUser,
-                    cartStatus: "1",
-                    countryId: country
-                });
+            var cartDetails: any;
+            const customer = res.locals.user;
+            const guestUser = res.locals.uuid;
+            const query: any = {
+                cartStatus: "1",
+                countryId: country
+            };
+            if (customer || guestUser) {
+                if (customer) {
+                    query['customerId'] = customer;
+                } else if (guestUser) {
+                    query['guestUserId'] = guestUser;
+                }
+                cartDetails = await CartOrdersModel.findOne(query);
             }
-
-            if (cart) {
+            if (cartDetails) {
                 const existingCartProduct: any = await CartService.findCartProduct({
                     $or: [
-                        { $and: [{ cartId: cart._id }, { variantId: variantId }] },
-                        { $and: [{ cartId: cart._id }, { slug: slug }] }
+                        { $and: [{ cartId: cartDetails._id }, { variantId: variantId }] },
+                        { $and: [{ cartId: cartDetails._id }, { slug: slug }] }
                     ]
                 },);
-
                 if (existingCartProduct) {
                     const giftWrapAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.enableFeatures })
                     if (giftWrapAmount) {
@@ -589,51 +617,20 @@ class CartController extends BaseController {
                                 message: 'Giftwrap option is currently unavailable'
                             });
                         }
-
-                        if (existingCartProduct.giftWrapAmount != 0) {
-                            await CartService.updateCartProductByCart(
-                                existingCartProduct._id,
-                                { giftWrapAmount: 0 })
-
-                            const cartUpdate: any = await CartOrdersModel.findByIdAndUpdate(cart._id,
-                                {
-                                    totalGiftWrapAmount: (cart.totalGiftWrapAmount - giftWrapCharge),
-                                    totalAmount: (cart.totalAmount - giftWrapCharge)
-                                },
-                                { new: true, useFindAndModify: false });
-
-                        } else {
-                            const updateCart = await CartService.updateCartProductByCart(
-                                existingCartProduct._id,
-                                { giftWrapAmount: giftWrapCharge })
-                            if (updateCart) {
-                                const cartUpdate: any = await CartOrdersModel.findByIdAndUpdate(cart._id, {
-                                    totalGiftWrapAmount: (cart.totalGiftWrapAmount + giftWrapCharge),
-                                    totalAmount: (cart.totalAmount + giftWrapCharge)
-                                },
-                                    { new: true, useFindAndModify: false });
-                            }
-                        }
-
-                        var resultCart: any
-                        if (customer) {
-                            resultCart = await CartService.findCartPopulate({
-                                query: {
-                                    customerId: customer, countryId: country, cartStatus: "1"
-                                },
-                                hostName: req.get('origin')
-                            });
-                        } else {
-                            resultCart = await CartService.findCartPopulate({
-                                query: {
-                                    guestUserId: guestUser, countryId: country, cartStatus: "1"
-                                },
-                                hostName: req.get('origin')
-                            });
-                        }
-
-
-
+                        const giftWrapUpdateAmount = existingCartProduct.giftWrapAmount ? -giftWrapCharge : giftWrapCharge;
+                        await CartService.updateCartProductByCart(
+                            existingCartProduct._id,
+                            { giftWrapAmount: existingCartProduct.giftWrapAmount ? 0 : giftWrapCharge }
+                        );
+                        await CartOrdersModel.findByIdAndUpdate(
+                            cartDetails._id,
+                            {
+                                totalGiftWrapAmount: cartDetails.totalGiftWrapAmount + giftWrapUpdateAmount,
+                                totalAmount: cartDetails.totalAmount + giftWrapUpdateAmount
+                            },
+                            { new: true, useFindAndModify: false }
+                        );
+                        const resultCart = await CartService.findCartPopulate({ query });
                         return controller.sendSuccessResponse(res, {
                             requestedData: resultCart,
                             message: 'gift wrap added successfully!'
