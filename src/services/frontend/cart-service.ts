@@ -66,9 +66,7 @@ class CartService {
         const pipeline: any[] = [
             modifiedPipeline,
             { $match: query },
-
             { $sort: finalSort },
-
         ];
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
@@ -76,13 +74,11 @@ class CartService {
         }
         if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
             const offerBrand = wishlistOfferBrandPopulation(getOfferList, offerApplied.brand)
-
             modifiedPipeline.$lookup.pipeline.push(offerBrand);
         }
         if (offerApplied.product.products && offerApplied.product.products.length > 0) {
             const offerProduct = wishlistOfferProductPopulation(getOfferList, offerApplied.product)
             modifiedPipeline.$lookup.pipeline.push(offerProduct)
-
         }
 
         modifiedPipeline.$lookup.pipeline.push({
@@ -106,8 +102,6 @@ class CartService {
         modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.brandOffers" })
         modifiedPipeline.$lookup.pipeline.push({ $unset: "productDetails.productOffers" })
 
-
-
         if (skip) {
             pipeline.push({ $skip: skip });
         }
@@ -117,75 +111,22 @@ class CartService {
         }
 
         const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
-        // console.log("createdCartWithValues", createdCartWithValues);
 
         return createdCartWithValues[0];
-        // return CartOrderModel.findOne(data);
     }
-    async create(data: any): Promise<CartOrderProps | null> {
-
+    async createCart(data: any): Promise<CartOrderProps | null> {
         const cartData = await CartOrderModel.create(data);
-
-        if (cartData) {
-            const pipeline: any[] = [
-                { $match: { _id: cartData._id } },
-            ];
-
-            const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
-
-            return createdCartWithValues[0];
-        } else {
-            return null;
-        }
+        return cartData;
     }
-
-    async update(cartId: string, cartData: any): Promise<CartOrderProps | null> {
-        const updatedCart = await CartOrderModel.findByIdAndUpdate(
-            cartId,
-            cartData,
-            { new: true, useFindAndModify: false }
-        );
-
-        if (updatedCart) {
-            const pipeline = [
-                { $match: { _id: updatedCart._id } },
-                this.cartLookup
-            ];
-
-            const updatedCartWithValues = await CartOrderModel.aggregate(pipeline);
-
-            return updatedCartWithValues[0];
-        } else {
-            return null;
-        }
-    }
-
 
     async findCartProduct(data: any): Promise<CartOrderProductProps | null> {
-
         const createdAttributeWithValues = await CartOrderProductsModel.findOne(data);
-
         return createdAttributeWithValues;
-
-    }
-
-    async findAllCart(data: any): Promise<void[]> {
-        return CartOrderProductsModel.find(data);
     }
 
     async createCartProduct(data: any): Promise<CartOrderProductProps | null> {
-
         const cartData = await CartOrderProductsModel.create(data);
-        if (cartData) {
-            const pipeline = [
-                { $match: { _id: cartData._id } },
-
-            ];
-            const createdAttributeWithValues = await CartOrderProductsModel.aggregate(pipeline);
-            return createdAttributeWithValues[0];
-        } else {
-            return null;
-        }
+        return cartData
     }
 
     async updateCartProduct(_id: string, cartData: any): Promise<CartOrderProductProps | null> {
@@ -194,17 +135,7 @@ class CartService {
             cartData,
             { new: true, useFindAndModify: false }
         );
-
-        if (updatedCart) {
-            const pipeline = [
-                { $match: { _id: updatedCart._id } },
-            ];
-            const updatedCartWithValues = await CartOrderProductsModel.aggregate(pipeline);
-
-            return updatedCartWithValues[0];
-        } else {
-            return null;
-        }
+        return updatedCart;
     }
 
     async updateCartProductByCart(_id: any, cartData: any): Promise<CartOrderProductProps | null> {
@@ -213,17 +144,7 @@ class CartService {
             cartData,
             { new: true, useFindAndModify: false }
         );
-
-        if (updatedCart) {
-            const pipeline = [
-                { $match: { _id: updatedCart._id } },
-            ];
-            const updatedCartWithValues = await CartOrderProductsModel.aggregate(pipeline);
-
-            return updatedCartWithValues[0];
-        } else {
-            return null;
-        }
+        return updatedCart;
     }
 
     async findOneCart(query: any): Promise<CartOrderProps | null> {

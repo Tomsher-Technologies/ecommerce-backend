@@ -21,6 +21,7 @@ import { ObjectId } from 'mongoose';
 import TaxsModel from '../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
 import { smtpEmailGateway } from '../../lib/emails/smtp-nodemailer-gateway';
+import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
 
 class CheckoutService {
 
@@ -130,7 +131,7 @@ class CheckoutService {
                     couponId: null,
                     paymentMethodId: null
                 }
-                await CartService.update(cartDetails?._id, cartUpdate)
+                await  CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
                 return {
                     _id: cartDetails?._id,
                     orderId: null,
@@ -141,7 +142,7 @@ class CheckoutService {
 
             const couponDetails: any = await CouponService.findOne({ _id: cartDetails?.couponId });
             if (couponDetails) {
-                const cartProductDetails: any = await CartService.findAllCart({ cartId: cartDetails?._id });
+                const cartProductDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails?._id });
                 const productIds = cartProductDetails.map((product: any) => product.productId.toString());
 
                 const couponAmount = couponDetails?.discountAmount;
@@ -188,12 +189,12 @@ class CheckoutService {
                 }
             }
 
-          
+
 
             let cartProducts = cartDetails?.products || null
             let customerDetails = cartDetails?.customerDetails || null;
             let paymentMethodDetails = cartDetails?.paymentMethod || null;
-            
+
             if (customerDetails === null) {
                 customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
             }
@@ -208,7 +209,7 @@ class CheckoutService {
                 orderStatusAt: new Date(),
             } as any;
 
-            const updateCart = await CartService.update(cartDetails?._id, cartUpdate)
+            const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,

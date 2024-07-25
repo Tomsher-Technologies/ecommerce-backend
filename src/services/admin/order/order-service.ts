@@ -1,7 +1,7 @@
 import { pagination } from '../../../components/pagination';
 import { ADDRESS_MODES } from '../../../constants/customer';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { cartDeatilProject, cartLookup, cartProject, couponLookup, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
+import { cartDeatilProject, cartProductsLookup, cartProject, couponLookup, customerLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
 import { countriesLookup } from '../../../utils/config/customer-config';
 import { productLookup } from '../../../utils/config/product-config';
 import { productVariantsLookupValues } from '../../../utils/config/wishlist-config';
@@ -22,7 +22,7 @@ class OrderService {
 
         const modifiedPipeline = {
             $lookup: {
-                ...cartLookup.$lookup,
+                ...cartProductsLookup.$lookup,
                 pipeline: [
                     productLookup,
                     // productBrandLookupValues,
@@ -35,7 +35,7 @@ class OrderService {
             }
         };
         const pipeline: any[] = [
-            ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cartLookup]),
+            ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cartProductsLookup]),
             ...((!getTotalCount && getCartProducts) ? [couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
             ...(!getTotalCount ? [paymentMethodLookup, customerLookup, orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
@@ -75,7 +75,7 @@ class OrderService {
         );
         const modifiedPipeline = {
             $lookup: {
-                ...cartLookup.$lookup,
+                ...cartProductsLookup.$lookup,
                 pipeline: [
                     productLookup,
                     { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
@@ -87,7 +87,7 @@ class OrderService {
         if (updatedBrand) {
             const pipeline = [
                 { $match: { _id: updatedBrand._id } },
-                ...(getCartProducts === '1' ? [modifiedPipeline] : [cartLookup]),
+                ...(getCartProducts === '1' ? [modifiedPipeline] : [cartProductsLookup]),
                 paymentMethodLookup,
                 customerLookup,
                 orderListObjectLookup,

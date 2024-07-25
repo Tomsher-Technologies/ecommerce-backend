@@ -5,6 +5,7 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 
 import CouponModel from '../../../model/admin/marketing/coupon-model';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';
+import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 import { CustomerWishlistModelProps } from '../../../model/frontend/customer-wishlist-model';
 import CartService from "../../../services/frontend/cart-service";
 
@@ -85,7 +86,7 @@ class CouponService {
             }
 
             if (![couponTypes.entireOrders].includes(couponDetails.couponType)) {
-                const cartProductDetails = await CartService.findAllCart({ cartId: cartDetails._id });
+                const cartProductDetails = await CartOrderProductsModel.find({ cartId: cartDetails._id });
                 const productIds = cartProductDetails.map((product: any) => product.productId.toString());
                 const applicableCouponApplyValues = couponDetails.couponApplyValues;
 

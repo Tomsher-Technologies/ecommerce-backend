@@ -21,6 +21,7 @@ import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
+import CartOrdersModel from "../../../model/frontend/cart-order-model";
 
 const controller = new BaseController();
 
@@ -299,7 +300,7 @@ class CheckoutController extends BaseController {
                     }
                 }
 
-                const updateCart = await CartService.update(cartDetails._id, cartUpdate)
+                const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }

@@ -8,7 +8,7 @@ export const cartSchema = zod.object({
     guestUserId: zod.any().optional(),
 
 }).refine(data => (data.slug !== undefined || data.variantId !== undefined), {
-    message: 'Either "slug" or "variantId" must be provided',
+    message: 'Either slug or variantId must be provided',
 });
 export const cartProductSchema = zod.object({
     customerId: zod.string().optional(),
