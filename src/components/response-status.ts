@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { unlink } from 'fs/promises'; // Assuming you're using Node.js 14+
 import multer from 'multer';
+import mongoose from 'mongoose';
 
 const logResponseStatus = async (req: Request, res: Response, next: NextFunction) => {
     res.on('finish', async () => {
@@ -31,5 +32,17 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
         return res.status(500).send('Something broke!');
     }
 };
+
+
+function validateObjectId(req: Request, res: Response, next: NextFunction) {
+    const id = req.params.id;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+        next();
+    } else {
+        next('route');
+    }
+}
+
+export default validateObjectId;
 
 export { logResponseStatus, errorMiddleware };

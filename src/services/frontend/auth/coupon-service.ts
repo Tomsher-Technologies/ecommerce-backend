@@ -40,8 +40,7 @@ class CouponService {
             let cartQuery: any = { cartStatus: '1' };
             if (user && user._id) {
                 cartQuery.customerId = user._id;
-            }
-            if (uuid) {
+            } else if (uuid) {
                 cartQuery.guestUserId = uuid;
             }
 
@@ -142,9 +141,6 @@ class CouponService {
                 if (user && user._id) {
                     onlyForNewUserQuery.customerId = user._id;
                     onlyForNewUserQuery.isGuest = false;
-                } else if (uuid) {
-                    onlyForNewUserQuery.guestUserId = uuid;
-                    onlyForNewUserQuery.isGuest = true;
                 }
                 const checkCart = await CartService.findOneCart(onlyForNewUserQuery);
                 if (checkCart) {

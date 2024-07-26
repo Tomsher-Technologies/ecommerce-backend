@@ -314,7 +314,7 @@ class OrdersController extends BaseController {
                 });
             }
             let customerDetails: any = null;
-            if (orderDetails.customerId) {
+            if (!orderDetails?.isGuest &&orderDetails.customerId) {
                 const walletTransactionDetails = await CustomerWalletTransactionsModel.findOne({ orderId: orderDetails._id })
                 customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
                 if (customerDetails) {
