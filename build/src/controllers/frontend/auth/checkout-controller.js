@@ -295,7 +295,7 @@ class CheckoutController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.cashOnDelivery) {
-                    await checkout_service_1.default.cartUpdation({ ...updateCart, products: cartDetails.products, customerDetails, paymentMethod }, true);
+                    await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod }, true);
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {

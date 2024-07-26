@@ -42,8 +42,8 @@ exports.verifyOtpSchema = zod_1.z.object({
     }),
     otp: zod_1.z.string({ required_error: 'Otp  is required' }).min(4, 'Otp  should be 6 chars minimum').max(6, 'Otp  should be 6 chars maximum'),
     email: zod_1.z.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
-    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
-        message: 'Phone number should contain only numbers and be at least 9 digits long',
+    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 8, {
+        message: 'Phone number should contain only numbers and be at least 8 digits long',
     }).optional(),
 }).superRefine(({ otpType, email, phone }, ctx) => {
     if (otpType === 'email') {
@@ -71,8 +71,8 @@ exports.resendOtpSchema = zod_1.z.object({
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
     email: zod_1.z.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
-    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
-        message: 'Phone number should contain only numbers and be at least 9 digits long',
+    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 8, {
+        message: 'Phone number should contain only numbers and be at least 8 digits long',
         path: ['phone']
     }).optional(),
 }).superRefine(({ otpType, email, phone }, ctx) => {
@@ -101,8 +101,8 @@ exports.forgotPasswordSchema = zod_1.z.object({
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
     email: zod_1.z.string({ required_error: 'Email is required' }).email('Please provide a valid email address').optional(),
-    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
-        message: 'Phone number should contain only numbers and be at least 9 digits long',
+    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 8, {
+        message: 'Phone number should contain only numbers and be at least 8 digits long',
         path: ['phone']
     }).optional(),
 }).superRefine(({ otpType, email, phone }, ctx) => {

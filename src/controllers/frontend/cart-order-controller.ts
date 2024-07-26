@@ -666,10 +666,20 @@ class CartController extends BaseController {
 
         const customer = res.locals.user;
         const guestUser = res.locals.uuid;
-
-        return controller.sendErrorResponse(res, 200, {
-            message: 'Validation error',
-        });
+        const guestUserCart = await CartOrdersModel.findOneAndUpdate(
+            { customerId: customer, cartStatus: '1' },
+            { $set: { customerId: null, isGuest: true, guestUserId: guestUser } },
+            { new: true }
+        );
+        if (guestUserCart) {
+            return controller.sendSuccessResponse(res, {
+                message: 'Change guest successfully!'
+            });
+        } else {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+            });
+        }
     }
 }
 

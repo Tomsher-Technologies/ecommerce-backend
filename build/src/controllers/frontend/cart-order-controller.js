@@ -645,5 +645,24 @@ class CartController extends base_controller_1.default {
             });
         }
     }
+    async changeGuest(req, res) {
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
+        }
+        const customer = res.locals.user;
+        const guestUser = res.locals.uuid;
+        const guestUserCart = await cart_order_model_1.default.findOneAndUpdate({ customerId: customer, cartStatus: '1' }, { $set: { customerId: null, isGuest: true, guestUserId: guestUser } }, { new: true });
+        if (guestUserCart) {
+            return controller.sendSuccessResponse(res, {
+                message: 'Change guest successfully!'
+            });
+        }
+        else {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+            });
+        }
+    }
 }
 exports.default = new CartController();

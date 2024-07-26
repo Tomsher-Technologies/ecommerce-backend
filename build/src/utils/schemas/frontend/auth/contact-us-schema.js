@@ -7,8 +7,8 @@ exports.contactUsSchema = zod_1.z.object({
         message: "Name is required"
     }),
     email: zod_1.z.string({ required_error: 'Email is required', }).email('Please provide a valid email address'),
-    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 9, {
-        message: 'Phone number should contain only numbers and be at least 9 digits long',
+    phone: zod_1.z.string().refine(value => /^\d+$/.test(value) && value.length >= 8, {
+        message: 'Phone number should contain only numbers and be at least 8 digits long',
     }),
     subject: zod_1.z.string({ required_error: 'Message is required' })
         .min(3, 'Please enter at least 3 characters for the subject'),
