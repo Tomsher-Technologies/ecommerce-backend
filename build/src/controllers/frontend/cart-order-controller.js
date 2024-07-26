@@ -71,7 +71,6 @@ class CartController extends base_controller_1.default {
                                         },
                                         update: {
                                             $set: {
-                                                cartId: customerCart?._id,
                                                 quantity: detail.quantity,
                                                 productAmount: detail.productAmount,
                                                 productDiscountAmount: detail.productDiscountAmount,
