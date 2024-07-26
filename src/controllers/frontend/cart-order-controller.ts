@@ -66,11 +66,12 @@ class CartController extends BaseController {
                         const cartProductDetails: any = await CartOrderProductsModel.aggregate(cartOrderProductsGroupSumAggregate(customerCart?._id, guestUserCart?._id));
                         if (cartProductDetails && cartProductDetails.length > 0) {
                             const bulkOps = cartProductDetails.flatMap((detail: any) => [
+                                // Update or insert into customer's cart if the cartId matches
                                 {
                                     updateOne: {
                                         filter: {
                                             variantId: detail.variantId,
-                                            cartId: detail.cartId
+                                            cartId: customerCart?._id
                                         },
                                         update: {
                                             $set: {
@@ -94,13 +95,16 @@ class CartController extends BaseController {
                                     }
                                 }
                             ]);
-                            
+
                             const updateCartProduct = await CartOrderProductsModel.bulkWrite(bulkOps);
                             if (updateCartProduct) {
                                 const cartMergeDetails: any = await CartOrdersModel.aggregate(cartOrderGroupSumAggregate(customerCart?._id, guestUserCart?._id));
                                 if (cartMergeDetails.length > 0) {
                                     const bulkOps = [];
                                     const mergedData = cartMergeDetails[0];
+                                    const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: country })
+                                    const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                                    const finalShippingCharge = shippingCharge > 0 ? ((mergedData.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
                                     bulkOps.push({
                                         updateOne: {
                                             filter: { _id: customerCart?._id },
@@ -110,7 +114,8 @@ class CartController extends BaseController {
                                                     totalProductAmount: mergedData.totalProductAmount,
                                                     totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
                                                     totalDiscountAmount: mergedData.totalDiscountAmount,
-                                                    totalAmount: mergedData.totalAmount
+                                                    totalShippingAmount: finalShippingCharge,
+                                                    totalAmount: (Number(mergedData.totalAmount) + Number(guestUserCart.totalShippingAmount))
                                                 }
                                             },
                                             upsert: true
