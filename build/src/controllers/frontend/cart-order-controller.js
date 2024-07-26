@@ -63,11 +63,12 @@ class CartController extends base_controller_1.default {
                         const cartProductDetails = await cart_order_product_model_1.default.aggregate((0, cart_order_config_1.cartOrderProductsGroupSumAggregate)(customerCart?._id, guestUserCart?._id));
                         if (cartProductDetails && cartProductDetails.length > 0) {
                             const bulkOps = cartProductDetails.flatMap((detail) => [
+                                // Update or insert into customer's cart if the cartId matches
                                 {
                                     updateOne: {
                                         filter: {
                                             variantId: detail.variantId,
-                                            cartId: detail.cartId
+                                            cartId: customerCart?._id
                                         },
                                         update: {
                                             $set: {
@@ -97,6 +98,9 @@ class CartController extends base_controller_1.default {
                                 if (cartMergeDetails.length > 0) {
                                     const bulkOps = [];
                                     const mergedData = cartMergeDetails[0];
+                                    const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });
+                                    const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                                    const finalShippingCharge = shippingCharge > 0 ? ((mergedData.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                                     bulkOps.push({
                                         updateOne: {
                                             filter: { _id: customerCart?._id },
@@ -106,7 +110,8 @@ class CartController extends base_controller_1.default {
                                                     totalProductAmount: mergedData.totalProductAmount,
                                                     totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
                                                     totalDiscountAmount: mergedData.totalDiscountAmount,
-                                                    totalAmount: mergedData.totalAmount
+                                                    totalShippingAmount: finalShippingCharge,
+                                                    totalAmount: (Number(mergedData.totalAmount) + Number(guestUserCart.totalShippingAmount))
                                                 }
                                             },
                                             upsert: true
