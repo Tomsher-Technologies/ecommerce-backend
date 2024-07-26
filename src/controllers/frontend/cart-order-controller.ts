@@ -74,7 +74,6 @@ class CartController extends BaseController {
                                         },
                                         update: {
                                             $set: {
-                                                cartId: customerCart?._id,
                                                 quantity: detail.quantity,
                                                 productAmount: detail.productAmount,
                                                 productDiscountAmount: detail.productDiscountAmount,
@@ -95,6 +94,7 @@ class CartController extends BaseController {
                                     }
                                 }
                             ]);
+                            
                             const updateCartProduct = await CartOrderProductsModel.bulkWrite(bulkOps);
                             if (updateCartProduct) {
                                 const cartMergeDetails: any = await CartOrdersModel.aggregate(cartOrderGroupSumAggregate(customerCart?._id, guestUserCart?._id));
