@@ -683,18 +683,19 @@ class GuestController extends BaseController {
                                         lastLoggedAt: new Date()
                                     });
                                     if (updatedCustomer?.isGuest) {
-                                        const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1'});
+                                        const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1' });
                                         if (existingCart) {
                                             await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
                                             await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
                                         }
-                                        const uuid = req.header('User-Token');
-                                        const guestUserCart = await CartOrdersModel.findOne({ guestUserId: uuid });
-                                        if (guestUserCart) {
-                                            await CartOrdersModel.findOneAndUpdate({ customerId: updatedCustomer._id, isGuest: true, guestUserId: null })
-                                        }
-                                    }
 
+                                        const uuid = req.header('User-Token');
+                                        const guestUserCart = await CartOrdersModel.findOneAndUpdate(
+                                            { guestUserId: uuid, cartStatus: '1' },
+                                            { $set: { customerId: updatedCustomer._id, isGuest: true, guestUserId: null } },
+                                            { new: true }
+                                        );
+                                    }
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
