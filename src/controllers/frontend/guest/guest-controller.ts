@@ -369,7 +369,7 @@ class GuestController extends BaseController {
                 if (validatedData.success) {
                     const { email, password } = validatedData.data;
                     const user: CustomrProps | null = await CustomerModel.findOne({ email: email, status: '1' });
-                    if (user && !user.isGuest) {
+                    if (user && user.password !== '') {
                         const isPasswordValid = await bcrypt.compare(password, user.password);
                         if (isPasswordValid) {
                             const updateData: Partial<any> = {

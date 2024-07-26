@@ -363,7 +363,7 @@ class GuestController extends base_controller_1.default {
                 if (validatedData.success) {
                     const { email, password } = validatedData.data;
                     const user = await customers_model_1.default.findOne({ email: email, status: '1' });
-                    if (user && !user.isGuest) {
+                    if (user && user.password !== '') {
                         const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
                         if (isPasswordValid) {
                             const updateData = {
