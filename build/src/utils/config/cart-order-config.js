@@ -319,7 +319,7 @@ const cartOrderGroupSumAggregate = (customerCart, guestUserCartId) => {
                 totalProductOriginalPrice: { $sum: "$totalProductOriginalPrice" },
                 totalGiftWrapAmount: { $sum: "$totalGiftWrapAmount" },
                 totalDiscountAmount: { $sum: "$totalDiscountAmount" },
-                totalAmount: { $sum: { $add: ["$totalDiscountAmount", "$totalGiftWrapAmount", "$totalProductAmount"] } }
+                totalAmount: { $sum: { $add: ["$totalGiftWrapAmount", "$totalProductAmount"] } }
             }
         },
         {

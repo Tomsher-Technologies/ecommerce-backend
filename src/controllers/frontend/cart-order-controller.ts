@@ -633,7 +633,7 @@ class CartController extends BaseController {
                         const resultCart = await CartService.findCartPopulate({ query });
                         return controller.sendSuccessResponse(res, {
                             requestedData: resultCart,
-                            message: 'gift wrap added successfully!'
+                            message: 'gift wrap updated successfully!'
                         });
                     } else {
                         return controller.sendErrorResponse(res, 500, {
