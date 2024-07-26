@@ -27,7 +27,7 @@ class CouponService {
             if (user && user._id) {
                 cartQuery.customerId = user._id;
             }
-            if (uuid) {
+            else if (uuid) {
                 cartQuery.guestUserId = uuid;
             }
             const cartDetails = await cart_service_1.default.findOneCart(cartQuery);
@@ -122,10 +122,6 @@ class CouponService {
                 if (user && user._id) {
                     onlyForNewUserQuery.customerId = user._id;
                     onlyForNewUserQuery.isGuest = false;
-                }
-                else if (uuid) {
-                    onlyForNewUserQuery.guestUserId = uuid;
-                    onlyForNewUserQuery.isGuest = true;
                 }
                 const checkCart = await cart_service_1.default.findOneCart(onlyForNewUserQuery);
                 if (checkCart) {

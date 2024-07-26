@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorMiddleware = exports.logResponseStatus = void 0;
 const multer_1 = __importDefault(require("multer"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const logResponseStatus = async (req, res, next) => {
     res.on('finish', async () => {
         // console.error('Multer Error:', 'aaaaakmal');
@@ -38,3 +39,13 @@ const errorMiddleware = (err, req, res, next) => {
     }
 };
 exports.errorMiddleware = errorMiddleware;
+function validateObjectId(req, res, next) {
+    const id = req.params.id;
+    if (mongoose_1.default.Types.ObjectId.isValid(id)) {
+        next();
+    }
+    else {
+        next('route');
+    }
+}
+exports.default = validateObjectId;

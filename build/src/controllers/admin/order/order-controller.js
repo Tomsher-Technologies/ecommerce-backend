@@ -267,7 +267,7 @@ class OrdersController extends base_controller_1.default {
                 });
             }
             let customerDetails = null;
-            if (orderDetails.customerId) {
+            if (!orderDetails?.isGuest && orderDetails.customerId) {
                 const walletTransactionDetails = await customer_wallet_transaction_model_1.default.findOne({ orderId: orderDetails._id });
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
                 if (customerDetails) {

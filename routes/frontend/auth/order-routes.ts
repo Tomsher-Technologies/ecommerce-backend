@@ -3,13 +3,13 @@ import express, { Router } from 'express';
 import { frontendAuthMiddleware } from '../../../middleware/frontend/frontend-auth-middleware';
 
 import OrderController from '../../../src/controllers/frontend/auth/order-controller';
-import { logResponseStatus } from '../../../src/components/response-status';
+import validateObjectId, { logResponseStatus } from '../../../src/components/response-status';
 import cartOrderController from '../../../src/controllers/frontend/cart-order-controller';
 import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
 
 const router: Router = express.Router();
 
-router.get('/:id', OrderController.getOrder);
+router.get('/:id', validateObjectId, OrderController.getOrder);
 
 router.use(frontendAuthMiddleware);
 

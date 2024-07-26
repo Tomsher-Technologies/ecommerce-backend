@@ -36,8 +36,15 @@ class GuestController extends base_controller_1.default {
             const validatedData = auth_schema_1.registerSchema.safeParse(req.body);
             if (validatedData.success) {
                 const { email, firstName, phone, password, referralCode, otpType } = validatedData.data;
+                let existCustomer = await customers_model_1.default.findOne({
+                    $and: [
+                        { $or: [{ email }, { phone }] },
+                        {
+                            isGuest: true
+                        }
+                    ]
+                });
                 let referralCodeWithCustomerData = null;
-                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                 if (referralCode) {
                     referralCodeWithCustomerData = await customer_service_1.default.findOne({ referralCode: referralCode, status: '1' }); //referrer
                     if (!referralCodeWithCustomerData) {
@@ -49,21 +56,39 @@ class GuestController extends base_controller_1.default {
                 const currentDate = new Date();
                 const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
                 const generatedReferralCode = await customer_service_1.default.generateReferralCode(firstName);
-                const customerData = {
-                    countryId,
-                    email,
-                    firstName,
-                    phone,
-                    password: await bcrypt_1.default.hash(password, 10),
-                    otp: (0, helpers_1.generateOTP)(4),
-                    otpExpiry,
-                    referralCode: generatedReferralCode,
-                    status: '1',
-                    failureAttemptsCount: 0,
-                    createdAt: new Date()
-                };
-                const newCustomer = await customer_service_1.default.create(customerData);
-                if (newCustomer) {
+                if (!existCustomer) {
+                    const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+                    const customerData = {
+                        countryId,
+                        email,
+                        firstName,
+                        phone,
+                        password: await bcrypt_1.default.hash(password, 10),
+                        otp: (0, helpers_1.generateOTP)(4),
+                        otpExpiry,
+                        referralCode: generatedReferralCode,
+                        status: '1',
+                        failureAttemptsCount: 0,
+                        createdAt: new Date()
+                    };
+                    existCustomer = await customer_service_1.default.create(customerData);
+                }
+                else {
+                    await customers_model_1.default.findOneAndUpdate(existCustomer._id, {
+                        isGuest: false,
+                        email,
+                        firstName,
+                        phone,
+                        password: await bcrypt_1.default.hash(password, 10),
+                        otp: (0, helpers_1.generateOTP)(4),
+                        otpExpiry,
+                        referralCode: generatedReferralCode,
+                        status: '1',
+                        failureAttemptsCount: 0,
+                        createdAt: new Date()
+                    });
+                }
+                if (existCustomer) {
                     if (referralCodeWithCustomerData) {
                         const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                         const referAndEarn = await settings_service_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.referAndEarn });
@@ -72,7 +97,7 @@ class GuestController extends base_controller_1.default {
                                 if (Number(referAndEarn.blockValues.rewardToReferrer) > 0) {
                                     await customer_wallet_transaction_model_1.default.create({
                                         customerId: referralCodeWithCustomerData._id,
-                                        referredCustomerId: newCustomer._id, //referrer
+                                        referredCustomerId: existCustomer._id, //referrer
                                         earnType: wallet_1.earnTypes.referrer,
                                         referredCode: referralCode,
                                         walletAmount: (0, helpers_1.calculateWalletAmount)(referAndEarn.blockValues.rewardToReferrer, referAndEarn.blockValues),
@@ -82,7 +107,7 @@ class GuestController extends base_controller_1.default {
                                 }
                                 if (Number(referAndEarn.blockValues.rewardToReferred) > 0) {
                                     await customer_wallet_transaction_model_1.default.create({
-                                        customerId: newCustomer._id,
+                                        customerId: existCustomer._id,
                                         referrerCustomerId: referralCodeWithCustomerData._id, //rewardToReferred
                                         earnType: wallet_1.earnTypes.referred,
                                         referredCode: referralCode,
@@ -94,7 +119,7 @@ class GuestController extends base_controller_1.default {
                             }
                         }
                     }
-                    // const etisalatDefaultValues = smsGatwayDefaultValues('username', 'password', 'TIME HOUSE TRADING LLC ', newCustomer)
+                    // const etisalatDefaultValues = smsGatwayDefaultValues('username', 'password', 'TIME HOUSE TRADING LLC ', existCustomer)
                     // const sendOtp = await etisalatSmsGateway({
                     //     "sender": "TIME HOUSE TRADING LLC",
                     //     "recipient": '+971556151476',
@@ -104,7 +129,7 @@ class GuestController extends base_controller_1.default {
                     let websiteSettingsQuery = { _id: { $exists: true } };
                     websiteSettingsQuery = {
                         ...websiteSettingsQuery,
-                        countryId: newCustomer.countryId,
+                        countryId: existCustomer.countryId,
                         block: website_setup_1.websiteSetup.basicSettings,
                         blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
                         status: '1',
@@ -115,8 +140,8 @@ class GuestController extends base_controller_1.default {
                         const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
                         const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
                         const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
-                            otp: newCustomer.otp,
-                            firstName: newCustomer.firstName,
+                            otp: existCustomer.otp,
+                            firstName: existCustomer.firstName,
                             storeEmail: basicDetailsSettings?.storeEmail,
                             storePhone: basicDetailsSettings?.storePhone,
                             shopDescription: convert(basicDetailsSettings?.shopDescription, options),
@@ -132,27 +157,27 @@ class GuestController extends base_controller_1.default {
                                 return;
                             }
                             if (process.env.SHOPNAME === 'Timehouse') {
-                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...existCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
                             }
                             else if (process.env.SHOPNAME === 'Homestyle') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
-                                const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...newCustomer.toObject(), message: (0, messages_1.registerOtp)(process.env.SHOPNAME, Number(newCustomer.otp)) });
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...existCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...existCustomer.toObject(), message: (0, messages_1.registerOtp)(process.env.SHOPNAME, Number(existCustomer.otp)) });
                             }
                             else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...existCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
                             }
                             else if (process.env.SHOPNAME === 'Smartbaby') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...existCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
                             }
                         });
                     }
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
-                            userId: newCustomer._id,
-                            // otp: newCustomer.otp,
-                            email: newCustomer.email,
-                            phone: newCustomer.phone,
-                            isVerified: newCustomer.isVerified
+                            userId: existCustomer._id,
+                            // otp: existCustomer.otp,
+                            email: existCustomer.email,
+                            phone: existCustomer.phone,
+                            isVerified: existCustomer.isVerified
                         },
                         message: 'Customer created successfully!.'
                     });
@@ -318,6 +343,125 @@ class GuestController extends base_controller_1.default {
                     }
                 });
             }
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'Some error occurred while creating customer'
+            });
+        }
+    }
+    async login(req, res) {
+        try {
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (countryId) {
+                const validatedData = auth_schema_1.loginSchema.safeParse(req.body);
+                if (validatedData.success) {
+                    const { email, password } = validatedData.data;
+                    const user = await customers_model_1.default.findOne({ email: email, status: '1' });
+                    if (user && !user.isGuest) {
+                        const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
+                        if (isPasswordValid) {
+                            const updateData = {
+                                lastLoggedAt: new Date()
+                            };
+                            if (user?.isGuest) {
+                                updateData.isGuest = false;
+                            }
+                            await customer_service_1.default.update(user._id, updateData);
+                            const token = jsonwebtoken_1.default.sign({
+                                userId: user._id,
+                                email: user.email,
+                                phone: user.phone,
+                                firstName: user.firstName,
+                                totalWalletAmount: user.totalWalletAmount,
+                            }, `${process.env.TOKEN_SECRET_KEY}`);
+                            if (!user.isVerified) {
+                                let websiteSettingsQuery = { _id: { $exists: true } };
+                                websiteSettingsQuery = {
+                                    ...websiteSettingsQuery,
+                                    countryId: user.countryId,
+                                    block: website_setup_1.websiteSetup.basicSettings,
+                                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                                    status: '1',
+                                };
+                                const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                                if (settingsDetails) {
+                                    const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
+                                        otp: user.otp,
+                                        firstName: user.firstName,
+                                        storeEmail: basicDetailsSettings?.storeEmail,
+                                        storePhone: basicDetailsSettings?.storePhone,
+                                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                                        socialMedia,
+                                        appUrls,
+                                        subject: messages_1.subjects.verificationOTP,
+                                        shopLogo: `${process.env.SHOPLOGO}`,
+                                        shopName: `${process.env.SHOPNAME}`,
+                                        appUrl: `${process.env.APPURL}`
+                                    }, async (err, template) => {
+                                        if (err) {
+                                            console.log(err);
+                                            return;
+                                        }
+                                        if (process.env.SHOPNAME === 'Timehouse') {
+                                            const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                        }
+                                        else if (process.env.SHOPNAME === 'Homestyle') {
+                                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...user.toObject(), message: (0, messages_1.resendOtp)(Number(user.otp)) });
+                                        }
+                                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                        }
+                                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                        }
+                                    });
+                                }
+                            }
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: {
+                                    token,
+                                    userId: user._id,
+                                    firstName: user.firstName,
+                                    email: user.email,
+                                    phone: user.phone,
+                                    status: user.status,
+                                    isVerified: user.isVerified,
+                                    referralCode: user.referralCode,
+                                    lastLoggedAt: user?.lastLoggedAt || new Date(),
+                                    otpType: 'phone'
+                                },
+                                message: 'Customer login successfully!'
+                            });
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Invalid password.',
+                            });
+                        }
+                    }
+                    else {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'User not found',
+                        });
+                    }
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Validation error',
+                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+                    });
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
+            }
+        }
+        catch (error) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while creating customer'
             });
@@ -710,125 +854,6 @@ class GuestController extends base_controller_1.default {
                     else {
                         return controller.sendErrorResponse(res, 200, {
                             message: otpType + ' is not found!',
-                        });
-                    }
-                }
-                else {
-                    return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
-                    });
-                }
-            }
-            else {
-                return controller.sendErrorResponse(res, 500, {
-                    message: 'Country is missing'
-                });
-            }
-        }
-        catch (error) {
-            return controller.sendErrorResponse(res, 500, {
-                message: error.message || 'Some error occurred while creating customer'
-            });
-        }
-    }
-    async login(req, res) {
-        try {
-            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            if (countryId) {
-                const validatedData = auth_schema_1.loginSchema.safeParse(req.body);
-                if (validatedData.success) {
-                    const { email, password } = validatedData.data;
-                    const user = await customers_model_1.default.findOne({ email: email, status: '1' });
-                    if (user) {
-                        const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
-                        if (isPasswordValid) {
-                            const updateData = {
-                                lastLoggedAt: new Date()
-                            };
-                            if (user?.isGuest) {
-                                updateData.isGuest = false;
-                            }
-                            await customer_service_1.default.update(user._id, updateData);
-                            const token = jsonwebtoken_1.default.sign({
-                                userId: user._id,
-                                email: user.email,
-                                phone: user.phone,
-                                firstName: user.firstName,
-                                totalWalletAmount: user.totalWalletAmount,
-                            }, `${process.env.TOKEN_SECRET_KEY}`);
-                            if (!user.isVerified) {
-                                let websiteSettingsQuery = { _id: { $exists: true } };
-                                websiteSettingsQuery = {
-                                    ...websiteSettingsQuery,
-                                    countryId: user.countryId,
-                                    block: website_setup_1.websiteSetup.basicSettings,
-                                    blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
-                                    status: '1',
-                                };
-                                const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
-                                if (settingsDetails) {
-                                    const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                                    const emailTemplate = ejs.renderFile(path_1.default.join(__dirname, '../../../views/email', 'email-otp.ejs'), {
-                                        otp: user.otp,
-                                        firstName: user.firstName,
-                                        storeEmail: basicDetailsSettings?.storeEmail,
-                                        storePhone: basicDetailsSettings?.storePhone,
-                                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
-                                        socialMedia,
-                                        appUrls,
-                                        subject: messages_1.subjects.verificationOTP,
-                                        shopLogo: `${process.env.SHOPLOGO}`,
-                                        shopName: `${process.env.SHOPNAME}`,
-                                        appUrl: `${process.env.APPURL}`
-                                    }, async (err, template) => {
-                                        if (err) {
-                                            console.log(err);
-                                            return;
-                                        }
-                                        if (process.env.SHOPNAME === 'Timehouse') {
-                                            const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
-                                        }
-                                        else if (process.env.SHOPNAME === 'Homestyle') {
-                                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
-                                            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...user.toObject(), message: (0, messages_1.resendOtp)(Number(user.otp)) });
-                                        }
-                                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
-                                        }
-                                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
-                                        }
-                                    });
-                                }
-                            }
-                            return controller.sendSuccessResponse(res, {
-                                requestedData: {
-                                    token,
-                                    userId: user._id,
-                                    firstName: user.firstName,
-                                    email: user.email,
-                                    phone: user.phone,
-                                    status: user.status,
-                                    isVerified: user.isVerified,
-                                    referralCode: user.referralCode,
-                                    lastLoggedAt: user?.lastLoggedAt || new Date(),
-                                    otpType: 'phone'
-                                },
-                                message: 'Customer login successfully!'
-                            });
-                        }
-                        else {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Invalid password.',
-                            });
-                        }
-                    }
-                    else {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'User not found',
                         });
                     }
                 }
