@@ -81,15 +81,13 @@ class CheckoutController extends BaseController {
                     var productTitle
                     if (variant.extraProductTitle) {
                         productTitle = variant.extraProductTitle
-                    }
-                    else {
+                    } else {
                         const product: any = await ProductsModel.findOne({ _id: variant.productId }, 'productTitle')
                         productTitle = product.productTitle
                     }
                     if (variant.quantity == 0) {
                         errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' })
-                    }
-                    else if (variant.quantity <= requiredQuantity) {
+                    } else if (variant.quantity <= requiredQuantity) {
                         errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' })
                     }
                 }
@@ -310,9 +308,8 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
-                    await CheckoutService.cartUpdation({ ...updateCart, products: cartDetails.products, customerDetails, paymentMethod }, true)
+                       await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod }, true)
                 }
-
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: updateCart._id,
@@ -321,7 +318,6 @@ class CheckoutController extends BaseController {
                     },
                     message: 'Order successfully Created!'
                 }, 200);
-
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',

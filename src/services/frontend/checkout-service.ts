@@ -189,8 +189,6 @@ class CheckoutService {
                 }
             }
 
-
-
             let cartProducts = cartDetails?.products || null
             let customerDetails = cartDetails?.customerDetails || null;
             let paymentMethodDetails = cartDetails?.paymentMethod || null;
@@ -210,6 +208,7 @@ class CheckoutService {
             } as any;
 
             const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
+            
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
