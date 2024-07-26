@@ -8,6 +8,8 @@ export interface CustomrProps extends Document {
     phone: string;
     password: string;
     customerImageUrl: string;
+    guestPhone: string;
+    guestEmail: string;
     referralCode: string;
     otp: string;
     otpExpiry: Date;
@@ -81,6 +83,14 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         ],
         minlength: [8, 'Phone must be at least 8 characters long'],
         maxlength: [15, 'Phone must be at most 15 characters long'],
+    },
+    guestPhone: {
+        type: String,
+        default: ''
+    },
+    guestEmail: {
+        type: String,
+        default: ''
     },
     password: {
         type: String
