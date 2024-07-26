@@ -207,9 +207,7 @@ class CheckoutService {
                 orderStatusAt: new Date(),
             } as any;
 
-            const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate);
-            console.log('updateCart',updateCart);
-            console.log('cartDetails._id',cartDetails);
+            const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
             
             if (!updateCart) {
                 return {

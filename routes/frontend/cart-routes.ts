@@ -12,10 +12,7 @@ router.use(frontendAuthAndUnAuthMiddleware);
 router.post('/create-cart', logResponseStatus, cartOrderController.createCartOrder);
 router.get('/get-cart', logResponseStatus, cartOrderController.findUserCart);
 router.post('/add-gift-wrap', logResponseStatus, cartOrderController.addGiftWrap);
-router.get('/tap-success-response', logResponseStatus, checkoutController.tapSuccessResponse);
-router.get('/tap-failure-response', logResponseStatus, checkoutController.tapSuccessResponse);
-
-
+router.post('/change-guest', logResponseStatus, cartOrderController.changeGuest);
 
 
 
