@@ -253,7 +253,14 @@ class GuestController extends base_controller_1.default {
                         otp: (0, helpers_1.generateOTP)(4),
                         otpExpiry,
                         failureAttemptsCount: 0,
+                        guestPhone: phone,
+                        email: email,
                     });
+                    newCustomer = {
+                        ...newCustomer.toObject(),
+                        phone: phone,
+                        email: email,
+                    };
                 }
                 if (newCustomer) {
                     let websiteSettingsQuery = { _id: { $exists: true } };

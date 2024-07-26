@@ -260,7 +260,14 @@ class GuestController extends BaseController {
                         otp: generateOTP(4),
                         otpExpiry,
                         failureAttemptsCount: 0,
+                        guestPhone: phone,
+                        email: email,
                     });
+                    newCustomer = {
+                        ...newCustomer.toObject(),
+                        phone: phone,
+                        email: email,
+                    }
                 }
 
                 if (newCustomer) {
