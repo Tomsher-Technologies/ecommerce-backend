@@ -405,7 +405,7 @@ class OrdersController extends BaseController {
                 let query: any = { _id: { $exists: true } };
                 query = {
                     ...query,
-                    countryId: orderDetails.countryId,
+                    countryId: orderDetails.country._id,
                     block: websiteSetup.basicSettings,
                     blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
                     status: '1',
@@ -512,7 +512,7 @@ class OrdersController extends BaseController {
                 let websiteSettingsQuery: any = { _id: { $exists: true } };
                 websiteSettingsQuery = {
                     ...websiteSettingsQuery,
-                    countryId: orderDetails[0].countryId,
+                    countryId: orderDetails[0].country._id,
                     block: websiteSetup.basicSettings,
                     blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia] },
                     status: '1',
