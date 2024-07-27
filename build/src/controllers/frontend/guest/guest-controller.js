@@ -240,7 +240,7 @@ class GuestController extends base_controller_1.default {
                     $and: [
                         { $or: [{ email }, { phone }] }
                     ]
-                });
+                }).lean();
                 if (!newCustomer) {
                     const customerData = {
                         countryId,
@@ -301,21 +301,21 @@ class GuestController extends base_controller_1.default {
                             appUrl: `${process.env.APPURL}`
                         }, async (err, template) => {
                             if (err) {
-                                console.log(err);
+                                console.log("email eroor", err);
                                 return;
                             }
                             if (process.env.SHOPNAME === 'Timehouse') {
-                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({ ...newCustomer, subject: messages_1.subjects.verificationOTP }, template);
                             }
                             else if (process.env.SHOPNAME === 'Homestyle') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
-                                const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...newCustomer.toObject(), message: (0, messages_1.guestRegisterOtp)(process.env.SHOPNAME, newCustomer.otp) });
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer, subject: messages_1.subjects.verificationOTP }, template);
+                                const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...newCustomer, message: (0, messages_1.guestRegisterOtp)(process.env.SHOPNAME, newCustomer.otp) });
                             }
                             else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer, subject: messages_1.subjects.verificationOTP }, template);
                             }
                             else if (process.env.SHOPNAME === 'Smartbaby') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer, subject: messages_1.subjects.verificationOTP }, template);
                             }
                         });
                     }
@@ -375,7 +375,7 @@ class GuestController extends base_controller_1.default {
                     const { email, password } = validatedData.data;
                     const user = await customers_model_1.default.findOne({ email: email, status: '1' });
                     if (user && user.password !== '') {
-                        const isPasswordValid = await bcrypt_1.default.compare(password, user.password);
+                        const isPasswordValid = user.password ? await bcrypt_1.default.compare(password, user.password) : false;
                         if (isPasswordValid) {
                             const updateData = {
                                 lastLoggedAt: new Date()

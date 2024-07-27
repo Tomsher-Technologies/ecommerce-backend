@@ -247,7 +247,7 @@ class GuestController extends BaseController {
                     $and: [
                         { $or: [{ email }, { phone }] }
                     ]
-                });
+                }).lean();
 
                 if (!newCustomer) {
                     const customerData = {
@@ -312,18 +312,18 @@ class GuestController extends BaseController {
                             },
                             async (err: any, template: any) => {
                                 if (err) {
-                                    console.log(err);
+                                    console.log("email eroor", err);
                                     return;
                                 }
                                 if (process.env.SHOPNAME === 'Timehouse') {
-                                    const sendEmail = await mailChimpEmailGateway({ ...newCustomer.toObject(), subject: subjects.verificationOTP }, template)
+                                    const sendEmail = await mailChimpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
                                 } else if (process.env.SHOPNAME === 'Homestyle') {
-                                    const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: subjects.verificationOTP }, template)
-                                    const sendsms = await bulkSmsGateway({ ...newCustomer.toObject(), message: guestRegisterOtp(process.env.SHOPNAME, newCustomer.otp) })
+                                    const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
+                                    const sendsms = await bulkSmsGateway({ ...newCustomer, message: guestRegisterOtp(process.env.SHOPNAME, newCustomer.otp) })
                                 } else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                    const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: subjects.verificationOTP }, template)
+                                    const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
                                 } else if (process.env.SHOPNAME === 'Smartbaby') {
-                                    const sendEmail = await smtpEmailGateway({ ...newCustomer.toObject(), subject: subjects.verificationOTP }, template)
+                                    const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
                                 }
                             })
                     }
@@ -381,7 +381,7 @@ class GuestController extends BaseController {
                     const { email, password } = validatedData.data;
                     const user: CustomrProps | null = await CustomerModel.findOne({ email: email, status: '1' });
                     if (user && user.password !== '') {
-                        const isPasswordValid = await bcrypt.compare(password, user.password);
+                        const isPasswordValid = user.password ? await bcrypt.compare(password, user.password) : false;
                         if (isPasswordValid) {
                             const updateData: Partial<any> = {
                                 lastLoggedAt: new Date()
