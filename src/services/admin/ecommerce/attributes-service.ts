@@ -133,12 +133,11 @@ class AttributesService {
             return null;
         }
     }
-    async findOneAttributeFromExcel(data: any): Promise<void | null> {
-        data = data.value
-        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.data.trim() });
+    async findOneAttributeFromExcel(attributeData: any): Promise<void | null> {
+        const { attributeTitle, attributeType } = attributeData
+        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
         if (resultAttribute) {
-            const attributeDetailResult: any = await this.findOneAttributeDetail(data, resultAttribute._id)
-
+            const attributeDetailResult: any = await this.findOneAttributeDetail(attributeData, resultAttribute._id)
             const result: any = {
                 attributeId: resultAttribute._id,
                 attributeDetailId: attributeDetailResult._id
@@ -146,16 +145,14 @@ class AttributesService {
             return result
         } else {
             const attributeData = {
-                attributeTitle: capitalizeWords(data.data),
-                attributeType: data.type,
+                attributeTitle: capitalizeWords(attributeTitle),
+                attributeType: attributeType,
                 isExcel: true,
-                slug: slugify(data.data)
+                slug: slugify(attributeTitle)
             }
             const attributeResult: any = await this.create(attributeData)
-
             if (attributeResult) {
-                const attributeDetailResult: any = await this.findOneAttributeDetail(data, attributeResult._id)
-
+                const attributeDetailResult: any = await this.findOneAttributeDetail(attributeData, attributeResult._id)
                 const result: any = {
                     attributeId: attributeResult._id,
                     attributeDetailId: attributeDetailResult._id
@@ -165,20 +162,19 @@ class AttributesService {
         }
     }
 
-    async findOneAttributeDetail(data: any, attributeId: string): Promise<void | null> {
-        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: data.name }, { attributeId: attributeId }] });
+    async findOneAttributeDetail(attributeData: any, attributeId: string): Promise<void | null> {
+        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: attributeData.attributeItemName }, { attributeId: attributeId }] });
         if (resultAttribute) {
             return resultAttribute
         } else {
-            const attributeData = {
+            const insertAttributeDetail = {
                 attributeId: attributeId,
-                itemName: data.name,
-                itemValue: data.value,
-
+                itemName: attributeData.attributeItemName,
+                itemValue: attributeData.attributeItemValue,
             }
-            const attributeResult: any = await AttributeDetailModel.create(attributeData);
-            if (attributeResult) {
-                return attributeResult
+            const attributeDetailsResult: any = await AttributeDetailModel.create(insertAttributeDetail);
+            if (attributeDetailsResult) {
+                return attributeDetailsResult
             }
         }
     }

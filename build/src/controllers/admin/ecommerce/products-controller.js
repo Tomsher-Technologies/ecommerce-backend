@@ -438,11 +438,10 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                         }
                                                                     }
-                                                                    const optionColumns = [];
-                                                                    const valueColumns = [];
-                                                                    const typeColumn = [];
-                                                                    const NameColumns = [];
-                                                                    const attributeCombinedArray = [];
+                                                                    const attributeOptionColumns = [];
+                                                                    const attributeItemValueColumns = [];
+                                                                    const attributeTypeColumn = [];
+                                                                    const attributeItemNameColumns = [];
                                                                     const specificationOption = [];
                                                                     const specificationValue = [];
                                                                     const specificationName = [];
@@ -450,21 +449,21 @@ class ProductsController extends base_controller_1.default {
                                                                     const galleryImage = [];
                                                                     for (const columnName in data) {
                                                                         if (columnName.startsWith('Attribute_Option')) {
-                                                                            // optionColumns.push(columnName);
+                                                                            // attributeOptionColumns.push(columnName);
                                                                             const index = columnName.split('_')[2];
-                                                                            optionColumns[index] = data[columnName];
+                                                                            attributeOptionColumns[index] = data[columnName];
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Name')) {
                                                                             const index = columnName.split('_')[2];
-                                                                            NameColumns[index] = data[columnName];
+                                                                            attributeItemNameColumns[index] = data[columnName];
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Type')) {
                                                                             const index = columnName.split('_')[2];
-                                                                            typeColumn[index] = data[columnName];
+                                                                            attributeTypeColumn[index] = data[columnName];
                                                                         }
                                                                         if (columnName.startsWith('Attribute_Value')) {
                                                                             const index = columnName.split('_')[2];
-                                                                            valueColumns[index] = data[columnName];
+                                                                            attributeItemValueColumns[index] = data[columnName];
                                                                         }
                                                                         if (columnName.startsWith('Specification_Option')) {
                                                                             const index = columnName.split('_')[2];
@@ -489,20 +488,12 @@ class ProductsController extends base_controller_1.default {
                                                                             galleryImage.push(columnName);
                                                                         }
                                                                     }
-                                                                    // for (let i = 0; i < optionColumns.length; i++) {
-                                                                    //     attributeCombinedArray.push({
-                                                                    //         data: data[optionColumns[i]],
-                                                                    //         type: data[typeColumn[i]],
-                                                                    //         name: data[NameColumns[i]],
-                                                                    //         value: data[valueColumns[i]]
-                                                                    //     });
-                                                                    // }
-                                                                    for (let index in optionColumns) {
-                                                                        let attributeTitle = optionColumns[index];
-                                                                        let attributeType = typeColumn[index];
-                                                                        let attributeItemName = NameColumns[index];
-                                                                        let attributeItemValue = valueColumns[index];
-                                                                        // Only add if both option and name exist
+                                                                    const attributeCombinedArray = [];
+                                                                    for (let index in attributeOptionColumns) {
+                                                                        let attributeTitle = attributeOptionColumns[index];
+                                                                        let attributeType = attributeTypeColumn[index];
+                                                                        let attributeItemName = attributeItemNameColumns[index];
+                                                                        let attributeItemValue = attributeItemValueColumns[index];
                                                                         if (attributeTitle && attributeItemName && attributeType) {
                                                                             attributeCombinedArray.push({ attributeTitle: attributeTitle, attributeType: attributeType, attributeItemName: attributeItemName, attributeItemValue: attributeItemValue });
                                                                         }
