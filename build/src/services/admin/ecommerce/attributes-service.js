@@ -115,7 +115,7 @@ class AttributesService {
             return null;
         }
     }
-    async findOneAttribute(data) {
+    async findOneAttributeFromExcel(data) {
         data = data.value;
         const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: data.data.trim() });
         if (resultAttribute) {
