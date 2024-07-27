@@ -72,23 +72,6 @@ class GuestController extends base_controller_1.default {
                         createdAt: new Date()
                     };
                     existCustomer = await customer_service_1.default.create(customerData);
-                }
-                else {
-                    await customers_model_1.default.findOneAndUpdate(existCustomer._id, {
-                        isGuest: false,
-                        email,
-                        firstName,
-                        phone,
-                        password: await bcrypt_1.default.hash(password, 10),
-                        otp: (0, helpers_1.generateOTP)(4),
-                        otpExpiry,
-                        referralCode: generatedReferralCode,
-                        status: '1',
-                        failureAttemptsCount: 0,
-                        createdAt: new Date()
-                    });
-                }
-                if (existCustomer) {
                     if (referralCodeWithCustomerData) {
                         const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                         const referAndEarn = await settings_service_1.default.findOne({ countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.referAndEarn });
@@ -171,13 +154,41 @@ class GuestController extends base_controller_1.default {
                             }
                         });
                     }
+                }
+                else {
+                    await customers_model_1.default.findOneAndUpdate(existCustomer._id, {
+                        isGuest: false,
+                        email,
+                        firstName,
+                        phone,
+                        password: await bcrypt_1.default.hash(password, 10),
+                        otp: (0, helpers_1.generateOTP)(4),
+                        otpExpiry,
+                        referralCode: generatedReferralCode,
+                        status: '1',
+                        failureAttemptsCount: 0,
+                        createdAt: new Date()
+                    });
+                }
+                if (existCustomer) {
+                    const payload = {
+                        userId: existCustomer._id,
+                        email: existCustomer.email,
+                        phone: existCustomer.phone,
+                        firstName: existCustomer.firstName,
+                        ...(existCustomer.isGuest ? {} : { totalWalletAmount: existCustomer.totalWalletAmount })
+                    };
+                    const token = jsonwebtoken_1.default.sign(payload, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn: '10y' });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: existCustomer._id,
+                            firstName: existCustomer.firstName,
                             // otp: existCustomer.otp,
                             email: existCustomer.email,
                             phone: existCustomer.phone,
-                            isVerified: existCustomer.isVerified
+                            isVerified: existCustomer.isVerified,
+                            isGuest: existCustomer.isGuest,
+                            ...(!existCustomer.isVerified ? {} : { referralCode: existCustomer.referralCode, token }),
                         },
                         message: 'Customer created successfully!.'
                     });

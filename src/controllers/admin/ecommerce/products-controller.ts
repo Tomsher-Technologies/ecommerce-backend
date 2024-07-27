@@ -473,8 +473,6 @@ class ProductsController extends BaseController {
                                                                         brandId = brandData._id
                                                                     }
                                                                 }
-                                                                console.log(data.Country);
-
                                                                 if (data.Country) {
                                                                     countryData = await CountryService.findCountryId({ $or: [{ countryTitle: data.Country }, { countryShortTitle: data.Country }] })
                                                                     if (countryData) {
@@ -568,7 +566,7 @@ class ProductsController extends BaseController {
 
                                                                     for await (let attributeKeyValue of attributeCombinedArray) {
                                                                         if (attributeKeyValue && attributeKeyValue.attributeTitle && attributeKeyValue.attributeType && attributeKeyValue.attributeItemName) {
-                                                                            const attributes: any = await AttributesService.findOneAttributeFromExcel({ attributeKeyValue })
+                                                                            const attributes: any = await AttributesService.findOneAttributeFromExcel(attributeKeyValue)
                                                                             attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                         }
                                                                     }
@@ -673,7 +671,6 @@ class ProductsController extends BaseController {
                                                                     const shortTitleOfCountry: any = await CountryModel.findOne({ _id: await getCountryIdWithSuperAdmin(userData) })
 
                                                                     var countryForSlug
-
                                                                     if (countryData && countryData.countryShortTitle) {
                                                                         countryForSlug = countryData.countryShortTitle
                                                                     } else {
@@ -681,19 +678,29 @@ class ProductsController extends BaseController {
                                                                     }
                                                                     if (data.Item_Type == 'config-item' || data.Item_Type == 'simple-item') {
                                                                         // const productDuplication: any = await ProductsService.find({ productTitle: data.Product_Title })
-
                                                                         // if (!productDuplication) {
-                                                                        const product: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: capitalizeWords(data.Product_Title) }] })
-                                                                        if (!product) {
-                                                                            console.log("sfsfdsfdsf");
-
-                                                                            const createProduct = await ProductsService.create(finalData)
+                                                                        let insertWithNonConfigItemVariant = false;
+                                                                        let createProduct = null
+                                                                        const productDetails: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: capitalizeWords(data.Product_Title) }] });
+                                                                        if (productDetails) {
+                                                                            const existingVariantDetails = await ProductVariantsModel.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
+                                                                            if (!existingVariantDetails) {
+                                                                                insertWithNonConfigItemVariant = true;
+                                                                                createProduct = productDetails
+                                                                            }
+                                                                        }
+                                                                        if (!productDetails || insertWithNonConfigItemVariant) {
+                                                                            if (!insertWithNonConfigItemVariant) {
+                                                                                createProduct = await ProductsService.create(finalData)
+                                                                            }
                                                                             if (createProduct) {
-                                                                                for await (const item of categoryArray) {
-                                                                                    const newCategory = await ProductCategoryLinkService.create({
-                                                                                        productId: createProduct._id,
-                                                                                        categoryId: item
-                                                                                    })
+                                                                                if (!insertWithNonConfigItemVariant) {
+                                                                                    for await (const item of categoryArray) {
+                                                                                        const newCategory = await ProductCategoryLinkService.create({
+                                                                                            productId: createProduct._id,
+                                                                                            categoryId: item
+                                                                                        })
+                                                                                    }
                                                                                 }
 
                                                                                 if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
@@ -730,9 +737,8 @@ class ProductsController extends BaseController {
                                                                                     slug: slugify(slugData)
                                                                                 }
 
-                                                                                const variant = await ProductVariantService.find({ $or: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
-                                                                                console.log("gdsgsdgdsg", variant);
-                                                                                if (!variant) {
+                                                                                const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
+                                                                                if (!variantDetails) {
                                                                                     const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
                                                                                     if (createVariant) {
                                                                                         if (attributeData && attributeData.length > 0) {
@@ -749,20 +755,34 @@ class ProductsController extends BaseController {
                                                                                         await deleteFunction(createProduct._id)
                                                                                     }
                                                                                 } else {
-                                                                                    const updateProduct = await ProductVariantService.update(variant._id, productVariants);
-                                                                                    const updatedproductVariantAttribute = await ProductVariantAttributesModel.findByIdAndUpdate(
-                                                                                        { variantId: variant._id },
-                                                                                        { new: true, useFindAndModify: false }
-                                                                                    );
+                                                                                    const updateProduct = await ProductVariantService.update(variantDetails._id, productVariants);
+                                                                                    const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
+                                                                                    if (existingAttributes.length !== attributeData.length) {
+                                                                                        await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
+                                                                                        for (const attribute of attributeData) {
+                                                                                            const attributeValues = {
+                                                                                                variantId: variantDetails._id,
+                                                                                                productId: createProduct._id,
+                                                                                                ...attribute
+                                                                                            };
+                                                                                            await ProductVariantAttributeService.create(attributeValues);
+                                                                                        }
+                                                                                    } else {
+                                                                                        for (const attribute of attributeData) {
+                                                                                            const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
+                                                                                                { variantId: variantDetails._id, attributeId: attribute.attributeId },
+                                                                                                { ...attribute, productId: createProduct._id },
+                                                                                                { new: true, useFindAndModify: false }
+                                                                                            );
+                                                                                        }
+                                                                                    }
                                                                                 }
 
                                                                             }
                                                                         } else {
-                                                                            const updateProduct = await ProductsService.update(product._id, finalData)
+                                                                            const updateProduct = await ProductsService.update(productDetails._id, finalData)
                                                                             if (updateProduct) {
-
-                                                                                const data = await ProductGalleryImagesModel.deleteMany({ productID: product._id });
-
+                                                                                const data = await ProductGalleryImagesModel.deleteMany({ productID: productDetails._id });
                                                                                 if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
@@ -773,9 +793,30 @@ class ProductsController extends BaseController {
 
                                                                                     }
                                                                                 }
+                                                                                const variantDetails = await ProductVariantsModel.findOne({ variantSku: (data as any).SKU, countryId: productVariants.countryId });
+                                                                                if (variantDetails) {
+                                                                                    const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
+                                                                                    if (existingAttributes.length !== attributeData.length) {
+                                                                                        await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
+                                                                                        for (const attribute of attributeData) {
+                                                                                            const attributeValues = {
+                                                                                                variantId: variantDetails._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...attribute
+                                                                                            };
+                                                                                            await ProductVariantAttributeService.create(attributeValues);
+                                                                                        }
+                                                                                    } else {
+                                                                                        for (const attribute of attributeData) {
+                                                                                            const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
+                                                                                                { variantId: variantDetails._id, attributeId: attribute.attributeId },
+                                                                                                { ...attribute, productId: productDetails._id },
+                                                                                                { new: true, useFindAndModify: false }
+                                                                                            );
+                                                                                        }
+                                                                                    }
+                                                                                }
                                                                             }
-
-
                                                                             // validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
                                                                         }
                                                                         // } else {
@@ -786,8 +827,8 @@ class ProductsController extends BaseController {
                                                                         // }
                                                                     } else if (data.Item_Type == 'variant') {
                                                                         if (data.Parent_SKU) {
-                                                                            const product: any = await ProductsService.find({ sku: data.Parent_SKU })
-                                                                            if (product) {
+                                                                            const productDetails: any = await ProductsService.find({ sku: data.Parent_SKU, countryId: productVariants.countryId })
+                                                                            if (productDetails) {
                                                                                 var slugData
                                                                                 // if (data.Product_Title === product.productTitle) {
                                                                                 //     slugData = product?.slug
@@ -804,16 +845,15 @@ class ProductsController extends BaseController {
                                                                                     slug: slugify(slugData)
                                                                                 }
 
-                                                                                const variant = await ProductVariantService.find({ $or: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
-
-                                                                                if (!variant) {
-                                                                                    const createVariant = await ProductVariantService.create(product._id, productVariants, userData)
+                                                                                const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
+                                                                                if (!variantDetails) {
+                                                                                    const createVariant = await ProductVariantService.create(productDetails._id, productVariants, userData)
                                                                                     if (createVariant) {
                                                                                         if (attributeData && attributeData.length > 0) {
                                                                                             for await (const attribute of attributeData) {
                                                                                                 const attributeValues = {
                                                                                                     variantId: createVariant._id,
-                                                                                                    productId: product._id,
+                                                                                                    productId: productDetails._id,
                                                                                                     ...attribute
                                                                                                 }
                                                                                                 const attributes = await ProductVariantAttributeService.create(attributeValues)
@@ -821,7 +861,7 @@ class ProductsController extends BaseController {
                                                                                         }
                                                                                         if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
                                                                                             const newSeo = await SeoPageService.create({
-                                                                                                pageId: product._id,
+                                                                                                pageId: productDetails._id,
                                                                                                 pageReferenceId: createVariant._id,
                                                                                                 page: seoPage.ecommerce.products,
                                                                                                 ...productSeo
@@ -832,7 +872,7 @@ class ProductsController extends BaseController {
                                                                                             for await (const specification of specificationData) {
                                                                                                 const specificationValues = {
                                                                                                     variantId: createVariant._id,
-                                                                                                    productId: product._id,
+                                                                                                    productId: productDetails._id,
                                                                                                     ...specification
                                                                                                 }
                                                                                                 const specifications = await ProductSpecificationService.create(specificationValues)
@@ -849,14 +889,10 @@ class ProductsController extends BaseController {
                                                                                             }
                                                                                         }
                                                                                     }
-                                                                                }
-                                                                                else {
-
-                                                                                    const updateProduct = await ProductVariantService.update(variant._id, productVariants)
-
+                                                                                } else {
+                                                                                    const updateProduct = await ProductVariantService.update(variantDetails._id, productVariants)
                                                                                     if (updateProduct) {
-                                                                                        const data = await ProductGalleryImagesModel.deleteMany({ variantId: variant._id });
-
+                                                                                        const data = await ProductGalleryImagesModel.deleteMany({ variantId: variantDetails._id });
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                             for await (const galleryImage of galleryImageArray) {
                                                                                                 const galleryImageData = {
@@ -867,11 +903,31 @@ class ProductsController extends BaseController {
 
                                                                                             }
                                                                                         }
+                                                                                        const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
+
+                                                                                        if (existingAttributes.length !== attributeData.length) {
+                                                                                            await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
+                                                                                            for (const attribute of attributeData) {
+                                                                                                const attributeValues = {
+                                                                                                    variantId: variantDetails._id,
+                                                                                                    productId: updateProduct.productId,
+                                                                                                    ...attribute
+                                                                                                };
+                                                                                                await ProductVariantAttributeService.create(attributeValues);
+                                                                                            }
+                                                                                        } else {
+                                                                                            for (const attribute of attributeData) {
+                                                                                                const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
+                                                                                                    { variantId: variantDetails._id },
+                                                                                                    { ...attribute, productId: updateProduct.productId },
+                                                                                                    { new: true, useFindAndModify: false }
+                                                                                                );
+                                                                                            }
+                                                                                        }
                                                                                     }
                                                                                     // validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Variant " + data.Product_Title + " is already existing" })
                                                                                 }
-                                                                            }
-                                                                            else {
+                                                                            } else {
                                                                                 validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: data.Product_Title + " product parent sku not fount" })
                                                                             }
                                                                         }

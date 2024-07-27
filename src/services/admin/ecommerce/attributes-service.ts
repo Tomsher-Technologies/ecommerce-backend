@@ -133,31 +133,33 @@ class AttributesService {
             return null;
         }
     }
-    async findOneAttributeFromExcel(attributeData: any): Promise<void | null> {
-        const { attributeTitle, attributeType } = attributeData
-        const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
-        if (resultAttribute) {
-            const attributeDetailResult: any = await this.findOneAttributeDetail(attributeData, resultAttribute._id)
-            const result: any = {
-                attributeId: resultAttribute._id,
-                attributeDetailId: attributeDetailResult._id
-            }
-            return result
-        } else {
-            const attributeData = {
-                attributeTitle: capitalizeWords(attributeTitle),
-                attributeType: attributeType,
-                isExcel: true,
-                slug: slugify(attributeTitle)
-            }
-            const attributeResult: any = await this.create(attributeData)
-            if (attributeResult) {
-                const attributeDetailResult: any = await this.findOneAttributeDetail(attributeData, attributeResult._id)
+    async findOneAttributeFromExcel(attributeKeyValue: any): Promise<void | null> {
+        const { attributeTitle, attributeType } = attributeKeyValue
+        if (attributeTitle && attributeType) {
+            const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
+            if (resultAttribute) {
+                const attributeDetailResult: any = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id)
                 const result: any = {
-                    attributeId: attributeResult._id,
+                    attributeId: resultAttribute._id,
                     attributeDetailId: attributeDetailResult._id
                 }
                 return result
+            } else {
+                const attributeData = {
+                    attributeTitle: capitalizeWords(attributeTitle),
+                    attributeType: attributeType,
+                    isExcel: true,
+                    slug: slugify(attributeTitle)
+                }
+                const attributeResult: any = await this.create(attributeData)
+                if (attributeResult) {
+                    const attributeDetailResult: any = await this.findOneAttributeDetail(attributeKeyValue, attributeResult._id)
+                    const result: any = {
+                        attributeId: attributeResult._id,
+                        attributeDetailId: attributeDetailResult._id
+                    }
+                    return result
+                }
             }
         }
     }

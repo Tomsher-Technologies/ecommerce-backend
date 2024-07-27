@@ -78,23 +78,6 @@ class GuestController extends BaseController {
                         createdAt: new Date()
                     };
                     existCustomer = await CustomerService.create(customerData);
-                } else {
-                    await CustomerModel.findOneAndUpdate(existCustomer._id, {
-                        isGuest: false,
-                        email,
-                        firstName,
-                        phone,
-                        password: await bcrypt.hash(password, 10),
-                        otp: generateOTP(4),
-                        otpExpiry,
-                        referralCode: generatedReferralCode,
-                        status: '1',
-                        failureAttemptsCount: 0,
-                        createdAt: new Date()
-                    })
-                }
-
-                if (existCustomer) {
                     if (referralCodeWithCustomerData) {
                         const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
                         const referAndEarn = await SettingsService.findOne({ countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.referAndEarn });
@@ -179,14 +162,42 @@ class GuestController extends BaseController {
                                 }
                             })
                     }
+                } else {
+                    await CustomerModel.findOneAndUpdate(existCustomer._id, {
+                        isGuest: false,
+                        email,
+                        firstName,
+                        phone,
+                        password: await bcrypt.hash(password, 10),
+                        otp: generateOTP(4),
+                        otpExpiry,
+                        referralCode: generatedReferralCode,
+                        status: '1',
+                        failureAttemptsCount: 0,
+                        createdAt: new Date()
+                    })
+                }
 
+                if (existCustomer) {
+                    const payload: any = {
+                        userId: existCustomer._id,
+                        email: existCustomer.email,
+                        phone: existCustomer.phone,
+                        firstName: existCustomer.firstName,
+                        ...(existCustomer.isGuest ? {} : { totalWalletAmount: existCustomer.totalWalletAmount })
+                    };
+                    const token: string = jwt.sign(payload, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn: '10y' });
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             userId: existCustomer._id,
+                            firstName: existCustomer.firstName,
                             // otp: existCustomer.otp,
                             email: existCustomer.email,
                             phone: existCustomer.phone,
-                            isVerified: existCustomer.isVerified
+                            isVerified: existCustomer.isVerified,
+                            isGuest: existCustomer.isGuest,
+                            ...(!existCustomer.isVerified ? {} : { referralCode: existCustomer.referralCode, token }),
+
                         },
                         message: 'Customer created successfully!.'
                     });
