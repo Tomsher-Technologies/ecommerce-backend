@@ -115,32 +115,34 @@ class AttributesService {
             return null;
         }
     }
-    async findOneAttributeFromExcel(attributeData) {
-        const { attributeTitle, attributeType } = attributeData;
-        const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
-        if (resultAttribute) {
-            const attributeDetailResult = await this.findOneAttributeDetail(attributeData, resultAttribute._id);
-            const result = {
-                attributeId: resultAttribute._id,
-                attributeDetailId: attributeDetailResult._id
-            };
-            return result;
-        }
-        else {
-            const attributeData = {
-                attributeTitle: (0, helpers_1.capitalizeWords)(attributeTitle),
-                attributeType: attributeType,
-                isExcel: true,
-                slug: (0, helpers_1.slugify)(attributeTitle)
-            };
-            const attributeResult = await this.create(attributeData);
-            if (attributeResult) {
-                const attributeDetailResult = await this.findOneAttributeDetail(attributeData, attributeResult._id);
+    async findOneAttributeFromExcel(attributeKeyValue) {
+        const { attributeTitle, attributeType } = attributeKeyValue;
+        if (attributeTitle && attributeType) {
+            const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
+            if (resultAttribute) {
+                const attributeDetailResult = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id);
                 const result = {
-                    attributeId: attributeResult._id,
+                    attributeId: resultAttribute._id,
                     attributeDetailId: attributeDetailResult._id
                 };
                 return result;
+            }
+            else {
+                const attributeData = {
+                    attributeTitle: (0, helpers_1.capitalizeWords)(attributeTitle),
+                    attributeType: attributeType,
+                    isExcel: true,
+                    slug: (0, helpers_1.slugify)(attributeTitle)
+                };
+                const attributeResult = await this.create(attributeData);
+                if (attributeResult) {
+                    const attributeDetailResult = await this.findOneAttributeDetail(attributeKeyValue, attributeResult._id);
+                    const result = {
+                        attributeId: attributeResult._id,
+                        attributeDetailId: attributeDetailResult._id
+                    };
+                    return result;
+                }
             }
         }
     }
