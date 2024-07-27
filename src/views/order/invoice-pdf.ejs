@@ -206,13 +206,13 @@
       <div class="column">
         <strong>Store Address:</strong>
         <% if(shopName || storeAppartment || storeCity ||storeState||storeStreet) { %>
-        <p>
-          <%= shopName %><br>
-            <%= storeAppartment %><br>
-              <%= storeCity %>, <%= storeState %>, <%= storeStreet %><br>
-                    <%= storePostalCode %>
-        </p>
-        <% } %>
+          <p>
+            <%= shopName %><br>
+              <%= storeAppartment %><br>
+                <%= storeCity %>, <%= storeState %>, <%= storeStreet %><br>
+                      <%= storePostalCode %>
+          </p>
+          <% } %>
       </div>
       <div class="column text-right">
         <strong>Shipped To:</strong>
@@ -291,10 +291,15 @@
         <% orderDetails.products.forEach(product=> { %>
           <tr>
             <td>
-              <%= product.productDetails.variantDetails.sku %>
+              <%= product.productDetails.variantDetails.variantSku %>
             </td>
             <td>
-              <%= product.productDetails.variantDetails.productTitle %>
+              <% if (product.productDetails.variantDetails.extraProductTitle &&
+                product.productDetails.variantDetails.extraProductTitle !=='' ) { %>
+                <%= product.productDetails.variantDetails.extraProductTitle %>
+                  <% } else { %>
+                    <%= product.productDetails.productTitle %>
+                      <% } %>
             </td>
             <td>
               <%= product.productDetails.variantDetails.price %>
@@ -312,13 +317,17 @@
           <% }); %>
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Sub Total</td>
-              <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalProductOriginalPrice %>
+              <td class="text-right-cell">
+                <%=currencyCode %>
+                  <%= orderDetails.totalProductOriginalPrice %>
               </td>
             </tr>
             <% if (orderDetails.totalDiscountAmount> 0) { %>
               <tr class="summary-row">
                 <td colspan="5" class="text-right-cell">Discount</td>
-                <td class="text-right-cell"> <%=currencyCode %> <%= orderDetails.totalDiscountAmount %>
+                <td class="text-right-cell">
+                  <%=currencyCode %>
+                    <%= orderDetails.totalDiscountAmount %>
                 </td>
               </tr>
               <% } %>
@@ -334,7 +343,9 @@
                       <%=tax.taxTitle%>
                         <%=tax.taxPercentage%>%
                     </td>
-                    <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalTaxAmount %>
+                    <td class="text-right-cell">
+                      <%=currencyCode %>
+                        <%= orderDetails.totalTaxAmount %>
                     </td>
                   </tr>
                   <% } %>
@@ -342,7 +353,9 @@
                     <% if (orderDetails.paymentMethodCharge> 0) { %>
                       <tr class="summary-row">
                         <td colspan="5" class="text-right-cell">COD Charges</td>
-                        <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.paymentMethodCharge %>
+                        <td class="text-right-cell">
+                          <%=currencyCode %>
+                            <%= orderDetails.paymentMethodCharge %>
                         </td>
                       </tr>
                       <% } %>
@@ -350,14 +363,18 @@
                         <% if (orderDetails.totalShippingAmount> 0) { %>
                           <tr class="summary-row">
                             <td colspan="5" class="text-right-cell">Delivery Charges</td>
-                            <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalShippingAmount %>
+                            <td class="text-right-cell">
+                              <%=currencyCode %>
+                                <%= orderDetails.totalShippingAmount %>
                             </td>
                           </tr>
                           <% } %>
 
                             <tr class="summary-row">
                               <td colspan="5" class="text-right-cell">Total</td>
-                              <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
+                              <td class="text-right-cell">
+                                <%=currencyCode %>
+                                  <%= orderDetails.totalAmount %>
                               </td>
                             </tr>
       </tbody>
