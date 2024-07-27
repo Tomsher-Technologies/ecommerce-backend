@@ -97,31 +97,28 @@ class CartController extends BaseController {
 
                             const updateCartProduct = await CartOrderProductsModel.bulkWrite(bulkOps);
                             if (updateCartProduct) {
-                                const cartMergeDetails: any = await CartOrdersModel.aggregate(cartOrderGroupSumAggregate(customerCart?._id, guestUserCart?._id));
-                                if (cartMergeDetails.length > 0) {
-                                    const mergedData = cartMergeDetails[0];
-                                    const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: country });
-                                    const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
-                                    const finalShippingCharge = shippingCharge > 0 ? ((mergedData.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
-                                    await CartOrdersModel.updateOne(
-                                        { _id: customerCart?._id },
-                                        {
-                                            $set: {
-                                                totalProductOriginalPrice: mergedData.totalProductOriginalPrice,
-                                                totalProductAmount: mergedData.totalProductAmount,
-                                                totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
-                                                totalDiscountAmount: mergedData.totalDiscountAmount,
-                                                totalShippingAmount: finalShippingCharge,
-                                                totalAmount: (Number(mergedData.totalAmount) + Number(finalShippingCharge))
-                                            }
-                                        },
-                                        { upsert: true }
-                                    );
-                            
-                                    const deleteGuestCart = await CartOrdersModel.findOneAndDelete({ _id: guestUserCart._id });
-                                    if (deleteGuestCart) {
-                                        await CartOrderProductsModel.deleteMany({ cartId: guestUserCart._id });
-                                    }
+                                const cartMergeDetails: any = cartOrderGroupSumAggregate(customerCart, guestUserCart);
+                                const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: country });
+                                const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                                const finalShippingCharge = shippingCharge > 0 ? ((cartMergeDetails.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                await CartOrdersModel.updateOne(
+                                    { _id: customerCart._id },
+                                    {
+                                        $set: {
+                                            totalProductOriginalPrice: cartMergeDetails.totalProductOriginalPrice,
+                                            totalProductAmount: cartMergeDetails.totalProductAmount,
+                                            totalGiftWrapAmount: cartMergeDetails.totalGiftWrapAmount,
+                                            totalDiscountAmount: cartMergeDetails.totalDiscountAmount,
+                                            totalShippingAmount: finalShippingCharge,
+                                            totalAmount: (cartMergeDetails.totalAmount + finalShippingCharge)// Total amount excluding shipping
+                                        }
+                                    },
+                                    { upsert: true }
+                                );
+
+                                const deleteGuestCart = await CartOrdersModel.findOneAndDelete({ _id: guestUserCart._id });
+                                if (deleteGuestCart) {
+                                    await CartOrderProductsModel.deleteMany({ cartId: guestUserCart._id });
                                 }
                             }
                             // if (updateCartProduct) {
