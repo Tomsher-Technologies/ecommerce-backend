@@ -133,7 +133,7 @@ class AttributesService {
             return null;
         }
     }
-    async findOneAttribute(data: any): Promise<void | null> {
+    async findOneAttributeFromExcel(data: any): Promise<void | null> {
         data = data.value
         const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: data.data.trim() });
         if (resultAttribute) {

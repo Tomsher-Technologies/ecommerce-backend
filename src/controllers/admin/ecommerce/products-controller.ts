@@ -402,13 +402,13 @@ class ProductsController extends BaseController {
         // try {
         // Load the Excel file
         if (req && req.file && req.file?.filename) {
-            const workbook = await xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
-            if (workbook) {
+            const excelDatas = await xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
+            if (excelDatas) {
                 // Assume the first sheet is the one you want to convert
-                const sheetName = workbook.SheetNames[0];
+                const sheetName = excelDatas.SheetNames[0];
 
-                if (workbook.SheetNames[0]) {
-                    const worksheet = workbook.Sheets[sheetName];
+                if (excelDatas.SheetNames[0]) {
+                    const worksheet = excelDatas.Sheets[sheetName];
 
                     const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
                     const missingColunm = await ProductsService.checkRequiredColumns(firstRow, products)
@@ -503,7 +503,7 @@ class ProductsController extends BaseController {
                                                                     const valueColumns: any = [];
                                                                     const typeColumn: any = []
                                                                     const NameColumns: any = [];
-                                                                    const combinedArray: any = [];
+                                                                    const attributeCombinedArray: any = [];
 
                                                                     const specificationOption: any = [];
                                                                     const specificationValue: any = [];
@@ -553,7 +553,7 @@ class ProductsController extends BaseController {
                                                                     }
 
                                                                     // for (let i = 0; i < optionColumns.length; i++) {
-                                                                    //     combinedArray.push({
+                                                                    //     attributeCombinedArray.push({
                                                                     //         data: data[optionColumns[i]],
                                                                     //         type: data[typeColumn[i]],
                                                                     //         name: data[NameColumns[i]],
@@ -563,22 +563,22 @@ class ProductsController extends BaseController {
 
 
                                                                     for (let index in optionColumns) {
-                                                                        let option = optionColumns[index];
-                                                                        let type = typeColumn[index];
-                                                                        let name = NameColumns[index];
-                                                                        let value = valueColumns[index]
+                                                                        let attributeTitle = optionColumns[index];
+                                                                        let attributeType = typeColumn[index];
+                                                                        let attributeItemName = NameColumns[index];
+                                                                        let attributeItemValue = valueColumns[index]
 
                                                                         // Only add if both option and name exist
-                                                                        if (option && name && type) {
-                                                                            combinedArray.push({ data: option, type: type, name: name, value: value });
+                                                                        if (attributeTitle && attributeItemName && attributeType) {
+                                                                            attributeCombinedArray.push({ attributeTitle: attributeTitle, attributeType: attributeType, attributeItemName: attributeItemName, attributeItemValue: attributeItemValue });
                                                                         } else {
-                                                                            combinedArray.push({ data: option || undefined, type: type || undefined, name: name || undefined, value: value || undefined });
+                                                                            attributeCombinedArray.push({ attributeTitle: attributeTitle || undefined, attributeType: attributeType || undefined, attributeItemName: attributeItemName || undefined, attributeItemValue: attributeItemValue || undefined });
                                                                         }
                                                                     }
 
-                                                                    for await (let value of combinedArray) {
-                                                                        if (value && value.data && value.type && value.name) {
-                                                                            const attributes: any = await AttributesService.findOneAttribute({ value })
+                                                                    for await (let attributeKeyValue of attributeCombinedArray) {
+                                                                        if (attributeKeyValue && attributeKeyValue.attributeTitle && attributeKeyValue.attributeType && attributeKeyValue.attributeItemName) {
+                                                                            const attributes: any = await AttributesService.findOneAttributeFromExcel({ attributeKeyValue })
                                                                             attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                         }
                                                                     }
