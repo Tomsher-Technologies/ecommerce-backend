@@ -63,7 +63,6 @@ class CartController extends base_controller_1.default {
                         const cartProductDetails = await cart_order_product_model_1.default.aggregate((0, cart_order_config_1.cartOrderProductsGroupSumAggregate)(customerCart?._id, guestUserCart?._id));
                         if (cartProductDetails && cartProductDetails.length > 0) {
                             const bulkOps = cartProductDetails.flatMap((detail) => [
-                                // Update or insert into customer's cart if the cartId matches
                                 {
                                     updateOne: {
                                         filter: {
