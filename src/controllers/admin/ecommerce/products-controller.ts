@@ -827,7 +827,7 @@ class ProductsController extends BaseController {
                                                                         // }
                                                                     } else if (data.Item_Type == 'variant') {
                                                                         if (data.Parent_SKU) {
-                                                                            const productDetails: any = await ProductsService.find({ sku: data.Parent_SKU, countryId: productVariants.countryId })
+                                                                            const productDetails: any = await ProductsService.find({ sku: data.Parent_SKU })
                                                                             if (productDetails) {
                                                                                 var slugData
                                                                                 // if (data.Product_Title === product.productTitle) {
