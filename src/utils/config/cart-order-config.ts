@@ -327,38 +327,50 @@ export const buildOrderPipeline = (paymentMethodDetails: any, customerDetails: a
 };
 
 
-export const cartOrderGroupSumAggregate = (customerCart: string, guestUserCartId: string) => {
+export const cartOrderGroupSumAggregate = (customerCart: any, guestUserCart: any) => {
+    const totalProductAmount = (customerCart?.totalProductAmount || 0) + (guestUserCart?.totalProductAmount || 0);
+    const totalProductOriginalPrice = (customerCart?.totalProductOriginalPrice || 0) + (guestUserCart?.totalProductOriginalPrice || 0);
+    const totalGiftWrapAmount = (customerCart?.totalGiftWrapAmount || 0) + (guestUserCart?.totalGiftWrapAmount || 0);
+    const totalDiscountAmount = (customerCart?.totalDiscountAmount || 0) + (guestUserCart?.totalDiscountAmount || 0);
+    const totalAmount = totalProductAmount + totalGiftWrapAmount;
 
-    return [
-        {
-            $match: {
-                $or: [
-                    { _id: guestUserCartId },
-                    { _id: customerCart }
-                ]
-            }
-        },
-        {
-            $group: {
-                _id: null,
-                totalProductAmount: { $sum: "$totalProductAmount" },
-                totalProductOriginalPrice: { $sum: "$totalProductOriginalPrice" },
-                totalGiftWrapAmount: { $sum: "$totalGiftWrapAmount" },
-                totalDiscountAmount: { $sum: "$totalDiscountAmount" },
-                totalAmount: { $sum: { $add: ["$totalGiftWrapAmount", "$totalProductAmount"] } }
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                totalProductOriginalPrice: 1,
-                totalProductAmount: 1,
-                totalGiftWrapAmount: 1,
-                totalDiscountAmount: 1,
-                totalAmount: 1
-            }
-        }
-    ]
+    return {
+        totalProductOriginalPrice,
+        totalProductAmount,
+        totalGiftWrapAmount,
+        totalDiscountAmount,
+        totalAmount
+    };
+    // return [
+    //     {
+    //         $match: {
+    //             $or: [
+    //                 { _id: guestUserCartId },
+    //                 { _id: customerCart }
+    //             ]
+    //         }
+    //     },
+    //     {
+    //         $group: {
+    //             _id: null,
+    //             totalProductAmount: { $sum: "$totalProductAmount" },
+    //             totalProductOriginalPrice: { $sum: "$totalProductOriginalPrice" },
+    //             totalGiftWrapAmount: { $sum: "$totalGiftWrapAmount" },
+    //             totalDiscountAmount: { $sum: "$totalDiscountAmount" },
+    //             totalAmount: { $sum: { $add: ["$totalGiftWrapAmount", "$totalProductAmount"] } }
+    //         }
+    //     },
+    //     {
+    //         $project: {
+    //             _id: 0,
+    //             totalProductOriginalPrice: 1,
+    //             totalProductAmount: 1,
+    //             totalGiftWrapAmount: 1,
+    //             totalDiscountAmount: 1,
+    //             totalAmount: 1
+    //         }
+    //     }
+    // ]
 }
 
 export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUserCartId: string) => {
@@ -402,7 +414,7 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
         },
         {
             $project: {
-                _id: 0, 
+                _id: 0,
                 cartId: 1,
                 variantId: "$_id",
                 slug: 1,
