@@ -226,8 +226,15 @@ function calculateWalletAmount(earnPoints, referAndEarn) {
 exports.calculateWalletAmount = calculateWalletAmount;
 const capitalizeWords = (sentence) => {
     if (!sentence)
-        return ""; // Handle null or undefined inputs
-    return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+        return "";
+    return sentence.replace(/(\b\w|'\w)/g, (match) => {
+        if (match.startsWith("'")) {
+            return match.charAt(0) + match.charAt(1).toLowerCase();
+        }
+        else {
+            return match.charAt(0).toUpperCase();
+        }
+    });
 };
 exports.capitalizeWords = capitalizeWords;
 const uploadImageFromUrl = async (imageUrl) => {

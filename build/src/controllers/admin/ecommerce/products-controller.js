@@ -748,9 +748,9 @@ class ProductsController extends base_controller_1.default {
                                                                                 //     slugData = product?.slug + "-" + data.Product_Title
                                                                                 // }
                                                                                 slugData = data.Product_Title + "-" + countryForSlug + '-' + (index); // generate slug
-                                                                                if (data.Product_Title === productVariants.extraProductTitle) {
-                                                                                    productVariants.extraProductTitle = "";
-                                                                                }
+                                                                                // if (data.Product_Title === productVariants.extraProductTitle) {
+                                                                                //     productVariants.extraProductTitle = ""
+                                                                                // }
                                                                                 productVariants = {
                                                                                     ...productVariants,
                                                                                     slug: (0, helpers_1.slugify)(slugData)
