@@ -291,10 +291,10 @@
         <% orderDetails.products.forEach(product=> { %>
           <tr>
             <td>
-              <%= product.productDetails.sku %>
+              <%= product.productDetails.variantDetails.sku %>
             </td>
             <td>
-              <%= product.productDetails.productTitle %>
+              <%= product.productDetails.variantDetails.productTitle %>
             </td>
             <td>
               <%= product.productDetails.variantDetails.price %>
@@ -311,8 +311,8 @@
           </tr>
           <% }); %>
             <tr class="summary-row">
-              <td colspan="5" class="text-right-cell">Total MRP</td>
-              <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalProductAmount %>
+              <td colspan="5" class="text-right-cell">Sub Total</td>
+              <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalProductOriginalPrice %>
               </td>
             </tr>
             <% if (orderDetails.totalDiscountAmount> 0) { %>
@@ -323,11 +323,11 @@
               </tr>
               <% } %>
 
-                <tr class="summary-row">
+                <!-- <tr class="summary-row">
                   <td colspan="5" class="text-right-cell">Sub Total</td>
                   <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
                   </td>
-                </tr>
+                </tr> -->
                 <% if (tax && tax.taxPercentage> 0) { %>
                   <tr class="summary-row">
                     <td colspan="5" class="text-right-cell">

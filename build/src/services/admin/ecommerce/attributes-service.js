@@ -115,11 +115,11 @@ class AttributesService {
             return null;
         }
     }
-    async findOneAttributeFromExcel(data) {
-        data = data.value;
-        const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: data.data.trim() });
+    async findOneAttributeFromExcel(attributeData) {
+        const { attributeTitle, attributeType } = attributeData;
+        const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
         if (resultAttribute) {
-            const attributeDetailResult = await this.findOneAttributeDetail(data, resultAttribute._id);
+            const attributeDetailResult = await this.findOneAttributeDetail(attributeData, resultAttribute._id);
             const result = {
                 attributeId: resultAttribute._id,
                 attributeDetailId: attributeDetailResult._id
@@ -128,14 +128,14 @@ class AttributesService {
         }
         else {
             const attributeData = {
-                attributeTitle: (0, helpers_1.capitalizeWords)(data.data),
-                attributeType: data.type,
+                attributeTitle: (0, helpers_1.capitalizeWords)(attributeTitle),
+                attributeType: attributeType,
                 isExcel: true,
-                slug: (0, helpers_1.slugify)(data.data)
+                slug: (0, helpers_1.slugify)(attributeTitle)
             };
             const attributeResult = await this.create(attributeData);
             if (attributeResult) {
-                const attributeDetailResult = await this.findOneAttributeDetail(data, attributeResult._id);
+                const attributeDetailResult = await this.findOneAttributeDetail(attributeData, attributeResult._id);
                 const result = {
                     attributeId: attributeResult._id,
                     attributeDetailId: attributeDetailResult._id
@@ -144,20 +144,20 @@ class AttributesService {
             }
         }
     }
-    async findOneAttributeDetail(data, attributeId) {
-        const resultAttribute = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: data.name }, { attributeId: attributeId }] });
+    async findOneAttributeDetail(attributeData, attributeId) {
+        const resultAttribute = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: attributeData.attributeItemName }, { attributeId: attributeId }] });
         if (resultAttribute) {
             return resultAttribute;
         }
         else {
-            const attributeData = {
+            const insertAttributeDetail = {
                 attributeId: attributeId,
-                itemName: data.name,
-                itemValue: data.value,
+                itemName: attributeData.attributeItemName,
+                itemValue: attributeData.attributeItemValue,
             };
-            const attributeResult = await attribute_detail_model_1.default.create(attributeData);
-            if (attributeResult) {
-                return attributeResult;
+            const attributeDetailsResult = await attribute_detail_model_1.default.create(insertAttributeDetail);
+            if (attributeDetailsResult) {
+                return attributeDetailsResult;
             }
         }
     }
