@@ -2,6 +2,8 @@
 
 export const tamaraCheckout = async (tamaraDefaultValues: any, paymentMethodValues: { liveApiKey: string; }) => {
     try {
+        console.log('process.env.TAMARA_API_URL',process.env.TAMARA_API_URL);
+        
         const response = await fetch(`${process.env.TAMARA_API_URL}/checkout`, {
             method: "POST",
             mode: "cors",
