@@ -496,7 +496,7 @@ class CheckoutController extends base_controller_1.default {
         if (!paymentDetails) {
             res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Payment transaction. Please contact administrator`); // failure
         }
-        const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
+        const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId }).select('_id paymentMethodValues');
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Payment method not found. Please contact administrator`); // failure
         }
@@ -505,7 +505,7 @@ class CheckoutController extends base_controller_1.default {
             res.redirect(`${process.env.APPURL}/order-response?status=${paymentStatus || 'failure'}&message=Tamara autorise not completed. Please contact administrator`); // failure
         }
         await payment_transaction_model_1.default.findByIdAndUpdate(paymentDetails._id, { $set: { data: tamaraResponse } }, { new: true, runValidators: true });
-        if (tamaraResponse.status) {
+        if (tamaraResponse.status === cart_1.tamaraPaymentGatwayStatus.authorised) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
                 paymentDetails,
                 allPaymentResponseData: tamaraResponse,
