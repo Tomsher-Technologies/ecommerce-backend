@@ -172,9 +172,7 @@ class CheckoutController extends base_controller_1.default {
                                     billingAddressDetails = await customer_address_model_1.default.findById(billingId);
                                 }
                                 const tamaraDefaultValues = (0, cart_utils_1.tamaraPaymentGatwayDefaultValues)(countryData, setPaymentDefualtValues, customerDetails, shippingAddressDetails, billingAddressDetails);
-                                console.log('tamaraDefaultValues', JSON.stringify(tamaraDefaultValues));
                                 const tamaraResponse = await (0, tamara_payments_1.tamaraCheckout)(tamaraDefaultValues, paymentMethod.paymentMethodValues);
-                                console.log('tamaraResponse', tamaraResponse);
                                 if (!tamaraResponse) {
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }

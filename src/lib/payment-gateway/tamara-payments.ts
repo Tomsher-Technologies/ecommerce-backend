@@ -2,8 +2,6 @@
 
 export const tamaraCheckout = async (tamaraDefaultValues: any, paymentMethodValues: { liveApiKey: string; }) => {
     try {
-        console.log('process.env.TAMARA_API_URL',paymentMethodValues.liveApiKey);
-        
         const response = await fetch(`${process.env.TAMARA_API_URL}/checkout`, {
             method: "POST",
             mode: "cors",
@@ -19,8 +17,8 @@ export const tamaraCheckout = async (tamaraDefaultValues: any, paymentMethodValu
             body: JSON.stringify(tamaraDefaultValues),
         });
 
-        if (!response) {
-            throw new Error(`HTTP error! status: ${(response as any)?.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         const responseData = await response.json();
 
