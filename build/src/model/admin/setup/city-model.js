@@ -24,55 +24,54 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const seoPageSchema = new mongoose_1.Schema({
-    pageId: {
+const citySchema = new mongoose_1.Schema({
+    countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        required: [true, 'Page Id is required'],
+        required: true,
+        ref: 'Countries',
     },
-    pageReferenceId: {
+    stateId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        default: null
+        required: true,
+        ref: 'States',
     },
-    page: {
+    cityTitle: {
         type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: async function (value) {
+                const count = await this.model('Cities').countDocuments({ cityTitle: value });
+                return count === 0;
+            },
+            message: 'City title must be unique'
+        },
+        minlength: [3, 'City title must be at least 3 characters long']
+    },
+    slug: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    status: {
+        type: String,
+        required: true
+    },
+    statusAt: {
+        type: Date,
         default: ''
     },
-    metaTitle: {
+    createdBy: {
         type: String,
-        default: ''
-    },
-    metaKeywords: {
-        type: String,
-        default: ''
-    },
-    metaDescription: {
-        type: String,
-        default: ''
-    },
-    ogTitle: {
-        type: String,
-        default: ''
-    },
-    ogDescription: {
-        type: String,
-        default: ''
-    },
-    twitterTitle: {
-        type: String,
-        default: ''
-    },
-    twitterDescription: {
-        type: String,
-        default: ''
+        required: true
     },
     createdAt: {
         type: Date,
-        default: Date.now
     },
     updatedAt: {
         type: Date,
         default: Date.now
     }
 });
-const SeoPageModel = mongoose_1.default.model('SeoPages', seoPageSchema);
-exports.default = SeoPageModel;
+const CityModel = mongoose_1.default.model('Cities', citySchema);
+exports.default = CityModel;

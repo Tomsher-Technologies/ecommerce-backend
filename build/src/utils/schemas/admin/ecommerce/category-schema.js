@@ -12,6 +12,7 @@ exports.categorySchema = zod_1.z.object({
     status: zod_1.z.string().optional(),
     slug: zod_1.z.any().optional(),
     level: zod_1.z.any().optional(),
+    seoData: zod_1.z.any().optional(),
     metaTitle: zod_1.z.string().optional(),
     metaKeywords: zod_1.z.string().optional(),
     metaDescription: zod_1.z.string().optional(),

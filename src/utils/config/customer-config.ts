@@ -19,6 +19,15 @@ export const countriesLookup = {
     }
 };
 
+export const statesLookup = {
+    $lookup: {
+        from: `${collections.setup.states}`, 
+        localField: 'stateId', 
+        foreignField: '_id',
+        as: 'state'
+    }
+};
+
 export const orderLookup = {
     $lookup: {
         from: `${collections.cart.cartorders}`,

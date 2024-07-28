@@ -7,4 +7,5 @@ const express_1 = __importDefault(require("express"));
 const general_controller_1 = __importDefault(require("../../../src/controllers/admin/general/general-controller"));
 const router = express_1.default.Router();
 router.get('/website-settings', general_controller_1.default.getGeneralSettings);
+router.get('/page-seo-details', general_controller_1.default.getPageSeoDetails);
 exports.default = router;

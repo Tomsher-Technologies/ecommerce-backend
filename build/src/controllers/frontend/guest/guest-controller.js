@@ -241,8 +241,10 @@ class GuestController extends base_controller_1.default {
                         { $or: [{ email }, { phone }] }
                     ]
                 }).lean();
+                const uuid = req.header('User-Token');
                 if (!newCustomer) {
                     const customerData = {
+                        guestUserId: uuid,
                         countryId,
                         firstName: "Guest",
                         email,
@@ -259,7 +261,8 @@ class GuestController extends base_controller_1.default {
                 }
                 else {
                     newCustomer = await customer_service_1.default.update(newCustomer._id, {
-                        guestRegisterCount: (newCustomer.guestRegisterCount + 1),
+                        guestUserId: uuid,
+                        guestRegisterCount: ((newCustomer?.guestRegisterCount > 0 ? newCustomer.guestRegisterCount + 1 : 1) || 1),
                         isGuest: true,
                         otp: (0, helpers_1.generateOTP)(4),
                         otpExpiry,

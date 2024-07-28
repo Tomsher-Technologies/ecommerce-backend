@@ -10,11 +10,13 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
+const seo_page_1 = require("../../../constants/admin/seo-page");
+const seo_page_model_1 = __importDefault(require("../../../model/admin/seo-page-model"));
 const controller = new base_controller_1.default();
 class BrandController extends base_controller_1.default {
     async findAllBrand(req, res) {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getSeo = '0' } = req.query;
             let query = {};
             query.status = '1';
             let collectionId;
@@ -81,10 +83,28 @@ class BrandController extends base_controller_1.default {
                         };
                     }
                 }
-                const brands = await brand_service_1.default.findAll({
+                let brands = await brand_service_1.default.findAll({
                     hostName: req.get('origin'),
                     query,
                 }, collectionId);
+                if (getSeo === '1' && brands && brands.length === 1) {
+                    const seoQuery = {
+                        _id: { $exists: true },
+                        pageId: brands[0]._id,
+                        pageReferenceId: new mongoose_1.default.Types.ObjectId(countryId),
+                        page: seo_page_1.seoPage.ecommerce.brands,
+                    };
+                    const seoDetails = await seo_page_model_1.default.find(seoQuery);
+                    if (seoDetails && seoDetails.length > 0) {
+                        const seoFields = ['metaTitle', 'metaKeywords', 'metaDescription', 'ogTitle', 'ogDescription', 'twitterTitle', 'twitterDescription'];
+                        const seoData = seoDetails[0];
+                        seoFields.forEach((field) => {
+                            if (seoData[field] && seoData[field] !== '') {
+                                brands[0][field] = seoData[field];
+                            }
+                        });
+                    }
+                }
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,
                     message: 'Success!'
