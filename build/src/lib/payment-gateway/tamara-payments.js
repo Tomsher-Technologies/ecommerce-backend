@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.tamaraAutoriseOrder = exports.tamaraCheckout = void 0;
 const tamaraCheckout = async (tamaraDefaultValues, paymentMethodValues) => {
     try {
-        console.log('process.env.TAMARA_API_URL', paymentMethodValues.liveApiKey);
         const response = await fetch(`${process.env.TAMARA_API_URL}/checkout`, {
             method: "POST",
             mode: "cors",
@@ -18,8 +17,8 @@ const tamaraCheckout = async (tamaraDefaultValues, paymentMethodValues) => {
             referrerPolicy: "no-referrer",
             body: JSON.stringify(tamaraDefaultValues),
         });
-        if (!response) {
-            throw new Error(`HTTP error! status: ${response?.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         const responseData = await response.json();
         return responseData;
