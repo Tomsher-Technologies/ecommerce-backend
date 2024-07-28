@@ -14,6 +14,8 @@ const category_service_1 = __importDefault(require("../../../services/admin/ecom
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const collections_categories_service_1 = __importDefault(require("../../../services/admin/website/collections-categories-service"));
+const seo_page_1 = require("../../../constants/admin/seo-page");
+const seo_page_service_1 = __importDefault(require("../../../services/admin/seo-page-service"));
 const controller = new base_controller_1.default();
 class CategoryController extends base_controller_1.default {
     async findAll(req, res) {
@@ -202,7 +204,7 @@ class CategoryController extends base_controller_1.default {
         try {
             const validatedData = category_schema_1.categorySchema.safeParse(req.body);
             if (validatedData.success) {
-                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, seoData, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
                 const category = parentCategory ? await category_service_1.default.findParentCategory(parentCategory) : null;
                 var slugData;
@@ -255,6 +257,9 @@ class CategoryController extends base_controller_1.default {
                                 }
                             });
                         });
+                    }
+                    if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                        await seo_page_service_1.default.insertOrUpdateSeoDataWithCountryId(newCategory._id, seoData, seo_page_1.seoPage.ecommerce.categories);
                     }
                     return controller.sendSuccessResponse(res, {
                         requestedData: newCategory,
@@ -322,7 +327,7 @@ class CategoryController extends base_controller_1.default {
                 const user = res.locals.user;
                 if (categoryId) {
                     const categoryImage = req.files.find((file) => file.fieldname === 'categoryImage');
-                    let updatedCategoryData = req.body;
+                    let { seoData, ...updatedCategoryData } = req.body;
                     const updatedCategory = await category_service_1.default.findOne(categoryId);
                     updatedCategoryData = {
                         ...updatedCategoryData,
@@ -370,7 +375,10 @@ class CategoryController extends base_controller_1.default {
                             mapped[key] = updatedCategory[key];
                             return mapped;
                         }, {});
-                        controller.sendSuccessResponse(res, {
+                        if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                            await seo_page_service_1.default.insertOrUpdateSeoDataWithCountryId(updatedCategory._id, seoData, seo_page_1.seoPage.ecommerce.categories);
+                        }
+                        return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedCategoryMapped,
                                 message: 'Category updated successfully!'
@@ -383,26 +391,26 @@ class CategoryController extends base_controller_1.default {
                         });
                     }
                     else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Category Id not found!',
                         }, req);
                     }
                 }
                 else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Category Id not found! Please try again with category id',
                     }, req);
                 }
             }
             else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
                 }, req);
             }
         }
         catch (error) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating category'
             }, req);
         }
@@ -413,26 +421,26 @@ class CategoryController extends base_controller_1.default {
             if (categoryId) {
                 const category = await category_service_1.default.findOne(categoryId);
                 if (category) {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Cant to be delete category!!',
                     });
                     // await CategoryService.destroy(categoryId);
                     // controller.sendSuccessResponse(res, { message: 'Category deleted successfully!' });
                 }
                 else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This Category details not found!',
                     });
                 }
             }
             else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Category id not found!',
                 });
             }
         }
         catch (error) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting category' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting category' });
         }
     }
     async getParentChilledCategory(req, res) {

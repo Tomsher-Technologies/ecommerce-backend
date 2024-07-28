@@ -44,10 +44,11 @@ const networkCreateOrder = async (networkDefaultValues, accessToken, paymentMeth
             referrerPolicy: "no-referrer",
             body: JSON.stringify(networkDefaultValues),
         });
+        const responseData = await response.json();
+        console.log('networkResponse', networkDefaultValues);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const responseData = await response.json();
         return responseData;
     }
     catch (error) {

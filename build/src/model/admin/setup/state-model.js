@@ -24,55 +24,49 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const seoPageSchema = new mongoose_1.Schema({
-    pageId: {
+const stateSchema = new mongoose_1.Schema({
+    countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        required: [true, 'Page Id is required'],
+        required: true,
+        ref: 'Countries',
     },
-    pageReferenceId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        default: null
-    },
-    page: {
+    stateTitle: {
         type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: async function (value) {
+                const count = await this.model('States').countDocuments({ stateTitle: value });
+                return count === 0;
+            },
+            message: 'State title must be unique'
+        },
+        minlength: [3, 'State title must be at least 3 characters long']
+    },
+    slug: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    status: {
+        type: String,
+        required: true
+    },
+    statusAt: {
+        type: Date,
         default: ''
     },
-    metaTitle: {
+    createdBy: {
         type: String,
-        default: ''
-    },
-    metaKeywords: {
-        type: String,
-        default: ''
-    },
-    metaDescription: {
-        type: String,
-        default: ''
-    },
-    ogTitle: {
-        type: String,
-        default: ''
-    },
-    ogDescription: {
-        type: String,
-        default: ''
-    },
-    twitterTitle: {
-        type: String,
-        default: ''
-    },
-    twitterDescription: {
-        type: String,
-        default: ''
+        required: true
     },
     createdAt: {
         type: Date,
-        default: Date.now
     },
     updatedAt: {
         type: Date,
         default: Date.now
     }
 });
-const SeoPageModel = mongoose_1.default.model('SeoPages', seoPageSchema);
-exports.default = SeoPageModel;
+const StateModel = mongoose_1.default.model('States', stateSchema);
+exports.default = StateModel;

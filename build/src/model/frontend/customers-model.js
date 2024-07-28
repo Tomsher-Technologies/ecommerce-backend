@@ -30,6 +30,10 @@ const customerSchema = new mongoose_1.Schema({
         ref: 'Countries',
         required: true,
     },
+    guestUserId: {
+        type: String,
+        default: '',
+    },
     email: {
         type: String,
         required: function () {

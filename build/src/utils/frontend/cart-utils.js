@@ -162,11 +162,11 @@ const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetail
         "action": "PURCHASE",
         "amount": {
             "currencyCode": countryData.currencyCode,
-            "value": cartData.totalAmount
+            "value": cartData.totalAmount * 100
         },
         "emailAddress": customerDetails.email,
         "billingAddress": {
-            "firstName": customerDetails.firstName,
+            "firstName": customerDetails.firstName
         },
         "merchantAttributes": {
             "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`

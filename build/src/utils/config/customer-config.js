@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.customerDetailProject = exports.customerProject = exports.referredWalletTransactionLookup = exports.referrerWalletTransactionLookup = exports.orderWalletTransactionLookup = exports.billingLookup = exports.shippingLookup = exports.groupStage = exports.addField = exports.orderLookup = exports.countriesLookup = exports.whishlistLookup = void 0;
+exports.customerDetailProject = exports.customerProject = exports.referredWalletTransactionLookup = exports.referrerWalletTransactionLookup = exports.orderWalletTransactionLookup = exports.billingLookup = exports.shippingLookup = exports.groupStage = exports.addField = exports.orderLookup = exports.statesLookup = exports.countriesLookup = exports.whishlistLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const wallet_1 = require("../../constants/wallet");
 exports.whishlistLookup = {
@@ -17,6 +17,14 @@ exports.countriesLookup = {
         localField: 'countryId',
         foreignField: '_id',
         as: 'country'
+    }
+};
+exports.statesLookup = {
+    $lookup: {
+        from: `${collections_1.collections.setup.states}`,
+        localField: 'stateId',
+        foreignField: '_id',
+        as: 'state'
     }
 };
 exports.orderLookup = {

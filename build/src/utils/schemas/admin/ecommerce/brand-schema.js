@@ -9,6 +9,7 @@ exports.brandSchema = zod_1.z.object({
     brandBannerImageUrl: zod_1.z.string().optional(),
     brandImage: zod_1.z.any({ required_error: 'Brand image is required' }).nullable(),
     languageValues: zod_1.z.any().optional(),
+    seoData: zod_1.z.any().optional(),
     metaTitle: zod_1.z.string().optional(),
     metaKeywords: zod_1.z.string().optional(),
     metaDescription: zod_1.z.string().optional(),

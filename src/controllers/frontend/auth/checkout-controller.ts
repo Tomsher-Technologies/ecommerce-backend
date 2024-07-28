@@ -551,11 +551,11 @@ class CheckoutController extends BaseController {
                 res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
                 return true
             } else {
-                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${tamaraResponse?.status}`); // failure
+                res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=${paymentStatus}`); // failure
                 return false
             }
         } else {
-            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${tamaraResponse?.status}`); // failure
+            res.redirect(`${process.env.APPURL}/order-response/${paymentDetails?.orderId}?status=${paymentStatus}`); // failure
             return false
         }
 

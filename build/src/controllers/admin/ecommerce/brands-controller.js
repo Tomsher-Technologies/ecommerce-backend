@@ -4,16 +4,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
+const mongoose_1 = __importDefault(require("mongoose"));
 const helpers_1 = require("../../../utils/helpers");
 const brand_schema_1 = require("../../../utils/schemas/admin/ecommerce/brand-schema");
 const multi_languages_1 = require("../../../constants/multi-languages");
 const task_log_1 = require("../../../constants/admin/task-log");
+const seo_page_1 = require("../../../constants/admin/seo-page");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const brands_service_1 = __importDefault(require("../../../services/admin/ecommerce/brands-service"));
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const collections_brands_service_1 = __importDefault(require("../../../services/admin/website/collections-brands-service"));
+const seo_page_service_1 = __importDefault(require("../../../services/admin/seo-page-service"));
 const controller = new base_controller_1.default();
 class BrandsController extends base_controller_1.default {
     async findAll(req, res) {
@@ -122,7 +124,7 @@ class BrandsController extends base_controller_1.default {
             const validatedData = brand_schema_1.brandSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { brandTitle, slug, description, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
+                const { brandTitle, slug, description, seoData, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
                 const brandImage = req.files.find((file) => file.fieldname === 'brandImage');
                 const brandBannerImage = req.files.find((file) => file.fieldname === 'brandBannerImage');
@@ -174,6 +176,9 @@ class BrandsController extends base_controller_1.default {
                                 }
                             });
                         });
+                    }
+                    if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                        await seo_page_service_1.default.insertOrUpdateSeoDataWithCountryId(newBrand._id, seoData, seo_page_1.seoPage.ecommerce.brands);
                     }
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
@@ -252,7 +257,7 @@ class BrandsController extends base_controller_1.default {
                 if (brandId) {
                     const brandImage = req.files.find((file) => file.fieldname === 'brandImage');
                     const brandBannerImage = req.files.find((file) => file.fieldname === 'brandBannerImage');
-                    let updatedBrandData = req.body;
+                    let { seoData, ...updatedBrandData } = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
                         brandTitle: await (0, helpers_1.capitalizeWords)(updatedBrandData.brandTitle),
@@ -304,6 +309,9 @@ class BrandsController extends base_controller_1.default {
                             mapped[key] = updatedBrand[key];
                             return mapped;
                         }, {});
+                        if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                            await seo_page_service_1.default.insertOrUpdateSeoDataWithCountryId(updatedBrand._id, seoData, seo_page_1.seoPage.ecommerce.brands);
+                        }
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedBrandMapped,

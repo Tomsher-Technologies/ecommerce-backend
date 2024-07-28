@@ -136,6 +136,21 @@ class SeoPageService {
             return null;
         }
     }
+    async insertOrUpdateSeoDataWithCountryId(pageId, seoData, page) {
+        for (const seo of seoData) {
+            const { countryId, ...fields } = seo;
+            if (Object.values(fields).some(field => field !== '')) {
+                await seo_page_model_1.default.findOneAndUpdate({
+                    page: page,
+                    pageReferenceId: countryId,
+                    pageId: pageId,
+                }, {
+                    ...fields,
+                    updatedAt: new Date()
+                }, { upsert: true, new: true });
+            }
+        }
+    }
     async update(seoPageId, seoPageData) {
         const updatedSeoPage = await seo_page_model_1.default.findByIdAndUpdate(seoPageId, seoPageData, { new: true, useFindAndModify: false });
         if (updatedSeoPage) {
@@ -156,14 +171,12 @@ class SeoPageService {
     }
     async seoPageService(pageId, seoDetails, page, pageReferenceId) {
         try {
-            // console.log("seoDetails:", seoDetails, pageId);
             if (pageId) {
                 if (seoDetails) {
                     if (seoDetails._id != '') {
                         await seo_page_model_1.default.findByIdAndUpdate(seoDetails._id, { ...seoDetails, pageId: pageId });
                     }
                     else {
-                        console.log("seoDetailsseoDetailsseoDetails:", seoDetails);
                         await this.create({
                             metaTitle: seoDetails.metaTitle,
                             metaKeywords: seoDetails.metaKeywords,

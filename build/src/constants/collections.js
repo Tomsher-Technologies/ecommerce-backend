@@ -42,6 +42,7 @@ exports.collections = {
         stores: 'stores'
     },
     setup: {
-        countries: 'countries'
+        countries: 'countries',
+        states: 'states',
     }
 };
