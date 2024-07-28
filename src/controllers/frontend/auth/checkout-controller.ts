@@ -187,7 +187,7 @@ class CheckoutController extends BaseController {
                                     billingAddressDetails
                                 );
                                 const tamaraResponse = await tamaraCheckout(tamaraDefaultValues, paymentMethod.paymentMethodValues);
-                                
+
                                 if (!tamaraResponse) {
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
@@ -259,6 +259,7 @@ class CheckoutController extends BaseController {
                                     products: cartDetails?.products
                                 },
                                     customerDetails);
+
                                 const networkResult = await networkCreateOrder(networkDefaultValues, networkResponse.access_token, paymentMethod.paymentMethodValues);
                                 if (networkResult && networkResult._links && networkResult._links.payment) {
                                     const paymentTransaction = await PaymentTransactionModel.create({

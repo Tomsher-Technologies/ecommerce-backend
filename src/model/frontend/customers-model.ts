@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface CustomrProps extends Document {
     countryId: Schema.Types.ObjectId;
+    guestUserId?: string
     email: string;
     firstName: string;
     countryCode: string;
@@ -32,6 +33,10 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Countries',
         required: true,
+    },
+    guestUserId: {
+        type: String,
+        default: '',
     },
     email: {
         type: String,

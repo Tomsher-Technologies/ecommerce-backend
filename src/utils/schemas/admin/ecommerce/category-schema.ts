@@ -10,6 +10,7 @@ export const categorySchema = zod.object({
     status: zod.string().optional(),
     slug: zod.any().optional(),
     level: zod.any().optional(),
+    seoData: zod.any().optional(),
     metaTitle: zod.string().optional(),
     metaKeywords: zod.string().optional(),
     metaDescription: zod.string().optional(),

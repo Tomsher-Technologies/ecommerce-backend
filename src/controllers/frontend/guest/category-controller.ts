@@ -1,12 +1,15 @@
 import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 
+import { seoPage } from '../../../constants/admin/seo-page';
+import { CategoryQueryParams } from '../../../utils/types/category';
+
 import BaseController from '../../../controllers/admin/base-controller';
 import CategoryService from '../../../services/frontend/guest/category-service'
 import CommonService from '../../../services/frontend/guest/common-service'
-import { CategoryQueryParams } from '../../../utils/types/category';
-const controller = new BaseController();
+import SeoPageModel from '../../../model/admin/seo-page-model';
 
+const controller = new BaseController();
 class CategoryController extends BaseController {
     async findAllCategory(req: Request, res: Response): Promise<void> {
         try {
@@ -64,13 +67,34 @@ class CategoryController extends BaseController {
         try {
             const categoryId = req.params.slug;
             if (categoryId) {
-                const category = await CategoryService.findOne(categoryId, req.get('origin'));
-                controller.sendSuccessResponse(res, {
+                const category: any = await CategoryService.findOne(categoryId, req.get('origin'));
+
+                const { getSeo = '0' } = req.query as { getSeo?: string }
+                if (getSeo === '1' && category) {
+                    const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+                    const seoQuery = {
+                        _id: { $exists: true },
+                        pageId: category._id,
+                        pageReferenceId: new mongoose.Types.ObjectId(countryId),
+                        page: seoPage.ecommerce.categories,
+                    };
+                    const seoDetails = await SeoPageModel.find(seoQuery);
+                    if (seoDetails && seoDetails.length > 0) {
+                        const seoFields = ['metaTitle', 'metaKeywords', 'metaDescription', 'ogTitle', 'ogDescription', 'twitterTitle', 'twitterDescription'];
+                        const seoData: any = seoDetails[0];
+                        seoFields.forEach((field: string) => {
+                            if (seoData[field] && seoData[field] !== '') {
+                                category[field] = seoData[field];
+                            }
+                        });
+                    }
+                }
+                return controller.sendSuccessResponse(res, {
                     requestedData: category,
                     message: 'Success'
                 });
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Category Id not found!',
                 });
             }

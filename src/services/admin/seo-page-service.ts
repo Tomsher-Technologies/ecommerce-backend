@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../components/pagination';
 
 import SeoPageModel, { SeoPageProps } from '../../model/admin/seo-page-model';
@@ -69,10 +70,8 @@ class SeoPageService {
                     pageReferenceId: seoPage.pageReferenceId,
                     page: seoPage.page,
                 });
-
                 let seoValue: any = {};
                 if (existingEntries) {
-
                     const filter = {
                         pageId: seoPage.pageId,
                         pageReferenceId: seoPage.pageReferenceId,
@@ -93,24 +92,16 @@ class SeoPageService {
                             createdAt: new Date()
                         }
                     };
-
                     const options = {
                         upsert: false,
                         new: true
                     };
-
                     seoValue = await SeoPageModel.findOneAndUpdate(filter, update, options);
                     return seoValue
-
                 } else {
-
-
                     const isEmptyValue = Object.values(seoPage).some(value => (value !== ''));
-
                     if (isEmptyValue) {
-
                         const seoPageData = {
-
                             pageId: seoPage.pageId,
                             pageReferenceId: seoPage.pageReferenceId,
                             page: seoPage.page,
@@ -123,12 +114,9 @@ class SeoPageService {
                             twitterDescription: seoPage?.twitterDescription,
                             createdAt: new Date()
                         };
-
                         seoValue = await SeoPageModel.create(seoPageData);
                     }
-                    return seoValue 
-
-
+                    return seoValue
                 }
             } else {
                 return null
@@ -138,7 +126,6 @@ class SeoPageService {
         }
     }
     async find(pageId: string): Promise<SeoPageProps[]> {
-
         return SeoPageModel.find({ pageId: pageId })
     }
 
@@ -149,12 +136,29 @@ class SeoPageService {
                 this.lookup,
                 this.project
             ];
-
             const seoPageDataWithValues = await SeoPageModel.aggregate(pipeline);
-
             return seoPageDataWithValues[0];
         } else {
             return null;
+        }
+    }
+    async insertOrUpdateSeoDataWithCountryId(pageId: ObjectId, seoData: any, page: string): Promise<any> {
+        for (const seo of seoData) {
+            const { countryId, ...fields } = seo;
+            if (Object.values(fields).some(field => field !== '')) {
+                await SeoPageModel.findOneAndUpdate(
+                    {
+                        page: page,
+                        pageReferenceId: countryId,
+                        pageId: pageId,
+                    },
+                    {
+                        ...fields,
+                        updatedAt: new Date()
+                    },
+                    { upsert: true, new: true }
+                );
+            }
         }
     }
 
@@ -164,16 +168,13 @@ class SeoPageService {
             seoPageData,
             { new: true, useFindAndModify: false }
         );
-
         if (updatedSeoPage) {
             const pipeline = [
                 { $match: { _id: updatedSeoPage._id } },
                 this.lookup,
                 this.project
             ];
-
             const updatedSeoPageWithValues = await SeoPageModel.aggregate(pipeline);
-
             return updatedSeoPageWithValues[0];
         } else {
             return null;
@@ -185,16 +186,12 @@ class SeoPageService {
     }
     async seoPageService(pageId: string | null, seoDetails: any, page: string, pageReferenceId: string): Promise<SeoPageProps[]> {
         try {
-            // console.log("seoDetails:", seoDetails, pageId);
-
             if (pageId) {
                 if (seoDetails) {
                     if (seoDetails._id != '') {
                         await SeoPageModel.findByIdAndUpdate(seoDetails._id, { ...seoDetails, pageId: pageId });
                     }
                     else {
-                        console.log("seoDetailsseoDetailsseoDetails:", seoDetails);
-
                         await this.create({
                             metaTitle: seoDetails.metaTitle,
                             metaKeywords: seoDetails.metaKeywords,

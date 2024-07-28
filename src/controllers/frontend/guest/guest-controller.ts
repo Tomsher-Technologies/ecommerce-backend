@@ -248,9 +248,10 @@ class GuestController extends BaseController {
                         { $or: [{ email }, { phone }] }
                     ]
                 }).lean();
-
+                const uuid = req.header('User-Token');
                 if (!newCustomer) {
                     const customerData = {
+                        guestUserId: uuid,
                         countryId,
                         firstName: "Guest",
                         email,
@@ -266,7 +267,8 @@ class GuestController extends BaseController {
                     newCustomer = await CustomerService.create(customerData);
                 } else {
                     newCustomer = await CustomerService.update(newCustomer._id, {
-                        guestRegisterCount: (newCustomer.guestRegisterCount + 1),
+                        guestUserId: uuid,
+                        guestRegisterCount: ((newCustomer?.guestRegisterCount > 0 ? newCustomer.guestRegisterCount + 1 : 1) || 1),
                         isGuest: true,
                         otp: generateOTP(4),
                         otpExpiry,

@@ -8,12 +8,14 @@ import { BrandQueryParams } from '../../../utils/types/brands';
 import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import { seoPage } from '../../../constants/admin/seo-page';
+import SeoPageModel from '../../../model/admin/seo-page-model';
 const controller = new BaseController();
 
 class BrandController extends BaseController {
     async findAllBrand(req: Request, res: Response): Promise<void> {
         try {
-            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '' } = req.query as BrandQueryParams;
+            const { category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getSeo = '0' } = req.query as BrandQueryParams;
             let query: any = {}
 
             query.status = '1';
@@ -80,10 +82,28 @@ class BrandController extends BaseController {
                         }
                     }
                 }
-                const brands = await BrandService.findAll({
+                let brands: any = await BrandService.findAll({
                     hostName: req.get('origin'),
                     query,
                 }, collectionId);
+                if (getSeo === '1' && brands && brands.length === 1) {
+                    const seoQuery = {
+                        _id: { $exists: true },
+                        pageId: brands[0]._id,
+                        pageReferenceId: new mongoose.Types.ObjectId(countryId),
+                        page: seoPage.ecommerce.brands,
+                    };
+                    const seoDetails = await SeoPageModel.find(seoQuery);
+                    if (seoDetails && seoDetails.length > 0) {
+                        const seoFields = ['metaTitle', 'metaKeywords', 'metaDescription', 'ogTitle', 'ogDescription', 'twitterTitle', 'twitterDescription'];
+                        const seoData: any = seoDetails[0];
+                        seoFields.forEach((field: string) => {
+                            if (seoData[field] && seoData[field] !== '') {
+                                brands[0][field] = seoData[field];
+                            }
+                        });
+                    }
+                }
                 return controller.sendSuccessResponse(res, {
                     requestedData: brands,
                     message: 'Success!'

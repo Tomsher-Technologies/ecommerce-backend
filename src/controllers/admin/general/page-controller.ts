@@ -10,7 +10,6 @@ class PageController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-
             return controller.sendSuccessResponse(res, {
                 requestedData: {
                     page: page,
