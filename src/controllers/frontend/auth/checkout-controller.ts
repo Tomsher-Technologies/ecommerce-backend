@@ -539,14 +539,12 @@ class CheckoutController extends BaseController {
             { new: true, runValidators: true }
         );
         if (tamaraResponse.status === tamaraPaymentGatwayStatus.authorised) {
-
             const retValResponse = await CheckoutService.paymentResponse({
                 paymentDetails,
                 allPaymentResponseData: tamaraResponse,
                 paymentStatus: (tamaraResponse.status === tamaraPaymentGatwayStatus.authorised || tamaraResponse.status === tamaraPaymentGatwayStatus.approved) ?
                     orderPaymentStatus.success : ((tamaraResponse.status === tamaraPaymentGatwayStatus.declined) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
             });
-
             if (retValResponse.status) {
                 res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
                 return true
