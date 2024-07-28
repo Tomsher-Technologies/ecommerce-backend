@@ -186,7 +186,10 @@ class CheckoutController extends BaseController {
                                     shippingAddressDetails,
                                     billingAddressDetails
                                 );
+                                console.log('tamaraDefaultValues', JSON.stringify(tamaraDefaultValues));
                                 const tamaraResponse = await tamaraCheckout(tamaraDefaultValues, paymentMethod.paymentMethodValues);
+                                console.log('tamaraResponse',tamaraResponse);
+                                
                                 if (!tamaraResponse) {
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
