@@ -17,8 +17,8 @@ export const tamaraCheckout = async (tamaraDefaultValues: any, paymentMethodValu
             body: JSON.stringify(tamaraDefaultValues),
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response) {
+            throw new Error(`HTTP error! status: ${(response as any)?.status}`);
         }
         const responseData = await response.json();
 
