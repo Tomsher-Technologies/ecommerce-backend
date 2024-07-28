@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.tamaraAutoriseOrder = exports.tamaraCheckout = void 0;
 const tamaraCheckout = async (tamaraDefaultValues, paymentMethodValues) => {
     try {
-        console.log('process.env.TAMARA_API_URL', process.env.TAMARA_API_URL);
+        console.log('process.env.TAMARA_API_URL', paymentMethodValues.liveApiKey);
         const response = await fetch(`${process.env.TAMARA_API_URL}/checkout`, {
             method: "POST",
             mode: "cors",
