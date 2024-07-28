@@ -15,4 +15,5 @@ export type BrandQueryParams = {
     collectionbrand?: any;
     collectioncategory?: any
     slug?: string;
+    getSeo?: string;
 }

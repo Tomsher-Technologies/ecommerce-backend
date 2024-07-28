@@ -1,19 +1,20 @@
 import 'module-alias/register';
+import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 
 import { capitalizeWords, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
 import { brandSchema, brandStatusSchema, updateWebsitePrioritySchema } from '../../../utils/schemas/admin/ecommerce/brand-schema';
-import { QueryParams } from '../../../utils/types/common';
 import { BrandQueryParams } from '../../../utils/types/brands';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { seoPage } from '../../../constants/admin/seo-page';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import BrandsService from '../../../services/admin/ecommerce/brands-service'
 import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-model';
 import GeneralService from '../../../services/admin/general-service';
-import mongoose from 'mongoose';
 import CollectionsBrandsService from '../../../services/admin/website/collections-brands-service';
+import SeoPageService from '../../../services/admin/seo-page-service';
 
 const controller = new BaseController();
 
@@ -132,7 +133,7 @@ class BrandsController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const { brandTitle, slug, description, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
+                const { brandTitle, slug, description, seoData, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
 
                 const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
@@ -194,6 +195,10 @@ class BrandsController extends BaseController {
                                 }
                             })
                         })
+                    }
+
+                    if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                        await SeoPageService.insertOrUpdateSeoDataWithCountryId(newBrand._id, seoData, seoPage.ecommerce.brands)
                     }
 
                     return controller.sendSuccessResponse(res, {
@@ -270,8 +275,7 @@ class BrandsController extends BaseController {
                 if (brandId) {
                     const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
                     const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
-
-                    let updatedBrandData = req.body;
+                    let { seoData, ...updatedBrandData } = req.body;
                     updatedBrandData = {
                         ...updatedBrandData,
                         brandTitle: await capitalizeWords(updatedBrandData.brandTitle),
@@ -282,7 +286,6 @@ class BrandsController extends BaseController {
 
                     const updatedBrand: any = await BrandsService.update(brandId, updatedBrandData);
                     if (updatedBrand) {
-
                         const languageValuesImages = (req as any).files.filter((file: any) =>
                             file.fieldname &&
                             file.fieldname.startsWith('languageValues[') &&
@@ -332,6 +335,10 @@ class BrandsController extends BaseController {
                             mapped[key] = updatedBrand[key];
                             return mapped;
                         }, {});
+
+                        if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                            await SeoPageService.insertOrUpdateSeoDataWithCountryId(updatedBrand._id, seoData, seoPage.ecommerce.brands)
+                        }
 
                         return controller.sendSuccessResponse(res, {
                             requestedData: {

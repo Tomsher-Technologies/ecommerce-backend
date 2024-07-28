@@ -7,6 +7,7 @@ export const brandSchema = zod.object({
     brandBannerImageUrl: zod.string().optional(),
     brandImage: zod.any({ required_error: 'Brand image is required' }).nullable(),
     languageValues: zod.any().optional(),
+    seoData: zod.any().optional(),
     metaTitle: zod.string().optional(),
     metaKeywords: zod.string().optional(),
     metaDescription: zod.string().optional(),

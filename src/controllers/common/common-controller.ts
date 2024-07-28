@@ -7,7 +7,6 @@ import WebsiteSetupModel from "../../model/admin/setup/website-setup-model";
 import { blockReferences } from "../../constants/website-setup";
 
 const controller = new BaseController();
-
 class CommonController extends BaseController {
 
 

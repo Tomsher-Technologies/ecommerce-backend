@@ -4,8 +4,7 @@ import GeneralController from '../../../src/controllers/admin/general/general-co
 
 const router: Router = express.Router();
 
-
-
 router.get('/website-settings', GeneralController.getGeneralSettings);
+router.get('/page-seo-details', GeneralController.getPageSeoDetails);
 
 export default router;

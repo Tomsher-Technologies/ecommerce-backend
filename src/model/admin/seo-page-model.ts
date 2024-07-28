@@ -18,12 +18,11 @@ export interface SeoPageProps extends Document {
 const seoPageSchema: Schema<SeoPageProps> = new Schema({
     pageId: {
         type: Schema.Types.ObjectId,
-        required: [true, 'Product Id is required'],
-        ref: 'Products', // Reference to the Product model
+        required: [true, 'Page Id is required'],
     },
     pageReferenceId: {
         type: Schema.Types.ObjectId,
-        ref: 'ProductVariant',
+        default: null
     },
     page: {
         type: String,

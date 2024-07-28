@@ -133,7 +133,6 @@ class CommonService {
             if (allCountryData && allCountryData.length > 0) {
                 const normalizedHostname = countrySubDomain?.toLowerCase();
                 const regex = new RegExp(`^${normalizedHostname}$`, 'i');
-
                 const countryData: any = countrySubDomain && allCountryData.find((country: any) => regex.test(country?.countrySubDomain));
                 if (countryData) {
                     return returnCountry ? countryData : countryData._id

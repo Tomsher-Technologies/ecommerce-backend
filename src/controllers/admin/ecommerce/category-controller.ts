@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import 'module-alias/register';
 
-import { capitalizeWords, categorySlugify, categorySlugifyManually, formatZodError, handleFileUpload, slugify } from '../../../utils/helpers';
+import { capitalizeWords, categorySlugifyManually, formatZodError, handleFileUpload } from '../../../utils/helpers';
 import { categorySchema, updateWebsitePrioritySchema, categoryStatusSchema } from '../../../utils/schemas/admin/ecommerce/category-schema';
 import { CategoryQueryParams } from '../../../utils/types/category';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -13,6 +13,8 @@ import CategoryService from '../../../services/admin/ecommerce/category-service'
 import GeneralService from '../../../services/admin/general-service';
 import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/category-model';
 import CollectionsCategoriesService from '../../../services/admin/website/collections-categories-service';
+import { seoPage } from '../../../constants/admin/seo-page';
+import SeoPageService from '../../../services/admin/seo-page-service';
 
 const controller = new BaseController();
 
@@ -218,11 +220,9 @@ class CategoryController extends BaseController {
     async create(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = categorySchema.safeParse(req.body);
-
             if (validatedData.success) {
-                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
+                const { categoryTitle, slug, description, corporateGiftsPriority, type, level, parentCategory, seoData, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, metaImage, twitterTitle, twitterDescription, languageValues, status } = validatedData.data;
                 const user = res.locals.user;
-
                 const category = parentCategory ? await CategoryService.findParentCategory(parentCategory) : null;
                 var slugData
                 var data: any = []
@@ -233,10 +233,7 @@ class CategoryController extends BaseController {
                     data = category?.slug + "-" + categorySlugifyManually(categoryTitle)
                 }
                 slugData = data
-
-
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
-
                 const categoryData = {
                     categoryTitle: capitalizeWords(categoryTitle),
                     slug: slugData || slug,
@@ -257,9 +254,7 @@ class CategoryController extends BaseController {
                     twitterDescription: twitterDescription as string,
                     ['status' as string]: status || '1',
                 };
-
                 const newCategory = await CategoryService.create(categoryData);
-
                 if (newCategory) {
                     const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
                         file.fieldname &&
@@ -284,6 +279,10 @@ class CategoryController extends BaseController {
                                 }
                             })
                         })
+                    }
+
+                    if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                        await SeoPageService.insertOrUpdateSeoDataWithCountryId(newCategory._id, seoData, seoPage.ecommerce.categories)
                     }
 
                     return controller.sendSuccessResponse(res, {
@@ -351,11 +350,8 @@ class CategoryController extends BaseController {
 
                 if (categoryId) {
                     const categoryImage = (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
-
-                    let updatedCategoryData = req.body;
-
+                    let { seoData, ...updatedCategoryData } = req.body;
                     const updatedCategory: any = await CategoryService.findOne(categoryId);
-
                     updatedCategoryData = {
                         ...updatedCategoryData,
                         categoryTitle: capitalizeWords(updatedCategoryData.categoryTitle),
@@ -367,7 +363,6 @@ class CategoryController extends BaseController {
                     };
 
                     if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData) {
-
                         const updatedSlugCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
                         if (updatedSlugCategory) {
                             await CategoryService.findSubCategory(updatedSlugCategory)
@@ -375,27 +370,23 @@ class CategoryController extends BaseController {
                     }
 
                     if (updatedCategory) {
-
                         const languageValuesImages = (req as any).files.filter((file: any) =>
                             file.fieldname &&
                             file.fieldname.startsWith('languageValues[') &&
                             file.fieldname.includes('[categoryImage]')
                         );
-
                         let newLanguageValues: any = []
                         if (updatedCategoryData.languageValues && Array.isArray(updatedCategoryData.languageValues) && updatedCategoryData.languageValues.length > 0) {
                             for (let i = 0; i < updatedCategoryData.languageValues.length; i++) {
                                 const languageValue = updatedCategoryData.languageValues[i];
                                 let categoryImageUrl = '';
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
-
                                 if (languageValuesImages.length > 0 && matchingImage) {
                                     const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.categories, updatedCategory._id, languageValue.languageId);
                                     categoryImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `categoryImageUrl`, 'category');
                                 } else {
                                     categoryImageUrl = updatedCategoryData.languageValues[i].languageValues?.categoryImageUrl
                                 }
-
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(updatedCategory._id, {
                                     ...languageValue,
                                     languageValues: {
@@ -406,14 +397,14 @@ class CategoryController extends BaseController {
                                 newLanguageValues.push(languageValues);
                             }
                         }
-
                         const updatedCategoryMapped = Object.keys(updatedCategory).reduce((mapped: any, key: string) => {
                             mapped[key] = updatedCategory[key];
                             return mapped;
                         }, {});
-
-
-                        controller.sendSuccessResponse(res, {
+                        if (seoData && Array.isArray(seoData) && seoData.length > 0) {
+                            await SeoPageService.insertOrUpdateSeoDataWithCountryId(updatedCategory._id, seoData, seoPage.ecommerce.categories)
+                        }
+                        return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedCategoryMapped,
                                 message: 'Category updated successfully!'
@@ -425,23 +416,23 @@ class CategoryController extends BaseController {
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Category Id not found!',
                         }, req);
                     }
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Category Id not found! Please try again with category id',
                     }, req);
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, {
+            return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating category'
             }, req);
         }
@@ -453,23 +444,23 @@ class CategoryController extends BaseController {
             if (categoryId) {
                 const category = await CategoryService.findOne(categoryId);
                 if (category) {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'Cant to be delete category!!',
                     });
                     // await CategoryService.destroy(categoryId);
                     // controller.sendSuccessResponse(res, { message: 'Category deleted successfully!' });
                 } else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This Category details not found!',
                     });
                 }
             } else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Category id not found!',
                 });
             }
         } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting category' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting category' });
         }
     }
 

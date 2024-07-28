@@ -4,7 +4,7 @@ export interface CartOrderProps extends Document {
     countryId: Schema.Types.ObjectId;
     customerId: Schema.Types.ObjectId;
     guestUserId: string;
-    orderUuid: string;
+    orderUuid: string; // customer guest uuid
     orderId: string;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
