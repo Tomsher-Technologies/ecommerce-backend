@@ -18,7 +18,7 @@ class CityService {
             { $limit: limit },
         ];
 
-        if (sort) {
+        if (Object.keys(sort).length > 0) {
             aggregationPipeline.push({ $sort: sort });
         }
 
@@ -34,12 +34,44 @@ class CityService {
         }
     }
 
-    async creatCitye(cityData: any): Promise<CityProps> {
-        return CityModel.create(cityData);
+    async creatCitye(cityData: any): Promise<CityProps | null> {
+        const createdCity = await CityModel.create(cityData);
+        if (createdCity) {
+            const pipeline = [
+                { $match: { _id: createdCity._id } },
+                countriesLookup,
+                { $unwind: '$country' },
+                statesLookup,
+                { $unwind: '$state' },
+            ];
+
+            const createdCityWithValues = await CityModel.aggregate(pipeline);
+
+            return createdCityWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async updateCity(cityId: string, cityData: any): Promise<CityProps | null> {
-        return CityModel.findByIdAndUpdate(cityId, cityData, { new: true, useFindAndModify: false });
+        const updatedBannner = await CityModel.findByIdAndUpdate(
+            cityId,
+            cityData,
+            { new: true, useFindAndModify: false }
+        );
+        if (updatedBannner) {
+            const pipeline = [
+                { $match: { _id: updatedBannner._id } },
+                countriesLookup,
+                { $unwind: '$country' },
+                statesLookup,
+                { $unwind: '$state' },
+            ];
+            const updatedBannnerWithValues = await CityModel.aggregate(pipeline);
+            return updatedBannnerWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async destroyCity(cityId: string): Promise<CityProps | null> {

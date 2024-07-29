@@ -23,6 +23,7 @@ const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model")
 const product_variants_model_1 = __importDefault(require("../../model/admin/ecommerce/product/product-variants-model"));
 const smtp_nodemailer_gateway_1 = require("../../lib/emails/smtp-nodemailer-gateway");
 const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
+const country_model_1 = __importDefault(require("../../model/admin/setup/country-model"));
 class CheckoutService {
     async paymentResponse(options) {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
@@ -248,6 +249,7 @@ class CheckoutService {
                     }
                     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
                     const tax = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
+                    const currencyCode = await country_model_1.default.findOne({ _id: cartDetails.countryId }, 'currencyCode');
                     const options = {
                         wordwrap: 130,
                         // ...
@@ -258,6 +260,12 @@ class CheckoutService {
                         totalAmount: cartUpdate.totalAmount,
                         totalShippingAmount: cartDetails.totalShippingAmount,
                         totalProductAmount: cartDetails.totalProductAmount,
+                        totalTaxAmount: cartDetails.totalTaxAmount,
+                        totalProductOriginalPrice: cartDetails.totalProductOriginalPrice,
+                        totalGiftWrapAmount: cartDetails.totalGiftWrapAmount,
+                        totalCouponAmount: cartDetails.totalCouponAmount,
+                        totalDiscountAmount: cartDetails.totalDiscountAmount,
+                        paymentMethodCharge: cartDetails.paymentMethodCharge,
                         orderComments: cartDetails?.orderComments,
                         paymentMethod: paymentMethodDetails?.paymentMethodTitle,
                         shippingAddressDetails: {
@@ -272,6 +280,7 @@ class CheckoutService {
                             landlineNumber: shippingAddressDetails?.landlineNumber,
                             email: customerDetails.email
                         },
+                        currencyCode: currencyCode?.currencyCode,
                         expectedDeliveryDate,
                         socialMedia,
                         appUrls,
@@ -285,6 +294,7 @@ class CheckoutService {
                         tax: tax
                     }, async (err, template) => {
                         if (err) {
+                            console.log("err", err);
                         }
                         if (process.env.SHOPNAME === 'Timehouse') {
                             const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({

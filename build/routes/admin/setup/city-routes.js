@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const auth_middleware_1 = __importDefault(require("../../../middleware/admin/auth-middleware"));
+const admin_user_permission_roll_middleware_1 = __importDefault(require("../../../middleware/admin/admin-user-permission-roll-middleware"));
+const response_status_1 = require("../../../src/components/response-status");
+const permission_blocks_1 = require("../../../src/constants/permission-blocks");
+const city_controller_1 = __importDefault(require("../../../src/controllers/admin/setup/city-controller"));
+const router = express_1.default.Router();
+router.use(auth_middleware_1.default);
+router.get('/', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.setup.state, readOnly: 1 }), city_controller_1.default.findAllCity);
+router.get('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.setup.state, readOnly: 1 }), city_controller_1.default.findOneCity);
+router.get('city-state/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.setup.state, readOnly: 1 }), city_controller_1.default.findOneCityFromState);
+router.post('/', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.setup.state, writeOnly: 1 }), response_status_1.logResponseStatus, city_controller_1.default.createCity);
+router.post('/:id', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.setup.state, writeOnly: 1 }), city_controller_1.default.updateCity);
+router.post('/status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.setup.state, writeOnly: 1 }), city_controller_1.default.statusChangeCity);
+exports.default = router;

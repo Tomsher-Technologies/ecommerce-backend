@@ -16,10 +16,9 @@ class StateService {
             { $limit: limit },
         ];
 
-        if (sort) {
+        if (Object.keys(sort).length > 0) {
             aggregationPipeline.push({ $sort: sort });
         }
-
         return StateModel.aggregate(aggregationPipeline).exec();
     }
 
@@ -32,12 +31,42 @@ class StateService {
         }
     }
 
-    async creatStatee(stateData: any): Promise<StateProps> {
-        return StateModel.create(stateData);
+    async creatState(stateData: any): Promise<StateProps | null> {
+        const createdState = await StateModel.create(stateData);
+        if (createdState) {
+            const pipeline = [
+                { $match: { _id: createdState._id } },
+                countriesLookup,
+                { $unwind: '$country' },
+            ];
+
+            const createdStateWithValues = await StateModel.aggregate(pipeline);
+
+            return createdStateWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async updateState(stateId: string, stateData: any): Promise<StateProps | null> {
-        return StateModel.findByIdAndUpdate(stateId, stateData, { new: true, useFindAndModify: false });
+        const updatedBannner = await StateModel.findByIdAndUpdate(
+            stateId,
+            stateData,
+            { new: true, useFindAndModify: false }
+        );
+        if (updatedBannner) {
+            const pipeline = [
+                { $match: { _id: updatedBannner._id } },
+                countriesLookup,
+                { $unwind: '$country' },
+            ];
+
+            const updatedBannnerWithValues = await StateModel.aggregate(pipeline);
+
+            return updatedBannnerWithValues[0];
+        } else {
+            return null;
+        }
     }
 
     async destroyState(stateId: string): Promise<StateProps | null> {

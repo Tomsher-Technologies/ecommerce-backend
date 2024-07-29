@@ -314,7 +314,7 @@ class OrdersController extends BaseController {
                 });
             }
             let customerDetails: any = null;
-            if (!orderDetails?.isGuest &&orderDetails.customerId) {
+            if (!orderDetails?.isGuest && orderDetails.customerId) {
                 const walletTransactionDetails = await CustomerWalletTransactionsModel.findOne({ orderId: orderDetails._id })
                 customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
                 if (customerDetails) {
@@ -405,7 +405,7 @@ class OrdersController extends BaseController {
                 let query: any = { _id: { $exists: true } };
                 query = {
                     ...query,
-                    countryId: orderDetails.country._id,
+                    countryId: orderDetails.countryId,
                     block: websiteSetup.basicSettings,
                     blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
                     status: '1',
@@ -537,8 +537,8 @@ class OrdersController extends BaseController {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
-                const tax = await TaxsModel.findOne({ countryId: orderDetails[0].countryId, status: "1" })
-                const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].countryId }, 'currencyCode')
+                const tax = await TaxsModel.findOne({ countryId: orderDetails[0].country._id, status: "1" })
+                const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].country._id }, 'currencyCode')
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 

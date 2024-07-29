@@ -315,6 +315,7 @@
             </td>
           </tr>
           <% }); %>
+          <% if (orderDetails.totalProductOriginalPrice> 0) { %>
             <tr class="summary-row">
               <td colspan="5" class="text-right-cell">Sub Total</td>
               <td class="text-right-cell">
@@ -322,6 +323,7 @@
                   <%= orderDetails.totalProductOriginalPrice %>
               </td>
             </tr>
+            <% } %>
             <% if (orderDetails.totalDiscountAmount> 0) { %>
               <tr class="summary-row">
                 <td colspan="5" class="text-right-cell">Discount</td>
@@ -331,6 +333,15 @@
                 </td>
               </tr>
               <% } %>
+              <% if (orderDetails.totalGiftWrapAmount> 0) { %>
+                <tr class="summary-row">
+                  <td colspan="5" class="text-right-cell">Gift Wrap Charge</td>
+                  <td class="text-right-cell">
+                    <%=currencyCode %>
+                      <%= orderDetails.totalGiftWrapAmount %>
+                  </td>
+                </tr>
+                <% } %>
 
                 <!-- <tr class="summary-row">
                   <td colspan="5" class="text-right-cell">Sub Total</td>
@@ -371,7 +382,7 @@
                           <% } %>
 
                             <tr class="summary-row">
-                              <td colspan="5" class="text-right-cell">Total</td>
+                              <td colspan="5" class="text-right-cell">Total (Inclusive of <%= (tax && tax.taxTitle) ? tax.taxTitle : 'Tax' %>)</td>
                               <td class="text-right-cell">
                                 <%=currencyCode %>
                                   <%= orderDetails.totalAmount %>
@@ -380,20 +391,8 @@
       </tbody>
     </table>
 
-    <div class="footer">
-      <button class="btn noprint" onclick="printDiv('invoice')">PRINT</button>
-    </div>
   </div>
 
-  <script>
-    function printDiv(id) {
-      var printContents = document.getElementById(id).innerHTML;
-      var originalContents = document.body.innerHTML;
-      document.body.innerHTML = printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-    }
-  </script>
 </body>
 
 </html>

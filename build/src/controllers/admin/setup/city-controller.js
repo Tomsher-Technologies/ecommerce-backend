@@ -1,10 +1,33 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
-const mongoose_1 = require("mongoose");
+const mongoose_1 = __importStar(require("mongoose"));
 const helpers_1 = require("../../../utils/helpers");
 const city_schema_1 = require("../../../utils/schemas/admin/setup/city-schema");
 const task_log_1 = require("../../../constants/admin/task-log");
@@ -14,13 +37,16 @@ const controller = new base_controller_1.default();
 class CityController extends base_controller_1.default {
     async findAllCity(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { stateId, page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
             let query = { _id: { $exists: true } };
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             }
             else {
                 query.status = '1';
+            }
+            if (stateId) {
+                query.stateId = new mongoose_1.default.Types.ObjectId(stateId);
             }
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
@@ -41,7 +67,7 @@ class CityController extends base_controller_1.default {
                 query,
                 sort
             });
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: cities,
                 totalCount: await city_service_1.default.getCityTotalCount(query),
                 message: 'Success!'
@@ -58,8 +84,8 @@ class CityController extends base_controller_1.default {
                 const { countryId, stateId, cityTitle, slug, } = validatedData.data;
                 const user = res.locals.user;
                 const cityData = {
-                    countryId: new mongoose_1.Schema.Types.ObjectId(countryId),
-                    stateId: new mongoose_1.Schema.Types.ObjectId(stateId),
+                    countryId,
+                    stateId,
                     cityTitle,
                     slug: slug || (0, helpers_1.slugify)(cityTitle),
                     status: '1', // active
@@ -69,15 +95,22 @@ class CityController extends base_controller_1.default {
                     updatedAt: new Date()
                 };
                 const newCity = await city_service_1.default.creatCitye(cityData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newCity,
-                    message: 'City created successfully!'
-                }, 200, {
-                    sourceFromId: newCity._id,
-                    sourceFrom: task_log_1.adminTaskLog.setup.city,
-                    activity: task_log_1.adminTaskLogActivity.create,
-                    activityStatus: task_log_1.adminTaskLogStatus.success
-                });
+                if (newCity) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newCity,
+                        message: 'City created successfully!'
+                    }, 200, {
+                        sourceFromId: newCity._id,
+                        sourceFrom: task_log_1.adminTaskLog.setup.city,
+                        activity: task_log_1.adminTaskLogActivity.create,
+                        activityStatus: task_log_1.adminTaskLogStatus.success
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Something went wrong, please try again!',
+                    }, req);
+                }
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
@@ -117,8 +150,28 @@ class CityController extends base_controller_1.default {
                 });
             }
             else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'City Id not found!',
+                });
+            }
+        }
+        catch (error) {
+            controller.sendErrorResponse(res, 500, { message: error.message });
+        }
+    }
+    async findOneCityFromState(req, res) {
+        try {
+            const stateId = req.params.id;
+            if (stateId) {
+                const city = await city_service_1.default.findOneCity({ stateId: new mongoose_1.Schema.Types.ObjectId(stateId) });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: city,
+                    message: 'Success'
+                });
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'State Id not found!',
                 });
             }
         }
@@ -139,7 +192,7 @@ class CityController extends base_controller_1.default {
                     };
                     const updatedCity = await city_service_1.default.updateCity(cityId, updatedCityData);
                     if (updatedCity) {
-                        controller.sendSuccessResponse(res, {
+                        return controller.sendSuccessResponse(res, {
                             requestedData: updatedCity,
                             message: 'City updated successfully!'
                         }, 200, {
@@ -150,7 +203,7 @@ class CityController extends base_controller_1.default {
                         });
                     }
                     else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'City Id not found!',
                         }, req);
                     }
@@ -162,7 +215,7 @@ class CityController extends base_controller_1.default {
                 }
             }
             else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
                     validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
                 }, req);
@@ -182,13 +235,13 @@ class CityController extends base_controller_1.default {
                 return controller.sendErrorResponse(res, 200, validationError, req);
             }
             else {
-                controller.sendErrorResponse(res, 500, {
+                return controller.sendErrorResponse(res, 500, {
                     message: error.message || 'Some error occurred while updating city'
                 }, req);
             }
         }
     }
-    async statusChange(req, res) {
+    async statusChangeCity(req, res) {
         try {
             const validatedData = city_schema_1.cityStatusSchema.safeParse(req.body);
             if (validatedData.success) {
@@ -239,24 +292,24 @@ class CityController extends base_controller_1.default {
             if (cityId) {
                 const city = await city_service_1.default.findOneCity(cityId);
                 if (city) {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'You cant delete this city!',
                     });
                 }
                 else {
-                    controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'This City details not found!',
                     });
                 }
             }
             else {
-                controller.sendErrorResponse(res, 200, {
+                return controller.sendErrorResponse(res, 200, {
                     message: 'City id not found!',
                 });
             }
         }
         catch (error) {
-            controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting city' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting city' });
         }
     }
 }

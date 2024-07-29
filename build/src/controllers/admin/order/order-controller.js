@@ -380,7 +380,7 @@ class OrdersController extends base_controller_1.default {
                 let query = { _id: { $exists: true } };
                 query = {
                     ...query,
-                    countryId: orderDetails.country._id,
+                    countryId: orderDetails.countryId,
                     block: website_setup_1.websiteSetup.basicSettings,
                     blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
                     status: '1',
@@ -497,8 +497,8 @@ class OrdersController extends base_controller_1.default {
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
-                const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].countryId, status: "1" });
-                const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].countryId }, 'currencyCode');
+                const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].country._id, status: "1" });
+                const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].country._id }, 'currencyCode');
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
                 ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
                     orderDetails: orderDetails[0],

@@ -18,7 +18,7 @@ class CityService {
             { $skip: skip },
             { $limit: limit },
         ];
-        if (sort) {
+        if (Object.keys(sort).length > 0) {
             aggregationPipeline.push({ $sort: sort });
         }
         return city_model_1.default.aggregate(aggregationPipeline).exec();
@@ -33,10 +33,38 @@ class CityService {
         }
     }
     async creatCitye(cityData) {
-        return city_model_1.default.create(cityData);
+        const createdCity = await city_model_1.default.create(cityData);
+        if (createdCity) {
+            const pipeline = [
+                { $match: { _id: createdCity._id } },
+                customer_config_1.countriesLookup,
+                { $unwind: '$country' },
+                customer_config_1.statesLookup,
+                { $unwind: '$state' },
+            ];
+            const createdCityWithValues = await city_model_1.default.aggregate(pipeline);
+            return createdCityWithValues[0];
+        }
+        else {
+            return null;
+        }
     }
     async updateCity(cityId, cityData) {
-        return city_model_1.default.findByIdAndUpdate(cityId, cityData, { new: true, useFindAndModify: false });
+        const updatedBannner = await city_model_1.default.findByIdAndUpdate(cityId, cityData, { new: true, useFindAndModify: false });
+        if (updatedBannner) {
+            const pipeline = [
+                { $match: { _id: updatedBannner._id } },
+                customer_config_1.countriesLookup,
+                { $unwind: '$country' },
+                customer_config_1.statesLookup,
+                { $unwind: '$state' },
+            ];
+            const updatedBannnerWithValues = await city_model_1.default.aggregate(pipeline);
+            return updatedBannnerWithValues[0];
+        }
+        else {
+            return null;
+        }
     }
     async destroyCity(cityId) {
         return city_model_1.default.findOneAndDelete({ _id: cityId });
