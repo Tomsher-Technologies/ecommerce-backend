@@ -16,7 +16,7 @@ class StateService {
             { $skip: skip },
             { $limit: limit },
         ];
-        if (sort) {
+        if (Object.keys(sort).length > 0) {
             aggregationPipeline.push({ $sort: sort });
         }
         return state_model_1.default.aggregate(aggregationPipeline).exec();
@@ -30,11 +30,35 @@ class StateService {
             throw new Error('Error fetching total count of states');
         }
     }
-    async creatStatee(stateData) {
-        return state_model_1.default.create(stateData);
+    async creatState(stateData) {
+        const createdState = await state_model_1.default.create(stateData);
+        if (createdState) {
+            const pipeline = [
+                { $match: { _id: createdState._id } },
+                customer_config_1.countriesLookup,
+                { $unwind: '$country' },
+            ];
+            const createdStateWithValues = await state_model_1.default.aggregate(pipeline);
+            return createdStateWithValues[0];
+        }
+        else {
+            return null;
+        }
     }
     async updateState(stateId, stateData) {
-        return state_model_1.default.findByIdAndUpdate(stateId, stateData, { new: true, useFindAndModify: false });
+        const updatedBannner = await state_model_1.default.findByIdAndUpdate(stateId, stateData, { new: true, useFindAndModify: false });
+        if (updatedBannner) {
+            const pipeline = [
+                { $match: { _id: updatedBannner._id } },
+                customer_config_1.countriesLookup,
+                { $unwind: '$country' },
+            ];
+            const updatedBannnerWithValues = await state_model_1.default.aggregate(pipeline);
+            return updatedBannnerWithValues[0];
+        }
+        else {
+            return null;
+        }
     }
     async destroyState(stateId) {
         return state_model_1.default.findOneAndDelete({ _id: stateId });

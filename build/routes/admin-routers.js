@@ -26,6 +26,8 @@ const coupon_routes_1 = __importDefault(require("./admin/marketing/coupon-routes
 const offer_routes_1 = __importDefault(require("./admin/marketing/offer-routes"));
 // admin setup
 const country_routes_1 = __importDefault(require("./admin/setup/country-routes"));
+const state_routes_1 = __importDefault(require("./admin/setup/state-routes"));
+const city_routes_1 = __importDefault(require("./admin/setup/city-routes"));
 const payment_methods_routes_1 = __importDefault(require("./admin/setup/payment-methods-routes"));
 const languages_routes_1 = __importDefault(require("./admin/setup/languages-routes"));
 const settings_routes_1 = __importDefault(require("./admin/setup/settings-routes"));
@@ -70,6 +72,8 @@ adminRouter.use('/marketing/coupons', coupon_routes_1.default);
 adminRouter.use('/marketing/offers', offer_routes_1.default);
 // //admin setup
 adminRouter.use('/setup/country', country_routes_1.default);
+adminRouter.use('/setup/state', state_routes_1.default);
+adminRouter.use('/setup/city', city_routes_1.default);
 adminRouter.use('/setup/payment-method', payment_methods_routes_1.default);
 adminRouter.use('/setup/languages', languages_routes_1.default);
 adminRouter.use('/setup/website-settings', settings_routes_1.default);

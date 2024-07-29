@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
-const mongoose_1 = require("mongoose");
 const helpers_1 = require("../../../utils/helpers");
 const state_schema_1 = require("../../../utils/schemas/admin/setup/state-schema");
 const task_log_1 = require("../../../constants/admin/task-log");
@@ -58,7 +57,7 @@ class StateController extends base_controller_1.default {
                 const { countryId, stateTitle, slug, } = validatedData.data;
                 const user = res.locals.user;
                 const stateData = {
-                    countryId: new mongoose_1.Schema.Types.ObjectId(countryId),
+                    countryId,
                     stateTitle,
                     slug: slug || (0, helpers_1.slugify)(stateTitle),
                     status: '1', // active
@@ -67,16 +66,23 @@ class StateController extends base_controller_1.default {
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
-                const newState = await state_service_1.default.creatStatee(stateData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newState,
-                    message: 'State created successfully!'
-                }, 200, {
-                    sourceFromId: newState._id,
-                    sourceFrom: task_log_1.adminTaskLog.setup.state,
-                    activity: task_log_1.adminTaskLogActivity.create,
-                    activityStatus: task_log_1.adminTaskLogStatus.success
-                });
+                const newState = await state_service_1.default.creatState(stateData);
+                if (newState) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newState,
+                        message: 'State created successfully!'
+                    }, 200, {
+                        sourceFromId: newState._id,
+                        sourceFrom: task_log_1.adminTaskLog.setup.state,
+                        activity: task_log_1.adminTaskLogActivity.create,
+                        activityStatus: task_log_1.adminTaskLogStatus.success
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Something went wrong',
+                    }, req);
+                }
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
@@ -86,6 +92,7 @@ class StateController extends base_controller_1.default {
             }
         }
         catch (error) {
+            console.log('error', error);
             if (error && error.errors) {
                 let validationError = '';
                 if (error.errors.stateTitle && error.errors.stateTitle.properties) {
@@ -187,7 +194,7 @@ class StateController extends base_controller_1.default {
             }
         }
     }
-    async statusChange(req, res) {
+    async statusChangeState(req, res) {
         try {
             const validatedData = state_schema_1.stateStatusSchema.safeParse(req.body);
             if (validatedData.success) {
@@ -232,7 +239,7 @@ class StateController extends base_controller_1.default {
             }, req);
         }
     }
-    async destroy(req, res) {
+    async destroyState(req, res) {
         try {
             const stateId = req.params.id;
             if (stateId) {

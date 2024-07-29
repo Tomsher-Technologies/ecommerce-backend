@@ -1,6 +1,5 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
-import  { Schema, Types } from 'mongoose';
 
 import { formatZodError, slugify } from '../../../utils/helpers';
 import { stateSchema, stateStatusSchema } from '../../../utils/schemas/admin/setup/state-schema';
@@ -9,7 +8,6 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 
 import BaseController from '../../../controllers/admin/base-controller';
 import StateService from '../../../services/admin/setup/state-service'
-import { StateProps } from '../../../model/admin/setup/state-model';
 
 const controller = new BaseController();
 
@@ -63,8 +61,8 @@ class StateController extends BaseController {
             if (validatedData.success) {
                 const { countryId, stateTitle, slug, } = validatedData.data;
                 const user = res.locals.user;
-                const stateData: Partial<StateProps> = {
-                    countryId:  new Schema.Types.ObjectId(countryId),
+                const stateData: Partial<any> = {
+                    countryId,
                     stateTitle,
                     slug: slug || slugify(stateTitle) as any,
                     status: '1', // active
@@ -74,16 +72,22 @@ class StateController extends BaseController {
                     updatedAt: new Date()
                 };
 
-                const newState = await StateService.creatStatee(stateData);
-                return controller.sendSuccessResponse(res, {
-                    requestedData: newState,
-                    message: 'State created successfully!'
-                }, 200, { // task log
-                    sourceFromId: newState._id,
-                    sourceFrom: adminTaskLog.setup.state,
-                    activity: adminTaskLogActivity.create,
-                    activityStatus: adminTaskLogStatus.success
-                });
+                const newState = await StateService.creatState(stateData);
+                if (newState) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newState,
+                        message: 'State created successfully!'
+                    }, 200, { // task log
+                        sourceFromId: newState._id,
+                        sourceFrom: adminTaskLog.setup.state,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
+                    });
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Something went wrong',
+                    }, req);
+                }
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -91,6 +95,8 @@ class StateController extends BaseController {
                 }, req);
             }
         } catch (error: any) {
+            console.log('error', error);
+
             if (error && error.errors) {
                 let validationError: any = '';
                 if (error.errors.stateTitle && error.errors.stateTitle.properties) {
@@ -189,7 +195,7 @@ class StateController extends BaseController {
         }
     }
 
-    async statusChange(req: Request, res: Response): Promise<void> {
+    async statusChangeState(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = stateStatusSchema.safeParse(req.body);
             if (validatedData.success) {
@@ -232,7 +238,7 @@ class StateController extends BaseController {
         }
     }
 
-    async destroy(req: Request, res: Response): Promise<void> {
+    async destroyState(req: Request, res: Response): Promise<void> {
         try {
             const stateId = req.params.id;
             if (stateId) {
