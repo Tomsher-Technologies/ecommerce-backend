@@ -321,28 +321,28 @@ class ProductController extends BaseController {
 
     async findProductDetail(req: Request, res: Response): Promise<void> {
         try {
-            const productId: any = req.params.slug;
+            const productSlug: any = req.params.slug;
             const variantSku: any = req.params.sku;
-            const { getattribute = '' } = req.query as ProductsFrontendQueryParams;
+            const { getattribute = '0', getspecification = '0', getimagegallery = '0' } = req.query as ProductsFrontendQueryParams;
             let query: any = {}
-            if (productId) {
+            if (productSlug) {
                 if (variantSku) {
                     query = {
                         ...query, 'productVariants.variantSku': new RegExp(variantSku, 'i')
                     };
                 }
-                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productSlug);
                 const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
                 let variantDetails: any = null;
                 if (checkProductIdOrSlug) {
                     query = {
                         ...query,
-                        'productVariants._id': new mongoose.Types.ObjectId(productId),
+                        'productVariants._id': new mongoose.Types.ObjectId(productSlug),
                     }
                 } else {
                     query = {
                         ...query,
-                        'productVariants.slug': productId,
+                        'productVariants.slug': productSlug,
                     }
                 }
                 const productDetails: any = await ProductService.findProductList({
@@ -375,14 +375,17 @@ class ProductController extends BaseController {
                 if (!imageGallery?.length) { // Check if imageGallery is empty
                     imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status');
                 }
-                let productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
-                    variantId: variantDetails._id
-                }));
-                if (!productSpecification?.length) {
+                let productSpecification: any[] = [];
+                if (getspecification === '1') {
                     productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
-                        productId: variantDetails.productId,
-                        variantId: null
+                        variantId: variantDetails._id
                     }));
+                    if (!productSpecification?.length) {
+                        productSpecification = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
+                            productId: variantDetails.productId,
+                            variantId: null
+                        }));
+                    }
                 }
 
                 let allProductVariantAttributes: any[] = [];
@@ -422,6 +425,45 @@ class ProductController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
+    async findProductDetailSpecification(req: Request, res: Response): Promise<void> {
+        try {
+            const variantSlugOrId: string = req.params.slug;
+            if (!variantSlugOrId) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product ID or slug is required!',
+                });
+            }
+            const isObjectId = mongoose.Types.ObjectId.isValid(variantSlugOrId);
+            const variantDetails = isObjectId
+                ? await ProductVariantsModel.findOne({ _id: variantSlugOrId }).lean()
+                : await ProductVariantsModel.findOne({ slug: variantSlugOrId }).lean();
+            if (!variantDetails) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product variant not found!',
+                });
+            }
+            let productSpecifications = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
+                variantId: variantDetails._id
+            }));
+            if (!productSpecifications.length) {
+                productSpecifications = await ProductSpecificationModel.aggregate(frontendSpecificationLookup({
+                    productId: variantDetails.productId,
+                    variantId: null
+                }));
+            }
+
+            return controller.sendSuccessResponse(res, {
+                requestedData: productSpecifications,
+                message: 'Success'
+            });
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'An error occurred while retrieving product specifications',
+            });
+        }
+    }
+
     async findProductDetailSeo(req: Request, res: Response): Promise<void> {
         try {
             const productId: any = req.params.slug;
@@ -692,7 +734,7 @@ class ProductController extends BaseController {
     }
 
     async relatedProducts(req: Request, res: Response): Promise<void> {
-        const { categories = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+        const { categories = '', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query as ProductsFrontendQueryParams;
         let query: any = { _id: { $exists: true } };
 
         if (!categories) {
@@ -741,6 +783,8 @@ class ProductController extends BaseController {
             getattribute,
             getspecification,
             getbrand: '0',
+            page: parseInt(page_size as string),
+            limit: parseInt(limit as string),
             hostName: req.get('origin'),
         });
         return controller.sendSuccessResponse(res, {

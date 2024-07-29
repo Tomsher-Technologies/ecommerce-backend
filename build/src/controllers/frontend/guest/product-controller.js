@@ -319,29 +319,29 @@ class ProductController extends base_controller_1.default {
     }
     async findProductDetail(req, res) {
         try {
-            const productId = req.params.slug;
+            const productSlug = req.params.slug;
             const variantSku = req.params.sku;
-            const { getattribute = '' } = req.query;
+            const { getattribute = '0', getspecification = '0', getimagegallery = '0' } = req.query;
             let query = {};
-            if (productId) {
+            if (productSlug) {
                 if (variantSku) {
                     query = {
                         ...query, 'productVariants.variantSku': new RegExp(variantSku, 'i')
                     };
                 }
-                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productId);
+                const checkProductIdOrSlug = /^[0-9a-fA-F]{24}$/.test(productSlug);
                 const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
                 let variantDetails = null;
                 if (checkProductIdOrSlug) {
                     query = {
                         ...query,
-                        'productVariants._id': new mongoose_1.default.Types.ObjectId(productId),
+                        'productVariants._id': new mongoose_1.default.Types.ObjectId(productSlug),
                     };
                 }
                 else {
                     query = {
                         ...query,
-                        'productVariants.slug': productId,
+                        'productVariants.slug': productSlug,
                     };
                 }
                 const productDetails = await product_service_1.default.findProductList({
@@ -372,14 +372,17 @@ class ProductController extends base_controller_1.default {
                 if (!imageGallery?.length) { // Check if imageGallery is empty
                     imageGallery = await product_gallery_images_model_1.default.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status');
                 }
-                let productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
-                    variantId: variantDetails._id
-                }));
-                if (!productSpecification?.length) {
+                let productSpecification = [];
+                if (getspecification === '1') {
                     productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
-                        productId: variantDetails.productId,
-                        variantId: null
+                        variantId: variantDetails._id
                     }));
+                    if (!productSpecification?.length) {
+                        productSpecification = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
+                            productId: variantDetails.productId,
+                            variantId: null
+                        }));
+                    }
                 }
                 let allProductVariantAttributes = [];
                 let allProductVariants = [];
@@ -416,6 +419,43 @@ class ProductController extends base_controller_1.default {
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message });
+        }
+    }
+    async findProductDetailSpecification(req, res) {
+        try {
+            const variantSlugOrId = req.params.slug;
+            if (!variantSlugOrId) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product ID or slug is required!',
+                });
+            }
+            const isObjectId = mongoose_1.default.Types.ObjectId.isValid(variantSlugOrId);
+            const variantDetails = isObjectId
+                ? await product_variants_model_1.default.findOne({ _id: variantSlugOrId }).lean()
+                : await product_variants_model_1.default.findOne({ slug: variantSlugOrId }).lean();
+            if (!variantDetails) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Product variant not found!',
+                });
+            }
+            let productSpecifications = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
+                variantId: variantDetails._id
+            }));
+            if (!productSpecifications.length) {
+                productSpecifications = await product_specification_model_1.default.aggregate((0, specification_config_1.frontendSpecificationLookup)({
+                    productId: variantDetails.productId,
+                    variantId: null
+                }));
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: productSpecifications,
+                message: 'Success'
+            });
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'An error occurred while retrieving product specifications',
+            });
         }
     }
     async findProductDetailSeo(req, res) {
@@ -671,7 +711,7 @@ class ProductController extends base_controller_1.default {
         }
     }
     async relatedProducts(req, res) {
-        const { categories = '', getattribute = '', getspecification = '' } = req.query;
+        const { categories = '', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query;
         let query = { _id: { $exists: true } };
         if (!categories) {
             return controller.sendErrorResponse(res, 200, {
@@ -716,6 +756,8 @@ class ProductController extends base_controller_1.default {
             getattribute,
             getspecification,
             getbrand: '0',
+            page: parseInt(page_size),
+            limit: parseInt(limit),
             hostName: req.get('origin'),
         });
         return controller.sendSuccessResponse(res, {

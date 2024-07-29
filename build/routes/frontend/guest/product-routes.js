@@ -15,6 +15,7 @@ router.get('/brand', response_status_1.logResponseStatus, brand_controller_1.def
 router.get('/attribute', response_status_1.logResponseStatus, product_controller_1.default.findAllAttributes);
 router.get('/specification', response_status_1.logResponseStatus, product_controller_1.default.findAllSpecifications);
 router.get('/product-detail/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetail);
+router.get('/product-detail-specification/:slug', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSpecification);
 router.get('/product-detail-seo/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSeo);
 router.get('/product-list', response_status_1.logResponseStatus, product_controller_1.default.findAllProducts);
 router.get('/related-products', response_status_1.logResponseStatus, product_controller_1.default.relatedProducts);
