@@ -37,13 +37,16 @@ const controller = new base_controller_1.default();
 class CityController extends base_controller_1.default {
     async findAllCity(req, res) {
         try {
-            const { stateId, page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { countryId = '', stateId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
             let query = { _id: { $exists: true } };
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             }
             else {
                 query.status = '1';
+            }
+            if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (stateId) {
                 query.stateId = new mongoose_1.default.Types.ObjectId(stateId);

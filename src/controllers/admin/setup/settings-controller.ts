@@ -96,7 +96,7 @@ class SettingsController extends BaseController {
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: newBasicSettings,
-                        message: 'Language created successfully!'
+                        message: 'Setting created successfully!'
                     }, 200, { // task log
                         sourceFromId: newBasicSettings._id,
                         sourceFrom: (adminTaskLog as any).setup.settings[blockReference],

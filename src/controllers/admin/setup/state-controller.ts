@@ -1,4 +1,5 @@
 import 'module-alias/register';
+import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 
 import { formatZodError, slugify } from '../../../utils/helpers';
@@ -15,13 +16,17 @@ class StateController extends BaseController {
 
     async findAllState(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
                 query.status = '1';
+            }
+
+            if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId);
             }
 
             if (keyword) {
