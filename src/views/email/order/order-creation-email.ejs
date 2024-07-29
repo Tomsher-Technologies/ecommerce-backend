@@ -455,11 +455,9 @@
                                                                                             </td>
                                                                                             <td style="border-bottom: #e4e4e4 1px solid;text-align: left;font-family: sans-serif"
                                                                                                 width="35%">
-                                                                                                <span
-                                                                                                    style="font-size: 14px;text-align: left;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;">
-                                                                                                    <%= product.productDetails.productTitle
-                                                                                                        %>
-                                                                                                </span>
+                                                                                                <span style="font-size: 14px; text-align: left; color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;">
+                                                                                                    <!-- <%= (product.productDetails.variantDetails.extraProductTitle && product.productDetails.variantDetails.extraProductTitle !== '') ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle %> -->
+                                                                                                     <%= product.productDetails.productTitle %>                                                                                                </span>
                                                                                             </td>
                                                                                             <td style="border-bottom: #e4e4e4 1px solid;text-align: center;color: #4c4a4a; letter-spacing: -0.0px; font-weight: normal;font-family: sans-serif"
                                                                                                 width="10%">
@@ -510,27 +508,74 @@
                                                                                     </td>
                                                                                     <td
                                                                                         style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
-                                                                                        <%= totalProductAmount%>
+                                                                                        <%=currencyCode %> <%= totalProductOriginalPrice %>
                                                                                     </td>
                                                                                 </tr>
+                                                                                <% if (totalDiscountAmount > 0) { %>
+                                                                                    <tr>
+                                                                                        <td style="font-family: sans-serif">
+                                                                                            Discount:
+                                                                                        </td>
+                                                                                        <td
+                                                                                            style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
+                                                                                            <%=currencyCode %> <%= totalDiscountAmount%>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                <% } %>
+                                                                                <% if (totalShippingAmount > 0) { %>
                                                                                 <tr>
                                                                                     <td style="font-family: sans-serif">
                                                                                         Delivery Charges:
                                                                                     </td>
                                                                                     <td
                                                                                         style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
-                                                                                        <%= totalShippingAmount%>
+                                                                                        <%=currencyCode %> <%= totalShippingAmount%>
                                                                                     </td>
                                                                                 </tr>
+                                                                                <% } %>
+                                                                                <% if (totalGiftWrapAmount > 0) { %>
+                                                                                <tr>
+                                                                                    <td style="font-family: sans-serif">
+                                                                                        Gift Wrap Charge:
+                                                                                    </td>
+                                                                                    <td
+                                                                                        style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
+                                                                                        <%=currencyCode %> <%= totalGiftWrapAmount %>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <% } %>
+                                                                                <% if (totalCouponAmount > 0) { %>
+                                                                                    <tr>
+                                                                                        <td style="font-family: sans-serif">
+                                                                                            Discount:
+                                                                                        </td>
+                                                                                        <td
+                                                                                            style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
+                                                                                            <%=currencyCode %> <%= totalCouponAmount %>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                <% } %>
+
+                                                                                <% if (paymentMethodCharge > 0) { %>
+                                                                                    <tr>
+                                                                                        <td style="font-family: sans-serif">
+                                                                                            COD Charge:
+                                                                                        </td>
+                                                                                        <td
+                                                                                            style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
+                                                                                            <%=currencyCode %> <%= paymentMethodCharge %>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                <% } %>
 
                                                                                 <% if (tax && tax.taxPercentage > 0) { %>
                                                                                 <tr>
                                                                                     <td style="font-family: sans-serif">
-                                                                                        <%=tax.taxTitle%>:
+                                                                                        <%=tax.taxTitle%> <%=tax.taxPercentage %> %
                                                                                     </td>
                                                                                     <td
                                                                                         style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
-                                                                                        <%=tax.taxPercentage%>%
+                                                                                        <%=currencyCode %> <%= totalTaxAmount %>
                                                                                     </td>
                                                                                 </tr>
                                                                                 <% } %>

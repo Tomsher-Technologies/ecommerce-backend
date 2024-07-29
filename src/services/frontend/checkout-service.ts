@@ -22,6 +22,7 @@ import TaxsModel from '../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../model/admin/ecommerce/product/product-variants-model';
 import { smtpEmailGateway } from '../../lib/emails/smtp-nodemailer-gateway';
 import CartOrderProductsModel from '../../model/frontend/cart-order-product-model';
+import CountryModel from '../../model/admin/setup/country-model';
 
 class CheckoutService {
 
@@ -131,7 +132,7 @@ class CheckoutService {
                     couponId: null,
                     paymentMethodId: null
                 }
-                await  CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
+                await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
                 return {
                     _id: cartDetails?._id,
                     orderId: null,
@@ -208,7 +209,7 @@ class CheckoutService {
             } as any;
 
             const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
-            
+
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
@@ -267,6 +268,7 @@ class CheckoutService {
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
                     const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
+                    const currencyCode = await CountryModel.findOne({ _id: cartDetails.countryId }, 'currencyCode')
 
                     const options = {
                         wordwrap: 130,
@@ -279,6 +281,12 @@ class CheckoutService {
                         totalAmount: cartUpdate.totalAmount,
                         totalShippingAmount: cartDetails.totalShippingAmount,
                         totalProductAmount: cartDetails.totalProductAmount,
+                        totalTaxAmount: cartDetails.totalTaxAmount,
+                        totalProductOriginalPrice: cartDetails.totalProductOriginalPrice,
+                        totalGiftWrapAmount: cartDetails.totalGiftWrapAmount,
+                        totalCouponAmount: cartDetails.totalCouponAmount,
+                        totalDiscountAmount: cartDetails.totalDiscountAmount,
+                        paymentMethodCharge: cartDetails.paymentMethodCharge,
                         orderComments: cartDetails?.orderComments,
                         paymentMethod: paymentMethodDetails?.paymentMethodTitle,
                         shippingAddressDetails: {
@@ -293,6 +301,7 @@ class CheckoutService {
                             landlineNumber: shippingAddressDetails?.landlineNumber,
                             email: customerDetails.email
                         },
+                        currencyCode: currencyCode?.currencyCode,
                         expectedDeliveryDate,
                         socialMedia,
                         appUrls,
@@ -306,6 +315,7 @@ class CheckoutService {
                         tax: tax
                     }, async (err: any, template: any) => {
                         if (err) {
+                            console.log("err", err);
                         }
                         if (process.env.SHOPNAME === 'Timehouse') {
                             const sendEmail = await mailChimpEmailGateway({

@@ -36,7 +36,7 @@ class CheckoutController extends BaseController {
             }
             const validatedData = checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, orderComments } = validatedData.data;
 
                 const customerDetails = await CustomerModel.findOne({ _id: customerId });
                 if (!customerDetails || !customerDetails.isVerified) {
@@ -87,7 +87,7 @@ class CheckoutController extends BaseController {
                     }
                     if (variant.quantity == 0) {
                         errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' })
-                    } else if (variant.quantity <= requiredQuantity) {
+                    } else if (variant.quantity < requiredQuantity) {
                         errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' })
                     }
                 }
@@ -108,6 +108,7 @@ class CheckoutController extends BaseController {
                     cartStatus: cartStatus.active,
                     paymentMethodCharge: 0,
                     couponId: null,
+                    orderComments: orderComments,
                     totalCouponAmount: 0,
                     totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
