@@ -22,7 +22,7 @@ const smtpEmailGateway = async (emailDefaultValues, template) => {
         };
         const transporter = nodemailer_1.default.createTransport(transportOptions);
         const mailOptions = {
-            from: process.env.SMTP_USER, // Sender address
+            from: `"${process.env.SHOPNAME}" <${process.env.SMTP_USER}>`, // Sender address
             to: emailDefaultValues.email,
             subject: emailDefaultValues.subject,
             html: template,
