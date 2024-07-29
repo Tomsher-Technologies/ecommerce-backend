@@ -17,13 +17,17 @@ class CityController extends BaseController {
 
     async findAllCity(req: Request, res: Response): Promise<void> {
         try {
-            const { stateId, page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as any;
+            const { countryId = '', stateId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as any;
             let query: any = { _id: { $exists: true } };
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
                 query.status = '1';
+            }
+
+            if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId);
             }
 
             if (stateId) {
@@ -80,17 +84,17 @@ class CityController extends BaseController {
                 };
 
                 const newCity = await CityService.creatCitye(cityData);
-                if(newCity){
-                       return controller.sendSuccessResponse(res, {
-                    requestedData: newCity,
-                    message: 'City created successfully!'
-                }, 200, { // task log
-                    sourceFromId: newCity._id,
-                    sourceFrom: adminTaskLog.setup.city,
-                    activity: adminTaskLogActivity.create,
-                    activityStatus: adminTaskLogStatus.success
-                });   
-                }else{
+                if (newCity) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: newCity,
+                        message: 'City created successfully!'
+                    }, 200, { // task log
+                        sourceFromId: newCity._id,
+                        sourceFrom: adminTaskLog.setup.city,
+                        activity: adminTaskLogActivity.create,
+                        activityStatus: adminTaskLogStatus.success
+                    });
+                } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Something went wrong, please try again!',
                     }, req);

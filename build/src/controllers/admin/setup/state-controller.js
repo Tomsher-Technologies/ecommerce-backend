@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
+const mongoose_1 = __importDefault(require("mongoose"));
 const helpers_1 = require("../../../utils/helpers");
 const state_schema_1 = require("../../../utils/schemas/admin/setup/state-schema");
 const task_log_1 = require("../../../constants/admin/task-log");
@@ -13,13 +14,16 @@ const controller = new base_controller_1.default();
 class StateController extends base_controller_1.default {
     async findAllState(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
             let query = { _id: { $exists: true } };
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             }
             else {
                 query.status = '1';
+            }
+            if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');

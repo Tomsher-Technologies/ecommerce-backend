@@ -77,7 +77,7 @@ class PageController extends base_controller_1.default {
                     }
                     return controller.sendSuccessResponse(res, {
                         requestedData: newPagesData,
-                        message: 'Language created successfully!'
+                        message: 'Page created successfully!'
                     }, 200, {
                         sourceFromId: newPagesData._id,
                         sourceFrom: task_log_1.adminTaskLog.website.pages[blockReference],
