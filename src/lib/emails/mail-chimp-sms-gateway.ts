@@ -23,6 +23,7 @@ export const mailChimpEmailGateway = async (emailDefaultValues: any, template: a
             key: `${process.env.MAILCHIMP_API_KEY}`,
             message: {
                 from_email: `${process.env.MAILCHIMP_API_EMAIL}`, // Replace with your actual sender email
+                from_name: `${process.env.SHOPNAME}`,
                 subject: emailDefaultValues.subject,
                 html: template,
                 to: toRecipients
