@@ -472,7 +472,7 @@
                                                                                                 width="30%">
                                                                                                 <span
                                                                                                     style="font-size: 14px;letter-spacing: -0.8px">
-                                                                                                    <%= product.productAmount
+                                                                                                    <%=currencyCode %> <%= product.productAmount
                                                                                                         %>
                                                                                                 </span>
                                                                                             </td>
@@ -548,7 +548,7 @@
                                                                                 <% if (totalCouponAmount > 0) { %>
                                                                                     <tr>
                                                                                         <td style="font-family: sans-serif">
-                                                                                            Discount:
+                                                                                            Coupon:
                                                                                         </td>
                                                                                         <td
                                                                                             style=" text-align: right;font-family: sans-serif;white-space: nowrap;">
@@ -619,7 +619,7 @@
 
                                                                                     <td
                                                                                         style="color:#211f81; font-weight:bold;font-family: sans-serif">
-                                                                                        Total Order Amount:  <% if (tax) { %>
+                                                                                        Total Amount:  <% if (tax) { %>
                                                                                             <span style="color: lightgray; font-size: 12px;">(Inclusive of <%= tax.taxTitle %>)</span>
                                                                                         <% } else { %>
                                                                                             <span style="color: lightgray; font-size: 12px;">(Inclusive of Tax)</span>
@@ -627,7 +627,7 @@
                                                                                     </td>
                                                                                     <td
                                                                                         style=" text-align: right; color:  #211f81; font-weight:bold;font-family: sans-serif; white-space: nowrap;">
-                                                                                        <%= totalAmount%>
+                                                                                        <%=currencyCode %> <%= totalAmount%>
                                                                                     </td>
                                                                                 </tr>
                                                                             </table>

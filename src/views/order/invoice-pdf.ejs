@@ -333,6 +333,15 @@
                 </td>
               </tr>
               <% } %>
+              <% if (orderDetails.totalCouponAmount> 0) { %>
+                <tr class="summary-row">
+                  <td colspan="5" class="text-right-cell">Coupon</td>
+                  <td class="text-right-cell">
+                    <%=currencyCode %>
+                      <%= orderDetails.totalCouponAmount %>
+                  </td>
+                </tr>
+                <% } %>
               <% if (orderDetails.totalGiftWrapAmount> 0) { %>
                 <tr class="summary-row">
                   <td colspan="5" class="text-right-cell">Gift Wrap Charge</td>
