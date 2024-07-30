@@ -11,7 +11,7 @@ const order_controller_1 = __importDefault(require("../../../src/controllers/adm
 const router = express_1.default.Router();
 router.get('/invoice-detail/:id', order_controller_1.default.getInvoice);
 router.use(auth_middleware_1.default);
-router.get('/order-list', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders }), order_controller_1.default.findAll);
-router.get('/order-detail/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders }), order_controller_1.default.getOrderDetails);
-router.post('/order-status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders }), order_controller_1.default.orderStatusChange);
+router.get('/order-list', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, readOnly: 1 }), order_controller_1.default.findAll);
+router.get('/order-detail/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, readOnly: 1 }), order_controller_1.default.getOrderDetails);
+router.post('/order-status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderStatusChange);
 exports.default = router;

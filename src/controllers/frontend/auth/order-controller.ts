@@ -4,6 +4,7 @@ import CommonService from '../../../services/frontend/guest/common-service'
 import CustomerModel from "../../../model/frontend/customers-model";
 import mongoose from "mongoose";
 import OrderService from "../../../services/frontend/auth/order-service";
+import CartOrdersModel from "../../../model/frontend/cart-order-model";
 
 const controller = new BaseController();
 class OrderController extends BaseController {
@@ -113,7 +114,55 @@ class OrderController extends BaseController {
         }
     }
 
+    async orderCancel(req: Request, res: Response): Promise<void> {
+        try {
+            const customerId: any = res.locals.user;
+            const orderId = req.params.id;
+            let countryData = await CommonService.findOneCountrySubDomainWithId(origin, true);
+            if (!countryData) {
+                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
+            }
 
+            if (!customerId) {
+                return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
+            }
+
+            const query: any = {
+                $and: [
+                    { countryId: countryData._id },
+                    { customerId: new mongoose.Types.ObjectId(customerId) },
+                    { _id: new mongoose.Types.ObjectId(orderId) }
+                ]
+            };
+            const orderDetails = await CartOrdersModel.findOne({ _id: new mongoose.Types.ObjectId(orderId) });
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
+            }
+            console.log('customerDetails', customerId);
+
+            const order: any = await OrderService.orderList({
+                query,
+                hostName: origin,
+                getAddress: '1',
+                getCartProducts: '1',
+            });
+
+            if (order && order.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: order[0],
+                    message: 'Your Order is ready!'
+                });
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not found'
+                });
+            }
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'An error occurred while fetching the order'
+            });
+        }
+    }
 }
 
 export default new OrderController();

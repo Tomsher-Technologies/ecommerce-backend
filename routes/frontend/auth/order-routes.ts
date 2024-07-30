@@ -20,6 +20,7 @@ OrderRoutes.get('/order-list', logResponseStatus, OrderController.orderList);
 OrderRoutes.post('/move-to-wishlist', logResponseStatus, cartOrderController.moveToWishlist);
 OrderRoutes.post('/checkout', logResponseStatus, CheckoutController.checkout);
 OrderRoutes.get('/checkout/retrieve-checkout-tabby/:tabby', logResponseStatus, CheckoutController.tabbyCheckoutRetrieveDetails);
+OrderRoutes.post('/order-cancel', logResponseStatus, OrderController.orderCancel);
 
 OrderRoutes.use(routerWithUser);
 

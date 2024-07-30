@@ -8,6 +8,7 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_service_1 = __importDefault(require("../../../services/frontend/auth/order-service"));
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const controller = new base_controller_1.default();
 class OrderController extends base_controller_1.default {
     async orderList(req, res) {
@@ -82,6 +83,53 @@ class OrderController extends base_controller_1.default {
             else if (uuid) {
                 query.orderUuid = uuid;
                 query.isGuest = true;
+            }
+            console.log('customerDetails', customerId);
+            const order = await order_service_1.default.orderList({
+                query,
+                hostName: origin,
+                getAddress: '1',
+                getCartProducts: '1',
+            });
+            if (order && order.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: order[0],
+                    message: 'Your Order is ready!'
+                });
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not found'
+                });
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'An error occurred while fetching the order'
+            });
+        }
+    }
+    async orderCancel(req, res) {
+        try {
+            const customerId = res.locals.user;
+            const orderId = req.params.id;
+            let countryData = await common_service_1.default.findOneCountrySubDomainWithId(origin, true);
+            if (!countryData) {
+                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
+            }
+            if (!customerId) {
+                return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
+            }
+            const query = {
+                $and: [
+                    { countryId: countryData._id },
+                    { customerId: new mongoose_1.default.Types.ObjectId(customerId) },
+                    { _id: new mongoose_1.default.Types.ObjectId(orderId) }
+                ]
+            };
+            const orderDetails = await cart_order_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(orderId) });
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
             console.log('customerDetails', customerId);
             const order = await order_service_1.default.orderList({
