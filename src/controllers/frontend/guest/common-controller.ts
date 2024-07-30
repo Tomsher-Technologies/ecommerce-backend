@@ -6,6 +6,9 @@ import { ProductsProps, ProductsQueryParams } from '../../../utils/types/product
 import BaseController from '../../admin/base-controller';
 import { CommonQueryParams } from '../../../utils/types/frontend/common';
 import CommonService from '../../../services/frontend/guest/common-service';
+import mongoose from 'mongoose';
+import StateModel from '../../../model/admin/setup/state-model';
+import CityModel from '../../../model/admin/setup/city-model';
 
 const controller = new BaseController();
 
@@ -30,6 +33,52 @@ class HomeController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }
     }
+    async findAllStates(req: Request, res: Response): Promise<void> {
+        try {
+            const { countryId = '', stateId = '' } = req.query as any;
+            let query: any = { _id: { $exists: true } };
+            query.status = '1';
+            if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId);
+            }
+            if (stateId) {
+                query._id = new mongoose.Types.ObjectId(stateId);
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: await StateModel.find(query),
+                message: 'Success!'
+            }, 200);
+
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+    async findAllCities(req: Request, res: Response): Promise<void> {
+        try {
+            const { countryId = '', stateId = '', cityId = '' } = req.query as any;
+            let query: any = { _id: { $exists: true } };
+            query.status = '1';
+            if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId);
+            }
+            if (stateId) {
+                query.stateId = new mongoose.Types.ObjectId(stateId);
+            }
+            if (cityId) {
+                query._id = new mongoose.Types.ObjectId(cityId);
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: await CityModel.find(query),
+                message: 'Success!'
+            }, 200);
+
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+
     async findAllStores(req: Request, res: Response): Promise<void> {
         try {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -41,7 +90,7 @@ class HomeController extends BaseController {
                     countryId,
                     status: '1',
                 } as any;
-             
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: await CommonService.findAllStores({
                         hostName: req.get('origin'),
@@ -152,7 +201,6 @@ class HomeController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching sliders' });
         }
     }
-
 
     async findAllBanners(req: Request, res: Response): Promise<void> {
         try {
@@ -381,13 +429,13 @@ class HomeController extends BaseController {
             if (countryId) {
                 let query: any = { _id: { $exists: true } };
 
-                const { enableDisplay = ['0', '1', '2']} = req.query;
+                const { enableDisplay = ['0', '1', '2'] } = req.query;
                 query = {
                     ...query,
                     countryId,
                     status: '1',
                 } as any;
-             
+
                 if (enableDisplay && enableDisplay !== '') {
                     query.enableDisplay = { $in: Array.isArray(enableDisplay) ? enableDisplay : [enableDisplay] };
                 } else {

@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
+const mongoose_1 = __importDefault(require("mongoose"));
+const state_model_1 = __importDefault(require("../../../model/admin/setup/state-model"));
+const city_model_1 = __importDefault(require("../../../model/admin/setup/city-model"));
 const controller = new base_controller_1.default();
 class HomeController extends base_controller_1.default {
     async findAllCountries(req, res) {
@@ -23,6 +26,49 @@ class HomeController extends base_controller_1.default {
                     validation: 'Country is missing! please check'
                 }, req);
             }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+    async findAllStates(req, res) {
+        try {
+            const { countryId = '', stateId = '' } = req.query;
+            let query = { _id: { $exists: true } };
+            query.status = '1';
+            if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            if (stateId) {
+                query._id = new mongoose_1.default.Types.ObjectId(stateId);
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: await state_model_1.default.find(query),
+                message: 'Success!'
+            }, 200);
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+        }
+    }
+    async findAllCities(req, res) {
+        try {
+            const { countryId = '', stateId = '', cityId = '' } = req.query;
+            let query = { _id: { $exists: true } };
+            query.status = '1';
+            if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            if (stateId) {
+                query.stateId = new mongoose_1.default.Types.ObjectId(stateId);
+            }
+            if (cityId) {
+                query._id = new mongoose_1.default.Types.ObjectId(cityId);
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: await city_model_1.default.find(query),
+                message: 'Success!'
+            }, 200);
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });

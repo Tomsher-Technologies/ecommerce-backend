@@ -13,9 +13,13 @@ class StateService {
             { $match: query },
             customer_config_1.countriesLookup,
             { $unwind: '$country' },
-            { $skip: skip },
-            { $limit: limit },
         ];
+        if (skip) {
+            aggregationPipeline.push({ $skip: skip });
+        }
+        if (limit) {
+            aggregationPipeline.push({ $limit: limit });
+        }
         if (Object.keys(sort).length > 0) {
             aggregationPipeline.push({ $sort: sort });
         }

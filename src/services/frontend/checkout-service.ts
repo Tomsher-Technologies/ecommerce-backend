@@ -2,17 +2,16 @@ import path from 'path';
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 
-import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
+import { cartStatus, couponDiscountType, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages } from "../../constants/cart";
 import { DiscountType, calculateExpectedDeliveryDate, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
-import CartService from "./cart-service";
 import ProductsModel from "../../model/admin/ecommerce/product-model";
 import ProductCategoryLinkModel from "../../model/admin/ecommerce/product/product-category-link-model";
 import CartOrdersModel from "../../model/frontend/cart-order-model";
 import PaymentTransactionModel from "../../model/frontend/payment-transaction-model";
 import CustomerModel from '../../model/frontend/customers-model';
-import { blockReferences, websiteSetup } from '../../constants/website-setup';
+import { blockReferences, shippingTypes, websiteSetup } from '../../constants/website-setup';
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import { mailChimpEmailGateway } from '../../lib/emails/mail-chimp-sms-gateway';
 import CustomerAddress from '../../model/frontend/customer-address-model';
@@ -121,6 +120,7 @@ class CheckoutService {
             let cartUpdate = {
                 cartStatus: cartStatus.active,
                 totalAmount: cartDetails?.totalAmount,
+                totalShippingAmount: cartDetails?.totalShippingAmount,
                 totalCouponAmount: 0,
                 couponId: cartDetails?.couponId,
                 paymentMethodId: cartDetails?.paymentMethodId
@@ -141,61 +141,91 @@ class CheckoutService {
                 }
             }
 
-            const couponDetails: any = await CouponService.findOne({ _id: cartDetails?.couponId });
-            if (couponDetails) {
-                const cartProductDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails?._id });
-                const productIds = cartProductDetails.map((product: any) => product.productId.toString());
+            if (cartDetails?.couponId) {
+                const couponDetails: any = await CouponService.findOne({ _id: cartDetails?.couponId });
+                if (couponDetails) {
+                    const cartProductDetails: any = await CartOrderProductsModel.find({ cartId: cartDetails?._id });
+                    const productIds = cartProductDetails.map((product: any) => product.productId.toString());
 
-                const couponAmount = couponDetails?.discountAmount;
-                const discountType = couponDetails.discountType
-                const updateTotalCouponAmount = (productAmount: any, discountAmount: number, discountType: DiscountType) => {
-                    if (productAmount) {
-                        const totalCouponAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
-                        const cartTotalAmount = cartDetails?.totalAmount - calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
-                        cartUpdate = {
-                            ...cartUpdate,
-                            totalAmount: cartTotalAmount,
-                            totalCouponAmount: totalCouponAmount
+                    const couponAmount = couponDetails?.discountAmount;
+                    const discountType = couponDetails.discountType
+                    const updateTotalCouponAmount = (productAmount: any, discountAmount: number, discountType: DiscountType) => {
+                        if (productAmount) {
+                            const couponDiscountAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
+                            const totalCouponAmount = (discountType === couponDiscountType.percentage) ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount)) : couponDiscountAmount
+                            const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
+                            cartUpdate = {
+                                ...cartUpdate,
+                                totalAmount: cartTotalAmount,
+                                totalCouponAmount: totalCouponAmount
+                            }
                         }
+                    };
+                    var totalAmount = 0
+                    if (couponDetails?.couponType == couponTypes.entireOrders) {
+                        updateTotalCouponAmount(cartDetails?.totalProductAmount, couponAmount, discountType)
+                    } else if (couponDetails?.couponType == couponTypes.forProduct) {
+                        cartProductDetails.map(async (product: any) => {
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
+                                totalAmount += product.productAmount
+                            }
+                        });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
+                    } else if (couponDetails?.couponType == couponTypes.forCategory) {
+                        const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
+                        const categoryIds = productCategoryDetails.map((product: any) => product.categoryId);
+                        categoryIds.map(async (product: any) => {
+                            if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
+                                totalAmount += product.productAmount
+                            }
+                        });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
+                    } else if (couponDetails?.couponType == couponTypes.forBrand) {
+                        const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
+                        const brandIds = productDetails.map((product: any) => product.brand);
+                        brandIds.map(async (product: any) => {
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
+                                totalAmount += product.productAmount
+                            }
+                        });
+                        updateTotalCouponAmount(totalAmount, couponAmount, discountType)
                     }
-                };
-                var totalAmount = 0
-                if (couponDetails?.couponType == couponTypes.entireOrders) {
-                    updateTotalCouponAmount(cartDetails?.totalAmount, couponAmount, discountType)
-                } else if (couponDetails?.couponType == couponTypes.forProduct) {
-                    cartProductDetails.map(async (product: any) => {
-                        if (couponDetails?.couponApplyValues.includes((product.productId))) {
-                            totalAmount += product.productAmount
-                        }
-                    });
-                    updateTotalCouponAmount(totalAmount, couponAmount, discountType)
-                } else if (couponDetails?.couponType == couponTypes.forCategory) {
-                    const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
-                    const categoryIds = productCategoryDetails.map((product: any) => product.categoryId);
-                    categoryIds.map(async (product: any) => {
-                        if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
-                            totalAmount += product.productAmount
-                        }
-                    });
-                    updateTotalCouponAmount(totalAmount, couponAmount, discountType)
-                } else if (couponDetails?.couponType == couponTypes.forBrand) {
-                    const productDetails = await ProductsModel.find({ _id: { $in: productIds } });
-                    const brandIds = productDetails.map((product: any) => product.brand);
-                    brandIds.map(async (product: any) => {
-                        if (couponDetails?.couponApplyValues.includes((product.productId))) {
-                            totalAmount += product.productAmount
-                        }
-                    });
-                    updateTotalCouponAmount(totalAmount, couponAmount, discountType)
                 }
             }
 
             let cartProducts = cartDetails?.products || null
             let customerDetails = cartDetails?.customerDetails || null;
             let paymentMethodDetails = cartDetails?.paymentMethod || null;
+            let shippingChargeDetails = cartDetails?.shippingChargeDetails || null;
 
             if (customerDetails === null) {
                 customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
+            }
+            if ((!shippingChargeDetails) && (!cartDetails.stateId)) {
+                shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: cartDetails.countryId });
+                if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[1])) {
+                    const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || []
+                    if (areaWiseDeliveryChargeValues?.length > 0) {
+                        const matchedValue = areaWiseDeliveryChargeValues.find((item: any) => {
+                            if (item.stateId === cartDetails.stateId) {
+                                if (cartDetails.cityId) {
+                                    return item.cityId === cartDetails.cityId;
+                                }
+                                return true;
+                            }
+                            return false;
+                        });
+                        if (matchedValue) {
+                            const shippingCharge = matchedValue?.shippingCharge || 0;
+                            const finalShippingCharge = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
+                            cartUpdate = {
+                                ...cartUpdate,
+                                totalShippingAmount: finalShippingCharge,
+                                totalAmount: (cartDetails.totalAmount - cartUpdate.totalShippingAmount) + finalShippingCharge,
+                            }
+                        }
+                    }
+                }
             }
             const orderId = await this.getNextSequenceValue();
             cartUpdate = {
@@ -279,15 +309,15 @@ class CheckoutService {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
                         totalAmount: cartUpdate.totalAmount,
-                        totalShippingAmount: cartDetails.totalShippingAmount,
-                        totalProductAmount: cartDetails.totalProductAmount,
-                        totalTaxAmount: cartDetails.totalTaxAmount,
-                        totalProductOriginalPrice: cartDetails.totalProductOriginalPrice,
-                        totalGiftWrapAmount: cartDetails.totalGiftWrapAmount,
-                        totalCouponAmount: cartDetails.totalCouponAmount,
-                        totalDiscountAmount: cartDetails.totalDiscountAmount,
-                        paymentMethodCharge: cartDetails.paymentMethodCharge,
-                        orderComments: cartDetails?.orderComments,
+                        totalShippingAmount: updateCart.totalShippingAmount,
+                        totalProductAmount: updateCart.totalProductAmount,
+                        totalTaxAmount: updateCart.totalTaxAmount,
+                        totalProductOriginalPrice: updateCart.totalProductOriginalPrice,
+                        totalGiftWrapAmount: updateCart.totalGiftWrapAmount,
+                        totalCouponAmount: updateCart.totalCouponAmount,
+                        totalDiscountAmount: updateCart.totalDiscountAmount,
+                        paymentMethodCharge: updateCart.paymentMethodCharge,
+                        orderComments: updateCart?.orderComments,
                         paymentMethod: paymentMethodDetails?.paymentMethodTitle,
                         shippingAddressDetails: {
                             name: shippingAddressDetails?.name,

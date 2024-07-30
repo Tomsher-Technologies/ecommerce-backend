@@ -15,9 +15,13 @@ class CityService {
             { $unwind: '$country' },
             customer_config_1.statesLookup,
             { $unwind: '$state' },
-            { $skip: skip },
-            { $limit: limit },
         ];
+        if (skip) {
+            aggregationPipeline.push({ $skip: skip });
+        }
+        if (limit) {
+            aggregationPipeline.push({ $limit: limit });
+        }
         if (Object.keys(sort).length > 0) {
             aggregationPipeline.push({ $sort: sort });
         }

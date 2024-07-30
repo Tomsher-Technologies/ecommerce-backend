@@ -22,7 +22,6 @@ const checkout_service_1 = __importDefault(require("../../../services/frontend/c
 const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
 const network_payments_1 = require("../../../lib/payment-gateway/network-payments");
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
-const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const tamara_payments_1 = require("../../../lib/payment-gateway/tamara-payments");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const controller = new base_controller_1.default();
@@ -36,7 +35,7 @@ class CheckoutController extends base_controller_1.default {
             }
             const validatedData = checkout_schema_1.checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, orderComments } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, stateId = '66a76e47239952224a5f1bba', cityId = '66a792eda1672f8a3e35e882', orderComments } = validatedData.data;
                 const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
                 if (!customerDetails || !customerDetails.isVerified) {
                     const message = !customerDetails
@@ -79,8 +78,7 @@ class CheckoutController extends base_controller_1.default {
                         productTitle = variant.extraProductTitle;
                     }
                     else {
-                        const product = await product_model_1.default.findOne({ _id: variant.productId }, 'productTitle');
-                        productTitle = product.productTitle;
+                        productTitle = cartDetails.products.find((product) => product.variantId === variant._id)?.productDetails?.productTitle;
                     }
                     if (variant.quantity == 0) {
                         errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' });
@@ -100,15 +98,17 @@ class CheckoutController extends base_controller_1.default {
                 }
                 let cartUpdate = {
                     orderUuid: uuid,
-                    cartStatus: cart_1.cartStatus.active,
-                    paymentMethodCharge: 0,
-                    couponId: null,
-                    orderComments: orderComments,
-                    totalCouponAmount: 0,
-                    totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
                     billingId: billingId || null,
                     paymentMethodId: paymentMethod._id,
+                    couponId: null,
+                    stateId: stateId || null,
+                    cityId: cityId || null,
+                    cartStatus: cart_1.cartStatus.active,
+                    paymentMethodCharge: 0,
+                    orderComments: orderComments,
+                    totalCouponAmount: 0,
+                    totalAmount: cartDetails.totalAmount,
                     orderStatusAt: null,
                 };
                 if (!customerDetails?.isGuest && couponCode && deviceType) {
@@ -135,6 +135,35 @@ class CheckoutController extends base_controller_1.default {
                     totalAmount: cartDetails.totalAmount,
                 };
                 let paymentData = null;
+                let shippingChargeDetails = null;
+                let totalShippingAmount = cartDetails.totalShippingAmount || 0;
+                if (stateId) {
+                    shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: countryData._id });
+                    if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[1])) {
+                        const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || [];
+                        if (areaWiseDeliveryChargeValues?.length > 0) {
+                            const matchedValue = areaWiseDeliveryChargeValues.find((item) => {
+                                if (item.stateId === stateId) {
+                                    if (cityId) {
+                                        return item.cityId === cityId;
+                                    }
+                                    return true;
+                                }
+                                return false;
+                            });
+                            if (matchedValue) {
+                                const shippingCharge = matchedValue?.shippingCharge || 0;
+                                const finalShippingCharge = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                cartUpdate = {
+                                    ...cartUpdate,
+                                    totalShippingAmount: finalShippingCharge,
+                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                };
+                                totalShippingAmount = finalShippingCharge;
+                            }
+                        }
+                    }
+                }
                 if (paymentMethod.slug !== cart_1.paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.tap) {
                         const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
@@ -163,7 +192,7 @@ class CheckoutController extends base_controller_1.default {
                                 orderComments: cartDetails.orderComments,
                                 cartStatusAt: cartDetails.cartStatusAt,
                                 totalDiscountAmount: cartDetails.totalDiscountAmount,
-                                totalShippingAmount: cartDetails.totalShippingAmount,
+                                totalShippingAmount: totalShippingAmount,
                                 totalTaxAmount: cartDetails.totalTaxAmount,
                                 products: cartDetails?.products
                             };
@@ -240,7 +269,7 @@ class CheckoutController extends base_controller_1.default {
                                     orderComments: cartDetails.orderComments,
                                     cartStatusAt: cartDetails.cartStatusAt,
                                     totalDiscountAmount: cartDetails.totalDiscountAmount,
-                                    totalShippingAmount: cartDetails.totalShippingAmount,
+                                    totalShippingAmount: totalShippingAmount,
                                     totalTaxAmount: cartDetails.totalTaxAmount,
                                     products: cartDetails?.products
                                 }, customerDetails);
@@ -296,7 +325,7 @@ class CheckoutController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.cashOnDelivery) {
-                    await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod }, true);
+                    await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails }, true);
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {

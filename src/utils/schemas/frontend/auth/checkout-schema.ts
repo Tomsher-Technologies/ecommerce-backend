@@ -4,6 +4,8 @@ import { couponDeviceType } from '../../../../constants/cart';
 export const checkoutSchema = zod.object({
     shippingId:  zod.string({ required_error: 'Please choose shipping address is required', }).min(3, 'Please choose shipping address is should be 3 chars minimum'),
     billingId:  zod.string().optional(),
+    stateId:  zod.string().optional(),
+    cityId:  zod.string().optional(),
     orderComments: zod.string().optional(),
     paymentMethodId:  zod.string({ required_error: 'Payment method  is required', }).min(3, 'Please choose Payment method'),
     couponCode: zod.string().optional(),

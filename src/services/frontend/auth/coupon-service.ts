@@ -89,7 +89,7 @@ class CouponService {
                     { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
                 ]);
                 const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
-                if (totalCouponAmount > Number(couponDetails.discountMaxRedeemAmount)) {
+                if (totalCouponAmount >= Number(couponDetails.discountMaxRedeemAmount)) {
                     return {
                         status: false,
                         message: `The total coupon amount exceeds the maximum redeemable amount`
