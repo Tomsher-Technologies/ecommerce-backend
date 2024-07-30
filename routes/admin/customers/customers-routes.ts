@@ -13,9 +13,9 @@ const { uploadExcel } = configureMulterExcel('customer/excel', ['customerExcel',
 
 router.use(authMiddleware);
 
-router.get('/customer-list', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers }), CustomerController.findAll);
-router.get('/customer-detail/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers }), CustomerController.findCustomer);
-router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers }), uploadExcel.single('customerExcel'), CustomerController.importExcel);
+router.get('/customer-list', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers, readOnly: 1 }), CustomerController.findAll);
+router.get('/customer-detail/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers, readOnly: 1 }), CustomerController.findCustomer);
+router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers, writeOnly: 1 }), uploadExcel.single('customerExcel'), CustomerController.importExcel);
 
 
 export default router;
