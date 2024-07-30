@@ -15,6 +15,9 @@ import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import path from 'path';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
+import { newsletterSchema } from '../../../utils/schemas/frontend/auth/newsletter-schema';
+import NewsletterService from '../../../services/frontend/guest/newsletter-service';
+import NewsletterModel from '../../../model/frontend/newsletter-model';
 
 const controller = new BaseController();
 
@@ -159,7 +162,51 @@ class PageController extends BaseController {
         }
     }
 
+    async newsletterSubmit(req: Request, res: Response): Promise<void> {
+        const validatedData = newsletterSchema.safeParse(req.body);
+
+        if (!validatedData.success) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+                validation: formatZodError(validatedData.error.errors)
+            });
+        }
+        const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Country is missing',
+            });
+        }
+        const { email } = validatedData.data;
+        let subscriber = await NewsletterModel.findOne({ email });
+
+        if (subscriber) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Email is already subscribed',
+            });
+        }
+        const customerId: any = res.locals.user || null;
+
+        const insertNewsletterData = {
+            customerId,
+            countryId,
+            email
+        }
+        const newsletter = await NewsletterService.create(insertNewsletterData);
+        if (newsletter) {
+            return controller.sendSuccessResponse(res, {
+                requestedData: newsletter,
+                message: 'You have subscribed successfully!'
+            }, 200);
+        } else {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Something went wrong! Please try again',
+            });
+        }
+    }
+
 }
+
 
 
 export default new PageController;

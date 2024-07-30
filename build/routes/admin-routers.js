@@ -47,6 +47,8 @@ const orders_routes_1 = __importDefault(require("./admin/orders/orders-routes"))
 const customers_routes_1 = __importDefault(require("./admin/customers/customers-routes"));
 //dashboard
 const dashboard_routes_1 = __importDefault(require("./admin/dashboard/dashboard-routes"));
+//newsletter
+const newsletter_routes_1 = __importDefault(require("./admin/website-information/newsletter-routes"));
 //dashboard
 const adminRouter = express_1.default.Router();
 // admin
@@ -94,5 +96,6 @@ adminRouter.use('/orders', orders_routes_1.default);
 adminRouter.use('/customers', customers_routes_1.default);
 //dashboard
 adminRouter.use('/dashboard', dashboard_routes_1.default);
-//dashboard
+//newsletter
+adminRouter.use('/newsletter', newsletter_routes_1.default);
 exports.default = adminRouter;

@@ -16,6 +16,9 @@ const website_setup_model_1 = __importDefault(require("../../../model/admin/setu
 const path_1 = __importDefault(require("path"));
 const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
 const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
+const newsletter_schema_1 = require("../../../utils/schemas/frontend/auth/newsletter-schema");
+const newsletter_service_1 = __importDefault(require("../../../services/frontend/guest/newsletter-service"));
+const newsletter_model_1 = __importDefault(require("../../../model/frontend/newsletter-model"));
 const controller = new base_controller_1.default();
 class PageController extends base_controller_1.default {
     async findPagesData(req, res) {
@@ -146,6 +149,46 @@ class PageController extends base_controller_1.default {
             return controller.sendSuccessResponse(res, {
                 requestedData: contactUs,
                 message: 'Thank you for reaching out! We have received your message and will get back to you shortly'
+            }, 200);
+        }
+        else {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Something went wrong! Please try again',
+            });
+        }
+    }
+    async newsletterSubmit(req, res) {
+        const validatedData = newsletter_schema_1.newsletterSchema.safeParse(req.body);
+        if (!validatedData.success) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+                validation: (0, helpers_1.formatZodError)(validatedData.error.errors)
+            });
+        }
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Country is missing',
+            });
+        }
+        const { email } = validatedData.data;
+        let subscriber = await newsletter_model_1.default.findOne({ email });
+        if (subscriber) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Email is already subscribed',
+            });
+        }
+        const customerId = res.locals.user || null;
+        const insertNewsletterData = {
+            customerId,
+            countryId,
+            email
+        };
+        const newsletter = await newsletter_service_1.default.create(insertNewsletterData);
+        if (newsletter) {
+            return controller.sendSuccessResponse(res, {
+                requestedData: newsletter,
+                message: 'You have subscribed successfully!'
             }, 200);
         }
         else {

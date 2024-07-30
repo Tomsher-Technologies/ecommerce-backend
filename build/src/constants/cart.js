@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderProductStatusArray = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -36,6 +36,18 @@ exports.orderStatusMessages = {
     '12': 'Order has been completed!',
     '13': 'Order is ready for pickup!'
 };
+exports.orderProductStatusArray = [
+    { value: '1', label: "Pending" },
+    { value: '2', label: "Processing" },
+    { value: '3', label: "Packed" },
+    { value: '4', label: "Shipped" },
+    { value: '5', label: "Delivered" },
+    { value: '6', label: "Canceled" },
+    { value: '7', label: "Returned" },
+    { value: '8', label: "Refunded" },
+    { value: '12', label: "Completed" },
+    { value: '13', label: "Pickup" }
+];
 exports.orderStatusMap = exports.orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;
     return map;

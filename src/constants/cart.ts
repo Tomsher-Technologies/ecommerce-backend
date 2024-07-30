@@ -36,6 +36,19 @@ export const orderStatusMessages: { [key: string]: string } = {
     '13': 'Order is ready for pickup!'
 };
 
+export const orderProductStatusArray = [
+    { value: '1', label: "Pending" },
+    { value: '2', label: "Processing" },
+    { value: '3', label: "Packed" },
+    { value: '4', label: "Shipped" },
+    { value: '5', label: "Delivered" },
+    { value: '6', label: "Canceled" },
+    { value: '7', label: "Returned" },
+    { value: '8', label: "Refunded" },
+    { value: '12', label: "Completed" },
+    { value: '13', label: "Pickup" }
+];
+
 export const orderStatusMap = orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;
     return map;

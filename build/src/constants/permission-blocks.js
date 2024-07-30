@@ -55,4 +55,7 @@ exports.permissionBlocks = {
         coupons: 'coupons',
         offers: 'offers',
     },
+    newsletter: {
+        newsletter: 'newsletter'
+    },
 };

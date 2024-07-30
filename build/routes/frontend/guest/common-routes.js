@@ -21,6 +21,7 @@ router.get('/collection-brands', common_controller_1.default.findCollectionBrand
 router.get('/payment-methods', common_controller_1.default.findPaymentMethods);
 router.get('/stores', common_controller_1.default.findAllStores);
 router.post('/contact-us-submit', pages_controller_1.default.contactUsSubmit);
+router.post('/newsletter-submit', pages_controller_1.default.newsletterSubmit);
 router.get('/tap-success-response', checkout_controller_1.default.tapSuccessResponse);
 router.get('/tap-failure-response', checkout_controller_1.default.tapSuccessResponse);
 router.get('/tabby-success-response', checkout_controller_1.default.tabbySuccessResponse);
