@@ -55,5 +55,8 @@ export const permissionBlocks = {
         coupons: 'coupons',
         offers: 'offers',
     },
+    newsletter: {
+        newsletter: 'newsletter'
+    },
 
 }
