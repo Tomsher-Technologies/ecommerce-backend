@@ -2,7 +2,7 @@ import path from 'path';
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 
-import { cartStatus, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
+import { cartStatus, couponDiscountType, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
 import { DiscountType, calculateExpectedDeliveryDate, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
@@ -150,8 +150,9 @@ class CheckoutService {
                 const discountType = couponDetails.discountType
                 const updateTotalCouponAmount = (productAmount: any, discountAmount: number, discountType: DiscountType) => {
                     if (productAmount) {
-                        const totalCouponAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
-                        const cartTotalAmount = cartDetails?.totalAmount - calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
+                        const couponDiscountAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
+                        const totalCouponAmount = (discountType === couponDiscountType.percentage) ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount)) : couponDiscountAmount
+                        const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
                         cartUpdate = {
                             ...cartUpdate,
                             totalAmount: cartTotalAmount,
@@ -161,7 +162,7 @@ class CheckoutService {
                 };
                 var totalAmount = 0
                 if (couponDetails?.couponType == couponTypes.entireOrders) {
-                    updateTotalCouponAmount(cartDetails?.totalAmount, couponAmount, discountType)
+                    updateTotalCouponAmount(cartDetails?.totalProductAmount, couponAmount, discountType)
                 } else if (couponDetails?.couponType == couponTypes.forProduct) {
                     cartProductDetails.map(async (product: any) => {
                         if (couponDetails?.couponApplyValues.includes((product.productId))) {
@@ -279,15 +280,15 @@ class CheckoutService {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
                         totalAmount: cartUpdate.totalAmount,
-                        totalShippingAmount: cartDetails.totalShippingAmount,
-                        totalProductAmount: cartDetails.totalProductAmount,
-                        totalTaxAmount: cartDetails.totalTaxAmount,
-                        totalProductOriginalPrice: cartDetails.totalProductOriginalPrice,
-                        totalGiftWrapAmount: cartDetails.totalGiftWrapAmount,
-                        totalCouponAmount: cartDetails.totalCouponAmount,
-                        totalDiscountAmount: cartDetails.totalDiscountAmount,
-                        paymentMethodCharge: cartDetails.paymentMethodCharge,
-                        orderComments: cartDetails?.orderComments,
+                        totalShippingAmount: updateCart.totalShippingAmount,
+                        totalProductAmount: updateCart.totalProductAmount,
+                        totalTaxAmount: updateCart.totalTaxAmount,
+                        totalProductOriginalPrice: updateCart.totalProductOriginalPrice,
+                        totalGiftWrapAmount: updateCart.totalGiftWrapAmount,
+                        totalCouponAmount: updateCart.totalCouponAmount,
+                        totalDiscountAmount: updateCart.totalDiscountAmount,
+                        paymentMethodCharge: updateCart.paymentMethodCharge,
+                        orderComments: updateCart?.orderComments,
                         paymentMethod: paymentMethodDetails?.paymentMethodTitle,
                         shippingAddressDetails: {
                             name: shippingAddressDetails?.name,
