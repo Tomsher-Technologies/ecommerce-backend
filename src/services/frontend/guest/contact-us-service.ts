@@ -5,8 +5,8 @@ import ContactUsModel, { ContactUsProps } from '../../../model/frontend/contact-
 
 class ContactUsService {
 
-    async create(languageData: any): Promise<ContactUsProps> {
-        return ContactUsModel.create(languageData);
+    async create(contactUsData: any): Promise<ContactUsProps> {
+        return ContactUsModel.create(contactUsData);
     }
 
 }

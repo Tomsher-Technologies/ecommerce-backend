@@ -1,4 +1,4 @@
-import express, {  Router } from 'express';
+import express, { Router } from 'express';
 
 import CommonController from '../../../src/controllers/frontend/guest/common-controller';
 import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
@@ -18,6 +18,7 @@ router.get('/collection-brands', CommonController.findCollectionBrands);
 router.get('/payment-methods', CommonController.findPaymentMethods);
 router.get('/stores', CommonController.findAllStores);
 router.post('/contact-us-submit', PagesController.contactUsSubmit);
+router.post('/newsletter-submit', PagesController.newsletterSubmit);
 
 router.get('/tap-success-response', CheckoutController.tapSuccessResponse);
 router.get('/tap-failure-response', CheckoutController.tapSuccessResponse);
