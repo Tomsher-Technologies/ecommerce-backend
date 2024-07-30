@@ -41,6 +41,7 @@ OrderRoutes.get('/order-list', response_status_1.logResponseStatus, order_contro
 OrderRoutes.post('/move-to-wishlist', response_status_1.logResponseStatus, cart_order_controller_1.default.moveToWishlist);
 OrderRoutes.post('/checkout', response_status_1.logResponseStatus, checkout_controller_1.default.checkout);
 OrderRoutes.get('/checkout/retrieve-checkout-tabby/:tabby', response_status_1.logResponseStatus, checkout_controller_1.default.tabbyCheckoutRetrieveDetails);
-OrderRoutes.post('/order-cancel', response_status_1.logResponseStatus, order_controller_1.default.orderCancel);
+OrderRoutes.post('/order-cancel/:id', response_status_1.logResponseStatus, order_controller_1.default.orderCancel);
+OrderRoutes.post('/order-return/:id', response_status_1.logResponseStatus, order_controller_1.default.orderReturn);
 OrderRoutes.use(routerWithUser);
 exports.default = OrderRoutes;
