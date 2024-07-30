@@ -65,16 +65,18 @@ class CouponService {
             if (uuid) {
                 totalCouponAmounQuery.guestUserId = uuid;
             }
-            const totalCouponAmountResult = await cart_order_model_1.default.aggregate([
-                { $match: totalCouponAmounQuery },
-                { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
-            ]);
-            const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
-            if (totalCouponAmount >= Number(couponDetails.discountMaxRedeemAmount)) {
-                return {
-                    status: false,
-                    message: `The total coupon amount exceeds the maximum redeemable amount`
-                };
+            if (Number(couponDetails.discountMaxRedeemAmount) > 0 && couponDetails.discountType === cart_1.couponDiscountType.percentage) {
+                const totalCouponAmountResult = await cart_order_model_1.default.aggregate([
+                    { $match: totalCouponAmounQuery },
+                    { $group: { _id: null, totalCouponAmount: { $sum: "$totalCouponAmount" } } }
+                ]);
+                const totalCouponAmount = totalCouponAmountResult[0]?.totalCouponAmount || 0;
+                if (totalCouponAmount > Number(couponDetails.discountMaxRedeemAmount)) {
+                    return {
+                        status: false,
+                        message: `The total coupon amount exceeds the maximum redeemable amount`
+                    };
+                }
             }
             if (![cart_1.couponTypes.entireOrders].includes(couponDetails.couponType)) {
                 const cartProductDetails = await cart_order_product_model_1.default.find({ cartId: cartDetails._id });
