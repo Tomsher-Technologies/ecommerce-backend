@@ -6,6 +6,8 @@ import PagesController from '../../../src/controllers/frontend/guest/pages-contr
 const router: Router = express.Router();
 
 router.get('/countries', CommonController.findAllCountries);
+router.get('/states', CommonController.findAllStates);
+router.get('/cities', CommonController.findAllCities);
 router.get('/slider', CommonController.findAllSliders);
 router.get('/banner', CommonController.findAllBanners);
 router.get('/website-setups', CommonController.findWebsiteSetups);

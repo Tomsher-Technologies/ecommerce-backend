@@ -48,7 +48,7 @@ class GeneralController extends base_controller_1.default {
                 query.page = page;
             }
             const seoDetails = await seo_page_model_1.default.find(query);
-            controller.sendSuccessResponse(res, {
+            return controller.sendSuccessResponse(res, {
                 requestedData: seoDetails,
                 message: 'Success!'
             }, 200);

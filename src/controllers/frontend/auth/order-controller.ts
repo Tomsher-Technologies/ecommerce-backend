@@ -82,9 +82,12 @@ class OrderController extends BaseController {
                     return controller.sendErrorResponse(res, 200, { message: 'User is not found' });
                 }
                 query.customerId = customerId;
+                query.isGuest = false;
             } else if (uuid) {
                 query.orderUuid = uuid;
+                query.isGuest = true;
             }
+            console.log('customerDetails', customerId);
 
             const order: any = await OrderService.orderList({
                 query,

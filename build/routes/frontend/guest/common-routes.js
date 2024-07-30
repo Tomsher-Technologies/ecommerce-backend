@@ -9,6 +9,8 @@ const checkout_controller_1 = __importDefault(require("../../../src/controllers/
 const pages_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/pages-controller"));
 const router = express_1.default.Router();
 router.get('/countries', common_controller_1.default.findAllCountries);
+router.get('/states', common_controller_1.default.findAllStates);
+router.get('/cities', common_controller_1.default.findAllCities);
 router.get('/slider', common_controller_1.default.findAllSliders);
 router.get('/banner', common_controller_1.default.findAllBanners);
 router.get('/website-setups', common_controller_1.default.findWebsiteSetups);

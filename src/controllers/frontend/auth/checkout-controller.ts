@@ -5,7 +5,7 @@ import CartService from '../../../services/frontend/cart-service';
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
 import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymentGatwaySuccessStatus, orderTypes, orderStatusMap, cartStatus, networkPaymentGatwayStatus, tamaraPaymentGatwayStatus } from "../../../constants/cart";
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
-import { blockReferences } from "../../../constants/website-setup";
+import { blockReferences, shippingTypes } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
 import { checkoutSchema } from "../../../utils/schemas/frontend/auth/checkout-schema";
 import { formatZodError } from "../../../utils/helpers";
@@ -36,7 +36,7 @@ class CheckoutController extends BaseController {
             }
             const validatedData = checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, orderComments } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, stateId = '66a76e47239952224a5f1bba', cityId = '66a792eda1672f8a3e35e882', orderComments } = validatedData.data;
 
                 const customerDetails = await CustomerModel.findOne({ _id: customerId });
                 if (!customerDetails || !customerDetails.isVerified) {
@@ -82,8 +82,7 @@ class CheckoutController extends BaseController {
                     if (variant.extraProductTitle) {
                         productTitle = variant.extraProductTitle
                     } else {
-                        const product: any = await ProductsModel.findOne({ _id: variant.productId }, 'productTitle')
-                        productTitle = product.productTitle
+                        productTitle = cartDetails.products.find((product: any) => product.variantId === variant._id)?.productDetails?.productTitle
                     }
                     if (variant.quantity == 0) {
                         errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' })
@@ -105,15 +104,17 @@ class CheckoutController extends BaseController {
 
                 let cartUpdate: any = {
                     orderUuid: uuid,
-                    cartStatus: cartStatus.active,
-                    paymentMethodCharge: 0,
-                    couponId: null,
-                    orderComments: orderComments,
-                    totalCouponAmount: 0,
-                    totalAmount: cartDetails.totalAmount,
                     shippingId: shippingId,
                     billingId: billingId || null,
                     paymentMethodId: paymentMethod._id,
+                    couponId: null,
+                    stateId: stateId || null,
+                    cityId: cityId || null,
+                    cartStatus: cartStatus.active,
+                    paymentMethodCharge: 0,
+                    orderComments: orderComments,
+                    totalCouponAmount: 0,
+                    totalAmount: cartDetails.totalAmount,
                     orderStatusAt: null,
                 }
                 if (!customerDetails?.isGuest && couponCode && deviceType) {
@@ -140,7 +141,36 @@ class CheckoutController extends BaseController {
                     totalAmount: cartDetails.totalAmount,
                 }
 
-                let paymentData = null
+                let paymentData = null;
+                let shippingChargeDetails: any = null;
+                let totalShippingAmount = cartDetails.totalShippingAmount || 0;
+                if (stateId) {
+                    shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
+                    if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[1])) {
+                        const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || []
+                        if (areaWiseDeliveryChargeValues?.length > 0) {
+                            const matchedValue = areaWiseDeliveryChargeValues.find((item: any) => {
+                                if (item.stateId === stateId) {
+                                    if (cityId) {
+                                        return item.cityId === cityId;
+                                    }
+                                    return true;
+                                }
+                                return false;
+                            });
+                            if (matchedValue) {
+                                const shippingCharge = matchedValue?.shippingCharge || 0;
+                                const finalShippingCharge = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                cartUpdate = {
+                                    ...cartUpdate,
+                                    totalShippingAmount: finalShippingCharge,
+                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                }
+                                totalShippingAmount = finalShippingCharge;
+                            }
+                        }
+                    }
+                }
                 if (paymentMethod.slug !== paymentMethods.cashOnDelivery) {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
                         const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
@@ -170,7 +200,7 @@ class CheckoutController extends BaseController {
                                 orderComments: cartDetails.orderComments,
                                 cartStatusAt: cartDetails.cartStatusAt,
                                 totalDiscountAmount: cartDetails.totalDiscountAmount,
-                                totalShippingAmount: cartDetails.totalShippingAmount,
+                                totalShippingAmount: totalShippingAmount,
                                 totalTaxAmount: cartDetails.totalTaxAmount,
                                 products: cartDetails?.products
                             }
@@ -255,7 +285,7 @@ class CheckoutController extends BaseController {
                                     orderComments: cartDetails.orderComments,
                                     cartStatusAt: cartDetails.cartStatusAt,
                                     totalDiscountAmount: cartDetails.totalDiscountAmount,
-                                    totalShippingAmount: cartDetails.totalShippingAmount,
+                                    totalShippingAmount: totalShippingAmount,
                                     totalTaxAmount: cartDetails.totalTaxAmount,
                                     products: cartDetails?.products
                                 },
@@ -305,13 +335,12 @@ class CheckoutController extends BaseController {
                         orderStatusAt: new Date(),
                     }
                 }
-
                 const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
-                    await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod }, true)
+                    await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails }, true)
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
