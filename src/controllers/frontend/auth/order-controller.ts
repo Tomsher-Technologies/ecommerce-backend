@@ -114,53 +114,109 @@ class OrderController extends BaseController {
         }
     }
 
-    async orderCancel(req: Request, res: Response): Promise<void> {
+    async orderReturn(req: Request, res: Response): Promise<void> {
         try {
-            const customerId: any = res.locals.user;
+            const customerId = res.locals.user;
             const orderId = req.params.id;
-            let countryData = await CommonService.findOneCountrySubDomainWithId(origin, true);
-            if (!countryData) {
-                return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
-            }
 
             if (!customerId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }
 
-            const query: any = {
-                $and: [
-                    { countryId: countryData._id },
-                    { customerId: new mongoose.Types.ObjectId(customerId) },
-                    { _id: new mongoose.Types.ObjectId(orderId) }
-                ]
-            };
-            const orderDetails = await CartOrdersModel.findOne({ _id: new mongoose.Types.ObjectId(orderId) });
+            const orderObjectId = new mongoose.Types.ObjectId(orderId);
+            const customerObjectId = new mongoose.Types.ObjectId(customerId);
+
+            const orderDetails = await CartOrdersModel.findOne({
+                _id: orderObjectId,
+                cartStatus: { $ne: "1" },
+                orderStatus: { $ne: "0" }
+            });
+
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            console.log('customerDetails', customerId);
 
-            const order: any = await OrderService.orderList({
-                query,
-                hostName: origin,
+            if (Number(orderDetails.orderStatus) > 1) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
+            }
+
+            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6" });
+
+            const orderList = await OrderService.orderList({
+                query: {
+                    $and: [
+                        { customerId: customerObjectId },
+                        { _id: orderObjectId }
+                    ]
+                },
+                hostName: req.get('origin'),
                 getAddress: '1',
                 getCartProducts: '1',
             });
 
-            if (order && order.length > 0) {
+            if (orderList && orderList.length > 0) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: order[0],
-                    message: 'Your Order is ready!'
+                    requestedData: orderList[0],
+                    message: 'Your order has been successfully cancelled!'
                 });
             } else {
-                return controller.sendErrorResponse(res, 200, {
-                    message: 'Order not found'
-                });
+                return controller.sendErrorResponse(res, 200, { message: 'Order not found' });
             }
-        } catch (error: any) {
-            return controller.sendErrorResponse(res, 200, {
-                message: 'An error occurred while fetching the order'
+        } catch (error) {
+            return controller.sendErrorResponse(res, 200, { message: 'An error occurred while cancelling the order' });
+        }
+    }
+    
+    async orderCancel(req: Request, res: Response): Promise<void> {
+        try {
+            const customerId = res.locals.user;
+            const orderId = req.params.id;
+
+            if (!customerId) {
+                return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
+            }
+
+            const orderObjectId = new mongoose.Types.ObjectId(orderId);
+            const customerObjectId = new mongoose.Types.ObjectId(customerId);
+
+            const orderDetails = await CartOrdersModel.findOne({
+                _id: orderObjectId,
+                cartStatus: { $ne: "1" },
+                orderStatus: { $ne: "0" }
             });
+
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
+            }
+
+            if (Number(orderDetails.orderStatus) > 1) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
+            }
+
+            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6" });
+
+            const orderList = await OrderService.orderList({
+                query: {
+                    $and: [
+                        { customerId: customerObjectId },
+                        { _id: orderObjectId }
+                    ]
+                },
+                hostName: req.get('origin'),
+                getAddress: '1',
+                getCartProducts: '1',
+            });
+
+            if (orderList && orderList.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: orderList[0],
+                    message: 'Your order has been successfully cancelled!'
+                });
+            } else {
+                return controller.sendErrorResponse(res, 200, { message: 'Order not found' });
+            }
+        } catch (error) {
+            return controller.sendErrorResponse(res, 200, { message: 'An error occurred while cancelling the order' });
         }
     }
 }
