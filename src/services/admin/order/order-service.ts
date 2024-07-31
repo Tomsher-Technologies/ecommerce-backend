@@ -81,7 +81,7 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        let pipeline = getOrderReturnProductsWithCart(query);
+        let pipeline = getOrderReturnProductsWithCart(query, false);
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip } as any);
@@ -94,7 +94,7 @@ class OrderService {
         pipeline.push({ $sort: finalSort } as any);
         const results = await CartOrderProductsModel.aggregate(pipeline);
         if (getTotalCount) {
-            const countPipeline = getOrderReturnProductsWithCart(query);
+            const countPipeline = getOrderReturnProductsWithCart(query, true);
             countPipeline.push({ $count: 'totalCount' } as any);
             const [{ totalCount }] = await CartOrderProductsModel.aggregate(countPipeline);
             return { totalCount };

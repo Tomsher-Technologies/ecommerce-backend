@@ -13,10 +13,7 @@ const order_service_1 = __importDefault(require("../../../services/admin/order/o
 const mongoose_1 = __importDefault(require("mongoose"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_1 = require("../../../constants/cart");
-const customer_wallet_transaction_model_1 = __importDefault(require("../../../model/frontend/customer-wallet-transaction-model"));
-const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
 const website_setup_1 = require("../../../constants/website-setup");
-const wallet_1 = require("../../../constants/wallet");
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
 const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
@@ -206,6 +203,73 @@ class OrdersController extends base_controller_1.default {
             });
         }
     }
+    async getOrdeReturnProducts(req, res) {
+        const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query;
+        const userData = await res.locals.user;
+        let query = { _id: { $exists: true } };
+        const country = (0, helpers_1.getCountryId)(userData);
+        if (country) {
+            query = {
+                'cartDetails.countryId': country
+            };
+        }
+        else if (countryId) {
+            query = {
+                'cartDetails.countryId': new mongoose_1.default.Types.ObjectId(countryId)
+            };
+        }
+        if (customerId) {
+            query = {
+                ...query,
+                'customerDetails._id': new mongoose_1.default.Types.ObjectId(customerId)
+            };
+        }
+        if (paymentMethodId) {
+            query = {
+                ...query,
+                'customerDetails._id': new mongoose_1.default.Types.ObjectId(paymentMethodId)
+            };
+        }
+        const sort = {};
+        if (sortby && sortorder) {
+            sort[sortby] = sortorder === 'desc' ? -1 : 1;
+        }
+        const order = await order_service_1.default.getOrdeReturnProducts({
+            page: parseInt(page_size),
+            limit: parseInt(limit),
+            query,
+            sort
+        });
+        const totalCount = await order_service_1.default.getOrdeReturnProducts({
+            page: parseInt(page_size),
+            query,
+            getTotalCount: true
+        });
+        return controller.sendSuccessResponse(res, {
+            requestedData: order,
+            totalCount: totalCount?.totalCount || 0,
+            message: 'Success!'
+        }, 200);
+    }
+    async orderProductStatusChange(req, res) {
+        // if (shouldUpdateTotalProductAmount) {
+        //     const sumOfProductData = await CartOrderProductsModel.aggregate([
+        //         { $match: { cartId: orderDetails._id } },
+        //         { $group: { _id: null, totalProductAmount: { $sum: "$productAmount" }, totalProductQuantity: { $sum: "$quantity" }, totalProductOriginalPrice: { $sum: "$productOriginalPrice" } } }
+        //     ]);
+        //     if (sumOfProductData.length > 0) {
+        //         await CartOrdersModel.updateOne(
+        //             { _id: orderDetails._id },
+        //             {
+        //                 $set: {
+        //                     totalProductAmount: sumOfProductData[0].totalProductAmount,
+        //                     totalProductOriginalPrice: sumOfProductData[0].totalProductOriginalPrice,
+        //                 }
+        //             }
+        //         );
+        //     }
+        // }
+    }
     async orderStatusChange(req, res) {
         try {
             const orderId = req.params.id;
@@ -268,43 +332,9 @@ class OrdersController extends base_controller_1.default {
             }
             let customerDetails = null;
             if (!orderDetails?.isGuest && orderDetails.customerId) {
-                const walletTransactionDetails = await customer_wallet_transaction_model_1.default.findOne({ orderId: orderDetails._id });
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
-                if (customerDetails) {
-                    if (orderStatus === '5' && !walletTransactionDetails) {
-                        const walletsDetails = await settings_service_1.default.findOne({ countryId: orderDetails.countryId, block: website_setup_1.websiteSetup.basicSettings, blockReference: website_setup_1.blockReferences.wallets });
-                        if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (Number(walletsDetails.blockValues.orderAmount) > 0) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
-                            const rewarDetails = (0, helpers_1.calculateWalletRewardPoints)(walletsDetails.blockValues, orderDetails.totalAmount);
-                            await customer_wallet_transaction_model_1.default.create({
-                                customerId: orderDetails.customerId,
-                                orderId: orderDetails._id,
-                                earnType: wallet_1.earnTypes.order,
-                                walletAmount: rewarDetails.redeemableAmount,
-                                walletPoints: rewarDetails.rewardPoints,
-                                status: '1'
-                            });
-                            if (customerDetails) {
-                                await customer_service_1.default.update(customerDetails?._id, {
-                                    totalRewardPoint: (customerDetails.totalRewardPoint + rewarDetails.rewardPoints),
-                                    totalWalletAmount: (customerDetails.totalWalletAmount + rewarDetails.redeemableAmount)
-                                });
-                            }
-                            orderDetails.rewardAmount = rewarDetails.redeemableAmount;
-                            orderDetails.rewardPoints = rewarDetails.rewardPoints;
-                        }
-                    }
-                    else if ((orderStatus === '8' || orderStatus === '6') && walletTransactionDetails) {
-                        await customer_wallet_transaction_model_1.default.findByIdAndUpdate(walletTransactionDetails._id, {
-                            earnType: orderStatus === '8' ? wallet_1.earnTypes.orderReturned : wallet_1.earnTypes.orderCancelled,
-                            status: '3' // rejected
-                        });
-                        await customer_service_1.default.update(customerDetails?._id, {
-                            totalRewardPoint: (customerDetails.totalRewardPoint - walletTransactionDetails.walletPoints),
-                            totalWalletAmount: (customerDetails.totalWalletAmount - walletTransactionDetails.walletAmount)
-                        });
-                        orderDetails.rewardAmount = 0;
-                        orderDetails.rewardPoints = 0;
-                    }
+                if (orderStatus === '12' && customerDetails) {
+                    await order_service_1.default.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
                 }
             }
             orderDetails.orderStatus = orderStatus;
@@ -352,6 +382,9 @@ class OrdersController extends base_controller_1.default {
                 case '13':
                     orderDetails.pickupStatusAt = currentDate;
                     break;
+                case '14':
+                    orderDetails.partiallyDeliveredStatusAt = currentDate;
+                    break;
                 default: break;
             }
             const updatedOrderDetails = await order_service_1.default.orderStatusUpdate(orderDetails._id, orderDetails, '1');
@@ -362,8 +395,8 @@ class OrdersController extends base_controller_1.default {
             }
             await cart_order_product_model_1.default.updateMany({ cartId: orderDetails._id }, {
                 $set: {
-                    orderStatus: orderStatus,
-                    orderStatusAt: currentDate
+                    orderProductStatus: orderStatus,
+                    orderProductStatusAt: currentDate
                 }
             });
             if (orderStatus === '11' || orderStatus === '7') { // return products

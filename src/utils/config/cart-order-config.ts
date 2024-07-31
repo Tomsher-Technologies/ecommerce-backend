@@ -434,6 +434,123 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
     ];
 }
 
+// export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boolean) => {
+//     const pipeline: any[] = [
+//         { $match: query },
+//         {
+//             $lookup: {
+//                 from: `${collections.cart.cartorders}`,
+//                 localField: 'cartId',
+//                 foreignField: '_id',
+//                 as: 'cartDetails'
+//             }
+//         },
+//         { $unwind: '$cartDetails' },
+//         {
+//             $lookup: {
+//                 from: `${collections.ecommerce.products.products}`,
+//                 localField: 'productId',
+//                 foreignField: '_id',
+//                 as: 'productsDetails'
+//             }
+//         },
+//         { $unwind: '$productsDetails' },
+//           {
+//                 $lookup: {
+//                     from: `${collections.ecommerce.products.productvariants.productvariants}`,
+//                     localField: 'variantId',
+//                     foreignField: '_id',
+//                     as: 'productvariants'
+//                 }
+//             },
+//             {
+//                 $addFields: {
+//                     'productsDetails.productvariants': {
+//                         $arrayElemAt: ['$productvariants', 0]
+//                     }
+//                 }
+//             }
+//     ];
+
+//     if (notCallLookups) {
+//         pipeline.push(
+//             {
+//                 $lookup: {
+//                     from: `${collections.customer.customers}`,
+//                     localField: 'cartDetails.customerId',
+//                     foreignField: '_id',
+//                     as: 'customerDetails'
+//                 }
+//             },
+//             { $unwind: '$customerDetails' },
+//             {
+//                 $lookup: {
+//                     from: `${collections.cart.paymentmethods}`,
+//                     localField: 'cartDetails.paymentMethodId',
+//                     foreignField: '_id',
+//                     as: 'paymentMethod'
+//                 }
+//             },
+//             { $unwind: '$paymentMethod' },
+//             {
+//                 $lookup: {
+//                     from: `${collections.setup.countries}`,
+//                     localField: 'cartDetails.countryId',
+//                     foreignField: '_id',
+//                     as: 'country'
+//                 }
+//             },
+//             {
+//                 $unwind: {
+//                     path: "$country",
+//                     preserveNullAndEmptyArrays: true
+//                 }
+//             }
+//         );
+//     }
+
+//     pipeline.push({
+//         $project: {
+//             _id: 1,
+//             cartId: 1,
+//             quantity: 1,
+//             productOriginalPrice: 1,
+//             productAmount: 1,
+//             productDiscountAmount: 1,
+//             orderProductStatus: 1,
+//             'cartDetails._id': 1,
+//             'cartDetails.customerId': 1,
+//             'cartDetails.countryId': 1,
+//             'cartDetails.isGuest': 1,
+//             'cartDetails.cartStatus': 1,
+//             'cartDetails.totalProductOriginalPrice': 1,
+//             'cartDetails.totalReturnedProduct': 1,
+//             'cartDetails.totalDiscountAmount': 1,
+//             'cartDetails.totalShippingAmount': 1,
+//             'cartDetails.totalCouponAmount': 1,
+//             'cartDetails.totalWalletAmount': 1,
+//             'cartDetails.totalTaxAmount': 1,
+//             'cartDetails.totalProductAmount': 1,
+//             'cartDetails.couponAmount': 1,
+//             'cartDetails.totalGiftWrapAmount': 1,
+//             'cartDetails.totalAmount': 1,
+//             'cartDetails.orderStatusAt': 1,
+//             'cartDetails.deliveredStatusAt': 1,
+//             'customerDetails._id': 1,
+//             'customerDetails.firstName': 1,
+//             'customerDetails.email': 1,
+//             'customerDetails.isGuest': 1,
+//             'paymentMethod._id': 1,
+//             'paymentMethod.paymentMethodTitle': 1,
+//             'paymentMethod.slug': 1,
+//             'productsDetails': 1,
+//             'country': 1
+//         }
+//     });
+
+//     return pipeline;
+// };
+
 export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boolean) => {
     return [
         { $match: query },
@@ -535,7 +652,8 @@ export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boole
                 'paymentMethod._id': 1,
                 'paymentMethod.paymentMethodTitle': 1,
                 'paymentMethod.slug': 1,
-                'productsDetails': 1
+                'productsDetails': 1,
+                'country': 1
             }
         }
     ];

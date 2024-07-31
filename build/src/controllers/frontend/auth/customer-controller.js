@@ -196,13 +196,13 @@ class CustomerController extends base_controller_1.default {
                     validation: (0, helpers_1.formatZodError)(validationResult.error.errors)
                 });
             }
-            const { addressId, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude } = validationResult.data;
+            const { addressId, stateId, cityId, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude } = validationResult.data;
             const currentUser = res.locals.user;
             if (addressId) {
                 return await CustomerController.updateExistingAddress(addressId, req.body, res);
             }
             else {
-                return await CustomerController.createNewAddress(currentUser._id, { isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
+                return await CustomerController.createNewAddress(currentUser._id, { stateId, cityId, isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
             }
         }
         catch (error) {

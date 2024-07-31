@@ -9,6 +9,7 @@ const customers_model_1 = __importDefault(require("../../../model/frontend/custo
 const mongoose_1 = __importDefault(require("mongoose"));
 const order_service_1 = __importDefault(require("../../../services/frontend/auth/order-service"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const controller = new base_controller_1.default();
 class OrderController extends base_controller_1.default {
     async orderList(req, res) {
@@ -109,10 +110,14 @@ class OrderController extends base_controller_1.default {
             });
         }
     }
-    async orderReturn(req, res) {
+    async orderReturnAndEdit(req, res) {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
+            const { orderProducts, returnReson } = req.body;
+            if (!orderProducts || orderProducts.length === 0) {
+                return controller.sendErrorResponse(res, 200, { message: 'Please select the order product to return or edit' });
+            }
             if (!customerId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }
@@ -126,33 +131,99 @@ class OrderController extends base_controller_1.default {
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            if (Number(orderDetails.orderStatus) > 1) {
-                return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
+            if (Number(orderDetails.orderStatus) < 4) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
-            await cart_order_model_1.default.findByIdAndUpdate(orderObjectId, { orderStatus: "6" });
-            const orderList = await order_service_1.default.orderList({
-                query: {
-                    $and: [
-                        { customerId: customerObjectId },
-                        { _id: orderObjectId }
-                    ]
-                },
-                hostName: req.get('origin'),
-                getAddress: '1',
-                getCartProducts: '1',
-            });
-            if (orderList && orderList.length > 0) {
-                return controller.sendSuccessResponse(res, {
-                    requestedData: orderList[0],
-                    message: 'Your order has been successfully cancelled!'
+            if ([6, 7, 10, 11].includes(Number(orderDetails.orderStatus))) {
+                const statusMessages = {
+                    6: 'Your order has already been cancelled!',
+                    7: 'Your order has already been cancelled!',
+                    10: 'Your order is on hold!',
+                    11: 'Your order has failed!'
+                };
+                return controller.sendErrorResponse(res, 200, { message: statusMessages[Number(orderDetails.orderStatus)] });
+            }
+            const orderProductDetails = await cart_order_product_model_1.default.find({ cartId: orderDetails._id });
+            if (!orderProductDetails || orderProductDetails.length === 0) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
+            }
+            let shouldUpdateTotalProductAmount = false;
+            let hasErrorOccurred = false;
+            const updateOperations = orderProducts.map((orderProduct) => {
+                const productDetail = orderProductDetails.find((detail) => detail._id.toString() === orderProduct.orderProductId);
+                if (!productDetail) {
+                    if (!hasErrorOccurred) {
+                        controller.sendErrorResponse(res, 400, {
+                            message: `Order product with ID ${orderProduct.orderProductId} not found`
+                        });
+                        hasErrorOccurred = true;
+                    }
+                    return null;
+                }
+                if (!['5'].includes(productDetail.orderProductStatus)) {
+                    if (!hasErrorOccurred) {
+                        controller.sendErrorResponse(res, 400, {
+                            message: `Order product with ID ${orderProduct.orderProductId} cannot be updated as its status is not '5' or '13'`
+                        });
+                        hasErrorOccurred = true;
+                    }
+                    return null;
+                }
+                if (productDetail.quantity !== orderProduct.quantity) {
+                    shouldUpdateTotalProductAmount = true;
+                }
+                return {
+                    updateOne: {
+                        filter: { _id: new mongoose_1.default.Types.ObjectId(orderProduct.orderProductId) },
+                        update: {
+                            $set: {
+                                orderRequestedProductStatus: "6",
+                                orderRequestedProductStatusAt: new Date(),
+                                orderRequestedProductQuantity: shouldUpdateTotalProductAmount ? (orderProduct.quantity > 1 ? orderProduct.quantity : null) : null
+                            }
+                        }
+                    }
+                };
+            }).filter((op) => op !== null);
+            if (hasErrorOccurred) {
+                return;
+            }
+            if (updateOperations.length > 0) {
+                await cart_order_product_model_1.default.bulkWrite(updateOperations);
+                if (returnReson !== '') {
+                    await cart_order_model_1.default.findOneAndDelete(orderDetails._id, {
+                        returnReson
+                    });
+                }
+                const orderList = await order_service_1.default.orderList({
+                    query: {
+                        $and: [
+                            { customerId: customerObjectId },
+                            { _id: orderObjectId }
+                        ]
+                    },
+                    hostName: req.get('origin'),
+                    getAddress: '1',
+                    getCartProducts: '1',
                 });
+                if (orderList && orderList.length > 0) {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: orderList[0],
+                        message: 'Order product statuses and quantities updated successfully!'
+                    });
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, { message: 'Order not found' });
+                }
             }
             else {
-                return controller.sendErrorResponse(res, 200, { message: 'Order not found' });
+                return controller.sendErrorResponse(res, 400, {
+                    message: 'No valid order products found to update'
+                });
             }
         }
         catch (error) {
-            return controller.sendErrorResponse(res, 200, { message: 'An error occurred while cancelling the order' });
+            return controller.sendErrorResponse(res, 500, { message: 'An error occurred while updating the order' });
         }
     }
     async orderCancel(req, res) {
@@ -171,6 +242,9 @@ class OrderController extends base_controller_1.default {
             });
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
+            }
+            if (Number(orderDetails.orderStatus) === 6) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order are already cancelled!' });
             }
             if (Number(orderDetails.orderStatus) > 1) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });

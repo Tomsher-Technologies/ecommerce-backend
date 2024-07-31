@@ -262,13 +262,13 @@ class OrdersController extends BaseController {
         if (customerId) {
             query = {
                 ...query,
-                'customerDetails._id': new mongoose.Types.ObjectId(customerId)
+                'cartDetails.customerId': new mongoose.Types.ObjectId(customerId)
             }
         }
         if (paymentMethodId) {
             query = {
                 ...query,
-                'customerDetails._id': new mongoose.Types.ObjectId(paymentMethodId)
+                'cartDetails.paymentMethodId': new mongoose.Types.ObjectId(paymentMethodId)
             }
         }
         const sort: any = {};
@@ -280,7 +280,8 @@ class OrdersController extends BaseController {
             page: parseInt(page_size as string),
             limit: parseInt(limit as string),
             query,
-            sort
+            sort,
+            getTotalCount: false
         });
         const totalCount = await OrderService.getOrdeReturnProducts({
             page: parseInt(page_size as string),

@@ -35,7 +35,7 @@ class CheckoutController extends base_controller_1.default {
             }
             const validatedData = checkout_schema_1.checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, stateId = '66a76e47239952224a5f1bba', cityId = '66a792eda1672f8a3e35e882', orderComments } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, stateId = '', cityId = '', orderComments } = validatedData.data;
                 const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
                 if (!customerDetails || !customerDetails.isVerified) {
                     const message = !customerDetails

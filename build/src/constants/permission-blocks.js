@@ -17,6 +17,7 @@ exports.permissionBlocks = {
     },
     orders: {
         orders: 'orders',
+        orderReturn: 'order-return',
     },
     customers: {
         customers: 'customers',
@@ -57,5 +58,8 @@ exports.permissionBlocks = {
     },
     newsletter: {
         newsletter: 'newsletter'
+    },
+    contactus: {
+        contactus: 'contactus'
     },
 };

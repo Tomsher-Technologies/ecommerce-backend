@@ -38,6 +38,10 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         required: true,
         default: 1
     },
+    orderRequestedProductQuantity: {
+        type: Number,
+        default: null
+    },
     productOriginalPrice: {
         type: Number,
         required: true,
@@ -72,12 +76,21 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         ref: 'Products',
         required: false
     },
-    orderStatus: {
+    orderProductStatus: {
         type: String,
         required: true,
         default: '1'
     },
-    orderStatusAt: {
+    orderProductStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderRequestedProductStatus: {
+        type: String,
+        required: true,
+        default: '1'
+    },
+    orderRequestedProductStatusAt: {
         type: Date,
         default: null
     },
