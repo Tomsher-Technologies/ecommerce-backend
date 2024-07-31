@@ -5,6 +5,7 @@ import CustomerModel from "../../../model/frontend/customers-model";
 import mongoose from "mongoose";
 import OrderService from "../../../services/frontend/auth/order-service";
 import CartOrdersModel from "../../../model/frontend/cart-order-model";
+import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
 
 const controller = new BaseController();
 class OrderController extends BaseController {
@@ -118,6 +119,7 @@ class OrderController extends BaseController {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
+            const { orderProducts } = req.body;
 
             if (!customerId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
@@ -140,7 +142,11 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
             }
 
-            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6" });
+            const orderProductDetails = await CartOrderProductsModel.find({ cartId: orderDetails._id })
+
+            if (orderProductDetails && orderProductDetails.length === 0) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
+            }
 
             const orderList = await OrderService.orderList({
                 query: {
@@ -166,7 +172,7 @@ class OrderController extends BaseController {
             return controller.sendErrorResponse(res, 200, { message: 'An error occurred while cancelling the order' });
         }
     }
-    
+
     async orderCancel(req: Request, res: Response): Promise<void> {
         try {
             const customerId = res.locals.user;
