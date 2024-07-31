@@ -76,7 +76,7 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        let pipeline = (0, cart_order_config_1.getOrderReturnProductsWithCart)(query, false);
+        let pipeline = (0, cart_order_config_1.getOrderReturnProductsWithCart)(query, true);
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip });
@@ -86,14 +86,15 @@ class OrderService {
             }
         }
         pipeline.push({ $sort: finalSort });
-        const results = await cart_order_product_model_1.default.aggregate(pipeline);
         if (getTotalCount) {
-            const countPipeline = (0, cart_order_config_1.getOrderReturnProductsWithCart)(query, true);
+            const countPipeline = (0, cart_order_config_1.getOrderReturnProductsWithCart)(query, false);
             countPipeline.push({ $count: 'totalCount' });
-            const [{ totalCount }] = await cart_order_product_model_1.default.aggregate(countPipeline);
+            const [{ totalCount = 0 } = {}] = await cart_order_product_model_1.default.aggregate(countPipeline);
             return { totalCount };
         }
-        return results;
+        else {
+            return await cart_order_product_model_1.default.aggregate(pipeline);
+        }
     }
     async orderStatusUpdate(orderId, orderData, getCartProducts = '0') {
         const updatedBrand = await cart_order_model_1.default.findByIdAndUpdate(orderId, orderData, { new: true, useFindAndModify: false });

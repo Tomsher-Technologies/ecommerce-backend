@@ -1,53 +1,80 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderProductStatusArray = exports.orderStatusMessages = exports.orderStatusArray = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJason = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
     delivered: "3"
 };
+exports.orderStatusArrayJason = {
+    pending: "1",
+    processing: "2",
+    packed: "3",
+    shipped: "4",
+    delivered: "5",
+    canceled: "6",
+    returned: "7",
+    refunded: "8",
+    partiallyShipped: "9",
+    onHold: "10",
+    failed: "11",
+    completed: "12",
+    pickup: "13",
+    partiallyDelivered: "14",
+};
 exports.orderStatusArray = [
-    { value: '1', label: "Pending" },
-    { value: '2', label: "Processing" },
-    { value: '3', label: "Packed" },
-    { value: '4', label: "Shipped" },
-    { value: '5', label: "Delivered" },
-    { value: '6', label: "Canceled" },
-    { value: '7', label: "Returned" },
-    { value: '8', label: "Refunded" },
-    { value: '9', label: "Partially Shipped" },
-    { value: '10', label: "On Hold" },
-    { value: '11', label: "Failed" },
-    { value: '12', label: "Completed" },
-    { value: '13', label: "Pickup" },
-    { value: '14', label: "Partially Delivered" },
+    { value: exports.orderStatusArrayJason.pending, label: "Pending" },
+    { value: exports.orderStatusArrayJason.processing, label: "Processing" },
+    { value: exports.orderStatusArrayJason.packed, label: "Packed" },
+    { value: exports.orderStatusArrayJason.shipped, label: "Shipped" },
+    { value: exports.orderStatusArrayJason.delivered, label: "Delivered" },
+    { value: exports.orderStatusArrayJason.canceled, label: "Canceled" },
+    { value: exports.orderStatusArrayJason.returned, label: "Returned" },
+    { value: exports.orderStatusArrayJason.refunded, label: "Refunded" },
+    { value: exports.orderStatusArrayJason.partiallyShipped, label: "Partially Shipped" },
+    { value: exports.orderStatusArrayJason.onHold, label: "On Hold" },
+    { value: exports.orderStatusArrayJason.failed, label: "Failed" },
+    { value: exports.orderStatusArrayJason.completed, label: "Completed" },
+    { value: exports.orderStatusArrayJason.pickup, label: "Pickup" },
+    { value: exports.orderStatusArrayJason.partiallyDelivered, label: "Partially Delivered" },
 ];
 exports.orderStatusMessages = {
-    '1': 'Order received successfully!',
-    '2': 'Order is now being processed!',
-    '3': 'Order has been packed!',
-    '4': 'Order has been shipped!',
-    '5': 'Order has been delivered!',
-    '6': 'Order has been canceled!',
-    '7': 'Order has been returned!',
-    '8': 'Order has been refunded!',
-    '9': 'Order has been partially shipped!',
-    '10': 'Order is on hold!',
-    '11': 'Order has failed!',
-    '12': 'Order has been completed!',
-    '13': 'Order is ready for pickup!',
-    '14': 'Order has been delivered!',
+    [exports.orderStatusArrayJason.pending]: 'Order received successfully!',
+    [exports.orderStatusArrayJason.processing]: 'Order is now being processed!',
+    [exports.orderStatusArrayJason.packed]: 'Order has been packed!',
+    [exports.orderStatusArrayJason.shipped]: 'Order has been shipped!',
+    [exports.orderStatusArrayJason.delivered]: 'Order has been delivered!',
+    [exports.orderStatusArrayJason.canceled]: 'Order has been canceled!',
+    [exports.orderStatusArrayJason.returned]: 'Order has been returned!',
+    [exports.orderStatusArrayJason.refunded]: 'Order has been refunded!',
+    [exports.orderStatusArrayJason.partiallyShipped]: 'Order has been partially shipped!',
+    [exports.orderStatusArrayJason.onHold]: 'Order is on hold!',
+    [exports.orderStatusArrayJason.failed]: 'Order has failed!',
+    [exports.orderStatusArrayJason.completed]: 'Order has been completed!',
+    [exports.orderStatusArrayJason.pickup]: 'Order is ready for pickup!',
+    [exports.orderStatusArrayJason.partiallyDelivered]: 'Order has been delivered!',
+};
+exports.orderProductStatusJson = {
+    pending: "1",
+    processing: "2",
+    packed: "3",
+    shipped: "4",
+    delivered: "5",
+    canceled: "6",
+    returned: "7",
+    refunded: "8",
+    pickup: "13"
 };
 exports.orderProductStatusArray = [
-    { value: '1', label: "Pending" },
-    { value: '2', label: "Processing" },
-    { value: '3', label: "Packed" },
-    { value: '4', label: "Shipped" },
-    { value: '5', label: "Delivered" },
-    { value: '6', label: "Canceled" },
-    { value: '7', label: "Returned" },
-    { value: '8', label: "Refunded" },
-    { value: '13', label: "Pickup" }
+    { value: exports.orderProductStatusJson.pending, label: "Pending" },
+    { value: exports.orderProductStatusJson.processing, label: "Processing" },
+    { value: exports.orderProductStatusJson.packed, label: "Packed" },
+    { value: exports.orderProductStatusJson.shipped, label: "Shipped" },
+    { value: exports.orderProductStatusJson.delivered, label: "Delivered" },
+    { value: exports.orderProductStatusJson.canceled, label: "Canceled" },
+    { value: exports.orderProductStatusJson.returned, label: "Returned" },
+    { value: exports.orderProductStatusJson.refunded, label: "Refunded" },
+    { value: exports.orderProductStatusJson.pickup, label: "Pickup" }
 ];
 exports.orderStatusMap = exports.orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;

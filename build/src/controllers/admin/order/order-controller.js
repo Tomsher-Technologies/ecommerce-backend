@@ -37,7 +37,7 @@ class OrdersController extends base_controller_1.default {
             else if (countryId) {
                 query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
-            query = { cartStatus: { $ne: "1" } };
+            query = { cartStatus: { $ne: cart_1.cartStatus.active } };
             // { customerId: customerDetails._id },
             // { countryId: countryData._id },
             if (customerId) {
@@ -204,31 +204,30 @@ class OrdersController extends base_controller_1.default {
         }
     }
     async getOrdeReturnProducts(req, res) {
-        const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query;
+        const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query;
         const userData = await res.locals.user;
-        let query = { _id: { $exists: true } };
+        let query = {
+            _id: { $exists: true },
+            'orderProductStatus': cart_1.orderProductStatusJson.delivered,
+            'cartDetails.orderStatus': cart_1.orderProductStatusJson.delivered,
+            'cartDetails.cartStatus': { $ne: cart_1.cartStatus.active },
+            $or: [
+                { orderRequestedProductQuantity: { $gt: 0 } },
+                { orderRequestedProductStatus: cart_1.orderProductStatusJson.returned }
+            ]
+        };
         const country = (0, helpers_1.getCountryId)(userData);
         if (country) {
-            query = {
-                'cartDetails.countryId': country
-            };
+            query['cartDetails.countryId'] = country;
         }
         else if (countryId) {
-            query = {
-                'cartDetails.countryId': new mongoose_1.default.Types.ObjectId(countryId)
-            };
+            query['cartDetails.countryId'] = new mongoose_1.default.Types.ObjectId(countryId);
         }
         if (customerId) {
-            query = {
-                ...query,
-                'customerDetails._id': new mongoose_1.default.Types.ObjectId(customerId)
-            };
+            query['cartDetails.customerId'] = new mongoose_1.default.Types.ObjectId(customerId);
         }
         if (paymentMethodId) {
-            query = {
-                ...query,
-                'customerDetails._id': new mongoose_1.default.Types.ObjectId(paymentMethodId)
-            };
+            query['cartDetails.paymentMethodId'] = new mongoose_1.default.Types.ObjectId(paymentMethodId);
         }
         const sort = {};
         if (sortby && sortorder) {
@@ -238,7 +237,8 @@ class OrdersController extends base_controller_1.default {
             page: parseInt(page_size),
             limit: parseInt(limit),
             query,
-            sort
+            sort,
+            getTotalCount: false
         });
         const totalCount = await order_service_1.default.getOrdeReturnProducts({
             page: parseInt(page_size),
@@ -287,45 +287,57 @@ class OrdersController extends base_controller_1.default {
                 });
             }
             // Ensure that the order cannot go back to a previous status once delivered
-            if (orderDetails.orderStatus === '5' && ["1", "2", "3", "4", "9", "10", "13"].includes(orderStatus)) {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.delivered && [
+                cart_1.orderStatusArrayJason.pending,
+                cart_1.orderStatusArrayJason.processing,
+                cart_1.orderStatusArrayJason.packed,
+                cart_1.orderStatusArrayJason.shipped,
+                cart_1.orderStatusArrayJason.partiallyShipped,
+                cart_1.orderStatusArrayJason.onHold,
+                cart_1.orderStatusArrayJason.pickup
+            ].includes(orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status back to a previous state once delivered'
                 });
             }
             // Ensure that the order cannot be changed to Canceled after Delivered
-            if (orderDetails.orderStatus === '5' && orderStatus === '6') {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.delivered && orderStatus === cart_1.orderStatusArrayJason.canceled) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status to Canceled once delivered'
                 });
             }
             // Ensure that Returned status is only possible after Delivered
-            if (orderStatus === '7' && orderDetails.orderStatus !== '5') {
+            if (orderStatus === cart_1.orderStatusArrayJason.returned && orderDetails.orderStatus !== cart_1.orderStatusArrayJason.delivered) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Returned status is only possible after Delivered'
                 });
             }
-            if (orderStatus === '8' && orderDetails.orderStatus !== '7') {
+            // Ensure that Refunded status is only possible after Returned
+            if (orderStatus === cart_1.orderStatusArrayJason.refunded && orderDetails.orderStatus !== cart_1.orderStatusArrayJason.returned) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Refunded status is only possible after Returned'
                 });
             }
-            if (orderStatus === '12' && orderDetails.orderStatus !== '5') {
+            // Ensure that Completed status is only possible after Delivered
+            if (orderStatus === cart_1.orderStatusArrayJason.completed && orderDetails.orderStatus !== cart_1.orderStatusArrayJason.delivered) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Completed status is only possible after Delivered'
                 });
             }
             // Ensure that the order cannot be changed from Completed to any other status
-            if (orderDetails.orderStatus === '12') {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.completed) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is completed'
                 });
             }
-            if (orderDetails.orderStatus === '11') {
+            // Ensure that the order cannot be changed from Failed
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.failed) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is failed'
                 });
             }
-            if (orderDetails.orderStatus === '8') {
+            // Ensure that the order cannot be changed from Refunded
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.refunded) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is refunded'
                 });
@@ -333,56 +345,57 @@ class OrdersController extends base_controller_1.default {
             let customerDetails = null;
             if (!orderDetails?.isGuest && orderDetails.customerId) {
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
-                if (orderStatus === '12' && customerDetails) {
+                if (orderStatus === cart_1.orderStatusArrayJason.completed && customerDetails) {
                     await order_service_1.default.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
                 }
             }
             orderDetails.orderStatus = orderStatus;
-            if (orderStatus === '12' || orderStatus === '5') {
-                orderDetails.cartStatus == cart_1.cartStatus.delivered;
+            // Update cart status if the order status is Completed or Delivered
+            if (orderStatus === cart_1.orderStatusArrayJason.completed || orderStatus === cart_1.orderStatusArrayJason.delivered) {
+                orderDetails.cartStatus = cart_1.cartStatus.delivered;
             }
             const currentDate = new Date();
             switch (orderStatus) {
-                case '1':
+                case cart_1.orderStatusArrayJason.pending:
                     orderDetails.orderStatusAt = currentDate;
                     break;
-                case '2':
+                case cart_1.orderStatusArrayJason.processing:
                     orderDetails.processingStatusAt = currentDate;
                     break;
-                case '3':
+                case cart_1.orderStatusArrayJason.packed:
                     orderDetails.packedStatusAt = currentDate;
                     break;
-                case '4':
+                case cart_1.orderStatusArrayJason.shipped:
                     orderDetails.shippedStatusAt = currentDate;
                     break;
-                case '5':
+                case cart_1.orderStatusArrayJason.delivered:
                     orderDetails.deliveredStatusAt = currentDate;
                     break;
-                case '6':
+                case cart_1.orderStatusArrayJason.canceled:
                     orderDetails.canceledStatusAt = currentDate;
                     break;
-                case '7':
+                case cart_1.orderStatusArrayJason.returned:
                     orderDetails.returnedStatusAt = currentDate;
                     break;
-                case '8':
+                case cart_1.orderStatusArrayJason.refunded:
                     orderDetails.refundedStatusAt = currentDate;
                     break;
-                case '9':
+                case cart_1.orderStatusArrayJason.partiallyShipped:
                     orderDetails.partiallyShippedStatusAt = currentDate;
                     break;
-                case '10':
+                case cart_1.orderStatusArrayJason.onHold:
                     orderDetails.onHoldStatusAt = currentDate;
                     break;
-                case '11':
+                case cart_1.orderStatusArrayJason.failed:
                     orderDetails.failedStatusAt = currentDate;
                     break;
-                case '12':
+                case cart_1.orderStatusArrayJason.completed:
                     orderDetails.completedStatusAt = currentDate;
                     break;
-                case '13':
+                case cart_1.orderStatusArrayJason.pickup:
                     orderDetails.pickupStatusAt = currentDate;
                     break;
-                case '14':
+                case cart_1.orderStatusArrayJason.partiallyDelivered:
                     orderDetails.partiallyDeliveredStatusAt = currentDate;
                     break;
                 default: break;
@@ -399,7 +412,7 @@ class OrdersController extends base_controller_1.default {
                     orderProductStatusAt: currentDate
                 }
             });
-            if (orderStatus === '11' || orderStatus === '7') { // return products
+            if (orderStatus === cart_1.orderStatusArrayJason.failed || orderStatus === cart_1.orderStatusArrayJason.returned) {
                 const cartProducts = await cart_order_product_model_1.default.find({ cartId: orderDetails._id }).select('variantId quantity');
                 const updateProductVariant = cartProducts.map((products) => ({
                     updateOne: {
@@ -409,7 +422,7 @@ class OrdersController extends base_controller_1.default {
                 }));
                 await product_variants_model_1.default.bulkWrite(updateProductVariant);
             }
-            if (orderStatus === '4' || orderStatus === '5') {
+            if (orderStatus === cart_1.orderStatusArrayJason.shipped || orderStatus === cart_1.orderStatusArrayJason.delivered) {
                 let query = { _id: { $exists: true } };
                 query = {
                     ...query,
