@@ -89,7 +89,7 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
             res.locals.uuid = uuid;
             next();
         } else {
-            return res.status(401).json({ message: 'Unautssssshorized - Invalid token', status: false, reLogin: true });
+            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
         }
     } catch (error) {
         console.error(error);
