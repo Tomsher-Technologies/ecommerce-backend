@@ -49,6 +49,7 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
         if (!authHeader && !uuid) {
             return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
         }
+  
         if (authHeader && uuid) {
             const token = authHeader.split(' ')[1];
             if (!token) {
@@ -67,9 +68,7 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
                     return res.status(404).json({ message: 'User data not found!', status: false });
                 }
             }
-        }
-
-        else if (authHeader) {
+        } else if (authHeader) {
             const token = authHeader.split(' ')[1];
             if (!token) {
                 return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
@@ -89,10 +88,8 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
         } else if (uuid) {
             res.locals.uuid = uuid;
             next();
-        }
-
-        else {
-            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
+        } else {
+            return res.status(401).json({ message: 'Unautssssshorized - Invalid token', status: false, reLogin: true });
         }
     } catch (error) {
         console.error(error);

@@ -7,22 +7,15 @@ import validateObjectId, { logResponseStatus } from '../../../src/components/res
 import cartOrderController from '../../../src/controllers/frontend/cart-order-controller';
 import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
 
-
-const routerWithUser: Router = express.Router();
-
-routerWithUser.use(frontendAuthAndUnAuthMiddleware);
-routerWithUser.get('/:id', validateObjectId, OrderController.getOrder);
-
 const OrderRoutes: Router = express.Router();
-OrderRoutes.use(frontendAuthMiddleware);
 
-OrderRoutes.get('/order-list', logResponseStatus, OrderController.orderList);
-OrderRoutes.post('/move-to-wishlist', logResponseStatus, cartOrderController.moveToWishlist);
-OrderRoutes.post('/checkout', logResponseStatus, CheckoutController.checkout);
-OrderRoutes.get('/checkout/retrieve-checkout-tabby/:tabby', logResponseStatus, CheckoutController.tabbyCheckoutRetrieveDetails);
-OrderRoutes.post('/order-cancel/:id', logResponseStatus, OrderController.orderCancel);
-OrderRoutes.post('/order-return/:id', logResponseStatus, OrderController.orderReturn);
+OrderRoutes.get('/:id', frontendAuthAndUnAuthMiddleware, validateObjectId, OrderController.getOrder);
+OrderRoutes.get('/order-list', frontendAuthMiddleware, logResponseStatus, OrderController.orderList);
+OrderRoutes.post('/move-to-wishlist', frontendAuthMiddleware, logResponseStatus, cartOrderController.moveToWishlist);
+OrderRoutes.post('/checkout', frontendAuthMiddleware, logResponseStatus, CheckoutController.checkout);
+OrderRoutes.get('/checkout/retrieve-checkout-tabby/:tabby', frontendAuthMiddleware, logResponseStatus, CheckoutController.tabbyCheckoutRetrieveDetails);
+OrderRoutes.post('/order-cancel/:id', frontendAuthMiddleware, logResponseStatus, OrderController.orderCancel);
+OrderRoutes.post('/order-return-edit/:id', frontendAuthMiddleware, logResponseStatus, OrderController.orderReturnAndEdit);
 
-OrderRoutes.use(routerWithUser);
 
 export default OrderRoutes;

@@ -27,6 +27,7 @@ export interface CartOrderProps extends Document {
     totalGiftWrapAmount: number;
     totalAmount: number;
     orderComments: string;
+    returnReson: string;
     cartStatus: string;
     orderStatus: string;
     cartStatusAt?: Date;
@@ -35,6 +36,7 @@ export interface CartOrderProps extends Document {
     packedStatusAt?: Date;
     shippedStatusAt?: Date;
     deliveredStatusAt?: Date;
+    partiallyDeliveredStatusAt?: Date;
     canceledStatusAt?: Date;
     returnedStatusAt?: Date;
     refundedStatusAt?: Date;
@@ -108,6 +110,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         default: null
     },
     orderComments: {
+        type: String,
+        default: ''
+    },
+    returnReson: {
         type: String,
         default: ''
     },
@@ -198,6 +204,10 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         default: null
     },
     deliveredStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyDeliveredStatusAt: {
         type: Date,
         default: null
     },
