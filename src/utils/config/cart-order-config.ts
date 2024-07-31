@@ -225,7 +225,7 @@ export const cartDeatilProject = {
         updatedAt: 1,
         __v: 1,
         products: 1,
-        totalProductCount: { $size: '$products' }, 
+        totalProductCount: { $size: '$products' },
         paymentMethod: {
             $ifNull: ['$paymentMethod', null]
         },
@@ -434,7 +434,7 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
     ];
 }
 
-export const getOrderReturnProductsWithCart = (query: any) => {
+export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boolean) => {
     return [
         { $match: query },
         {
@@ -466,7 +466,7 @@ export const getOrderReturnProductsWithCart = (query: any) => {
         {
             $addFields: {
                 'productsDetails.productvariants': {
-                    $arrayElemAt: ['$productvariants', 0] 
+                    $arrayElemAt: ['$productvariants', 0]
                 }
             }
         },
@@ -488,6 +488,20 @@ export const getOrderReturnProductsWithCart = (query: any) => {
             }
         },
         { $unwind: '$paymentMethod' },
+        {
+            $lookup: {
+                from: `${collections.setup.countries}`,
+                localField: 'cartDetails.countryId',
+                foreignField: '_id',
+                as: 'country'
+            }
+        },
+        {
+            $unwind: {
+                path: "$country",
+                preserveNullAndEmptyArrays: true
+            }
+        },
         {
             $project: {
                 _id: 1,

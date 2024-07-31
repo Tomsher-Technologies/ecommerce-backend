@@ -290,7 +290,7 @@ class OrdersController extends BaseController {
 
         return controller.sendSuccessResponse(res, {
             requestedData: order,
-            totalCount: totalCount.length,
+            totalCount: totalCount?.totalCount || 0,
             message: 'Success!'
         }, 200);
     }

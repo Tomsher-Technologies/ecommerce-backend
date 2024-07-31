@@ -99,7 +99,7 @@ class OrderService {
             const [{ totalCount }] = await CartOrderProductsModel.aggregate(countPipeline);
             return { totalCount };
         }
-        return { results };
+        return results;
     }
 
 
