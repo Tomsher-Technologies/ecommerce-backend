@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const base_controller_1 = __importDefault(require("../../admin/base-controller"));
-const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
-const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const base_controller_1 = __importDefault(require("../../admin/base-controller"));
+const cart_1 = require("../../../constants/cart");
+const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
+const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const order_service_1 = __importDefault(require("../../../services/frontend/auth/order-service"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
@@ -125,23 +126,23 @@ class OrderController extends base_controller_1.default {
             const customerObjectId = new mongoose_1.default.Types.ObjectId(customerId);
             const orderDetails = await cart_order_model_1.default.findOne({
                 _id: orderObjectId,
-                cartStatus: { $ne: "1" },
+                cartStatus: { $ne: cart_1.cartStatus.active },
                 orderStatus: { $ne: "0" }
             });
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            if (Number(orderDetails.orderStatus) < 4) {
+            if (Number(orderDetails.orderStatus) < Number(cart_1.orderStatusArrayJason.delivered)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
-            if ([6, 7, 10, 11].includes(Number(orderDetails.orderStatus))) {
-                const statusMessages = {
-                    6: 'Your order has already been cancelled!',
-                    7: 'Your order has already been cancelled!',
-                    10: 'Your order is on hold!',
-                    11: 'Your order has failed!'
-                };
-                return controller.sendErrorResponse(res, 200, { message: statusMessages[Number(orderDetails.orderStatus)] });
+            const statusMessages = {
+                [cart_1.orderStatusArrayJason.canceled.toString()]: 'Your order has already been cancelled!',
+                [cart_1.orderStatusArrayJason.returned.toString()]: 'Your order has already been returned!',
+                [cart_1.orderStatusArrayJason.onHold.toString()]: 'Your order is on hold!',
+                [cart_1.orderStatusArrayJason.failed.toString()]: 'Your order has failed!'
+            };
+            if ([cart_1.orderStatusArrayJason.canceled, cart_1.orderStatusArrayJason.returned, cart_1.orderStatusArrayJason.onHold, cart_1.orderStatusArrayJason.failed].map(String).includes(orderDetails.orderStatus)) {
+                return controller.sendErrorResponse(res, 200, { message: statusMessages[orderDetails.orderStatus] });
             }
             const orderProductDetails = await cart_order_product_model_1.default.find({ cartId: orderDetails._id });
             if (!orderProductDetails || orderProductDetails.length === 0) {
@@ -177,9 +178,12 @@ class OrderController extends base_controller_1.default {
                         filter: { _id: new mongoose_1.default.Types.ObjectId(orderProduct.orderProductId) },
                         update: {
                             $set: {
-                                orderRequestedProductStatus: "6",
-                                orderRequestedProductStatusAt: new Date(),
-                                orderRequestedProductQuantity: shouldUpdateTotalProductAmount ? (orderProduct.quantity > 1 ? orderProduct.quantity : null) : null
+                                ...(!orderProduct.quantityChange ? {
+                                    orderRequestedProductStatus: cart_1.orderProductStatusJson.returned,
+                                    orderRequestedProductStatusAt: new Date()
+                                } : {
+                                    orderRequestedProductQuantity: shouldUpdateTotalProductAmount ? (orderProduct.quantity > 1 ? orderProduct.quantity : null) : null
+                                })
                             }
                         }
                     }

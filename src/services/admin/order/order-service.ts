@@ -81,25 +81,24 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        let pipeline = getOrderReturnProductsWithCart(query, false);
+        let pipeline = getOrderReturnProductsWithCart(query, true);
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip } as any);
             }
-
             if (limit) {
                 pipeline.push({ $limit: limit } as any);
             }
         }
         pipeline.push({ $sort: finalSort } as any);
-        const results = await CartOrderProductsModel.aggregate(pipeline);
         if (getTotalCount) {
-            const countPipeline = getOrderReturnProductsWithCart(query, true);
+            const countPipeline = getOrderReturnProductsWithCart(query, false);
             countPipeline.push({ $count: 'totalCount' } as any);
-            const [{ totalCount }] = await CartOrderProductsModel.aggregate(countPipeline);
+            const [{ totalCount = 0 } = {}] = await CartOrderProductsModel.aggregate(countPipeline);
             return { totalCount };
+        } else {
+            return await CartOrderProductsModel.aggregate(pipeline);
         }
-        return results;
     }
 
 

@@ -4,7 +4,7 @@ import path from 'path';
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 
-import { calculateExpectedDeliveryDate, calculateWalletRewardPoints, dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
+import { calculateExpectedDeliveryDate, dateConvertPm, formatZodError, getCountryId, handleFileUpload, slugify, stringToArray } from '../../../utils/helpers';
 
 import BaseController from '../../../controllers/admin/base-controller';
 import OrderService from '../../../services/admin/order/order-service'
@@ -12,11 +12,8 @@ import OrderService from '../../../services/admin/order/order-service'
 import mongoose from 'mongoose';
 import { OrderQueryParams } from '../../../utils/types/order';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';
-import { cartStatus, orderStatusArray, orderStatusMessages } from '../../../constants/cart';
-import CustomerWalletTransactionsModel from '../../../model/frontend/customer-wallet-transaction-model';
-import settingsService from '../../../services/admin/setup/settings-service';
+import { cartStatus as cartStatusJson, orderProductStatusJson, orderStatusArray, orderStatusArrayJason, orderStatusMessages } from '../../../constants/cart';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
-import { earnTypes } from '../../../constants/wallet';
 import CustomerService from '../../../services/frontend/customer-service';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
@@ -26,7 +23,6 @@ import TaxsModel from '../../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 import CountryModel from '../../../model/admin/setup/country-model';
-import { getOrderReturnProductsWithCart } from '../../../utils/config/cart-order-config';
 
 const controller = new BaseController();
 
@@ -46,7 +42,7 @@ class OrdersController extends BaseController {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
-            query = { cartStatus: { $ne: "1" } }
+            query = { cartStatus: { $ne: cartStatusJson.active } }
 
             // { customerId: customerDetails._id },
             // { countryId: countryData._id },
@@ -245,32 +241,34 @@ class OrdersController extends BaseController {
     }
 
     async getOrdeReturnProducts(req: Request, res: Response): Promise<void> {
-        const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query as OrderQueryParams;
+        const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query as OrderQueryParams;
         const userData = await res.locals.user;
-        let query: any = { _id: { $exists: true } };
+        let query: any = {
+            _id: { $exists: true },
+            'orderProductStatus': orderProductStatusJson.delivered,
+            'cartDetails.orderStatus': orderProductStatusJson.delivered,
+            'cartDetails.cartStatus': { $ne: cartStatusJson.active },
+            $or: [
+                { orderRequestedProductQuantity: { $gt: 0 } },
+                { orderRequestedProductStatus: orderProductStatusJson.returned }
+            ]
+        };
 
         const country = getCountryId(userData);
         if (country) {
-            query = {
-                'cartDetails.countryId': country
-            }
+            query['cartDetails.countryId'] = country;
         } else if (countryId) {
-            query = {
-                'cartDetails.countryId': new mongoose.Types.ObjectId(countryId)
-            }
+            query['cartDetails.countryId'] = new mongoose.Types.ObjectId(countryId);
         }
+
         if (customerId) {
-            query = {
-                ...query,
-                'cartDetails.customerId': new mongoose.Types.ObjectId(customerId)
-            }
+            query['cartDetails.customerId'] = new mongoose.Types.ObjectId(customerId);
         }
+
         if (paymentMethodId) {
-            query = {
-                ...query,
-                'cartDetails.paymentMethodId': new mongoose.Types.ObjectId(paymentMethodId)
-            }
+            query['cartDetails.paymentMethodId'] = new mongoose.Types.ObjectId(paymentMethodId);
         }
+
         const sort: any = {};
         if (sortby && sortorder) {
             sort[sortby] = sortorder === 'desc' ? -1 : 1;
@@ -323,15 +321,12 @@ class OrdersController extends BaseController {
         try {
             const orderId = req.params.id;
             const orderStatus = req.body.orderStatus;
-
             const isValidStatus = orderStatusArray.some(status => status.value === orderStatus);
-
             if (!isValidStatus) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Invalid order status'
                 });
             }
-
             const orderDetails: any = await CartOrdersModel.findById(orderId)
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, {
@@ -339,51 +334,57 @@ class OrdersController extends BaseController {
                 });
             }
             // Ensure that the order cannot go back to a previous status once delivered
-            if (orderDetails.orderStatus === '5' && ["1", "2", "3", "4", "9", "10", "13"].includes(orderStatus)) {
+            if (orderDetails.orderStatus === orderStatusArrayJason.delivered && [
+                orderStatusArrayJason.pending,
+                orderStatusArrayJason.processing,
+                orderStatusArrayJason.packed,
+                orderStatusArrayJason.shipped,
+                orderStatusArrayJason.partiallyShipped,
+                orderStatusArrayJason.onHold,
+                orderStatusArrayJason.pickup
+            ].includes(orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status back to a previous state once delivered'
                 });
             }
-
             // Ensure that the order cannot be changed to Canceled after Delivered
-            if (orderDetails.orderStatus === '5' && orderStatus === '6') {
+            if (orderDetails.orderStatus === orderStatusArrayJason.delivered && orderStatus === orderStatusArrayJason.canceled) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status to Canceled once delivered'
                 });
             }
-
             // Ensure that Returned status is only possible after Delivered
-            if (orderStatus === '7' && orderDetails.orderStatus !== '5') {
+            if (orderStatus === orderStatusArrayJason.returned && orderDetails.orderStatus !== orderStatusArrayJason.delivered) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Returned status is only possible after Delivered'
                 });
             }
-
-            if (orderStatus === '8' && orderDetails.orderStatus !== '7') {
+            // Ensure that Refunded status is only possible after Returned
+            if (orderStatus === orderStatusArrayJason.refunded && orderDetails.orderStatus !== orderStatusArrayJason.returned) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Refunded status is only possible after Returned'
                 });
             }
-
-            if (orderStatus === '12' && orderDetails.orderStatus !== '5') {
+            // Ensure that Completed status is only possible after Delivered
+            if (orderStatus === orderStatusArrayJason.completed && orderDetails.orderStatus !== orderStatusArrayJason.delivered) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Completed status is only possible after Delivered'
                 });
             }
-
             // Ensure that the order cannot be changed from Completed to any other status
-            if (orderDetails.orderStatus === '12') {
+            if (orderDetails.orderStatus === orderStatusArrayJason.completed) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is completed'
                 });
             }
-
-            if (orderDetails.orderStatus === '11') {
+            // Ensure that the order cannot be changed from Failed
+            if (orderDetails.orderStatus === orderStatusArrayJason.failed) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is failed'
                 });
             }
-            if (orderDetails.orderStatus === '8') {
+            // Ensure that the order cannot be changed from Refunded
+            if (orderDetails.orderStatus === orderStatusArrayJason.refunded) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is refunded'
                 });
@@ -391,31 +392,31 @@ class OrdersController extends BaseController {
             let customerDetails: any = null;
             if (!orderDetails?.isGuest && orderDetails.customerId) {
                 customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
-                if (orderStatus === '12' && customerDetails) {
-                    await OrderService.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails)
+                if (orderStatus === orderStatusArrayJason.completed && customerDetails) {
+                    await OrderService.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
                 }
             }
-
             orderDetails.orderStatus = orderStatus;
-            if (orderStatus === '12' || orderStatus === '5') {
-                orderDetails.cartStatus == cartStatus.delivered
+            // Update cart status if the order status is Completed or Delivered
+            if (orderStatus === orderStatusArrayJason.completed || orderStatus === orderStatusArrayJason.delivered) {
+                orderDetails.cartStatus = cartStatusJson.delivered;
             }
             const currentDate = new Date();
             switch (orderStatus) {
-                case '1': orderDetails.orderStatusAt = currentDate; break;
-                case '2': orderDetails.processingStatusAt = currentDate; break;
-                case '3': orderDetails.packedStatusAt = currentDate; break;
-                case '4': orderDetails.shippedStatusAt = currentDate; break;
-                case '5': orderDetails.deliveredStatusAt = currentDate; break;
-                case '6': orderDetails.canceledStatusAt = currentDate; break;
-                case '7': orderDetails.returnedStatusAt = currentDate; break;
-                case '8': orderDetails.refundedStatusAt = currentDate; break;
-                case '9': orderDetails.partiallyShippedStatusAt = currentDate; break;
-                case '10': orderDetails.onHoldStatusAt = currentDate; break;
-                case '11': orderDetails.failedStatusAt = currentDate; break;
-                case '12': orderDetails.completedStatusAt = currentDate; break;
-                case '13': orderDetails.pickupStatusAt = currentDate; break;
-                case '14': orderDetails.partiallyDeliveredStatusAt = currentDate; break;
+                case orderStatusArrayJason.pending: orderDetails.orderStatusAt = currentDate; break;
+                case orderStatusArrayJason.processing: orderDetails.processingStatusAt = currentDate; break;
+                case orderStatusArrayJason.packed: orderDetails.packedStatusAt = currentDate; break;
+                case orderStatusArrayJason.shipped: orderDetails.shippedStatusAt = currentDate; break;
+                case orderStatusArrayJason.delivered: orderDetails.deliveredStatusAt = currentDate; break;
+                case orderStatusArrayJason.canceled: orderDetails.canceledStatusAt = currentDate; break;
+                case orderStatusArrayJason.returned: orderDetails.returnedStatusAt = currentDate; break;
+                case orderStatusArrayJason.refunded: orderDetails.refundedStatusAt = currentDate; break;
+                case orderStatusArrayJason.partiallyShipped: orderDetails.partiallyShippedStatusAt = currentDate; break;
+                case orderStatusArrayJason.onHold: orderDetails.onHoldStatusAt = currentDate; break;
+                case orderStatusArrayJason.failed: orderDetails.failedStatusAt = currentDate; break;
+                case orderStatusArrayJason.completed: orderDetails.completedStatusAt = currentDate; break;
+                case orderStatusArrayJason.pickup: orderDetails.pickupStatusAt = currentDate; break;
+                case orderStatusArrayJason.partiallyDelivered: orderDetails.partiallyDeliveredStatusAt = currentDate; break;
                 default: break;
             }
 
@@ -434,7 +435,7 @@ class OrdersController extends BaseController {
                     }
                 }
             );
-            if (orderStatus === '11' || orderStatus === '7') { // return products
+            if (orderStatus === orderStatusArrayJason.failed || orderStatus === orderStatusArrayJason.returned) {
                 const cartProducts = await CartOrderProductsModel.find({ cartId: orderDetails._id }).select('variantId quantity');
                 const updateProductVariant: any = cartProducts.map((products: any) => ({
                     updateOne: {
@@ -444,7 +445,7 @@ class OrdersController extends BaseController {
                 }));
                 await ProductVariantsModel.bulkWrite(updateProductVariant);
             }
-            if (orderStatus === '4' || orderStatus === '5') {
+            if (orderStatus === orderStatusArrayJason.shipped || orderStatus === orderStatusArrayJason.delivered) {
                 let query: any = { _id: { $exists: true } };
                 query = {
                     ...query,
