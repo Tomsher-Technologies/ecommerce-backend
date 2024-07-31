@@ -7,7 +7,7 @@ import { sliderFinalProject, sliderLookup, sliderProject, sliderlanguageFieldsRe
 import { categoryFinalProject, categoryLanguageFieldsReplace, categoryLookup } from "../../../utils/config/category-config";
 import { brandFinalProject } from "../../../utils/config/brand-config";
 import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, collectionsBrandLookup } from "../../../utils/config/collections-brands-config";
-import { addFieldsProductSpecification, addFieldsProductVariantAttributes, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productSpecificationLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
+import { addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandObject, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productSpecificationLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
 import { offers } from '../../../constants/offers';
@@ -382,7 +382,7 @@ class CommonService {
                         ]
                     }
                 };
-
+                productPipeline.push(brandLookup, brandObject,)
                 productPipeline.push(productCategoryLookup);
                 productPipeline.push(modifiedPipeline);
 
@@ -393,10 +393,12 @@ class CommonService {
                 if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
                     const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
                     productPipeline.push(offerCategory);
-                } else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                }
+                if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
                     const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
                     productPipeline.push(offerBrand);
-                } else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                }
+                if (offerApplied.product.products && offerApplied.product.products.length > 0) {
                     const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
                     productPipeline.push(offerProduct)
                 }
