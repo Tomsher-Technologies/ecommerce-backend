@@ -37,6 +37,8 @@ export const changePassword = zod.object({
 
 export const customerAddressSchema = zod.object({
     addressId: zod.string().optional(),
+    stateId: zod.string().optional(),
+    cityId: zod.string().optional(),
     country: zod.string({ required_error: "Country is required" }).min(1, {
         message: "Country is required",
     }),

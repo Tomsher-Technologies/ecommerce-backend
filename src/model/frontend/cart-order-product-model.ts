@@ -9,10 +9,13 @@ export interface CartOrderProductProps extends Document {
     productDiscountAmount: number;
     productCouponAmount: number;
     quantity: number;
+    orderRequestedProductQuantity: number;
     slug: string;
     giftWrapAmount: number;
-    orderStatus: string;
-    orderStatusAt?: Date;
+    orderProductStatus: string;
+    orderProductStatusAt?: Date;
+    orderRequestedProductStatus: string;
+    orderRequestedProductStatusAt?: Date;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -31,6 +34,10 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         type: Number,
         required: true,
         default: 1
+    },
+    orderRequestedProductQuantity: {
+        type: Number,
+        default: null
     },
     productOriginalPrice: {
         type: Number,
@@ -66,12 +73,21 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         ref: 'Products',
         required: false
     },
-    orderStatus: {
+    orderProductStatus: {
         type: String,
         required: true,
         default: '1'
     },
-    orderStatusAt: {
+    orderProductStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderRequestedProductStatus: {
+        type: String,
+        required: true,
+        default: '1'
+    },
+    orderRequestedProductStatusAt: {
         type: Date,
         default: null
     },
