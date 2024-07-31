@@ -58,5 +58,8 @@ export const permissionBlocks = {
     newsletter: {
         newsletter: 'newsletter'
     },
+    contactus: {
+        contactus: 'contactus'
+    },
 
 }

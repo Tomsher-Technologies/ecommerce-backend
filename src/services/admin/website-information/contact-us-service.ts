@@ -1,13 +1,12 @@
-import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
-import NewsletterModel, { NewsletterProps } from '../../../model/frontend/newsletter-model';
+import ContactUsModel, { ContactUsProps } from '../../../model/frontend/contact-us-model';
 
-class NewsletterService {
+class ContactUsService {
 
     constructor() { }
 
-    async findAll(options: FilterOptionsProps = {}): Promise<NewsletterProps[]> {
+    async findAll(options: FilterOptionsProps = {}): Promise<ContactUsProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
 
         const defaultSort = { createdAt: -1 };
@@ -24,12 +23,12 @@ class NewsletterService {
             { $sort: finalSort },
         ];
 
-        return NewsletterModel.aggregate(pipeline).exec();
+        return ContactUsModel.aggregate(pipeline).exec();
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
         try {
-            const totalCount = await NewsletterModel.countDocuments(query);
+            const totalCount = await ContactUsModel.countDocuments(query);
             return totalCount;
         } catch (error) {
             throw new Error('Error fetching total count of newsletters');
@@ -37,4 +36,4 @@ class NewsletterService {
     }
 }
 
-export default new NewsletterService();
+export default new ContactUsService();

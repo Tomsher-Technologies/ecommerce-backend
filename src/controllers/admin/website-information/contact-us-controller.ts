@@ -5,12 +5,12 @@ import { QueryParamsWithPage } from '../../../utils/types/common';
 
 import BaseController from '../base-controller';
 
-import NewsletterService from '../../../services/admin/website-information/newsletter-service';
-// import ExcelJS from 'exceljs';
+import ContactUsService from '../../../services/admin/website-information/contact-us-service';
+import ContactUsModel from '../../../model/frontend/contact-us-model';
 
 const controller = new BaseController();
 
-class NewsletterController extends BaseController {
+class ContactUsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
@@ -56,7 +56,7 @@ class NewsletterController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
 
-            const newsletters = await NewsletterService.findAll({
+            const contactUs = await ContactUsService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
@@ -64,48 +64,33 @@ class NewsletterController extends BaseController {
             });
 
             return controller.sendSuccessResponse(res, {
-                requestedData: newsletters,
-                totalCount: await NewsletterService.getTotalCount(query),
+                requestedData: contactUs,
+                totalCount: await ContactUsService.getTotalCount(query),
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching newsletters' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching contactUs' });
         }
     }
 
-    async exportNewsletter(req: Request, res: Response): Promise<void> {
+    async findOne(req: Request, res: Response): Promise<void> {
         try {
-
-            const newsletters = await NewsletterService.findAll({});
-
-
-            // const workbook = new ExcelJS.Workbook();
-            // const worksheet = workbook.addWorksheet('Newsletters');
-
-            // worksheet.columns = [
-            //     { header: 'Email', key: 'email', width: 30 },
-            //     { header: 'Subscribed At', key: 'createdAt', width: 20 },
-            // ];
-
-            // newsletters.forEach((newsletter) => {
-            //     worksheet.addRow({
-            //         email: newsletter.email,
-            //         createdAt: newsletter.createdAt,
-            //     });
-            // });
-
-            // res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            // res.setHeader('Content-Disposition', 'attachment; filename=newsletters.xlsx');
-
-            // await workbook.xlsx.write(res);
-            // res.end();
-
-        } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching newsletters' });
+            const contactUsId = req.params.id;
+            if (contactUsId) {
+                const contactUs = await ContactUsModel.findById(contactUsId);
+                return controller.sendSuccessResponse(res, {
+                    requestedData: contactUs,
+                    message: 'Success'
+                });
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Contact Us Id not found!',
+                });
+            }
+        } catch (error: any) { // Explicitly specify the type of 'error' as 'any'
+            return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
-
-
 }
 
-export default new NewsletterController();
+export default new ContactUsController();
