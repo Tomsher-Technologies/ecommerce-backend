@@ -3,6 +3,8 @@ import { ADDRESS_MODES, ADDRESS_TYPES } from '../../constants/customer';
 
 export interface CustomerAddressProps extends Document {
     customerId: mongoose.Schema.Types.ObjectId;
+    stateId: mongoose.Schema.Types.ObjectId;
+    cityId: mongoose.Schema.Types.ObjectId;
     addressType: typeof ADDRESS_TYPES[number];
     defaultAddress: boolean;
     addressMode: typeof ADDRESS_MODES[number];
@@ -30,6 +32,16 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',
         required: [true, 'Customer ID is required'],
+    },
+    stateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cities',
+        default: null
     },
     addressType: {
         type: String,

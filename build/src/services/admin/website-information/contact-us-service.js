@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
-const newsletter_model_1 = __importDefault(require("../../../model/frontend/newsletter-model"));
-class NewsletterService {
+const contact_us_model_1 = __importDefault(require("../../../model/frontend/contact-us-model"));
+class ContactUsService {
     constructor() { }
     async findAll(options = {}) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
@@ -21,11 +21,11 @@ class NewsletterService {
             { $limit: limit },
             { $sort: finalSort },
         ];
-        return newsletter_model_1.default.aggregate(pipeline).exec();
+        return contact_us_model_1.default.aggregate(pipeline).exec();
     }
     async getTotalCount(query = {}) {
         try {
-            const totalCount = await newsletter_model_1.default.countDocuments(query);
+            const totalCount = await contact_us_model_1.default.countDocuments(query);
             return totalCount;
         }
         catch (error) {
@@ -33,4 +33,4 @@ class NewsletterService {
         }
     }
 }
-exports.default = new NewsletterService();
+exports.default = new ContactUsService();

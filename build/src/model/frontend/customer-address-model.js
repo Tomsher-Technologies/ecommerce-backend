@@ -31,6 +31,16 @@ const customerAddressSchema = new mongoose_1.Schema({
         ref: 'Customer',
         required: [true, 'Customer ID is required'],
     },
+    stateId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Cities',
+        default: null
+    },
     addressType: {
         type: String,
         required: [true, 'Address type is required'],

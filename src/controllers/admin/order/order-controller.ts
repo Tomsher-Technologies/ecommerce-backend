@@ -26,6 +26,7 @@ import TaxsModel from '../../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 import CountryModel from '../../../model/admin/setup/country-model';
+import { getOrderReturnProductsWithCart } from '../../../utils/config/cart-order-config';
 
 const controller = new BaseController();
 
@@ -44,7 +45,6 @@ class OrdersController extends BaseController {
             } else if (countryId) {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
-
 
             query = { cartStatus: { $ne: "1" } }
 
@@ -244,6 +244,81 @@ class OrdersController extends BaseController {
         }
     }
 
+    async getOrdeReturnProducts(req: Request, res: Response): Promise<void> {
+        const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query as OrderQueryParams;
+        const userData = await res.locals.user;
+        let query: any = { _id: { $exists: true } };
+
+        const country = getCountryId(userData);
+        if (country) {
+            query = {
+                'cartDetails.countryId': country
+            }
+        } else if (countryId) {
+            query = {
+                'cartDetails.countryId': new mongoose.Types.ObjectId(countryId)
+            }
+        }
+        if (customerId) {
+            query = {
+                ...query,
+                'cartDetails.customerId': new mongoose.Types.ObjectId(customerId)
+            }
+        }
+        if (paymentMethodId) {
+            query = {
+                ...query,
+                'cartDetails.paymentMethodId': new mongoose.Types.ObjectId(paymentMethodId)
+            }
+        }
+        const sort: any = {};
+        if (sortby && sortorder) {
+            sort[sortby] = sortorder === 'desc' ? -1 : 1;
+        }
+
+        const order = await OrderService.getOrdeReturnProducts({
+            page: parseInt(page_size as string),
+            limit: parseInt(limit as string),
+            query,
+            sort,
+            getTotalCount: false
+        });
+        const totalCount = await OrderService.getOrdeReturnProducts({
+            page: parseInt(page_size as string),
+            query,
+            getTotalCount: true
+        })
+
+        return controller.sendSuccessResponse(res, {
+            requestedData: order,
+            totalCount: totalCount?.totalCount || 0,
+            message: 'Success!'
+        }, 200);
+    }
+
+    async orderProductStatusChange(req: Request, res: Response): Promise<void> {
+        // if (shouldUpdateTotalProductAmount) {
+        //     const sumOfProductData = await CartOrderProductsModel.aggregate([
+        //         { $match: { cartId: orderDetails._id } },
+        //         { $group: { _id: null, totalProductAmount: { $sum: "$productAmount" }, totalProductQuantity: { $sum: "$quantity" }, totalProductOriginalPrice: { $sum: "$productOriginalPrice" } } }
+        //     ]);
+
+        //     if (sumOfProductData.length > 0) {
+        //         await CartOrdersModel.updateOne(
+        //             { _id: orderDetails._id },
+        //             {
+        //                 $set: {
+        //                     totalProductAmount: sumOfProductData[0].totalProductAmount,
+        //                     totalProductOriginalPrice: sumOfProductData[0].totalProductOriginalPrice,
+
+        //                 }
+        //             }
+        //         );
+        //     }
+        // }
+
+    }
+
     async orderStatusChange(req: Request, res: Response): Promise<void> {
         try {
             const orderId = req.params.id;
@@ -315,42 +390,9 @@ class OrdersController extends BaseController {
             }
             let customerDetails: any = null;
             if (!orderDetails?.isGuest && orderDetails.customerId) {
-                const walletTransactionDetails = await CustomerWalletTransactionsModel.findOne({ orderId: orderDetails._id })
                 customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
-                if (customerDetails) {
-                    if (orderStatus === '5' && !walletTransactionDetails) {
-                        const walletsDetails = await settingsService.findOne({ countryId: orderDetails.countryId, block: websiteSetup.basicSettings, blockReference: blockReferences.wallets });
-                        if ((walletsDetails) && (walletsDetails.blockValues) && (walletsDetails.blockValues.enableWallet) && (Number(walletsDetails.blockValues.orderAmount) > 0) && (orderDetails?.totalAmount >= Number(walletsDetails.blockValues.minimumOrderAmount))) {
-                            const rewarDetails = calculateWalletRewardPoints(walletsDetails.blockValues, orderDetails.totalAmount)
-                            await CustomerWalletTransactionsModel.create({
-                                customerId: orderDetails.customerId,
-                                orderId: orderDetails._id,
-                                earnType: earnTypes.order,
-                                walletAmount: rewarDetails.redeemableAmount,
-                                walletPoints: rewarDetails.rewardPoints,
-                                status: '1'
-                            });
-                            if (customerDetails) {
-                                await CustomerService.update(customerDetails?._id, {
-                                    totalRewardPoint: (customerDetails.totalRewardPoint + rewarDetails.rewardPoints),
-                                    totalWalletAmount: (customerDetails.totalWalletAmount + rewarDetails.redeemableAmount)
-                                });
-                            }
-                            orderDetails.rewardAmount = rewarDetails.redeemableAmount;
-                            orderDetails.rewardPoints = rewarDetails.rewardPoints;
-                        }
-                    } else if ((orderStatus === '8' || orderStatus === '6') && walletTransactionDetails) {
-                        await CustomerWalletTransactionsModel.findByIdAndUpdate(walletTransactionDetails._id, {
-                            earnType: orderStatus === '8' ? earnTypes.orderReturned : earnTypes.orderCancelled,
-                            status: '3' // rejected
-                        });
-                        await CustomerService.update(customerDetails?._id, {
-                            totalRewardPoint: (customerDetails.totalRewardPoint - walletTransactionDetails.walletPoints),
-                            totalWalletAmount: (customerDetails.totalWalletAmount - walletTransactionDetails.walletAmount)
-                        });
-                        orderDetails.rewardAmount = 0;
-                        orderDetails.rewardPoints = 0;
-                    }
+                if (orderStatus === '12' && customerDetails) {
+                    await OrderService.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails)
                 }
             }
 
@@ -373,6 +415,7 @@ class OrdersController extends BaseController {
                 case '11': orderDetails.failedStatusAt = currentDate; break;
                 case '12': orderDetails.completedStatusAt = currentDate; break;
                 case '13': orderDetails.pickupStatusAt = currentDate; break;
+                case '14': orderDetails.partiallyDeliveredStatusAt = currentDate; break;
                 default: break;
             }
 
@@ -386,8 +429,8 @@ class OrdersController extends BaseController {
                 { cartId: orderDetails._id },
                 {
                     $set: {
-                        orderStatus: orderStatus,
-                        orderStatusAt: currentDate
+                        orderProductStatus: orderStatus,
+                        orderProductStatusAt: currentDate
                     }
                 }
             );
@@ -476,8 +519,6 @@ class OrdersController extends BaseController {
                             email: customerDetails?.email,
                         }, template)
                     }
-
-
                 });
             }
             // console.log('aaaaaaaa', updatedOrderDetails);

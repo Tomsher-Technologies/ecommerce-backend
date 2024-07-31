@@ -86,6 +86,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
+    returnReson: {
+        type: String,
+        default: ''
+    },
     paymentMethodCharge: {
         type: Number,
         default: 0
@@ -173,6 +177,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         default: null
     },
     deliveredStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyDeliveredStatusAt: {
         type: Date,
         default: null
     },

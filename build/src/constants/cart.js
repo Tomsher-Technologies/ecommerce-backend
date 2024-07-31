@@ -19,7 +19,8 @@ exports.orderStatusArray = [
     { value: '10', label: "On Hold" },
     { value: '11', label: "Failed" },
     { value: '12', label: "Completed" },
-    { value: '13', label: "Pickup" }
+    { value: '13', label: "Pickup" },
+    { value: '14', label: "Partially Delivered" },
 ];
 exports.orderStatusMessages = {
     '1': 'Order received successfully!',
@@ -34,7 +35,8 @@ exports.orderStatusMessages = {
     '10': 'Order is on hold!',
     '11': 'Order has failed!',
     '12': 'Order has been completed!',
-    '13': 'Order is ready for pickup!'
+    '13': 'Order is ready for pickup!',
+    '14': 'Order has been delivered!',
 };
 exports.orderProductStatusArray = [
     { value: '1', label: "Pending" },
@@ -45,7 +47,6 @@ exports.orderProductStatusArray = [
     { value: '6', label: "Canceled" },
     { value: '7', label: "Returned" },
     { value: '8', label: "Refunded" },
-    { value: '12', label: "Completed" },
     { value: '13', label: "Pickup" }
 ];
 exports.orderStatusMap = exports.orderStatusArray.reduce((map, obj) => {

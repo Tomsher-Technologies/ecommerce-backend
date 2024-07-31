@@ -29,6 +29,8 @@ exports.changePassword = zod_1.z.object({
 });
 exports.customerAddressSchema = zod_1.z.object({
     addressId: zod_1.z.string().optional(),
+    stateId: zod_1.z.string().optional(),
+    cityId: zod_1.z.string().optional(),
     country: zod_1.z.string({ required_error: "Country is required" }).min(1, {
         message: "Country is required",
     }),

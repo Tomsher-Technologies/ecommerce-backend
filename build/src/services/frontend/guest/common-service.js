@@ -338,6 +338,7 @@ class CommonService {
                         ]
                     }
                 };
+                productPipeline.push(product_config_1.brandLookup, product_config_1.brandObject);
                 productPipeline.push(product_config_1.productCategoryLookup);
                 productPipeline.push(modifiedPipeline);
                 productPipeline.push(product_config_1.productMultilanguageFieldsLookup);
@@ -347,11 +348,11 @@ class CommonService {
                     const offerCategory = (0, offer_config_1.offerCategoryPopulation)(getOfferList, offerApplied.category);
                     productPipeline.push(offerCategory);
                 }
-                else if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
+                if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
                     const offerBrand = (0, offer_config_1.offerBrandPopulation)(getOfferList, offerApplied.brand);
                     productPipeline.push(offerBrand);
                 }
-                else if (offerApplied.product.products && offerApplied.product.products.length > 0) {
+                if (offerApplied.product.products && offerApplied.product.products.length > 0) {
                     const offerProduct = (0, offer_config_1.offerProductPopulation)(getOfferList, offerApplied.product);
                     productPipeline.push(offerProduct);
                 }

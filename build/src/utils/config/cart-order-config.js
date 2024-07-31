@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
+exports.getOrderReturnProductsWithCart = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
@@ -122,6 +122,7 @@ exports.cartProject = {
         totalGiftWrapAmount: 1,
         totalAmount: 1,
         orderComments: 1,
+        returnReson: 1,
         cartStatus: 1,
         orderStatus: 1,
         orderStatusAt: 1,
@@ -133,6 +134,7 @@ exports.cartProject = {
         returnedStatusAt: 1,
         refundedStatusAt: 1,
         partiallyShippedStatusAt: 1,
+        partiallyDeliveredStatusAt: 1,
         onHoldStatusAt: 1,
         failedStatusAt: 1,
         completedStatusAt: 1,
@@ -186,6 +188,7 @@ exports.cartDeatilProject = {
         totalGiftWrapAmount: 1,
         totalAmount: 1,
         orderComments: 1,
+        returnReson: 1,
         cartStatus: 1,
         orderStatus: 1,
         orderStatusAt: 1,
@@ -197,6 +200,7 @@ exports.cartDeatilProject = {
         returnedStatusAt: 1,
         refundedStatusAt: 1,
         partiallyShippedStatusAt: 1,
+        partiallyDeliveredStatusAt: 1,
         onHoldStatusAt: 1,
         failedStatusAt: 1,
         completedStatusAt: 1,
@@ -207,7 +211,7 @@ exports.cartDeatilProject = {
         updatedAt: 1,
         __v: 1,
         products: 1,
-        totalProductCount: { $size: '$products' }, // Calculate the size of the products array
+        totalProductCount: { $size: '$products' },
         paymentMethod: {
             $ifNull: ['$paymentMethod', null]
         },
@@ -405,3 +409,110 @@ const cartOrderProductsGroupSumAggregate = (customerCart, guestUserCartId) => {
     ];
 };
 exports.cartOrderProductsGroupSumAggregate = cartOrderProductsGroupSumAggregate;
+const getOrderReturnProductsWithCart = (query, notCallLookups) => {
+    return [
+        { $match: query },
+        {
+            $lookup: {
+                from: `${collections_1.collections.cart.cartorders}`,
+                localField: 'cartId',
+                foreignField: '_id',
+                as: 'cartDetails'
+            }
+        },
+        { $unwind: '$cartDetails' },
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.products.products}`,
+                localField: 'productId',
+                foreignField: '_id',
+                as: 'productsDetails'
+            }
+        },
+        { $unwind: '$productsDetails' },
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                localField: 'variantId',
+                foreignField: '_id',
+                as: 'productvariants'
+            }
+        },
+        {
+            $addFields: {
+                'productsDetails.productvariants': {
+                    $arrayElemAt: ['$productvariants', 0]
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: `${collections_1.collections.customer.customers}`,
+                localField: 'cartDetails.customerId',
+                foreignField: '_id',
+                as: 'customerDetails'
+            }
+        },
+        { $unwind: '$customerDetails' },
+        {
+            $lookup: {
+                from: `${collections_1.collections.cart.paymentmethods}`,
+                localField: 'cartDetails.paymentMethodId',
+                foreignField: '_id',
+                as: 'paymentMethod'
+            }
+        },
+        { $unwind: '$paymentMethod' },
+        {
+            $lookup: {
+                from: `${collections_1.collections.setup.countries}`,
+                localField: 'cartDetails.countryId',
+                foreignField: '_id',
+                as: 'country'
+            }
+        },
+        {
+            $unwind: {
+                path: "$country",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                cartId: 1,
+                quantity: 1,
+                productOriginalPrice: 1,
+                productAmount: 1,
+                productDiscountAmount: 1,
+                orderProductStatus: 1,
+                'cartDetails._id': 1,
+                'cartDetails.customerId': 1,
+                'cartDetails.isGuest': 1,
+                'cartDetails.cartStatus': 1,
+                'cartDetails.totalProductOriginalPrice': 1,
+                'cartDetails.totalReturnedProduct': 1,
+                'cartDetails.totalDiscountAmount': 1,
+                'cartDetails.totalShippingAmount': 1,
+                'cartDetails.totalCouponAmount': 1,
+                'cartDetails.totalWalletAmount': 1,
+                'cartDetails.totalTaxAmount': 1,
+                'cartDetails.totalProductAmount': 1,
+                'cartDetails.couponAmount': 1,
+                'cartDetails.totalGiftWrapAmount': 1,
+                'cartDetails.totalAmount': 1,
+                'cartDetails.orderStatusAt': 1,
+                'cartDetails.deliveredStatusAt': 1,
+                'customerDetails._id': 1,
+                'customerDetails.firstName': 1,
+                'customerDetails.email': 1,
+                'customerDetails.isGuest': 1,
+                'paymentMethod._id': 1,
+                'paymentMethod.paymentMethodTitle': 1,
+                'paymentMethod.slug': 1,
+                'productsDetails': 1
+            }
+        }
+    ];
+};
+exports.getOrderReturnProductsWithCart = getOrderReturnProductsWithCart;
