@@ -33,6 +33,17 @@ class CustomerController extends BaseController {
                 query.countryId = countryId;
             }
 
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { firstName: keywordRegex },
+                        { email: keywordRegex }
+                    ],
+                    ...query
+                } as any;
+            }
+
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
             } else {
