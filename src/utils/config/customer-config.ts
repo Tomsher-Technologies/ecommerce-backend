@@ -12,8 +12,8 @@ export const whishlistLookup = {
 
 export const countriesLookup = {
     $lookup: {
-        from: `${collections.setup.countries}`, 
-        localField: 'countryId', 
+        from: `${collections.setup.countries}`,
+        localField: 'countryId',
         foreignField: '_id',
         as: 'country'
     }
@@ -21,8 +21,8 @@ export const countriesLookup = {
 
 export const statesLookup = {
     $lookup: {
-        from: `${collections.setup.states}`, 
-        localField: 'stateId', 
+        from: `${collections.setup.states}`,
+        localField: 'stateId',
         foreignField: '_id',
         as: 'state'
     }
@@ -65,7 +65,7 @@ export const groupStage = {
 
 export const shippingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections.customer.customeraddresses}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -85,7 +85,7 @@ export const shippingLookup = {
 
 export const billingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections.customer.customeraddresses}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -105,7 +105,7 @@ export const billingLookup = {
 
 export const orderWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -125,7 +125,7 @@ export const orderWalletTransactionLookup = {
 
 export const referrerWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -145,7 +145,7 @@ export const referrerWalletTransactionLookup = {
 
 export const referredWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
