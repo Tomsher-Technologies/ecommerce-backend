@@ -34,6 +34,7 @@ import CountryModel from '../../../model/admin/setup/country-model';
 import WarehouseModel from '../../../model/admin/stores/warehouse-model';
 import ProductGalleryImagesModel from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
+import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 
 const controller = new BaseController();
 
@@ -492,7 +493,6 @@ class ProductsController extends BaseController {
                                                                         for await (let category of categoryData) {
                                                                             const categoryId = await CategoryService.findCategoryId(category)
                                                                             if (categoryId) {
-                                                                                // console.log("categoryId:", categoryId._id);
                                                                                 categoryArray.push(categoryId._id)
                                                                             }
                                                                         }
@@ -636,7 +636,6 @@ class ProductsController extends BaseController {
                                                                         tags: data.Tags,
                                                                         pageTitle: data.Page_Title,
                                                                     }
-
 
                                                                     const productSeo = {
                                                                         metaTitle: data.Meta_Title,
@@ -782,7 +781,15 @@ class ProductsController extends BaseController {
                                                                         } else {
                                                                             const updateProduct = await ProductsService.update(productDetails._id, finalData)
                                                                             if (updateProduct) {
-                                                                                const data = await ProductGalleryImagesModel.deleteMany({ productID: productDetails._id });
+                                                                                await ProductCategoryLinkModel.deleteMany({ productId: productDetails._id });
+                                                                                for await (const item of categoryArray) {
+                                                                                    const newCategory = await ProductCategoryLinkService.create({
+                                                                                        productId: updateProduct._id,
+                                                                                        categoryId: item
+                                                                                    })
+                                                                                }
+
+                                                                                await ProductGalleryImagesModel.deleteMany({ productID: productDetails._id });
                                                                                 if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
@@ -966,6 +973,8 @@ class ProductsController extends BaseController {
                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Product_Title is missing, row :" + index })
                                     }
                                     index++
+                                    console.log(index, "dsfsfsdffsfdfs");
+
                                 }
                                 controller.sendSuccessResponse(res, {
                                     validation,
