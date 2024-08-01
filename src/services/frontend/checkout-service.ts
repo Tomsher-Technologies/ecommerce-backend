@@ -217,7 +217,7 @@ class CheckoutService {
                         });
                         if (matchedValue) {
                             const shippingCharge = matchedValue?.shippingCharge || 0;
-                            const finalShippingCharge = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
+                            const finalShippingCharge = Number(shippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
                             cartUpdate = {
                                 ...cartUpdate,
                                 totalShippingAmount: finalShippingCharge,
