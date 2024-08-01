@@ -3,9 +3,9 @@ import { Request, Response } from 'express';
 
 import { QueryParamsWithPage } from '../../../utils/types/common';
 
-import * as XLSX from 'xlsx';
 import BaseController from '../base-controller';
 import NewsletterService from '../../../services/admin/website-information/newsletter-service';
+import { generateExcelFile } from '../../../lib/excel/excel-generator';
 
 const controller = new BaseController();
 class NewsletterController extends BaseController {
@@ -75,21 +75,11 @@ class NewsletterController extends BaseController {
         try {
             const newsletters = await NewsletterService.findAll({});
 
-            const data = newsletters.map(newsletter => ({
+            const newslettersData = newsletters.map(newsletter => ({
                 email: newsletter.email,
                 createdAt: newsletter.createdAt
             }));
-
-            const worksheet = XLSX.utils.json_to_sheet(data, { header: ['email', 'createdAt'] });
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Newsletters');
-
-            const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', 'attachment; filename=newsletters.xlsx');
-            res.send(buffer);
-
+            await generateExcelFile(res, newslettersData, ['email', 'createdAt'], 'Newsletters')
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching newsletters' });
         }
