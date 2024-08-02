@@ -153,7 +153,7 @@ class CheckoutController extends base_controller_1.default {
                             });
                             if (matchedValue) {
                                 const shippingCharge = matchedValue?.shippingCharge || 0;
-                                const finalShippingCharge = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                const finalShippingCharge = Number(shippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
@@ -164,7 +164,7 @@ class CheckoutController extends base_controller_1.default {
                         }
                     }
                 }
-                if (paymentMethod.slug !== cart_1.paymentMethods.cashOnDelivery) {
+                if ((paymentMethod.slug !== cart_1.paymentMethods.cashOnDelivery && paymentMethod.slug !== cart_1.paymentMethods.cardOnDelivery)) {
                     if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.tap) {
                         const tapDefaultValues = (0, cart_utils_1.tapPaymentGatwayDefaultValues)(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
                         const tapResponse = await (0, tap_payment_1.tapPaymentCreate)(tapDefaultValues, paymentMethod.paymentMethodValues);
@@ -324,7 +324,7 @@ class CheckoutController extends base_controller_1.default {
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
-                if (paymentMethod && paymentMethod.slug == cart_1.paymentMethods.cashOnDelivery) {
+                if (paymentMethod && (paymentMethod.slug == cart_1.paymentMethods.cashOnDelivery || paymentMethod.slug == cart_1.paymentMethods.cardOnDelivery)) {
                     await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails }, true);
                 }
                 return controller.sendSuccessResponse(res, {

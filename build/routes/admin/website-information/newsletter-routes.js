@@ -9,7 +9,7 @@ const admin_user_permission_roll_middleware_1 = __importDefault(require("../../.
 const permission_blocks_1 = require("../../../src/constants/permission-blocks");
 const newsletter_controller_1 = __importDefault(require("../../../src/controllers/admin/website-information/newsletter-controller"));
 const router = express_1.default.Router();
-router.get('/export', newsletter_controller_1.default.exportNewsletter);
 router.use(auth_middleware_1.default);
 router.get('/', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.newsletter.newsletter, readOnly: 1 }), newsletter_controller_1.default.findAll);
+router.get('/export', newsletter_controller_1.default.exportNewsletter);
 exports.default = router;

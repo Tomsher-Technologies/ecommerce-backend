@@ -23,23 +23,25 @@ const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-mode
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
+const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
+const product_config_1 = require("../../../utils/config/product-config");
+const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
+const reports_1 = require("../../../utils/admin/excel/reports");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate } = req.query;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate, isExcel } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
+            query = { cartStatus: { $ne: cart_1.cartStatus.active } };
             if (country) {
                 query.countryId = country;
             }
             else if (countryId) {
                 query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
-            query = { cartStatus: { $ne: cart_1.cartStatus.active } };
-            // { customerId: customerDetails._id },
-            // { countryId: countryData._id },
             if (customerId) {
                 query = {
                     ...query, customerId: new mongoose_1.default.Types.ObjectId(customerId)
@@ -153,22 +155,38 @@ class OrdersController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            const order = await order_service_1.default.OrderList({
-                page: parseInt(page_size),
-                limit: parseInt(limit),
-                query,
-                sort
-            });
-            const totalCount = await order_service_1.default.OrderList({
-                page: parseInt(page_size),
-                query,
-                getTotalCount: true
-            });
-            return controller.sendSuccessResponse(res, {
-                requestedData: order,
-                totalCount: totalCount.length,
-                message: 'Success!'
-            }, 200);
+            if (isExcel !== '1') {
+                const order = await order_service_1.default.OrderList({
+                    page: parseInt(page_size),
+                    limit: parseInt(limit),
+                    query,
+                    sort
+                });
+                const totalCount = await order_service_1.default.OrderList({
+                    page: parseInt(page_size),
+                    query,
+                    getTotalCount: true
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: order,
+                    totalCount: totalCount.length,
+                    message: 'Success!'
+                }, 200);
+            }
+            else {
+                const orders = await order_service_1.default.orderListExcelExport({
+                    page: parseInt(page_size),
+                    limit: parseInt(limit),
+                    query,
+                    sort
+                });
+                if (orders[0].orderData && orders[0].orderData.length > 0) {
+                    await (0, reports_1.exportOrderReport)(res, orders[0].orderData);
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, { message: 'Order Data not found' });
+                }
+            }
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
@@ -204,16 +222,16 @@ class OrdersController extends base_controller_1.default {
         }
     }
     async getOrdeReturnProducts(req, res) {
-        const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId = '', customerId = '', paymentMethodId = '', } = req.query;
+        const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId = '', customerId = '', paymentMethodId = '', orderProductReturnStatus = '', orderProductReturnStatusFromDate = '', orderProductReturnStatusEndDate = '' } = req.query;
         const userData = await res.locals.user;
         let query = {
             _id: { $exists: true },
-            'orderProductStatus': cart_1.orderProductStatusJson.delivered,
             'cartDetails.orderStatus': cart_1.orderProductStatusJson.delivered,
             'cartDetails.cartStatus': { $ne: cart_1.cartStatus.active },
             $or: [
                 { orderRequestedProductQuantity: { $gt: 0 } },
-                { orderRequestedProductStatus: cart_1.orderProductStatusJson.returned }
+                { orderRequestedProductQuantityStatus: { $ne: "0" } },
+                { orderProductReturnStatus: { $ne: "0" } },
             ]
         };
         const country = (0, helpers_1.getCountryId)(userData);
@@ -228,6 +246,17 @@ class OrdersController extends base_controller_1.default {
         }
         if (paymentMethodId) {
             query['cartDetails.paymentMethodId'] = new mongoose_1.default.Types.ObjectId(paymentMethodId);
+        }
+        if (orderProductReturnStatus) {
+            query = {
+                ...query, orderProductReturnStatus: orderProductReturnStatus
+            };
+        }
+        if (orderProductReturnStatusFromDate || orderProductReturnStatusEndDate) {
+            query.orderProductReturnStatusStatusAt = {
+                ...(orderProductReturnStatusFromDate && { $gte: new Date(orderProductReturnStatusFromDate) }),
+                ...(orderProductReturnStatusEndDate && { $lte: (0, helpers_1.dateConvertPm)(orderProductReturnStatusEndDate) })
+            };
         }
         const sort = {};
         if (sortby && sortorder) {
@@ -252,23 +281,360 @@ class OrdersController extends base_controller_1.default {
         }, 200);
     }
     async orderProductStatusChange(req, res) {
-        // if (shouldUpdateTotalProductAmount) {
-        //     const sumOfProductData = await CartOrderProductsModel.aggregate([
-        //         { $match: { cartId: orderDetails._id } },
-        //         { $group: { _id: null, totalProductAmount: { $sum: "$productAmount" }, totalProductQuantity: { $sum: "$quantity" }, totalProductOriginalPrice: { $sum: "$productOriginalPrice" } } }
-        //     ]);
-        //     if (sumOfProductData.length > 0) {
-        //         await CartOrdersModel.updateOne(
-        //             { _id: orderDetails._id },
-        //             {
-        //                 $set: {
-        //                     totalProductAmount: sumOfProductData[0].totalProductAmount,
-        //                     totalProductOriginalPrice: sumOfProductData[0].totalProductOriginalPrice,
-        //                 }
-        //             }
-        //         );
-        //     }
-        // }
+        const { orderID, orderProductId } = req.params;
+        const { newStatus } = req.body;
+        const orderProducts = await cart_order_product_model_1.default.find({ cartId: new mongoose_1.default.Types.ObjectId(orderID) });
+        if (orderProducts.length === 0) {
+            return controller.sendErrorResponse(res, 200, { message: 'Order not found!' });
+        }
+        if (orderProducts.length === 1) {
+            return controller.sendErrorResponse(res, 200, { message: 'Please update the status through the main order status!' });
+        }
+        const orderProduct = orderProducts.find(product => product._id.toString() === orderProductId);
+        if (!orderProduct) {
+            return controller.sendErrorResponse(res, 200, { message: 'Order product not found!' });
+        }
+        const invalidStatuses = [cart_1.orderProductStatusJson.returned, cart_1.orderProductStatusJson.refunded, cart_1.orderProductStatusJson.canceled, cart_1.orderProductStatusJson.delivered];
+        if (invalidStatuses.includes(orderProduct.orderProductStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Status change not allowed for the current product status.' });
+        }
+        if (Number(cart_1.orderProductStatusJson.delivered) > Number(orderProduct.orderProductStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Status can only be changed to a value before "Delivered".' });
+        }
+        const orderDetails = await cart_order_model_1.default.findById(orderProduct.cartId);
+        if (!orderDetails) {
+            return controller.sendErrorResponse(res, 200, { message: 'Order not found!' });
+        }
+        if (Number(cart_1.orderStatusArrayJason.delivered) > Number(orderDetails.orderStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Cannot change status for an order with status before "Delivered".' });
+        }
+        if (!newStatus || !Object.values(cart_1.orderProductStatusJson).includes(newStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Invalid status provided.' });
+        }
+        const updateProductStatus = {
+            orderProductStatus: newStatus,
+            orderProductStatusAt: new Date()
+        };
+        const updatedProduct = await cart_order_product_model_1.default.findByIdAndUpdate(orderProduct._id, updateProductStatus, { new: true });
+        if (!updatedProduct) {
+            return controller.sendErrorResponse(res, 200, { message: 'Failed to update product status. Please try again later.' });
+        }
+        const updateOrderStatus = {};
+        if (orderProduct.orderProductStatus === cart_1.orderProductStatusJson.delivered) {
+            const otherProductsDelivered = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === cart_1.orderProductStatusJson.delivered);
+            if (otherProductsDelivered) {
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.delivered;
+                updateOrderStatus.deliveredStatusAt = new Date();
+            }
+            else {
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.partiallyDelivered;
+                updateOrderStatus.partiallyDeliveredStatusAt = new Date();
+            }
+        }
+        else if (orderProduct.orderProductStatus === cart_1.orderProductStatusJson.shipped) {
+            const otherProductsShipped = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === cart_1.orderProductStatusJson.shipped);
+            if (otherProductsShipped) {
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.shipped;
+                updateOrderStatus.shippedStatusAt = new Date();
+            }
+            else {
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.partiallyShipped;
+                updateOrderStatus.partiallyShippedStatusAt = new Date();
+            }
+        }
+        if (Object.keys(updateOrderStatus).length > 0) {
+            await cart_order_model_1.default.findByIdAndUpdate(orderProduct.cartId, updateOrderStatus);
+        }
+    }
+    async orderProductReturnStatusChange(req, res) {
+        try {
+            const orderProductId = req.params.id;
+            const orderProductDetails = await cart_order_product_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(orderProductId) });
+            if (!orderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
+            }
+            if (orderProductDetails.orderProductStatus !== cart_1.orderProductStatusJson.delivered) {
+                return controller.sendErrorResponse(res, 200, { message: `You cant change to this status without delivered product` });
+            }
+            if (orderProductDetails.quantity < orderProductDetails.orderRequestedProductQuantity) {
+                return controller.sendErrorResponse(res, 200, { message: `You cant change quantity out of ${orderProductDetails.quantity}` });
+            }
+            const orderDetails = await cart_order_model_1.default.findOne({ _id: orderProductDetails.cartId });
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order not found!' });
+            }
+            const { quantityChange, newStatus } = req.body;
+            if (!newStatus) {
+                return controller.sendErrorResponse(res, 200, { message: 'Invalid order return status!' });
+            }
+            const currentStatus = quantityChange ? orderProductDetails.orderRequestedProductQuantityStatus : orderProductDetails.orderProductReturnStatus;
+            const statusJson = quantityChange ? cart_1.orderProductReturnQuantityStatusJson : cart_1.orderProductReturnStatusJson;
+            if (currentStatus === statusJson.refunded) {
+                return controller.sendErrorResponse(res, 200, { message: 'No further status changes are allowed once the product is refunded.' });
+            }
+            if (!newStatus) {
+                return controller.sendErrorResponse(res, 200, { message: 'Invalid order return status!' });
+            }
+            if (currentStatus === newStatus) {
+                return controller.sendErrorResponse(res, 200, { message: 'This status has already been applied. Please choose a different status.' });
+            }
+            if (newStatus === statusJson.received && currentStatus !== statusJson.approved) {
+                return controller.sendErrorResponse(res, 200, { message: 'The item must be approved before it can be received.' });
+            }
+            if (newStatus === statusJson.refunded && currentStatus !== statusJson.received) {
+                return controller.sendErrorResponse(res, 200, { message: 'The item can only be refunded after it has been received.' });
+            }
+            let updateVariantProductQuantity = null;
+            let orderUpdateFields = {};
+            const orderProductUpdateFields = {
+                [quantityChange ? 'orderRequestedProductQuantityStatus' : 'orderProductReturnStatus']: newStatus,
+                [quantityChange ? 'orderRequestedProductQuantityStatusAt' : 'orderProductReturnStatusAt']: new Date(),
+            };
+            if (newStatus === statusJson.approved) {
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityApprovedStatusAt' : 'orderProductReturnApprovedStatusAt'] = new Date();
+            }
+            else if (newStatus === statusJson.refunded) {
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRefundStatusAt' : 'orderProductReturnRefundStatusAt'] = new Date();
+                const newQuantity = orderProductDetails.orderRequestedProductQuantity;
+                const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
+                orderProductUpdateFields['returnedProductAmount'] = quantityChange ? newQuantity * perUnitPrice : orderProductDetails.productAmount;
+                orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + (newQuantity * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
+                orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.canceled;
+            }
+            else if (newStatus === statusJson.received) {
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityReceivedStatusAt' : 'orderProductReturnReceivedStatusAt'] = new Date();
+                if (!quantityChange) {
+                    updateVariantProductQuantity = orderProductDetails.quantity;
+                }
+                else {
+                    updateVariantProductQuantity = orderProductDetails.orderRequestedProductQuantity;
+                }
+            }
+            else if (newStatus === statusJson.rejected) {
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRejectedStatusAt' : 'orderProductReturnRejectedStatusAt'] = new Date();
+            }
+            const updatedOrderProductDetails = await cart_order_product_model_1.default.findByIdAndUpdate(orderProductDetails._id, orderProductUpdateFields);
+            if (!updatedOrderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Something went wrong please try again.' });
+            }
+            if (orderUpdateFields && orderUpdateFields?.totalReturnedProductAmount) {
+                await cart_order_model_1.default.findOneAndUpdate(orderDetails._id, orderUpdateFields);
+            }
+            if (newStatus === statusJson.approved || newStatus === statusJson.rejected || newStatus === statusJson.refunded || newStatus === statusJson.received) {
+                const productDetails = await product_model_1.default.aggregate((0, product_config_1.productDetailsWithVariant)({ 'productvariants._id': orderProductDetails.variantId }));
+                if (newStatus === statusJson.received && updateVariantProductQuantity) {
+                    await product_variants_model_1.default.findOneAndUpdate(orderProductDetails.variantId, { quantity: (productDetails[0].productvariants.quantity + (orderProductDetails.quantity - updateVariantProductQuantity)) });
+                }
+                if (productDetails && productDetails?.length > 0) {
+                    const customerDetails = await customers_model_1.default.findOne({ _id: orderDetails.customerId });
+                    if (customerDetails) {
+                        let query = { _id: { $exists: true } };
+                        query = {
+                            ...query,
+                            countryId: orderDetails.countryId,
+                            block: website_setup_1.websiteSetup.basicSettings,
+                            blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                            status: '1',
+                        };
+                        const settingsDetails = await website_setup_model_1.default.find(query);
+                        const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                        const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                        const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                        ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
+                            firstName: customerDetails?.firstName,
+                            orderId: orderDetails.orderId,
+                            content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderReturnStatusMessages[newStatus]}.`,
+                            subject: cart_1.orderReturnStatusMessages[newStatus],
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+                            appUrl: `${process.env.APPURL}`,
+                            socialMedia,
+                            appUrls,
+                        }, async (err, template) => {
+                            const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+                            if (process.env.SHOPNAME === 'Timehouse') {
+                                await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                                    subject: cart_1.orderReturnStatusMessages[newStatus],
+                                    email: customerEmail
+                                }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Homestyle') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                    subject: cart_1.orderReturnStatusMessages[newStatus],
+                                    email: customerEmail,
+                                }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                    subject: cart_1.orderReturnStatusMessages[newStatus],
+                                    email: customerEmail,
+                                }, template);
+                            }
+                            else if (process.env.SHOPNAME === 'Smartbaby') {
+                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                    subject: cart_1.orderReturnStatusMessages[newStatus],
+                                    email: customerEmail,
+                                }, template);
+                            }
+                        });
+                    }
+                }
+            }
+            const updatedOrderDetails = await order_service_1.default.OrderList({
+                query: {
+                    _id: orderProductDetails.cartId
+                },
+                getAddress: '1',
+                getCartProducts: '1',
+                hostName: req.get('origin'),
+            });
+            if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: updatedOrderDetails[0],
+                    message: 'Your Order is ready!'
+                });
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not fount'
+                });
+            }
+        }
+        catch (error) {
+            console.log('error', error);
+            return controller.sendErrorResponse(res, 500, {
+                message: 'Order not fount'
+            });
+        }
+    }
+    async orderProductReturnQuantityChange(req, res) {
+        try {
+            const orderProductId = req.params.id;
+            const { changedQuantity, newStatus } = req.body;
+            const orderProductDetails = await cart_order_product_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(orderProductId) });
+            if (!orderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
+            }
+            if (orderProductDetails.orderProductStatus !== cart_1.orderProductStatusJson.pending) {
+                return controller.sendErrorResponse(res, 200, { message: `You cant change to this status without pending product` });
+            }
+            if (changedQuantity >= orderProductDetails.quantity) {
+                return controller.sendErrorResponse(res, 200, { message: `Changed quantity cannot be greater than or equal to the original quantity` });
+            }
+            const orderDetails = await cart_order_model_1.default.findOne({ _id: orderProductDetails.cartId });
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order not found!' });
+            }
+            let orderUpdateFields = {};
+            const orderProductUpdateFields = {
+                ['changedQuantity']: changedQuantity,
+                ['changedQuantityStatusAt']: new Date(),
+            };
+            const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
+            orderProductUpdateFields['returnedProductAmount'] = changedQuantity * perUnitPrice;
+            orderUpdateFields['totalReturnedProductAmount'] = (orderDetails?.totalReturnedProductAmount || 0) + (changedQuantity * perUnitPrice);
+            const updatedOrderProductDetails = await cart_order_product_model_1.default.findByIdAndUpdate(orderProductDetails._id, orderProductUpdateFields);
+            if (!updatedOrderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Something went wrong please try again.' });
+            }
+            if (orderUpdateFields && orderUpdateFields?.totalReturnedProductAmount) {
+                await cart_order_model_1.default.findOneAndUpdate(orderDetails._id, orderUpdateFields);
+            }
+            const productDetails = await product_model_1.default.aggregate((0, product_config_1.productDetailsWithVariant)({ 'productvariants._id': orderProductDetails.variantId }));
+            if (productDetails && productDetails?.length > 0) {
+                if (orderProductDetails.changedQuantity === 0) {
+                    await product_variants_model_1.default.findOneAndUpdate(orderProductDetails.variantId, { quantity: (((productDetails[0].productvariants.quantity) + (orderProductDetails.quantity - changedQuantity))) });
+                }
+                const customerDetails = await customers_model_1.default.findOne({ _id: orderDetails.customerId });
+                if (customerDetails) {
+                    let query = { _id: { $exists: true } };
+                    query = {
+                        ...query,
+                        countryId: orderDetails.countryId,
+                        block: website_setup_1.websiteSetup.basicSettings,
+                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                        status: '1',
+                    };
+                    const settingsDetails = await website_setup_model_1.default.find(query);
+                    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
+                        firstName: customerDetails?.firstName,
+                        orderId: orderDetails.orderId,
+                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.`,
+                        subject: cart_1.orderReturnStatusMessages[newStatus],
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+                        appUrl: `${process.env.APPURL}`,
+                        socialMedia,
+                        appUrls,
+                    }, async (err, template) => {
+                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                                subject: cart_1.orderReturnStatusMessages[newStatus],
+                                email: customerEmail
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderReturnStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderReturnStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderReturnStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template);
+                        }
+                    });
+                }
+            }
+            const updatedOrderDetails = await order_service_1.default.OrderList({
+                query: {
+                    _id: orderProductDetails.cartId
+                },
+                getAddress: '1',
+                getCartProducts: '1',
+                hostName: req.get('origin'),
+            });
+            if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: updatedOrderDetails[0],
+                    message: 'Your Order is ready!'
+                });
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not fount'
+                });
+            }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, {
+                message: 'Order not fount'
+            });
+        }
     }
     async orderStatusChange(req, res) {
         try {
@@ -343,7 +709,7 @@ class OrdersController extends base_controller_1.default {
                 });
             }
             let customerDetails = null;
-            if (!orderDetails?.isGuest && orderDetails.customerId) {
+            if (orderDetails.customerId) {
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
                 if (orderStatus === cart_1.orderStatusArrayJason.completed && customerDetails) {
                     await order_service_1.default.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
@@ -436,10 +802,6 @@ class OrdersController extends base_controller_1.default {
                 const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
                 const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
                 const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                const options = {
-                    wordwrap: 130,
-                    // ...
-                };
                 let commonDeliveryDays = '8';
                 if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
@@ -457,7 +819,7 @@ class OrdersController extends base_controller_1.default {
                     products: updatedOrderDetails.products,
                     shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                     shopLogo: `${process.env.SHOPLOGO}`,
-                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                    shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
                     appUrl: `${process.env.APPURL}`,
                     socialMedia,
                     appUrls,

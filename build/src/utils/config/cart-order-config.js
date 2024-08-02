@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderReturnProductsWithCart = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
+exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
@@ -111,7 +111,7 @@ exports.cartProject = {
         rewardPoints: 1,
         rewardAmount: 1,
         totalProductOriginalPrice: 1,
-        totalReturnedProduct: 1,
+        totalReturnedProductAmount: 1,
         totalDiscountAmount: 1,
         totalShippingAmount: 1,
         totalCouponAmount: 1,
@@ -177,7 +177,7 @@ exports.cartDeatilProject = {
         rewardPoints: 1,
         rewardAmount: 1,
         totalProductOriginalPrice: 1,
-        totalReturnedProduct: 1,
+        totalReturnedProductAmount: 1,
         totalDiscountAmount: 1,
         totalShippingAmount: 1,
         totalCouponAmount: 1,
@@ -409,7 +409,7 @@ const cartOrderProductsGroupSumAggregate = (customerCart, guestUserCartId) => {
     ];
 };
 exports.cartOrderProductsGroupSumAggregate = cartOrderProductsGroupSumAggregate;
-// export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boolean) => {
+// export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boolean) => {
 //     const pipeline: any[] = [
 //         { $match: query },
 //         {
@@ -497,7 +497,7 @@ exports.cartOrderProductsGroupSumAggregate = cartOrderProductsGroupSumAggregate;
 //             'cartDetails.isGuest': 1,
 //             'cartDetails.cartStatus': 1,
 //             'cartDetails.totalProductOriginalPrice': 1,
-//             'cartDetails.totalReturnedProduct': 1,
+//             'cartDetails.totalReturnedProductAmount': 1,
 //             'cartDetails.totalDiscountAmount': 1,
 //             'cartDetails.totalShippingAmount': 1,
 //             'cartDetails.totalCouponAmount': 1,
@@ -522,7 +522,7 @@ exports.cartOrderProductsGroupSumAggregate = cartOrderProductsGroupSumAggregate;
 //     });
 //     return pipeline;
 // };
-const getOrderReturnProductsWithCart = (query, notCallLookups) => {
+const getOrderProductsWithCartLookup = (query, notCallLookups) => {
     const pipeline = [
         {
             $lookup: {
@@ -594,7 +594,13 @@ const getOrderReturnProductsWithCart = (query, notCallLookups) => {
             productOriginalPrice: 1,
             productAmount: 1,
             productDiscountAmount: 1,
+            returnedProductAmount: 1,
             orderProductStatus: 1,
+            orderProductReturnStatus: 1,
+            orderProductReturnStatusAt: 1,
+            orderRequestedProductQuantity: 1,
+            orderRequestedProductQuantityStatus: 1,
+            orderRequestedProductQuantityStatusAt: 1,
             'cartDetails._id': 1,
             'cartDetails.orderId': 1,
             'cartDetails.customerId': 1,
@@ -604,7 +610,7 @@ const getOrderReturnProductsWithCart = (query, notCallLookups) => {
             'cartDetails.cartStatus': 1,
             'cartDetails.orderStatus': 1,
             'cartDetails.totalProductOriginalPrice': 1,
-            'cartDetails.totalReturnedProduct': 1,
+            'cartDetails.totalReturnedProductAmount': 1,
             'cartDetails.totalDiscountAmount': 1,
             'cartDetails.totalShippingAmount': 1,
             'cartDetails.totalCouponAmount': 1,
@@ -623,10 +629,33 @@ const getOrderReturnProductsWithCart = (query, notCallLookups) => {
             'paymentMethod._id': 1,
             'paymentMethod.paymentMethodTitle': 1,
             'paymentMethod.slug': 1,
-            'productsDetails': 1,
-            'country': 1
+            'productsDetails': {
+                _id: 1,
+                productTitle: 1,
+                brand: 1,
+                productImageUrl: 1,
+                productvariants: {
+                    _id: 1,
+                    productId: 1,
+                    extraProductTitle: 1,
+                    quantity: 1,
+                    variantSku: 1,
+                    price: 1,
+                    discountPrice: 1,
+                    status: 1,
+                    isDefault: 1,
+                }
+            },
+            'country': {
+                _id: 1,
+                countryTitle: 1,
+                countryCode: 1,
+                countryShortTitle: 1,
+                currencyCode: 1,
+                slug: 1
+            }
         }
     });
     return pipeline;
 };
-exports.getOrderReturnProductsWithCart = getOrderReturnProductsWithCart;
+exports.getOrderProductsWithCartLookup = getOrderProductsWithCartLookup;

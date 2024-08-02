@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJason = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJason = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -75,6 +75,41 @@ exports.orderProductStatusArray = [
     { value: exports.orderProductStatusJson.returned, label: "Returned" },
     { value: exports.orderProductStatusJson.refunded, label: "Refunded" },
     { value: exports.orderProductStatusJson.pickup, label: "Pickup" }
+];
+exports.orderProductReturnStatusJson = {
+    pending: "1",
+    approved: "2",
+    refunded: "3",
+    received: "4",
+    rejected: "5",
+};
+exports.orderReturnStatusMessages = {
+    [exports.orderProductReturnStatusJson.pending]: 'Your product return has been received successfully.',
+    [exports.orderProductReturnStatusJson.approved]: 'Your product return request is now approved.',
+    [exports.orderProductReturnStatusJson.refunded]: 'Your product return has been successfully refunded.',
+    [exports.orderProductReturnStatusJson.rejected]: 'Your product return request has been rejected.',
+    [exports.orderProductReturnStatusJson.received]: 'Your product return has been received and is being processed.',
+};
+exports.orderProductReturnStatusArray = [
+    { value: exports.orderProductReturnStatusJson.pending, label: "Pending" },
+    { value: exports.orderProductReturnStatusJson.approved, label: "Approved" },
+    { value: exports.orderProductReturnStatusJson.refunded, label: "Refunded" },
+    { value: exports.orderProductReturnStatusJson.received, label: "Received" },
+    { value: exports.orderProductReturnStatusJson.rejected, label: "Rejected" },
+];
+exports.orderProductReturnQuantityStatusJson = {
+    pending: "1",
+    approved: "2",
+    refunded: "3",
+    received: "4",
+    rejected: "5",
+};
+exports.orderProductReturnQuantityStatusArray = [
+    { value: exports.orderProductReturnQuantityStatusJson.pending, label: "Pending" },
+    { value: exports.orderProductReturnQuantityStatusJson.approved, label: "Approved" },
+    { value: exports.orderProductReturnQuantityStatusJson.refunded, label: "Refunded" },
+    { value: exports.orderProductReturnStatusJson.received, label: "Received" },
+    { value: exports.orderProductReturnQuantityStatusJson.rejected, label: "Rejected" },
 ];
 exports.orderStatusMap = exports.orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;

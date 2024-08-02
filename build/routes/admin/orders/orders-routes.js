@@ -15,4 +15,7 @@ router.get('/order-list', (0, admin_user_permission_roll_middleware_1.default)({
 router.get('/order-detail/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, readOnly: 1 }), order_controller_1.default.getOrderDetails);
 router.post('/order-status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderStatusChange);
 router.get('/order-return-products', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orderReturn, readOnly: 1 }), order_controller_1.default.getOrdeReturnProducts);
+router.post('/order-return-status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductReturnStatusChange);
+router.post('/order-quantity-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductReturnQuantityChange);
+router.post('/order-product-status-change/:orderID/:orderProductId', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductStatusChange);
 exports.default = router;

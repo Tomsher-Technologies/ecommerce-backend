@@ -16,16 +16,28 @@ const xlsx = require('xlsx');
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
 const auth_schema_1 = require("../../../utils/schemas/frontend/guest/auth-schema");
+const reports_1 = require("../../../utils/admin/excel/reports");
 const controller = new base_controller_1.default();
 class CustomerController extends base_controller_1.default {
     async findAll(req, res) {
         try {
             const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
             let query = { _id: { $exists: true } };
+            const isExcel = req.query.isExcel;
             const userData = await res.locals.user;
             const countryId = (0, helpers_1.getCountryId)(userData);
             if (countryId) {
                 query.countryId = countryId;
+            }
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { firstName: keywordRegex },
+                        { email: keywordRegex }
+                    ],
+                    ...query
+                };
             }
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -37,17 +49,30 @@ class CustomerController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            const customer = await customer_service_1.default.findAll({
+            if (isExcel === '1') {
+                query.isExcel = '1';
+            }
+            const customers = await customer_service_1.default.findAll({
                 page: parseInt(page_size),
                 limit: parseInt(limit),
                 query,
                 sort
             });
-            controller.sendSuccessResponse(res, {
-                requestedData: customer,
-                totalCount: await customer_service_1.default.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
+            if (customers && customers.length > 0 && isExcel !== '1') {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: customers[0]?.customerData || [],
+                    totalCount: customers[0]?.totalCount || 0,
+                    message: 'Success!'
+                }, 200);
+            }
+            else {
+                if (customers[0].customerData && customers[0].customerData.length > 0) {
+                    await (0, reports_1.exportCustomerReport)(res, customers[0].customerData);
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, { message: 'Customer Data not found' });
+                }
+            }
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });

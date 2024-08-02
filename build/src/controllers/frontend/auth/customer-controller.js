@@ -40,11 +40,18 @@ class CustomerController extends base_controller_1.default {
     }
     async getAllCustomerAddress(req, res) {
         let query = { _id: { $exists: true } };
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 500, {
+                message: 'Country is missing'
+            });
+        }
         const currentUser = res.locals.user;
         const { addressMode } = req.query;
         query = {
             ...query,
             status: '1',
+            countryId,
             customerId: currentUser._id,
             isGuest: currentUser.isGuest ?? false,
         };
@@ -202,7 +209,7 @@ class CustomerController extends base_controller_1.default {
                 return await CustomerController.updateExistingAddress(addressId, req.body, res);
             }
             else {
-                return await CustomerController.createNewAddress(currentUser._id, { stateId, cityId, isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
+                return await CustomerController.createNewAddress(currentUser._id, { countryId: originCountryId, stateId, cityId, isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
             }
         }
         catch (error) {

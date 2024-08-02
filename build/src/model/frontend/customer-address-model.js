@@ -26,6 +26,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const customer_1 = require("../../constants/customer");
 const customerAddressSchema = new mongoose_1.Schema({
+    countryId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Countries',
+        required: true
+    },
     customerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: 'Customer',

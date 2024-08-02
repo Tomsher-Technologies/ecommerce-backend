@@ -38,6 +38,15 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         required: true,
         default: 1
     },
+    changedQuantity: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    changedQuantityStatusAt: {
+        type: Date,
+        default: null
+    },
     orderRequestedProductQuantity: {
         type: Number,
         default: null
@@ -55,6 +64,10 @@ const cartOrderProductSchema = new mongoose_1.Schema({
     productDiscountAmount: {
         type: Number,
         required: true,
+        default: 0
+    },
+    returnedProductAmount: {
+        type: Number,
         default: 0
     },
     productCouponAmount: {
@@ -85,12 +98,53 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         type: Date,
         default: null
     },
-    orderRequestedProductStatus: {
+    orderRequestedProductQuantityStatus: {
         type: String,
         required: true,
-        default: '1'
+        default: '0'
     },
-    orderRequestedProductStatusAt: {
+    orderRequestedProductQuantityStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnRefundStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnStatus: {
+        type: String,
+        required: true,
+        default: '0'
+    },
+    orderProductReturnStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnReceivedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnApprovedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnRejectedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityApprovedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityRefundStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityReceivedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityRejectedStatusAt: {
         type: Date,
         default: null
     },

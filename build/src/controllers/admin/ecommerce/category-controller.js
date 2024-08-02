@@ -328,23 +328,24 @@ class CategoryController extends base_controller_1.default {
                 if (categoryId) {
                     const categoryImage = req.files.find((file) => file.fieldname === 'categoryImage');
                     let { seoData, ...updatedCategoryData } = req.body;
-                    const updatedCategory = await category_service_1.default.findOne(categoryId);
+                    const categoryDetails = await category_service_1.default.findOne(categoryId);
+                    const parentCategoryDetail = await category_model_1.default.findOne({ _id: updatedCategoryData.parentCategory });
                     updatedCategoryData = {
                         ...updatedCategoryData,
                         categoryTitle: (0, helpers_1.capitalizeWords)(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
-                        level: updatedCategoryData.level,
+                        level: parentCategoryDetail ? Number(parentCategoryDetail.level) + 1 : 0,
                         slug: updatedCategoryData.slug,
                         categoryImageUrl: (0, helpers_1.handleFileUpload)(req, await category_service_1.default.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
                         updatedAt: new Date()
                     };
-                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData) {
+                    if (categoryDetails.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData) {
                         const updatedSlugCategory = await category_service_1.default.update(categoryId, updatedCategoryData);
                         if (updatedSlugCategory) {
                             await category_service_1.default.findSubCategory(updatedSlugCategory);
                         }
                     }
-                    if (updatedCategory) {
+                    if (categoryDetails) {
                         const languageValuesImages = req.files.filter((file) => file.fieldname &&
                             file.fieldname.startsWith('languageValues[') &&
                             file.fieldname.includes('[categoryImage]'));
@@ -355,13 +356,13 @@ class CategoryController extends base_controller_1.default {
                                 let categoryImageUrl = '';
                                 const matchingImage = languageValuesImages.find((image) => image.fieldname.includes(`languageValues[${i}]`));
                                 if (languageValuesImages.length > 0 && matchingImage) {
-                                    const existingLanguageValues = await general_service_1.default.findOneLanguageValues(multi_languages_1.multiLanguageSources.ecommerce.categories, updatedCategory._id, languageValue.languageId);
+                                    const existingLanguageValues = await general_service_1.default.findOneLanguageValues(multi_languages_1.multiLanguageSources.ecommerce.categories, categoryDetails._id, languageValue.languageId);
                                     categoryImageUrl = await (0, helpers_1.handleFileUpload)(req, existingLanguageValues.languageValues, matchingImage, `categoryImageUrl`, 'category');
                                 }
                                 else {
                                     categoryImageUrl = updatedCategoryData.languageValues[i].languageValues?.categoryImageUrl;
                                 }
-                                const languageValues = await general_service_1.default.multiLanguageFieledsManage(updatedCategory._id, {
+                                const languageValues = await general_service_1.default.multiLanguageFieledsManage(categoryDetails._id, {
                                     ...languageValue,
                                     languageValues: {
                                         ...languageValue.languageValues,
@@ -371,12 +372,12 @@ class CategoryController extends base_controller_1.default {
                                 newLanguageValues.push(languageValues);
                             }
                         }
-                        const updatedCategoryMapped = Object.keys(updatedCategory).reduce((mapped, key) => {
-                            mapped[key] = updatedCategory[key];
+                        const updatedCategoryMapped = Object.keys(categoryDetails).reduce((mapped, key) => {
+                            mapped[key] = categoryDetails[key];
                             return mapped;
                         }, {});
                         if (seoData && Array.isArray(seoData) && seoData.length > 0) {
-                            await seo_page_service_1.default.insertOrUpdateSeoDataWithCountryId(updatedCategory._id, seoData, seo_page_1.seoPage.ecommerce.categories);
+                            await seo_page_service_1.default.insertOrUpdateSeoDataWithCountryId(categoryDetails._id, seoData, seo_page_1.seoPage.ecommerce.categories);
                         }
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
@@ -384,7 +385,7 @@ class CategoryController extends base_controller_1.default {
                                 message: 'Category updated successfully!'
                             }
                         }, 200, {
-                            sourceFromId: updatedCategory._id,
+                            sourceFromId: categoryDetails._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.categories,
                             activity: task_log_1.adminTaskLogActivity.update,
                             activityStatus: task_log_1.adminTaskLogStatus.success
