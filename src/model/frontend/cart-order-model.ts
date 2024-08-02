@@ -8,6 +8,8 @@ export interface CartOrderProps extends Document {
     orderId: string;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
+    stateId: mongoose.Schema.Types.ObjectId;
+    cityId: mongoose.Schema.Types.ObjectId;
     // paymentGatwayId: Schema.Types.ObjectId;
     paymentMethodId: Schema.Types.ObjectId;
     pickupStoreId: Schema.Types.ObjectId;
@@ -97,6 +99,16 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     billingId: {
         type: Schema.Types.ObjectId,
         ref: 'CustomerAddress',
+        default: null
+    },
+    stateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cities',
         default: null
     },
     pickupStoreId: {
