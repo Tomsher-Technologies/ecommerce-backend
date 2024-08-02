@@ -76,7 +76,7 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        let pipeline = (0, cart_order_config_1.getOrderReturnProductsWithCart)(query, true);
+        let pipeline = (0, cart_order_config_1.getOrderProductsWithCartLookup)(query, true);
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip });
@@ -87,7 +87,7 @@ class OrderService {
         }
         pipeline.push({ $sort: finalSort });
         if (getTotalCount) {
-            const countPipeline = (0, cart_order_config_1.getOrderReturnProductsWithCart)(query, false);
+            const countPipeline = (0, cart_order_config_1.getOrderProductsWithCartLookup)(query, false);
             countPipeline.push({ $count: 'totalCount' });
             const [{ totalCount = 0 } = {}] = await cart_order_product_model_1.default.aggregate(countPipeline);
             return { totalCount };
@@ -161,6 +161,27 @@ class OrderService {
             orderDetails.rewardAmount = 0;
             orderDetails.rewardPoints = 0;
         }
+    }
+    async orderListExcelExport(options) {
+        const { query, skip, limit, sort, getTotalCount } = (0, pagination_1.pagination)(options.query || {}, options);
+        const { getAddress, getCartProducts } = options;
+        const defaultSort = { orderStatusAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+        let pipeline = (0, cart_order_config_1.getOrderProductsWithCartLookup)(query, true);
+        if (!getTotalCount) {
+            if (skip) {
+                pipeline.push({ $skip: skip });
+            }
+            if (limit) {
+                pipeline.push({ $limit: limit });
+            }
+        }
+        pipeline.push({ $sort: finalSort });
+        return await cart_order_product_model_1.default.aggregate(pipeline);
     }
 }
 exports.default = new OrderService();

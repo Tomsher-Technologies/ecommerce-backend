@@ -248,17 +248,12 @@ class CategoryService {
 
     async findCategoryId(categoryTitle: string): Promise<void | any> {
         const slug = categorySlugify(categoryTitle);
-
         let categoryResult = await this.findOneCategory({ slug: slug });
         if (categoryResult) {
             return categoryResult;
         }
         else {
-            // const catData = slug.split(/([^-]+)/g);
-
-
             function splitHyphenOutsideParentheses(inputStr: any) {
-                // Regular expression to split by hyphens not inside parentheses
                 const parts = inputStr.split(/-(?![^()]*\))/);
                 return parts;
             }
@@ -266,27 +261,19 @@ class CategoryService {
             function splitHyphenOutsideParentheses1(inputStr: any) {
                 return inputStr
                     .toLowerCase()
-                    .replace(/\(([^)]*)\)/g, (match: any, p1: any) => {       // Match content within parentheses
-                        return `(${p1.replace(/-/g, '_')})`;         // Replace hyphens with underscores in the matched content
+                    .replace(/\(([^)]*)\)/g, (match: any, p1: any) => {
+                        return `(${p1.replace(/-/g, '_')})`;
                     });
             }
 
-
-
-
-
-
-            // Example usage
             const categoryTitleData = splitHyphenOutsideParentheses(categoryTitle)
             const catData1 = splitHyphenOutsideParentheses1(categoryTitle);
             const catData = splitHyphenOutsideParentheses(catData1);
-
-            console.log("catData", catData);
-
             let parentSlug = null
             let currentSlug = '';
             let index = 0;
             for (const data of catData) {
+                parentSlug = currentSlug
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
@@ -294,9 +281,6 @@ class CategoryService {
 
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
                 if (categoryResult == null) {
-
-                    console.log("data",);
-
                     const titleData = splitHyphenOutsideParentheses(data);
                     const lastItem = titleData[titleData.length - 1];
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });
@@ -309,7 +293,6 @@ class CategoryService {
                         level: parentCategory ? Number(parentCategory.level) + 1 : '0',
                         isExcel: true
                     };
-
                     await this.create(categoryData);
                 }
                 index++;

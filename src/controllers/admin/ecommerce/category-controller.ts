@@ -351,25 +351,27 @@ class CategoryController extends BaseController {
                 if (categoryId) {
                     const categoryImage = (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
                     let { seoData, ...updatedCategoryData } = req.body;
-                    const updatedCategory: any = await CategoryService.findOne(categoryId);
+                    const categoryDetails: any = await CategoryService.findOne(categoryId);
+                    const parentCategoryDetail: any = await CategoryModel.findOne({ _id: updatedCategoryData.parentCategory })
+
                     updatedCategoryData = {
                         ...updatedCategoryData,
                         categoryTitle: capitalizeWords(updatedCategoryData.categoryTitle),
                         parentCategory: updatedCategoryData.parentCategory ? updatedCategoryData.parentCategory : null,
-                        level: updatedCategoryData.level,
+                        level: parentCategoryDetail ? Number(parentCategoryDetail.level) + 1 : 0,
                         slug: updatedCategoryData.slug,
                         categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
                         updatedAt: new Date()
                     };
 
-                    if (updatedCategory.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData) {
+                    if (categoryDetails.parentCategory != updatedCategoryData.parentCategory || updatedCategoryData) {
                         const updatedSlugCategory: any = await CategoryService.update(categoryId, updatedCategoryData);
                         if (updatedSlugCategory) {
                             await CategoryService.findSubCategory(updatedSlugCategory)
                         }
                     }
 
-                    if (updatedCategory) {
+                    if (categoryDetails) {
                         const languageValuesImages = (req as any).files.filter((file: any) =>
                             file.fieldname &&
                             file.fieldname.startsWith('languageValues[') &&
@@ -382,12 +384,12 @@ class CategoryController extends BaseController {
                                 let categoryImageUrl = '';
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
                                 if (languageValuesImages.length > 0 && matchingImage) {
-                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.categories, updatedCategory._id, languageValue.languageId);
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.categories, categoryDetails._id, languageValue.languageId);
                                     categoryImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingImage, `categoryImageUrl`, 'category');
                                 } else {
                                     categoryImageUrl = updatedCategoryData.languageValues[i].languageValues?.categoryImageUrl
                                 }
-                                const languageValues = await GeneralService.multiLanguageFieledsManage(updatedCategory._id, {
+                                const languageValues = await GeneralService.multiLanguageFieledsManage(categoryDetails._id, {
                                     ...languageValue,
                                     languageValues: {
                                         ...languageValue.languageValues,
@@ -397,12 +399,12 @@ class CategoryController extends BaseController {
                                 newLanguageValues.push(languageValues);
                             }
                         }
-                        const updatedCategoryMapped = Object.keys(updatedCategory).reduce((mapped: any, key: string) => {
-                            mapped[key] = updatedCategory[key];
+                        const updatedCategoryMapped = Object.keys(categoryDetails).reduce((mapped: any, key: string) => {
+                            mapped[key] = categoryDetails[key];
                             return mapped;
                         }, {});
                         if (seoData && Array.isArray(seoData) && seoData.length > 0) {
-                            await SeoPageService.insertOrUpdateSeoDataWithCountryId(updatedCategory._id, seoData, seoPage.ecommerce.categories)
+                            await SeoPageService.insertOrUpdateSeoDataWithCountryId(categoryDetails._id, seoData, seoPage.ecommerce.categories)
                         }
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
@@ -410,7 +412,7 @@ class CategoryController extends BaseController {
                                 message: 'Category updated successfully!'
                             }
                         }, 200, {
-                            sourceFromId: updatedCategory._id,
+                            sourceFromId: categoryDetails._id,
                             sourceFrom: adminTaskLog.ecommerce.categories,
                             activity: adminTaskLogActivity.update,
                             activityStatus: adminTaskLogStatus.success

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
-import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup, countriesLookup } from '../../../utils/config/customer-config';
+import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup, countriesLookup, reportOrderLookup, addressLookup } from '../../../utils/config/customer-config';
 
 
 class CustomerService {
@@ -19,10 +19,27 @@ class CustomerService {
             orderLookup,
             addField,
             customerProject,
+            ...reportOrderLookup,
+            ...((query.isExcel === '1') ? [addressLookup] : []),
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
-            { $sort: finalSort },
+            {
+                $facet: {
+                    customerData: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        { $sort: finalSort }
+                    ],
+                    totalCount: [
+                        { $count: 'count' }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    customerData: 1,
+                    totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
+                }
+            }
         ];
         const createdCartWithValues = await CustomerModel.aggregate(pipeline);
         return createdCartWithValues;

@@ -72,6 +72,16 @@ const cartOrderSchema = new mongoose_1.Schema({
         ref: 'CustomerAddress',
         default: null
     },
+    stateId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Cities',
+        default: null
+    },
     pickupStoreId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Store',
@@ -102,7 +112,7 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: Number,
         default: 0
     },
-    totalReturnedProduct: {
+    totalReturnedProductAmount: {
         type: Number,
         default: 0
     },

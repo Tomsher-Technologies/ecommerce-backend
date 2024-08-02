@@ -273,26 +273,26 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     hostName: req.get('origin'),
+                    sortby
                 });
-                if (sortby == "price") {
-                    productData.sort((a, b) => {
-                        const getPrice = (product) => {
-                            let variant = product.productVariants.find((v) => v.isDefault === 1 && v.quantity > 0) ||
-                                product.productVariants.find((v) => v.slug === product.slug && v.quantity > 0) ||
-                                product.productVariants.find((v) => v.quantity > 0) ||
-                                product.productVariants[0];
-                            return variant.price;
-                        };
-                        const aPrice = getPrice(a);
-                        const bPrice = getPrice(b);
-                        if (sortorder === 'asc') {
-                            return aPrice - bPrice;
-                        }
-                        else {
-                            return bPrice - aPrice;
-                        }
-                    });
-                }
+                // if (sortby == "price") {
+                //     productData.sort((a: any, b: any) => {
+                //         const getPrice = (product: any) => {
+                //             let variant = product.productVariants.find((v: any) => v.isDefault === 1 && v.quantity > 0) ||
+                //                 product.productVariants.find((v: any) => v.slug === product.slug && v.quantity > 0) ||
+                //                 product.productVariants.find((v: any) => v.quantity > 0) ||
+                //                 product.productVariants[0];
+                //             return variant.price;
+                //         };
+                //         const aPrice = getPrice(a);
+                //         const bPrice = getPrice(b);
+                //         if (sortorder === 'asc') {
+                //             return aPrice - bPrice;
+                //         } else {
+                //             return bPrice - aPrice;
+                //         }
+                //     });
+                // }
                 // const totalProductData: any = await ProductService.findProductList({
                 //     query,
                 //     collectionProductsData,

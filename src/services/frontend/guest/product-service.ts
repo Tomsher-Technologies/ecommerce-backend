@@ -11,7 +11,7 @@ import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, 
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import { collections } from '../../../constants/collections';
 import { ProductsProps } from '../../../utils/types/products';
-import { offers } from '../../../constants/offers';
+import { offers, offerTypes } from '../../../constants/offers';
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
 
 import CollectionsProductsModel from '../../../model/admin/website/collections-products-model';
@@ -83,6 +83,7 @@ class ProductService {
                             discountPrice: 1,
                             price: 1,
                             quantity: 1,
+                            isDefault: 1
                         }
                     },
                     ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...productVariantAttributesLookup] : []),
@@ -159,9 +160,85 @@ class ProductService {
             pipeline.push({ $match: { '_id': { $in: collectionPipeline.productIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
         }
 
-        pipeline.push(...(skip ? [{ $skip: skip }] : []),
-            ...(limit ? [{ $limit: limit }] : []))
 
+        // if (sort && sort.price) {
+        //     pipeline.push({
+        //         $addFields: {
+        //             selectedVariant: {
+        //                 $arrayElemAt: [
+        //                     {
+        //                         $filter: {
+        //                             input: "$productVariants",
+        //                             as: "productVariant",
+        //                             cond: {
+        //                                 $or: [
+        //                                     {
+        //                                         $and: [
+        //                                             { $gt: ["$$productVariant.quantity", 0] },
+        //                                             {
+        //                                                 $or: [
+        //                                                     { $eq: ["$$productVariant.isDefault", 1] },
+        //                                                     { $eq: ["$$productVariant.isDefault", '1'] },
+        //                                                     { $eq: ["$$productVariant.variantSku", "$sku"] },
+        //                                                     { $eq: ["$$productVariant.slug", "$slug"] }
+        //                                                 ]
+        //                                             }
+        //                                         ]
+        //                                     },
+        //                                     {
+        //                                         $or: [
+        //                                             { $eq: ["$$productVariant.isDefault", 1] },
+        //                                             { $eq: ["$$productVariant.isDefault", '1'] },
+        //                                             { $eq: ["$$productVariant.variantSku", "$sku"] },
+        //                                             { $eq: ["$$productVariant.slug", "$slug"] }
+        //                                         ]
+        //                                     }
+        //                                 ]
+        //                             }
+        //                         }
+        //                     },
+        //                     0
+        //                 ]
+        //             },
+        //             discountedPrice: {
+        //                 $let: {
+        //                     vars: {
+        //                         variant: "$selectedVariant"
+        //                     },
+        //                     in: {
+        //                         $cond: {
+        //                             if: { $gt: ["$$variant.discountPrice", 0] },
+        //                             then: {
+        //                                 $cond: {
+        //                                     if: { $eq: ["$offer.offerType", offerTypes.percent] },
+        //                                     then: { $subtract: ["$$variant.discountPrice", { $multiply: ["$$variant.discountPrice", { $divide: ["$offer.offerIN", 100] }] }] },
+        //                                     else: { $subtract: ["$$variant.discountPrice", "$offer.offerIN"] }
+        //                                 }
+        //                             },
+        //                             else: {
+        //                                 $cond: {
+        //                                     if: { $eq: ["$offer.offerType", offerTypes.percent] },
+        //                                     then: { $subtract: ["$$variant.price", { $multiply: ["$$variant.price", { $divide: ["$offer.offerIN", 100] }] }] },
+        //                                     else: { $subtract: ["$$variant.price", "$offer.offerIN"] }
+        //                                 }
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     });
+        //     pipeline.push(
+        //         { $sort: { discountedPrice: 1 } }
+
+        //     );
+        // }
+        // if (skip) {
+        //     pipeline.push({ $skip: skip });
+        // }
+        // if (limit) {
+        //     pipeline.push({ $limit: limit });
+        // }
         if (getLanguageValues === '1') {
             const languageData = await LanguagesModel.find().exec();
             var lastPipelineModification: any
@@ -174,7 +251,99 @@ class ProductService {
         }
 
         pipeline.push(productProject);
+        if (sort && sort.price) {
+            pipeline.push({
+                $addFields: {
+                    selectedVariant: {
+                        $arrayElemAt: [
+                            {
+                                $filter: {
+                                    input: "$productVariants",
+                                    as: "productVariant",
+                                    cond: {
+                                        $and: [
+                                            { $gt: ["$$productVariant.quantity", 0] },
+                                            {
+                                                $or: [
+                                                    { $eq: ["$$productVariant.isDefault", 1] },
+                                                    { $eq: ["$$productVariant.isDefault", '1'] },
+                                                    { $eq: ["$$productVariant.variantSku", "$sku"] },
+                                                    { $eq: ["$$productVariant.slug", "$slug"] }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            0
+                        ]
+                    }
+                }
+            });
 
+            pipeline.push({
+                $addFields: {
+                    discountedPrice: {
+                        $let: {
+                            vars: {
+                                price: { $toDouble: { $ifNull: ["$selectedVariant.price", 0] } },
+                                discountPrice: { $toDouble: { $ifNull: ["$selectedVariant.discountPrice", 0] } },
+                                offerIN: { $toDouble: { $ifNull: ["$offer.offerIN", 0] } },
+                                offerType: "$offer.offerType"
+                            },
+                            in: {
+                                $cond: {
+                                    if: { $gt: ["$$discountPrice", 0] },
+                                    then: {
+                                        $cond: {
+                                            if: { $eq: ["$$offerType", "percent"] },
+                                            then: {
+                                                $subtract: [
+                                                    "$$discountPrice",
+                                                    { $multiply: ["$$discountPrice", { $divide: ["$$offerIN", 100] }] }
+                                                ]
+                                            },
+                                            else: {
+                                                $subtract: ["$$discountPrice", "$$offerIN"]
+                                            }
+                                        }
+                                    },
+                                    else: {
+                                        $cond: {
+                                            if: { $eq: ["$$offerType", "percent"] },
+                                            then: {
+                                                $subtract: [
+                                                    "$$price",
+                                                    { $multiply: ["$$price", { $divide: ["$$offerIN", 100] }] }
+                                                ]
+                                            },
+                                            else: {
+                                                $subtract: ["$$price", "$$offerIN"]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            if (sort.price == 1) {
+                pipeline.push(
+                    { $sort: { discountedPrice: 1 } }
+                );
+            } else {
+                pipeline.push(
+                    { $sort: { discountedPrice: -1 } }
+                );
+            }
+        }
+        if (skip) {
+            pipeline.push({ $skip: skip });
+        }
+        if (limit) {
+            pipeline.push({ $limit: limit });
+        }
         productData = await ProductsModel.aggregate(pipeline).exec();
         return productData
     }

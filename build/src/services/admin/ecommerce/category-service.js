@@ -223,9 +223,7 @@ class CategoryService {
             return categoryResult;
         }
         else {
-            // const catData = slug.split(/([^-]+)/g);
             function splitHyphenOutsideParentheses(inputStr) {
-                // Regular expression to split by hyphens not inside parentheses
                 const parts = inputStr.split(/-(?![^()]*\))/);
                 return parts;
             }
@@ -233,25 +231,23 @@ class CategoryService {
                 return inputStr
                     .toLowerCase()
                     .replace(/\(([^)]*)\)/g, (match, p1) => {
-                    return `(${p1.replace(/-/g, '_')})`; // Replace hyphens with underscores in the matched content
+                    return `(${p1.replace(/-/g, '_')})`;
                 });
             }
-            // Example usage
             const categoryTitleData = splitHyphenOutsideParentheses(categoryTitle);
             const catData1 = splitHyphenOutsideParentheses1(categoryTitle);
             const catData = splitHyphenOutsideParentheses(catData1);
-            console.log("catData", catData);
             let parentSlug = null;
             let currentSlug = '';
             let index = 0;
             for (const data of catData) {
+                parentSlug = currentSlug;
                 if (currentSlug !== '') {
                     currentSlug += '-';
                 }
                 currentSlug += (0, helpers_1.categorySlugify)(data);
                 categoryResult = await this.findOneCategory({ slug: currentSlug });
                 if (categoryResult == null) {
-                    console.log("data");
                     const titleData = splitHyphenOutsideParentheses(data);
                     const lastItem = titleData[titleData.length - 1];
                     const parentCategory = await this.findOneCategory({ slug: parentSlug });

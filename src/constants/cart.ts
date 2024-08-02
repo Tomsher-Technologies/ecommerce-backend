@@ -77,6 +77,47 @@ export const orderProductStatusArray = [
     { value: orderProductStatusJson.refunded, label: "Refunded" },
     { value: orderProductStatusJson.pickup, label: "Pickup" }
 ];
+
+export const orderProductReturnStatusJson = {
+    pending: "1",
+    approved: "2",
+    refunded: "3",
+    received: "4",
+    rejected: "5",
+};
+
+export const orderReturnStatusMessages: { [key: string]: string } = {
+    [orderProductReturnStatusJson.pending]: 'Your product return has been received successfully.',
+    [orderProductReturnStatusJson.approved]: 'Your product return request is now approved.',
+    [orderProductReturnStatusJson.refunded]: 'Your product return has been successfully refunded.',
+    [orderProductReturnStatusJson.rejected]: 'Your product return request has been rejected.',
+    [orderProductReturnStatusJson.received]: 'Your product return has been received and is being processed.',
+};
+
+export const orderProductReturnStatusArray = [
+    { value: orderProductReturnStatusJson.pending, label: "Pending" },
+    { value: orderProductReturnStatusJson.approved, label: "Approved" },
+    { value: orderProductReturnStatusJson.refunded, label: "Refunded" },
+    { value: orderProductReturnStatusJson.received, label: "Received" },
+    { value: orderProductReturnStatusJson.rejected, label: "Rejected" },
+];
+
+export const orderProductReturnQuantityStatusJson = {
+    pending: "1",
+    approved: "2",
+    refunded: "3",
+    received: "4",
+    rejected: "5",
+};
+
+export const orderProductReturnQuantityStatusArray = [
+    { value: orderProductReturnQuantityStatusJson.pending, label: "Pending" },
+    { value: orderProductReturnQuantityStatusJson.approved, label: "Approved" },
+    { value: orderProductReturnQuantityStatusJson.refunded, label: "Refunded" },
+    { value: orderProductReturnStatusJson.received, label: "Received" },
+    { value: orderProductReturnQuantityStatusJson.rejected, label: "Rejected" },
+];
+
 export const orderStatusMap = orderStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;
     return map;

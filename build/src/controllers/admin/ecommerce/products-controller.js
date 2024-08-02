@@ -32,6 +32,7 @@ const country_model_1 = __importDefault(require("../../../model/admin/setup/coun
 const warehouse_model_1 = __importDefault(require("../../../model/admin/stores/warehouse-model"));
 const product_gallery_images_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-gallery-images-model"));
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
+const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const controller = new base_controller_1.default();
 class ProductsController extends base_controller_1.default {
     // constructor() {
@@ -434,7 +435,6 @@ class ProductsController extends base_controller_1.default {
                                                                         for await (let category of categoryData) {
                                                                             const categoryId = await category_service_1.default.findCategoryId(category);
                                                                             if (categoryId) {
-                                                                                // console.log("categoryId:", categoryId._id);
                                                                                 categoryArray.push(categoryId._id);
                                                                             }
                                                                         }
@@ -699,7 +699,14 @@ class ProductsController extends base_controller_1.default {
                                                                         else {
                                                                             const updateProduct = await product_service_1.default.update(productDetails._id, finalData);
                                                                             if (updateProduct) {
-                                                                                const data = await product_gallery_images_model_1.default.deleteMany({ productID: productDetails._id });
+                                                                                await product_category_link_model_1.default.deleteMany({ productId: productDetails._id });
+                                                                                for await (const item of categoryArray) {
+                                                                                    const newCategory = await product_category_link_service_1.default.create({
+                                                                                        productId: updateProduct._id,
+                                                                                        categoryId: item
+                                                                                    });
+                                                                                }
+                                                                                await product_gallery_images_model_1.default.deleteMany({ productID: productDetails._id });
                                                                                 if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
@@ -873,6 +880,7 @@ class ProductsController extends base_controller_1.default {
                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Product_Title is missing, row :" + index });
                                     }
                                     index++;
+                                    console.log(index, "dsfsfsdffsfdfs");
                                 }
                                 controller.sendSuccessResponse(res, {
                                     validation,

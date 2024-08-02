@@ -12,8 +12,8 @@ export const whishlistLookup = {
 
 export const countriesLookup = {
     $lookup: {
-        from: `${collections.setup.countries}`, 
-        localField: 'countryId', 
+        from: `${collections.setup.countries}`,
+        localField: 'countryId',
         foreignField: '_id',
         as: 'country'
     }
@@ -21,8 +21,8 @@ export const countriesLookup = {
 
 export const statesLookup = {
     $lookup: {
-        from: `${collections.setup.states}`, 
-        localField: 'stateId', 
+        from: `${collections.setup.states}`,
+        localField: 'stateId',
         foreignField: '_id',
         as: 'state'
     }
@@ -38,6 +38,44 @@ export const orderLookup = {
         as: 'orders'
     }
 };
+
+export const reportOrderLookup = [{
+    $lookup: {
+        from: 'cartorders',
+        let: { userId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $eq: ['$customerId', '$$userId'] },
+                            { $ne: ['$cartStatus', '1'] }
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    orderStatusAt: 1
+                }
+            }
+        ],
+        as: 'orders'
+    }
+},
+{
+    $addFields: {
+        lastOrderDate: {
+            $arrayElemAt: ['$orders.orderStatusAt', -1]
+        }
+    }
+},
+{
+    $project: {
+        orders: 0
+    }
+}]
 
 export const addField = {
     $addFields: {
@@ -65,7 +103,7 @@ export const groupStage = {
 
 export const shippingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections.customer.customeraddresses}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -85,7 +123,7 @@ export const shippingLookup = {
 
 export const billingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections.customer.customeraddresses}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -103,9 +141,19 @@ export const billingLookup = {
     }
 };
 
+export const addressLookup = {
+
+    $lookup: {
+        from: `${collections.customer.customeraddresses}`,
+        localField: '_id',
+        foreignField: 'customerId',
+        as: 'address'
+    }
+};
+
 export const orderWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -125,7 +173,7 @@ export const orderWalletTransactionLookup = {
 
 export const referrerWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -145,7 +193,7 @@ export const referrerWalletTransactionLookup = {
 
 export const referredWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {

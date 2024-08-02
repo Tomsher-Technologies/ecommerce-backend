@@ -136,7 +136,7 @@ class AttributesService {
     async findOneAttributeFromExcel(attributeKeyValue: any): Promise<void | null> {
         const { attributeTitle, attributeType } = attributeKeyValue
         if (attributeTitle && attributeType) {
-            const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: attributeTitle.trim(), attributeType });
+            const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: capitalizeWords(attributeTitle), attributeType });
             if (resultAttribute) {
                 const attributeDetailResult: any = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id)
                 const result: any = {

@@ -56,7 +56,9 @@ import DashboardRoutes from './admin/dashboard/dashboard-routes';
 //newsletter
 import NewsletterRoutes from './admin/website-information/newsletter-routes';
 import ContactUsRoutes from './admin/website-information/contact-us-routes';
-//dashboard
+
+//report
+
 const adminRouter = express.Router();
 
 // admin
@@ -118,6 +120,8 @@ adminRouter.use('/dashboard', DashboardRoutes);
 //newsletter
 adminRouter.use('/newsletter', NewsletterRoutes);
 adminRouter.use('/contact-us', ContactUsRoutes);
+
+//report
 
 
 export default adminRouter;

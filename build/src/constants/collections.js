@@ -29,6 +29,7 @@ exports.collections = {
         customers: 'customers',
         wishlists: 'wishlists',
         customeraddresses: 'customeraddresses',
+        customerwallettransactions: 'customerwallettransactions'
     },
     cart: {
         cartorders: 'cartorders',

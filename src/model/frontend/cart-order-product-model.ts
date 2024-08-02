@@ -4,18 +4,32 @@ export interface CartOrderProductProps extends Document {
     cartId: Schema.Types.ObjectId;
     productId: Schema.Types.ObjectId;
     variantId: Schema.Types.ObjectId;
+    slug: string;
     productOriginalPrice: number;
     productAmount: number;
     productDiscountAmount: number;
+    returnedProductAmount: number;
     productCouponAmount: number;
-    quantity: number;
-    orderRequestedProductQuantity: number;
-    slug: string;
     giftWrapAmount: number;
+    quantity: number;
+    changedQuantity: number;
+    changedQuantityStatusAt?: Date;
     orderProductStatus: string;
     orderProductStatusAt?: Date;
-    orderRequestedProductStatus: string;
-    orderRequestedProductStatusAt?: Date;
+    orderProductReturnStatus: string; // from customer choose return
+    orderProductReturnStatusAt?: Date; // from customer choose return
+    orderProductReturnRefundStatusAt?: Date;
+    orderProductReturnReceivedStatusAt?: Date;
+    orderProductReturnApprovedStatusAt?: Date;
+    orderProductReturnRejectedStatusAt?: Date;
+
+    orderRequestedProductQuantity: number;
+    orderRequestedProductQuantityStatus: string;
+    orderRequestedProductQuantityStatusAt?: Date;
+    orderProductReturnQuantityApprovedStatusAt?: Date;
+    orderProductReturnQuantityReceivedStatusAt?: Date;
+    orderProductReturnQuantityRefundStatusAt?: Date;
+    orderProductReturnQuantityRejectedStatusAt?: Date;
     createdBy?: string;
     createdAt?: Date;
     updatedAt?: Date;
@@ -35,6 +49,15 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         required: true,
         default: 1
     },
+    changedQuantity: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    changedQuantityStatusAt: {
+        type: Date,
+        default: null
+    },
     orderRequestedProductQuantity: {
         type: Number,
         default: null
@@ -52,6 +75,10 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     productDiscountAmount: {
         type: Number,
         required: true,
+        default: 0
+    },
+    returnedProductAmount: {
+        type: Number,
         default: 0
     },
     productCouponAmount: {
@@ -82,12 +109,53 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         type: Date,
         default: null
     },
-    orderRequestedProductStatus: {
+    orderRequestedProductQuantityStatus: {
         type: String,
         required: true,
-        default: '1'
+        default: '0'
     },
-    orderRequestedProductStatusAt: {
+    orderRequestedProductQuantityStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnRefundStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnStatus: {
+        type: String,
+        required: true,
+        default: '0'
+    },
+    orderProductReturnStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnReceivedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnApprovedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnRejectedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityApprovedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityRefundStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityReceivedStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderProductReturnQuantityRejectedStatusAt: {
         type: Date,
         default: null
     },

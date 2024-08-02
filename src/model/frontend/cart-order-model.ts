@@ -8,7 +8,8 @@ export interface CartOrderProps extends Document {
     orderId: string;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
-    // paymentGatwayId: Schema.Types.ObjectId;
+    stateId: mongoose.Schema.Types.ObjectId;
+    cityId: mongoose.Schema.Types.ObjectId;
     paymentMethodId: Schema.Types.ObjectId;
     pickupStoreId: Schema.Types.ObjectId;
     couponId: Schema.Types.ObjectId;
@@ -17,7 +18,7 @@ export interface CartOrderProps extends Document {
     rewardAmount: number;
     totalProductOriginalPrice: number;
     totalProductAmount: number //productprice*quantity
-    totalReturnedProduct: number;
+    totalReturnedProductAmount: number;
     totalDiscountAmount: number;
     totalShippingAmount: number;
     totalCouponAmount: number;
@@ -99,6 +100,16 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         ref: 'CustomerAddress',
         default: null
     },
+    stateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cities',
+        default: null
+    },
     pickupStoreId: {
         type: Schema.Types.ObjectId,
         ref: 'Store',
@@ -129,7 +140,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: Number,
         default: 0
     },
-    totalReturnedProduct: {
+    totalReturnedProductAmount: {
         type: Number,
         default: 0
     },

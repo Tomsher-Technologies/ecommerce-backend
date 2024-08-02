@@ -1,7 +1,7 @@
 import { pagination } from '../../../components/pagination';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { cartDeatilProject, cartProductsLookup, cartProject, couponLookup, customerLookup, getOrderReturnProductsWithCart, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
+import { cartDeatilProject, cartProductsLookup, cartProject, couponLookup, customerLookup, getOrderProductsWithCartLookup, orderListObjectLookup, paymentMethodLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
 import { countriesLookup } from '../../../utils/config/customer-config';
 import { productLookup } from '../../../utils/config/product-config';
 import { productVariantsLookupValues } from '../../../utils/config/wishlist-config';
@@ -81,7 +81,7 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        let pipeline = getOrderReturnProductsWithCart(query, true);
+        let pipeline = getOrderProductsWithCartLookup(query, true);
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip } as any);
@@ -92,7 +92,7 @@ class OrderService {
         }
         pipeline.push({ $sort: finalSort } as any);
         if (getTotalCount) {
-            const countPipeline = getOrderReturnProductsWithCart(query, false);
+            const countPipeline = getOrderProductsWithCartLookup(query, false);
             countPipeline.push({ $count: 'totalCount' } as any);
             const [{ totalCount = 0 } = {}] = await CartOrderProductsModel.aggregate(countPipeline);
             return { totalCount };
@@ -173,7 +173,30 @@ class OrderService {
         }
     }
 
+    async orderListExcelExport(options: any): Promise<CartOrderProps[]> {
+        const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
+        const { getAddress, getCartProducts } = options;
 
+        const defaultSort = { orderStatusAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+       
+        let pipeline = getOrderProductsWithCartLookup(query, true);
+        if (!getTotalCount) {
+            if (skip) {
+                pipeline.push({ $skip: skip } as any);
+            }
+            if (limit) {
+                pipeline.push({ $limit: limit } as any);
+            }
+        }
+        pipeline.push({ $sort: finalSort } as any);
+
+        return await CartOrderProductsModel.aggregate(pipeline);
+    }
 }
 
 export default new OrderService();

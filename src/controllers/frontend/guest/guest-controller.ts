@@ -630,7 +630,7 @@ class GuestController extends BaseController {
                                         referralCode: updatedCustomer.referralCode,
                                         status: updatedCustomer.status
                                     },
-                                    message: 'Customer password rest successfully. Please realogin with new password'
+                                    message: 'Your password has been reset successfully. Please log in using your new password.'
                                 });
                             } else {
                                 return controller.sendErrorResponse(res, 200, {
@@ -645,7 +645,7 @@ class GuestController extends BaseController {
 
                     } else {
                         return controller.sendErrorResponse(res, 200, {
-                            message: email + ' is not found!',
+                            message: 'Invalid OTP!',
                         });
                     }
                 } else {

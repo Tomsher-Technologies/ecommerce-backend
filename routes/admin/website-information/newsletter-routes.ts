@@ -7,10 +7,10 @@ import { permissionBlocks } from '../../../src/constants/permission-blocks';
 import NewsletterService from '../../../src/controllers/admin/website-information/newsletter-controller';
 
 const router: Router = express.Router();
-router.get('/export', NewsletterService.exportNewsletter);
 
 router.use(authMiddleware);
 
 router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.newsletter.newsletter, readOnly: 1 }), NewsletterService.findAll);
+router.get('/export', NewsletterService.exportNewsletter);
 
 export default router;

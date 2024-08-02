@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Request, Response, query } from 'express';
 
 import BaseController from "../../admin/base-controller";
-import { cartStatus, orderProductStatusJson, orderStatusArrayJason } from "../../../constants/cart";
+import { cartStatus, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJason } from "../../../constants/cart";
 
 import CustomerModel from "../../../model/frontend/customers-model";
 import CommonService from '../../../services/frontend/guest/common-service'
@@ -92,7 +92,6 @@ class OrderController extends BaseController {
                 query.orderUuid = uuid;
                 query.isGuest = true;
             }
-            console.log('customerDetails', customerId);
 
             const order: any = await OrderService.orderList({
                 query,
@@ -158,15 +157,14 @@ class OrderController extends BaseController {
             }
             let shouldUpdateTotalProductAmount = false;
             let hasErrorOccurred = false;
+            let errorMessage = ''
             const updateOperations = orderProducts.map((orderProduct: any) => {
                 const productDetail = orderProductDetails.find(
                     (detail) => detail._id.toString() === orderProduct.orderProductId
                 );
                 if (!productDetail) {
                     if (!hasErrorOccurred) {
-                        controller.sendErrorResponse(res, 400, {
-                            message: `Order product with ID ${orderProduct.orderProductId} not found`
-                        });
+                        errorMessage = `Order product with ID ${orderProduct.orderProductId} not found`;
                         hasErrorOccurred = true;
                     }
                     return null;
@@ -174,15 +172,22 @@ class OrderController extends BaseController {
 
                 if (!['5'].includes(productDetail.orderProductStatus)) {
                     if (!hasErrorOccurred) {
-                        controller.sendErrorResponse(res, 400, {
-                            message: `Order product with ID ${orderProduct.orderProductId} cannot be updated as its status is not '5' or '13'`
-                        });
+                        errorMessage = `Order product with ID ${orderProduct.orderProductId} cannot be updated as its status is not '5' or '13'`
                         hasErrorOccurred = true;
                     }
                     return null;
                 }
-                if (productDetail.quantity !== orderProduct.quantity) {
-                    shouldUpdateTotalProductAmount = true;
+                if (orderProduct.quantityChange && productDetail.orderRequestedProductQuantity) {
+                    errorMessage = "You can't change quantity anymore. You are already changed the quantity"
+                    hasErrorOccurred = true;
+                }
+                if (orderProduct.quantityChange && productDetail.quantity !== orderProduct.quantity) {
+                    if (orderProduct.quantity < productDetail.quantity) {
+                        shouldUpdateTotalProductAmount = true;
+                    } else {
+                        errorMessage = `You cant change quantity out of ${productDetail.quantity}`
+                        hasErrorOccurred = true;
+                    }
                 }
                 return {
                     updateOne: {
@@ -190,10 +195,12 @@ class OrderController extends BaseController {
                         update: {
                             $set: {
                                 ...(!orderProduct.quantityChange ? {
-                                    orderRequestedProductStatus: orderProductStatusJson.returned,
-                                    orderRequestedProductStatusAt: new Date()
+                                    orderProductReturnStatus: orderProductReturnStatusJson.pending,
+                                    orderProductReturnStatusAt: new Date(),
                                 } : {
-                                    orderRequestedProductQuantity: shouldUpdateTotalProductAmount ? (orderProduct.quantity > 1 ? orderProduct.quantity : null) : null
+                                    orderRequestedProductQuantity: shouldUpdateTotalProductAmount ? (orderProduct.quantity < productDetail.quantity ? orderProduct.quantity : null) : null,
+                                    orderRequestedProductQuantityStatus: orderProductReturnQuantityStatusJson.pending,
+                                    orderRequestedProductQuantityStatusAt: new Date(),
                                 })
                             }
                         }
@@ -201,12 +208,15 @@ class OrderController extends BaseController {
                 };
             }).filter((op: any): op is { updateOne: any } => op !== null);
             if (hasErrorOccurred) {
-                return;
+                return controller.sendErrorResponse(res, 200, {
+                    message: errorMessage
+                });
             }
+
             if (updateOperations.length > 0) {
                 await CartOrderProductsModel.bulkWrite(updateOperations);
                 if (returnReson !== '') {
-                    await CartOrdersModel.findOneAndDelete(orderDetails._id, {
+                    await CartOrdersModel.findOneAndUpdate(orderDetails._id, {
                         returnReson
                     })
                 }

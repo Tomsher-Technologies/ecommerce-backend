@@ -160,7 +160,7 @@ class CheckoutController extends BaseController {
                             });
                             if (matchedValue) {
                                 const shippingCharge = matchedValue?.shippingCharge || 0;
-                                const finalShippingCharge = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                const finalShippingCharge = Number(shippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
@@ -171,7 +171,7 @@ class CheckoutController extends BaseController {
                         }
                     }
                 }
-                if (paymentMethod.slug !== paymentMethods.cashOnDelivery) {
+                if ((paymentMethod.slug !== paymentMethods.cashOnDelivery && paymentMethod.slug !== paymentMethods.cardOnDelivery)) {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
                         const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
 
@@ -339,7 +339,7 @@ class CheckoutController extends BaseController {
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
-                if (paymentMethod && paymentMethod.slug == paymentMethods.cashOnDelivery) {
+                if (paymentMethod && (paymentMethod.slug == paymentMethods.cashOnDelivery || paymentMethod.slug == paymentMethods.cardOnDelivery)) {
                     await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails }, true)
                 }
                 return controller.sendSuccessResponse(res, {

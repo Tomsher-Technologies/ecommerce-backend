@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.customerDetailProject = exports.customerProject = exports.referredWalletTransactionLookup = exports.referrerWalletTransactionLookup = exports.orderWalletTransactionLookup = exports.billingLookup = exports.shippingLookup = exports.groupStage = exports.addField = exports.orderLookup = exports.statesLookup = exports.countriesLookup = exports.whishlistLookup = void 0;
+exports.customerDetailProject = exports.customerProject = exports.referredWalletTransactionLookup = exports.referrerWalletTransactionLookup = exports.orderWalletTransactionLookup = exports.addressLookup = exports.billingLookup = exports.shippingLookup = exports.groupStage = exports.addField = exports.reportOrderLookup = exports.orderLookup = exports.statesLookup = exports.countriesLookup = exports.whishlistLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const wallet_1 = require("../../constants/wallet");
 exports.whishlistLookup = {
@@ -37,6 +37,43 @@ exports.orderLookup = {
         as: 'orders'
     }
 };
+exports.reportOrderLookup = [{
+        $lookup: {
+            from: 'cartorders',
+            let: { userId: '$_id' },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $eq: ['$customerId', '$$userId'] },
+                                { $ne: ['$cartStatus', '1'] }
+                            ]
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        orderStatusAt: 1
+                    }
+                }
+            ],
+            as: 'orders'
+        }
+    },
+    {
+        $addFields: {
+            lastOrderDate: {
+                $arrayElemAt: ['$orders.orderStatusAt', -1]
+            }
+        }
+    },
+    {
+        $project: {
+            orders: 0
+        }
+    }];
 exports.addField = {
     $addFields: {
         whishlistCount: { $size: '$whishlist' },
@@ -59,7 +96,7 @@ exports.groupStage = {
 };
 exports.shippingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections_1.collections.customer.customeraddresses}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -78,7 +115,7 @@ exports.shippingLookup = {
 };
 exports.billingLookup = {
     $lookup: {
-        from: 'customeraddresses',
+        from: `${collections_1.collections.customer.customeraddresses}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -95,9 +132,17 @@ exports.billingLookup = {
         as: 'billingAddress'
     }
 };
+exports.addressLookup = {
+    $lookup: {
+        from: `${collections_1.collections.customer.customeraddresses}`,
+        localField: '_id',
+        foreignField: 'customerId',
+        as: 'address'
+    }
+};
 exports.orderWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections_1.collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -116,7 +161,7 @@ exports.orderWalletTransactionLookup = {
 };
 exports.referrerWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections_1.collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {
@@ -135,7 +180,7 @@ exports.referrerWalletTransactionLookup = {
 };
 exports.referredWalletTransactionLookup = {
     $lookup: {
-        from: 'customerwallettransactions',
+        from: `${collections_1.collections.customer.customerwallettransactions}`,
         let: { userId: '$_id' },
         pipeline: [
             {

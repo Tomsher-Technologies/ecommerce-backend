@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const base_controller_1 = __importDefault(require("../base-controller"));
 const newsletter_service_1 = __importDefault(require("../../../services/admin/website-information/newsletter-service"));
-// import ExcelJS from 'exceljs';
+const excel_generator_1 = require("../../../lib/excel/excel-generator");
 const controller = new base_controller_1.default();
 class NewsletterController extends base_controller_1.default {
     async findAll(req, res) {
@@ -68,22 +68,11 @@ class NewsletterController extends base_controller_1.default {
     async exportNewsletter(req, res) {
         try {
             const newsletters = await newsletter_service_1.default.findAll({});
-            // const workbook = new ExcelJS.Workbook();
-            // const worksheet = workbook.addWorksheet('Newsletters');
-            // worksheet.columns = [
-            //     { header: 'Email', key: 'email', width: 30 },
-            //     { header: 'Subscribed At', key: 'createdAt', width: 20 },
-            // ];
-            // newsletters.forEach((newsletter) => {
-            //     worksheet.addRow({
-            //         email: newsletter.email,
-            //         createdAt: newsletter.createdAt,
-            //     });
-            // });
-            // res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            // res.setHeader('Content-Disposition', 'attachment; filename=newsletters.xlsx');
-            // await workbook.xlsx.write(res);
-            // res.end();
+            const newslettersData = newsletters.map(newsletter => ({
+                email: newsletter.email,
+                createdAt: newsletter.createdAt
+            }));
+            await (0, excel_generator_1.generateExcelFile)(res, newslettersData, ['email', 'createdAt'], 'Newsletters');
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching newsletters' });

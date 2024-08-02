@@ -21,10 +21,27 @@ class CustomerService {
             customer_config_1.orderLookup,
             customer_config_1.addField,
             customer_config_1.customerProject,
+            ...customer_config_1.reportOrderLookup,
+            ...((query.isExcel === '1') ? [customer_config_1.addressLookup] : []),
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
-            { $sort: finalSort },
+            {
+                $facet: {
+                    customerData: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        { $sort: finalSort }
+                    ],
+                    totalCount: [
+                        { $count: 'count' }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    customerData: 1,
+                    totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
+                }
+            }
         ];
         const createdCartWithValues = await customers_model_1.default.aggregate(pipeline);
         return createdCartWithValues;

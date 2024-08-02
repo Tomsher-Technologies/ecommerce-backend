@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 exports.productLookup = {
@@ -620,3 +620,31 @@ exports.productProject = {
         }
     }
 };
+const productDetailsWithVariant = (query) => {
+    return [
+        {
+            $lookup: {
+                from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                localField: '_id',
+                foreignField: 'productId',
+                as: 'productvariants'
+            }
+        },
+        { $unwind: '$productvariants' },
+        { $match: query },
+        {
+            $project: {
+                _id: 1,
+                productTitle: 1,
+                productvariants: {
+                    _id: 1,
+                    variantSku: 1,
+                    extraProductTitle: 1,
+                    slug: 1,
+                    quantity: 1
+                }
+            }
+        }
+    ];
+};
+exports.productDetailsWithVariant = productDetailsWithVariant;
