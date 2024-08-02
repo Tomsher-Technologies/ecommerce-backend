@@ -12,6 +12,8 @@ export interface CartOrderProductProps extends Document {
     productCouponAmount: number;
     giftWrapAmount: number;
     quantity: number;
+    changedQuantity: number;
+    changedQuantityStatusAt?: Date;
     orderProductStatus: string;
     orderProductStatusAt?: Date;
     orderProductReturnStatus: string; // from customer choose return
@@ -20,13 +22,13 @@ export interface CartOrderProductProps extends Document {
     orderProductReturnReceivedStatusAt?: Date;
     orderProductReturnApprovedStatusAt?: Date;
     orderProductReturnRejectedStatusAt?: Date;
-    
+
     orderRequestedProductQuantity: number;
     orderRequestedProductQuantityStatus: string;
     orderRequestedProductQuantityStatusAt?: Date;
     orderProductReturnQuantityApprovedStatusAt?: Date;
-    orderProductReturnQuantityRefundStatusAt?: Date;
     orderProductReturnQuantityReceivedStatusAt?: Date;
+    orderProductReturnQuantityRefundStatusAt?: Date;
     orderProductReturnQuantityRejectedStatusAt?: Date;
     createdBy?: string;
     createdAt?: Date;
@@ -46,6 +48,15 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         type: Number,
         required: true,
         default: 1
+    },
+    changedQuantity: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    changedQuantityStatusAt: {
+        type: Date,
+        default: null
     },
     orderRequestedProductQuantity: {
         type: Number,

@@ -172,8 +172,6 @@ class OrderService {
             orderDetails.rewardPoints = 0;
         }
     }
-
-
 }
 
 export default new OrderService();

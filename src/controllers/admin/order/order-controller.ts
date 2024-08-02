@@ -308,13 +308,18 @@ class OrdersController extends BaseController {
     }
 
     async orderProductStatusChange(req: Request, res: Response): Promise<void> {
-        const orderId = req.params.id;
-        const orderProductDetails = await CartOrderProductsModel.findOne({ _id: new mongoose.Types.ObjectId(orderId) });
-        if (!orderProductDetails) {
+        const orderID = req.params.orderID;
+        const orderProductId = req.params.orderProductId;
+        const orderAllProductDetails = await CartOrderProductsModel.find({ cartId: new mongoose.Types.ObjectId(orderID) });
+        if (orderAllProductDetails.length === 0) {
             return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
         }
-        if (orderProductDetails.orderProductStatus === orderProductStatusJson.returned) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status returned product` });
+        if (orderAllProductDetails.length === 1) {
+            return controller.sendErrorResponse(res, 200, { message: 'Please change status with main order status!' });
+        }
+        const orderProductDetails = orderAllProductDetails.find((orderProduct: any) => orderProduct._id.toString() === orderProductId);
+        if (!orderProductDetails) {
+            return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
         }
         if (orderProductDetails.orderProductStatus === orderProductStatusJson.returned) {
             return controller.sendErrorResponse(res, 200, { message: `You cant change to this status returned product` });
@@ -325,8 +330,11 @@ class OrdersController extends BaseController {
         if (orderProductDetails.orderProductStatus === orderProductStatusJson.canceled) {
             return controller.sendErrorResponse(res, 200, { message: `You cant change to this status canceled product` });
         }
-        if (orderProductDetails.orderProductStatus === orderProductStatusJson.refunded) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status refunded product` });
+        if (orderProductDetails.orderProductStatus === orderProductStatusJson.delivered) {
+            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status delivered product` });
+        }
+        if (Number(orderProductStatusJson.delivered) > Number(orderProductDetails.orderProductStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: `You possible to change the status before the delivered status only` });
         }
 
         const orderDetails: any = await CartOrdersModel.findOne({ _id: orderProductDetails.cartId });
@@ -334,9 +342,22 @@ class OrdersController extends BaseController {
             return controller.sendErrorResponse(res, 200, { message: 'Your order not found!' });
         }
 
+        if (Number(orderStatusArrayJason.delivered) > Number(orderDetails.orderStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status delivered order status` });
+        }
         const { newStatus } = req.body;
         if (!newStatus) {
             return controller.sendErrorResponse(res, 200, { message: 'Invalid order return status!' });
+        }
+
+        const updateProductStatus: any = {
+            orderProductStatus: newStatus,
+            orderProductStatusAt: new Date()
+        }
+
+        const successUpdateOrderProduct = await CartOrderProductsModel.findByIdAndUpdate(orderProductDetails._id, updateProductStatus);
+        if (!successUpdateOrderProduct) {
+            return controller.sendErrorResponse(res, 200, { message: 'Something went wrong. Please try again!' });
         }
 
     }
@@ -415,11 +436,13 @@ class OrdersController extends BaseController {
             if (orderUpdateFields && orderUpdateFields?.totalReturnedProductAmount) {
                 await CartOrdersModel.findOneAndUpdate(orderDetails._id, orderUpdateFields)
             }
-            if (updateVariantProductQuantity) {
-                await ProductVariantsModel.findOneAndUpdate(orderProductDetails.variantId, { quantity: updateVariantProductQuantity })
-            }
-            if (newStatus === statusJson.approved || newStatus === statusJson.rejected || newStatus === statusJson.refunded) {
+
+            if (newStatus === statusJson.approved || newStatus === statusJson.rejected || newStatus === statusJson.refunded || newStatus === statusJson.received) {
                 const productDetails = await ProductsModel.aggregate(productDetailsWithVariant({ 'productvariants._id': orderProductDetails.variantId }))
+                if (newStatus === statusJson.received && updateVariantProductQuantity) {
+                    await ProductVariantsModel.findOneAndUpdate(orderProductDetails.variantId, { quantity: (productDetails[0].productvariants.quantity + (orderProductDetails.quantity - updateVariantProductQuantity)) });
+                }
+
                 if (productDetails && productDetails?.length > 0) {
                     const customerDetails = await CustomerModel.findOne({ _id: orderDetails.customerId });
                     if (customerDetails) {
@@ -514,6 +537,140 @@ class OrdersController extends BaseController {
         }
     }
 
+    async orderProductReturnQuantityChange(req: Request, res: Response): Promise<void> {
+        try {
+            const orderProductId = req.params.id;
+            const { changedQuantity, newStatus } = req.body;
+
+            const orderProductDetails = await CartOrderProductsModel.findOne({ _id: new mongoose.Types.ObjectId(orderProductId) });
+            if (!orderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
+            }
+            if (orderProductDetails.orderProductStatus !== orderProductStatusJson.pending) {
+                return controller.sendErrorResponse(res, 200, { message: `You cant change to this status without pending product` });
+            }
+
+            if (changedQuantity >= orderProductDetails.quantity) {
+                return controller.sendErrorResponse(res, 200, { message: `Changed quantity cannot be greater than or equal to the original quantity` });
+            }
+
+            const orderDetails: any = await CartOrdersModel.findOne({ _id: orderProductDetails.cartId });
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order not found!' });
+            }
+
+            let orderUpdateFields: any = {};
+            const orderProductUpdateFields: any = {
+                ['changedQuantity']: changedQuantity,
+                ['changedQuantityStatusAt']: new Date(),
+            };
+
+            const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
+            orderProductUpdateFields['returnedProductAmount'] = changedQuantity * perUnitPrice;
+            orderUpdateFields['totalReturnedProductAmount'] = (orderDetails?.totalReturnedProductAmount || 0) + (changedQuantity * perUnitPrice);
+
+            const updatedOrderProductDetails = await CartOrderProductsModel.findByIdAndUpdate(orderProductDetails._id, orderProductUpdateFields);
+            if (!updatedOrderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Something went wrong please try again.' });
+            }
+            if (orderUpdateFields && orderUpdateFields?.totalReturnedProductAmount) {
+                await CartOrdersModel.findOneAndUpdate(orderDetails._id, orderUpdateFields)
+            }
+            const productDetails = await ProductsModel.aggregate(productDetailsWithVariant({ 'productvariants._id': orderProductDetails.variantId }));
+            if (productDetails && productDetails?.length > 0) {
+                if (orderProductDetails.changedQuantity === 0) {
+                    await ProductVariantsModel.findOneAndUpdate(orderProductDetails.variantId, { quantity: (((productDetails[0].productvariants.quantity) + (orderProductDetails.quantity - changedQuantity))) });
+                }
+
+                const customerDetails = await CustomerModel.findOne({ _id: orderDetails.customerId });
+                if (customerDetails) {
+                    let query: any = { _id: { $exists: true } };
+                    query = {
+                        ...query,
+                        countryId: orderDetails.countryId,
+                        block: websiteSetup.basicSettings,
+                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
+                        status: '1',
+                    } as any;
+
+                    const settingsDetails = await WebsiteSetupModel.find(query);
+                    const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
+
+                    ejs.renderFile(path.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
+                        firstName: customerDetails?.firstName,
+                        orderId: orderDetails.orderId,
+                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.`,
+                        subject: orderReturnStatusMessages[newStatus],
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+                        appUrl: `${process.env.APPURL}`,
+                        socialMedia,
+                        appUrls,
+                    }, async (err: any, template: any) => {
+                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            await mailChimpEmailGateway({
+                                subject: orderReturnStatusMessages[newStatus],
+                                email: customerEmail
+                            }, template)
+
+                        } else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderReturnStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template)
+
+                        }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderReturnStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template)
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await smtpEmailGateway({
+                                subject: orderReturnStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template)
+                        }
+                    });
+                }
+            }
+
+            const updatedOrderDetails: any = await OrderService.OrderList({
+                query: {
+                    _id: orderProductDetails.cartId
+                },
+                getAddress: '1',
+                getCartProducts: '1',
+                hostName: req.get('origin'),
+            })
+
+            if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: updatedOrderDetails[0],
+                    message: 'Your Order is ready!'
+                });
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not fount'
+                });
+            }
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: 'Order not fount'
+            });
+        }
+    }
+
     async orderStatusChange(req: Request, res: Response): Promise<void> {
         try {
             const orderId = req.params.id;
@@ -587,7 +744,7 @@ class OrdersController extends BaseController {
                 });
             }
             let customerDetails: any = null;
-            if (!orderDetails?.isGuest && orderDetails.customerId) {
+            if (orderDetails.customerId) {
                 customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
                 if (orderStatus === orderStatusArrayJason.completed && customerDetails) {
                     await OrderService.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
@@ -810,9 +967,6 @@ class OrdersController extends BaseController {
             });
         }
     }
-
-
-
 
 }
 
