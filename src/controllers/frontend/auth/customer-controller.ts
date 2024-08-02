@@ -47,12 +47,18 @@ class CustomerController extends BaseController {
 
     async getAllCustomerAddress(req: Request, res: Response): Promise<void> {
         let query: any = { _id: { $exists: true } };
+        const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 500, {
+                message: 'Country is missing'
+            });
+        }
         const currentUser = res.locals.user;
         const { addressMode } = req.query;
-
         query = {
             ...query,
             status: '1',
+            countryId,
             customerId: currentUser._id,
             isGuest: currentUser.isGuest ?? false,
         } as any;
@@ -241,7 +247,7 @@ class CustomerController extends BaseController {
             if (addressId) {
                 return await CustomerController.updateExistingAddress(addressId, req.body, res);
             } else {
-                return await CustomerController.createNewAddress(currentUser._id, { stateId, cityId, isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
+                return await CustomerController.createNewAddress(currentUser._id, { countryId: originCountryId, stateId, cityId, isGuest: currentUser.isGuest, addressType, defaultAddress, addressMode, name, address1, address2, phoneNumber, country, state, city, street, zipCode, longitude, latitude }, res);
             }
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'An error occurred while processing your request.' });

@@ -17,7 +17,7 @@ export interface CartOrderProps extends Document {
     rewardAmount: number;
     totalProductOriginalPrice: number;
     totalProductAmount: number //productprice*quantity
-    totalReturnedProduct: number;
+    totalReturnedProductAmount: number;
     totalDiscountAmount: number;
     totalShippingAmount: number;
     totalCouponAmount: number;
@@ -129,7 +129,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: Number,
         default: 0
     },
-    totalReturnedProduct: {
+    totalReturnedProductAmount: {
         type: Number,
         default: 0
     },

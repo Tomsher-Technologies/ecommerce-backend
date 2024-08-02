@@ -2,9 +2,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { ADDRESS_MODES, ADDRESS_TYPES } from '../../constants/customer';
 
 export interface CustomerAddressProps extends Document {
-    customerId: mongoose.Schema.Types.ObjectId;
-    stateId: mongoose.Schema.Types.ObjectId;
-    cityId: mongoose.Schema.Types.ObjectId;
+    countryId: Schema.Types.ObjectId;
+    customerId: Schema.Types.ObjectId;
+    stateId: Schema.Types.ObjectId;
+    cityId: Schema.Types.ObjectId;
     addressType: typeof ADDRESS_TYPES[number];
     defaultAddress: boolean;
     addressMode: typeof ADDRESS_MODES[number];
@@ -28,6 +29,11 @@ export interface CustomerAddressProps extends Document {
 }
 
 const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
+    countryId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Countries',
+        required: true
+    },
     customerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Customer',

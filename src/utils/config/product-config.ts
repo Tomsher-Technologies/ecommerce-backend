@@ -654,3 +654,30 @@ export const productProject = {
     }
 }
 
+export const productDetailsWithVariant = (query: any) => {
+    return [
+        {
+            $lookup: {
+                from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                localField: '_id', 
+                foreignField: 'productId',
+                as: 'productvariants'
+            }
+        },
+        { $unwind: '$productvariants' },
+        { $match: query },
+        {
+            $project: {
+                _id: 1,
+                productTitle: 1,
+                productvariants: {
+                    _id: 1,
+                    variantSku: 1,
+                    extraProductTitle: 1,
+                    slug: 1,
+                    quantity: 1
+                }
+            }
+        }
+    ]
+}   

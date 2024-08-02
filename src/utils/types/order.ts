@@ -41,4 +41,7 @@ export interface OrderQueryParams {
     pickupEndDate?: string;
     cartFromDate?: string;
     cartEndDate?: string;
+    orderProductReturnStatusFromDate?: string;
+    orderProductReturnStatusEndDate?: string;
+    orderProductReturnStatus?: string;
 }

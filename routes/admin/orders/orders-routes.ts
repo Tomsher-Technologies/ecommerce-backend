@@ -16,6 +16,7 @@ router.get('/order-list', userPermissionMiddleware({ permissionBlock: permission
 router.get('/order-detail/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, readOnly: 1 }), OrdersController.getOrderDetails);
 router.post('/order-status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, writeOnly: 1 }), OrdersController.orderStatusChange);
 router.get('/order-return-products', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orderReturn, readOnly: 1 }), OrdersController.getOrdeReturnProducts);
+router.post('/order-return-status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, writeOnly: 1 }), OrdersController.orderProductReturnStatusChange);
 
 
 export default router;
