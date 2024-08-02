@@ -26,6 +26,7 @@ import CountryModel from '../../../model/admin/setup/country-model';
 import CustomerModel from '../../../model/frontend/customers-model';
 import { productDetailsWithVariant } from '../../../utils/config/product-config';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import { exportOrderReport } from '../../../utils/admin/excel/reports';
 
 const controller = new BaseController();
 
@@ -33,7 +34,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate, isExcel } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -186,23 +187,39 @@ class OrdersController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
+            if (isExcel !== '1') {
+                const order = await OrderService.OrderList({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query,
+                    sort
+                });
+                const totalCount = await OrderService.OrderList({
+                    page: parseInt(page_size as string),
+                    query,
+                    getTotalCount: true
+                })
+                return controller.sendSuccessResponse(res, {
+                    requestedData: order,
+                    totalCount: totalCount.length,
+                    message: 'Success!'
+                }, 200);
+            } else {
+                const orders: any = await OrderService.orderListExcelExport({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query,
+                    sort
+                });
+                if (orders[0].orderData && orders[0].orderData.length > 0) {
+                    await exportOrderReport(res, orders[0].orderData)
+                } else {
+                    return controller.sendErrorResponse(res, 200, { message: 'Order Data not found' });
 
-            const order = await OrderService.OrderList({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort
-            });
-            const totalCount = await OrderService.OrderList({
-                page: parseInt(page_size as string),
-                query,
-                getTotalCount: true
-            })
-            return controller.sendSuccessResponse(res, {
-                requestedData: order,
-                totalCount: totalCount.length,
-                message: 'Success!'
-            }, 200);
+                }
+            }
+
+
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
         }

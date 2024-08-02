@@ -338,11 +338,6 @@ class ProductService {
                 );
             }
         }
-
-
-
-        console.log(skip,limit);
-
         if (skip) {
             pipeline.push({ $skip: skip });
         }

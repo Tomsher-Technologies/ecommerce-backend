@@ -39,6 +39,44 @@ export const orderLookup = {
     }
 };
 
+export const reportOrderLookup = [{
+    $lookup: {
+        from: 'cartorders',
+        let: { userId: '$_id' },
+        pipeline: [
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $eq: ['$customerId', '$$userId'] },
+                            { $ne: ['$cartStatus', '1'] }
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    orderStatusAt: 1
+                }
+            }
+        ],
+        as: 'orders'
+    }
+},
+{
+    $addFields: {
+        lastOrderDate: {
+            $arrayElemAt: ['$orders.orderStatusAt', -1]
+        }
+    }
+},
+{
+    $project: {
+        orders: 0
+    }
+}]
+
 export const addField = {
     $addFields: {
         whishlistCount: { $size: '$whishlist' },
@@ -100,6 +138,16 @@ export const billingLookup = {
             }
         ],
         as: 'billingAddress'
+    }
+};
+
+export const addressLookup = {
+
+    $lookup: {
+        from: `${collections.customer.customeraddresses}`,
+        localField: '_id',
+        foreignField: 'customerId',
+        as: 'address'
     }
 };
 

@@ -44,4 +44,5 @@ export interface OrderQueryParams {
     orderProductReturnStatusFromDate?: string;
     orderProductReturnStatusEndDate?: string;
     orderProductReturnStatus?: string;
+    isExcel?: string;
 }

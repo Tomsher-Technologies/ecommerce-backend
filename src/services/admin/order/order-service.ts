@@ -173,6 +173,30 @@ class OrderService {
         }
     }
 
+    async orderListExcelExport(options: any): Promise<CartOrderProps[]> {
+        const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
+        const { getAddress, getCartProducts } = options;
+
+        const defaultSort = { orderStatusAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+       
+        let pipeline = getOrderProductsWithCartLookup(query, true);
+        if (!getTotalCount) {
+            if (skip) {
+                pipeline.push({ $skip: skip } as any);
+            }
+            if (limit) {
+                pipeline.push({ $limit: limit } as any);
+            }
+        }
+        pipeline.push({ $sort: finalSort } as any);
+
+        return await CartOrderProductsModel.aggregate(pipeline);
+    }
 
 }
 

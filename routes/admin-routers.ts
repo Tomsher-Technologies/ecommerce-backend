@@ -58,7 +58,6 @@ import NewsletterRoutes from './admin/website-information/newsletter-routes';
 import ContactUsRoutes from './admin/website-information/contact-us-routes';
 
 //report
-import CustomerReportRoutes from './admin/reports/customer-report-routes';
 
 const adminRouter = express.Router();
 
@@ -123,7 +122,6 @@ adminRouter.use('/newsletter', NewsletterRoutes);
 adminRouter.use('/contact-us', ContactUsRoutes);
 
 //report
-adminRouter.use('/report', CustomerReportRoutes);
 
 
 export default adminRouter;
