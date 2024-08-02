@@ -10,7 +10,6 @@ export interface CartOrderProps extends Document {
     billingId: Schema.Types.ObjectId;
     stateId: mongoose.Schema.Types.ObjectId;
     cityId: mongoose.Schema.Types.ObjectId;
-    // paymentGatwayId: Schema.Types.ObjectId;
     paymentMethodId: Schema.Types.ObjectId;
     pickupStoreId: Schema.Types.ObjectId;
     couponId: Schema.Types.ObjectId;

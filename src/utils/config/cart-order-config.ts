@@ -434,7 +434,7 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
     ];
 }
 
-// export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boolean) => {
+// export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boolean) => {
 //     const pipeline: any[] = [
 //         { $match: query },
 //         {
@@ -551,7 +551,7 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
 //     return pipeline;
 // };
 
-export const getOrderReturnProductsWithCart = (query: any, notCallLookups: boolean) => {
+export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boolean) => {
     const pipeline: any[] = [
         {
             $lookup: {
