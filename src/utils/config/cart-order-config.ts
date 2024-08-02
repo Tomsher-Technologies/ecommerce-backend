@@ -670,8 +670,31 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
             'paymentMethod._id': 1,
             'paymentMethod.paymentMethodTitle': 1,
             'paymentMethod.slug': 1,
-            'productsDetails': 1,
-            'country': 1
+            'productsDetails': {
+                _id: 1,
+                productTitle: 1,
+                brand: 1,
+                productImageUrl: 1,
+                productvariants: {
+                    _id: 1,
+                    productId: 1,
+                    extraProductTitle: 1,
+                    quantity: 1,
+                    variantSku: 1,
+                    price: 1,
+                    discountPrice: 1,
+                    status: 1,
+                    isDefault: 1,
+                }
+            },
+            'country': {
+                _id: 1,
+                countryTitle: 1,
+                countryCode: 1,
+                countryShortTitle: 1,
+                currencyCode: 1,
+                slug: 1
+            }
         }
     });
 
