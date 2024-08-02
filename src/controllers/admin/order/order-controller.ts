@@ -11,7 +11,7 @@ import OrderService from '../../../services/admin/order/order-service'
 
 import mongoose from 'mongoose';
 import { OrderQueryParams } from '../../../utils/types/order';
-import CartOrdersModel from '../../../model/frontend/cart-order-model';
+import CartOrdersModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import { cartStatus as cartStatusJson, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderReturnStatusMessages, orderStatusArray, orderStatusArrayJason, orderStatusMessages } from '../../../constants/cart';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 import CustomerService from '../../../services/frontend/customer-service';
@@ -26,6 +26,7 @@ import CountryModel from '../../../model/admin/setup/country-model';
 import CustomerModel from '../../../model/frontend/customers-model';
 import { productDetailsWithVariant } from '../../../utils/config/product-config';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import { exportOrderReport } from '../../../utils/admin/excel/reports';
 
 const controller = new BaseController();
 
@@ -33,7 +34,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate, isExcel } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -186,23 +187,39 @@ class OrdersController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
+            if (isExcel !== '1') {
+                const order = await OrderService.OrderList({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query,
+                    sort
+                });
+                const totalCount = await OrderService.OrderList({
+                    page: parseInt(page_size as string),
+                    query,
+                    getTotalCount: true
+                })
+                return controller.sendSuccessResponse(res, {
+                    requestedData: order,
+                    totalCount: totalCount.length,
+                    message: 'Success!'
+                }, 200);
+            } else {
+                const orders: any = await OrderService.orderListExcelExport({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query,
+                    sort
+                });
+                if (orders[0].orderData && orders[0].orderData.length > 0) {
+                    await exportOrderReport(res, orders[0].orderData)
+                } else {
+                    return controller.sendErrorResponse(res, 200, { message: 'Order Data not found' });
 
-            const order = await OrderService.OrderList({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort
-            });
-            const totalCount = await OrderService.OrderList({
-                page: parseInt(page_size as string),
-                query,
-                getTotalCount: true
-            })
-            return controller.sendSuccessResponse(res, {
-                requestedData: order,
-                totalCount: totalCount.length,
-                message: 'Success!'
-            }, 200);
+                }
+            }
+
+
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
         }
@@ -308,56 +325,70 @@ class OrdersController extends BaseController {
     }
 
     async orderProductStatusChange(req: Request, res: Response): Promise<void> {
-        const orderID = req.params.orderID;
-        const orderProductId = req.params.orderProductId;
-        const orderAllProductDetails = await CartOrderProductsModel.find({ cartId: new mongoose.Types.ObjectId(orderID) });
-        if (orderAllProductDetails.length === 0) {
-            return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
-        }
-        if (orderAllProductDetails.length === 1) {
-            return controller.sendErrorResponse(res, 200, { message: 'Please change status with main order status!' });
-        }
-        const orderProductDetails = orderAllProductDetails.find((orderProduct: any) => orderProduct._id.toString() === orderProductId);
-        if (!orderProductDetails) {
-            return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
-        }
-        if (orderProductDetails.orderProductStatus === orderProductStatusJson.returned) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status returned product` });
-        }
-        if (orderProductDetails.orderProductStatus === orderProductStatusJson.refunded) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status refunded product` });
-        }
-        if (orderProductDetails.orderProductStatus === orderProductStatusJson.canceled) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status canceled product` });
-        }
-        if (orderProductDetails.orderProductStatus === orderProductStatusJson.delivered) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status delivered product` });
-        }
-        if (Number(orderProductStatusJson.delivered) > Number(orderProductDetails.orderProductStatus)) {
-            return controller.sendErrorResponse(res, 200, { message: `You possible to change the status before the delivered status only` });
-        }
-
-        const orderDetails: any = await CartOrdersModel.findOne({ _id: orderProductDetails.cartId });
-        if (!orderDetails) {
-            return controller.sendErrorResponse(res, 200, { message: 'Your order not found!' });
-        }
-
-        if (Number(orderStatusArrayJason.delivered) > Number(orderDetails.orderStatus)) {
-            return controller.sendErrorResponse(res, 200, { message: `You cant change to this status delivered order status` });
-        }
+        const { orderID, orderProductId } = req.params;
         const { newStatus } = req.body;
-        if (!newStatus) {
-            return controller.sendErrorResponse(res, 200, { message: 'Invalid order return status!' });
-        }
+        const orderProducts = await CartOrderProductsModel.find({ cartId: new mongoose.Types.ObjectId(orderID) });
 
-        const updateProductStatus: any = {
+        if (orderProducts.length === 0) {
+            return controller.sendErrorResponse(res, 200, { message: 'Order not found!' });
+        }
+        if (orderProducts.length === 1) {
+            return controller.sendErrorResponse(res, 200, { message: 'Please update the status through the main order status!' });
+        }
+        const orderProduct = orderProducts.find(product => product._id.toString() === orderProductId);
+        if (!orderProduct) {
+            return controller.sendErrorResponse(res, 200, { message: 'Order product not found!' });
+        }
+        const invalidStatuses = [orderProductStatusJson.returned, orderProductStatusJson.refunded, orderProductStatusJson.canceled, orderProductStatusJson.delivered];
+        if (invalidStatuses.includes(orderProduct.orderProductStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Status change not allowed for the current product status.' });
+        }
+        if (Number(orderProductStatusJson.delivered) > Number(orderProduct.orderProductStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Status can only be changed to a value before "Delivered".' });
+        }
+        const orderDetails = await CartOrdersModel.findById(orderProduct.cartId);
+        if (!orderDetails) {
+            return controller.sendErrorResponse(res, 200, { message: 'Order not found!' });
+        }
+        if (Number(orderStatusArrayJason.delivered) > Number(orderDetails.orderStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Cannot change status for an order with status before "Delivered".' });
+        }
+        if (!newStatus || !Object.values(orderProductStatusJson).includes(newStatus)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Invalid status provided.' });
+        }
+        const updateProductStatus = {
             orderProductStatus: newStatus,
             orderProductStatusAt: new Date()
+        };
+        const updatedProduct = await CartOrderProductsModel.findByIdAndUpdate(orderProduct._id, updateProductStatus, { new: true });
+
+        if (!updatedProduct) {
+            return controller.sendErrorResponse(res, 200, { message: 'Failed to update product status. Please try again later.' });
         }
 
-        const successUpdateOrderProduct = await CartOrderProductsModel.findByIdAndUpdate(orderProductDetails._id, updateProductStatus);
-        if (!successUpdateOrderProduct) {
-            return controller.sendErrorResponse(res, 200, { message: 'Something went wrong. Please try again!' });
+        const updateOrderStatus: Partial<CartOrderProps> = {};
+        if (orderProduct.orderProductStatus === orderProductStatusJson.delivered) {
+            const otherProductsDelivered = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === orderProductStatusJson.delivered);
+            if (otherProductsDelivered) {
+                updateOrderStatus.orderStatus = orderStatusArrayJason.delivered;
+                updateOrderStatus.deliveredStatusAt = new Date();
+            } else {
+                updateOrderStatus.orderStatus = orderStatusArrayJason.partiallyDelivered;
+                updateOrderStatus.partiallyDeliveredStatusAt = new Date();
+            }
+        } else if (orderProduct.orderProductStatus === orderProductStatusJson.shipped) {
+            const otherProductsShipped = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === orderProductStatusJson.shipped);
+            if (otherProductsShipped) {
+                updateOrderStatus.orderStatus = orderStatusArrayJason.shipped;
+                updateOrderStatus.shippedStatusAt = new Date();
+            } else {
+                updateOrderStatus.orderStatus = orderStatusArrayJason.partiallyShipped;
+                updateOrderStatus.partiallyShippedStatusAt = new Date();
+            }
+        }
+
+        if (Object.keys(updateOrderStatus).length > 0) {
+            await CartOrdersModel.findByIdAndUpdate(orderProduct.cartId, updateOrderStatus);
         }
 
     }

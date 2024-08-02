@@ -17,6 +17,7 @@ const xlsx = require('xlsx');
 import bcrypt from 'bcrypt';
 import CustomerAddress from '../../../model/frontend/customer-address-model';
 import { isValidEmail } from '../../../utils/schemas/frontend/guest/auth-schema';
+import { exportCustomerReport } from '../../../utils/admin/excel/reports';
 
 const controller = new BaseController();
 
@@ -26,7 +27,7 @@ class CustomerController extends BaseController {
         try {
             const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
-
+            const isExcel = req.query.isExcel
             const userData = await res.locals.user;
             const countryId = getCountryId(userData);
             if (countryId) {
@@ -54,19 +55,29 @@ class CustomerController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            const customer = await CustomerService.findAll({
+            if (isExcel === '1') {
+                query.isExcel = '1'
+            }
+            const customers: any = await CustomerService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
                 sort
             });
 
-            controller.sendSuccessResponse(res, {
-                requestedData: customer,
-                totalCount: await CustomerService.getTotalCount(query),
-                message: 'Success!'
-            }, 200);
-
+            if (customers && customers.length > 0 && isExcel !== '1') {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: customers[0]?.customerData || [],
+                    totalCount: customers[0]?.totalCount || 0,
+                    message: 'Success!'
+                }, 200);
+            } else {
+                if (customers[0].customerData && customers[0].customerData.length > 0) {
+                    await exportCustomerReport(res, customers[0].customerData)
+                } else {
+                    return controller.sendErrorResponse(res, 200, { message: 'Customer Data not found' });
+                }
+            }
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
         }
