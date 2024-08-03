@@ -428,7 +428,18 @@ class ProductController extends BaseController {
         }
     }
     async findAllProductsListWithBasicDetails(req: Request, res: Response): Promise<void> {
-        const productDetails = await ProductsModel.aggregate(productDetailsWithVariant())
+        try {
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            const allProducts = await ProductVariantsModel.find({countryId});
+            return controller.sendSuccessResponse(res, {
+                requestedData: allProducts,
+                message: 'Success!'
+            }, 200);
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'An error occurred while retrieving product specifications',
+            });
+        }
     }
 
     async findProductDetailSpecification(req: Request, res: Response): Promise<void> {
