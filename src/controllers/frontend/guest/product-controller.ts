@@ -16,6 +16,7 @@ import { frontendSpecificationLookup } from '../../../utils/config/specification
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import { frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
+import { productDetailsWithVariant } from '../../../utils/config/product-config';
 const controller = new BaseController();
 
 class ProductController extends BaseController {
@@ -426,6 +427,21 @@ class ProductController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
+    async findAllProductsListWithBasicDetails(req: Request, res: Response): Promise<void> {
+        try {
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            const allProducts = await ProductsModel.aggregate(productDetailsWithVariant({ 'productvariants.countryId': countryId }));
+            return controller.sendSuccessResponse(res, {
+                requestedData: allProducts,
+                message: 'Success!'
+            }, 200);
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, {
+                message: error.message || 'An error occurred while retrieving product specifications',
+            });
+        }
+    }
+
     async findProductDetailSpecification(req: Request, res: Response): Promise<void> {
         try {
             const variantSlugOrId: string = req.params.slug;

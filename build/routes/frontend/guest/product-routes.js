@@ -19,4 +19,5 @@ router.get('/product-detail-specification/:slug', response_status_1.logResponseS
 router.get('/product-detail-seo/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSeo);
 router.get('/product-list', response_status_1.logResponseStatus, product_controller_1.default.findAllProducts);
 router.get('/related-products', response_status_1.logResponseStatus, product_controller_1.default.relatedProducts);
+router.get('/all-products-list-with-basic-details', response_status_1.logResponseStatus, product_controller_1.default.findAllProductsListWithBasicDetails);
 exports.default = router;

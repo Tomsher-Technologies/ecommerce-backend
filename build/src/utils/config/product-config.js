@@ -621,7 +621,7 @@ exports.productProject = {
     }
 };
 const productDetailsWithVariant = (query) => {
-    return [
+    const pipeline = [
         {
             $lookup: {
                 from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
@@ -631,13 +631,13 @@ const productDetailsWithVariant = (query) => {
             }
         },
         { $unwind: '$productvariants' },
-        { $match: query },
         {
             $project: {
                 _id: 1,
                 productTitle: 1,
                 productvariants: {
                     _id: 1,
+                    countryId: 1,
                     variantSku: 1,
                     extraProductTitle: 1,
                     slug: 1,
@@ -646,5 +646,9 @@ const productDetailsWithVariant = (query) => {
             }
         }
     ];
+    if (query) {
+        pipeline.push({ $match: query });
+    }
+    return pipeline;
 };
 exports.productDetailsWithVariant = productDetailsWithVariant;
