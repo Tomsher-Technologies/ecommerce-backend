@@ -12,6 +12,7 @@ const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 class CategoryService {
     async findAll(options = {}) {
         const { query, hostName, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        const { getAllCategory } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -22,13 +23,16 @@ class CategoryService {
         let pipeline = [];
         if (query.level == 0) {
             const language = await this.categoryLanguage(hostName, [matchPipeline]);
-            const data = await category_model_1.default.aggregate(language).exec();
-            return data;
+            const categoryData = await category_model_1.default.aggregate(language).exec();
+            return categoryData;
         }
-        const data = await category_model_1.default.aggregate([matchPipeline]).exec();
+        const categoryData = await category_model_1.default.aggregate([matchPipeline]).exec();
+        if (getAllCategory === '1') {
+            return categoryData;
+        }
         var categoryArray = [];
-        if (data.length > 0) {
-            pipeline.push({ '$match': { parentCategory: data[0]._id } });
+        if (categoryData.length > 0) {
+            pipeline.push({ '$match': { parentCategory: categoryData[0]._id } });
             const language = await this.categoryLanguage(hostName, pipeline);
             categoryArray = await category_model_1.default.aggregate(language).exec();
         }

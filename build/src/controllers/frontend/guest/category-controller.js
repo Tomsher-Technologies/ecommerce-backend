@@ -13,7 +13,7 @@ const controller = new base_controller_1.default();
 class CategoryController extends base_controller_1.default {
     async findAllCategory(req, res) {
         try {
-            const { category = '', sortby = 'categoryTitle', sortorder = 'asc' } = req.query;
+            const { category = '', sortby = 'categoryTitle', sortorder = 'asc', getAllCategory = '' } = req.query;
             const level = '0';
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -44,7 +44,8 @@ class CategoryController extends base_controller_1.default {
                 const categories = await category_service_1.default.findAll({
                     hostName: req.get('origin'),
                     query,
-                    sort
+                    sort,
+                    getAllCategory
                 });
                 return controller.sendSuccessResponse(res, {
                     requestedData: categories,
