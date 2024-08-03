@@ -654,18 +654,17 @@ export const productProject = {
     }
 }
 
-export const productDetailsWithVariant = (query: any) => {
-    return [
+export const productDetailsWithVariant = (query?: any) => {
+    const pipeline: any[] = [
         {
             $lookup: {
                 from: `${collections.ecommerce.products.productvariants.productvariants}`,
-                localField: '_id', 
+                localField: '_id',
                 foreignField: 'productId',
                 as: 'productvariants'
             }
         },
         { $unwind: '$productvariants' },
-        { $match: query },
         {
             $project: {
                 _id: 1,
@@ -679,5 +678,11 @@ export const productDetailsWithVariant = (query: any) => {
                 }
             }
         }
-    ]
-}   
+    ];
+
+    if (query) {
+        pipeline.push({ $match: query });
+    }
+
+    return pipeline;
+}

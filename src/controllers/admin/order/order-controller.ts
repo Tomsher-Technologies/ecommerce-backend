@@ -534,8 +534,8 @@ class OrdersController extends BaseController {
                 orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRefundStatusAt' : 'orderProductReturnRefundStatusAt'] = new Date();
                 const newQuantity = orderProductDetails.orderRequestedProductQuantity;
                 const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
-                orderProductUpdateFields['returnedProductAmount'] = quantityChange ? newQuantity * perUnitPrice : orderProductDetails.productAmount;
-                orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + (newQuantity * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
+                orderProductUpdateFields['returnedProductAmount'] = quantityChange ? ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : orderProductDetails.productAmount;
+                orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
                 orderProductUpdateFields['orderProductStatus'] = orderProductStatusJson.canceled;
             } else if (newStatus === statusJson.received) {
                 orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityReceivedStatusAt' : 'orderProductReturnReceivedStatusAt'] = new Date();
@@ -685,8 +685,8 @@ class OrdersController extends BaseController {
             };
 
             const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
-            orderProductUpdateFields['returnedProductAmount'] = changedQuantity * perUnitPrice;
-            orderUpdateFields['totalReturnedProductAmount'] = (orderDetails?.totalReturnedProductAmount || 0) + (changedQuantity * perUnitPrice);
+            orderProductUpdateFields['returnedProductAmount'] = ((orderProductDetails.quantity - changedQuantity) * perUnitPrice);
+            orderUpdateFields['totalReturnedProductAmount'] = (orderDetails?.totalReturnedProductAmount || 0) + (orderProductUpdateFields['returnedProductAmount'] || 0);
 
             const updatedOrderProductDetails = await CartOrderProductsModel.findByIdAndUpdate(orderProductDetails._id, orderProductUpdateFields);
             if (!updatedOrderProductDetails) {
