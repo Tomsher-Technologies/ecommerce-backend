@@ -551,7 +551,7 @@ export const cartOrderProductsGroupSumAggregate = (customerCart: string, guestUs
 //     return pipeline;
 // };
 
-export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boolean) => {
+export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boolean, getCategory?: string, getBrand?: string) => {
     const pipeline: any[] = [
         {
             $lookup: {
@@ -612,6 +612,23 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
             { $unwind: '$paymentMethod' },
             {
                 $lookup: {
+                    from: `${collections.customer.customeraddresses}`,
+                    localField: 'cartDetails.shippingId',
+                    foreignField: '_id',
+                    as: 'shippingAddress'
+                }
+            },
+            { $unwind: '$shippingAddress' }, {
+            $lookup: {
+                from: `${collections.customer.customeraddresses}`,
+                localField: 'cartDetails.billingId',
+                foreignField: '_id',
+                as: 'billingAddress'
+            }
+        },
+            { $unwind: '$billingAddress' },
+            {
+                $lookup: {
                     from: `${collections.setup.countries}`,
                     localField: 'cartDetails.countryId',
                     foreignField: '_id',
@@ -623,7 +640,57 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
                     path: "$country",
                     preserveNullAndEmptyArrays: true
                 }
-            }
+            },
+            getCategory === '1' ? ({
+                $lookup: {
+                    from: `${collections.ecommerce.products.productcategorylinks}`,
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productCategory',
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: `${collections.ecommerce.categories}`,
+                                localField: 'categoryId',
+                                foreignField: '_id',
+                                as: 'category',
+                            },
+                        },
+                        {
+                            $unwind: "$category"
+                        },
+                        {
+                            $project: {
+                                category: {
+                                    categoryTitle: 1,
+                                }
+                            }
+                        }
+                    ]
+                }
+            }) : {},
+            getCategory === '1' ? ({
+                $addFields: {
+                    'productsDetails.productCategory': {
+                        $arrayElemAt: ['$productCategory', 0]
+                    }
+                }
+            }) : {},
+            getBrand === '1' ? {
+                $lookup: {
+                    from: `${collections.ecommerce.brands}`,
+                    localField: 'productsDetails.brand',
+                    foreignField: '_id',
+                    as: 'brandDetails',
+                }
+            } : {},
+            getBrand === '1' ? {
+                $addFields: {
+                    'productsDetails.brand': {
+                        $arrayElemAt: ['$brandDetails', 0]
+                    }
+                }
+            } : {}
         );
     }
 
@@ -632,11 +699,14 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
             _id: 1,
             cartId: 1,
             quantity: 1,
+            productId: 1,
+            variantId: 1,
             productOriginalPrice: 1,
             productAmount: 1,
             productDiscountAmount: 1,
             returnedProductAmount: 1,
             orderProductStatus: 1,
+            orderProductStatusAt: 1,
             orderProductReturnStatus: 1,
             orderProductReturnStatusAt: 1,
             orderRequestedProductQuantity: 1,
@@ -650,6 +720,7 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
             'cartDetails.isGuest': 1,
             'cartDetails.cartStatus': 1,
             'cartDetails.orderStatus': 1,
+            'cartDetails.orderComments': 1,
             'cartDetails.totalProductOriginalPrice': 1,
             'cartDetails.totalReturnedProductAmount': 1,
             'cartDetails.totalDiscountAmount': 1,
@@ -657,6 +728,8 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
             'cartDetails.totalCouponAmount': 1,
             'cartDetails.totalWalletAmount': 1,
             'cartDetails.totalTaxAmount': 1,
+            'cartDetails.shippingId': 1,
+            'cartDetails.billingId': 1,
             'cartDetails.totalProductAmount': 1,
             'cartDetails.couponAmount': 1,
             'cartDetails.totalGiftWrapAmount': 1,
@@ -673,7 +746,10 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
             'productsDetails': {
                 _id: 1,
                 productTitle: 1,
-                brand: 1,
+                brand: {
+                    brandTitle: 1
+                },
+                productCategory: { $ifNull: ['$productCategory', []] },
                 productImageUrl: 1,
                 productvariants: {
                     _id: 1,
@@ -694,7 +770,9 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
                 countryShortTitle: 1,
                 currencyCode: 1,
                 slug: 1
-            }
+            },
+            shippingAddress: 1,
+            billingAddress: 1
         }
     });
 

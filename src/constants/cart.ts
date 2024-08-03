@@ -72,7 +72,7 @@ export const orderProductStatusArray = [
     { value: orderProductStatusJson.packed, label: "Packed" },
     { value: orderProductStatusJson.shipped, label: "Shipped" },
     { value: orderProductStatusJson.delivered, label: "Delivered" },
-    { value: orderProductStatusJson.canceled, label: "Canceled" },
+    { value: orderProductStatusJson.canceled, label: "Cancelled" },
     { value: orderProductStatusJson.returned, label: "Returned" },
     { value: orderProductStatusJson.refunded, label: "Refunded" },
     { value: orderProductStatusJson.pickup, label: "Pickup" }
@@ -135,6 +135,10 @@ export const orderStatusMap = orderStatusArray.reduce((map, obj) => {
     return map;
 }, {} as Record<string, { value: string; label: string }>);
 
+export const orderProductStatusMap = orderProductStatusArray.reduce((map, obj) => {
+    map[obj.value] = obj;
+    return map;
+}, {} as Record<string, { value: string; label: string }>);
 
 export const couponTypes = {
     entireOrders: "entire-orders",
