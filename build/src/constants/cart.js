@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJason = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJason = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -71,11 +71,22 @@ exports.orderProductStatusArray = [
     { value: exports.orderProductStatusJson.packed, label: "Packed" },
     { value: exports.orderProductStatusJson.shipped, label: "Shipped" },
     { value: exports.orderProductStatusJson.delivered, label: "Delivered" },
-    { value: exports.orderProductStatusJson.canceled, label: "Canceled" },
+    { value: exports.orderProductStatusJson.canceled, label: "Cancelled" },
     { value: exports.orderProductStatusJson.returned, label: "Returned" },
     { value: exports.orderProductStatusJson.refunded, label: "Refunded" },
     { value: exports.orderProductStatusJson.pickup, label: "Pickup" }
 ];
+exports.orderProductStatussMessages = {
+    [exports.orderProductStatusJson.pending]: 'Your product order is pending.',
+    [exports.orderProductStatusJson.processing]: 'Your product order is now being processed.',
+    [exports.orderProductStatusJson.packed]: 'Your product order has been packed and is ready for shipment.',
+    [exports.orderProductStatusJson.shipped]: 'Your product order has been shipped.',
+    [exports.orderProductStatusJson.delivered]: 'Your product order has been delivered successfully.',
+    [exports.orderProductStatusJson.canceled]: 'Your product order has been canceled.',
+    [exports.orderProductStatusJson.returned]: 'Your product has been returned.',
+    [exports.orderProductStatusJson.refunded]: 'Your product has been refunded.',
+    [exports.orderProductStatusJson.pickup]: 'Your product is ready for pickup.',
+};
 exports.orderProductReturnStatusJson = {
     pending: "1",
     approved: "2",
@@ -112,6 +123,10 @@ exports.orderProductReturnQuantityStatusArray = [
     { value: exports.orderProductReturnQuantityStatusJson.rejected, label: "Rejected" },
 ];
 exports.orderStatusMap = exports.orderStatusArray.reduce((map, obj) => {
+    map[obj.value] = obj;
+    return map;
+}, {});
+exports.orderProductStatusMap = exports.orderProductStatusArray.reduce((map, obj) => {
     map[obj.value] = obj;
     return map;
 }, {});

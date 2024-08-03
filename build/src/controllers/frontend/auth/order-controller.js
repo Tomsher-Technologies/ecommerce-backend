@@ -131,7 +131,7 @@ class OrderController extends base_controller_1.default {
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            if (Number(orderDetails.orderStatus) < Number(cart_1.orderStatusArrayJason.delivered)) {
+            if (Number(orderDetails.orderStatus) > Number(cart_1.orderStatusArrayJason.delivered)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
             const statusMessages = {

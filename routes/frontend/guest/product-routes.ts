@@ -18,5 +18,6 @@ router.get('/product-detail-specification/:slug', logResponseStatus, ProductCont
 router.get('/product-detail-seo/:slug/:sku?', logResponseStatus, ProductController.findProductDetailSeo);
 router.get('/product-list', logResponseStatus, ProductController.findAllProducts);
 router.get('/related-products', logResponseStatus, ProductController.relatedProducts);
+router.get('/all-products-list-with-basic-details', logResponseStatus, ProductController.findAllProductsListWithBasicDetails);
 
 export default router;

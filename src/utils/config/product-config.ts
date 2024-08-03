@@ -671,6 +671,7 @@ export const productDetailsWithVariant = (query?: any) => {
                 productTitle: 1,
                 productvariants: {
                     _id: 1,
+                    countryId: 1,
                     variantSku: 1,
                     extraProductTitle: 1,
                     slug: 1,
