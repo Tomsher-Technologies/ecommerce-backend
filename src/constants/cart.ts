@@ -78,6 +78,18 @@ export const orderProductStatusArray = [
     { value: orderProductStatusJson.pickup, label: "Pickup" }
 ];
 
+export const orderProductStatussMessages: { [key: string]: string } = {
+    [orderProductStatusJson.pending]: 'Your product order is pending.',
+    [orderProductStatusJson.processing]: 'Your product order is now being processed.',
+    [orderProductStatusJson.packed]: 'Your product order has been packed and is ready for shipment.',
+    [orderProductStatusJson.shipped]: 'Your product order has been shipped.',
+    [orderProductStatusJson.delivered]: 'Your product order has been delivered successfully.',
+    [orderProductStatusJson.canceled]: 'Your product order has been canceled.',
+    [orderProductStatusJson.returned]: 'Your product has been returned.',
+    [orderProductStatusJson.refunded]: 'Your product has been refunded.',
+    [orderProductStatusJson.pickup]: 'Your product is ready for pickup.',
+};
+
 export const orderProductReturnStatusJson = {
     pending: "1",
     approved: "2",
