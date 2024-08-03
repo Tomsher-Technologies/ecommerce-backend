@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exportOrderReport = exports.exportCustomerReport = void 0;
 const excel_generator_1 = require("../../../lib/excel/excel-generator");
+const cart_1 = require("../../../constants/cart");
 const exportCustomerReport = async (res, customerData) => {
     const customersData = customerData.map((customer) => {
         const addressBook = {};
@@ -37,28 +38,60 @@ const exportCustomerReport = async (res, customerData) => {
 exports.exportCustomerReport = exportCustomerReport;
 const exportOrderReport = async (res, orderData) => {
     const ordersData = orderData.map((order) => {
+        const categoryTitles = order.productsDetails.productCategory.map((cat) => cat.category.categoryTitle).join(', ');
         return {
             id: order._id.toString(),
             orderId: order.cartDetails.orderId,
+            brand: order.productsDetails.brand.brandTitle,
             orderComments: order.cartDetails.orderComments,
             productTitle: order.productsDetails.productvariants.extraProductTitle ? order.productsDetails.productvariants.extraProductTitle : order.productsDetails.productTitle,
-            sku: order.productsDetails.productvariants.sku,
+            sku: order.productsDetails.productvariants.variantSku,
+            quantity: order.quantity,
             mrp: order.productsDetails.productvariants.price,
-            // discount: order.lastOrderDate,
-            // subtotal: order.productAmount,
-            // fromGuest: order.isGuest,
-            // addressBook: order?.address && order.address.length > 0 ? JSON.stringify(order.address) : null,
-            // credits: order.totalRewardPoint,
-            // orderTotalAmount: order.orderTotalAmount,
-            // totalOrderCount: order.totalOrderCount
+            subtotal: order.productAmount,
+            totalWithCancel: order.returnedProductAmount > 0 ? (order.productAmount - order.returnedProductAmount) : 0,
+            category: categoryTitles,
+            createdAt: order.orderProductStatus === '1' ? order.orderProductStatusAt : null,
+            status: cart_1.orderProductStatusMap[order.orderProductStatus].label,
+            deliveredAt: order.orderProductStatus === '5' ? order.orderProductStatusAt : null,
+            billingName: order.billingAddress.name,
+            shippingName: order.shippingAddress.name,
+            paymentMethod: order.paymentMethod.paymentMethodTitle,
+            shippingAddress: JSON.stringify(order.shippingAddress),
+            shippingPhone: order.shippingAddress.phoneNumber,
+            billingAddress: JSON.stringify(order.billingAddress),
+            billingPhone: order.billingAddress.phoneNumber,
         };
     });
-    // const addressColumns = orderData.reduce((acc: any, order: any) => {
-    //     order.address.forEach((_: any, index: number) => {
-    //         acc.push(`addressBook[${index + 1}]State`, `addressBook[${index + 1}]City`);
-    //     });
-    //     return Array.from(new Set(acc));
-    // }, []);
-    await (0, excel_generator_1.generateExcelFile)(res, ordersData, ['id', 'orderId', 'orderComments', 'productTitle', 'sku', 'mrp'], 'Orders');
+    const totals = ordersData.reduce((acc, order) => {
+        acc.subtotal += order.subtotal;
+        acc.quantity += order.quantity;
+        acc.mrp += order.mrp;
+        return acc;
+    }, { subtotal: 0, quantity: 0, mrp: 0 });
+    ordersData.push({
+        id: 'Total',
+        orderId: '',
+        brand: '',
+        orderComments: '',
+        productTitle: '',
+        sku: '',
+        quantity: totals.quantity,
+        mrp: totals.mrp,
+        subtotal: totals.subtotal,
+        totalWithCancel: '',
+        category: '',
+        createdAt: '',
+        status: '',
+        deliveredAt: '',
+        billingName: '',
+        shippingName: '',
+        paymentMethod: '',
+        shippingAddress: '',
+        shippingPhone: '',
+        billingAddress: '',
+        billingPhone: '',
+    });
+    await (0, excel_generator_1.generateExcelFile)(res, ordersData, ['id', 'orderId', 'brand', 'orderComments', 'productTitle', 'sku', 'mrp', 'category', 'createdAt', 'deliveredAt'], 'Orders');
 };
 exports.exportOrderReport = exportOrderReport;

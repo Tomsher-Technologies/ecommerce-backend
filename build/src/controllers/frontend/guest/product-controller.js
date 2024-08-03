@@ -17,7 +17,6 @@ const specification_config_1 = require("../../../utils/config/specification-conf
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const attribute_config_1 = require("../../../utils/config/attribute-config");
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
-const product_config_1 = require("../../../utils/config/product-config");
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllProducts(req, res) {
@@ -422,10 +421,10 @@ class ProductController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
-    async findAllProductsListWithBasicDetails(req, res) {
+    async findAllProductVariantsListWithBasicDetails(req, res) {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
-            const allProducts = await product_model_1.default.aggregate((0, product_config_1.productDetailsWithVariant)({ 'productvariants.countryId': countryId }));
+            const allProducts = await product_variants_model_1.default.find({ countryId });
             return controller.sendSuccessResponse(res, {
                 requestedData: allProducts,
                 message: 'Success!'
