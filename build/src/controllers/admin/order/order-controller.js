@@ -180,8 +180,8 @@ class OrdersController extends base_controller_1.default {
                     query,
                     sort
                 });
-                if (orders[0].orderData && orders[0].orderData.length > 0) {
-                    await (0, reports_1.exportOrderReport)(res, orders[0].orderData);
+                if (orders && orders.length > 0) {
+                    await (0, reports_1.exportOrderReport)(res, orders);
                 }
                 else {
                     return controller.sendErrorResponse(res, 200, { message: 'Order Data not found' });

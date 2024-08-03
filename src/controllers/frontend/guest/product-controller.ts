@@ -427,7 +427,7 @@ class ProductController extends BaseController {
             return controller.sendErrorResponse(res, 500, { message: error.message });
         }
     }
-    async findAllProductsListWithBasicDetails(req: Request, res: Response): Promise<void> {
+    async findAllProductVariantsListWithBasicDetails(req: Request, res: Response): Promise<void> {
         try {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             const allProducts = await ProductVariantsModel.find({countryId});

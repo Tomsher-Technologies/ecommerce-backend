@@ -164,14 +164,13 @@ class OrderService {
     }
     async orderListExcelExport(options) {
         const { query, skip, limit, sort, getTotalCount } = (0, pagination_1.pagination)(options.query || {}, options);
-        const { getAddress, getCartProducts } = options;
         const defaultSort = { orderStatusAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        let pipeline = (0, cart_order_config_1.getOrderProductsWithCartLookup)(query, true);
+        let pipeline = (0, cart_order_config_1.getOrderProductsWithCartLookup)(query, true, '1', '1');
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip });
