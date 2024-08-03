@@ -13,20 +13,15 @@ const admin_routers_1 = __importDefault(require("./routes/admin-routers"));
 const frontend_router_1 = __importDefault(require("./routes/frontend-router"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
+const corsOptions = {
+    origin: '*', // Replace '*' with your domain for security, e.g., 'https://yourdomain.com'
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    exposedHeaders: ['Content-Length', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Origin', 'User-Token'],
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use((0, helmet_1.default)());
-app.use((0, cors_1.default)());
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//   credentials: true,
-//   optionsSuccessStatus: 200,
-// }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
 app.use('/public', express_1.default.static(path_1.default.join(__dirname, 'public')));

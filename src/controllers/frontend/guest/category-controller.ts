@@ -14,7 +14,7 @@ class CategoryController extends BaseController {
     async findAllCategory(req: Request, res: Response): Promise<void> {
         try {
             const { category = '', sortby = 'categoryTitle', sortorder = 'asc', getAllCategory = '' } = req.query as CategoryQueryParams;
-            const level = '0';
+            const level = getAllCategory === '1' ? '' : '0';
             let query: any = { _id: { $exists: true } };
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
@@ -35,8 +35,7 @@ class CategoryController extends BaseController {
                             ...query, slug: category
                         }
                     }
-                }
-                else {
+                } else if (level) {
                     query = {
                         ...query, level: level
                     } as any;
