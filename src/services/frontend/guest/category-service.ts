@@ -8,8 +8,9 @@ import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domai
 
 class CategoryService {
 
-    async findAll(options: FilterOptionsProps = {}): Promise<CategoryProps[]> {
+    async findAll(options: any = {}): Promise<CategoryProps[]> {
         const { query, hostName, sort } = pagination(options.query || {}, options);
+        const { getAllCategory } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -21,13 +22,17 @@ class CategoryService {
 
         if (query.level == 0) {
             const language: any = await this.categoryLanguage(hostName, [matchPipeline])
-            const data: any = await CategoryModel.aggregate(language).exec();
-            return data
+            const categoryData: any = await CategoryModel.aggregate(language).exec();
+            return categoryData
         }
-        const data: any = await CategoryModel.aggregate([matchPipeline]).exec();
+        const categoryData: any = await CategoryModel.aggregate([matchPipeline]).exec();
+
+        if (getAllCategory === '1') {
+            return categoryData
+        }
         var categoryArray: any = []
-        if (data.length > 0) {
-            pipeline.push({ '$match': { parentCategory: data[0]._id } });
+        if (categoryData.length > 0) {
+            pipeline.push({ '$match': { parentCategory: categoryData[0]._id } });
             const language: any = await this.categoryLanguage(hostName, pipeline)
             categoryArray = await CategoryModel.aggregate(language).exec();
         }
@@ -83,10 +88,10 @@ class CategoryService {
             } else {
                 pipeline.push({ $match: { slug: category } });
             }
-    
+
             const categoryLanguageLookup: any = await this.categoryLanguage(hostName, pipeline);
             const categoryDetails = await CategoryModel.aggregate(categoryLanguageLookup).exec();
-    
+
             return categoryDetails[0] || null;
         } catch (error) {
             console.error('Error in findOne:', error);
