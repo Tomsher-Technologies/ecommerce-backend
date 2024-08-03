@@ -211,11 +211,10 @@ class OrdersController extends BaseController {
                     query,
                     sort
                 });
-                if (orders[0].orderData && orders[0].orderData.length > 0) {
-                    await exportOrderReport(res, orders[0].orderData)
+                if (orders && orders.length > 0) {
+                    await exportOrderReport(res, orders)
                 } else {
                     return controller.sendErrorResponse(res, 200, { message: 'Order Data not found' });
-
                 }
             }
 

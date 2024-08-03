@@ -175,7 +175,6 @@ class OrderService {
 
     async orderListExcelExport(options: any): Promise<CartOrderProps[]> {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
-        const { getAddress, getCartProducts } = options;
 
         const defaultSort = { orderStatusAt: -1 };
         let finalSort = sort || defaultSort;
@@ -183,8 +182,8 @@ class OrderService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-       
-        let pipeline = getOrderProductsWithCartLookup(query, true);
+
+        let pipeline = getOrderProductsWithCartLookup(query, true, '1', '1');
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip } as any);
