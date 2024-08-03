@@ -21,12 +21,13 @@ class CategoryService {
         }
         const matchPipeline = { $match: query };
         let pipeline = [];
-        if (query.level == 0) {
+        if (query.level == '0') {
             const language = await this.categoryLanguage(hostName, [matchPipeline]);
             const categoryData = await category_model_1.default.aggregate(language).exec();
             return categoryData;
         }
         const categoryData = await category_model_1.default.aggregate([matchPipeline]).exec();
+        console.log('getAllCategory', query);
         if (getAllCategory === '1') {
             return categoryData;
         }

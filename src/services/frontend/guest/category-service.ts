@@ -20,12 +20,13 @@ class CategoryService {
         const matchPipeline: any = { $match: query };
         let pipeline: any[] = [];
 
-        if (query.level == 0) {
+        if (query.level == '0') {
             const language: any = await this.categoryLanguage(hostName, [matchPipeline])
             const categoryData: any = await CategoryModel.aggregate(language).exec();
             return categoryData
         }
         const categoryData: any = await CategoryModel.aggregate([matchPipeline]).exec();
+        console.log('getAllCategory', query);
 
         if (getAllCategory === '1') {
             return categoryData

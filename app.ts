@@ -6,8 +6,6 @@ import path from 'path';
 
 require('dotenv').config();
 
-import { url as dbUrl } from './config/database.config';
-import { allowedOrigins } from './config/allowed-origins';
 
 import adminRouter from './routes/admin-routers'; 
 import frontendRouter from './routes/frontend-router'; 
@@ -15,20 +13,17 @@ import frontendRouter from './routes/frontend-router';
 const app = express();
 const port = process.env.PORT || 3000;
 
+const corsOptions = {
+  origin: '*', // Replace '*' with your domain for security, e.g., 'https://yourdomain.com'
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  exposedHeaders: ['Content-Length', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Origin','User-Token'],
+};
+
+
+app.use(cors(corsOptions));
 app.use(helmet());
-app.use(cors());
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//   credentials: true,
-//   optionsSuccessStatus: 200,
-// }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
