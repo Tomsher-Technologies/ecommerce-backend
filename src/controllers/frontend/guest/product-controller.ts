@@ -430,7 +430,7 @@ class ProductController extends BaseController {
     async findAllProductsListWithBasicDetails(req: Request, res: Response): Promise<void> {
         try {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-            const allProducts = await ProductsModel.aggregate(productDetailsWithVariant({ 'productvariants.countryId': countryId }));
+            const allProducts = await ProductVariantsModel.find({countryId});
             return controller.sendSuccessResponse(res, {
                 requestedData: allProducts,
                 message: 'Success!'
