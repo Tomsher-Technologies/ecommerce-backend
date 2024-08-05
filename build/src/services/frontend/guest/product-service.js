@@ -23,7 +23,7 @@ const product_variant_attribute_model_1 = __importDefault(require("../../../mode
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -198,6 +198,32 @@ class ProductService {
                 }
             });
             pipeline.push({
+                $project: {
+                    _id: 1,
+                    productTitle: 1,
+                    slug: 1,
+                    starRating: 1,
+                    productImageUrl: 1,
+                    description: 1,
+                    brand: 1,
+                    unit: 1,
+                    warehouse: 1,
+                    measurements: 1,
+                    tags: 1,
+                    sku: 1,
+                    status: 1,
+                    createdAt: 1,
+                    offer: 1,
+                    productCategory: 1,
+                    productVariants: 1,
+                    languageValues: 1,
+                    productSpecification: 1,
+                    imageGallery: 1,
+                    selectedVariant: {
+                        $arrayElemAt: ["$productVariants", 0]
+                    }
+                }
+            }, {
                 $addFields: {
                     discountedPrice: {
                         $let: {
@@ -250,6 +276,20 @@ class ProductService {
             else {
                 pipeline.push({ $sort: { discountedPrice: -1 } });
             }
+        }
+        if (minprice || maxprice) {
+            const priceFilter = {};
+            if (minprice) {
+                priceFilter.$gte = Number(minprice);
+            }
+            if (maxprice) {
+                priceFilter.$lte = Number(maxprice);
+            }
+            pipeline.push({
+                $match: {
+                    discountedPrice: priceFilter
+                }
+            });
         }
         if (skip) {
             pipeline.push({ $skip: skip });

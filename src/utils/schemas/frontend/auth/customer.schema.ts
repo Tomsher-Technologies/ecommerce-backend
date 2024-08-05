@@ -70,14 +70,16 @@ export const customerAddressSchema = zod.object({
     }),
     street: zod.string().optional(),
     zipCode: zod.string().optional(),
-    longitude: zod.union([
-        zod.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
-        zod.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Please select the address" })
-    ]).optional(),
-    latitude: zod.union([
-        zod.number().min(-90).max(90, { message: "Invalid latitude; must be between -90 and 90 degrees" }),
-        zod.string().regex(/^(\-?\d{1,2}(\.\d+)?)$/, { message: "Please select the address" })
-    ]).optional(),
+    longitude: zod.string().optional(),
+    latitude: zod.string().optional(),
+    // longitude: zod.union([
+    //     zod.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
+    //     zod.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Please select the address" })
+    // ]).optional(),
+    // latitude: zod.union([
+    //     zod.number().min(-90).max(90, { message: "Invalid latitude; must be between -90 and 90 degrees" }),
+    //     zod.string().regex(/^(\-?\d{1,2}(\.\d+)?)$/, { message: "Please select the address" })
+    // ]).optional(),
     status: zod.string().optional(),
 }).refine((data) => data.longitude !== undefined || data.latitude !== undefined, {
     message: "Please select the address (either longitude or latitude must be provided)",
