@@ -37,8 +37,9 @@ const warehouseSchema: Schema<StoreProps> = new Schema({
     },
     storePhone: {
         type: String,
-        required: true,
-        minlength: [8, 'Store phone must be at least 8 characters long']
+        defualt: '',
+        // required: true,
+        // minlength: [8, 'Store phone must be at least 8 characters long']
     },
     storePhone2: {
         type: String,
@@ -54,8 +55,9 @@ const warehouseSchema: Schema<StoreProps> = new Schema({
     },
     storeEmail: {
         type: String,
-        required: true,
-        minlength: [8, 'Store email must be at least 8 characters long']
+        defualt: '',
+        // required: true,
+        // minlength: [8, 'Store email must be at least 8 characters long']
     },
     latitude: {
         type: String,

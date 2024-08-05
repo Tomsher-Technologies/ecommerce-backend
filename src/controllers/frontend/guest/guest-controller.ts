@@ -238,7 +238,7 @@ class GuestController extends BaseController {
         try {
             const validatedData = guestRegisterSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { email, phone, otpType } = validatedData.data;
+                const { email, phone, notRequiredOtp, otpType } = validatedData.data;
                 const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
                 const currentDate = new Date();
                 const otpExpiry = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours to current time
@@ -284,54 +284,68 @@ class GuestController extends BaseController {
                 }
 
                 if (newCustomer) {
-                    let websiteSettingsQuery: any = { _id: { $exists: true } };
-                    websiteSettingsQuery = {
-                        ...websiteSettingsQuery,
-                        countryId: newCustomer.countryId,
-                        block: websiteSetup.basicSettings,
-                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
-                        status: '1',
-                    } as any;
+                    let token: string = '';
+                    if (!notRequiredOtp) {
+                        let websiteSettingsQuery: any = { _id: { $exists: true } };
+                        websiteSettingsQuery = {
+                            ...websiteSettingsQuery,
+                            countryId: newCustomer.countryId,
+                            block: websiteSetup.basicSettings,
+                            blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia, blockReferences.appUrls] },
+                            status: '1',
+                        } as any;
 
-                    const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
-                    if (settingsDetails) {
-                        const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
-                        const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
-                        const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-                        const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
-                            {
-                                otp: newCustomer.otp,
-                                firstName: newCustomer.firstName,
-                                storeEmail: basicDetailsSettings?.storeEmail,
-                                storePhone: basicDetailsSettings?.storePhone,
-                                shopDescription: convert(basicDetailsSettings?.shopDescription, options),
-                                socialMedia,
-                                appUrls,
-                                subject: subjects.verificationOTP,
-                                shopLogo: `${process.env.SHOPLOGO}`,
-                                shopName: `${process.env.SHOPNAME}`,
-                                appUrl: `${process.env.APPURL}`
-                            },
-                            async (err: any, template: any) => {
-                                if (err) {
-                                    console.log("email eroor", err);
-                                    return;
-                                }
-                                if (process.env.SHOPNAME === 'Timehouse') {
-                                    const sendEmail = await mailChimpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
-                                } else if (process.env.SHOPNAME === 'Homestyle') {
-                                    const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
-                                    const sendsms = await bulkSmsGateway({ ...newCustomer, message: guestRegisterOtp(process.env.SHOPNAME, newCustomer.otp) })
-                                } else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                    const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
-                                } else if (process.env.SHOPNAME === 'Smartbaby') {
-                                    const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
-                                }
-                            })
+                        const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+                        if (settingsDetails) {
+                            const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+                            const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
+                            const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
+                            const emailTemplate = ejs.renderFile(path.join(__dirname, '../../../views/email', 'email-otp.ejs'),
+                                {
+                                    otp: newCustomer.otp,
+                                    firstName: newCustomer.firstName,
+                                    storeEmail: basicDetailsSettings?.storeEmail,
+                                    storePhone: basicDetailsSettings?.storePhone,
+                                    shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                                    socialMedia,
+                                    appUrls,
+                                    subject: subjects.verificationOTP,
+                                    shopLogo: `${process.env.SHOPLOGO}`,
+                                    shopName: `${process.env.SHOPNAME}`,
+                                    appUrl: `${process.env.APPURL}`
+                                },
+                                async (err: any, template: any) => {
+                                    if (err) {
+                                        console.log("email eroor", err);
+                                        return;
+                                    }
+                                    if (process.env.SHOPNAME === 'Timehouse') {
+                                        const sendEmail = await mailChimpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
+                                    } else if (process.env.SHOPNAME === 'Homestyle') {
+                                        const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
+                                        const sendsms = await bulkSmsGateway({ ...newCustomer, message: guestRegisterOtp(process.env.SHOPNAME, newCustomer.otp) })
+                                    } else if (process.env.SHOPNAME === 'Beyondfresh') {
+                                        const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
+                                    } else if (process.env.SHOPNAME === 'Smartbaby') {
+                                        const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
+                                    }
+                                })
+                        }
+                    } else {
+                        const payload: any = {
+                            userId: newCustomer._id,
+                            email: newCustomer.email,
+                            phone: newCustomer.phone,
+                            firstName: newCustomer.firstName,
+                            ...(newCustomer.isGuest ? {} : { totalWalletAmount: newCustomer.totalWalletAmount })
+                        };
+                        const expiresIn = newCustomer.isGuest ? '1h' : '10y';
+                        token = jwt.sign(payload, `${process.env.TOKEN_SECRET_KEY}`, { expiresIn });
                     }
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
+                            token,
                             userId: newCustomer._id,
                             email: newCustomer.email,
                             phone: newCustomer.phone,
