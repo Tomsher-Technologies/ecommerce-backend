@@ -100,6 +100,10 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
+    cancelReson: {
+        type: String,
+        default: ''
+    },
     paymentMethodCharge: {
         type: Number,
         default: 0

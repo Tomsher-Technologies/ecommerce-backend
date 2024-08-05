@@ -139,7 +139,7 @@ class OrderController extends BaseController {
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            
+
             if (Number(orderDetails.orderStatus) > Number(orderStatusArrayJason.delivered)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
@@ -254,7 +254,12 @@ class OrderController extends BaseController {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
+            const { cancelReson } = req.body;
 
+            if (!cancelReson) {
+                return controller.sendErrorResponse(res, 200, { message: 'Cancel ' });
+            }
+            
             if (!customerId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }
@@ -280,7 +285,7 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
             }
 
-            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6" });
+            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReson });
 
             const orderList = await OrderService.orderList({
                 query: {
