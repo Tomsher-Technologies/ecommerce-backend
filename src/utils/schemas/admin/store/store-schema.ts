@@ -6,18 +6,13 @@ export const storeSchema = zod.object({
         required_error: 'Store title is required',
     }).min(3, 'Store title should be at least 3 characters long'),
     slug: zod.string().optional(),
-    storePhone: zod.string({
-        required_error: 'Store phone is required',
-    }).min(2, 'Store phone should be at least 2 characters long')
-        .regex(/^\+?[1-9]\d{1,14}$/, 'Store phone must be a valid phone number'),
+    storePhone: zod.string().optional(),
     storePhone2: zod.string().optional(),
     storeAddress: zod.string({
         required_error: 'Store address is required',
     }).min(2, 'Store address should be at least 2 characters long'),
     storeWorkingHours: zod.string().optional(),
-    storeEmail: zod.string({
-        required_error: 'Store email is required',
-    }).email('Store email must be a valid email address'),
+    storeEmail: zod.string().optional(),
     storeImageUrl: zod.string().optional(),
     storeDesription: zod.string().optional(),
     longitude: zod.union([

@@ -8,18 +8,13 @@ exports.storeSchema = zod_1.z.object({
         required_error: 'Store title is required',
     }).min(3, 'Store title should be at least 3 characters long'),
     slug: zod_1.z.string().optional(),
-    storePhone: zod_1.z.string({
-        required_error: 'Store phone is required',
-    }).min(2, 'Store phone should be at least 2 characters long')
-        .regex(/^\+?[1-9]\d{1,14}$/, 'Store phone must be a valid phone number'),
+    storePhone: zod_1.z.string().optional(),
     storePhone2: zod_1.z.string().optional(),
     storeAddress: zod_1.z.string({
         required_error: 'Store address is required',
     }).min(2, 'Store address should be at least 2 characters long'),
     storeWorkingHours: zod_1.z.string().optional(),
-    storeEmail: zod_1.z.string({
-        required_error: 'Store email is required',
-    }).email('Store email must be a valid email address'),
+    storeEmail: zod_1.z.string().optional(),
     storeImageUrl: zod_1.z.string().optional(),
     storeDesription: zod_1.z.string().optional(),
     longitude: zod_1.z.union([

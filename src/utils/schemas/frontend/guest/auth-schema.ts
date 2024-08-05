@@ -30,6 +30,7 @@ export const guestRegisterSchema = zod.object({
         invalid_type_error: 'Otp type must be either "phone" or "email"',
     }),
     phone: zod.string().min(7, { message: 'Phone number must be at least 8 characters long' }).max(15).refine(value => value.trim() !== '', { message: 'Phone number cannot be empty' }).refine(value => /^[0-9]+$/.test(value), { message: 'Phone number must contain only numerals' }),
+    notRequiredOtp: zod.boolean().optional(), 
 })
 
 export const loginSchema = zod.object({
