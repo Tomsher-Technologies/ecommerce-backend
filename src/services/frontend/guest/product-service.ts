@@ -26,7 +26,7 @@ import OffersModel from '../../../model/admin/marketing/offers-model';
 class ProductService {
 
     async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
@@ -213,44 +213,73 @@ class ProductService {
                 }
             });
 
-            pipeline.push({
-                $addFields: {
-                    discountedPrice: {
-                        $let: {
-                            vars: {
-                                price: { $toDouble: { $ifNull: ["$selectedVariant.price", 0] } },
-                                discountPrice: { $toDouble: { $ifNull: ["$selectedVariant.discountPrice", 0] } },
-                                offerIN: { $toDouble: { $ifNull: ["$offer.offerIN", 0] } },
-                                offerType: "$offer.offerType"
-                            },
-                            in: {
-                                $cond: {
-                                    if: { $gt: ["$$discountPrice", 0] },
-                                    then: {
-                                        $cond: {
-                                            if: { $eq: ["$$offerType", "percent"] },
-                                            then: {
-                                                $subtract: [
-                                                    "$$discountPrice",
-                                                    { $multiply: ["$$discountPrice", { $divide: ["$$offerIN", 100] }] }
-                                                ]
-                                            },
-                                            else: {
-                                                $subtract: ["$$discountPrice", "$$offerIN"]
+            pipeline.push(
+                {
+                    $project: {
+                        _id: 1,
+                        productTitle: 1,
+                        slug: 1,
+                        starRating: 1,
+                        productImageUrl: 1,
+                        description: 1,
+                        brand: 1,
+                        unit: 1,
+                        warehouse: 1,
+                        measurements: 1,
+                        tags: 1,
+                        sku: 1,
+                        status: 1,
+                        createdAt: 1,
+                        offer: 1,
+                        productCategory: 1,
+                        productVariants: 1,
+                        languageValues: 1,
+                        productSpecification: 1,
+                        imageGallery: 1,
+                        selectedVariant: {
+                            $arrayElemAt: ["$productVariants", 0]
+                        }
+                    }
+                },
+                {
+                    $addFields: {
+                        discountedPrice: {
+                            $let: {
+                                vars: {
+                                    price: { $toDouble: { $ifNull: ["$selectedVariant.price", 0] } },
+                                    discountPrice: { $toDouble: { $ifNull: ["$selectedVariant.discountPrice", 0] } },
+                                    offerIN: { $toDouble: { $ifNull: ["$offer.offerIN", 0] } },
+                                    offerType: "$offer.offerType"
+                                },
+                                in: {
+                                    $cond: {
+                                        if: { $gt: ["$$discountPrice", 0] },
+                                        then: {
+                                            $cond: {
+                                                if: { $eq: ["$$offerType", "percent"] },
+                                                then: {
+                                                    $subtract: [
+                                                        "$$discountPrice",
+                                                        { $multiply: ["$$discountPrice", { $divide: ["$$offerIN", 100] }] }
+                                                    ]
+                                                },
+                                                else: {
+                                                    $subtract: ["$$discountPrice", "$$offerIN"]
+                                                }
                                             }
-                                        }
-                                    },
-                                    else: {
-                                        $cond: {
-                                            if: { $eq: ["$$offerType", "percent"] },
-                                            then: {
-                                                $subtract: [
-                                                    "$$price",
-                                                    { $multiply: ["$$price", { $divide: ["$$offerIN", 100] }] }
-                                                ]
-                                            },
-                                            else: {
-                                                $subtract: ["$$price", "$$offerIN"]
+                                        },
+                                        else: {
+                                            $cond: {
+                                                if: { $eq: ["$$offerType", "percent"] },
+                                                then: {
+                                                    $subtract: [
+                                                        "$$price",
+                                                        { $multiply: ["$$price", { $divide: ["$$offerIN", 100] }] }
+                                                    ]
+                                                },
+                                                else: {
+                                                    $subtract: ["$$price", "$$offerIN"]
+                                                }
                                             }
                                         }
                                     }
@@ -258,8 +287,8 @@ class ProductService {
                             }
                         }
                     }
-                }
-            });
+                },
+            );
             if (sort.price == 1) {
                 pipeline.push(
                     { $sort: { discountedPrice: 1 } }
@@ -270,6 +299,22 @@ class ProductService {
                 );
             }
         }
+        if (minprice || maxprice) {
+            const priceFilter: any = {};
+            if (minprice) {
+                priceFilter.$gte = Number(minprice);
+            }
+            if (maxprice) {
+                priceFilter.$lte = Number(maxprice);
+            }
+
+            pipeline.push({
+                $match: {
+                    discountedPrice: priceFilter
+                }
+            });
+        }
+
         if (skip) {
             pipeline.push({ $skip: skip });
         }
