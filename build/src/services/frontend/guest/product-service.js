@@ -146,83 +146,6 @@ class ProductService {
         if (collectionProductsData && collectionProductsData.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
             pipeline.push({ $match: { '_id': { $in: collectionPipeline.productIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
-        // if (sort && sort.price) {
-        //     pipeline.push({
-        //         $addFields: {
-        //             selectedVariant: {
-        //                 $arrayElemAt: [
-        //                     {
-        //                         $filter: {
-        //                             input: "$productVariants",
-        //                             as: "productVariant",
-        //                             cond: {
-        //                                 $or: [
-        //                                     {
-        //                                         $and: [
-        //                                             { $gt: ["$$productVariant.quantity", 0] },
-        //                                             {
-        //                                                 $or: [
-        //                                                     { $eq: ["$$productVariant.isDefault", 1] },
-        //                                                     { $eq: ["$$productVariant.isDefault", '1'] },
-        //                                                     { $eq: ["$$productVariant.variantSku", "$sku"] },
-        //                                                     { $eq: ["$$productVariant.slug", "$slug"] }
-        //                                                 ]
-        //                                             }
-        //                                         ]
-        //                                     },
-        //                                     {
-        //                                         $or: [
-        //                                             { $eq: ["$$productVariant.isDefault", 1] },
-        //                                             { $eq: ["$$productVariant.isDefault", '1'] },
-        //                                             { $eq: ["$$productVariant.variantSku", "$sku"] },
-        //                                             { $eq: ["$$productVariant.slug", "$slug"] }
-        //                                         ]
-        //                                     }
-        //                                 ]
-        //                             }
-        //                         }
-        //                     },
-        //                     0
-        //                 ]
-        //             },
-        //             discountedPrice: {
-        //                 $let: {
-        //                     vars: {
-        //                         variant: "$selectedVariant"
-        //                     },
-        //                     in: {
-        //                         $cond: {
-        //                             if: { $gt: ["$$variant.discountPrice", 0] },
-        //                             then: {
-        //                                 $cond: {
-        //                                     if: { $eq: ["$offer.offerType", offerTypes.percent] },
-        //                                     then: { $subtract: ["$$variant.discountPrice", { $multiply: ["$$variant.discountPrice", { $divide: ["$offer.offerIN", 100] }] }] },
-        //                                     else: { $subtract: ["$$variant.discountPrice", "$offer.offerIN"] }
-        //                                 }
-        //                             },
-        //                             else: {
-        //                                 $cond: {
-        //                                     if: { $eq: ["$offer.offerType", offerTypes.percent] },
-        //                                     then: { $subtract: ["$$variant.price", { $multiply: ["$$variant.price", { $divide: ["$offer.offerIN", 100] }] }] },
-        //                                     else: { $subtract: ["$$variant.price", "$offer.offerIN"] }
-        //                                 }
-        //                             }
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     });
-        //     pipeline.push(
-        //         { $sort: { discountedPrice: 1 } }
-        //     );
-        // }
-        // if (skip) {
-        //     pipeline.push({ $skip: skip });
-        // }
-        // if (limit) {
-        //     pipeline.push({ $limit: limit });
-        // }
         if (getLanguageValues === '1') {
             const languageData = await language_model_1.default.find().exec();
             var lastPipelineModification;
@@ -243,8 +166,20 @@ class ProductService {
                                     input: "$productVariants",
                                     as: "productVariant",
                                     cond: {
-                                        $and: [
-                                            { $gt: ["$$productVariant.quantity", 0] },
+                                        $or: [
+                                            {
+                                                $and: [
+                                                    { $gt: ["$$productVariant.quantity", 0] },
+                                                    {
+                                                        $or: [
+                                                            { $eq: ["$$productVariant.isDefault", 1] },
+                                                            { $eq: ["$$productVariant.isDefault", '1'] },
+                                                            { $eq: ["$$productVariant.variantSku", "$sku"] },
+                                                            { $eq: ["$$productVariant.slug", "$slug"] }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
                                             {
                                                 $or: [
                                                     { $eq: ["$$productVariant.isDefault", 1] },

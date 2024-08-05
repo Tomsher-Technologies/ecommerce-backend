@@ -353,7 +353,7 @@ class GuestController extends BaseController {
                             isGuest: newCustomer.isGuest,
                             guestRegisterCount: newCustomer.guestRegisterCount,
                         },
-                        message: 'Customer created successfully! An OTP has been sent to your email for verification.'
+                        message: notRequiredOtp ? "Customer login successfully!" : 'Customer created successfully! An OTP has been sent to your email for verification.'
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
