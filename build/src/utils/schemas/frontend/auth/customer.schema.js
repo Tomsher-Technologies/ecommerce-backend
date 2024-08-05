@@ -62,14 +62,16 @@ exports.customerAddressSchema = zod_1.z.object({
     }),
     street: zod_1.z.string().optional(),
     zipCode: zod_1.z.string().optional(),
-    longitude: zod_1.z.union([
-        zod_1.z.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
-        zod_1.z.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Please select the address" })
-    ]).optional(),
-    latitude: zod_1.z.union([
-        zod_1.z.number().min(-90).max(90, { message: "Invalid latitude; must be between -90 and 90 degrees" }),
-        zod_1.z.string().regex(/^(\-?\d{1,2}(\.\d+)?)$/, { message: "Please select the address" })
-    ]).optional(),
+    longitude: zod_1.z.string().optional(),
+    latitude: zod_1.z.string().optional(),
+    // longitude: zod.union([
+    //     zod.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
+    //     zod.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Please select the address" })
+    // ]).optional(),
+    // latitude: zod.union([
+    //     zod.number().min(-90).max(90, { message: "Invalid latitude; must be between -90 and 90 degrees" }),
+    //     zod.string().regex(/^(\-?\d{1,2}(\.\d+)?)$/, { message: "Please select the address" })
+    // ]).optional(),
     status: zod_1.z.string().optional(),
 }).refine((data) => data.longitude !== undefined || data.latitude !== undefined, {
     message: "Please select the address (either longitude or latitude must be provided)",

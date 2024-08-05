@@ -124,26 +124,28 @@ const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
     },
     longitude: {
         type: String,
-        required: function () {
-            return !this.isExcel;
-        },
-        validate: {
-            validator: function (value: string): boolean {
-                return /^(\-?\d{1,3}(\.\d+)?)$/.test(value);
-            },
-            message: 'Longitude is invalid.'
-        }
+        default: ''
+        // required: function () {
+        //     return !this.isExcel;
+        // },
+        // validate: {
+        //     validator: function (value: string): boolean {
+        //         return /^(\-?\d{1,3}(\.\d+)?)$/.test(value);
+        //     },
+        //     message: 'Longitude is invalid.'
+        // }
     },
     latitude: {
         type: String,
-        required: function () {
-            return !this.isExcel;
-        }, validate: {
-            validator: function (value: string): boolean {
-                return /^(\-?\d{1,2}(\.\d+)?)$/.test(value);
-            },
-            message: 'Latitude is invalid.'
-        }
+        default: ''
+        // required: function () {
+        //     return !this.isExcel;
+        // }, validate: {
+        //     validator: function (value: string): boolean {
+        //         return /^(\-?\d{1,2}(\.\d+)?)$/.test(value);
+        //     },
+        //     message: 'Latitude is invalid.'
+        // }
     },
     isExcel: {
         type: Boolean,

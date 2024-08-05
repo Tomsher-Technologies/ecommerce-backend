@@ -238,15 +238,15 @@ class ProductController extends base_controller_1.default {
                         offers = { slug: keywordRegex };
                     }
                 }
-                if (maxprice || minprice) {
-                    query['productVariants.price'] = {};
-                    if (minprice) {
-                        query['productVariants.price'].$gte = Number(minprice);
-                    }
-                    if (maxprice) {
-                        query['productVariants.price'].$lte = Number(maxprice);
-                    }
-                }
+                // if (maxprice || minprice) {
+                //     query['productVariants.price'] = {};
+                //     if (minprice) {
+                //         query['productVariants.price'].$gte = Number(minprice);
+                //     }
+                //     if (maxprice) {
+                //         query['productVariants.price'].$lte = Number(maxprice);
+                //     }
+                // }
                 if (discount) {
                     discountValue = {
                         ...discount, discount: discount
@@ -273,7 +273,8 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     hostName: req.get('origin'),
-                    sortby
+                    maxprice,
+                    minprice
                 });
                 // if (sortby == "price") {
                 //     productData.sort((a: any, b: any) => {
