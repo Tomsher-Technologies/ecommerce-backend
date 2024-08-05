@@ -373,6 +373,7 @@ class ProductService {
                             _id: '$_id',
                             attributeTitle: { $first: '$attributeTitle' },
                             slug: { $first: '$slug' },
+                            attributeType: { $first: '$attributeType' },
                             status: { $first: '$status' },
                             attributeValues: { $push: '$attributeValues' }
                         }
@@ -382,6 +383,7 @@ class ProductService {
                             attributeTitle: 1,
                             attributeValues: 1,
                             slug: 1,
+                            attributeType: 1,
                             status: 1,
                             itemNameLowerCase: {
                                 $map: {
