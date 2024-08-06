@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import BaseController from "../../admin/base-controller";
 import { Request, Response } from 'express';
 import CommonService from '../../../services/frontend/guest/common-service'
@@ -19,10 +20,8 @@ import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
 import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from "../../../lib/payment-gateway/network-payments";
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
-import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
 import CartOrdersModel from "../../../model/frontend/cart-order-model";
-import mongoose from "mongoose";
 
 const controller = new BaseController();
 

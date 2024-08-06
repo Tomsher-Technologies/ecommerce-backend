@@ -100,7 +100,7 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
-    cancelReson: {
+    cancelReason: {
         type: String,
         default: ''
     },

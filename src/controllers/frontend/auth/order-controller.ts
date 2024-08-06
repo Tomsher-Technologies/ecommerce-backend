@@ -254,10 +254,10 @@ class OrderController extends BaseController {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
-            const { cancelReson } = req.body;
+            const { cancelReason } = req.body;
 
-            if (!cancelReson) {
-                return controller.sendErrorResponse(res, 200, { message: 'Cancel ' });
+            if (!cancelReason) {
+                return controller.sendErrorResponse(res, 200, { message: 'Cancel reason is required' });
             }
             
             if (!customerId) {
@@ -285,7 +285,7 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
             }
 
-            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReson });
+            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReason });
 
             const orderList = await OrderService.orderList({
                 query: {
@@ -301,7 +301,7 @@ class OrderController extends BaseController {
 
             if (orderList && orderList.length > 0) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: orderList[0],
+                    requestedData: orderList,
                     message: 'Your order has been successfully cancelled!'
                 });
             } else {
