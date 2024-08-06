@@ -88,10 +88,15 @@ class ProductController extends base_controller_1.default {
                             ...query, "productCategory.category._id": { $in: categoryIds }
                         };
                     }
+                    else {
+                        query = {
+                            ...query, "productCategory.category._id": findcategory
+                        };
+                    }
                 }
                 if (categories) {
                     const categoryArray = categories.split(',');
-                    let categoryIds = null;
+                    let categoryIds = [];
                     for await (let category of categoryArray) {
                         const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         var findcategory;
@@ -102,7 +107,7 @@ class ProductController extends base_controller_1.default {
                             findcategory = await category_model_1.default.findOne({ slug: category }, '_id');
                         }
                         if (findcategory && findcategory._id) {
-                            categoryIds = [findcategory._id];
+                            categoryIds.push(findcategory._id);
                             async function fetchCategoryAndChildren(categoryId) {
                                 let queue = [categoryId];
                                 while (queue.length > 0) {
