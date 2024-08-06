@@ -868,14 +868,13 @@ class GuestController extends BaseController {
 
                                     await CustomerService.update(updatedCustomer._id, {
                                         lastLoggedAt: new Date()
-                                    });
+                                    });  
                                     if (updatedCustomer?.isGuest) {
                                         const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1' });
                                         if (existingCart) {
                                             await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
                                             await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
                                         }
-
                                         const uuid = req.header('User-Token');
                                         const guestUserCart = await CartOrdersModel.findOneAndUpdate(
                                             { guestUserId: uuid, cartStatus: '1' },
