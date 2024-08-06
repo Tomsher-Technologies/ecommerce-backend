@@ -680,7 +680,8 @@ class ProductsController extends BaseController {
                                                                         // if (!productDuplication) {
                                                                         let insertWithNonConfigItemVariant = false;
                                                                         let createProduct = null
-                                                                        const productDetails: any = await ProductsService.find({ $or: [{ sku: data.SKU }, { productTitle: capitalizeWords(data.Product_Title) }] });
+                                                                        const productDetails: any = await ProductsService.find({ $and: [{ sku: data.SKU }, { productTitle: capitalizeWords(data.Product_Title) }] });
+
                                                                         if (productDetails) {
                                                                             const existingVariantDetails = await ProductVariantsModel.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
                                                                             if (!existingVariantDetails) {

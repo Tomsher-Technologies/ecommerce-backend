@@ -28,27 +28,27 @@ const productsSchema = new mongoose_1.Schema({
     productTitle: {
         type: String,
         required: true,
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Products').countDocuments({ productTitle: value });
-                return count === 0;
-            },
-            message: 'Product title must be unique'
-        },
+        // unique: true,
+        // validate: {
+        //     validator: async function (this: any, value: string): Promise<boolean> {
+        //         const count = await this.model('Products').countDocuments({ productTitle: value });
+        //         return count === 0;
+        //     },
+        //     message: 'Product title must be unique'
+        // },
         minlength: [3, 'Product title must be at least 3 characters long']
     },
     slug: {
         type: String,
         required: [true, 'Slug is required'],
-        unique: true,
-        validate: {
-            validator: async function (value) {
-                const count = await this.model('Products').countDocuments({ slug: value });
-                return count === 0;
-            },
-            message: 'Slug must be unique'
-        }
+        // unique: true,
+        // validate: {
+        //     validator: async function (this: any, value: string): Promise<boolean> {
+        //         const count = await this.model('Products').countDocuments({ slug: value });
+        //         return count === 0;
+        //     },
+        //     message: 'Slug must be unique'
+        // }
     },
     starRating: {
         type: Number,
