@@ -29,7 +29,7 @@ export interface CartOrderProps extends Document {
     totalAmount: number;
     orderComments: string;
     returnReson: string;
-    cancelReson: string;
+    cancelReason: string;
     cartStatus: string;
     orderStatus: string;
     cartStatusAt?: Date;
@@ -129,7 +129,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: String,
         default: ''
     },
-    cancelReson: {
+    cancelReason: {
         type: String,
         default: ''
     },

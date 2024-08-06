@@ -244,9 +244,9 @@ class OrderController extends base_controller_1.default {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
-            const { cancelReson } = req.body;
-            if (!cancelReson) {
-                return controller.sendErrorResponse(res, 200, { message: 'Cancel ' });
+            const { cancelReason } = req.body;
+            if (!cancelReason) {
+                return controller.sendErrorResponse(res, 200, { message: 'Cancel reason is required' });
             }
             if (!customerId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
@@ -267,7 +267,7 @@ class OrderController extends base_controller_1.default {
             if (Number(orderDetails.orderStatus) > 1) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
             }
-            await cart_order_model_1.default.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReson });
+            await cart_order_model_1.default.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReason });
             const orderList = await order_service_1.default.orderList({
                 query: {
                     $and: [
@@ -281,7 +281,7 @@ class OrderController extends base_controller_1.default {
             });
             if (orderList && orderList.length > 0) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: orderList[0],
+                    requestedData: orderList,
                     message: 'Your order has been successfully cancelled!'
                 });
             }

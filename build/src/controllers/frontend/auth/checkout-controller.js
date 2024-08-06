@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
 const base_controller_1 = __importDefault(require("../../admin/base-controller"));
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const cart_service_1 = __importDefault(require("../../../services/frontend/cart-service"));
@@ -24,7 +25,6 @@ const network_payments_1 = require("../../../lib/payment-gateway/network-payment
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const tamara_payments_1 = require("../../../lib/payment-gateway/tamara-payments");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
