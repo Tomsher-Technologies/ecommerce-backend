@@ -156,7 +156,7 @@ class ProductService {
             }
         }
         pipeline.push(product_config_1.productProject);
-        if (sort && sort.price) {
+        if ((sort && sort.price) || (minprice || maxprice)) {
             pipeline.push({
                 $addFields: {
                     selectedVariant: {

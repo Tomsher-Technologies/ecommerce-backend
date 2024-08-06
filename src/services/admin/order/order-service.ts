@@ -129,7 +129,14 @@ class OrderService {
                 { $match: { _id: updatedBrand._id } },
                 ...(getCartProducts === '1' ? [modifiedPipeline] : [cartProductsLookup]),
                 paymentMethodLookup,
-                customerLookup,
+                customerLookup, 
+                countriesLookup,
+                {
+                    $unwind: {
+                        path: "$country",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
                 orderListObjectLookup,
                 ...(getCartProducts === '1' ? [cartDeatilProject] : [cartProject]),
             ];

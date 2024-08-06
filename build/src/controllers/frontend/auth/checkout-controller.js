@@ -36,9 +36,9 @@ class CheckoutController extends base_controller_1.default {
             }
             const validatedData = checkout_schema_1.checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, pickupStoreId = '', stateId = '', cityId = '', orderComments } = validatedData.data;
+                const { notVerifyUser = false, deviceType, couponCode, paymentMethodId, shippingId, billingId, pickupStoreId = '', stateId = '', cityId = '', orderComments } = validatedData.data;
                 const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
-                if (!customerDetails || !customerDetails.isVerified) {
+                if (!customerDetails || (!notVerifyUser && !customerDetails.isVerified)) {
                     const message = !customerDetails
                         ? 'User is not found'
                         : 'User is not verified';
@@ -48,7 +48,6 @@ class CheckoutController extends base_controller_1.default {
                 if (!paymentMethod) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, payment method is not found' });
                 }
-                console.log('customerId', customerId);
                 const cartDetails = await cart_service_1.default.findCartPopulate({
                     query: {
                         $and: [

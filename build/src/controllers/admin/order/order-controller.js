@@ -946,7 +946,7 @@ class OrdersController extends base_controller_1.default {
         catch (error) {
             console.log('error', error);
             return controller.sendErrorResponse(res, 500, {
-                message: 'Order not fount'
+                message: 'Something went wrong'
             });
         }
     }

@@ -120,6 +120,13 @@ class OrderService {
                 ...(getCartProducts === '1' ? [modifiedPipeline] : [cart_order_config_1.cartProductsLookup]),
                 cart_order_config_1.paymentMethodLookup,
                 cart_order_config_1.customerLookup,
+                customer_config_1.countriesLookup,
+                {
+                    $unwind: {
+                        path: "$country",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
                 cart_order_config_1.orderListObjectLookup,
                 ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
             ];
