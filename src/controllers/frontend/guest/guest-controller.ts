@@ -875,7 +875,6 @@ class GuestController extends BaseController {
                                             await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
                                             await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
                                         }
-
                                         const uuid = req.header('User-Token');
                                         const guestUserCart = await CartOrdersModel.findOneAndUpdate(
                                             { guestUserId: uuid, cartStatus: '1' },
