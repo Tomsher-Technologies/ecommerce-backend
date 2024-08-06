@@ -89,12 +89,16 @@ class ProductController extends BaseController {
                         query = {
                             ...query, "productCategory.category._id": { $in: categoryIds }
                         }
+                    } else {
+                        query = {
+                            ...query, "productCategory.category._id": findcategory
+                        }
                     }
                 }
 
                 if (categories) {
                     const categoryArray = categories.split(',')
-                    let categoryIds = null;
+                    let categoryIds: any[] = [];
                     for await (let category of categoryArray) {
                         const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
                         var findcategory
@@ -104,7 +108,7 @@ class ProductController extends BaseController {
                             findcategory = await CategoryModel.findOne({ slug: category }, '_id');
                         }
                         if (findcategory && findcategory._id) {
-                            categoryIds = [findcategory._id];
+                            categoryIds.push(findcategory._id);
                             async function fetchCategoryAndChildren(categoryId: any) {
                                 let queue = [categoryId];
                                 while (queue.length > 0) {
@@ -431,7 +435,7 @@ class ProductController extends BaseController {
     async findAllProductVariantsListWithBasicDetails(req: Request, res: Response): Promise<void> {
         try {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-            const allProducts = await ProductVariantsModel.find({countryId});
+            const allProducts = await ProductVariantsModel.find({ countryId });
             return controller.sendSuccessResponse(res, {
                 requestedData: allProducts,
                 message: 'Success!'
