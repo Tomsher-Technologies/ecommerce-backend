@@ -73,10 +73,12 @@ class StoreController extends base_controller_1.default {
             const validatedData = store_schema_1.storeSchema.safeParse(req.body);
             // console.log('req', req.file);
             if (validatedData.success) {
-                const { countryId, storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeDesription, latitude, longitude } = validatedData.data;
+                const { countryId, stateId, cityId, storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeDesription, latitude, longitude } = validatedData.data;
                 const user = res.locals.user;
                 const storeData = {
                     countryId: countryId || (0, helpers_1.getCountryId)(user),
+                    stateId,
+                    cityId,
                     storeTitle,
                     slug: slug || (0, helpers_1.slugify)(storeTitle),
                     storePhone,

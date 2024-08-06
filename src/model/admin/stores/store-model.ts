@@ -2,6 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface StoreProps extends Document {
     countryId: Schema.Types.ObjectId;
+    stateId: Schema.Types.ObjectId;
+    cityId: Schema.Types.ObjectId;
     storeTitle: string;
     slug: string;
     storePhone: string;
@@ -25,6 +27,16 @@ const warehouseSchema: Schema<StoreProps> = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'Countries',
+    },
+    stateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cities',
+        default: null
     },
     storeTitle: {
         type: String,

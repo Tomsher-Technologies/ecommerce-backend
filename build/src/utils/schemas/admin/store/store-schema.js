@@ -4,6 +4,8 @@ exports.storeStatusSchema = exports.storeSchema = void 0;
 const zod_1 = require("zod");
 exports.storeSchema = zod_1.z.object({
     countryId: zod_1.z.string().optional(),
+    stateId: zod_1.z.any().optional(),
+    cityId: zod_1.z.any().optional(),
     storeTitle: zod_1.z.string({
         required_error: 'Store title is required',
     }).min(3, 'Store title should be at least 3 characters long'),
