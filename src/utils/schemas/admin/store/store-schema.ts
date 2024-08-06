@@ -2,6 +2,8 @@ import { z as zod } from 'zod';
 
 export const storeSchema = zod.object({
     countryId: zod.string().optional(),
+    stateId: zod.any().optional(),
+    cityId: zod.any().optional(),
     storeTitle: zod.string({
         required_error: 'Store title is required',
     }).min(3, 'Store title should be at least 3 characters long'),

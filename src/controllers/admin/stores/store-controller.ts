@@ -17,7 +17,7 @@ class StoreController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { _id = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '',countryId } = req.query as QueryParams;
+            const { _id = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
 
@@ -81,11 +81,13 @@ class StoreController extends BaseController {
             // console.log('req', req.file);
 
             if (validatedData.success) {
-                const {countryId, storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeDesription, latitude, longitude } = validatedData.data;
+                const { countryId, stateId, cityId, storeTitle, slug, storePhone, storePhone2, storeAddress, storeWorkingHours, storeEmail, storeDesription, latitude, longitude } = validatedData.data;
                 const user = res.locals.user;
 
                 const storeData: Partial<any> = {
                     countryId: countryId || getCountryId(user),
+                    stateId,
+                    cityId,
                     storeTitle,
                     slug: slug || slugify(storeTitle) as any,
                     storePhone,

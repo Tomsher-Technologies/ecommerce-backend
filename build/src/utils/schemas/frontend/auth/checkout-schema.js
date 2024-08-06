@@ -12,6 +12,7 @@ exports.checkoutSchema = zod_1.z.object({
     orderComments: zod_1.z.string().optional(),
     paymentMethodId: zod_1.z.string({ required_error: 'Payment method  is required', }).min(3, 'Please choose Payment method'),
     couponCode: zod_1.z.string().optional(),
+    notVerifyUser: zod_1.z.boolean().optional(),
     deviceType: zod_1.z.enum([cart_1.couponDeviceType.desktop, cart_1.couponDeviceType.mobile], {
         invalid_type_error: 'Device type must be either "desktop" or "mobile"',
     }).optional(),

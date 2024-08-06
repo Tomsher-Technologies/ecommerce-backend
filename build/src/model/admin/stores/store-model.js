@@ -30,6 +30,16 @@ const warehouseSchema = new mongoose_1.Schema({
         required: true,
         ref: 'Countries',
     },
+    stateId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'States',
+        default: null
+    },
+    cityId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Cities',
+        default: null
+    },
     storeTitle: {
         type: String,
         required: true,
