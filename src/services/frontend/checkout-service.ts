@@ -2,7 +2,7 @@ import path from 'path';
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 
-import { cartStatus, couponDiscountType, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages } from "../../constants/cart";
+import { cartStatus, couponDiscountType, couponTypes, orderPaymentStatus, orderStatusMap, orderStatusMessages, paymentMethods } from "../../constants/cart";
 import { DiscountType, calculateExpectedDeliveryDate, calculateTotalDiscountAmountDifference, } from "../../utils/helpers";
 import CouponService from "./auth/coupon-service";
 
@@ -34,7 +34,7 @@ class CheckoutService {
             }
         }
 
-        const cartDetails: any = await CartOrdersModel.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" })
+        const cartDetails: any = await CartOrdersModel.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" }).lean()
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
@@ -55,17 +55,20 @@ class CheckoutService {
             this.cartUpdation({
                 ...cartDetails,
                 _id: cartDetails?._id,
-                totalAmount: cartDetails?.totalAmount,
                 customerId: cartDetails.customerId,
                 couponId: cartDetails?.couponId,
                 countryId: cartDetails?.countryId,
                 shippingId: cartDetails?.shippingId,
-                orderStatusAt: cartDetails?.orderStatusAt,
-                orderStatus: cartDetails?.orderStatus,
                 paymentMethodId: cartDetails?.paymentMethodId,
+                pickupStoreId: cartDetails?.pickupStoreId,
+                stateId: cartDetails?.stateId,
+                cityId: cartDetails?.cityId,
+                totalAmount: cartDetails?.totalAmount,
                 totalShippingAmount: cartDetails.totalShippingAmount,
                 totalProductAmount: cartDetails.totalProductAmount,
+                orderStatus: cartDetails?.orderStatus,
                 orderComments: cartDetails?.orderComments,
+                orderStatusAt: cartDetails?.orderStatusAt,
             }, true);
 
             if (updateTransaction) {
@@ -113,10 +116,8 @@ class CheckoutService {
         }
     }
 
-
     async cartUpdation(cartDetails: any, paymentSuccess: boolean): Promise<any> {
         if (cartDetails) {
-
             let cartUpdate = {
                 cartStatus: cartStatus.active,
                 totalAmount: cartDetails?.totalAmount,
@@ -197,11 +198,31 @@ class CheckoutService {
             let customerDetails = cartDetails?.customerDetails || null;
             let paymentMethodDetails = cartDetails?.paymentMethod || null;
             let shippingChargeDetails = cartDetails?.shippingChargeDetails || null;
+            let shippingAddressDetails: any = cartDetails?.shippingAddressDetails || null;
+            let countryData: any = cartDetails?.countryData || null;
 
             if (customerDetails === null) {
                 customerDetails = await CustomerModel.findOne({ _id: cartDetails.customerId });
             }
-            if ((!shippingChargeDetails) && (!cartDetails.stateId)) {
+            if (!countryData) {
+                countryData = await CountryModel.findOne({ _id: cartDetails.countryId }, '_id countryTitle currencyCode')
+            }
+            if (!cartProducts) {
+                const pipeline = buildOrderPipeline(paymentMethodDetails, customerDetails, cartDetails);
+                const createdCartWithValues = await CartOrdersModel.aggregate(pipeline);
+                if (createdCartWithValues && createdCartWithValues.length > 0) {
+                    if (createdCartWithValues[0]?.products) {
+                        cartProducts = createdCartWithValues[0].products;
+                    }
+                    if (paymentMethodDetails == null) {
+                        paymentMethodDetails = createdCartWithValues[0]?.paymentMethod;
+                    }
+                    if (customerDetails == null) {
+                        customerDetails = createdCartWithValues[0]?.customer;
+                    }
+                }
+            }
+            if ((!shippingChargeDetails) && (!cartDetails.pickupStoreId) && (cartDetails.stateId)) {
                 shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: cartDetails.countryId });
                 if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[1])) {
                     const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || []
@@ -222,6 +243,30 @@ class CheckoutService {
                                 ...cartUpdate,
                                 totalShippingAmount: finalShippingCharge,
                                 totalAmount: (cartDetails.totalAmount - cartUpdate.totalShippingAmount) + finalShippingCharge,
+                            }
+                        }
+                    }
+                } else if (cartDetails.pickupStoreId && (paymentMethodDetails && paymentMethodDetails.slug !== paymentMethods.cashOnDelivery && paymentMethodDetails.slug !== paymentMethods.cardOnDelivery)) {
+                    cartUpdate = {
+                        ...cartUpdate,
+                        totalShippingAmount: 0,
+                        totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(cartUpdate.totalShippingAmount)),
+                    }
+                } else {
+                    if (!shippingAddressDetails) {
+                        shippingAddressDetails = await CustomerAddress.findOne({ _id: cartDetails.shippingId });
+                        if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
+                            shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
+                            if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[2])) {
+                                const { internationalShippingCharge, internationalFreeShippingThreshold } = shippingChargeDetails.blockValues || null
+                                if (internationalShippingCharge && Number(internationalShippingCharge) > 0) {
+                                    const finalShippingCharge = Number(internationalShippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(internationalFreeShippingThreshold)) > 0 ? 0 : internationalShippingCharge) : 0;
+                                    cartUpdate = {
+                                        ...cartUpdate,
+                                        totalShippingAmount: finalShippingCharge,
+                                        totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(cartDetails.totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                    }
+                                }
                             }
                         }
                     }
@@ -248,23 +293,6 @@ class CheckoutService {
                     message: 'Cart updation failed'
                 }
             } else {
-                if (!cartProducts) {
-                    const pipeline = buildOrderPipeline(paymentMethodDetails, customerDetails, cartDetails);
-                    const createdCartWithValues = await CartOrdersModel.aggregate(pipeline);
-
-                    if (createdCartWithValues && createdCartWithValues.length > 0) {
-                        if (createdCartWithValues[0]?.products) {
-                            cartProducts = createdCartWithValues[0].products;
-                        }
-                        if (paymentMethodDetails == null) {
-                            paymentMethodDetails = createdCartWithValues[0]?.paymentMethod;
-                        }
-                        if (customerDetails == null) {
-                            customerDetails = createdCartWithValues[0]?.customer;
-                        }
-                    }
-                }
-
                 if (cartProducts) {
                     const updateProductVariant = cartProducts.map((products: any) => ({
                         updateOne: {
@@ -288,23 +316,17 @@ class CheckoutService {
                     const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
                     const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
                     const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                    const shippingAddressDetails: any = await CustomerAddress.findById(cartDetails.shippingId);
-
+                    if (!shippingAddressDetails) {
+                        shippingAddressDetails = await CustomerAddress.findById(cartDetails.shippingId);
+                    }
                     let commonDeliveryDays = '6';
                     if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                     }
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
-                    const tax = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
-                    const currencyCode = await CountryModel.findOne({ _id: cartDetails.countryId }, 'currencyCode')
-
-                    const options = {
-                        wordwrap: 130,
-                        // ...
-                    };
-
+                    const taDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
+                
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
@@ -331,18 +353,18 @@ class CheckoutService {
                             landlineNumber: shippingAddressDetails?.landlineNumber,
                             email: customerDetails.email
                         },
-                        currencyCode: currencyCode?.currencyCode,
+                        currencyCode: countryData?.currencyCode,
                         expectedDeliveryDate,
                         socialMedia,
                         appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, {wordwrap: 130}),
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
                         appUrl: `${process.env.APPURL}`,
-                        tax: tax
+                        tax: taDetails
                     }, async (err: any, template: any) => {
                         if (err) {
                             console.log("err", err);

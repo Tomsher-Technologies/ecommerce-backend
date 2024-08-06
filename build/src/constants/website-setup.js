@@ -25,4 +25,4 @@ exports.blockReferences = {
     contactUs: 'contact-us',
     aboutUs: 'about-us',
 };
-exports.shippingTypes = ['defualt', 'area'];
+exports.shippingTypes = ['defualt', 'area', 'international'];

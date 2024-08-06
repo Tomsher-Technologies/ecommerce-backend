@@ -26,4 +26,4 @@ export const blockReferences = {
     aboutUs: 'about-us',
 }
 
-export const shippingTypes = ['defualt', 'area'];
+export const shippingTypes = ['defualt', 'area', 'international'];

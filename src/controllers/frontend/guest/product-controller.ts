@@ -431,7 +431,7 @@ class ProductController extends BaseController {
     async findAllProductVariantsListWithBasicDetails(req: Request, res: Response): Promise<void> {
         try {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
-            const allProducts = await ProductVariantsModel.find({ countryId });
+            const allProducts = await ProductVariantsModel.find({countryId});
             return controller.sendSuccessResponse(res, {
                 requestedData: allProducts,
                 message: 'Success!'
@@ -556,7 +556,6 @@ class ProductController extends BaseController {
             let collectionId: any;
 
             query.status = '1';
-            query.attributeType = { $ne: "pattern" };
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 if (category) {

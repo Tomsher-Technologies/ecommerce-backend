@@ -540,7 +540,6 @@ class ProductController extends base_controller_1.default {
             let query = { _id: { $exists: true } };
             let collectionId;
             query.status = '1';
-            query.attributeType = { $ne: "pattern" };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 if (category) {

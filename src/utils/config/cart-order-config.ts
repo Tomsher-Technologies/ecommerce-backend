@@ -84,7 +84,7 @@ export const pickupStoreLookup = {
         from: `${collections.stores.stores}`,
         localField: 'pickupStoreId',
         foreignField: '_id',
-        as: 'pickupStoreId',
+        as: 'pickupFromStore',
 
     }
 };
@@ -171,7 +171,10 @@ export const cartProject = {
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]
-        }
+        },
+        // pickupFromStore: {
+        //     $ifNull: ['$pickupFromStore', null]
+        // }
 
     }
 
@@ -187,7 +190,7 @@ export const cartDeatilProject = {
         guestUserId: 1,
         // shippingId: 1,
         // billingId: 1,
-        pickupStoreId: 1,
+        // pickupStoreId: 1,
         paymentMethodCharge: 1,
         rewardPoints: 1,
         rewardAmount: 1,
@@ -245,6 +248,9 @@ export const cartDeatilProject = {
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]
+        },
+        pickupFromStore: {
+            $ifNull: ['$pickupFromStore', null]
         }
     }
 

@@ -78,7 +78,7 @@ exports.pickupStoreLookup = {
         from: `${collections_1.collections.stores.stores}`,
         localField: 'pickupStoreId',
         foreignField: '_id',
-        as: 'pickupStoreId',
+        as: 'pickupFromStore',
     }
 };
 exports.paymentMethodLookup = {
@@ -160,7 +160,10 @@ exports.cartProject = {
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]
-        }
+        },
+        // pickupFromStore: {
+        //     $ifNull: ['$pickupFromStore', null]
+        // }
     }
 };
 exports.cartDeatilProject = {
@@ -173,7 +176,7 @@ exports.cartDeatilProject = {
         guestUserId: 1,
         // shippingId: 1,
         // billingId: 1,
-        pickupStoreId: 1,
+        // pickupStoreId: 1,
         paymentMethodCharge: 1,
         rewardPoints: 1,
         rewardAmount: 1,
@@ -231,6 +234,9 @@ exports.cartDeatilProject = {
         },
         billingAddress: {
             $ifNull: ['$billingAddress', null]
+        },
+        pickupFromStore: {
+            $ifNull: ['$pickupFromStore', null]
         }
     }
 };

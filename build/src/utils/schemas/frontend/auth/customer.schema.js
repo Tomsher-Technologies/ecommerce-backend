@@ -62,8 +62,8 @@ exports.customerAddressSchema = zod_1.z.object({
     }),
     street: zod_1.z.string().optional(),
     zipCode: zod_1.z.string().optional(),
-    longitude: zod_1.z.string().optional(),
-    latitude: zod_1.z.string().optional(),
+    longitude: zod_1.z.any().optional(),
+    latitude: zod_1.z.any().optional(),
     // longitude: zod.union([
     //     zod.number().min(-180).max(180, { message: "Invalid longitude; must be between -180 and 180 degrees" }),
     //     zod.string().regex(/^(\-?\d{1,3}(\.\d+)?)$/, { message: "Please select the address" })

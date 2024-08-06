@@ -33,7 +33,7 @@ class CheckoutService {
                 message: 'Payment transactions not found'
             };
         }
-        const cartDetails = await cart_order_model_1.default.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" });
+        const cartDetails = await cart_order_model_1.default.findOne({ _id: paymentDetails?.orderId, cartStatus: "1" }).lean();
         if (!cartDetails) {
             const cartUpdation = this.cartUpdation(cartDetails, false);
             return {
@@ -51,17 +51,20 @@ class CheckoutService {
             this.cartUpdation({
                 ...cartDetails,
                 _id: cartDetails?._id,
-                totalAmount: cartDetails?.totalAmount,
                 customerId: cartDetails.customerId,
                 couponId: cartDetails?.couponId,
                 countryId: cartDetails?.countryId,
                 shippingId: cartDetails?.shippingId,
-                orderStatusAt: cartDetails?.orderStatusAt,
-                orderStatus: cartDetails?.orderStatus,
                 paymentMethodId: cartDetails?.paymentMethodId,
+                pickupStoreId: cartDetails?.pickupStoreId,
+                stateId: cartDetails?.stateId,
+                cityId: cartDetails?.cityId,
+                totalAmount: cartDetails?.totalAmount,
                 totalShippingAmount: cartDetails.totalShippingAmount,
                 totalProductAmount: cartDetails.totalProductAmount,
+                orderStatus: cartDetails?.orderStatus,
                 orderComments: cartDetails?.orderComments,
+                orderStatusAt: cartDetails?.orderStatusAt,
             }, true);
             if (updateTransaction) {
                 return {
@@ -188,10 +191,30 @@ class CheckoutService {
             let customerDetails = cartDetails?.customerDetails || null;
             let paymentMethodDetails = cartDetails?.paymentMethod || null;
             let shippingChargeDetails = cartDetails?.shippingChargeDetails || null;
+            let shippingAddressDetails = cartDetails?.shippingAddressDetails || null;
+            let countryData = cartDetails?.countryData || null;
             if (customerDetails === null) {
                 customerDetails = await customers_model_1.default.findOne({ _id: cartDetails.customerId });
             }
-            if ((!shippingChargeDetails) && (!cartDetails.stateId)) {
+            if (!countryData) {
+                countryData = await country_model_1.default.findOne({ _id: cartDetails.countryId }, '_id countryTitle currencyCode');
+            }
+            if (!cartProducts) {
+                const pipeline = (0, cart_order_config_1.buildOrderPipeline)(paymentMethodDetails, customerDetails, cartDetails);
+                const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
+                if (createdCartWithValues && createdCartWithValues.length > 0) {
+                    if (createdCartWithValues[0]?.products) {
+                        cartProducts = createdCartWithValues[0].products;
+                    }
+                    if (paymentMethodDetails == null) {
+                        paymentMethodDetails = createdCartWithValues[0]?.paymentMethod;
+                    }
+                    if (customerDetails == null) {
+                        customerDetails = createdCartWithValues[0]?.customer;
+                    }
+                }
+            }
+            if ((!shippingChargeDetails) && (!cartDetails.pickupStoreId) && (cartDetails.stateId)) {
                 shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: cartDetails.countryId });
                 if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[1])) {
                     const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || [];
@@ -216,6 +239,32 @@ class CheckoutService {
                         }
                     }
                 }
+                else if (cartDetails.pickupStoreId && (paymentMethodDetails && paymentMethodDetails.slug !== cart_1.paymentMethods.cashOnDelivery && paymentMethodDetails.slug !== cart_1.paymentMethods.cardOnDelivery)) {
+                    cartUpdate = {
+                        ...cartUpdate,
+                        totalShippingAmount: 0,
+                        totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(cartUpdate.totalShippingAmount)),
+                    };
+                }
+                else {
+                    if (!shippingAddressDetails) {
+                        shippingAddressDetails = await customer_address_model_1.default.findOne({ _id: cartDetails.shippingId });
+                        if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
+                            shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: countryData._id });
+                            if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[2])) {
+                                const { internationalShippingCharge, internationalFreeShippingThreshold } = shippingChargeDetails.blockValues || null;
+                                if (internationalShippingCharge && Number(internationalShippingCharge) > 0) {
+                                    const finalShippingCharge = Number(internationalShippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(internationalFreeShippingThreshold)) > 0 ? 0 : internationalShippingCharge) : 0;
+                                    cartUpdate = {
+                                        ...cartUpdate,
+                                        totalShippingAmount: finalShippingCharge,
+                                        totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(cartDetails.totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
             }
             const orderId = await this.getNextSequenceValue();
             cartUpdate = {
@@ -237,21 +286,6 @@ class CheckoutService {
                 };
             }
             else {
-                if (!cartProducts) {
-                    const pipeline = (0, cart_order_config_1.buildOrderPipeline)(paymentMethodDetails, customerDetails, cartDetails);
-                    const createdCartWithValues = await cart_order_model_1.default.aggregate(pipeline);
-                    if (createdCartWithValues && createdCartWithValues.length > 0) {
-                        if (createdCartWithValues[0]?.products) {
-                            cartProducts = createdCartWithValues[0].products;
-                        }
-                        if (paymentMethodDetails == null) {
-                            paymentMethodDetails = createdCartWithValues[0]?.paymentMethod;
-                        }
-                        if (customerDetails == null) {
-                            customerDetails = createdCartWithValues[0]?.customer;
-                        }
-                    }
-                }
                 if (cartProducts) {
                     const updateProductVariant = cartProducts.map((products) => ({
                         updateOne: {
@@ -273,18 +307,15 @@ class CheckoutService {
                     const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
                     const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
                     const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                    const shippingAddressDetails = await customer_address_model_1.default.findById(cartDetails.shippingId);
+                    if (!shippingAddressDetails) {
+                        shippingAddressDetails = await customer_address_model_1.default.findById(cartDetails.shippingId);
+                    }
                     let commonDeliveryDays = '6';
                     if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                     }
                     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
-                    const tax = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
-                    const currencyCode = await country_model_1.default.findOne({ _id: cartDetails.countryId }, 'currencyCode');
-                    const options = {
-                        wordwrap: 130,
-                        // ...
-                    };
+                    const taDetails = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
                     ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
@@ -311,18 +342,18 @@ class CheckoutService {
                             landlineNumber: shippingAddressDetails?.landlineNumber,
                             email: customerDetails.email
                         },
-                        currencyCode: currencyCode?.currencyCode,
+                        currencyCode: countryData?.currencyCode,
                         expectedDeliveryDate,
                         socialMedia,
                         appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, options),
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130 }),
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
                         appUrl: `${process.env.APPURL}`,
-                        tax: tax
+                        tax: taDetails
                     }, async (err, template) => {
                         if (err) {
                             console.log("err", err);
