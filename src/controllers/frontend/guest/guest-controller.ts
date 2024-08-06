@@ -868,7 +868,7 @@ class GuestController extends BaseController {
 
                                     await CustomerService.update(updatedCustomer._id, {
                                         lastLoggedAt: new Date()
-                                    });
+                                    });  
                                     if (updatedCustomer?.isGuest) {
                                         const existingCart = await CartOrdersModel.findOne({ customerId: updatedCustomer._id, cartStatus: '1' });
                                         if (existingCart) {
