@@ -22,6 +22,7 @@ import ProductVariantsModel from "../../../model/admin/ecommerce/product/product
 import ProductsModel from "../../../model/admin/ecommerce/product-model";
 import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
 import CartOrdersModel from "../../../model/frontend/cart-order-model";
+import mongoose from "mongoose";
 
 const controller = new BaseController();
 
@@ -36,7 +37,7 @@ class CheckoutController extends BaseController {
             }
             const validatedData = checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, stateId = '', cityId = '', orderComments } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, pickupStoreId = '', stateId = '', cityId = '', orderComments } = validatedData.data;
 
                 const customerDetails = await CustomerModel.findOne({ _id: customerId });
                 if (!customerDetails || !customerDetails.isVerified) {
@@ -50,6 +51,7 @@ class CheckoutController extends BaseController {
                 if (!paymentMethod) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, payment method is not found' });
                 }
+                console.log('customerId', customerId);
 
                 const cartDetails: any = await CartService.findCartPopulate({
                     query: {
@@ -108,6 +110,7 @@ class CheckoutController extends BaseController {
                     billingId: billingId || null,
                     paymentMethodId: paymentMethod._id,
                     couponId: null,
+                    pickupStoreId: pickupStoreId || null,
                     stateId: stateId || null,
                     cityId: cityId || null,
                     cartStatus: cartStatus.active,
@@ -140,11 +143,11 @@ class CheckoutController extends BaseController {
                     totalCouponAmount: 0,
                     totalAmount: cartDetails.totalAmount,
                 }
-
+                let shippingAddressDetails: any = null
                 let paymentData = null;
                 let shippingChargeDetails: any = null;
                 let totalShippingAmount = cartDetails.totalShippingAmount || 0;
-                if (stateId) {
+                if (!pickupStoreId && stateId) {
                     shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
                     if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[1])) {
                         const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || []
@@ -161,6 +164,30 @@ class CheckoutController extends BaseController {
                             if (matchedValue) {
                                 const shippingCharge = matchedValue?.shippingCharge || 0;
                                 const finalShippingCharge = Number(shippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                cartUpdate = {
+                                    ...cartUpdate,
+                                    totalShippingAmount: finalShippingCharge,
+                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                }
+                                totalShippingAmount = finalShippingCharge;
+                            }
+                        }
+                    }
+                } else if (pickupStoreId) {
+                    cartUpdate = {
+                        ...cartUpdate,
+                        totalShippingAmount: 0,
+                        totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)),
+                    }
+                    totalShippingAmount = 0;
+                } else {
+                    shippingAddressDetails = await CustomerAddress.findOne({ _id: new mongoose.Types.ObjectId(shippingId) });
+                    if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
+                        shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
+                        if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[2])) {
+                            const { internationalShippingCharge, internationalFreeShippingThreshold } = shippingChargeDetails.blockValues || null
+                            if (internationalShippingCharge && Number(internationalShippingCharge) > 0) {
+                                const finalShippingCharge = Number(internationalShippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(internationalFreeShippingThreshold)) > 0 ? 0 : internationalShippingCharge) : 0;
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
@@ -193,7 +220,9 @@ class CheckoutController extends BaseController {
 
                     } else if (paymentMethod && (paymentMethod.slug == paymentMethods.tamara || paymentMethod.slug == paymentMethods.tabby)) {
                         if (paymentMethod.paymentMethodValues) {
-                            const shippingAddressDetails: any = await CustomerAddress.findById(shippingId);
+                            if (!shippingAddressDetails) {
+                                shippingAddressDetails = await CustomerAddress.findById(shippingId);
+                            }
                             const setPaymentDefualtValues = {
                                 ...cartUpdate,
                                 _id: cartDetails._id,
@@ -340,7 +369,7 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && (paymentMethod.slug == paymentMethods.cashOnDelivery || paymentMethod.slug == paymentMethods.cardOnDelivery)) {
-                    await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails }, true)
+                    await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails, shippingAddressDetails, countryData }, true)
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {

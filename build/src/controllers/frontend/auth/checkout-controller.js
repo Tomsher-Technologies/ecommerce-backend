@@ -24,6 +24,7 @@ const network_payments_1 = require("../../../lib/payment-gateway/network-payment
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const tamara_payments_1 = require("../../../lib/payment-gateway/tamara-payments");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
@@ -35,7 +36,7 @@ class CheckoutController extends base_controller_1.default {
             }
             const validatedData = checkout_schema_1.checkoutSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, stateId = '', cityId = '', orderComments } = validatedData.data;
+                const { deviceType, couponCode, paymentMethodId, shippingId, billingId, pickupStoreId = '', stateId = '', cityId = '', orderComments } = validatedData.data;
                 const customerDetails = await customers_model_1.default.findOne({ _id: customerId });
                 if (!customerDetails || !customerDetails.isVerified) {
                     const message = !customerDetails
@@ -47,6 +48,7 @@ class CheckoutController extends base_controller_1.default {
                 if (!paymentMethod) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, payment method is not found' });
                 }
+                console.log('customerId', customerId);
                 const cartDetails = await cart_service_1.default.findCartPopulate({
                     query: {
                         $and: [
@@ -102,6 +104,7 @@ class CheckoutController extends base_controller_1.default {
                     billingId: billingId || null,
                     paymentMethodId: paymentMethod._id,
                     couponId: null,
+                    pickupStoreId: pickupStoreId || null,
                     stateId: stateId || null,
                     cityId: cityId || null,
                     cartStatus: cart_1.cartStatus.active,
@@ -134,10 +137,11 @@ class CheckoutController extends base_controller_1.default {
                     totalCouponAmount: 0,
                     totalAmount: cartDetails.totalAmount,
                 };
+                let shippingAddressDetails = null;
                 let paymentData = null;
                 let shippingChargeDetails = null;
                 let totalShippingAmount = cartDetails.totalShippingAmount || 0;
-                if (stateId) {
+                if (!pickupStoreId && stateId) {
                     shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: countryData._id });
                     if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[1])) {
                         const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || [];
@@ -154,6 +158,32 @@ class CheckoutController extends base_controller_1.default {
                             if (matchedValue) {
                                 const shippingCharge = matchedValue?.shippingCharge || 0;
                                 const finalShippingCharge = Number(shippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(matchedValue.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                                cartUpdate = {
+                                    ...cartUpdate,
+                                    totalShippingAmount: finalShippingCharge,
+                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                };
+                                totalShippingAmount = finalShippingCharge;
+                            }
+                        }
+                    }
+                }
+                else if (pickupStoreId) {
+                    cartUpdate = {
+                        ...cartUpdate,
+                        totalShippingAmount: 0,
+                        totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)),
+                    };
+                    totalShippingAmount = 0;
+                }
+                else {
+                    shippingAddressDetails = await customer_address_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(shippingId) });
+                    if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
+                        shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: countryData._id });
+                        if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[2])) {
+                            const { internationalShippingCharge, internationalFreeShippingThreshold } = shippingChargeDetails.blockValues || null;
+                            if (internationalShippingCharge && Number(internationalShippingCharge) > 0) {
+                                const finalShippingCharge = Number(internationalShippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(internationalFreeShippingThreshold)) > 0 ? 0 : internationalShippingCharge) : 0;
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
@@ -185,7 +215,9 @@ class CheckoutController extends base_controller_1.default {
                     }
                     else if (paymentMethod && (paymentMethod.slug == cart_1.paymentMethods.tamara || paymentMethod.slug == cart_1.paymentMethods.tabby)) {
                         if (paymentMethod.paymentMethodValues) {
-                            const shippingAddressDetails = await customer_address_model_1.default.findById(shippingId);
+                            if (!shippingAddressDetails) {
+                                shippingAddressDetails = await customer_address_model_1.default.findById(shippingId);
+                            }
                             const setPaymentDefualtValues = {
                                 ...cartUpdate,
                                 _id: cartDetails._id,
@@ -325,7 +357,7 @@ class CheckoutController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && (paymentMethod.slug == cart_1.paymentMethods.cashOnDelivery || paymentMethod.slug == cart_1.paymentMethods.cardOnDelivery)) {
-                    await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails }, true);
+                    await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails, shippingAddressDetails, countryData }, true);
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {

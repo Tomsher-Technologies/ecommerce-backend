@@ -332,6 +332,20 @@ class GuestController extends BaseController {
                                 })
                         }
                     } else {
+                        if (newCustomer?.isGuest) {
+                            const existingCart = await CartOrdersModel.findOne({ customerId: newCustomer._id, cartStatus: '1' });
+                            if (existingCart) {
+                                await CartOrdersModel.findOneAndDelete({ _id: existingCart._id });
+                                await CartOrderProductsModel.deleteMany({ cartId: existingCart._id });
+                            }
+
+                            const uuid = req.header('User-Token');
+                            const guestUserCart = await CartOrdersModel.findOneAndUpdate(
+                                { guestUserId: uuid, cartStatus: '1' },
+                                { $set: { customerId: newCustomer._id, isGuest: true, guestUserId: null } },
+                                { new: true }
+                            );
+                        }
                         const payload: any = {
                             userId: newCustomer._id,
                             email: newCustomer.email,
@@ -352,6 +366,7 @@ class GuestController extends BaseController {
                             isVerified: newCustomer.isVerified,
                             isGuest: newCustomer.isGuest,
                             guestRegisterCount: newCustomer.guestRegisterCount,
+                            ...(notRequiredOtp ? { lastLoggedAt: new Date() } : {}),
                         },
                         message: notRequiredOtp ? "Customer login successfully!" : 'Customer created successfully! An OTP has been sent to your email for verification.'
                     });

@@ -605,7 +605,6 @@ class ProductsController extends base_controller_1.default {
                                                                         let insertWithNonConfigItemVariant = false;
                                                                         let createProduct = null;
                                                                         const productDetails = await product_service_1.default.find({ $and: [{ sku: data.SKU }, { productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title) }] });
-                                                                        console.log("fgfhfhfhfghfgh", productDetails);
                                                                         if (productDetails) {
                                                                             const existingVariantDetails = await product_variants_model_1.default.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
                                                                             if (!existingVariantDetails) {

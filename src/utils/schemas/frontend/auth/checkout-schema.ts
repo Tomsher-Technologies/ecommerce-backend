@@ -6,6 +6,7 @@ export const checkoutSchema = zod.object({
     billingId:  zod.string().optional(),
     stateId:  zod.string().optional(),
     cityId:  zod.string().optional(),
+    pickupStoreId:  zod.string().optional(),
     orderComments: zod.string().optional(),
     paymentMethodId:  zod.string({ required_error: 'Payment method  is required', }).min(3, 'Please choose Payment method'),
     couponCode: zod.string().optional(),

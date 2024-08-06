@@ -365,6 +365,7 @@ class ProductService {
             const productVariantAttributesDetailIds = productVariantAttributeDetailIdResult.length ? productVariantAttributeDetailIdResult[0].attributeDetailIds : [];
             if (productVariantAttributesDetailIds && productVariantAttributesDetailIds?.length > 0) {
                 let attributePipeline: any[] = [
+                    { $match: { attributeType: { $ne: "pattern" } } },
                     attributeDetailsLookup,
                     { $unwind: '$attributeValues' },
                     { $match: { 'attributeValues._id': { $in: productVariantAttributesDetailIds }, status: "1" } },

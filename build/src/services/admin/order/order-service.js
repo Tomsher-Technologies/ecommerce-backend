@@ -43,7 +43,12 @@ class OrderService {
         const pipeline = [
             ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cart_order_config_1.cartProductsLookup]),
             ...((!getTotalCount && getCartProducts) ? [cart_order_config_1.couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
-            ...(!getTotalCount ? [cart_order_config_1.paymentMethodLookup, cart_order_config_1.customerLookup, cart_order_config_1.orderListObjectLookup] : []),
+            ...(!getTotalCount ? [cart_order_config_1.paymentMethodLookup, cart_order_config_1.customerLookup, cart_order_config_1.pickupStoreLookup, {
+                    $unwind: {
+                        path: "$pickupFromStore",
+                        preserveNullAndEmptyArrays: true
+                    }
+                }, cart_order_config_1.orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('shippingId', 'shippingAddress') : []),
             ...((!getTotalCount && getAddress === '1') ? (0, cart_order_config_1.shippingAndBillingLookup)('billingId', 'billingAddress') : []),
             customer_config_1.countriesLookup,

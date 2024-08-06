@@ -74,6 +74,7 @@ class CartController extends BaseController {
                                         },
                                         update: {
                                             $set: {
+                                                productId: detail.productId,
                                                 quantity: detail.quantity,
                                                 productAmount: detail.productAmount,
                                                 productDiscountAmount: detail.productDiscountAmount,
