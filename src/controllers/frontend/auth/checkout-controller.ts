@@ -146,9 +146,9 @@ class CheckoutController extends BaseController {
                 let paymentData = null;
                 let shippingChargeDetails: any = null;
                 let totalShippingAmount = cartDetails.totalShippingAmount || 0;
-                if (!pickupStoreId && stateId) {
+                if (pickupStoreId === '' && stateId) {
                     shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
-                    if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === shippingTypes[1])) {
+                    if (shippingChargeDetails.blockValues) {
                         const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || []
                         if (areaWiseDeliveryChargeValues?.length > 0) {
                             const matchedValue = areaWiseDeliveryChargeValues.find((item: any) => {
@@ -172,14 +172,14 @@ class CheckoutController extends BaseController {
                             }
                         }
                     }
-                } else if (pickupStoreId) {
+                } else if (pickupStoreId !== '') {
                     cartUpdate = {
                         ...cartUpdate,
                         totalShippingAmount: 0,
                         totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)),
                     }
                     totalShippingAmount = 0;
-                } else if (shippingId) {
+                } else if (shippingId !== '') {
                     shippingAddressDetails = await CustomerAddress.findOne({ _id: new mongoose.Types.ObjectId(shippingId) });
                     if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
                         shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
@@ -197,6 +197,7 @@ class CheckoutController extends BaseController {
                         }
                     }
                 }
+
                 if ((paymentMethod.slug !== paymentMethods.cashOnDelivery && paymentMethod.slug !== paymentMethods.cardOnDelivery)) {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
                         const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
