@@ -11,7 +11,7 @@ import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
 const router: Router = express.Router();
 
-const { upload } = configureMulter('category', ['categoryImage',]);
+const { upload } = configureMulter('category', ['categoryImage','categorySecondImage']);
 
 router.use(authMiddleware);
 

@@ -5,6 +5,7 @@ export const categorySchema = zod.object({
     description: zod.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     parentCategory: zod.string().optional(),
     categoryImageUrl: zod.string().optional(),
+    categorySecondImageUrl: zod.string().optional(),
     categoryImage: zod.any({ required_error: 'Category image is required' }).nullable(),
     languageValues: zod.any().optional(),
     status: zod.string().optional(),

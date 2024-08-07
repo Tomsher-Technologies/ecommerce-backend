@@ -8,6 +8,7 @@ export interface CategoryProps extends Document {
     corporateGiftsPriority: string;
     type?: string;
     categoryImageUrl: string;
+    categorySecondImageUrl: string;
     isExcel: Boolean;
     level: string;
     metaTitle?: string;
@@ -62,6 +63,10 @@ const categorySchema: Schema<CategoryProps> = new Schema({
             // Require categoryImageUrl field if isExcel is not true
             return !this.isExcel;
         },
+        default: '',
+    },
+    categorySecondImageUrl: {
+        type: String,
         default: '',
     },
     isExcel: {
