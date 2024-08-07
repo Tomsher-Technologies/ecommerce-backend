@@ -81,6 +81,7 @@ class HomeController extends BaseController {
 
     async findAllStores(req: Request, res: Response): Promise<void> {
         try {
+            const { stateId = '', cityId = '' } = req.query as any;
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
                 let query: any = { _id: { $exists: true } };
@@ -90,7 +91,12 @@ class HomeController extends BaseController {
                     countryId,
                     status: '1',
                 } as any;
-
+                if (stateId) {
+                    query.stateId = new mongoose.Types.ObjectId(stateId);
+                }
+                if (cityId) {
+                    query.cityId = new mongoose.Types.ObjectId(cityId);
+                }
                 return controller.sendSuccessResponse(res, {
                     requestedData: await CommonService.findAllStores({
                         hostName: req.get('origin'),
