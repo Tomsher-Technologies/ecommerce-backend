@@ -105,7 +105,7 @@ class CheckoutController extends BaseController {
 
                 let cartUpdate: any = {
                     orderUuid: uuid,
-                    shippingId: shippingId,
+                    shippingId: shippingId || null,
                     billingId: billingId || null,
                     paymentMethodId: paymentMethod._id,
                     couponId: null,
@@ -179,7 +179,7 @@ class CheckoutController extends BaseController {
                         totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)),
                     }
                     totalShippingAmount = 0;
-                } else {
+                } else if (shippingId) {
                     shippingAddressDetails = await CustomerAddress.findOne({ _id: new mongoose.Types.ObjectId(shippingId) });
                     if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
                         shippingChargeDetails = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: countryData._id });
@@ -219,7 +219,7 @@ class CheckoutController extends BaseController {
 
                     } else if (paymentMethod && (paymentMethod.slug == paymentMethods.tamara || paymentMethod.slug == paymentMethods.tabby)) {
                         if (paymentMethod.paymentMethodValues) {
-                            if (!shippingAddressDetails) {
+                            if (!shippingAddressDetails && shippingId) {
                                 shippingAddressDetails = await CustomerAddress.findById(shippingId);
                             }
                             const setPaymentDefualtValues = {
