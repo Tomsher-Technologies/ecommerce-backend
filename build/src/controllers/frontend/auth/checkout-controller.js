@@ -140,9 +140,9 @@ class CheckoutController extends base_controller_1.default {
                 let paymentData = null;
                 let shippingChargeDetails = null;
                 let totalShippingAmount = cartDetails.totalShippingAmount || 0;
-                if (!pickupStoreId && stateId) {
+                if (pickupStoreId === '' && stateId) {
                     shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: countryData._id });
-                    if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[1])) {
+                    if (shippingChargeDetails.blockValues) {
                         const areaWiseDeliveryChargeValues = shippingChargeDetails.blockValues.areaWiseDeliveryChargeValues || [];
                         if (areaWiseDeliveryChargeValues?.length > 0) {
                             const matchedValue = areaWiseDeliveryChargeValues.find((item) => {
@@ -167,7 +167,7 @@ class CheckoutController extends base_controller_1.default {
                         }
                     }
                 }
-                else if (pickupStoreId) {
+                else if (pickupStoreId !== '') {
                     cartUpdate = {
                         ...cartUpdate,
                         totalShippingAmount: 0,
@@ -175,7 +175,7 @@ class CheckoutController extends base_controller_1.default {
                     };
                     totalShippingAmount = 0;
                 }
-                else if (shippingId) {
+                else if (shippingId !== '') {
                     shippingAddressDetails = await customer_address_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(shippingId) });
                     if (shippingAddressDetails && shippingAddressDetails.country !== countryData.countryTitle) {
                         shippingChargeDetails = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: countryData._id });
