@@ -351,6 +351,7 @@ exports.productCategoryLookup = {
                         parentCategory: 1,
                         level: 1,
                         categoryImageUrl: 1,
+                        categorySecondImageUrl: 1,
                         status: 1,
                     }
                 }

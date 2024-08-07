@@ -63,6 +63,10 @@ const categorySchema = new mongoose_1.Schema({
         },
         default: '',
     },
+    categorySecondImageUrl: {
+        type: String,
+        default: '',
+    },
     isExcel: {
         type: Boolean,
         default: false

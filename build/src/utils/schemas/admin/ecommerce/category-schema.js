@@ -7,6 +7,7 @@ exports.categorySchema = zod_1.z.object({
     description: zod_1.z.string({ required_error: 'Description is required', }).min(10, 'Description is should be 10 chars minimum'),
     parentCategory: zod_1.z.string().optional(),
     categoryImageUrl: zod_1.z.string().optional(),
+    categorySecondImageUrl: zod_1.z.string().optional(),
     categoryImage: zod_1.z.any({ required_error: 'Category image is required' }).nullable(),
     languageValues: zod_1.z.any().optional(),
     status: zod_1.z.string().optional(),
