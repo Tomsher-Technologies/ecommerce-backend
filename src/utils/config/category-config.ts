@@ -78,6 +78,24 @@ export const categoryLanguageFieldsReplace = {
                 else: { $arrayElemAt: ["$languageValues.languageValues.categoryImageUrl", 0] }
             },
         },
+        categorySecondImageUrl: {
+            $cond: {
+                if: {
+                    $or: [
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, null] }, null] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, ""] }, ""] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, "undefined"] }, "undefined"] },
+                        { $eq: [{ $ifNull: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, undefined] }, undefined] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, ""] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, null] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, "undefined"] },
+                        { $eq: [{ $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }, undefined] }
+                    ]
+                },
+                then: "$categorySecondImageUrl",
+                else: { $arrayElemAt: ["$languageValues.languageValues.categorySecondImageUrl", 0] }
+            },
+        },
         metaTitle: {
             $cond: {
                 if: {

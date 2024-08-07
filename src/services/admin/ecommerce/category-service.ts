@@ -61,6 +61,7 @@ class CategoryService {
                 slug: 1,
                 description: 1,
                 categoryImageUrl: 1,
+                categorySecondImageUrl: 1,
                 parentCategory: 1,
                 corporateGiftsPriority: 1,
                 type: 1,

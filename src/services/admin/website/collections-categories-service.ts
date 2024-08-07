@@ -34,7 +34,7 @@ class CollectionsCategoriesService {
         try {
             const query = { _id: { $nin: categoryIds } };
 
-            const unCollectionedCategories = await CategoryModel.find(query).select('_id categoryTitle slug description categoryImageUrl status');
+            const unCollectionedCategories = await CategoryModel.find(query).select('_id categoryTitle slug description categoryImageUrl categorySecondImageUrl status');
 
             return unCollectionedCategories;
         } catch (error) {
@@ -47,7 +47,7 @@ class CollectionsCategoriesService {
         try {
             const query = { _id: { $in: categoryIds } };
 
-            const categories = await CategoryModel.find(query).select('_id categoryTitle slug description categoryImageUrl status');
+            const categories = await CategoryModel.find(query).select('_id categoryTitle slug description categoryImageUrl categorySecondImageUrl status');
 
             return categories;
         } catch (error) {

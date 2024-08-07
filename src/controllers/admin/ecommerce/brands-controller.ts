@@ -324,7 +324,8 @@ class BrandsController extends BaseController {
                                     ...languageValue,
                                     languageValues: {
                                         ...languageValue.languageValues,
-                                        brandImageUrl
+                                        brandImageUrl,
+                                        brandBannerImageUrl
                                     }
                                 });
                                 newLanguageValues.push(languageValues);

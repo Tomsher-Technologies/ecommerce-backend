@@ -234,10 +234,12 @@ class CategoryController extends BaseController {
                 }
                 slugData = data
                 const categoryImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+                const categorySecondImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categorySecondImage');
                 const categoryData = {
                     categoryTitle: capitalizeWords(categoryTitle),
                     slug: slugData || slug,
                     categoryImageUrl: handleFileUpload(req, null, (req.file || categoryImage), 'categoryImageUrl', 'category'),
+                    categorySecondImageUrl: handleFileUpload(req, null, (req.file || categorySecondImage), 'categorySecondImageUrl', 'category'),
                     description,
                     corporateGiftsPriority,
                     type,
@@ -261,6 +263,11 @@ class CategoryController extends BaseController {
                         file.fieldname.startsWith('languageValues[') &&
                         file.fieldname.includes('[categoryImage]')
                     );
+                    const languageValuesCategorySecondImage = (req as any).files.filter((file: any) =>
+                        file.fieldname &&
+                        file.fieldname.startsWith('languageValues[') &&
+                        file.fieldname.includes('[categorySecondImage]')
+                    );
 
                     if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
                         await languageValues?.map((languageValue: any, index: number) => {
@@ -269,13 +276,17 @@ class CategoryController extends BaseController {
                                 categoryImageUrl = handleFileUpload(req
                                     , null, languageValuesImages[index], `categoryImageUrl`, 'category');
                             }
-
+                            let categorySecondImageUrl = ''
+                            if (languageValuesCategorySecondImage.length > 0) {
+                                categorySecondImageUrl = handleFileUpload(req, null, languageValuesCategorySecondImage[index], `categorySecondImageUrl`, 'category');
+                            }
                             GeneralService.multiLanguageFieledsManage(newCategory._id, {
                                 ...languageValue,
                                 source: multiLanguageSources.ecommerce.categories,
                                 languageValues: {
                                     ...languageValue.languageValues,
-                                    categoryImageUrl
+                                    categoryImageUrl,
+                                    categorySecondImageUrl
                                 }
                             })
                         })
@@ -350,6 +361,7 @@ class CategoryController extends BaseController {
 
                 if (categoryId) {
                     const categoryImage = (req as any).files.find((file: any) => file.fieldname === 'categoryImage');
+                    const categorySecondImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categorySecondImage');
                     let { seoData, ...updatedCategoryData } = req.body;
                     const categoryDetails: any = await CategoryService.findOne(categoryId);
                     const parentCategoryDetail: any = await CategoryModel.findOne({ _id: updatedCategoryData.parentCategory })
@@ -361,6 +373,7 @@ class CategoryController extends BaseController {
                         level: parentCategoryDetail ? Number(parentCategoryDetail.level) + 1 : 0,
                         slug: updatedCategoryData.slug,
                         categoryImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categoryImage), 'categoryImageUrl', 'category'),
+                        categorySecondImageUrl: handleFileUpload(req, await CategoryService.findOne(categoryId), (req.file || categorySecondImage), 'categorySecondImageUrl', 'category'),
                         updatedAt: new Date()
                     };
 
@@ -377,11 +390,17 @@ class CategoryController extends BaseController {
                             file.fieldname.startsWith('languageValues[') &&
                             file.fieldname.includes('[categoryImage]')
                         );
+                        const languageValuesCategorySecondImage = (req as any).files.filter((file: any) =>
+                            file.fieldname &&
+                            file.fieldname.startsWith('languageValues[') &&
+                            file.fieldname.includes('[categorySecondImage]')
+                        );
                         let newLanguageValues: any = []
                         if (updatedCategoryData.languageValues && Array.isArray(updatedCategoryData.languageValues) && updatedCategoryData.languageValues.length > 0) {
                             for (let i = 0; i < updatedCategoryData.languageValues.length; i++) {
                                 const languageValue = updatedCategoryData.languageValues[i];
                                 let categoryImageUrl = '';
+                                let categorySecondImageUrl = '';
                                 const matchingImage = languageValuesImages.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
                                 if (languageValuesImages.length > 0 && matchingImage) {
                                     const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.categories, categoryDetails._id, languageValue.languageId);
@@ -389,11 +408,20 @@ class CategoryController extends BaseController {
                                 } else {
                                     categoryImageUrl = updatedCategoryData.languageValues[i].languageValues?.categoryImageUrl
                                 }
+                                const matchingcategorySecondrImage = languageValuesCategorySecondImage.find((image: any) => image.fieldname.includes(`languageValues[${i}]`));
+
+                                if (languageValuesCategorySecondImage.length > 0 && matchingcategorySecondrImage) {
+                                    const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.brands, categoryDetails._id, languageValue.languageId);
+                                    categorySecondImageUrl = await handleFileUpload(req, existingLanguageValues.languageValues, matchingcategorySecondrImage, `categorySecondImageUrl`, 'brand');
+                                } else {
+                                    categorySecondImageUrl = updatedCategoryData.languageValues[i].languageValues?.categorySecondImageUrl
+                                }
                                 const languageValues = await GeneralService.multiLanguageFieledsManage(categoryDetails._id, {
                                     ...languageValue,
                                     languageValues: {
                                         ...languageValue.languageValues,
-                                        categoryImageUrl
+                                        categoryImageUrl,
+                                        categorySecondImageUrl
                                     }
                                 });
                                 newLanguageValues.push(languageValues);
