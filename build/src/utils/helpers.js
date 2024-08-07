@@ -48,8 +48,6 @@ const handleFileUpload = (req, data, file, fieldName, folderPath) => {
     if (data && data[fieldName]) {
         if (file) {
             (0, exports.deleteImage)(data, fieldName);
-            console.log('${req.protocol}://${req.hostname}/${file.path}`', file);
-            // return `${file.path}`; // Construct the URL using req.protocol and req.hostname
             return `/public/uploads/${folderPath}/${file.filename}`;
         }
         else {
@@ -58,7 +56,6 @@ const handleFileUpload = (req, data, file, fieldName, folderPath) => {
     }
     else {
         if (file) {
-            // console.log('file',file.filename);
             return `/public/uploads/${folderPath}/${file.filename}`; // Construct the URL using req.protocol and req.hostname
         }
         else {

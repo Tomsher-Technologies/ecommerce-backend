@@ -42,6 +42,7 @@ class ProductCategoryLinkService {
                             categoryTitle: 1,
                             slug: 1,
                             categoryImageUrl: 1,
+                            categorySecondImageUrl: 1,
                             status: 1
                         }
                     }

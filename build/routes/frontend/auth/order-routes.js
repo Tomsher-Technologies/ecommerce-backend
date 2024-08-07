@@ -32,7 +32,9 @@ const order_controller_1 = __importDefault(require("../../../src/controllers/fro
 const response_status_1 = __importStar(require("../../../src/components/response-status"));
 const cart_order_controller_1 = __importDefault(require("../../../src/controllers/frontend/cart-order-controller"));
 const checkout_controller_1 = __importDefault(require("../../../src/controllers/frontend/auth/checkout-controller"));
+const order_controller_2 = __importDefault(require("../../../src/controllers/admin/order/order-controller"));
 const OrderRoutes = express_1.default.Router();
+OrderRoutes.get('/invoice-download/:id', order_controller_2.default.getInvoice);
 OrderRoutes.get('/:id', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.default, order_controller_1.default.getOrder);
 OrderRoutes.get('/order-list', frontend_auth_middleware_1.frontendAuthMiddleware, response_status_1.logResponseStatus, order_controller_1.default.orderList);
 OrderRoutes.post('/move-to-wishlist', frontend_auth_middleware_1.frontendAuthMiddleware, response_status_1.logResponseStatus, cart_order_controller_1.default.moveToWishlist);

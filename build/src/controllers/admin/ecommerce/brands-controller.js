@@ -299,7 +299,8 @@ class BrandsController extends base_controller_1.default {
                                     ...languageValue,
                                     languageValues: {
                                         ...languageValue.languageValues,
-                                        brandImageUrl
+                                        brandImageUrl,
+                                        brandBannerImageUrl
                                     }
                                 });
                                 newLanguageValues.push(languageValues);

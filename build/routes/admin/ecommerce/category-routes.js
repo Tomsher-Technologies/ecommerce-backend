@@ -12,7 +12,7 @@ const response_status_1 = require("../../../src/components/response-status");
 const category_controller_1 = __importDefault(require("../../../src/controllers/admin/ecommerce/category-controller"));
 const permission_blocks_1 = require("../../../src/constants/permission-blocks");
 const router = express_1.default.Router();
-const { upload } = (0, file_uploads_1.configureMulter)('category', ['categoryImage',]);
+const { upload } = (0, file_uploads_1.configureMulter)('category', ['categoryImage', 'categorySecondImage']);
 router.use(auth_middleware_1.default);
 router.get('/', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.categories, readOnly: 1 }), category_controller_1.default.findAll);
 router.get('/parent-categories', response_status_1.logResponseStatus, category_controller_1.default.findAllParentCategories);
