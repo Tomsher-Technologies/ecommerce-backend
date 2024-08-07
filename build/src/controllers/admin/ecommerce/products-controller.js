@@ -662,10 +662,12 @@ class ProductsController extends base_controller_1.default {
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                             for await (const galleryImage of galleryImageArray) {
                                                                                                 const galleryImageData = {
-                                                                                                    productID: createProduct._id,
+                                                                                                    // productID: createProduct._id,
+                                                                                                    variantId: createVariant._id,
                                                                                                     ...galleryImage
                                                                                                 };
                                                                                                 const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
+                                                                                                console.log(galleryImages, "galleryImagesgalleryImages");
                                                                                             }
                                                                                         }
                                                                                         if (attributeData && attributeData.length > 0) {
@@ -750,7 +752,7 @@ class ProductsController extends base_controller_1.default {
                                                                                         categoryId: item
                                                                                     });
                                                                                 }
-                                                                                await product_gallery_images_model_1.default.deleteMany({ productID: productDetails._id });
+                                                                                await product_gallery_images_model_1.default.deleteMany({ productID: updateProduct._id });
                                                                                 if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
@@ -762,11 +764,11 @@ class ProductsController extends base_controller_1.default {
                                                                                 }
                                                                                 const variantDetails = await product_variants_model_1.default.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
                                                                                 if (variantDetails) {
-                                                                                    await product_gallery_images_model_1.default.deleteMany({ productID: productDetails._id });
+                                                                                    await product_gallery_images_model_1.default.deleteMany({ variantId: variantDetails._id });
                                                                                     if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                         for await (const galleryImage of galleryImageArray) {
                                                                                             const galleryImageData = {
-                                                                                                productID: updateProduct._id,
+                                                                                                // productID: updateProduct._id,
                                                                                                 variantId: variantDetails._id,
                                                                                                 ...galleryImage
                                                                                             };
@@ -840,6 +842,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 if (!variantDetails) {
                                                                                     const createVariant = await product_variant_service_1.default.create(productDetails._id, productVariants, userData);
                                                                                     if (createVariant) {
+                                                                                        console.log("productDetails", productDetails);
                                                                                         if (attributeData && attributeData.length > 0) {
                                                                                             for await (const attribute of attributeData) {
                                                                                                 const attributeValues = {
