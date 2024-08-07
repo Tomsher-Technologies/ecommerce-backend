@@ -742,10 +742,13 @@ class ProductsController extends BaseController {
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                             for await (const galleryImage of galleryImageArray) {
                                                                                                 const galleryImageData = {
-                                                                                                    productID: createProduct._id,
+                                                                                                    // productID: createProduct._id,
+                                                                                                    variantId: createVariant._id,
                                                                                                     ...galleryImage
                                                                                                 }
                                                                                                 const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
+                                                                                                console.log(galleryImages, "galleryImagesgalleryImages");
+
                                                                                             }
                                                                                         }
                                                                                         if (attributeData && attributeData.length > 0) {
@@ -835,7 +838,7 @@ class ProductsController extends BaseController {
                                                                                     })
                                                                                 }
 
-                                                                                await ProductGalleryImagesModel.deleteMany({ productID: productDetails._id });
+                                                                                await ProductGalleryImagesModel.deleteMany({ productID: updateProduct._id });
                                                                                 if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
@@ -848,11 +851,11 @@ class ProductsController extends BaseController {
                                                                                 }
                                                                                 const variantDetails = await ProductVariantsModel.findOne({ variantSku: (data as any).SKU, countryId: productVariants.countryId });
                                                                                 if (variantDetails) {
-                                                                                    await ProductGalleryImagesModel.deleteMany({ productID: productDetails._id });
+                                                                                    await ProductGalleryImagesModel.deleteMany({ variantId: variantDetails._id });
                                                                                     if (galleryImageArray && galleryImageArray.length > 0) {
                                                                                         for await (const galleryImage of galleryImageArray) {
                                                                                             const galleryImageData = {
-                                                                                                productID: updateProduct._id,
+                                                                                                // productID: updateProduct._id,
                                                                                                 variantId: variantDetails._id,
                                                                                                 ...galleryImage
                                                                                             }
@@ -936,6 +939,8 @@ class ProductsController extends BaseController {
                                                                                 if (!variantDetails) {
                                                                                     const createVariant = await ProductVariantService.create(productDetails._id, productVariants, userData)
                                                                                     if (createVariant) {
+                                                                                        console.log("productDetails", productDetails);
+
                                                                                         if (attributeData && attributeData.length > 0) {
                                                                                             for await (const attribute of attributeData) {
                                                                                                 const attributeValues = {
