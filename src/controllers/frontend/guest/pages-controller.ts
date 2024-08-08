@@ -48,9 +48,22 @@ class PageController extends BaseController {
                         blockReference: pageSlug,
                         query,
                     });
+                    let shipmentDetails = null;
+                    if (pageSlug === blockReferences.shipmentAndDeliveryPolicy) {
+                        shipmentDetails = await WebsiteSetupModel.findOne({
+                            block: websiteSetupObjects.basicSettings,
+                            blockReference: blockReferences.shipmentSettings
+                        });
+                        if (shipmentDetails && shipmentDetails.blockValues) {
+                            shipmentDetails = shipmentDetails.blockValues
+                        }
+                    }
 
                     return controller.sendSuccessResponse(res, {
-                        requestedData: websiteSetup,
+                        requestedData: {
+                            ...websiteSetup,
+                            ...(shipmentDetails ? { shipmentDetails } : {})
+                        },
                         message: 'Success!'
                     }, 200);
                 } else {

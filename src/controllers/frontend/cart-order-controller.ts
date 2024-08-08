@@ -347,14 +347,14 @@ class CartController extends BaseController {
                     if (productVariantData.quantity < quantityProduct) {
                         return controller.sendErrorResponse(res, 200, {
                             message: 'Validation error',
-                            validation: "The quantity of the product exceeds the available stock."
+                            validation: "Reached maximum quantity"
                         });
                     }
                     if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
                         if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) < quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
                                 message: 'Validation error',
-                                validation: `Cart minimum quantity is ${productVariantData.cartMinQuantity} and Cart maximum quantity ${productVariantData.cartMaxQuantity}`
+                                validation: `Reached maximum quantity`
                             });
                         }
                     }

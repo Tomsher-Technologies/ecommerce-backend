@@ -53,7 +53,7 @@ class PagesService {
         else if (blockReference === website_setup_1.blockReferences.contactUs) {
             pipeline.push(pages_config_1.pageContsctUsAddFieldsStage);
         }
-        else if ((blockReference === website_setup_1.blockReferences.termsAndConditions) || (blockReference === website_setup_1.blockReferences.privacyAndPolicy)) {
+        else if ((blockReference === website_setup_1.blockReferences.termsAndConditions) || (blockReference === website_setup_1.blockReferences.privacyAndPolicy) || (blockReference === website_setup_1.blockReferences.returnAndPolicy) || (blockReference === website_setup_1.blockReferences.shipmentAndDeliveryPolicy)) {
             pipeline.push(pages_config_1.pageTermsAndPrivacyAddFieldsStage);
         }
         else if (blockReference === website_setup_1.blockReferences.aboutUs) {

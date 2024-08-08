@@ -32,15 +32,15 @@ class ProductService {
             finalSort = defaultSort;
         }
         // const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
-        if (discount) {
-            const discountArray = await discount.split(",");
-            console.log("discount", discountArray);
-            for await (let discount of discountArray) {
-                // const discountSplitArray: any = await discount.split("=")
-                // console.log("discountSplitArray", discountSplitArray);
-                // const discountOffer = await CommonService.findOffers(offers, hostName)
-            }
-        }
+        // if (discount) {
+        //     const discountArray: any = await discount.split(",")
+        //     console.log("discount", discount);
+        //     for await (let discount of discountArray) {
+        //         // const discountSplitArray: any = await discount.split("=")
+        //         // console.log("discountSplitArray", discountSplitArray);
+        //         // const discountOffer = await CommonService.findOffers(offers, hostName)
+        //     }
+        // }
         const variantLookupMatch = {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
@@ -156,7 +156,7 @@ class ProductService {
             }
         }
         pipeline.push(product_config_1.productProject);
-        if ((sort && sort.price) || (minprice || maxprice)) {
+        if ((sort && sort.price) || (minprice || maxprice) || discount) {
             pipeline.push({
                 $addFields: {
                     selectedVariant: {
@@ -276,6 +276,24 @@ class ProductService {
             else {
                 pipeline.push({ $sort: { discountedPrice: -1 } });
             }
+            if (discount) {
+                pipeline.push({
+                    $addFields: {
+                        discountPercentage: {
+                            $cond: {
+                                if: { $gt: [{ $ifNull: [{ $arrayElemAt: ["$productVariants.price", 0] }, 0] }, 0] },
+                                then: {
+                                    $multiply: [
+                                        { $divide: [{ $subtract: [{ $arrayElemAt: ["$productVariants.price", 0] }, "$discountedPrice"] }, { $arrayElemAt: ["$productVariants.price", 0] }] },
+                                        100
+                                    ]
+                                },
+                                else: 0
+                            }
+                        }
+                    }
+                });
+            }
         }
         if (minprice || maxprice) {
             const priceFilter = {};
@@ -288,6 +306,13 @@ class ProductService {
             pipeline.push({
                 $match: {
                     discountedPrice: priceFilter
+                }
+            });
+        }
+        if (discount) {
+            pipeline.push({
+                $match: {
+                    discountPercentage: { $gt: Number(discount) }
                 }
             });
         }

@@ -26,7 +26,6 @@ class CategoryService {
             return categoryData
         }
         const categoryData: any = await CategoryModel.aggregate([matchPipeline]).exec();
-        console.log('getAllCategory', query);
 
         if (getAllCategory === '1') {
             return categoryData
