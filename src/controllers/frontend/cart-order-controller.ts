@@ -111,7 +111,7 @@ class CartController extends BaseController {
                                             totalGiftWrapAmount: cartMergeDetails.totalGiftWrapAmount,
                                             totalDiscountAmount: cartMergeDetails.totalDiscountAmount,
                                             totalShippingAmount: finalShippingCharge,
-                                            totalAmount: (cartMergeDetails.totalAmount + finalShippingCharge)// Total amount excluding shipping
+                                            totalAmount: (cartMergeDetails.totalAmount + finalShippingCharge)
                                         }
                                     },
                                     { upsert: true }
@@ -122,39 +122,6 @@ class CartController extends BaseController {
                                     await CartOrderProductsModel.deleteMany({ cartId: guestUserCart._id });
                                 }
                             }
-                            // if (updateCartProduct) {
-                            //     const cartMergeDetails: any = await CartOrdersModel.aggregate(cartOrderGroupSumAggregate(customerCart?._id, guestUserCart?._id));
-                            //     if (cartMergeDetails.length > 0) {
-                            //         const bulkOps = [];
-                            //         const mergedData = cartMergeDetails[0];
-                            //         const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: country })
-                            //         const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
-                            //         const finalShippingCharge = shippingCharge > 0 ? ((mergedData.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
-                            //         bulkOps.push({
-                            //             updateOne: {
-                            //                 filter: { _id: customerCart?._id },
-                            //                 update: {
-                            //                     $set: {
-                            //                         totalProductOriginalPrice: mergedData.totalProductOriginalPrice,
-                            //                         totalProductAmount: mergedData.totalProductAmount,
-                            //                         totalGiftWrapAmount: mergedData.totalGiftWrapAmount,
-                            //                         totalDiscountAmount: mergedData.totalDiscountAmount,
-                            //                         totalShippingAmount: finalShippingCharge,
-                            //                         totalAmount: (Number(mergedData.totalAmount) + Number(guestUserCart.totalShippingAmount))
-                            //                     }
-                            //                 },
-                            //                 upsert: true
-                            //             }
-                            //         });
-                            //         if (bulkOps.length > 0) {
-                            //             await CartOrdersModel.bulkWrite(bulkOps);
-                            //             const deleteGuestCart = await CartOrdersModel.findOneAndDelete(guestUserCart._id);
-                            //             if (deleteGuestCart) {
-                            //                 await CartOrderProductsModel.deleteMany({ cartId: guestUserCart._id })
-                            //             }
-                            //         }
-                            //     }
-                            // }
                         }
                     }
                 }

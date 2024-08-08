@@ -383,6 +383,7 @@ const cartOrderProductsGroupSumAggregate = (customerCart, guestUserCartId) => {
                 },
                 cartId: { $first: "$cartId" },
                 slug: { $first: "$slug" },
+                productId: { $first: "$productId" },
                 quantity: { $sum: "$quantity" },
                 productOriginalPrice: { $sum: "$productOriginalPrice" },
                 productAmount: { $sum: "$productAmount" },
@@ -395,6 +396,7 @@ const cartOrderProductsGroupSumAggregate = (customerCart, guestUserCartId) => {
             $group: {
                 _id: "$_id.variantId",
                 cartId: { $first: "$cartId" },
+                productId: { $first: "$productId" },
                 slug: { $first: "$slug" },
                 quantity: { $sum: "$quantity" },
                 productOriginalPrice: { $sum: "$productOriginalPrice" },
@@ -408,6 +410,7 @@ const cartOrderProductsGroupSumAggregate = (customerCart, guestUserCartId) => {
             $project: {
                 _id: 0,
                 cartId: 1,
+                productId: 1,
                 variantId: "$_id",
                 slug: 1,
                 quantity: 1,

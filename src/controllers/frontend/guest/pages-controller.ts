@@ -1,21 +1,20 @@
 import { Request, Response, response } from 'express';
+import path from 'path';
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 
-import { CommonQueryParams } from '../../../utils/types/frontend/common';
 import { checkValueExists, formatZodError } from '../../../utils/helpers';
 import { blockReferences, websiteSetup, websiteSetup as websiteSetupObjects } from '../../../constants/website-setup';
 import { contactUsSchema } from '../../../utils/schemas/frontend/auth/contact-us-schema';
+import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
+import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
+import { newsletterSchema } from '../../../utils/schemas/frontend/auth/newsletter-schema';
 
 import BaseController from "../../admin/base-controller";
 import CommonService from '../../../services/frontend/guest/common-service';
 import PagesService from '../../../services/frontend/guest/pages-service';
 import ContactUsService from '../../../services/frontend/guest/contact-us-service';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
-import path from 'path';
-import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
-import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
-import { newsletterSchema } from '../../../utils/schemas/frontend/auth/newsletter-schema';
 import NewsletterService from '../../../services/frontend/guest/newsletter-service';
 import NewsletterModel from '../../../model/frontend/newsletter-model';
 
