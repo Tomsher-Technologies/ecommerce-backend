@@ -20,6 +20,8 @@ export const adminTaskLog = {
             termsAndConditions: 'terms-and-conditions',
             privacyAndPolicy: 'privacy-and-policy',
             contactUs: 'contact-us',
+            returnAndPolicy: 'return-and-policy',
+            shipmentAndDeliveryPolicy: 'shipment-and-delivery-policy',
         },
         galleryimages: 'galleryimages'
     },

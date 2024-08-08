@@ -43,8 +43,21 @@ class PageController extends base_controller_1.default {
                         blockReference: pageSlug,
                         query,
                     });
+                    let shipmentDetails = null;
+                    if (pageSlug === website_setup_1.blockReferences.shipmentAndDeliveryPolicy) {
+                        shipmentDetails = await website_setup_model_1.default.findOne({
+                            block: website_setup_1.websiteSetup.basicSettings,
+                            blockReference: website_setup_1.blockReferences.shipmentSettings
+                        });
+                        if (shipmentDetails && shipmentDetails.blockValues) {
+                            shipmentDetails = shipmentDetails.blockValues;
+                        }
+                    }
                     return controller.sendSuccessResponse(res, {
-                        requestedData: websiteSetup,
+                        requestedData: {
+                            ...websiteSetup,
+                            ...(shipmentDetails ? { shipmentDetails } : {})
+                        },
                         message: 'Success!'
                     }, 200);
                 }

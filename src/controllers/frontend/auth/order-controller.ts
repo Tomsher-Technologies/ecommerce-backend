@@ -235,7 +235,7 @@ class OrderController extends BaseController {
                 if (orderList && orderList.length > 0) {
                     return controller.sendSuccessResponse(res, {
                         requestedData: orderList[0],
-                        message: 'Order product statuses and quantities updated successfully!'
+                        message: shouldUpdateTotalProductAmount ? 'Order product statuses and quantities updated successfully!' : 'Order product return updated successfully!'
                     });
                 } else {
                     return controller.sendErrorResponse(res, 200, { message: 'Order not found' });
@@ -259,7 +259,7 @@ class OrderController extends BaseController {
             if (!cancelReason) {
                 return controller.sendErrorResponse(res, 200, { message: 'Cancel reason is required' });
             }
-            
+
             if (!customerId) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }

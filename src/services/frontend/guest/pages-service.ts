@@ -58,7 +58,7 @@ class PagesService {
             pipeline.push(pageHomeAddFieldsStage);
         } else if (blockReference === blockReferences.contactUs) {
             pipeline.push(pageContsctUsAddFieldsStage);
-        } else if ((blockReference === blockReferences.termsAndConditions) || (blockReference === blockReferences.privacyAndPolicy)) {
+        } else if ((blockReference === blockReferences.termsAndConditions) || (blockReference === blockReferences.privacyAndPolicy) || (blockReference === blockReferences.returnAndPolicy) || (blockReference === blockReferences.shipmentAndDeliveryPolicy)) {
             pipeline.push(pageTermsAndPrivacyAddFieldsStage);
         } else if (blockReference === blockReferences.aboutUs) {
             pipeline.push(pageAboutUsAddFieldsStage);

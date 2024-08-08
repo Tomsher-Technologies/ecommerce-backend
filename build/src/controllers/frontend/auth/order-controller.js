@@ -223,7 +223,7 @@ class OrderController extends base_controller_1.default {
                 if (orderList && orderList.length > 0) {
                     return controller.sendSuccessResponse(res, {
                         requestedData: orderList[0],
-                        message: 'Order product statuses and quantities updated successfully!'
+                        message: shouldUpdateTotalProductAmount ? 'Order product statuses and quantities updated successfully!' : 'Order product return updated successfully!'
                     });
                 }
                 else {
