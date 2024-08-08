@@ -24,6 +24,9 @@ exports.blockReferences = {
     privacyAndPolicy: 'privacy-and-policy',
     returnAndPolicy: 'return-and-policy',
     shipmentAndDeliveryPolicy: 'shipment-and-delivery-policy',
+    corporateEnquiry: 'corporate-enquiry',
+    warrantyAndRepairs: 'warranty-and-repairs',
+    watchCare: 'watch-care',
     contactUs: 'contact-us',
     aboutUs: 'about-us',
 };
