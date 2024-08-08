@@ -200,7 +200,13 @@
       </div>
     </div>
 
-    <div class="title">TAX INVOICE </div>
+    <div class="title">
+      <% if (orderDetails.country.countrySubDomain !== 'kw' && orderDetails.country.countrySubDomain !== 'qa') { %>
+        TAX INVOICE
+      <% } else { %>
+        INVOICE
+      <% } %>
+    </div>
 
     <div class="row">
       <div class="column">
@@ -391,7 +397,7 @@
                           <% } %>
 
                             <tr class="summary-row">
-                              <td colspan="5" class="text-right-cell">Total (Inclusive of <%= (tax && tax.taxTitle) ? tax.taxTitle : 'Tax' %>)</td>
+                              <td colspan="5" class="text-right-cell">Total <% if (tax && tax.taxTitle) { %>(Inclusive of <%=tax.taxTitle%>)<% } %></td>
                               <td class="text-right-cell">
                                 <%=currencyCode %>
                                   <%= orderDetails.totalAmount %>
