@@ -67,6 +67,9 @@ const websiteSetupSchema = new mongoose_1.Schema({
             website_setup_1.blockReferences.privacyAndPolicy,
             website_setup_1.blockReferences.returnAndPolicy,
             website_setup_1.blockReferences.shipmentAndDeliveryPolicy,
+            website_setup_1.blockReferences.corporateEnquiry,
+            website_setup_1.blockReferences.warrantyAndRepairs,
+            website_setup_1.blockReferences.watchCare,
             website_setup_1.blockReferences.contactUs,
             website_setup_1.blockReferences.aboutUs
         ],
