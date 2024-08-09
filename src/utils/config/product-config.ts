@@ -126,20 +126,20 @@ export const productSpecificationLookup = [
                 {
                     $unwind: "$specificationDetail"
                 },
-                {
-                    $group: {
-                        _id: {
-                            productId: "$productId",
-                            specificationId: "$specificationId"
-                        },
-                        variantId: { $first: "$variantId" },
-                        specificationTitle: { $first: "$specification.specificationTitle" },
-                        specificationDisplayName: { $first: "$specification.specificationDisplayName" },
-                        enableTab: { $first: "$specification.enableTab" },
-                        slug: { $first: "$specification.slug" },
-                        specificationDetails: { $push: "$specificationDetail" }
-                    }
-                },
+                // {
+                //     $group: {
+                //         _id: {
+                //             productId: "$productId",
+                //             specificationId: "$specificationId"
+                //         },
+                //         variantId: { $first: "$variantId" },
+                //         specificationTitle: { $first: "$specification.specificationTitle" },
+                //         specificationDisplayName: { $first: "$specification.specificationDisplayName" },
+                //         enableTab: { $first: "$specification.enableTab" },
+                //         slug: { $first: "$specification.slug" },
+                //         specificationDetails: { $push: "$specificationDetail" }
+                //     }
+                // },
                 {
                     $project: {
                         _id: 1,
