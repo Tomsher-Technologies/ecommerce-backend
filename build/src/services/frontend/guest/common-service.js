@@ -86,7 +86,7 @@ class CommonService {
             pipeline.push(paymentMethodLookupWithLanguage);
             pipeline.push(payment_method_config_1.paymentMethodlanguageFieldsReplace);
         }
-        pipeline.push(payment_method_config_1.customPaymentMethodProject);
+        pipeline.push(payment_method_config_1.paymentMethodProject);
         pipeline.push(payment_method_config_1.paymentMethodFinalProject);
         return payment_methods_model_1.default.aggregate(pipeline).exec();
     }

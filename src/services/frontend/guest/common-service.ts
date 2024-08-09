@@ -14,7 +14,7 @@ import { offers } from '../../../constants/offers';
 import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
 import { blockReferences, websiteSetup } from "../../../constants/website-setup";
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
-import { customPaymentMethodProject, paymentMethodFinalProject, paymentMethodLookup, paymentMethodlanguageFieldsReplace } from "../../../utils/config/payment-method-config";
+import { paymentMethodProject, paymentMethodFinalProject, paymentMethodLookup, paymentMethodlanguageFieldsReplace } from "../../../utils/config/payment-method-config";
 
 import SliderModel, { SliderProps } from "../../../model/admin/ecommerce/slider-model";
 import CountryModel, { CountryProps } from "../../../model/admin/setup/country-model";
@@ -90,7 +90,7 @@ class CommonService {
             pipeline.push(paymentMethodlanguageFieldsReplace);
         }
 
-        pipeline.push(customPaymentMethodProject);
+        pipeline.push(paymentMethodProject);
 
         pipeline.push(paymentMethodFinalProject);
 

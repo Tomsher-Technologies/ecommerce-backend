@@ -27,6 +27,7 @@ export const blockReferences = {
     corporateEnquiry: 'corporate-enquiry',
     warrantyAndRepairs: 'warranty-and-repairs',
     watchCare: 'watch-care',
+    termsOfSale:'terms-of-sale',
     contactUs: 'contact-us',
     aboutUs: 'about-us',
 }
