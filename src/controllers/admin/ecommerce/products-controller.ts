@@ -23,10 +23,8 @@ import SeoPageService from '../../../services/admin/seo-page-service';
 import CountryService from '../../../services/admin/setup/country-service'
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
-import ProductsModel1 from '../../../model/admin/ecommerce/product-excel-validation-model';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service';
 import { filterProduct, defaultSLugAndSkuSettings, deleteFunction } from '../../../utils/admin/products';
-import { uploadImageFromUrl } from '../../../utils/helpers';
 import SpecificationService from '../../../services/admin/ecommerce/specification-service';
 import { products } from "../../../constants/admin/excel/products";
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';

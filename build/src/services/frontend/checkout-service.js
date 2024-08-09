@@ -169,7 +169,7 @@ class CheckoutService {
                         const productCategoryDetails = await product_category_link_model_1.default.find({ productId: { $in: productIds } });
                         const categoryIds = productCategoryDetails.map((product) => product.categoryId);
                         categoryIds.map(async (product) => {
-                            if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
                                 totalAmount += product.productAmount;
                             }
                         });
