@@ -176,7 +176,7 @@ class CheckoutService {
                         const productCategoryDetails = await ProductCategoryLinkModel.find({ productId: { $in: productIds } });
                         const categoryIds = productCategoryDetails.map((product: any) => product.categoryId);
                         categoryIds.map(async (product: any) => {
-                            if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
+                            if (couponDetails?.couponApplyValues.includes((product.productId))) {
                                 totalAmount += product.productAmount
                             }
                         });
@@ -326,7 +326,7 @@ class CheckoutService {
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
                     const taDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
-                
+
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,
@@ -359,7 +359,7 @@ class CheckoutService {
                         appUrls,
                         storeEmail: basicDetailsSettings?.storeEmail,
                         storePhone: basicDetailsSettings?.storePhone,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, {wordwrap: 130}),
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130 }),
                         products: cartProducts,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
