@@ -205,14 +205,14 @@ class OrdersController extends BaseController {
                     message: 'Success!'
                 }, 200);
             } else {
-                const orders: any = await OrderService.orderListExcelExport({
+                const orderData: any = await OrderService.orderListExcelExport({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
                     query,
                     sort
                 });
-                if (orders && orders.length > 0) {
-                    await exportOrderReport(res, orders)
+                if (orderData[0].orders && orderData[0].orders.length > 0) {
+                    await exportOrderReport(res, orderData[0].orders, orderData[0])
                 } else {
                     return controller.sendErrorResponse(res, 200, { message: 'Order Data not found' });
                 }
@@ -1048,6 +1048,8 @@ class OrdersController extends BaseController {
                 const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].country._id }, 'currencyCode')
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
+                // console.log("fgfdgfd", orderDetails[0].products[0].productDetails);
+                console.log("555555555555", orderDetails[0].country.countrySubDomain, orderDetails[0].country.countrySubDomain !== 'qa');
 
                 ejs.renderFile(path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
                     {
