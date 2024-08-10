@@ -36,62 +36,58 @@ const exportCustomerReport = async (res, customerData) => {
     await (0, excel_generator_1.generateExcelFile)(res, customersData, ['id', 'name', 'phone', 'email', 'guestEmail', 'isVerified', 'lastOrderDate', ...addressColumns, 'created_date', 'fromGuest', 'addressBook', 'credits', 'orderTotalAmount', 'totalOrderCount'], 'Customers');
 };
 exports.exportCustomerReport = exportCustomerReport;
-const exportOrderReport = async (res, orderData) => {
+const exportOrderReport = async (res, orderData, orderSum) => {
     const ordersData = orderData.map((order) => {
         const categoryTitles = order.productsDetails.productCategory.map((cat) => cat.category.categoryTitle).join(', ');
         return {
-            id: order._id.toString(),
-            orderId: order.cartDetails.orderId,
-            brand: order.productsDetails.brand.brandTitle,
-            orderComments: order.cartDetails.orderComments,
-            productTitle: order.productsDetails.productvariants.extraProductTitle ? order.productsDetails.productvariants.extraProductTitle : order.productsDetails.productTitle,
-            sku: order.productsDetails.productvariants.variantSku,
-            quantity: order.quantity,
-            mrp: order.productsDetails.productvariants.price,
-            subtotal: order.productAmount,
-            totalWithCancel: order.returnedProductAmount > 0 ? (order.productAmount - order.returnedProductAmount) : 0,
-            category: categoryTitles,
-            createdAt: order.orderProductStatus === '1' ? order.orderProductStatusAt : null,
-            status: cart_1.orderProductStatusMap[order.orderProductStatus].label,
-            deliveredAt: order.orderProductStatus === '5' ? order.orderProductStatusAt : null,
-            billingName: order.billingAddress.name,
-            shippingName: order.shippingAddress.name,
-            paymentMethod: order.paymentMethod.paymentMethodTitle,
-            shippingAddress: JSON.stringify(order.shippingAddress),
-            shippingPhone: order.shippingAddress.phoneNumber,
-            billingAddress: JSON.stringify(order.billingAddress),
-            billingPhone: order.billingAddress.phoneNumber,
+            Id: order._id.toString(),
+            'Order Id': order.cartDetails.orderId,
+            Brand: order.productsDetails.brand.brandTitle,
+            Category: categoryTitles,
+            'Delivery instructions': order.cartDetails.orderComments,
+            'Product Title': order.productsDetails.productvariants.extraProductTitle ? order.productsDetails.productvariants.extraProductTitle : order.productsDetails.productTitle,
+            SKU: order.productsDetails.productvariants.variantSku,
+            Quantity: order.quantity,
+            MRP: order.productsDetails.productvariants.price,
+            'Discount Amount': order.productDiscountAmount,
+            'Sub Total': order.productAmount,
+            'Total With Cancel': order.returnedProductAmount > 0 ? (order.productAmount - order.returnedProductAmount) : 0,
+            'Created At': order.orderProductStatus === '1' ? order.orderProductStatusAt : null,
+            Status: order.orderProductStatus ? cart_1.orderProductStatusMap[order.orderProductStatus].label : null,
+            'Delivered At': order.orderProductStatus === '5' ? order.orderProductStatusAt : null,
+            'Billing Name': order.billingAddress.name,
+            'Shipping Name': order.shippingAddress.name,
+            'Payment Method': order.paymentMethod.paymentMethodTitle,
+            'Shipping Address': JSON.stringify(order.shippingAddress),
+            'Shipping Phone': order.shippingAddress.phoneNumber,
+            'Billing Address': JSON.stringify(order.billingAddress),
+            'Billing Phone': order.billingAddress.phoneNumber,
         };
     });
-    const totals = ordersData.reduce((acc, order) => {
-        acc.subtotal += order.subtotal;
-        acc.quantity += order.quantity;
-        acc.mrp += order.mrp;
-        return acc;
-    }, { subtotal: 0, quantity: 0, mrp: 0 });
     ordersData.push({
-        id: 'Total',
-        orderId: '',
-        brand: '',
-        orderComments: '',
-        productTitle: '',
-        sku: '',
-        quantity: totals.quantity,
-        mrp: totals.mrp,
-        subtotal: totals.subtotal,
-        totalWithCancel: '',
-        category: '',
-        createdAt: '',
-        status: '',
-        deliveredAt: '',
-        billingName: '',
-        shippingName: '',
-        paymentMethod: '',
-        shippingAddress: '',
-        shippingPhone: '',
-        billingAddress: '',
-        billingPhone: '',
+        Id: 'Total',
+        'Order Id': '',
+        Brand: '',
+        Category: '',
+        'Delivery instructions': '',
+        'Product Title': '',
+        SKU: '',
+        Quantity: orderSum.totalQuantity,
+        MRP: orderSum.totalMRP,
+        'Discount Amount': orderSum.totalDiscountAmount,
+        'Sub Total': orderSum.totalSubtotal,
+        'Total With Cancel': '',
+        'Created At': '',
+        Status: '',
+        'Delivered At': '',
+        'Billing Name': '',
+        'Shipping Name': '',
+        'Payment Method': '',
+        'Shipping Address': '',
+        'Shipping Phone': '',
+        'Billing Address': '',
+        'Billing Phone': '',
     });
-    await (0, excel_generator_1.generateExcelFile)(res, ordersData, ['id', 'orderId', 'brand', 'orderComments', 'productTitle', 'sku', 'mrp', 'category', 'createdAt', 'deliveredAt'], 'Orders');
+    await (0, excel_generator_1.generateExcelFile)(res, ordersData, ['Id', 'Order Id', 'Brand', 'Category', 'Delivery instructions', 'Product Title', 'SKU', 'Quantity', 'MRP', 'Discount Amount', 'Sub Total', 'Total With Cancel', 'Created At', 'Status', 'Delivered At', 'Billing Name', 'Shipping Name', 'Payment Method', 'Shipping Address', 'Shipping Phone', 'Billing Address', 'Billing Phone'], 'Orders');
 };
 exports.exportOrderReport = exportOrderReport;
