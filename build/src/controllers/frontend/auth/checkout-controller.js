@@ -182,11 +182,13 @@ class CheckoutController extends base_controller_1.default {
                         if ((shippingChargeDetails.blockValues && shippingChargeDetails.blockValues.shippingType) && (shippingChargeDetails.blockValues.shippingType === website_setup_1.shippingTypes[2])) {
                             const { internationalShippingCharge, internationalFreeShippingThreshold } = shippingChargeDetails.blockValues || null;
                             if (internationalShippingCharge && Number(internationalShippingCharge) > 0) {
-                                const finalShippingCharge = Number(internationalShippingCharge) > 0 ? ((cartDetails.totalProductAmount) - (Number(internationalFreeShippingThreshold)) > 0 ? 0 : internationalShippingCharge) : 0;
+                                const finalShippingCharge = Number(internationalFreeShippingThreshold) === 0 ? Number(internationalShippingCharge) : (Number(internationalShippingCharge) > 0 ?
+                                    ((Number(cartDetails.totalProductAmount) - Number(internationalFreeShippingThreshold)) > 0
+                                        ? 0 : Number(internationalShippingCharge)) : 0);
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
-                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + Number(finalShippingCharge)),
                                 };
                                 totalShippingAmount = finalShippingCharge;
                             }
