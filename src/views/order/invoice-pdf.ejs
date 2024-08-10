@@ -221,8 +221,8 @@
           <% } %>
       </div>
       <div class="column text-right">
-        <strong>Shipped To:</strong>
         <% if(orderDetails.shippingAddress) { %>
+        <strong>Shipped To:</strong>
           <p>
             <%= orderDetails.shippingAddress.name %><br>
               <%= orderDetails.shippingAddress.address1 %>,<br>
@@ -231,7 +231,18 @@
                       Phone No. - <%= orderDetails.shippingAddress.phoneNumber %>
           </p>
           <% } %>
-      </div>
+
+          <% if(orderDetails.pickupFromStore) { %>
+            <strong>Pickup store address:</strong>
+              <p>
+                <%= orderDetails.pickupFromStore.storeTitle %><br>
+                  <%= orderDetails.pickupFromStore.storeAddress %>,<br>
+                    <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,--> Email -<%= 
+                          orderDetails.pickupFromStore.storeEmail %><br>
+                          Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
+              </p>
+              <% } %>
+          </div>
     </div>
 
     <div class="row">
@@ -261,10 +272,13 @@
           </p>
           <% } else { %>
             <p>
+              <% if(orderDetails.shippingAddress!=null) { %>
               <%= orderDetails.shippingAddress.name %><br>
                 <%= orderDetails.shippingAddress.address1 %>,<br>
                   <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
                         orderDetails.shippingAddress.country %>
+                        <% } %>
+   
             </p>
             <% } %>
       </div>
@@ -314,7 +328,7 @@
               <%= product.productAmount.toFixed(2) %>
             </td>
             <td>
-              <%= product.quantity %>
+              <%= product.quantity %><% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %><% } %>
             </td>
             <td class="text-right-cell">
               <%= product.productAmount.toFixed(2) %>
@@ -363,11 +377,11 @@
                   <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
                   </td>
                 </tr> -->
-                <% if (tax && tax.taxPercentage> 0) { %>
+                <% if (tax && Number(tax.taxPercentage)> 0) { %>
                   <tr class="summary-row">
                     <td colspan="5" class="text-right-cell">
                       <%=tax.taxTitle%>
-                        <%=tax.taxPercentage.toFixed(2)%>%
+                        <%=tax.taxPercentage%>%
                     </td>
                     <td class="text-right-cell">
                       <%=currencyCode %>
