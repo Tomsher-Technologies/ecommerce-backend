@@ -784,7 +784,7 @@ class ProductsController extends BaseController {
                                                                                 } else {
                                                                                     const updateProduct = await ProductVariantService.update(variantDetails._id, productVariants);
                                                                                     const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
-                                                                                    if (existingAttributes.length !== attributeData.length) {
+                                                                                    // if (existingAttributes.length !== attributeData.length) {
                                                                                         await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
                                                                                         for (const attribute of attributeData) {
                                                                                             const attributeValues = {
@@ -794,15 +794,15 @@ class ProductsController extends BaseController {
                                                                                             };
                                                                                             await ProductVariantAttributeService.create(attributeValues);
                                                                                         }
-                                                                                    } else {
-                                                                                        for (const attribute of attributeData) {
-                                                                                            const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                                { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                                { ...attribute, productId: createProduct._id },
-                                                                                                { new: true, useFindAndModify: false }
-                                                                                            );
-                                                                                        }
-                                                                                    }
+                                                                                    // } else {
+                                                                                    //     for (const attribute of attributeData) {
+                                                                                    //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
+                                                                                    //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
+                                                                                    //             { ...attribute, productId: createProduct._id },
+                                                                                    //             { new: true, useFindAndModify: false }
+                                                                                    //         );
+                                                                                    //     }
+                                                                                    // }
                                                                                 }
 
                                                                             }
@@ -862,7 +862,7 @@ class ProductsController extends BaseController {
                                                                                         }
                                                                                     }
                                                                                     const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
-                                                                                    if (existingAttributes.length !== attributeData.length) {
+                                                                                    // if (existingAttributes.length !== attributeData.length) {
                                                                                         await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
                                                                                         for (const attribute of attributeData) {
                                                                                             const attributeValues = {
@@ -872,15 +872,15 @@ class ProductsController extends BaseController {
                                                                                             };
                                                                                             await ProductVariantAttributeService.create(attributeValues);
                                                                                         }
-                                                                                    } else {
-                                                                                        for (const attribute of attributeData) {
-                                                                                            const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                                { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                                { ...attribute, productId: productDetails._id },
-                                                                                                { new: true, useFindAndModify: false }
-                                                                                            );
-                                                                                        }
-                                                                                    }
+                                                                                    // } else {
+                                                                                    //     for (const attribute of attributeData) {
+                                                                                    //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
+                                                                                    //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
+                                                                                    //             { ...attribute, productId: productDetails._id },
+                                                                                    //             { new: true, useFindAndModify: false }
+                                                                                    //         );
+                                                                                    //     }
+                                                                                    // }
 
                                                                                     if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
                                                                                         const newSeo = await SeoPageService.create({
@@ -994,7 +994,7 @@ class ProductsController extends BaseController {
                                                                                         }
                                                                                         const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
 
-                                                                                        if (existingAttributes.length !== attributeData.length) {
+                                                                                        // if (existingAttributes.length !== attributeData.length) {
                                                                                             await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
                                                                                             for (const attribute of attributeData) {
                                                                                                 const attributeValues = {
@@ -1005,19 +1005,19 @@ class ProductsController extends BaseController {
                                                                                                 };
                                                                                                 await ProductVariantAttributeService.create(attributeValues);
                                                                                             }
-                                                                                        } else {
-                                                                                            for (const attribute of attributeData) {
-                                                                                                const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                                    { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                                    {
-                                                                                                        attributeId: attribute.attributeId,
-                                                                                                        attributeDetailId: attribute.attributeDetailId,
-                                                                                                        productId: updateProduct.productId
-                                                                                                    },
-                                                                                                    { new: true, useFindAndModify: false }
-                                                                                                );
-                                                                                            }
-                                                                                        }
+                                                                                        // } else {
+                                                                                        //     for (const attribute of attributeData) {
+                                                                                        //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
+                                                                                        //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
+                                                                                        //             {
+                                                                                        //                 attributeId: attribute.attributeId,
+                                                                                        //                 attributeDetailId: attribute.attributeDetailId,
+                                                                                        //                 productId: updateProduct.productId
+                                                                                        //             },
+                                                                                        //             { new: true, useFindAndModify: false }
+                                                                                        //         );
+                                                                                        //     }
+                                                                                        // }
                                                                                         await ProductSpecificationModel.deleteMany({ variantId: variantDetails._id });
 
                                                                                         if (specificationData && specificationData.length > 0) {
