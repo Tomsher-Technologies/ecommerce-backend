@@ -412,12 +412,16 @@ class ProductsController extends base_controller_1.default {
                                     });
                                 }
                                 else {
-                                    isProductVariantUpdate = true;
                                     const updateVariantData = {};
                                     let updateComment = [];
                                     if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) >= 0) {
-                                        updateVariantData.price = Number(productPriceData.ProductPrice);
-                                        updateComment.push(`Price updated to ${updateVariantData.price}`);
+                                        if (productVariantDetails && productVariantDetails.discountPrice !== undefined && Number(productPriceData.ProductPrice) <= Number(productVariantDetails.discountPrice)) {
+                                            fieldsErrors.push(`ProductPrice should be greater than the existing DiscountPrice (VariantSku: ${variantSku})`);
+                                        }
+                                        else {
+                                            updateVariantData.price = Number(productPriceData.ProductPrice);
+                                            updateComment.push(`Price updated to ${updateVariantData.price}`);
+                                        }
                                     }
                                     else if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) < 0) {
                                         fieldsErrors.push(`ProductPrice should be greater than or equal to 0 (VariantSku: ${variantSku})`);
@@ -456,10 +460,12 @@ class ProductsController extends base_controller_1.default {
                                             activityStatus: task_log_1.adminTaskLogStatus.success
                                         };
                                         await general_service_1.default.taskLog({ ...updateTaskLogs, userId: userData._id });
+                                        isProductVariantUpdate = true;
                                     }
                                 }
                                 excelRowIndex++;
                             }
+                            console.log('productVariantPriceQuantityUpdationErrorMessage', productVariantPriceQuantityUpdationErrorMessage);
                             if (!isProductVariantUpdate) {
                                 return controller.sendErrorResponse(res, 200, {
                                     message: "Validation failed for the following rows",
@@ -492,6 +498,17 @@ class ProductsController extends base_controller_1.default {
         else {
             return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
         }
+    }
+    async sapUpdateProductPriceAndQuantity(req, res) {
+        // const productVariantPriceQuantityUpdationErrorMessage: any = []
+        // var excelRowIndex = 2
+        // let isProductVariantUpdate = false
+        // const productPriceExcelJsonData = await xlsx.utils.sheet_to_json(productPriceWorksheet);
+        // if (productPriceExcelJsonData && productPriceExcelJsonData?.length > 0) {
+        //     let countryDataCache: any = {};
+        // } else {
+        //     return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+        // }
     }
     async importProductExcel(req, res) {
         const validation = [];

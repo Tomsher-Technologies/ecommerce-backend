@@ -467,13 +467,16 @@ class ProductsController extends BaseController {
                                         message: `Errors: ${fieldsErrors.join(', ')}`
                                     });
                                 } else {
-                                    isProductVariantUpdate = true;
                                     const updateVariantData: any = {};
                                     let updateComment: string[] = [];
 
                                     if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) >= 0) {
-                                        updateVariantData.price = Number(productPriceData.ProductPrice);
-                                        updateComment.push(`Price updated to ${updateVariantData.price}`);
+                                        if (productVariantDetails && productVariantDetails.discountPrice !== undefined && Number(productPriceData.ProductPrice) <= Number(productVariantDetails.discountPrice)) {
+                                            fieldsErrors.push(`ProductPrice should be greater than the existing DiscountPrice (VariantSku: ${variantSku})`);
+                                        } else {
+                                            updateVariantData.price = Number(productPriceData.ProductPrice);
+                                            updateComment.push(`Price updated to ${updateVariantData.price}`);
+                                        }
                                     } else if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) < 0) {
                                         fieldsErrors.push(`ProductPrice should be greater than or equal to 0 (VariantSku: ${variantSku})`);
                                     }
@@ -517,10 +520,13 @@ class ProductsController extends BaseController {
                                         };
 
                                         await GeneralService.taskLog({ ...updateTaskLogs, userId: userData._id });
+                                        isProductVariantUpdate = true;
                                     }
                                 }
                                 excelRowIndex++;
                             }
+                            console.log('productVariantPriceQuantityUpdationErrorMessage', productVariantPriceQuantityUpdationErrorMessage);
+
                             if (!isProductVariantUpdate) {
                                 return controller.sendErrorResponse(res, 200, {
                                     message: "Validation failed for the following rows",
@@ -528,7 +534,7 @@ class ProductsController extends BaseController {
                                 });
                             } else {
                                 return controller.sendSuccessResponse(res, {
-                                    productVariantPriceQuantityUpdationErrorMessage,
+                                    validation: productVariantPriceQuantityUpdationErrorMessage,
                                     message: `Product excel upload successfully completed. ${productVariantPriceQuantityUpdationErrorMessage.length > 0 ? 'Some Product updation are not completed' : ''}`
                                 }, 200);
                             }
@@ -547,6 +553,21 @@ class ProductsController extends BaseController {
         } else {
             return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
         }
+    }
+
+    async sapUpdateProductPriceAndQuantity(req: Request, res: Response): Promise<void> {
+        // const productVariantPriceQuantityUpdationErrorMessage: any = []
+        // var excelRowIndex = 2
+        // let isProductVariantUpdate = false
+
+        // const productPriceExcelJsonData = await xlsx.utils.sheet_to_json(productPriceWorksheet);
+
+        // if (productPriceExcelJsonData && productPriceExcelJsonData?.length > 0) {
+        //     let countryDataCache: any = {};
+
+        // } else {
+        //     return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+        // }
     }
 
     async importProductExcel(req: Request, res: Response): Promise<void> {
