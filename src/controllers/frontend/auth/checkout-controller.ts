@@ -133,7 +133,6 @@ class CheckoutController extends BaseController {
                         });
                     }
                 }
-            
                 let shippingAddressDetails: any = null
                 let paymentData = null;
                 let shippingChargeDetails: any = null;
@@ -158,7 +157,7 @@ class CheckoutController extends BaseController {
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
-                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                    totalAmount: ((parseInt(cartUpdate.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
                                 }
                                 totalShippingAmount = finalShippingCharge;
                             }
@@ -168,7 +167,7 @@ class CheckoutController extends BaseController {
                     cartUpdate = {
                         ...cartUpdate,
                         totalShippingAmount: 0,
-                        totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)),
+                        totalAmount: (parseInt(cartUpdate.totalAmount) - parseInt(totalShippingAmount)),
                     }
                     totalShippingAmount = 0;
                 } else if (shippingId !== '') {
@@ -184,7 +183,7 @@ class CheckoutController extends BaseController {
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
-                                    totalAmount: ((parseInt(cartDetails.totalAmount) - parseInt(totalShippingAmount)) + Number(finalShippingCharge)),
+                                    totalAmount: ((parseInt(cartUpdate.totalAmount) - parseInt(totalShippingAmount)) + Number(finalShippingCharge)),
                                 }
                                 totalShippingAmount = finalShippingCharge;
                             }

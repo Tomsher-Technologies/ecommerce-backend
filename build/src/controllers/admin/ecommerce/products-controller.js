@@ -493,6 +493,17 @@ class ProductsController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
         }
     }
+    async sapUpdateProductPriceAndQuantity(req, res) {
+        // const productVariantPriceQuantityUpdationErrorMessage: any = []
+        // var excelRowIndex = 2
+        // let isProductVariantUpdate = false
+        // const productPriceExcelJsonData = await xlsx.utils.sheet_to_json(productPriceWorksheet);
+        // if (productPriceExcelJsonData && productPriceExcelJsonData?.length > 0) {
+        //     let countryDataCache: any = {};
+        // } else {
+        //     return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+        // }
+    }
     async importProductExcel(req, res) {
         const validation = [];
         var index = 2;
