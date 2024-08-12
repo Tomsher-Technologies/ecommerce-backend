@@ -404,7 +404,7 @@ class ProductsController extends base_controller_1.default {
                                 if (fieldsErrors.length > 0) {
                                     isProductVariantUpdate = false;
                                     productVariantPriceQuantityUpdationErrorMessage.push({
-                                        row: excelRowIndex,
+                                        row: `Row: ${excelRowIndex}`,
                                         message: `Errors: ${fieldsErrors.join(', ')}`
                                     });
                                 }
