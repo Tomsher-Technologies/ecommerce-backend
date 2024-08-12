@@ -377,9 +377,7 @@ class ProductsController extends base_controller_1.default {
                                 if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) < 0) {
                                     fieldsErrors.push(`Quantity should be greater than or equal to 0 (VariantSku: ${variantSku})`);
                                 }
-                                if (productPriceData.ProductPrice === undefined &&
-                                    productPriceData.DiscountPrice === undefined &&
-                                    productPriceData.Quantity === undefined) {
+                                if (productPriceData.ProductPrice === undefined && productPriceData.DiscountPrice === undefined && productPriceData.Quantity === undefined) {
                                     fieldsErrors.push(`At least one field (ProductPrice, DiscountPrice, or Quantity) must be provided for update (VariantSku: ${variantSku})`);
                                 }
                                 let countryData = countryDataCache[productPriceData.Country];
@@ -401,6 +399,11 @@ class ProductsController extends base_controller_1.default {
                                         fieldsErrors.push(`Product variant not found for VariantSku: '${variantSku}' in the specified country.`);
                                     }
                                 }
+                                if (productPriceData.DiscountPrice !== undefined && productVariantDetails) {
+                                    if (Number(productPriceData.DiscountPrice) >= 0 && Number(productPriceData.DiscountPrice) >= Number(productVariantDetails.price)) {
+                                        fieldsErrors.push(`DiscountPrice should be less than existing ProductPrice (VariantSku: ${variantSku})`);
+                                    }
+                                }
                                 if (fieldsErrors.length > 0) {
                                     isProductVariantUpdate = false;
                                     productVariantPriceQuantityUpdationErrorMessage.push({
@@ -411,26 +414,49 @@ class ProductsController extends base_controller_1.default {
                                 else {
                                     isProductVariantUpdate = true;
                                     const updateVariantData = {};
-                                    if (productPriceData.ProductPrice !== undefined) {
+                                    let updateComment = [];
+                                    if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) >= 0) {
                                         updateVariantData.price = Number(productPriceData.ProductPrice);
+                                        updateComment.push(`Price updated to ${updateVariantData.price}`);
                                     }
-                                    if (productPriceData.DiscountPrice !== undefined) {
+                                    else if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) < 0) {
+                                        fieldsErrors.push(`ProductPrice should be greater than or equal to 0 (VariantSku: ${variantSku})`);
+                                    }
+                                    if (productPriceData.DiscountPrice !== undefined && Number(productPriceData.DiscountPrice) >= 0) {
                                         updateVariantData.discountPrice = Number(productPriceData.DiscountPrice);
+                                        updateComment.push(`Discount Price updated to ${updateVariantData.discountPrice}`);
                                     }
-                                    if (productPriceData.Quantity !== undefined) {
+                                    else if (productPriceData.DiscountPrice !== undefined && Number(productPriceData.DiscountPrice) < 0) {
+                                        fieldsErrors.push(`DiscountPrice should be greater than or equal to 0 (VariantSku: ${variantSku})`);
+                                    }
+                                    if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) >= 0) {
                                         updateVariantData.quantity = Number(productPriceData.Quantity);
+                                        updateComment.push(`Quantity updated to ${updateVariantData.quantity}`);
                                     }
-                                    await product_variants_model_1.default.findOneAndUpdate({ countryId: countryData._id, variantSku: variantSku }, { $set: updateVariantData }, { new: true });
-                                    const userData = res.locals.user;
-                                    const updateTaskLogs = {
-                                        userId: userData._id,
-                                        sourceFromId: productVariantDetails.productId,
-                                        sourceFromReferenceId: productVariantDetails._id,
-                                        sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
-                                        activity: task_log_1.adminTaskLogActivity.update,
-                                        activityStatus: task_log_1.adminTaskLogStatus.success
-                                    };
-                                    await general_service_1.default.taskLog({ ...updateTaskLogs, userId: userData._id });
+                                    else if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) < 0) {
+                                        fieldsErrors.push(`Quantity should be greater than or equal to 0 (VariantSku: ${variantSku})`);
+                                    }
+                                    if (fieldsErrors.length > 0) {
+                                        isProductVariantUpdate = false;
+                                        productVariantPriceQuantityUpdationErrorMessage.push({
+                                            row: `Row: ${excelRowIndex}`,
+                                            message: `Errors: ${fieldsErrors.join(', ')}`
+                                        });
+                                    }
+                                    else {
+                                        await product_variants_model_1.default.findOneAndUpdate({ countryId: countryData._id, variantSku: variantSku }, { $set: updateVariantData }, { new: true });
+                                        const userData = res.locals.user;
+                                        const updateTaskLogs = {
+                                            userId: userData._id,
+                                            sourceFromId: productVariantDetails.productId,
+                                            sourceFromReferenceId: productVariantDetails._id,
+                                            sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
+                                            activityComment: `Updated via Excel import: ${updateComment.join('; ')}`,
+                                            activity: task_log_1.adminTaskLogActivity.update,
+                                            activityStatus: task_log_1.adminTaskLogStatus.success
+                                        };
+                                        await general_service_1.default.taskLog({ ...updateTaskLogs, userId: userData._id });
+                                    }
                                 }
                                 excelRowIndex++;
                             }
