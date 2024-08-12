@@ -113,17 +113,14 @@ class CheckoutController extends base_controller_1.default {
                     totalAmount: cartDetails.totalAmount,
                     orderStatusAt: null,
                 };
-                if (!customerDetails?.isGuest && couponCode && deviceType) {
+                if (couponCode && deviceType) {
                     const query = {
                         countryId: countryData._id,
                         couponCode,
                     };
                     const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user: customerId, deviceType, uuid });
-                    if (couponDetails?.status) {
-                        cartUpdate = {
-                            ...cartUpdate,
-                            couponId: couponDetails?.requestedData._id,
-                        };
+                    if (couponDetails?.status && couponDetails.requestedData) {
+                        cartUpdate = await checkout_service_1.default.updateCouponCodeOrder(couponDetails.requestedData, cartDetails, cartUpdate);
                     }
                     else {
                         return controller.sendErrorResponse(res, 200, {
@@ -131,11 +128,6 @@ class CheckoutController extends base_controller_1.default {
                         });
                     }
                 }
-                cartUpdate = {
-                    ...cartUpdate,
-                    totalCouponAmount: 0,
-                    totalAmount: cartDetails.totalAmount,
-                };
                 let shippingAddressDetails = null;
                 let paymentData = null;
                 let shippingChargeDetails = null;

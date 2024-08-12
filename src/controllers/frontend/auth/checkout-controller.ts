@@ -119,29 +119,21 @@ class CheckoutController extends BaseController {
                     totalAmount: cartDetails.totalAmount,
                     orderStatusAt: null,
                 }
-                if (!customerDetails?.isGuest && couponCode && deviceType) {
+                if (couponCode && deviceType) {
                     const query = {
                         countryId: countryData._id,
                         couponCode,
                     } as any;
                     const couponDetails: any = await CouponService.checkCouponCode({ query, user: customerId, deviceType, uuid });
-                    if (couponDetails?.status) {
-                        cartUpdate = {
-                            ...cartUpdate,
-                            couponId: couponDetails?.requestedData._id,
-                        }
+                    if (couponDetails?.status && couponDetails.requestedData) {
+                        cartUpdate = await CheckoutService.updateCouponCodeOrder(couponDetails.requestedData, cartDetails, cartUpdate);
                     } else {
                         return controller.sendErrorResponse(res, 200, {
                             message: couponDetails?.message,
                         });
                     }
                 }
-
-                cartUpdate = {
-                    ...cartUpdate,
-                    totalCouponAmount: 0,
-                    totalAmount: cartDetails.totalAmount,
-                }
+            
                 let shippingAddressDetails: any = null
                 let paymentData = null;
                 let shippingChargeDetails: any = null;
