@@ -1,4 +1,7 @@
-export const products = [
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.excelProductVariantPriceAndQuantityRequiredColumn = exports.excelProductsRequiredColumn = void 0;
+exports.excelProductsRequiredColumn = [
     'Product_Title',
     'Description',
     'Long_Description',
@@ -34,5 +37,11 @@ export const products = [
     'Specification_Option_1',
     'Specification_Name_1',
     'Specification_Value_1',
-
-]
+];
+exports.excelProductVariantPriceAndQuantityRequiredColumn = [
+    'Country',
+    'VariantSku',
+    'ProductPrice',
+    'DiscountPrice',
+    'Quantity',
+];

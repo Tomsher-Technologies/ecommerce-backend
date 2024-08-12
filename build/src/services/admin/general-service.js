@@ -55,9 +55,11 @@ class GeneralService {
         if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
             const taskLogData = {
                 userId: taskLogs.userId,
-                sourceFromId: taskLogs.sourceFromId,
+                sourceFromId: taskLogs.sourceFromId || null,
+                sourceFromReferenceId: taskLogs.sourceFromReferenceId || null,
                 sourceFrom: taskLogs.sourceFrom,
                 activity: taskLogs.activity,
+                activityComment: taskLogs.activityComment || '',
                 activityStatus: taskLogs.activityStatus,
                 ipAddress: await this.getVisitorIP(),
                 createdAt: new Date()

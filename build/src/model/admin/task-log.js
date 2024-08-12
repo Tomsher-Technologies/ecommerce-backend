@@ -36,11 +36,19 @@ const adminTaskLogsSchema = new mongoose_1.Schema({
     },
     sourceFromId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        default: '',
+        required: true,
+    },
+    sourceFromReferenceId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        default: null,
     },
     activity: {
         type: String,
         required: true,
+    },
+    activityComment: {
+        type: String,
+        default: ''
     },
     activityStatus: {
         type: String,

@@ -24,9 +24,9 @@ import CountryService from '../../../services/admin/setup/country-service'
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service';
-import { filterProduct, defaultSLugAndSkuSettings, deleteFunction } from '../../../utils/admin/products';
+import { filterProduct, defaultSLugAndSkuSettings, deleteFunction, checkRequiredColumns } from '../../../utils/admin/products';
 import SpecificationService from '../../../services/admin/ecommerce/specification-service';
-import { products } from "../../../constants/admin/excel/products";
+import { excelProductVariantPriceAndQuantityRequiredColumn, excelProductsRequiredColumn } from "../../../constants/admin/products";
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import CountryModel from '../../../model/admin/setup/country-model';
 import WarehouseModel from '../../../model/admin/stores/warehouse-model';
@@ -396,6 +396,134 @@ class ProductsController extends BaseController {
         }
     }
 
+    async importProductPriceExcel(req: Request, res: Response): Promise<void> {
+        const productVariantPriceQuantityUpdationErrorMessage: any = []
+        var excelRowIndex = 2
+        let isProductVariantUpdate = false
+
+        if (req && req.file && req.file?.filename) {
+            const excelDatas = await xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
+            if (excelDatas && excelDatas.SheetNames[0]) {
+                const productPriceSheetName = excelDatas.SheetNames[0];
+                const productPriceWorksheet = excelDatas.Sheets[productPriceSheetName];
+                if (productPriceWorksheet) {
+                    const excelFirstRow = xlsx.utils.sheet_to_json(productPriceWorksheet, { header: 1 })[0];
+                    const missingVariantPriceAndQuantityColunm = await checkRequiredColumns(excelFirstRow, excelProductVariantPriceAndQuantityRequiredColumn);
+                    if (!missingVariantPriceAndQuantityColunm) {
+                        const productPriceExcelJsonData = await xlsx.utils.sheet_to_json(productPriceWorksheet);
+
+                        if (productPriceExcelJsonData && productPriceExcelJsonData?.length > 0) {
+                            let countryDataCache: any = {};
+                            for (let productPriceData of productPriceExcelJsonData) {
+                                let fieldsErrors = [];
+                                let variantSku = productPriceData.VariantSku ? productPriceData.VariantSku.trim() : 'Unknown SKU';
+
+                                if (!productPriceData.Country) fieldsErrors.push(`Country is required (VariantSku: ${variantSku})`);
+                                if (!variantSku) fieldsErrors.push(`VariantSku is required (Country: ${productPriceData.Country})`);
+
+                                if (productPriceData.ProductPrice !== undefined && productPriceData.DiscountPrice !== undefined) {
+                                    if (Number(productPriceData.ProductPrice) <= Number(productPriceData.DiscountPrice)) {
+                                        fieldsErrors.push(`ProductPrice should be greater than DiscountPrice (VariantSku: ${variantSku})`);
+                                    }
+                                }
+
+                                if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) < 0) {
+                                    fieldsErrors.push(`Quantity should be greater than or equal to 0 (VariantSku: ${variantSku})`);
+                                }
+
+                                if (
+                                    productPriceData.ProductPrice === undefined &&
+                                    productPriceData.DiscountPrice === undefined &&
+                                    productPriceData.Quantity === undefined
+                                ) {
+                                    fieldsErrors.push(`At least one field (ProductPrice, DiscountPrice, or Quantity) must be provided for update (VariantSku: ${variantSku})`);
+                                }
+
+                                let countryData = countryDataCache[productPriceData.Country];
+                                if (!countryData) {
+                                    countryData = await CountryService.findCountryId({
+                                        $or: [{ countryTitle: productPriceData.Country }, { countryShortTitle: productPriceData.Country }]
+                                    });
+                                    if (!countryData) {
+                                        fieldsErrors.push(`Country not found for '${productPriceData.Country}' (VariantSku: ${variantSku})`);
+                                    } else {
+                                        countryDataCache[productPriceData.Country] = countryData;
+                                    }
+                                }
+
+                                let productVariantDetails: any = null;
+                                if (variantSku) {
+                                    productVariantDetails = await ProductVariantsModel.findOne({ countryId: countryData._id, variantSku: variantSku });
+                                    if (!productVariantDetails) {
+                                        fieldsErrors.push(`Product variant not found for VariantSku: '${variantSku}' in the specified country.`);
+                                    }
+                                }
+
+                                if (fieldsErrors.length > 0) {
+                                    isProductVariantUpdate = false;
+                                    productVariantPriceQuantityUpdationErrorMessage.push({
+                                        row: excelRowIndex,
+                                        message: `Errors: ${fieldsErrors.join(', ')}`
+                                    });
+                                } else {
+                                    isProductVariantUpdate = true;
+                                    const updateVariantData: any = {};
+                                    if (productPriceData.ProductPrice !== undefined) {
+                                        updateVariantData.price = Number(productPriceData.ProductPrice);
+                                    }
+                                    if (productPriceData.DiscountPrice !== undefined) {
+                                        updateVariantData.discountPrice = Number(productPriceData.DiscountPrice);
+                                    }
+                                    if (productPriceData.Quantity !== undefined) {
+                                        updateVariantData.quantity = Number(productPriceData.Quantity);
+                                    }
+
+                                    await ProductVariantsModel.findOneAndUpdate(
+                                        { countryId: countryData._id, variantSku: variantSku },
+                                        { $set: updateVariantData },
+                                        { new: true }
+                                    );
+                                    const userData = res.locals.user
+                                    const updateTaskLogs = {
+                                        userId: userData._id,
+                                        sourceFromId: productVariantDetails.productId,
+                                        sourceFromReferenceId: productVariantDetails._id,
+                                        sourceFrom: adminTaskLog.ecommerce.products,
+                                        activity: adminTaskLogActivity.update,
+                                        activityStatus: adminTaskLogStatus.success
+                                    }
+                                    await GeneralService.taskLog({ ...updateTaskLogs, userId: userData._id })
+                                }
+                                excelRowIndex++;
+                            }
+                            if (!isProductVariantUpdate) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: "Validation failed for the following rows",
+                                    validation: productVariantPriceQuantityUpdationErrorMessage
+                                });
+                            } else {
+                                return controller.sendSuccessResponse(res, {
+                                    productVariantPriceQuantityUpdationErrorMessage,
+                                    message: `Product excel upload successfully completed. ${productVariantPriceQuantityUpdationErrorMessage.length > 0 ? 'Some Product updation are not completed' : ''}`
+                                }, 200);
+                            }
+                        } else {
+                            return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+                        }
+                    } else {
+                        return controller.sendErrorResponse(res, 200, { message: missingVariantPriceAndQuantityColunm + " coloumn must be included in the excel file" });
+                    }
+                } else {
+                    return controller.sendErrorResponse(res, 200, { message: "Product price worksheet not found!" });
+                }
+            } else {
+                return controller.sendErrorResponse(res, 200, { message: "Sheet names not found!" });
+            }
+        } else {
+            return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
+        }
+    }
+
     async importProductExcel(req: Request, res: Response): Promise<void> {
         const validation: any = []
         var index = 2
@@ -412,7 +540,7 @@ class ProductsController extends BaseController {
                     const worksheet = excelDatas.Sheets[sheetName];
 
                     const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
-                    const missingColunm = await ProductsService.checkRequiredColumns(firstRow, products)
+                    const missingColunm = await checkRequiredColumns(firstRow, excelProductsRequiredColumn)
 
                     if (!missingColunm) {
                         if (worksheet) {
@@ -785,15 +913,15 @@ class ProductsController extends BaseController {
                                                                                     const updateProduct = await ProductVariantService.update(variantDetails._id, productVariants);
                                                                                     const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
                                                                                     // if (existingAttributes.length !== attributeData.length) {
-                                                                                        await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                        for (const attribute of attributeData) {
-                                                                                            const attributeValues = {
-                                                                                                variantId: variantDetails._id,
-                                                                                                productId: createProduct._id,
-                                                                                                ...attribute
-                                                                                            };
-                                                                                            await ProductVariantAttributeService.create(attributeValues);
-                                                                                        }
+                                                                                    await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
+                                                                                    for (const attribute of attributeData) {
+                                                                                        const attributeValues = {
+                                                                                            variantId: variantDetails._id,
+                                                                                            productId: createProduct._id,
+                                                                                            ...attribute
+                                                                                        };
+                                                                                        await ProductVariantAttributeService.create(attributeValues);
+                                                                                    }
                                                                                     // } else {
                                                                                     //     for (const attribute of attributeData) {
                                                                                     //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
@@ -863,15 +991,15 @@ class ProductsController extends BaseController {
                                                                                     }
                                                                                     const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
                                                                                     // if (existingAttributes.length !== attributeData.length) {
-                                                                                        await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                        for (const attribute of attributeData) {
-                                                                                            const attributeValues = {
-                                                                                                variantId: variantDetails._id,
-                                                                                                productId: productDetails._id,
-                                                                                                ...attribute
-                                                                                            };
-                                                                                            await ProductVariantAttributeService.create(attributeValues);
-                                                                                        }
+                                                                                    await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
+                                                                                    for (const attribute of attributeData) {
+                                                                                        const attributeValues = {
+                                                                                            variantId: variantDetails._id,
+                                                                                            productId: productDetails._id,
+                                                                                            ...attribute
+                                                                                        };
+                                                                                        await ProductVariantAttributeService.create(attributeValues);
+                                                                                    }
                                                                                     // } else {
                                                                                     //     for (const attribute of attributeData) {
                                                                                     //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
@@ -995,16 +1123,16 @@ class ProductsController extends BaseController {
                                                                                         const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
 
                                                                                         // if (existingAttributes.length !== attributeData.length) {
-                                                                                            await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                            for (const attribute of attributeData) {
-                                                                                                const attributeValues = {
-                                                                                                    variantId: variantDetails._id,
-                                                                                                    productId: updateProduct.productId,
-                                                                                                    attributeId: attribute.attributeId,
-                                                                                                    attributeDetailId: attribute.attributeDetailId
-                                                                                                };
-                                                                                                await ProductVariantAttributeService.create(attributeValues);
-                                                                                            }
+                                                                                        await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
+                                                                                        for (const attribute of attributeData) {
+                                                                                            const attributeValues = {
+                                                                                                variantId: variantDetails._id,
+                                                                                                productId: updateProduct.productId,
+                                                                                                attributeId: attribute.attributeId,
+                                                                                                attributeDetailId: attribute.attributeDetailId
+                                                                                            };
+                                                                                            await ProductVariantAttributeService.create(attributeValues);
+                                                                                        }
                                                                                         // } else {
                                                                                         //     for (const attribute of attributeData) {
                                                                                         //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(

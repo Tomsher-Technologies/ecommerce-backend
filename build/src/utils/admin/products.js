@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFunction = exports.defaultSLugAndSkuSettings = exports.filterProduct = void 0;
+exports.checkRequiredColumns = exports.deleteFunction = exports.defaultSLugAndSkuSettings = exports.filterProduct = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const helpers_1 = require("../helpers");
 const collections_products_service_1 = __importDefault(require("../../services/admin/website/collections-products-service"));
@@ -23,11 +23,6 @@ const filterProduct = async (data, countryId) => {
             ...queryFilterIds,
             'productVariants.countryId': countryId
         };
-        // } else {
-        //     queryFilterIds = {
-        //         ...queryFilterIds,
-        //         'productVariants.countryId': new mongoose.Types.ObjectId(data.countryId)
-        //     }
     }
     if (data.status && data.status !== '') {
         query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };
@@ -228,3 +223,11 @@ const deleteFunction = async (productId) => {
     ]);
 };
 exports.deleteFunction = deleteFunction;
+const checkRequiredColumns = async (worksheet, requiredColumns) => {
+    for (let column of requiredColumns) {
+        if (!worksheet.includes(column)) {
+            return column;
+        }
+    }
+};
+exports.checkRequiredColumns = checkRequiredColumns;
