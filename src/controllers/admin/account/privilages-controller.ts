@@ -41,7 +41,7 @@ class PrivilagesController extends BaseController {
                     const privilages = await PrivilagesService.findOne(userTypeId);
                     const user = res.locals.user;
 
-                    let privilageData = {};
+                    let privilageData: any = {};
                     if (privilages) {// update new privilage based on user type
                         const updatedData = {
                             userTypeId,
@@ -63,7 +63,7 @@ class PrivilagesController extends BaseController {
                             createdBy: user._id,
                             createdAt: new Date()
                         };
-                        const updatedPrivilageData = await PrivilagesService.create(insertData);
+                        const updatedPrivilageData: any = await PrivilagesService.create(insertData);
 
                         privilageData = {
                             requestedData: updatedPrivilageData,
@@ -72,7 +72,7 @@ class PrivilagesController extends BaseController {
                     }
 
                     return controller.sendSuccessResponse(res, privilageData, 200, { // task log
-                        sourceFromId: '',
+                        sourceFromId: privilageData?.requestedData?._id || null,
                         sourceFrom: adminTaskLog.account.privilages,
                         activity: adminTaskLogActivity.managePrivilages,
                         activityStatus: adminTaskLogStatus.success

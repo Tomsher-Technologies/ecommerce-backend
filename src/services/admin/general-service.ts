@@ -3,10 +3,12 @@ import os from 'os';
 import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
 import AdminTaskLogModel from "../../model/admin/task-log";
 export interface AdminTaskLogProps {
-    sourceFromId: string;
+    sourceFromId: string | null;
+    sourceFromReferenceId?: string | null;
     sourceFrom: string;
     userId?: string;
     activity: string;
+    activityComment?: string;
     activityStatus: string;
 }
 class GeneralService {
@@ -63,9 +65,11 @@ class GeneralService {
         if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
             const taskLogData = {
                 userId: taskLogs.userId,
-                sourceFromId: taskLogs.sourceFromId,
+                sourceFromId: taskLogs.sourceFromId || null,
+                sourceFromReferenceId: taskLogs.sourceFromReferenceId || null,
                 sourceFrom: taskLogs.sourceFrom,
                 activity: taskLogs.activity,
+                activityComment: taskLogs.activityComment || '',
                 activityStatus: taskLogs.activityStatus,
                 ipAddress: await this.getVisitorIP(),
                 createdAt: new Date()

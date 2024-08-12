@@ -21,12 +21,6 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
             ...queryFilterIds,
             'productVariants.countryId': countryId
         }
-
-        // } else {
-        //     queryFilterIds = {
-        //         ...queryFilterIds,
-        //         'productVariants.countryId': new mongoose.Types.ObjectId(data.countryId)
-        //     }
     }
 
     if (data.status && data.status !== '') {
@@ -236,4 +230,12 @@ export const deleteFunction = async (productId: string) => {
         }
         // )
     ]);
+}
+
+export const checkRequiredColumns = async (worksheet: any, requiredColumns: any) => {
+    for (let column of requiredColumns) {
+        if (!worksheet.includes(column)) {
+            return column;
+        }
+    }
 }

@@ -3,10 +3,10 @@ import { deleteFunction } from '../../../../utils/admin/products';
 
 export interface ProductVariantsProps extends Document {
     productId: Schema.Types.ObjectId;
+    countryId: Schema.Types.ObjectId;
     slug: string;
     extraProductTitle: string;
     variantSku: string;
-    countryId: Schema.Types.ObjectId;
     price: number;
     quantity: number;
     discountPrice: number;

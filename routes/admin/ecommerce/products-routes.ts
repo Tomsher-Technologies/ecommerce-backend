@@ -19,6 +19,7 @@ router.use(authMiddleware);
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findAll);
 router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findOne);
 router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('productExcel'), ProductsController.importProductExcel);
+router.post('/import-product-price-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('productExcel'), ProductsController.importProductPriceExcel);
 router.post('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), ProductsController.create)
 router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), upload.any(), logResponseStatus, ProductsController.update);
 router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);

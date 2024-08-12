@@ -226,17 +226,7 @@ class ProductsService {
             throw new Error(error + 'Failed to update ' + columnKey);
         }
     }
-    async checkRequiredColumns(worksheet: any, requiredColumns: any) {
 
-
-        for (let column of requiredColumns) {
-
-            if (!worksheet.includes(column)) {
-
-                return column;
-            }
-        }
-    }
 }
 
 export default new ProductsService();

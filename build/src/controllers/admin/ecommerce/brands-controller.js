@@ -441,7 +441,7 @@ class BrandsController extends base_controller_1.default {
                         requestedData: await brands_model_1.default.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' }),
                         message: 'Brand website priority updated successfully!'
                     }, 200, {
-                        sourceFromId: '',
+                        sourceFromId: updatedBrandData._id,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.brands,
                         activity: task_log_1.adminTaskLogActivity.priorityUpdation,
                         activityStatus: task_log_1.adminTaskLogStatus.success

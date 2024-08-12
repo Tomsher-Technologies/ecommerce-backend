@@ -4,7 +4,9 @@ export interface AdminTaskLogProps extends Document {
     userId: Schema.Types.ObjectId;
     sourceFrom: string;
     sourceFromId: Schema.Types.ObjectId;
+    sourceFromReferenceId: Schema.Types.ObjectId;
     activity: string;
+    activityComment: string;
     activityStatus: string;
     ipAddress?: string,
     createdAt?: Date;
@@ -22,11 +24,19 @@ const adminTaskLogsSchema: Schema = new Schema({
     },
     sourceFromId: {
         type: Schema.Types.ObjectId,
-        default: '',
+        required: true,
+    },
+    sourceFromReferenceId: {
+        type: Schema.Types.ObjectId,
+        default: null,
     },
     activity: {
         type: String,
         required: true,
+    },
+    activityComment: {
+        type: String,
+        default: ''
     },
     activityStatus: {
         type: String,

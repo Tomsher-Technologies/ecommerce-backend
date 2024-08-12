@@ -26,7 +26,7 @@ const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/
 const attributes_service_1 = __importDefault(require("../../../services/admin/ecommerce/attributes-service"));
 const products_1 = require("../../../utils/admin/products");
 const specification_service_1 = __importDefault(require("../../../services/admin/ecommerce/specification-service"));
-const products_2 = require("../../../constants/admin/excel/products");
+const products_2 = require("../../../constants/admin/products");
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const warehouse_model_1 = __importDefault(require("../../../model/admin/stores/warehouse-model"));
@@ -346,6 +346,127 @@ class ProductsController extends base_controller_1.default {
             }, req);
         }
     }
+    async importProductPriceExcel(req, res) {
+        const productVariantPriceQuantityUpdationErrorMessage = [];
+        var excelRowIndex = 2;
+        let isProductVariantUpdate = false;
+        if (req && req.file && req.file?.filename) {
+            const excelDatas = await xlsx.readFile(path_1.default.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
+            if (excelDatas && excelDatas.SheetNames[0]) {
+                const productPriceSheetName = excelDatas.SheetNames[0];
+                const productPriceWorksheet = excelDatas.Sheets[productPriceSheetName];
+                if (productPriceWorksheet) {
+                    const excelFirstRow = xlsx.utils.sheet_to_json(productPriceWorksheet, { header: 1 })[0];
+                    const missingVariantPriceAndQuantityColunm = await (0, products_1.checkRequiredColumns)(excelFirstRow, products_2.excelProductVariantPriceAndQuantityRequiredColumn);
+                    if (!missingVariantPriceAndQuantityColunm) {
+                        const productPriceExcelJsonData = await xlsx.utils.sheet_to_json(productPriceWorksheet);
+                        if (productPriceExcelJsonData && productPriceExcelJsonData?.length > 0) {
+                            let countryDataCache = {};
+                            for (let productPriceData of productPriceExcelJsonData) {
+                                let fieldsErrors = [];
+                                let variantSku = productPriceData.VariantSku ? productPriceData.VariantSku.trim() : 'Unknown SKU';
+                                if (!productPriceData.Country)
+                                    fieldsErrors.push(`Country is required (VariantSku: ${variantSku})`);
+                                if (!variantSku)
+                                    fieldsErrors.push(`VariantSku is required (Country: ${productPriceData.Country})`);
+                                if (productPriceData.ProductPrice !== undefined && productPriceData.DiscountPrice !== undefined) {
+                                    if (Number(productPriceData.ProductPrice) <= Number(productPriceData.DiscountPrice)) {
+                                        fieldsErrors.push(`ProductPrice should be greater than DiscountPrice (VariantSku: ${variantSku})`);
+                                    }
+                                }
+                                if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) < 0) {
+                                    fieldsErrors.push(`Quantity should be greater than or equal to 0 (VariantSku: ${variantSku})`);
+                                }
+                                if (productPriceData.ProductPrice === undefined &&
+                                    productPriceData.DiscountPrice === undefined &&
+                                    productPriceData.Quantity === undefined) {
+                                    fieldsErrors.push(`At least one field (ProductPrice, DiscountPrice, or Quantity) must be provided for update (VariantSku: ${variantSku})`);
+                                }
+                                let countryData = countryDataCache[productPriceData.Country];
+                                if (!countryData) {
+                                    countryData = await country_service_1.default.findCountryId({
+                                        $or: [{ countryTitle: productPriceData.Country }, { countryShortTitle: productPriceData.Country }]
+                                    });
+                                    if (!countryData) {
+                                        fieldsErrors.push(`Country not found for '${productPriceData.Country}' (VariantSku: ${variantSku})`);
+                                    }
+                                    else {
+                                        countryDataCache[productPriceData.Country] = countryData;
+                                    }
+                                }
+                                let productVariantDetails = null;
+                                if (variantSku) {
+                                    productVariantDetails = await product_variants_model_1.default.findOne({ countryId: countryData._id, variantSku: variantSku });
+                                    if (!productVariantDetails) {
+                                        fieldsErrors.push(`Product variant not found for VariantSku: '${variantSku}' in the specified country.`);
+                                    }
+                                }
+                                if (fieldsErrors.length > 0) {
+                                    isProductVariantUpdate = false;
+                                    productVariantPriceQuantityUpdationErrorMessage.push({
+                                        row: `Row: ${excelRowIndex}`,
+                                        message: `Errors: ${fieldsErrors.join(', ')}`
+                                    });
+                                }
+                                else {
+                                    isProductVariantUpdate = true;
+                                    const updateVariantData = {};
+                                    if (productPriceData.ProductPrice !== undefined) {
+                                        updateVariantData.price = Number(productPriceData.ProductPrice);
+                                    }
+                                    if (productPriceData.DiscountPrice !== undefined) {
+                                        updateVariantData.discountPrice = Number(productPriceData.DiscountPrice);
+                                    }
+                                    if (productPriceData.Quantity !== undefined) {
+                                        updateVariantData.quantity = Number(productPriceData.Quantity);
+                                    }
+                                    await product_variants_model_1.default.findOneAndUpdate({ countryId: countryData._id, variantSku: variantSku }, { $set: updateVariantData }, { new: true });
+                                    const userData = res.locals.user;
+                                    const updateTaskLogs = {
+                                        userId: userData._id,
+                                        sourceFromId: productVariantDetails.productId,
+                                        sourceFromReferenceId: productVariantDetails._id,
+                                        sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
+                                        activity: task_log_1.adminTaskLogActivity.update,
+                                        activityStatus: task_log_1.adminTaskLogStatus.success
+                                    };
+                                    await general_service_1.default.taskLog({ ...updateTaskLogs, userId: userData._id });
+                                }
+                                excelRowIndex++;
+                            }
+                            if (!isProductVariantUpdate) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: "Validation failed for the following rows",
+                                    validation: productVariantPriceQuantityUpdationErrorMessage
+                                });
+                            }
+                            else {
+                                return controller.sendSuccessResponse(res, {
+                                    productVariantPriceQuantityUpdationErrorMessage,
+                                    message: `Product excel upload successfully completed. ${productVariantPriceQuantityUpdationErrorMessage.length > 0 ? 'Some Product updation are not completed' : ''}`
+                                }, 200);
+                            }
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+                        }
+                    }
+                    else {
+                        return controller.sendErrorResponse(res, 200, { message: missingVariantPriceAndQuantityColunm + " coloumn must be included in the excel file" });
+                    }
+                }
+                else {
+                    return controller.sendErrorResponse(res, 200, { message: "Product price worksheet not found!" });
+                }
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, { message: "Sheet names not found!" });
+            }
+        }
+        else {
+            return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
+        }
+    }
     async importProductExcel(req, res) {
         const validation = [];
         var index = 2;
@@ -359,7 +480,7 @@ class ProductsController extends base_controller_1.default {
                 if (excelDatas.SheetNames[0]) {
                     const worksheet = excelDatas.Sheets[sheetName];
                     const firstRow = xlsx.utils.sheet_to_json(worksheet, { header: 1 })[0];
-                    const missingColunm = await product_service_1.default.checkRequiredColumns(firstRow, products_2.products);
+                    const missingColunm = await (0, products_1.checkRequiredColumns)(firstRow, products_2.excelProductsRequiredColumn);
                     if (!missingColunm) {
                         if (worksheet) {
                             const jsonData = await xlsx.utils.sheet_to_json(worksheet);
