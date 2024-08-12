@@ -152,7 +152,7 @@ class CheckoutController extends base_controller_1.default {
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
-                                    totalAmount: ((parseInt(cartUpdate.totalAmount) - parseInt(totalShippingAmount)) + parseInt(finalShippingCharge)),
+                                    totalAmount: ((Number(cartUpdate.totalAmount) - Number(totalShippingAmount)) + Number(finalShippingCharge)),
                                 };
                                 totalShippingAmount = finalShippingCharge;
                             }
@@ -163,7 +163,7 @@ class CheckoutController extends base_controller_1.default {
                     cartUpdate = {
                         ...cartUpdate,
                         totalShippingAmount: 0,
-                        totalAmount: (parseInt(cartUpdate.totalAmount) - parseInt(totalShippingAmount)),
+                        totalAmount: (Number(cartUpdate.totalAmount) - Number(totalShippingAmount)),
                     };
                     totalShippingAmount = 0;
                 }
@@ -180,7 +180,7 @@ class CheckoutController extends base_controller_1.default {
                                 cartUpdate = {
                                     ...cartUpdate,
                                     totalShippingAmount: finalShippingCharge,
-                                    totalAmount: ((parseInt(cartUpdate.totalAmount) - parseInt(totalShippingAmount)) + Number(finalShippingCharge)),
+                                    totalAmount: ((Number(cartUpdate.totalAmount) - Number(totalShippingAmount)) + Number(finalShippingCharge)),
                                 };
                                 totalShippingAmount = finalShippingCharge;
                             }
