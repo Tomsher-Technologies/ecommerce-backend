@@ -230,7 +230,6 @@ class CheckoutService {
                 cartStatus: cart_1.cartStatus.order,
                 isGuest: customerDetails.isGuest ?? false,
                 orderStatus: cart_1.orderStatusMap['1'].value,
-                processingStatusAt: new Date(),
                 orderStatusAt: new Date(),
             };
             const updateCart = await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
@@ -363,21 +362,17 @@ class CheckoutService {
             const updateTotalCouponAmount = (productAmount, discountAmount, discountType) => {
                 if (productAmount) {
                     const couponDiscountAmount = (0, helpers_1.calculateTotalDiscountAmountDifference)(productAmount, discountType, discountAmount);
-                    const totalCouponAmount = (discountType === cart_1.couponDiscountType.percentage)
-                        ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount))
-                        : couponDiscountAmount;
+                    const totalCouponAmount = (discountType === cart_1.couponDiscountType.percentage) ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount)) : couponDiscountAmount;
                     const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
                     cartUpdate = {
                         ...cartUpdate,
                         totalAmount: cartTotalAmount,
                         totalCouponAmount: totalCouponAmount
                     };
-                    console.log('cartUpdatecartUpdate', cartUpdate);
                 }
             };
             let totalAmount = 0;
             const promises = [];
-            console.log('cartUpdatecartUpdate', couponDetails?.couponType);
             if (couponDetails?.couponType === cart_1.couponTypes.entireOrders) {
                 updateTotalCouponAmount(cartDetails?.totalProductAmount, couponAmount, discountType);
             }

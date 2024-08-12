@@ -431,11 +431,7 @@ class ProductsController extends BaseController {
                                     fieldsErrors.push(`Quantity should be greater than or equal to 0 (VariantSku: ${variantSku})`);
                                 }
 
-                                if (
-                                    productPriceData.ProductPrice === undefined &&
-                                    productPriceData.DiscountPrice === undefined &&
-                                    productPriceData.Quantity === undefined
-                                ) {
+                                if (productPriceData.ProductPrice === undefined && productPriceData.DiscountPrice === undefined && productPriceData.Quantity === undefined) {
                                     fieldsErrors.push(`At least one field (ProductPrice, DiscountPrice, or Quantity) must be provided for update (VariantSku: ${variantSku})`);
                                 }
 
@@ -458,6 +454,11 @@ class ProductsController extends BaseController {
                                         fieldsErrors.push(`Product variant not found for VariantSku: '${variantSku}' in the specified country.`);
                                     }
                                 }
+                                if (productPriceData.DiscountPrice !== undefined && productVariantDetails) {
+                                    if (Number(productPriceData.DiscountPrice) >= 0 && Number(productPriceData.DiscountPrice) >= Number(productVariantDetails.price)) {
+                                        fieldsErrors.push(`DiscountPrice should be less than existing ProductPrice (VariantSku: ${variantSku})`);
+                                    }
+                                }
 
                                 if (fieldsErrors.length > 0) {
                                     isProductVariantUpdate = false;
@@ -468,31 +469,55 @@ class ProductsController extends BaseController {
                                 } else {
                                     isProductVariantUpdate = true;
                                     const updateVariantData: any = {};
-                                    if (productPriceData.ProductPrice !== undefined) {
+                                    let updateComment: string[] = [];
+
+                                    if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) >= 0) {
                                         updateVariantData.price = Number(productPriceData.ProductPrice);
-                                    }
-                                    if (productPriceData.DiscountPrice !== undefined) {
-                                        updateVariantData.discountPrice = Number(productPriceData.DiscountPrice);
-                                    }
-                                    if (productPriceData.Quantity !== undefined) {
-                                        updateVariantData.quantity = Number(productPriceData.Quantity);
+                                        updateComment.push(`Price updated to ${updateVariantData.price}`);
+                                    } else if (productPriceData.ProductPrice !== undefined && Number(productPriceData.ProductPrice) < 0) {
+                                        fieldsErrors.push(`ProductPrice should be greater than or equal to 0 (VariantSku: ${variantSku})`);
                                     }
 
-                                    await ProductVariantsModel.findOneAndUpdate(
-                                        { countryId: countryData._id, variantSku: variantSku },
-                                        { $set: updateVariantData },
-                                        { new: true }
-                                    );
-                                    const userData = res.locals.user
-                                    const updateTaskLogs = {
-                                        userId: userData._id,
-                                        sourceFromId: productVariantDetails.productId,
-                                        sourceFromReferenceId: productVariantDetails._id,
-                                        sourceFrom: adminTaskLog.ecommerce.products,
-                                        activity: adminTaskLogActivity.update,
-                                        activityStatus: adminTaskLogStatus.success
+                                    if (productPriceData.DiscountPrice !== undefined && Number(productPriceData.DiscountPrice) >= 0) {
+                                        updateVariantData.discountPrice = Number(productPriceData.DiscountPrice);
+                                        updateComment.push(`Discount Price updated to ${updateVariantData.discountPrice}`);
+                                    } else if (productPriceData.DiscountPrice !== undefined && Number(productPriceData.DiscountPrice) < 0) {
+                                        fieldsErrors.push(`DiscountPrice should be greater than or equal to 0 (VariantSku: ${variantSku})`);
                                     }
-                                    await GeneralService.taskLog({ ...updateTaskLogs, userId: userData._id })
+
+                                    if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) >= 0) {
+                                        updateVariantData.quantity = Number(productPriceData.Quantity);
+                                        updateComment.push(`Quantity updated to ${updateVariantData.quantity}`);
+                                    } else if (productPriceData.Quantity !== undefined && Number(productPriceData.Quantity) < 0) {
+                                        fieldsErrors.push(`Quantity should be greater than or equal to 0 (VariantSku: ${variantSku})`);
+                                    }
+
+                                    if (fieldsErrors.length > 0) {
+                                        isProductVariantUpdate = false;
+                                        productVariantPriceQuantityUpdationErrorMessage.push({
+                                            row: `Row: ${excelRowIndex}`,
+                                            message: `Errors: ${fieldsErrors.join(', ')}`
+                                        });
+                                    } else {
+                                        await ProductVariantsModel.findOneAndUpdate(
+                                            { countryId: countryData._id, variantSku: variantSku },
+                                            { $set: updateVariantData },
+                                            { new: true }
+                                        );
+
+                                        const userData = res.locals.user;
+                                        const updateTaskLogs = {
+                                            userId: userData._id,
+                                            sourceFromId: productVariantDetails.productId,
+                                            sourceFromReferenceId: productVariantDetails._id,
+                                            sourceFrom: adminTaskLog.ecommerce.products,
+                                            activityComment: `Updated via Excel import: ${updateComment.join('; ')}`,
+                                            activity: adminTaskLogActivity.update,
+                                            activityStatus: adminTaskLogStatus.success
+                                        };
+
+                                        await GeneralService.taskLog({ ...updateTaskLogs, userId: userData._id });
+                                    }
                                 }
                                 excelRowIndex++;
                             }
