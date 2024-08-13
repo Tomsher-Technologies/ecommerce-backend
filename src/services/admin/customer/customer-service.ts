@@ -5,22 +5,22 @@ import { whishlistLookup, customerProject, addField, orderLookup, billingLookup,
 
 
 class CustomerService {
-    async findAll(options: FilterOptionsProps = {}): Promise<CustomrProps[]> {
+    async findAll(options: FilterOptionsProps = {}, isExcel: any): Promise<CustomrProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
+
         const pipeline: any[] = [
             whishlistLookup,
             orderLookup,
             addField,
             customerProject,
             ...reportOrderLookup,
-            ...((query.isExcel === '1') ? [addressLookup] : []),
+            ...((isExcel === '1') ? [addressLookup] : []),
             { $match: query },
             {
                 $facet: {
@@ -42,6 +42,8 @@ class CustomerService {
             }
         ];
         const createdCartWithValues = await CustomerModel.aggregate(pipeline);
+        console.log(createdCartWithValues);
+
         return createdCartWithValues;
     }
 
