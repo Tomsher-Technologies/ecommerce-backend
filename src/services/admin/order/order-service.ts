@@ -129,7 +129,7 @@ class OrderService {
                 { $match: { _id: updatedBrand._id } },
                 ...(getCartProducts === '1' ? [modifiedPipeline] : [cartProductsLookup]),
                 paymentMethodLookup,
-                customerLookup, 
+                customerLookup,
                 countriesLookup,
                 {
                     $unwind: {
@@ -185,10 +185,10 @@ class OrderService {
         }
     }
 
-    async orderListExcelExport(options: any): Promise<CartOrderProps[]> {
+    async orderListExcelExport(options: any): Promise<any> {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
 
-        const defaultSort = { orderStatusAt: -1 };
+        const defaultSort = { 'cartDetails.orderStatusAt': -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {
@@ -196,6 +196,8 @@ class OrderService {
         }
 
         let pipeline = getOrderProductsWithCartLookup(query, true, '1', '1');
+        pipeline.push({ $sort: finalSort } as any);
+
         if (!getTotalCount) {
             if (skip) {
                 pipeline.push({ $skip: skip } as any);
@@ -204,9 +206,72 @@ class OrderService {
                 pipeline.push({ $limit: limit } as any);
             }
         }
-        pipeline.push({ $sort: finalSort } as any);
 
-        return await CartOrderProductsModel.aggregate(pipeline);
+        pipeline.push({
+            $group: {
+                _id: null,
+                totalCartAmount: { $sum: "$cartDetails.totalAmount" },
+                totalQuantity: { $sum: "$quantity" },
+                totalMRP: { $sum: "$productsDetails.productvariants.price" },
+                totalSubtotal: { $sum: "$productAmount" },
+                totalDiscountAmount: { $sum: "$productDiscountAmount" },
+                orders: { $push: "$$ROOT" }
+            }
+        });
+
+        pipeline.push({
+            $project: {
+                _id: 0,
+                totalCartAmount: 1,
+                totalQuantity: 1,
+                totalMRP: 1,
+                totalSubtotal: 1,
+                totalDiscountAmount: 1,
+                orders: 1,
+            }
+        });
+
+        const results = await CartOrderProductsModel.aggregate(pipeline);
+        const [aggregatedData] = results; // Assuming there is only one result from the aggregation
+
+        if (!aggregatedData) {
+            return {
+                totalCartAmount: 0,
+                totalQuantity: 0,
+                totalMRP: 0,
+                totalSubtotal: 0,
+                totalDiscountAmount: 0,
+                orders: [],
+            };
+        }
+
+        const paginatedOrders = aggregatedData.orders;
+
+        // Define pagination parameters for cartDetails
+        const cartLimit = 2; // Number of cartDetails per page, adjust as needed
+
+        // Paginate cartDetails within each order
+        const finalResult = paginatedOrders.map((order: any) => {
+            // Check if cartDetails is an array and paginate
+            const cartDetailsArray = Array.isArray(order.cartDetails) ? order.cartDetails : [];
+
+            // Paginate cartDetails
+            const paginatedCartDetails = cartDetailsArray.slice(0, cartLimit);
+
+            return {
+                ...order,
+                cartDetails: paginatedCartDetails, // Paginate items within the order
+            };
+        });
+
+        return {
+            totalCartAmount: aggregatedData.totalCartAmount,
+            totalQuantity: aggregatedData.totalQuantity,
+            totalMRP: aggregatedData.totalMRP,
+            totalSubtotal: aggregatedData.totalSubtotal,
+            totalDiscountAmount: aggregatedData.totalDiscountAmount,
+            orders: finalResult,
+        };
     }
 }
 
