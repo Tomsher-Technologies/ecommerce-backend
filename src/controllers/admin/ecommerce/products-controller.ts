@@ -525,7 +525,6 @@ class ProductsController extends BaseController {
                                 }
                                 excelRowIndex++;
                             }
-                            console.log('productVariantPriceQuantityUpdationErrorMessage', productVariantPriceQuantityUpdationErrorMessage);
 
                             if (!isProductVariantUpdate) {
                                 return controller.sendErrorResponse(res, 200, {

@@ -283,7 +283,7 @@ class CheckoutService {
                     }
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
-                    const taDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
+                    const taxDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
 
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
@@ -322,7 +322,7 @@ class CheckoutService {
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
                         appUrl: `${process.env.APPURL}`,
-                        tax: taDetails
+                        tax: taxDetails
                     }, async (err: any, template: any) => {
                         if (err) {
                             console.log("err", err);
