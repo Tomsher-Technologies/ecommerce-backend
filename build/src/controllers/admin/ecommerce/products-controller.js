@@ -465,7 +465,6 @@ class ProductsController extends base_controller_1.default {
                                 }
                                 excelRowIndex++;
                             }
-                            console.log('productVariantPriceQuantityUpdationErrorMessage', productVariantPriceQuantityUpdationErrorMessage);
                             if (!isProductVariantUpdate) {
                                 return controller.sendErrorResponse(res, 200, {
                                     message: "Validation failed for the following rows",
@@ -474,7 +473,7 @@ class ProductsController extends base_controller_1.default {
                             }
                             else {
                                 return controller.sendSuccessResponse(res, {
-                                    productVariantPriceQuantityUpdationErrorMessage,
+                                    validation: productVariantPriceQuantityUpdationErrorMessage,
                                     message: `Product excel upload successfully completed. ${productVariantPriceQuantityUpdationErrorMessage.length > 0 ? 'Some Product updation are not completed' : ''}`
                                 }, 200);
                             }
