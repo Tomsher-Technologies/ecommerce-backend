@@ -28,7 +28,7 @@ export interface CartOrderProps extends Document {
     totalGiftWrapAmount: number;
     totalAmount: number;
     orderComments: string;
-    returnReson: string;
+    returnReason: string;
     cancelReason: string;
     cartStatus: string;
     orderStatus: string;
@@ -125,7 +125,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: String,
         default: ''
     },
-    returnReson: {
+    returnReason: {
         type: String,
         default: ''
     },

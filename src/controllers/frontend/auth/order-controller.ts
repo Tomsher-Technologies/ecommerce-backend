@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Request, Response, query } from 'express';
 
 import BaseController from "../../admin/base-controller";
-import { cartStatus, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJason } from "../../../constants/cart";
+import { cartStatus, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJson } from "../../../constants/cart";
 
 import CustomerModel from "../../../model/frontend/customers-model";
 import CommonService from '../../../services/frontend/guest/common-service'
@@ -121,7 +121,11 @@ class OrderController extends BaseController {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
-            const { orderProducts, returnReson } = req.body;
+            const { orderProducts, returnReason } = req.body;
+
+            if (returnReason==='') {
+                return controller.sendErrorResponse(res, 200, { message: 'Return eeason is required' });
+            }
 
             if (!orderProducts || orderProducts.length === 0) {
                 return controller.sendErrorResponse(res, 200, { message: 'Please select the order product to return or edit' });
@@ -140,16 +144,16 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
 
-            if (Number(orderDetails.orderStatus) > Number(orderStatusArrayJason.delivered)) {
+            if (Number(orderDetails.orderStatus) > Number(orderStatusArrayJson.delivered)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
             const statusMessages: { [key: string]: string } = {
-                [orderStatusArrayJason.canceled.toString()]: 'Your order has already been cancelled!',
-                [orderStatusArrayJason.returned.toString()]: 'Your order has already been returned!',
-                [orderStatusArrayJason.onHold.toString()]: 'Your order is on hold!',
-                [orderStatusArrayJason.failed.toString()]: 'Your order has failed!'
+                [orderStatusArrayJson.canceled.toString()]: 'Your order has already been cancelled!',
+                [orderStatusArrayJson.returned.toString()]: 'Your order has already been returned!',
+                [orderStatusArrayJson.onHold.toString()]: 'Your order is on hold!',
+                [orderStatusArrayJson.failed.toString()]: 'Your order has failed!'
             };
-            if ([orderStatusArrayJason.canceled, orderStatusArrayJason.returned, orderStatusArrayJason.onHold, orderStatusArrayJason.failed].map(String).includes(orderDetails.orderStatus)) {
+            if ([orderStatusArrayJson.canceled, orderStatusArrayJson.returned, orderStatusArrayJson.onHold, orderStatusArrayJson.failed].map(String).includes(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, { message: statusMessages[orderDetails.orderStatus] });
             }
             const orderProductDetails = await CartOrderProductsModel.find({ cartId: orderDetails._id });
@@ -216,9 +220,9 @@ class OrderController extends BaseController {
 
             if (updateOperations.length > 0) {
                 await CartOrderProductsModel.bulkWrite(updateOperations);
-                if (returnReson !== '') {
+                if (returnReason !== '') {
                     await CartOrdersModel.findOneAndUpdate(orderDetails._id, {
-                        returnReson
+                        returnReason
                     })
                 }
                 const orderList = await OrderService.orderList({

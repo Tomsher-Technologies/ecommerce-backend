@@ -5,18 +5,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const path_1 = __importDefault(require("path"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const order_service_1 = __importDefault(require("../../../services/admin/order/order-service"));
-const mongoose_1 = __importDefault(require("mongoose"));
-const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const product_config_1 = require("../../../utils/config/product-config");
+const reports_1 = require("../../../utils/admin/excel/reports");
+const order_1 = require("../../../utils/admin/order");
 const cart_1 = require("../../../constants/cart");
 const website_setup_1 = require("../../../constants/website-setup");
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
 const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
+const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
 const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-model"));
@@ -24,14 +27,12 @@ const product_variants_model_1 = __importDefault(require("../../../model/admin/e
 const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
-const product_config_1 = require("../../../utils/config/product-config");
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
-const reports_1 = require("../../../utils/admin/excel/reports");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate, isExcel } = req.query;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -67,89 +68,16 @@ class OrdersController extends base_controller_1.default {
                     ...query, pickupStoreId: new mongoose_1.default.Types.ObjectId(pickupStoreId)
                 };
             }
-            if (orderFromDate || orderEndDate) {
-                query.orderStatusAt = {
-                    ...(orderFromDate && { $gte: new Date(orderFromDate) }),
-                    ...(orderEndDate && { $lte: (0, helpers_1.dateConvertPm)(orderEndDate) })
-                };
-            }
-            if (processingFromDate || processingEndDate) {
-                query.processingStatusAt = {
-                    ...(processingFromDate && { $gte: new Date(processingFromDate) }),
-                    ...(processingEndDate && { $lte: (0, helpers_1.dateConvertPm)(processingEndDate) })
-                };
-            }
-            if (packedFromDate || packedEndDate) {
-                query.packedStatusAt = {
-                    ...(packedFromDate && { $gte: new Date(packedFromDate) }),
-                    ...(packedEndDate && { $lte: (0, helpers_1.dateConvertPm)(packedEndDate) })
-                };
-            }
-            if (shippedFromDate || shippedEndDate) {
-                query.shippedStatusAt = {
-                    ...(shippedFromDate && { $gte: new Date(shippedFromDate) }),
-                    ...(shippedEndDate && { $lte: (0, helpers_1.dateConvertPm)(shippedEndDate) })
-                };
-            }
-            if (deliveredFromDate || deliveredEndDate) {
-                query.deliveredStatusAt = {
-                    ...(deliveredFromDate && { $gte: new Date(deliveredFromDate) }),
-                    ...(deliveredEndDate && { $lte: (0, helpers_1.dateConvertPm)(deliveredEndDate) })
-                };
-            }
-            if (canceledFromDate || canceledEndDate) {
-                query.canceledStatusAt = {
-                    ...(canceledFromDate && { $gte: new Date(canceledFromDate) }),
-                    ...(canceledEndDate && { $lte: (0, helpers_1.dateConvertPm)(canceledEndDate) })
-                };
-            }
-            if (returnedFromDate || returnedEndDate) {
-                query.returnedStatusAt = {
-                    ...(returnedFromDate && { $gte: new Date(returnedFromDate) }),
-                    ...(returnedEndDate && { $lte: (0, helpers_1.dateConvertPm)(returnedEndDate) })
-                };
-            }
-            if (refundedFromDate || refundedEndDate) {
-                query.refundedStatusAt = {
-                    ...(refundedFromDate && { $gte: new Date(refundedFromDate) }),
-                    ...(refundedEndDate && { $lte: (0, helpers_1.dateConvertPm)(refundedEndDate) })
-                };
-            }
-            if (partiallyShippedFromDate || partiallyShippedEndDate) {
-                query.partiallyShippedStatusAt = {
-                    ...(partiallyShippedFromDate && { $gte: new Date(partiallyShippedFromDate) }),
-                    ...(partiallyShippedEndDate && { $lte: (0, helpers_1.dateConvertPm)(partiallyShippedEndDate) })
-                };
-            }
-            if (onHoldFromDate || onHoldEndDate) {
-                query.onHoldStatusAt = {
-                    ...(onHoldFromDate && { $gte: new Date(onHoldFromDate) }),
-                    ...(onHoldEndDate && { $lte: (0, helpers_1.dateConvertPm)(onHoldEndDate) })
-                };
-            }
-            if (failedFromDate || failedEndDate) {
-                query.failedStatusAt = {
-                    ...(failedFromDate && { $gte: new Date(failedFromDate) }),
-                    ...(failedEndDate && { $lte: (0, helpers_1.dateConvertPm)(failedEndDate) })
-                };
-            }
-            if (completedFromDate || completedEndDate) {
-                query.completedStatusAt = {
-                    ...(completedFromDate && { $gte: new Date(completedFromDate) }),
-                    ...(completedEndDate && { $lte: (0, helpers_1.dateConvertPm)(completedEndDate) })
-                };
-            }
-            if (pickupFromDate || pickupEndDate) {
-                query.pickupStatusAt = {
-                    ...(pickupFromDate && { $gte: new Date(pickupFromDate) }),
-                    ...(pickupEndDate && { $lte: (0, helpers_1.dateConvertPm)(pickupEndDate) })
-                };
-            }
-            if (cartFromDate || cartEndDate) {
-                query.cartStatusAt = {
-                    ...(cartFromDate && { $gte: new Date(cartFromDate) }),
-                    ...(cartEndDate && { $lte: (0, helpers_1.dateConvertPm)(cartEndDate) })
-                };
+            if (fromDate || endDate) {
+                const dateFilter = {};
+                if (fromDate)
+                    dateFilter.$gte = new Date(fromDate);
+                if (endDate)
+                    dateFilter.$lte = (0, helpers_1.dateConvertPm)(endDate);
+                if (orderStatus) {
+                    const statusField = (0, order_1.findOrderStatusDateCheck)(cart_1.orderStatusMap[orderStatus].value);
+                    query[statusField] = { ...dateFilter };
+                }
             }
             const sort = {};
             if (sortby && sortorder) {
@@ -305,7 +233,7 @@ class OrdersController extends base_controller_1.default {
         if (!orderDetails) {
             return controller.sendErrorResponse(res, 200, { message: 'Order not found!' });
         }
-        if (Number(orderDetails.orderStatus) > Number(cart_1.orderStatusArrayJason.delivered)) {
+        if (Number(orderDetails.orderStatus) > Number(cart_1.orderStatusArrayJson.delivered)) {
             return controller.sendErrorResponse(res, 200, { message: 'Cannot change status for an order with status before "Delivered".' });
         }
         if (!newStatus || !Object.values(cart_1.orderProductStatusJson).includes(newStatus)) {
@@ -323,22 +251,22 @@ class OrdersController extends base_controller_1.default {
         if (orderProduct.orderProductStatus === cart_1.orderProductStatusJson.delivered) {
             const otherProductsDelivered = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === cart_1.orderProductStatusJson.delivered);
             if (otherProductsDelivered) {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.delivered;
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.delivered;
                 updateOrderStatus.deliveredStatusAt = new Date();
             }
             else {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.partiallyDelivered;
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyDelivered;
                 updateOrderStatus.partiallyDeliveredStatusAt = new Date();
             }
         }
         else if (orderProduct.orderProductStatus === cart_1.orderProductStatusJson.shipped) {
             const otherProductsShipped = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === cart_1.orderProductStatusJson.shipped);
             if (otherProductsShipped) {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.shipped;
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.shipped;
                 updateOrderStatus.shippedStatusAt = new Date();
             }
             else {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJason.partiallyShipped;
+                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyShipped;
                 updateOrderStatus.partiallyShippedStatusAt = new Date();
             }
         }
@@ -735,57 +663,57 @@ class OrdersController extends base_controller_1.default {
                 });
             }
             // Ensure that the order cannot go back to a previous status once delivered
-            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.delivered && [
-                cart_1.orderStatusArrayJason.pending,
-                cart_1.orderStatusArrayJason.processing,
-                cart_1.orderStatusArrayJason.packed,
-                cart_1.orderStatusArrayJason.shipped,
-                cart_1.orderStatusArrayJason.partiallyShipped,
-                cart_1.orderStatusArrayJason.onHold,
-                cart_1.orderStatusArrayJason.pickup
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.delivered && [
+                cart_1.orderStatusArrayJson.pending,
+                cart_1.orderStatusArrayJson.processing,
+                cart_1.orderStatusArrayJson.packed,
+                cart_1.orderStatusArrayJson.shipped,
+                cart_1.orderStatusArrayJson.partiallyShipped,
+                cart_1.orderStatusArrayJson.onHold,
+                cart_1.orderStatusArrayJson.pickup
             ].includes(orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status back to a previous state once delivered'
                 });
             }
             // Ensure that the order cannot be changed to Canceled after Delivered
-            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.delivered && orderStatus === cart_1.orderStatusArrayJason.canceled) {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.delivered && orderStatus === cart_1.orderStatusArrayJson.canceled) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status to Canceled once delivered'
                 });
             }
             // Ensure that Returned status is only possible after Delivered
-            if (orderStatus === cart_1.orderStatusArrayJason.returned && orderDetails.orderStatus !== cart_1.orderStatusArrayJason.delivered) {
+            if (orderStatus === cart_1.orderStatusArrayJson.returned && orderDetails.orderStatus !== cart_1.orderStatusArrayJson.delivered) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Returned status is only possible after Delivered'
                 });
             }
             // Ensure that Refunded status is only possible after Returned
-            if (orderStatus === cart_1.orderStatusArrayJason.refunded && orderDetails.orderStatus !== cart_1.orderStatusArrayJason.returned) {
+            if (orderStatus === cart_1.orderStatusArrayJson.refunded && orderDetails.orderStatus !== cart_1.orderStatusArrayJson.returned) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Refunded status is only possible after Returned'
                 });
             }
             // Ensure that Completed status is only possible after Delivered
-            if (orderStatus === cart_1.orderStatusArrayJason.completed && orderDetails.orderStatus !== cart_1.orderStatusArrayJason.delivered) {
+            if (orderStatus === cart_1.orderStatusArrayJson.completed && orderDetails.orderStatus !== cart_1.orderStatusArrayJson.delivered) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Completed status is only possible after Delivered'
                 });
             }
             // Ensure that the order cannot be changed from Completed to any other status
-            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.completed) {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.completed) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is completed'
                 });
             }
             // Ensure that the order cannot be changed from Failed
-            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.failed) {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.failed) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is failed'
                 });
             }
             // Ensure that the order cannot be changed from Refunded
-            if (orderDetails.orderStatus === cart_1.orderStatusArrayJason.refunded) {
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.refunded) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is refunded'
                 });
@@ -793,57 +721,57 @@ class OrdersController extends base_controller_1.default {
             let customerDetails = null;
             if (orderDetails.customerId) {
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
-                if (orderStatus === cart_1.orderStatusArrayJason.completed && customerDetails) {
+                if (orderStatus === cart_1.orderStatusArrayJson.completed && customerDetails) {
                     await order_service_1.default.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
                 }
             }
             orderDetails.orderStatus = orderStatus;
             // Update cart status if the order status is Completed or Delivered
-            if (orderStatus === cart_1.orderStatusArrayJason.completed || orderStatus === cart_1.orderStatusArrayJason.delivered) {
+            if (orderStatus === cart_1.orderStatusArrayJson.completed || orderStatus === cart_1.orderStatusArrayJson.delivered) {
                 orderDetails.cartStatus = cart_1.cartStatus.delivered;
             }
             const currentDate = new Date();
             switch (orderStatus) {
-                case cart_1.orderStatusArrayJason.pending:
+                case cart_1.orderStatusArrayJson.pending:
                     orderDetails.orderStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.processing:
+                case cart_1.orderStatusArrayJson.processing:
                     orderDetails.processingStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.packed:
+                case cart_1.orderStatusArrayJson.packed:
                     orderDetails.packedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.shipped:
+                case cart_1.orderStatusArrayJson.shipped:
                     orderDetails.shippedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.delivered:
+                case cart_1.orderStatusArrayJson.delivered:
                     orderDetails.deliveredStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.canceled:
+                case cart_1.orderStatusArrayJson.canceled:
                     orderDetails.canceledStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.returned:
+                case cart_1.orderStatusArrayJson.returned:
                     orderDetails.returnedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.refunded:
+                case cart_1.orderStatusArrayJson.refunded:
                     orderDetails.refundedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.partiallyShipped:
+                case cart_1.orderStatusArrayJson.partiallyShipped:
                     orderDetails.partiallyShippedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.onHold:
+                case cart_1.orderStatusArrayJson.onHold:
                     orderDetails.onHoldStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.failed:
+                case cart_1.orderStatusArrayJson.failed:
                     orderDetails.failedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.completed:
+                case cart_1.orderStatusArrayJson.completed:
                     orderDetails.completedStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.pickup:
+                case cart_1.orderStatusArrayJson.pickup:
                     orderDetails.pickupStatusAt = currentDate;
                     break;
-                case cart_1.orderStatusArrayJason.partiallyDelivered:
+                case cart_1.orderStatusArrayJson.partiallyDelivered:
                     orderDetails.partiallyDeliveredStatusAt = currentDate;
                     break;
                 default: break;
@@ -860,7 +788,7 @@ class OrdersController extends base_controller_1.default {
                     orderProductStatusAt: currentDate
                 }
             });
-            if (orderStatus === cart_1.orderStatusArrayJason.failed || orderStatus === cart_1.orderStatusArrayJason.returned) {
+            if (orderStatus === cart_1.orderStatusArrayJson.failed || orderStatus === cart_1.orderStatusArrayJson.returned) {
                 const cartProducts = await cart_order_product_model_1.default.find({ cartId: orderDetails._id }).select('variantId quantity');
                 const updateProductVariant = cartProducts.map((products) => ({
                     updateOne: {
@@ -870,7 +798,7 @@ class OrdersController extends base_controller_1.default {
                 }));
                 await product_variants_model_1.default.bulkWrite(updateProductVariant);
             }
-            if (orderStatus === cart_1.orderStatusArrayJason.shipped || orderStatus === cart_1.orderStatusArrayJason.delivered) {
+            if (orderStatus === cart_1.orderStatusArrayJson.shipped || orderStatus === cart_1.orderStatusArrayJson.delivered) {
                 let query = { _id: { $exists: true } };
                 query = {
                     ...query,

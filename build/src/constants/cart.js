@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJason = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
     delivered: "3"
 };
-exports.orderStatusArrayJason = {
+exports.orderStatusArrayJson = {
     pending: "1",
     processing: "2",
     packed: "3",
@@ -23,36 +23,36 @@ exports.orderStatusArrayJason = {
     partiallyDelivered: "14",
 };
 exports.orderStatusArray = [
-    { value: exports.orderStatusArrayJason.pending, label: "Pending" },
-    { value: exports.orderStatusArrayJason.processing, label: "Processing" },
-    { value: exports.orderStatusArrayJason.packed, label: "Packed" },
-    { value: exports.orderStatusArrayJason.shipped, label: "Shipped" },
-    { value: exports.orderStatusArrayJason.delivered, label: "Delivered" },
-    { value: exports.orderStatusArrayJason.canceled, label: "Canceled" },
-    { value: exports.orderStatusArrayJason.returned, label: "Returned" },
-    { value: exports.orderStatusArrayJason.refunded, label: "Refunded" },
-    { value: exports.orderStatusArrayJason.partiallyShipped, label: "Partially Shipped" },
-    { value: exports.orderStatusArrayJason.onHold, label: "On Hold" },
-    { value: exports.orderStatusArrayJason.failed, label: "Failed" },
-    { value: exports.orderStatusArrayJason.completed, label: "Completed" },
-    { value: exports.orderStatusArrayJason.pickup, label: "Pickup" },
-    { value: exports.orderStatusArrayJason.partiallyDelivered, label: "Partially Delivered" },
+    { value: exports.orderStatusArrayJson.pending, label: "Pending" },
+    { value: exports.orderStatusArrayJson.processing, label: "Processing" },
+    { value: exports.orderStatusArrayJson.packed, label: "Packed" },
+    { value: exports.orderStatusArrayJson.shipped, label: "Shipped" },
+    { value: exports.orderStatusArrayJson.delivered, label: "Delivered" },
+    { value: exports.orderStatusArrayJson.canceled, label: "Canceled" },
+    { value: exports.orderStatusArrayJson.returned, label: "Returned" },
+    { value: exports.orderStatusArrayJson.refunded, label: "Refunded" },
+    { value: exports.orderStatusArrayJson.partiallyShipped, label: "Partially Shipped" },
+    { value: exports.orderStatusArrayJson.onHold, label: "On Hold" },
+    { value: exports.orderStatusArrayJson.failed, label: "Failed" },
+    { value: exports.orderStatusArrayJson.completed, label: "Completed" },
+    { value: exports.orderStatusArrayJson.pickup, label: "Pickup" },
+    { value: exports.orderStatusArrayJson.partiallyDelivered, label: "Partially Delivered" },
 ];
 exports.orderStatusMessages = {
-    [exports.orderStatusArrayJason.pending]: 'Order received successfully!',
-    [exports.orderStatusArrayJason.processing]: 'Order is now being processed!',
-    [exports.orderStatusArrayJason.packed]: 'Order has been packed!',
-    [exports.orderStatusArrayJason.shipped]: 'Order has been shipped!',
-    [exports.orderStatusArrayJason.delivered]: 'Order has been delivered!',
-    [exports.orderStatusArrayJason.canceled]: 'Order has been canceled!',
-    [exports.orderStatusArrayJason.returned]: 'Order has been returned!',
-    [exports.orderStatusArrayJason.refunded]: 'Order has been refunded!',
-    [exports.orderStatusArrayJason.partiallyShipped]: 'Order has been partially shipped!',
-    [exports.orderStatusArrayJason.onHold]: 'Order is on hold!',
-    [exports.orderStatusArrayJason.failed]: 'Order has failed!',
-    [exports.orderStatusArrayJason.completed]: 'Order has been completed!',
-    [exports.orderStatusArrayJason.pickup]: 'Order is ready for pickup!',
-    [exports.orderStatusArrayJason.partiallyDelivered]: 'Order has been delivered!',
+    [exports.orderStatusArrayJson.pending]: 'Order received successfully!',
+    [exports.orderStatusArrayJson.processing]: 'Order is now being processed!',
+    [exports.orderStatusArrayJson.packed]: 'Order has been packed!',
+    [exports.orderStatusArrayJson.shipped]: 'Order has been shipped!',
+    [exports.orderStatusArrayJson.delivered]: 'Order has been delivered!',
+    [exports.orderStatusArrayJson.canceled]: 'Order has been canceled!',
+    [exports.orderStatusArrayJson.returned]: 'Order has been returned!',
+    [exports.orderStatusArrayJson.refunded]: 'Order has been refunded!',
+    [exports.orderStatusArrayJson.partiallyShipped]: 'Order has been partially shipped!',
+    [exports.orderStatusArrayJson.onHold]: 'Order is on hold!',
+    [exports.orderStatusArrayJson.failed]: 'Order has failed!',
+    [exports.orderStatusArrayJson.completed]: 'Order has been completed!',
+    [exports.orderStatusArrayJson.pickup]: 'Order is ready for pickup!',
+    [exports.orderStatusArrayJson.partiallyDelivered]: 'Order has been delivered!',
 };
 exports.orderProductStatusJson = {
     pending: "1",
