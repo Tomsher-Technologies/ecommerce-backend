@@ -4,7 +4,7 @@ export const cartStatus = {
     delivered: "3"
 }
 
-export const orderStatusArrayJason = {
+export const orderStatusArrayJson = {
     pending: "1",
     processing: "2",
     packed: "3",
@@ -22,37 +22,37 @@ export const orderStatusArrayJason = {
 };
 
 export const orderStatusArray = [
-    { value: orderStatusArrayJason.pending, label: "Pending" },
-    { value: orderStatusArrayJason.processing, label: "Processing" },
-    { value: orderStatusArrayJason.packed, label: "Packed" },
-    { value: orderStatusArrayJason.shipped, label: "Shipped" },
-    { value: orderStatusArrayJason.delivered, label: "Delivered" },
-    { value: orderStatusArrayJason.canceled, label: "Canceled" },
-    { value: orderStatusArrayJason.returned, label: "Returned" },
-    { value: orderStatusArrayJason.refunded, label: "Refunded" },
-    { value: orderStatusArrayJason.partiallyShipped, label: "Partially Shipped" },
-    { value: orderStatusArrayJason.onHold, label: "On Hold" },
-    { value: orderStatusArrayJason.failed, label: "Failed" },
-    { value: orderStatusArrayJason.completed, label: "Completed" },
-    { value: orderStatusArrayJason.pickup, label: "Pickup" },
-    { value: orderStatusArrayJason.partiallyDelivered, label: "Partially Delivered" },
+    { value: orderStatusArrayJson.pending, label: "Pending" },
+    { value: orderStatusArrayJson.processing, label: "Processing" },
+    { value: orderStatusArrayJson.packed, label: "Packed" },
+    { value: orderStatusArrayJson.shipped, label: "Shipped" },
+    { value: orderStatusArrayJson.delivered, label: "Delivered" },
+    { value: orderStatusArrayJson.canceled, label: "Canceled" },
+    { value: orderStatusArrayJson.returned, label: "Returned" },
+    { value: orderStatusArrayJson.refunded, label: "Refunded" },
+    { value: orderStatusArrayJson.partiallyShipped, label: "Partially Shipped" },
+    { value: orderStatusArrayJson.onHold, label: "On Hold" },
+    { value: orderStatusArrayJson.failed, label: "Failed" },
+    { value: orderStatusArrayJson.completed, label: "Completed" },
+    { value: orderStatusArrayJson.pickup, label: "Pickup" },
+    { value: orderStatusArrayJson.partiallyDelivered, label: "Partially Delivered" },
 ];
 
 export const orderStatusMessages: { [key: string]: string } = {
-    [orderStatusArrayJason.pending]: 'Order received successfully!',
-    [orderStatusArrayJason.processing]: 'Order is now being processed!',
-    [orderStatusArrayJason.packed]: 'Order has been packed!',
-    [orderStatusArrayJason.shipped]: 'Order has been shipped!',
-    [orderStatusArrayJason.delivered]: 'Order has been delivered!',
-    [orderStatusArrayJason.canceled]: 'Order has been canceled!',
-    [orderStatusArrayJason.returned]: 'Order has been returned!',
-    [orderStatusArrayJason.refunded]: 'Order has been refunded!',
-    [orderStatusArrayJason.partiallyShipped]: 'Order has been partially shipped!',
-    [orderStatusArrayJason.onHold]: 'Order is on hold!',
-    [orderStatusArrayJason.failed]: 'Order has failed!',
-    [orderStatusArrayJason.completed]: 'Order has been completed!',
-    [orderStatusArrayJason.pickup]: 'Order is ready for pickup!',
-    [orderStatusArrayJason.partiallyDelivered]: 'Order has been delivered!',
+    [orderStatusArrayJson.pending]: 'Order received successfully!',
+    [orderStatusArrayJson.processing]: 'Order is now being processed!',
+    [orderStatusArrayJson.packed]: 'Order has been packed!',
+    [orderStatusArrayJson.shipped]: 'Order has been shipped!',
+    [orderStatusArrayJson.delivered]: 'Order has been delivered!',
+    [orderStatusArrayJson.canceled]: 'Order has been canceled!',
+    [orderStatusArrayJson.returned]: 'Order has been returned!',
+    [orderStatusArrayJson.refunded]: 'Order has been refunded!',
+    [orderStatusArrayJson.partiallyShipped]: 'Order has been partially shipped!',
+    [orderStatusArrayJson.onHold]: 'Order is on hold!',
+    [orderStatusArrayJson.failed]: 'Order has failed!',
+    [orderStatusArrayJson.completed]: 'Order has been completed!',
+    [orderStatusArrayJson.pickup]: 'Order is ready for pickup!',
+    [orderStatusArrayJson.partiallyDelivered]: 'Order has been delivered!',
 };
 
 export const orderProductStatusJson = {

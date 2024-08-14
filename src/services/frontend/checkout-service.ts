@@ -383,6 +383,7 @@ class CheckoutService {
                     const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
                     cartUpdate = {
                         ...cartUpdate,
+                        couponId: couponDetails._id,
                         totalAmount: cartTotalAmount,
                         totalCouponAmount: totalCouponAmount
                     };
