@@ -55,36 +55,30 @@ class ProductsController extends BaseController {
             const filterProducts = await filterProduct(req.query, countryId)
             console.log(filterProducts.query);
 
-            // const products = await ProductsService.findAll({
-            //     page: parseInt(page_size as string),
-            //     limit: parseInt(limit as string),
-            //     query: filterProducts.query,
-            //     sort: filterProducts.sort
-            // });
-            // const count = await ProductsService.getTotalCount(filterProducts.query)
-
-            // controller.sendSuccessResponse(res, {
-            //     requestedData: products,
-            //     totalCount: count,
-            //     message: 'Success'
-            // }, 200);
-
-            let isExcel
-
-            if (isExcel = '1') {
+            const products = await ProductsService.findAll({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
+                query: filterProducts.query,
+                sort: filterProducts.sort
+            });
+            const count = await ProductsService.getTotalCount(filterProducts.query)
+            let isExcel = req.query.isExcel
+            if (isExcel == '1') {
                 const products = await ProductsService.exportProducts({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
                     query: filterProducts.query,
                     sort: filterProducts.sort
                 });
-                // controller.sendSuccessResponse(res, {
-                //     requestedData: products,
-                //     message: 'Success'
-                // }, 200);
                 await exportProductExcel(res, products)
-
+            } else {
+                controller.sendSuccessResponse(res, {
+                    requestedData: products,
+                    totalCount: count,
+                    message: 'Success'
+                }, 200);
             }
+
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching products' });
         }
