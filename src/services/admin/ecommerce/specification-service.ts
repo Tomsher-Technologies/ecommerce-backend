@@ -187,7 +187,9 @@ class SpecificationService {
 
     async findOneSpecification(data: any): Promise<void | null> {
 
-        const resultSpecification: any = await SpecificationModel.findOne({ specificationTitle: data.specificationTitle.trim() });
+        const trimSpecificationTitle = data.specificationTitle.split('\n').map((line: any) => line.trim()).join('\n').trim();
+        const slug = slugify(trimSpecificationTitle);
+        const resultSpecification: any = await SpecificationModel.findOne({ slug: slug });
 
         if (resultSpecification) {
             const specificationDetailResult: any = await this.findOneSpecificationDetail(data, resultSpecification._id)
@@ -199,8 +201,8 @@ class SpecificationService {
             return result
         } else {
             const specificationData = {
-                specificationTitle: capitalizeWords(data.specificationTitle),
-                specificationDisplayName: data.specificationDisplayName,
+                specificationTitle: capitalizeWords(trimSpecificationTitle),
+                specificationDisplayName: slug,
                 isExcel: true,
                 slug: slugify(data.specificationTitle)
             }
@@ -218,7 +220,7 @@ class SpecificationService {
     }
 
     async findOneSpecificationDetail(data: any, specificationId: string): Promise<void | null> {
-        const resultBrand: any = await SpecificationDetailModel.findOne({ $and: [{ itemName: data.itemName }, { specificationId: specificationId }] });
+        const resultBrand: any = await SpecificationDetailModel.findOne({ $and: [{ itemName: { $regex: new RegExp(data.itemName, 'i') } }, { specificationId: specificationId }] });
         if (resultBrand) {
             return resultBrand
         } else {

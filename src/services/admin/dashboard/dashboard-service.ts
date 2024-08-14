@@ -104,7 +104,7 @@ class DashboardService {
             todayOrders: todayOrders.length,
             todaySales: todaySales,
             orderComparison: orderComparison,
-            salesComparison: salesComparison
+            salesComparison: salesComparison.toFixed(2)
         };
         return counts
 

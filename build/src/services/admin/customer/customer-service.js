@@ -8,7 +8,7 @@ const pagination_1 = require("../../../components/pagination");
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const customer_config_1 = require("../../../utils/config/customer-config");
 class CustomerService {
-    async findAll(options = {}) {
+    async findAll(options = {}, isExcel) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -22,7 +22,7 @@ class CustomerService {
             customer_config_1.addField,
             customer_config_1.customerProject,
             ...customer_config_1.reportOrderLookup,
-            ...((query.isExcel === '1') ? [customer_config_1.addressLookup] : []),
+            ...((isExcel === '1') ? [customer_config_1.addressLookup] : []),
             { $match: query },
             {
                 $facet: {
@@ -44,6 +44,7 @@ class CustomerService {
             }
         ];
         const createdCartWithValues = await customers_model_1.default.aggregate(pipeline);
+        console.log(createdCartWithValues);
         return createdCartWithValues;
     }
     async getTotalCount(query = {}) {

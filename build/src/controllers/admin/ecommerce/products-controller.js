@@ -34,6 +34,8 @@ const product_gallery_images_model_1 = __importDefault(require("../../../model/a
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
+const reports_1 = require("../../../utils/admin/excel/reports");
+const seo_page_model_1 = __importDefault(require("../../../model/admin/seo-page-model"));
 const controller = new base_controller_1.default();
 class ProductsController extends base_controller_1.default {
     // constructor() {
@@ -47,18 +49,32 @@ class ProductsController extends base_controller_1.default {
             const countryId = await (0, helpers_1.getCountryId)(userData);
             const filterProducts = await (0, products_1.filterProduct)(req.query, countryId);
             console.log(filterProducts.query);
-            const products = await product_service_1.default.findAll({
-                page: parseInt(page_size),
-                limit: parseInt(limit),
-                query: filterProducts.query,
-                sort: filterProducts.sort
-            });
-            const count = await product_service_1.default.getTotalCount(filterProducts.query);
-            controller.sendSuccessResponse(res, {
-                requestedData: products,
-                totalCount: count,
-                message: 'Success'
-            }, 200);
+            // const products = await ProductsService.findAll({
+            //     page: parseInt(page_size as string),
+            //     limit: parseInt(limit as string),
+            //     query: filterProducts.query,
+            //     sort: filterProducts.sort
+            // });
+            // const count = await ProductsService.getTotalCount(filterProducts.query)
+            // controller.sendSuccessResponse(res, {
+            //     requestedData: products,
+            //     totalCount: count,
+            //     message: 'Success'
+            // }, 200);
+            let isExcel;
+            if (isExcel = '1') {
+                const products = await product_service_1.default.exportProducts({
+                    page: parseInt(page_size),
+                    limit: parseInt(limit),
+                    query: filterProducts.query,
+                    sort: filterProducts.sort
+                });
+                // controller.sendSuccessResponse(res, {
+                //     requestedData: products,
+                //     message: 'Success'
+                // }, 200);
+                await (0, reports_1.exportProductExcel)(res, products);
+            }
         }
         catch (error) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching products' });
@@ -692,8 +708,6 @@ class ProductsController extends base_controller_1.default {
                                                                             specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId });
                                                                         }
                                                                     }
-                                                                    // console.log("sdgdfsdfsdgsd", specificationData);
-                                                                    // console.log("specificationCombinedArray", specificationCombinedArray);
                                                                     const galleryImageArray = [];
                                                                     galleryImageArray.push({
                                                                         galleryImageUrl: data.Image
@@ -744,6 +758,7 @@ class ProductsController extends base_controller_1.default {
                                                                         extraProductTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
+                                                                        variantImageUrl: data.Image,
                                                                         price: data.Price,
                                                                         discountPrice: data.Discount_Price ? data.Discount_Price : 0,
                                                                         quantity: data.Quantity,
@@ -751,9 +766,11 @@ class ProductsController extends base_controller_1.default {
                                                                         cartMinQuantity: data.Cart_Min_Quantity,
                                                                         cartMaxQuantity: data.Cart_Max_Quantity,
                                                                         barcode: data.Barcode,
-                                                                        isDefault: data.Is_Default ? data.Is_Default : 0,
-                                                                        isExcel: true
+                                                                        isExcel: true,
+                                                                        createdBy: userData._id,
+                                                                        isDefault: (data.Item_Type == 'config-item') ? 1 : 0
                                                                     };
+                                                                    // console.log("productVariants", productVariants);
                                                                     const shortTitleOfCountry = await country_model_1.default.findOne({ _id: await (0, helpers_1.getCountryIdWithSuperAdmin)(userData) });
                                                                     var countryForSlug;
                                                                     if (countryData && countryData.countryShortTitle) {
@@ -767,7 +784,7 @@ class ProductsController extends base_controller_1.default {
                                                                         // if (!productDuplication) {
                                                                         let insertWithNonConfigItemVariant = false;
                                                                         let createProduct = null;
-                                                                        const productDetails = await product_service_1.default.find({ $and: [{ sku: data.SKU }, { productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title) }] });
+                                                                        const productDetails = await product_service_1.default.find({ $and: [{ sku: data.SKU }] });
                                                                         if (productDetails) {
                                                                             const existingVariantDetails = await product_variants_model_1.default.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
                                                                             if (!existingVariantDetails) {
@@ -788,14 +805,14 @@ class ProductsController extends base_controller_1.default {
                                                                                         });
                                                                                     }
                                                                                 }
-                                                                                if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                                if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
                                                                                     const newSeo = await seo_page_service_1.default.create({
                                                                                         pageId: createProduct._id,
                                                                                         page: seo_page_1.seoPage.ecommerce.products,
                                                                                         ...productSeo
                                                                                     });
                                                                                 }
-                                                                                if (specificationData && specificationData.length > 0) {
+                                                                                if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
                                                                                     for await (const specification of specificationData) {
                                                                                         const specificationValues = {
                                                                                             productId: createProduct._id,
@@ -804,7 +821,7 @@ class ProductsController extends base_controller_1.default {
                                                                                         const specifications = await product_specification_service_1.default.create(specificationValues);
                                                                                     }
                                                                                 }
-                                                                                if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
                                                                                             productID: createProduct._id,
@@ -819,6 +836,7 @@ class ProductsController extends base_controller_1.default {
                                                                                     slug: (0, helpers_1.slugify)(slugData)
                                                                                 };
                                                                                 const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
+                                                                                console.log("variantDetails", variantDetails);
                                                                                 if (!variantDetails) {
                                                                                     const createVariant = await product_variant_service_1.default.create(createProduct._id, productVariants, userData);
                                                                                     if (createVariant) {
@@ -892,7 +910,8 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                         }
                                                                         else {
-                                                                            if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                            await seo_page_model_1.default.deleteMany({ pageId: productDetails._id, pageReferenceId: null });
+                                                                            if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
                                                                                 const newSeo = await seo_page_service_1.default.create({
                                                                                     pageId: productDetails._id,
                                                                                     page: seo_page_1.seoPage.ecommerce.products,
@@ -900,7 +919,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 });
                                                                             }
                                                                             await product_specification_model_1.default.deleteMany({ productId: productDetails._id });
-                                                                            if (specificationData && specificationData.length > 0) {
+                                                                            if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
                                                                                 for await (const specification of specificationData) {
                                                                                     const specificationValues = {
                                                                                         productId: productDetails._id,
@@ -919,7 +938,7 @@ class ProductsController extends base_controller_1.default {
                                                                                     });
                                                                                 }
                                                                                 await product_gallery_images_model_1.default.deleteMany({ productID: updateProduct._id });
-                                                                                if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
                                                                                             productID: updateProduct._id,
@@ -1009,6 +1028,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 };
                                                                                 const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
+                                                                                    console.log("productVariantsproductVariantsproductVariants", productVariants);
                                                                                     const createVariant = await product_variant_service_1.default.create(productDetails._id, productVariants, userData);
                                                                                     if (createVariant) {
                                                                                         console.log("productDetails", productDetails);

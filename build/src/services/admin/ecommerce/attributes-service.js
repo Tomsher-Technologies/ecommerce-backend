@@ -117,8 +117,10 @@ class AttributesService {
     }
     async findOneAttributeFromExcel(attributeKeyValue) {
         const { attributeTitle, attributeType } = attributeKeyValue;
+        const trimAttributeTitle = attributeTitle.split('\n').map((line) => line.trim()).join('\n').trim();
+        const slug = (0, helpers_1.slugify)(trimAttributeTitle);
         if (attributeTitle && attributeType) {
-            const resultAttribute = await attribute_model_1.default.findOne({ attributeTitle: (0, helpers_1.capitalizeWords)(attributeTitle), attributeType });
+            const resultAttribute = await attribute_model_1.default.findOne({ slug: slug, attributeType });
             if (resultAttribute) {
                 const attributeDetailResult = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id);
                 const result = {
@@ -129,10 +131,10 @@ class AttributesService {
             }
             else {
                 const attributeData = {
-                    attributeTitle: (0, helpers_1.capitalizeWords)(attributeTitle),
+                    attributeTitle: (0, helpers_1.capitalizeWords)(trimAttributeTitle),
                     attributeType: attributeType,
                     isExcel: true,
-                    slug: (0, helpers_1.slugify)(attributeTitle)
+                    slug: slug
                 };
                 const attributeResult = await this.create(attributeData);
                 if (attributeResult) {
@@ -147,7 +149,7 @@ class AttributesService {
         }
     }
     async findOneAttributeDetail(attributeData, attributeId) {
-        const resultAttribute = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: attributeData.attributeItemName }, { attributeId: attributeId }] });
+        const resultAttribute = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: { $regex: new RegExp(attributeData.attributeItemName, 'i') } }, { attributeId: attributeId }] });
         if (resultAttribute) {
             return resultAttribute;
         }

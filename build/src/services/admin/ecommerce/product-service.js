@@ -201,5 +201,31 @@ class ProductsService {
             throw new Error(error + 'Failed to update ' + columnKey);
         }
     }
+    async exportProducts(options = {}) {
+        const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+        const pipeline = [
+            product_config_1.productCategoryLookup,
+            product_config_1.variantLookup,
+            product_config_1.imageLookup,
+            product_config_1.brandLookup,
+            product_config_1.brandObject,
+            (0, common_config_1.seoLookup)('productSeo'),
+            product_config_1.productSeoObject,
+            this.multilanguageFieldsLookup,
+            product_config_1.productSpecificationsLookup,
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+        ];
+        const productDataWithValues = await product_model_1.default.aggregate(pipeline);
+        return productDataWithValues;
+    }
 }
 exports.default = new ProductsService();

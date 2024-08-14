@@ -101,15 +101,17 @@ class BrandsService {
         return BrandsModel.findOne(data);
     }
     async findBrandId(brandTitle: string): Promise<void | null> {
-        const slug = slugify(brandTitle);
+        const trimBrandTitle = brandTitle.split('\n').map(line => line.trim()).join('\n').trim();
+        const slug = slugify(trimBrandTitle);
 
-        const resultBrand: any = await this.findBrand({ brandTitle: brandTitle.trim() });
+        const resultBrand: any = await this.findBrand({ slug: slug });
+
         if (resultBrand) {
             return resultBrand
         } else {
             const brandData = {
-                brandTitle: capitalizeWords(brandTitle),
-                slug: slugify(brandTitle),
+                brandTitle: capitalizeWords(trimBrandTitle),
+                slug: slug,
                 isExcel: true
             }
 

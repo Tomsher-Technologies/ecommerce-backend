@@ -167,7 +167,9 @@ class SpecificationService {
         return specifications_model_1.default.findOneAndDelete({ _id: specificationId });
     }
     async findOneSpecification(data) {
-        const resultSpecification = await specifications_model_1.default.findOne({ specificationTitle: data.specificationTitle.trim() });
+        const trimSpecificationTitle = data.specificationTitle.split('\n').map((line) => line.trim()).join('\n').trim();
+        const slug = (0, helpers_1.slugify)(trimSpecificationTitle);
+        const resultSpecification = await specifications_model_1.default.findOne({ slug: slug });
         if (resultSpecification) {
             const specificationDetailResult = await this.findOneSpecificationDetail(data, resultSpecification._id);
             const result = {
@@ -178,8 +180,8 @@ class SpecificationService {
         }
         else {
             const specificationData = {
-                specificationTitle: (0, helpers_1.capitalizeWords)(data.specificationTitle),
-                specificationDisplayName: data.specificationDisplayName,
+                specificationTitle: (0, helpers_1.capitalizeWords)(trimSpecificationTitle),
+                specificationDisplayName: slug,
                 isExcel: true,
                 slug: (0, helpers_1.slugify)(data.specificationTitle)
             };
@@ -195,7 +197,7 @@ class SpecificationService {
         }
     }
     async findOneSpecificationDetail(data, specificationId) {
-        const resultBrand = await specifications_detail_model_1.default.findOne({ $and: [{ itemName: data.itemName }, { specificationId: specificationId }] });
+        const resultBrand = await specifications_detail_model_1.default.findOne({ $and: [{ itemName: { $regex: new RegExp(data.itemName, 'i') } }, { specificationId: specificationId }] });
         if (resultBrand) {
             return resultBrand;
         }
