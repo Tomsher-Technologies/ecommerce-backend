@@ -851,15 +851,15 @@ class GuestController extends base_controller_1.default {
                                     await customer_service_1.default.update(updatedCustomer._id, {
                                         lastLoggedAt: new Date()
                                     });
+                                    const uuid = req.header('User-Token');
                                     if (updatedCustomer?.isGuest) {
                                         const existingCart = await cart_order_model_1.default.findOne({ customerId: updatedCustomer._id, cartStatus: '1' });
                                         if (existingCart) {
                                             await cart_order_model_1.default.findOneAndDelete({ _id: existingCart._id });
                                             await cart_order_product_model_1.default.deleteMany({ cartId: existingCart._id });
                                         }
-                                        const uuid = req.header('User-Token');
-                                        const guestUserCart = await cart_order_model_1.default.findOneAndUpdate({ guestUserId: uuid, cartStatus: '1' }, { $set: { customerId: updatedCustomer._id, isGuest: true, guestUserId: null } }, { new: true });
                                     }
+                                    const guestUserCart = await cart_order_model_1.default.findOneAndUpdate({ guestUserId: uuid, cartStatus: '1' }, { $set: { customerId: updatedCustomer._id, isGuest: true, guestUserId: null } }, { new: true });
                                     return controller.sendSuccessResponse(res, {
                                         requestedData: {
                                             token,
