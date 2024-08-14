@@ -1,6 +1,7 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
+import mongoose from 'mongoose';
 const ejs = require('ejs');
 const { convert } = require('html-to-text');
 
@@ -9,14 +10,17 @@ import { calculateExpectedDeliveryDate, dateConvertPm, formatZodError, getCountr
 import BaseController from '../../../controllers/admin/base-controller';
 import OrderService from '../../../services/admin/order/order-service'
 
-import mongoose from 'mongoose';
+import { productDetailsWithVariant } from '../../../utils/config/product-config';
 import { OrderQueryParams } from '../../../utils/types/order';
-import CartOrdersModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { cartStatus as cartStatusJson, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderProductStatussMessages, orderReturnStatusMessages, orderStatusArray, orderStatusArrayJason, orderStatusMessages } from '../../../constants/cart';
+import { exportOrderReport } from '../../../utils/admin/excel/reports';
+import { findOrderStatusDateCheck } from '../../../utils/admin/order';
+import { cartStatus as cartStatusJson, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderProductStatussMessages, orderReturnStatusMessages, orderStatusArray, orderStatusArrayJason, orderStatusMap, orderStatusMessages } from '../../../constants/cart';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
+
 import CustomerService from '../../../services/frontend/customer-service';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
+import CartOrdersModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
 import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
 import TaxsModel from '../../../model/admin/setup/tax-model';
@@ -24,9 +28,7 @@ import ProductVariantsModel from '../../../model/admin/ecommerce/product/product
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 import CountryModel from '../../../model/admin/setup/country-model';
 import CustomerModel from '../../../model/frontend/customers-model';
-import { productDetailsWithVariant } from '../../../utils/config/product-config';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
-import { exportOrderReport } from '../../../utils/admin/excel/reports';
 
 const controller = new BaseController();
 
@@ -34,7 +36,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', orderFromDate, orderEndDate, processingFromDate, processingEndDate, packedFromDate, packedEndDate, shippedFromDate, shippedEndDate, deliveredFromDate, deliveredEndDate, canceledFromDate, canceledEndDate, returnedFromDate, returnedEndDate, refundedFromDate, refundedEndDate, partiallyShippedFromDate, partiallyShippedEndDate, onHoldFromDate, onHoldEndDate, failedFromDate, failedEndDate, completedFromDate, completedEndDate, pickupFromDate, pickupEndDate, cartFromDate, cartEndDate, isExcel } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -77,110 +79,17 @@ class OrdersController extends BaseController {
                 } as any;
             }
 
-            if (orderFromDate || orderEndDate) {
-                query.orderStatusAt = {
-                    ...(orderFromDate && { $gte: new Date(orderFromDate) }),
-                    ...(orderEndDate && { $lte: dateConvertPm(orderEndDate) })
-                };
 
-            }
+            if (fromDate || endDate) {
+                const dateFilter: { $gte?: Date; $lte?: Date } = {};
 
-            if (processingFromDate || processingEndDate) {
-                query.processingStatusAt = {
-                    ...(processingFromDate && { $gte: new Date(processingFromDate) }),
-                    ...(processingEndDate && { $lte: dateConvertPm(processingEndDate) })
-                };
-            }
+                if (fromDate) dateFilter.$gte = new Date(fromDate);
+                if (endDate) dateFilter.$lte = dateConvertPm(endDate);
 
-            if (packedFromDate || packedEndDate) {
-                query.packedStatusAt = {
-                    ...(packedFromDate && { $gte: new Date(packedFromDate) }),
-                    ...(packedEndDate && { $lte: dateConvertPm(packedEndDate) })
-                };
-            }
-
-            if (shippedFromDate || shippedEndDate) {
-                query.shippedStatusAt = {
-                    ...(shippedFromDate && { $gte: new Date(shippedFromDate) }),
-                    ...(shippedEndDate && { $lte: dateConvertPm(shippedEndDate) })
-                };
-
-            }
-
-            if (deliveredFromDate || deliveredEndDate) {
-                query.deliveredStatusAt = {
-                    ...(deliveredFromDate && { $gte: new Date(deliveredFromDate) }),
-                    ...(deliveredEndDate && { $lte: dateConvertPm(deliveredEndDate) })
-                };
-
-            }
-            if (canceledFromDate || canceledEndDate) {
-                query.canceledStatusAt = {
-                    ...(canceledFromDate && { $gte: new Date(canceledFromDate) }),
-                    ...(canceledEndDate && { $lte: dateConvertPm(canceledEndDate) })
-                };
-
-            }
-            if (returnedFromDate || returnedEndDate) {
-                query.returnedStatusAt = {
-                    ...(returnedFromDate && { $gte: new Date(returnedFromDate) }),
-                    ...(returnedEndDate && { $lte: dateConvertPm(returnedEndDate) })
-                };
-
-            }
-            if (refundedFromDate || refundedEndDate) {
-                query.refundedStatusAt = {
-                    ...(refundedFromDate && { $gte: new Date(refundedFromDate) }),
-                    ...(refundedEndDate && { $lte: dateConvertPm(refundedEndDate) })
-                };
-
-            }
-
-            if (partiallyShippedFromDate || partiallyShippedEndDate) {
-                query.partiallyShippedStatusAt = {
-                    ...(partiallyShippedFromDate && { $gte: new Date(partiallyShippedFromDate) }),
-                    ...(partiallyShippedEndDate && { $lte: dateConvertPm(partiallyShippedEndDate) })
-                };
-
-            }
-
-            if (onHoldFromDate || onHoldEndDate) {
-                query.onHoldStatusAt = {
-                    ...(onHoldFromDate && { $gte: new Date(onHoldFromDate) }),
-                    ...(onHoldEndDate && { $lte: dateConvertPm(onHoldEndDate) })
-                };
-
-            }
-
-            if (failedFromDate || failedEndDate) {
-                query.failedStatusAt = {
-                    ...(failedFromDate && { $gte: new Date(failedFromDate) }),
-                    ...(failedEndDate && { $lte: dateConvertPm(failedEndDate) })
-                };
-
-            }
-
-            if (completedFromDate || completedEndDate) {
-                query.completedStatusAt = {
-                    ...(completedFromDate && { $gte: new Date(completedFromDate) }),
-                    ...(completedEndDate && { $lte: dateConvertPm(completedEndDate) })
-                };
-
-            }
-
-            if (pickupFromDate || pickupEndDate) {
-                query.pickupStatusAt = {
-                    ...(pickupFromDate && { $gte: new Date(pickupFromDate) }),
-                    ...(pickupEndDate && { $lte: dateConvertPm(pickupEndDate) })
-                };
-
-            }
-
-            if (cartFromDate || cartEndDate) {
-                query.cartStatusAt = {
-                    ...(cartFromDate && { $gte: new Date(cartFromDate) }),
-                    ...(cartEndDate && { $lte: dateConvertPm(cartEndDate) })
-                };
+                if (orderStatus) {
+                    const statusField = findOrderStatusDateCheck(orderStatusMap[orderStatus].value);
+                    query[statusField] = { ...dateFilter };
+                }
             }
 
             const sort: any = {};
@@ -211,7 +120,7 @@ class OrdersController extends BaseController {
                     query,
                     sort
                 });
-                
+
                 if (orderData.orders && orderData.orders.length > 0) {
                     await exportOrderReport(res, orderData.orders, orderData)
                 } else {
