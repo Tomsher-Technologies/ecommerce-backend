@@ -49,31 +49,29 @@ class ProductsController extends base_controller_1.default {
             const countryId = await (0, helpers_1.getCountryId)(userData);
             const filterProducts = await (0, products_1.filterProduct)(req.query, countryId);
             console.log(filterProducts.query);
-            // const products = await ProductsService.findAll({
-            //     page: parseInt(page_size as string),
-            //     limit: parseInt(limit as string),
-            //     query: filterProducts.query,
-            //     sort: filterProducts.sort
-            // });
-            // const count = await ProductsService.getTotalCount(filterProducts.query)
-            // controller.sendSuccessResponse(res, {
-            //     requestedData: products,
-            //     totalCount: count,
-            //     message: 'Success'
-            // }, 200);
-            let isExcel;
-            if (isExcel = '1') {
+            const products = await product_service_1.default.findAll({
+                page: parseInt(page_size),
+                limit: parseInt(limit),
+                query: filterProducts.query,
+                sort: filterProducts.sort
+            });
+            const count = await product_service_1.default.getTotalCount(filterProducts.query);
+            let isExcel = req.query.isExcel;
+            if (isExcel == '1') {
                 const products = await product_service_1.default.exportProducts({
                     page: parseInt(page_size),
                     limit: parseInt(limit),
                     query: filterProducts.query,
                     sort: filterProducts.sort
                 });
-                // controller.sendSuccessResponse(res, {
-                //     requestedData: products,
-                //     message: 'Success'
-                // }, 200);
                 await (0, reports_1.exportProductExcel)(res, products);
+            }
+            else {
+                controller.sendSuccessResponse(res, {
+                    requestedData: products,
+                    totalCount: count,
+                    message: 'Success'
+                }, 200);
             }
         }
         catch (error) {
