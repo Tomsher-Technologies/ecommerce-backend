@@ -135,8 +135,11 @@ class AttributesService {
     }
     async findOneAttributeFromExcel(attributeKeyValue: any): Promise<void | null> {
         const { attributeTitle, attributeType } = attributeKeyValue
+
+        const trimAttributeTitle = attributeTitle.split('\n').map((line: any) => line.trim()).join('\n').trim();
+        const slug = slugify(trimAttributeTitle);
         if (attributeTitle && attributeType) {
-            const resultAttribute: any = await AttributesModel.findOne({ attributeTitle: capitalizeWords(attributeTitle), attributeType });
+            const resultAttribute: any = await AttributesModel.findOne({ slug: slug, attributeType });
             if (resultAttribute) {
                 const attributeDetailResult: any = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id)
                 const result: any = {
@@ -146,10 +149,10 @@ class AttributesService {
                 return result
             } else {
                 const attributeData = {
-                    attributeTitle: capitalizeWords(attributeTitle),
+                    attributeTitle: capitalizeWords(trimAttributeTitle),
                     attributeType: attributeType,
                     isExcel: true,
-                    slug: slugify(attributeTitle)
+                    slug: slug
                 }
                 const attributeResult: any = await this.create(attributeData)
                 if (attributeResult) {
@@ -165,7 +168,7 @@ class AttributesService {
     }
 
     async findOneAttributeDetail(attributeData: any, attributeId: string): Promise<void | null> {
-        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: attributeData.attributeItemName }, { attributeId: attributeId }] });
+        const resultAttribute: any = await AttributeDetailModel.findOne({ $and: [{ itemName: { $regex: new RegExp(attributeData.attributeItemName, 'i') } }, { attributeId: attributeId }] });
         if (resultAttribute) {
             return resultAttribute
         } else {

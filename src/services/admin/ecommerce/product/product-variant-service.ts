@@ -31,6 +31,7 @@ class ProductVariantService {
                 countryId: 1,
                 price: 1,
                 quantity: 1,
+                variantImageUrl: 1,
                 discountPrice: 1,
                 isDefualt: 1,
                 hsn: 1,

@@ -93,3 +93,202 @@ export const exportOrderReport = async (res: Response, orderData: any, orderSum:
     });
     await generateExcelFile(res, ordersData, ['Id', 'Order Id', 'Brand', 'Category', 'Delivery instructions', 'Product Title', 'SKU', 'Quantity', 'MRP', 'Discount Amount', 'Sub Total', 'Total With Cancel', 'Created At', 'Status', 'Delivered At', 'Billing Name', 'Shipping Name', 'Payment Method', 'Shipping Address', 'Shipping Phone', 'Billing Address', 'Billing Phone'], 'Orders')
 }
+
+export const exportProductExcel = async (res: Response, products: any) => {
+    const productData: any[] = [];
+    const allGalleryImageKeys: Set<string> = new Set();
+    const allAttributeKeys: Set<string> = new Set();
+    const allSpecificationKeys: Set<string> = new Set();
+
+    products.forEach((product: any) => {
+        product.productVariants.forEach((variant: any) => {
+            variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
+                allGalleryImageKeys.add(`Gallery_Image_${imgIndex + 1}`);
+            });
+
+            variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
+                allAttributeKeys.add(`Attribute_Option_${attrIndex + 1}`);
+                allAttributeKeys.add(`Attribute_Type_${attrIndex + 1}`);
+                allAttributeKeys.add(`Attribute_Name_${attrIndex + 1}`);
+                allAttributeKeys.add(`Attribute_Value_${attrIndex + 1}`);
+            });
+
+            variant.productSpecification.forEach((specification: any, specIndex: number) => {
+                allSpecificationKeys.add(`Specification_Option_${specIndex + 1}`);
+                allSpecificationKeys.add(`Specification_Display_Name_${specIndex + 1}`);
+                allSpecificationKeys.add(`Specification_Name_${specIndex + 1}`);
+                allSpecificationKeys.add(`Specification_Value_${specIndex + 1}`);
+            });
+        });
+    });
+
+    products.forEach((product: any) => {
+        const categoryTitles = product.productCategory.map((cat: any) => cat.category.slug).join(', ');
+        const variantImages: { [key: string]: any } = {};
+        const attributes: { [key: string]: any } = {};
+        const specifications: { [key: string]: any } = {};
+
+        allGalleryImageKeys.forEach((key) => {
+            variantImages[key] = null;
+        });
+
+        allAttributeKeys.forEach((key) => {
+            attributes[key] = null;
+        });
+
+        allSpecificationKeys.forEach((key) => {
+            specifications[key] = null;
+        });
+
+        let totalQuantity = 0;
+        if (product.productVariants[0].productVariantAttributes.length > 0) {
+            let itemType: any;
+
+            product.productVariants.forEach((variant: any, index: number) => {
+
+                if (index === 0) {
+                    totalQuantity = product.productVariants.reduce((sum: number, v: any) => sum + v.quantity, 0);
+                }
+
+                variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
+                    variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                });
+
+                variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
+                    attributes[`Attribute_Option_${attrIndex + 1}`] = attribute.attributeTitle;
+                    attributes[`Attribute_Type_${attrIndex + 1}`] = attribute.attributeType;
+                    attributes[`Attribute_Name_${attrIndex + 1}`] = attribute.attributeDetail.itemName;
+                    attributes[`Attribute_Value_${attrIndex + 1}`] = attribute.attributeDetail.itemValue;
+                });
+
+                variant.productSpecification.forEach((specification: any, specIndex: number) => {
+                    specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                    specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                    specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                    specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+                });
+
+                itemType = product.productVariants[0]._id === variant._id ? 'config-item' : 'variant';
+
+                productData.push({
+                    Product_Title: product.isVariant === 1 ? variant.extraProductTitle : product.productTitle,
+                    Description: variant.variantDescription,
+                    Parent_SKU: itemType === 'config-item' ? null : product.sku,
+                    SKU: variant.variantSku,
+                    Item_Type: itemType,
+                    Category: categoryTitles,
+                    Image: product.productImageUrl,
+                    ...variantImages,
+                    Unit: product.unit,
+                    Hight: product.measurements.hight,
+                    Length: product.measurements.length,
+                    Width: product.measurements.width,
+                    Weight: product.measurements.Weight,
+                    Tags: product.tags,
+                    Brand: product.brand.brandTitle,
+                    Warehouse: product.warehouse,
+                    Price: variant.price,
+                    Discount_Price: variant.discountPrice,
+                    Quantity: variant.quantity,
+                    Total_Quantity: itemType === 'config-item' ? totalQuantity : null,
+                    Cart_Min_Quantity: variant.cartMinQuantity,
+                    Cart_Max_Quantity: variant.cartMaxQuantity,
+                    Is_Default: variant.isDefault,
+                    Meta_Title: variant.productSeo?.metaTitle,
+                    Meta_Keywords: variant.productSeo?.metaKeywords,
+                    Meta_Description: variant.productSeo?.metaDescription,
+                    OG_Title: variant.productSeo?.ogTitle,
+                    OG_Description: variant.productSeo?.ogDescription,
+                    Twitter_Title: variant.productSeo?.twitterTitle,
+                    Twitter_Description: variant.productSeo?.twitterDescription,
+                    ...attributes,
+                    ...specifications
+                });
+            });
+        } else {
+            product.imageGallery.forEach((image: any, imgIndex: number) => {
+                variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+            });
+
+            product.productSpecification.forEach((specification: any, specIndex: number) => {
+                specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+            });
+
+            productData.push({
+                Product_Title: product.productTitle,
+                Description: product.description,
+                Long_Description: product.longDescription,
+                Parent_SKU: null,
+                SKU: product.sku,
+                Item_Type: 'simple-item',
+                Category: categoryTitles,
+                Image: product.productImageUrl,
+                ...variantImages,
+                Unit: product.unit,
+                Hight: product.measurements.hight,
+                Length: product.measurements.length,
+                Width: product.measurements.width,
+                Weight: product.measurements.Weight,
+                Tags: product.tags,
+                Brand: product.brand.brandTitle,
+                Warehouse: product.warehouse,
+                Price: product.productVariants[0].price,
+                Discount_Price: product.productVariants[0].discountPrice,
+                Quantity: product.productVariants[0].quantity,
+                Total_Quantity: product.productVariants[0].quantity,
+                Cart_Min_Quantity: product.productVariants[0].cartMinQuantity,
+                Cart_Max_Quantity: product.productVariants[0].cartMaxQuantity,
+                Is_Default: product.productVariants[0].isDefault,
+                Meta_Title: product.productSeo.metaTitle,
+                Meta_Keywords: product.productSeo.metaKeywords,
+                Meta_Description: product.productSeo.metaDescription,
+                OG_Title: product.productSeo.ogTitle,
+                OG_Description: product.productSeo.ogDescription,
+                Twitter_Title: product.productSeo.twitterTitle,
+                Twitter_Description: product.productSeo.twitterDescription,
+                ...specifications
+            });
+        }
+    });
+
+    const columnOrder = [
+        'Product_Title',
+        'Description',
+        'Long_Description',
+        'Parent_SKU',
+        'SKU',
+        'Item_Type',
+        'Category',
+        'Image',
+        ...Array.from(allGalleryImageKeys),
+        'Unit',
+        'Hight',
+        'Length',
+        'Width',
+        'Weight',
+        'Tags',
+        'Brand',
+        'Warehouse',
+        'Price',
+        'Discount_Price',
+        'Quantity',
+        'Total_Quantity',
+        'Cart_Min_Quantity',
+        'Cart_Max_Quantity',
+        'Is_Default',
+        'Meta_Title',
+        'Meta_Keywords',
+        'Meta_Description',
+        'OG_Title',
+        'OG_Description',
+        'Twitter_Title',
+        'Twitter_Description',
+        ...Array.from(allAttributeKeys),
+        ...Array.from(allSpecificationKeys)
+    ];
+    await generateExcelFile(res, productData, columnOrder, 'products');
+}
+

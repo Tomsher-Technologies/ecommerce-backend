@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
 import mongoose from 'mongoose';
-import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoObject, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoObject, productSpecificationsLookup, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
 import { seoLookup } from '../../../utils/config/common-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { collections } from '../../../constants/collections';
@@ -160,10 +160,6 @@ class ProductsService {
         return ProductGalleryImagesModel.create(gallaryImageData);
     }
 
-
-
-
-
     async destroyGalleryImages(gallaryImageID: string): Promise<ProductsProps | null> {
         return ProductGalleryImagesModel.findOneAndDelete({ _id: gallaryImageID });
     }
@@ -225,6 +221,35 @@ class ProductsService {
         } catch (error) {
             throw new Error(error + 'Failed to update ' + columnKey);
         }
+    }
+
+    async exportProducts(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
+        const { query, skip, limit, sort } = pagination(options.query || {}, options);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+
+        const pipeline = [
+            productCategoryLookup,
+            variantLookup,
+            imageLookup,
+            brandLookup,
+            brandObject,
+            seoLookup('productSeo'),
+            productSeoObject,
+            this.multilanguageFieldsLookup,
+            productSpecificationsLookup,
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+        ];
+        const productDataWithValues = await ProductsModel.aggregate(pipeline);
+
+        return productDataWithValues;
     }
 
 }

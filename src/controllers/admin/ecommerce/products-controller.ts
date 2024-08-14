@@ -34,6 +34,8 @@ import ProductGalleryImagesModel from '../../../model/admin/ecommerce/product/pr
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
+import { exportProductExcel } from '../../../utils/admin/excel/reports';
+import SeoPageModel from '../../../model/admin/seo-page-model';
 
 const controller = new BaseController();
 
@@ -46,7 +48,6 @@ class ProductsController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 10 } = req.query as ProductsQueryParams;
-
             const userData = await res.locals.user;
             const countryId = await getCountryId(userData);
 
@@ -54,20 +55,36 @@ class ProductsController extends BaseController {
             const filterProducts = await filterProduct(req.query, countryId)
             console.log(filterProducts.query);
 
-            const products = await ProductsService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query: filterProducts.query,
-                sort: filterProducts.sort
-            });
+            // const products = await ProductsService.findAll({
+            //     page: parseInt(page_size as string),
+            //     limit: parseInt(limit as string),
+            //     query: filterProducts.query,
+            //     sort: filterProducts.sort
+            // });
+            // const count = await ProductsService.getTotalCount(filterProducts.query)
 
-            const count = await ProductsService.getTotalCount(filterProducts.query)
+            // controller.sendSuccessResponse(res, {
+            //     requestedData: products,
+            //     totalCount: count,
+            //     message: 'Success'
+            // }, 200);
 
-            controller.sendSuccessResponse(res, {
-                requestedData: products,
-                totalCount: count,
-                message: 'Success'
-            }, 200);
+            let isExcel
+
+            if (isExcel = '1') {
+                const products = await ProductsService.exportProducts({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query: filterProducts.query,
+                    sort: filterProducts.sort
+                });
+                // controller.sendSuccessResponse(res, {
+                //     requestedData: products,
+                //     message: 'Success'
+                // }, 200);
+                await exportProductExcel(res, products)
+
+            }
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching products' });
         }
@@ -767,9 +784,6 @@ class ProductsController extends BaseController {
                                                                             specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId })
                                                                         }
                                                                     }
-                                                                    // console.log("sdgdfsdfsdgsd", specificationData);
-                                                                    // console.log("specificationCombinedArray", specificationCombinedArray);
-
 
                                                                     const galleryImageArray = []
                                                                     galleryImageArray.push({
@@ -825,6 +839,7 @@ class ProductsController extends BaseController {
                                                                         extraProductTitle: capitalizeWords(data.Product_Title),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
+                                                                        variantImageUrl: data.Image,
                                                                         price: data.Price,
                                                                         discountPrice: data.Discount_Price ? data.Discount_Price : 0,
                                                                         quantity: data.Quantity,
@@ -832,9 +847,11 @@ class ProductsController extends BaseController {
                                                                         cartMinQuantity: data.Cart_Min_Quantity,
                                                                         cartMaxQuantity: data.Cart_Max_Quantity,
                                                                         barcode: data.Barcode,
-                                                                        isDefault: data.Is_Default ? data.Is_Default : 0,
-                                                                        isExcel: true
+                                                                        isExcel: true,
+                                                                        createdBy: userData._id,
+                                                                        isDefault: (data.Item_Type == 'config-item') ? 1 : 0
                                                                     }
+                                                                    // console.log("productVariants", productVariants);
 
                                                                     const shortTitleOfCountry: any = await CountryModel.findOne({ _id: await getCountryIdWithSuperAdmin(userData) })
 
@@ -849,7 +866,7 @@ class ProductsController extends BaseController {
                                                                         // if (!productDuplication) {
                                                                         let insertWithNonConfigItemVariant = false;
                                                                         let createProduct = null
-                                                                        const productDetails: any = await ProductsService.find({ $and: [{ sku: data.SKU }, { productTitle: capitalizeWords(data.Product_Title) }] });
+                                                                        const productDetails: any = await ProductsService.find({ $and: [{ sku: data.SKU }] });
 
                                                                         if (productDetails) {
                                                                             const existingVariantDetails = await ProductVariantsModel.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
@@ -872,7 +889,7 @@ class ProductsController extends BaseController {
                                                                                     }
                                                                                 }
 
-                                                                                if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                                if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
                                                                                     const newSeo = await SeoPageService.create({
                                                                                         pageId: createProduct._id,
                                                                                         page: seoPage.ecommerce.products,
@@ -880,7 +897,7 @@ class ProductsController extends BaseController {
                                                                                     })
                                                                                 }
 
-                                                                                if (specificationData && specificationData.length > 0) {
+                                                                                if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
                                                                                     for await (const specification of specificationData) {
                                                                                         const specificationValues = {
                                                                                             productId: createProduct._id,
@@ -890,7 +907,7 @@ class ProductsController extends BaseController {
                                                                                     }
                                                                                 }
 
-                                                                                if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
                                                                                             productID: createProduct._id,
@@ -907,6 +924,8 @@ class ProductsController extends BaseController {
                                                                                 }
 
                                                                                 const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
+                                                                                console.log("variantDetails", variantDetails);
+
                                                                                 if (!variantDetails) {
                                                                                     const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
                                                                                     if (createVariant) {
@@ -980,8 +999,8 @@ class ProductsController extends BaseController {
 
                                                                             }
                                                                         } else {
-
-                                                                            if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
+                                                                            await SeoPageModel.deleteMany({ pageId: productDetails._id, pageReferenceId: null });
+                                                                            if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
                                                                                 const newSeo = await SeoPageService.create({
                                                                                     pageId: productDetails._id,
                                                                                     page: seoPage.ecommerce.products,
@@ -990,7 +1009,7 @@ class ProductsController extends BaseController {
                                                                             }
                                                                             await ProductSpecificationModel.deleteMany({ productId: productDetails._id });
 
-                                                                            if (specificationData && specificationData.length > 0) {
+                                                                            if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
                                                                                 for await (const specification of specificationData) {
                                                                                     const specificationValues = {
                                                                                         productId: productDetails._id,
@@ -1010,7 +1029,7 @@ class ProductsController extends BaseController {
                                                                                 }
 
                                                                                 await ProductGalleryImagesModel.deleteMany({ productID: updateProduct._id });
-                                                                                if (galleryImageArray && galleryImageArray.length > 0) {
+                                                                                if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
                                                                                     for await (const galleryImage of galleryImageArray) {
                                                                                         const galleryImageData = {
                                                                                             productID: updateProduct._id,
@@ -1108,6 +1127,8 @@ class ProductsController extends BaseController {
 
                                                                                 const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
+                                                                                    console.log("productVariantsproductVariantsproductVariants", productVariants);
+
                                                                                     const createVariant = await ProductVariantService.create(productDetails._id, productVariants, userData)
                                                                                     if (createVariant) {
                                                                                         console.log("productDetails", productDetails);

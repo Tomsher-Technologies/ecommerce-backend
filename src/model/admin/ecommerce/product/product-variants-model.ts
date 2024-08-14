@@ -7,6 +7,7 @@ export interface ProductVariantsProps extends Document {
     slug: string;
     extraProductTitle: string;
     variantSku: string;
+    variantImageUrl: string;
     price: number;
     quantity: number;
     discountPrice: number;
@@ -20,7 +21,7 @@ export interface ProductVariantsProps extends Document {
     cartMaxQuantity: string;
     status: string;
     statusAt: Date;
-    createdBy?: string;
+    createdBy?: Schema.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -39,6 +40,9 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     variantSku: {
         type: String,
         required: true,
+    },
+    variantImageUrl: {
+        type: String
     },
     slug: {
         type: String,
@@ -97,10 +101,6 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: String,
         default: ''
     },
-    isExcel: {
-        type: Boolean,
-        default: false
-    },
     isDefault: {
         type: Number,
         required: true,
@@ -114,8 +114,21 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     statusAt: {
         type: Date,
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'Users',
+    },
     createdAt: {
         type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
 });
 
