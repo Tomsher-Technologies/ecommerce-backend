@@ -114,7 +114,10 @@ class OrderController extends base_controller_1.default {
         try {
             const customerId = res.locals.user;
             const orderId = req.params.id;
-            const { orderProducts, returnReson } = req.body;
+            const { orderProducts, returnReason } = req.body;
+            if (returnReason === '') {
+                return controller.sendErrorResponse(res, 200, { message: 'Return eeason is required' });
+            }
             if (!orderProducts || orderProducts.length === 0) {
                 return controller.sendErrorResponse(res, 200, { message: 'Please select the order product to return or edit' });
             }
@@ -131,16 +134,16 @@ class OrderController extends base_controller_1.default {
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            if (Number(orderDetails.orderStatus) > Number(cart_1.orderStatusArrayJason.delivered)) {
+            if (Number(orderDetails.orderStatus) > Number(cart_1.orderStatusArrayJson.delivered)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
             const statusMessages = {
-                [cart_1.orderStatusArrayJason.canceled.toString()]: 'Your order has already been cancelled!',
-                [cart_1.orderStatusArrayJason.returned.toString()]: 'Your order has already been returned!',
-                [cart_1.orderStatusArrayJason.onHold.toString()]: 'Your order is on hold!',
-                [cart_1.orderStatusArrayJason.failed.toString()]: 'Your order has failed!'
+                [cart_1.orderStatusArrayJson.canceled.toString()]: 'Your order has already been cancelled!',
+                [cart_1.orderStatusArrayJson.returned.toString()]: 'Your order has already been returned!',
+                [cart_1.orderStatusArrayJson.onHold.toString()]: 'Your order is on hold!',
+                [cart_1.orderStatusArrayJson.failed.toString()]: 'Your order has failed!'
             };
-            if ([cart_1.orderStatusArrayJason.canceled, cart_1.orderStatusArrayJason.returned, cart_1.orderStatusArrayJason.onHold, cart_1.orderStatusArrayJason.failed].map(String).includes(orderDetails.orderStatus)) {
+            if ([cart_1.orderStatusArrayJson.canceled, cart_1.orderStatusArrayJson.returned, cart_1.orderStatusArrayJson.onHold, cart_1.orderStatusArrayJson.failed].map(String).includes(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, { message: statusMessages[orderDetails.orderStatus] });
             }
             const orderProductDetails = await cart_order_product_model_1.default.find({ cartId: orderDetails._id });
@@ -204,9 +207,9 @@ class OrderController extends base_controller_1.default {
             }
             if (updateOperations.length > 0) {
                 await cart_order_product_model_1.default.bulkWrite(updateOperations);
-                if (returnReson !== '') {
+                if (returnReason !== '') {
                     await cart_order_model_1.default.findOneAndUpdate(orderDetails._id, {
-                        returnReson
+                        returnReason
                     });
                 }
                 const orderList = await order_service_1.default.orderList({

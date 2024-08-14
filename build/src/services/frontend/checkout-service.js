@@ -366,53 +366,44 @@ class CheckoutService {
                     const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
                     cartUpdate = {
                         ...cartUpdate,
+                        couponId: couponDetails._id,
                         totalAmount: cartTotalAmount,
                         totalCouponAmount: totalCouponAmount
                     };
                 }
             };
-            let totalAmount = 0;
-            const promises = [];
-            if (couponDetails?.couponType === cart_1.couponTypes.entireOrders) {
+            var totalAmount = 0;
+            if (couponDetails?.couponType == cart_1.couponTypes.entireOrders) {
                 updateTotalCouponAmount(cartDetails?.totalProductAmount, couponAmount, discountType);
             }
-            else if (couponDetails?.couponType === cart_1.couponTypes.forProduct) {
-                promises.push(...cartProductDetails.map(async (product) => {
-                    if (couponDetails?.couponApplyValues.includes(product.productId)) {
+            else if (couponDetails?.couponType == cart_1.couponTypes.forProduct) {
+                cartProductDetails.map(async (product) => {
+                    if (couponDetails?.couponApplyValues.includes((product.productId))) {
                         totalAmount += product.productAmount;
                     }
-                }));
+                });
+                updateTotalCouponAmount(totalAmount, couponAmount, discountType);
             }
-            else if (couponDetails?.couponType === cart_1.couponTypes.forCategory) {
+            else if (couponDetails?.couponType == cart_1.couponTypes.forCategory) {
                 const productCategoryDetails = await product_category_link_model_1.default.find({ productId: { $in: productIds } });
                 const categoryIds = productCategoryDetails.map((product) => product.categoryId);
-                promises.push(...categoryIds.map(async (categoryId) => {
-                    if (couponDetails?.couponApplyValues.includes(categoryId)) {
-                        const productsInCategory = await product_model_1.default.find({ categoryId });
-                        productsInCategory.forEach((product) => {
-                            if (couponDetails?.couponApplyValues.includes(product.productId)) {
-                                totalAmount += product.productAmount;
-                            }
-                        });
+                categoryIds.map(async (product) => {
+                    if (couponDetails?.couponApplyValues.includes((product.productId))) {
+                        totalAmount += product.productAmount;
                     }
-                }));
+                });
+                updateTotalCouponAmount(totalAmount, couponAmount, discountType);
             }
-            else if (couponDetails?.couponType === cart_1.couponTypes.forBrand) {
+            else if (couponDetails?.couponType == cart_1.couponTypes.forBrand) {
                 const productDetails = await product_model_1.default.find({ _id: { $in: productIds } });
                 const brandIds = productDetails.map((product) => product.brand);
-                promises.push(...brandIds.map(async (brandId) => {
-                    if (couponDetails?.couponApplyValues.includes(brandId)) {
-                        const productsInBrand = await product_model_1.default.find({ brand: brandId });
-                        productsInBrand.forEach((product) => {
-                            if (couponDetails?.couponApplyValues.includes(product.productId)) {
-                                totalAmount += product.productAmount;
-                            }
-                        });
+                brandIds.map(async (product) => {
+                    if (couponDetails?.couponApplyValues.includes((product.productId))) {
+                        totalAmount += product.productAmount;
                     }
-                }));
+                });
+                updateTotalCouponAmount(totalAmount, couponAmount, discountType);
             }
-            await Promise.all(promises);
-            updateTotalCouponAmount(totalAmount, couponAmount, discountType);
             return cartUpdate;
         }
     }
