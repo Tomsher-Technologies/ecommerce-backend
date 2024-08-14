@@ -87,15 +87,16 @@ class BrandsService {
         return brands_model_1.default.findOne(data);
     }
     async findBrandId(brandTitle) {
-        const slug = (0, helpers_1.slugify)(brandTitle);
-        const resultBrand = await this.findBrand({ brandTitle: brandTitle.trim() });
+        const trimBrandTitle = brandTitle.split('\n').map(line => line.trim()).join('\n').trim();
+        const slug = (0, helpers_1.slugify)(trimBrandTitle);
+        const resultBrand = await this.findBrand({ slug: slug });
         if (resultBrand) {
             return resultBrand;
         }
         else {
             const brandData = {
-                brandTitle: (0, helpers_1.capitalizeWords)(brandTitle),
-                slug: (0, helpers_1.slugify)(brandTitle),
+                brandTitle: (0, helpers_1.capitalizeWords)(trimBrandTitle),
+                slug: slug,
                 isExcel: true
             };
             const brandResult = await this.create(brandData);

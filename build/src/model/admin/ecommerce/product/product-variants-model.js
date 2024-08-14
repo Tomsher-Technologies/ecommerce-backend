@@ -39,6 +39,9 @@ const productVariantsSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    variantImageUrl: {
+        type: String
+    },
     slug: {
         type: String,
         validate: {
@@ -96,10 +99,6 @@ const productVariantsSchema = new mongoose_1.Schema({
         type: String,
         default: ''
     },
-    isExcel: {
-        type: Boolean,
-        default: false
-    },
     isDefault: {
         type: Number,
         required: true,
@@ -113,8 +112,21 @@ const productVariantsSchema = new mongoose_1.Schema({
     statusAt: {
         type: Date,
     },
+    isExcel: {
+        type: Boolean,
+        default: false
+    },
+    createdBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Users',
+    },
     createdAt: {
         type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
 });
 const ProductVariantsModel = mongoose_1.default.model('ProductVariants', productVariantsSchema);

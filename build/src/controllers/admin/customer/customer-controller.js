@@ -49,15 +49,15 @@ class CustomerController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            if (isExcel === '1') {
-                query.isExcel = '1';
-            }
+            // if (isExcel === '1') {
+            //     // query.isExcel = '1'
+            // }
             const customers = await customer_service_1.default.findAll({
                 page: parseInt(page_size),
                 limit: parseInt(limit),
                 query,
                 sort
-            });
+            }, (isExcel === '1') ? '1' : "0");
             if (customers && customers.length > 0 && isExcel !== '1') {
                 return controller.sendSuccessResponse(res, {
                     requestedData: customers[0]?.customerData || [],
