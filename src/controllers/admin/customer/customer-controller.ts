@@ -55,16 +55,17 @@ class CustomerController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            if (isExcel === '1') {
-                query.isExcel = '1'
-            }
+            // if (isExcel === '1') {
+            //     // query.isExcel = '1'
+            // }
             const customers: any = await CustomerService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
                 sort
-            });
-
+            },
+                (isExcel === '1') ? '1' : "0"
+            );
             if (customers && customers.length > 0 && isExcel !== '1') {
                 return controller.sendSuccessResponse(res, {
                     requestedData: customers[0]?.customerData || [],
@@ -72,6 +73,7 @@ class CustomerController extends BaseController {
                     message: 'Success!'
                 }, 200);
             } else {
+
                 if (customers[0].customerData && customers[0].customerData.length > 0) {
                     await exportCustomerReport(res, customers[0].customerData)
                 } else {
