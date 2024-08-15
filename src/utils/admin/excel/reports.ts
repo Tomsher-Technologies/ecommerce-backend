@@ -39,31 +39,61 @@ export const exportCustomerReport = async (res: Response, customerData: any) => 
 export const exportOrderReport = async (res: Response, orderData: any, orderSum: any) => {
     const ordersData = orderData.map((order: any) => {
         const categoryTitles = order.productsDetails.productCategory.map((cat: any) => cat.category.categoryTitle).join(', ');
-
+        const shippingAddress = {
+            name: order.shippingAddress?.name,
+            address1: order.shippingAddress?.address1,
+            address2: order.shippingAddress?.address2,
+            phoneNumber: order.shippingAddress?.phoneNumber,
+            landlineNumber: order.shippingAddress?.landlineNumber,
+            addressType: order.shippingAddress?.addressType,
+            defaultAddress: order.shippingAddress?.defaultAddress,
+            country: order.shippingAddress?.country,
+            state: order.shippingAddress?.state,
+            city: order.shippingAddress?.city,
+            street: order.shippingAddress?.street,
+            longitude: order.shippingAddress?.longitude,
+            latitude: order.shippingAddress?.latitude,
+            isGuest: order.shippingAddress?.isGuest,
+        }
+        const billingAddress = {
+            name: order.billingAddress?.name,
+            address1: order.billingAddress?.address1,
+            address2: order.billingAddress?.address2,
+            phoneNumber: order.billingAddress?.phoneNumber,
+            landlineNumber: order.billingAddress?.landlineNumber,
+            addressType: order.billingAddress?.addressType,
+            defaultAddress: order.billingAddress?.defaultAddress,
+            country: order.billingAddress?.country,
+            state: order.billingAddress?.state,
+            city: order.billingAddress?.city,
+            street: order.billingAddress?.street,
+            longitude: order.billingAddress?.longitude,
+            latitude: order.billingAddress?.latitude,
+            isGuest: order.billingAddress?.isGuest,
+        }
         return {
             Id: order._id.toString(),
-            'Order Id': order.cartDetails.orderId,
-            Brand: order.productsDetails.brand.brandTitle,
+            'Order Id': order.cartDetails?.orderId,
+            Brand: order.productsDetails?.brand.brandTitle,
             Category: categoryTitles,
             'Delivery instructions': order.cartDetails.orderComments,
-            'Product Title': order.productsDetails.productvariants.extraProductTitle ? order.productsDetails.productvariants.extraProductTitle : order.productsDetails.productTitle,
-            SKU: order.productsDetails.productvariants.variantSku,
+            'Product Title': order.productsDetails.productvariants?.extraProductTitle ? order.productsDetails.productvariants?.extraProductTitle : order.productsDetails?.productTitle,
+            SKU: order.productsDetails.productvariants?.variantSku,
             Quantity: order.quantity,
-            MRP: order.productsDetails.productvariants.price,
+            MRP: order.productsDetails.productvariants?.price,
             'Discount Amount': order.productDiscountAmount,
             'Sub Total': order.productAmount,
             'Total With Cancel': order.returnedProductAmount > 0 ? (order.productAmount - order.returnedProductAmount) : 0,
             'Created At': order.orderProductStatus === '1' ? order.orderProductStatusAt : null,
             Status: order.orderProductStatus ? orderProductStatusMap[order.orderProductStatus].label : null,
             'Delivered At': order.orderProductStatus === '5' ? order.orderProductStatusAt : null,
-            'Billing Name': order.billingAddress.name,
-            'Shipping Name': order.shippingAddress.name,
+            'Billing Name': order.billingAddress?.name,
+            'Shipping Name': order.shippingAddress?.name,
             'Payment Method': order.paymentMethod.paymentMethodTitle,
-            'Shipping Address': JSON.stringify(order.shippingAddress),
+            'Shipping Address': JSON.stringify(shippingAddress),
             'Shipping Phone': order.shippingAddress.phoneNumber,
-            'Billing Address': JSON.stringify(order.billingAddress),
+            'Billing Address': JSON.stringify(billingAddress),
             'Billing Phone': order.billingAddress.phoneNumber,
-
         }
     });
 
@@ -141,7 +171,8 @@ export const exportProductExcel = async (res: Response, products: any) => {
         });
 
         let totalQuantity = 0;
-        if (product.productVariants[0].productVariantAttributes.length > 0) {
+
+        if (product && product.productVariants[0] && product.productVariants[0].productVariantAttributes && product.productVariants[0].productVariantAttributes.length > 0) {
             let itemType: any;
 
             product.productVariants.forEach((variant: any, index: number) => {
