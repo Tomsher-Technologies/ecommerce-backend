@@ -756,6 +756,7 @@ class OrdersController extends BaseController {
                 });
             }
             // Ensure that the order cannot be changed to Canceled after Delivered
+
             if (orderDetails.orderStatus === orderStatusArrayJson.delivered && orderStatus === orderStatusArrayJson.canceled) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status to Canceled once delivered'
@@ -795,6 +796,11 @@ class OrdersController extends BaseController {
             if (orderDetails.orderStatus === orderStatusArrayJson.refunded) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status once it is refunded'
+                });
+            }
+            if (orderDetails.orderStatus === orderStatusArrayJson.canceled && (orderStatus !== orderStatusArrayJson.refunded || orderDetails.orderStatus !== orderStatusArrayJson.returned)) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status Canceled Order'
                 });
             }
             let customerDetails: any = null;
