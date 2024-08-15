@@ -1,5 +1,9 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+const xlsx = require('xlsx');
+import bcrypt from 'bcrypt';
+import path from 'path';
 
 import { getCountryId } from '../../../utils/helpers';
 
@@ -10,11 +14,8 @@ import CustomerServiceFrondend from '../../../services/frontend/customer-service
 import CountryService from '../../../services/admin/setup/country-service'
 
 import { QueryParams } from '../../../utils/types/common';
-import path from 'path';
 import CustomerModel from '../../../model/frontend/customers-model';
 import CountryModel from '../../../model/admin/setup/country-model';
-const xlsx = require('xlsx');
-import bcrypt from 'bcrypt';
 import CustomerAddress from '../../../model/frontend/customer-address-model';
 import { isValidEmail } from '../../../utils/schemas/frontend/guest/auth-schema';
 import { exportCustomerReport } from '../../../utils/admin/excel/reports';
@@ -25,13 +26,15 @@ class CustomerController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
             const isExcel = req.query.isExcel
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
             if (keyword) {
@@ -39,7 +42,9 @@ class CustomerController extends BaseController {
                 query = {
                     $or: [
                         { firstName: keywordRegex },
-                        { email: keywordRegex }
+                        { email: keywordRegex },
+                        { phone: keywordRegex },
+                        { referralCode: keywordRegex }
                     ],
                     ...query
                 } as any;
@@ -55,9 +60,7 @@ class CustomerController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            // if (isExcel === '1') {
-            //     // query.isExcel = '1'
-            // }
+
             const customers: any = await CustomerService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),

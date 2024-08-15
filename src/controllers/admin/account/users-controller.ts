@@ -2,6 +2,7 @@
 import 'module-alias/register'
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import mongoose from 'mongoose';
 
 import { userSchema } from '../../../../src/utils/schemas/admin/account/user-schema';
 import { formatZodError, getCountryId, handleFileUpload } from '../../../../src/utils/helpers';
@@ -16,13 +17,15 @@ const controller = new BaseController();
 class UserController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', userTypeID = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
             if (status && status !== '') {
@@ -43,6 +46,13 @@ class UserController extends BaseController {
                     ...query
                 } as any;
             }
+
+            if (userTypeID) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(userTypeID)
+                } as any;
+            }
+
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;

@@ -36,7 +36,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -49,6 +49,20 @@ class OrdersController extends BaseController {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { orderId: keywordRegex },
+                        { 'country.countryShortTitle': keywordRegex },
+                        { 'country.countryTitle': keywordRegex },
+                        { 'customer.firstName': keywordRegex },
+                        { 'customer.email': keywordRegex },
+                        { 'paymentMethod.paymentMethodTitle': keywordRegex },
+                    ],
+                    ...query
+                } as any;
+            }
             if (customerId) {
                 query = {
                     ...query, customerId: new mongoose.Types.ObjectId(customerId)
@@ -76,6 +90,18 @@ class OrdersController extends BaseController {
             if (pickupStoreId) {
                 query = {
                     ...query, pickupStoreId: new mongoose.Types.ObjectId(pickupStoreId)
+                } as any;
+            }
+
+            if (stateId) {
+                query = {
+                    ...query, stateId: new mongoose.Types.ObjectId(stateId)
+                } as any;
+            }
+
+            if (cityId) {
+                query = {
+                    ...query, cityId: new mongoose.Types.ObjectId(cityId)
                 } as any;
             }
 
