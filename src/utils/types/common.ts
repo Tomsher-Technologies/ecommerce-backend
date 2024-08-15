@@ -8,6 +8,7 @@ export interface QueryParams {
     sortorder?: string;
     keyword?: string;
     countryId?: string;
+    userTypeID?: string;
 }
 
 export interface UserDataProps {
