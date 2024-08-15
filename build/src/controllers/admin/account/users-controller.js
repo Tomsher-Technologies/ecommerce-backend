@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const user_schema_1 = require("../../../../src/utils/schemas/admin/account/user-schema");
 const helpers_1 = require("../../../../src/utils/helpers");
 const task_log_1 = require("../../../../src/constants/admin/task-log");
@@ -15,12 +16,15 @@ const controller = new base_controller_1.default();
 class UserController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', userTypeID = '' } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
@@ -38,6 +42,11 @@ class UserController extends base_controller_1.default {
                         { phone: keywordRegex }
                     ],
                     ...query
+                };
+            }
+            if (userTypeID) {
+                query = {
+                    ...query, _id: new mongoose_1.default.Types.ObjectId(userTypeID)
                 };
             }
             const sort = {};

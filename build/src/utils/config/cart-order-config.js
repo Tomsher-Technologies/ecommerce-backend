@@ -147,7 +147,10 @@ exports.cartProject = {
         createdAt: 1,
         updatedAt: 1,
         __v: 1,
-        totalProductCount: { $size: '$products' }, // Calculate the size of the products array
+        totalProductCount: { $size: '$products' },
+        totalQuantity: {
+            $sum: '$products.quantity'
+        },
         paymentMethod: {
             $ifNull: ['$paymentMethod', null]
         },

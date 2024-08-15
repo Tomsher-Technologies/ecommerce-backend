@@ -4,16 +4,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
+const mongoose_1 = __importDefault(require("mongoose"));
+const xlsx = require('xlsx');
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const path_1 = __importDefault(require("path"));
 const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const customer_service_1 = __importDefault(require("../../../services/admin/customer/customer-service"));
 const customer_service_2 = __importDefault(require("../../../services/frontend/customer-service"));
 const country_service_1 = __importDefault(require("../../../services/admin/setup/country-service"));
-const path_1 = __importDefault(require("path"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
-const xlsx = require('xlsx');
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
 const auth_schema_1 = require("../../../utils/schemas/frontend/guest/auth-schema");
 const reports_1 = require("../../../utils/admin/excel/reports");
@@ -21,20 +22,25 @@ const controller = new base_controller_1.default();
 class CustomerController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
             let query = { _id: { $exists: true } };
             const isExcel = req.query.isExcel;
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
                         { firstName: keywordRegex },
-                        { email: keywordRegex }
+                        { email: keywordRegex },
+                        { phone: keywordRegex },
+                        { referralCode: keywordRegex }
                     ],
                     ...query
                 };
@@ -49,9 +55,6 @@ class CustomerController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            // if (isExcel === '1') {
-            //     // query.isExcel = '1'
-            // }
             const customers = await customer_service_1.default.findAll({
                 page: parseInt(page_size),
                 limit: parseInt(limit),

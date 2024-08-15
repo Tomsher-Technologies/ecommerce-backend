@@ -32,7 +32,7 @@ const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -42,6 +42,20 @@ class OrdersController extends base_controller_1.default {
             }
             else if (countryId) {
                 query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { orderId: keywordRegex },
+                        { 'country.countryShortTitle': keywordRegex },
+                        { 'country.countryTitle': keywordRegex },
+                        { 'customer.firstName': keywordRegex },
+                        { 'customer.email': keywordRegex },
+                        { 'paymentMethod.paymentMethodTitle': keywordRegex },
+                    ],
+                    ...query
+                };
             }
             if (customerId) {
                 query = {
@@ -66,6 +80,16 @@ class OrdersController extends base_controller_1.default {
             if (pickupStoreId) {
                 query = {
                     ...query, pickupStoreId: new mongoose_1.default.Types.ObjectId(pickupStoreId)
+                };
+            }
+            if (stateId) {
+                query = {
+                    ...query, stateId: new mongoose_1.default.Types.ObjectId(stateId)
+                };
+            }
+            if (cityId) {
+                query = {
+                    ...query, cityId: new mongoose_1.default.Types.ObjectId(cityId)
                 };
             }
             if (fromDate || endDate) {

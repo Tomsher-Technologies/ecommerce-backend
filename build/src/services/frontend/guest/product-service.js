@@ -31,16 +31,6 @@ class ProductService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        // const countryId = await CommonService.findOneCountrySubDomainWithId(hostName)
-        // if (discount) {
-        //     const discountArray: any = await discount.split(",")
-        //     console.log("discount", discount);
-        //     for await (let discount of discountArray) {
-        //         // const discountSplitArray: any = await discount.split("=")
-        //         // console.log("discountSplitArray", discountSplitArray);
-        //         // const discountOffer = await CommonService.findOffers(offers, hostName)
-        //     }
-        // }
         const variantLookupMatch = {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
@@ -271,7 +261,7 @@ class ProductService {
                 }
             });
             if (sort.price == 1) {
-                pipeline.push({ $sort: { discountedPrice: 1 } });
+                pipeline.push({ $sort: { discountedPrice: 1, _id: 1 } });
             }
             else {
                 pipeline.push({ $sort: { discountedPrice: -1 } });
