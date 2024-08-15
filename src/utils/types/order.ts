@@ -8,6 +8,8 @@ export interface OrderQueryParams {
     sortorder?: string;
     keyword?: string;
     countryId?: string;
+    stateId?: string;
+    cityId?: string;
     customerId?: string;
     pickupStoreId?: string;
     paymentMethodId?: string;
