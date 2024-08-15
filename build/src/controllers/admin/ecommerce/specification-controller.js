@@ -22,7 +22,9 @@ class SpecificationController extends base_controller_1.default {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { specificationTitle: keywordRegex }
+                        { specificationTitle: keywordRegex },
+                        { 'specificationValues.itemName': keywordRegex },
+                        { 'specificationValues.itemValue': keywordRegex },
                     ],
                     ...query
                 };

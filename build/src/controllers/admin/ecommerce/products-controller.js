@@ -46,7 +46,7 @@ class ProductsController extends base_controller_1.default {
         try {
             const { page_size = 1, limit = 10 } = req.query;
             const userData = await res.locals.user;
-            const countryId = await (0, helpers_1.getCountryId)(userData);
+            const countryId = (0, helpers_1.getCountryId)(userData);
             const filterProducts = await (0, products_1.filterProduct)(req.query, countryId);
             console.log(filterProducts.query);
             const products = await product_service_1.default.findAll({

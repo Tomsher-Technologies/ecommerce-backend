@@ -616,53 +616,59 @@ const getOrderProductsWithCartLookup = (query, notCallLookups, getCategory, getB
                 path: "$country",
                 preserveNullAndEmptyArrays: true
             }
-        }, getCategory === '1' ? ({
-            $lookup: {
-                from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
-                localField: 'productId',
-                foreignField: 'productId',
-                as: 'productCategory',
-                pipeline: [
-                    {
-                        $lookup: {
-                            from: `${collections_1.collections.ecommerce.categories}`,
-                            localField: 'categoryId',
-                            foreignField: '_id',
-                            as: 'category',
+        });
+        if (getCategory === '1') {
+            pipeline.push({
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productCategory',
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: `${collections_1.collections.ecommerce.categories}`,
+                                localField: 'categoryId',
+                                foreignField: '_id',
+                                as: 'category',
+                            },
                         },
-                    },
-                    {
-                        $unwind: "$category"
-                    },
-                    {
-                        $project: {
-                            category: {
-                                categoryTitle: 1,
+                        {
+                            $unwind: "$category"
+                        },
+                        {
+                            $project: {
+                                category: {
+                                    categoryTitle: 1,
+                                }
                             }
                         }
+                    ]
+                }
+            }, {
+                $addFields: {
+                    'productsDetails.productCategory': {
+                        $arrayElemAt: ['$productCategory', 0]
                     }
-                ]
-            }
-        }) : {}, getCategory === '1' ? ({
-            $addFields: {
-                'productsDetails.productCategory': {
-                    $arrayElemAt: ['$productCategory', 0]
                 }
-            }
-        }) : {}, getBrand === '1' ? {
-            $lookup: {
-                from: `${collections_1.collections.ecommerce.brands}`,
-                localField: 'productsDetails.brand',
-                foreignField: '_id',
-                as: 'brandDetails',
-            }
-        } : {}, getBrand === '1' ? {
-            $addFields: {
-                'productsDetails.brand': {
-                    $arrayElemAt: ['$brandDetails', 0]
+            });
+        }
+        if (getBrand === '1') {
+            pipeline.push({
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.brands}`,
+                    localField: 'productsDetails.brand',
+                    foreignField: '_id',
+                    as: 'brandDetails',
                 }
-            }
-        } : {});
+            }, {
+                $addFields: {
+                    'productsDetails.brand': {
+                        $arrayElemAt: ['$brandDetails', 0]
+                    }
+                }
+            });
+        }
     }
     pipeline.push({
         $project: {

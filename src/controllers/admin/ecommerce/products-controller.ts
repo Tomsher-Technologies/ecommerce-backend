@@ -49,9 +49,7 @@ class ProductsController extends BaseController {
         try {
             const { page_size = 1, limit = 10 } = req.query as ProductsQueryParams;
             const userData = await res.locals.user;
-            const countryId = await getCountryId(userData);
-
-
+            const countryId = getCountryId(userData);
             const filterProducts = await filterProduct(req.query, countryId)
             console.log(filterProducts.query);
 

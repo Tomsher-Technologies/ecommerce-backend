@@ -742,6 +742,11 @@ class OrdersController extends base_controller_1.default {
                     message: 'Cannot change the status once it is refunded'
                 });
             }
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.canceled && (orderStatus !== cart_1.orderStatusArrayJson.refunded || orderDetails.orderStatus !== cart_1.orderStatusArrayJson.returned)) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status Canceled Order'
+                });
+            }
             let customerDetails = null;
             if (orderDetails.customerId) {
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
