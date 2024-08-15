@@ -26,8 +26,9 @@ class AttributesController extends BaseController {
                 query = {
                     $or: [
                         { attributeTitle: keywordRegex },
-                        { attributeLabel: keywordRegex },
-                        { ar_attributeLabel: keywordRegex }
+                        { attributeType: keywordRegex },
+                        { 'attributeValues.itemName': keywordRegex },
+                        { 'attributeValues.itemValue': keywordRegex },
                     ],
                     ...query
                 } as any;
