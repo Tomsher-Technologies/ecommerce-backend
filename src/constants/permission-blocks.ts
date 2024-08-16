@@ -3,7 +3,9 @@
 export const permissionBlocks = {
     dashboards: {
         orders: 'orders',
-        dashboards: 'dashboards'
+        analytics: 'analytics',
+        customers: 'customers',
+        topSellingProducts: 'topSellingProducts',
     },
     ecommerce: {
         products: 'products',
