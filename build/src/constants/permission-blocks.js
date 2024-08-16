@@ -4,7 +4,9 @@ exports.permissionBlocks = void 0;
 exports.permissionBlocks = {
     dashboards: {
         orders: 'orders',
-        dashboards: 'dashboards'
+        analytics: 'analytics',
+        customers: 'customers',
+        topSellingProducts: 'topSellingProducts',
     },
     ecommerce: {
         products: 'products',
@@ -24,8 +26,33 @@ exports.permissionBlocks = {
         whishlists: 'whishlists',
     },
     reports: {
-        customerWiseReports: 'customerwisereports',
-        productWiseReports: 'productwisereports'
+        customers: {
+            customerWise: 'customerwise',
+            dateWise: "dateWise",
+            monthWIse: "monthWIse"
+        },
+        products: {
+            productWise: 'productwise',
+            dateWise: "dateWise",
+            monthWIse: "monthWIse",
+            coupon: {
+                couponWise: "couponWise"
+            }
+        },
+        orders: {
+            dateWise: "dateWise",
+            monthWIse: "monthWIse"
+        },
+        category: {
+            categoryWise: "brandWise",
+            dateWise: "dateWise",
+            monthWIse: "monthWIse"
+        },
+        brand: {
+            brandWise: "brandWise",
+            dateWise: "dateWise",
+            monthWIse: "monthWIse"
+        },
     },
     website: {
         collectionsProducts: 'collectionsproducts',

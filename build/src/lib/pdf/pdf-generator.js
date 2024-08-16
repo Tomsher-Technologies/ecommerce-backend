@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pdfGenerator = void 0;
 const puppeteer_1 = __importDefault(require("puppeteer"));
-const pdfGenerator = async ({ html, res }) => {
+const pdfGenerator = async ({ html, res, preview }) => {
     let browser = null;
     try {
         browser = await puppeteer_1.default.launch({
@@ -31,12 +31,22 @@ const pdfGenerator = async ({ html, res }) => {
             printBackground: true,
             margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
         });
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'attachment; filename=invoice.pdf',
-            'Content-Length': pdfBuffer.length,
-        });
-        res.send(pdfBuffer);
+        if (preview == '1') {
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'inline; filename=invoice.pdf',
+                'Content-Length': pdfBuffer.length,
+            });
+            res.send(pdfBuffer);
+        }
+        else {
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename=invoice.pdf',
+                'Content-Length': pdfBuffer.length,
+            });
+            res.send(pdfBuffer);
+        }
         await page.close();
     }
     catch (error) {
