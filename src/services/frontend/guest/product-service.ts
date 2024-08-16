@@ -69,6 +69,7 @@ class ProductService {
                             extraProductTitle: 1,
                             variantDescription: 1,
                             cartMaxQuantity: 1,
+                            cartMinQuantity: 1,
                             discountPrice: 1,
                             price: 1,
                             quantity: 1,
