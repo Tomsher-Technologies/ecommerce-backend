@@ -318,10 +318,17 @@ class CartController extends BaseController {
                         });
                     }
                     if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
-                        if (Number(productVariantData.cartMinQuantity) >= quantityProduct || Number(productVariantData.cartMaxQuantity) < quantityProduct) {
+                        if (Number(productVariantData.cartMinQuantity) > quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
                                 message: 'Validation error',
-                                validation: `Reached maximum quantity`
+                                validation: `The minimum purchase quantity is ${productVariantData.cartMinQuantity}`
+                            });
+                        }
+
+                        if (Number(productVariantData.cartMaxQuantity) < quantityProduct) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Validation error',
+                                validation: `The maximun purchase quantity is ${productVariantData.cartMaxQuantity}`
                             });
                         }
                     }
@@ -390,6 +397,22 @@ class CartController extends BaseController {
                         }
                     }
                 } else {
+
+                    if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
+                        if (Number(productVariantData.cartMinQuantity) > quantityProduct) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Validation error',
+                                validation: `The minimum purchase quantity is ${productVariantData.cartMinQuantity}`
+                            });
+                        }
+
+                        if (Number(productVariantData.cartMaxQuantity) < quantityProduct) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Validation error',
+                                validation: `The maximun purchase quantity is ${productVariantData.cartMaxQuantity}`
+                            });
+                        }
+                    }
                     singleProductTotal *= quantityProduct
                     singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal
                     singleProductOriginalTotal = productVariantData.price * quantityProduct
