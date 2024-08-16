@@ -1016,7 +1016,7 @@ class OrdersController extends BaseController {
                                 message: 'Error generating invoice'
                             });
                         }
-                        await pdfGenerator({ html, res })
+                        await pdfGenerator({ html, res, preview: req.query.preview })
                     });
             } else {
                 return controller.sendErrorResponse(res, 200, {

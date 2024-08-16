@@ -4,9 +4,10 @@ import { Response } from 'express';
 interface PdfGeneratorOptions {
     html: string;
     res: Response;
+    preview: any;
 }
 
-export const pdfGenerator = async ({ html, res }: PdfGeneratorOptions) => {
+export const pdfGenerator = async ({ html, res, preview }: PdfGeneratorOptions) => {
     let browser: Browser | null = null;
     try {
         browser = await puppeteer.launch({
@@ -36,13 +37,21 @@ export const pdfGenerator = async ({ html, res }: PdfGeneratorOptions) => {
             margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
         });
 
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'attachment; filename=invoice.pdf',
-            'Content-Length': pdfBuffer.length,
-        });
-
-        res.send(pdfBuffer);
+        if (preview == '1') {
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'inline; filename=invoice.pdf',
+                'Content-Length': pdfBuffer.length,
+            });
+            res.send(pdfBuffer);
+        } else {
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename=invoice.pdf',
+                'Content-Length': pdfBuffer.length,
+            });
+            res.send(pdfBuffer);
+        }
 
         await page.close();
     } catch (error) {
