@@ -286,9 +286,9 @@ class OrdersController extends BaseController {
         if (!orderDetails) {
             return controller.sendErrorResponse(res, 200, { message: 'Order not found!' });
         }
-        if (Number(orderDetails.orderStatus) > Number(orderStatusArrayJson.delivered)) {
-            return controller.sendErrorResponse(res, 200, { message: 'Cannot change status for an order with status before "Delivered".' });
-        }
+        // if (Number(orderDetails.orderStatus) > Number(orderStatusArrayJson.delivered)) {
+        //     return controller.sendErrorResponse(res, 200, { message: 'Cannot change status for an order with status before "Delivered".' });
+        // }
         if (!newStatus || !Object.values(orderProductStatusJson).includes(newStatus)) {
             return controller.sendErrorResponse(res, 200, { message: 'Invalid status provided.' });
         }
@@ -803,18 +803,57 @@ class OrdersController extends BaseController {
                     message: 'Cannot change the status Canceled Order'
                 });
             }
-            let customerDetails: any = null;
-            if (orderDetails.customerId) {
-                customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
-                if (orderStatus === orderStatusArrayJson.completed && customerDetails) {
-                    await OrderService.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
+
+            const orderProductDetails = await CartOrderProductsModel.find({ cartId: orderDetails._id });
+            if (orderProductDetails.length === 0) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order products are not found!'
+                });
+            }
+
+            const checkOrderProductPartialStatus = orderProductDetails.find((product: any) =>
+                [orderProductStatusJson.canceled, orderProductStatusJson.returned, orderProductStatusJson.refunded].includes(product.orderProductStatus)
+            );
+
+            const partialToFinalStatusMapping: Record<string, string> = {
+                [orderStatusArrayJson.partiallyCanceled]: orderStatusArrayJson.canceled,
+                [orderStatusArrayJson.partiallyReturned]: orderStatusArrayJson.returned,
+                [orderStatusArrayJson.partiallyRefunded]: orderStatusArrayJson.refunded,
+            };
+
+            // Define the statuses
+            const partialStatuses = [
+                orderStatusArrayJson.partiallyCanceled,
+                orderStatusArrayJson.partiallyReturned,
+                orderStatusArrayJson.partiallyRefunded,
+            ];
+
+            // Initialize count for each partial status
+            const partialStatusesCount: Record<string, number> = partialStatuses.reduce((acc, status) => {
+                acc[status] = 0;
+                return acc;
+            }, {} as Record<string, number>);
+
+            // Count occurrences of partial statuses
+            orderProductDetails.forEach(product => {
+                if (partialStatuses.includes(product.orderProductStatus)) {
+                    partialStatusesCount[product.orderProductStatus]++;
                 }
+            });
+
+            // Determine the most frequent partial status
+            const entries: [string, number][] = Object.entries(partialStatusesCount);
+            const mostFrequentPartialStatus = entries.reduce((a, b) =>
+                b[1] > a[1] ? b : a
+            )[0];
+
+            // Update the order status based on the most frequent partial status
+            if (partialStatusesCount[mostFrequentPartialStatus] === orderProductDetails.length) {
+                orderDetails.orderStatus = partialToFinalStatusMapping[mostFrequentPartialStatus];
+            } else {
+                orderDetails.orderStatus = orderStatus;
             }
-            orderDetails.orderStatus = orderStatus;
-            // Update cart status if the order status is Completed or Delivered
-            if (orderStatus === orderStatusArrayJson.completed || orderStatus === orderStatusArrayJson.delivered) {
-                orderDetails.cartStatus = cartStatusJson.delivered;
-            }
+
             const currentDate = new Date();
             switch (orderStatus) {
                 case orderStatusArrayJson.pending: orderDetails.orderStatusAt = currentDate; break;
@@ -831,6 +870,9 @@ class OrdersController extends BaseController {
                 case orderStatusArrayJson.completed: orderDetails.completedStatusAt = currentDate; break;
                 case orderStatusArrayJson.pickup: orderDetails.pickupStatusAt = currentDate; break;
                 case orderStatusArrayJson.partiallyDelivered: orderDetails.partiallyDeliveredStatusAt = currentDate; break;
+                case orderStatusArrayJson.partiallyCanceled: orderDetails.partiallyCanceledStatusAt = currentDate; break;
+                case orderStatusArrayJson.partiallyReturned: orderDetails.partiallyReturnedStatusAt = currentDate; break;
+                case orderStatusArrayJson.partiallyRefunded: orderDetails.partiallyRefundedStatusAt = currentDate; break;
                 default: break;
             }
 
@@ -840,15 +882,38 @@ class OrdersController extends BaseController {
                     message: 'Something went wrong!'
                 });
             }
+            let orderProductStatus = orderDetails.orderStatus;
+            if ([orderStatusArrayJson.completed, orderStatusArrayJson.delivered, orderStatusArrayJson.pickup, orderStatusArrayJson.shipped, orderStatusArrayJson.packed, orderStatusArrayJson.processing, orderStatusArrayJson.onHold].includes(orderStatus)) {
+                switch (orderProductStatus) {
+                    case orderStatusArrayJson.partiallyCanceled:
+                        orderProductStatus = orderStatusArrayJson.canceled;
+                        break;
+                    case orderStatusArrayJson.partiallyReturned:
+                        orderProductStatus = orderStatusArrayJson.returned;
+                        break;
+                    case orderStatusArrayJson.partiallyRefunded:
+                        orderProductStatus = orderStatusArrayJson.refunded;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             await CartOrderProductsModel.updateMany(
-                { cartId: orderDetails._id },
+                {
+                    cartId: orderDetails._id,
+                    orderProductStatus: {
+                        $nin: [orderStatusArrayJson.canceled, orderStatusArrayJson.returned, orderStatusArrayJson.refunded]
+                    }
+                },
                 {
                     $set: {
-                        orderProductStatus: orderStatus,
+                        orderProductStatus: orderProductStatus,
                         orderProductStatusAt: currentDate
                     }
                 }
             );
+
             if (orderStatus === orderStatusArrayJson.failed || orderStatus === orderStatusArrayJson.returned) {
                 const cartProducts = await CartOrderProductsModel.find({ cartId: orderDetails._id }).select('variantId quantity');
                 const updateProductVariant: any = cartProducts.map((products: any) => ({
@@ -858,6 +923,13 @@ class OrdersController extends BaseController {
                     }
                 }));
                 await ProductVariantsModel.bulkWrite(updateProductVariant);
+            }
+            let customerDetails: any = null;
+            if (orderDetails.customerId) {
+                customerDetails = await CustomerService.findOne({ _id: orderDetails?.customerId });
+                if (orderStatus === orderStatusArrayJson.completed && customerDetails) {
+                    await OrderService.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
+                }
             }
             if (orderStatus === orderStatusArrayJson.shipped || orderStatus === orderStatusArrayJson.delivered) {
                 let query: any = { _id: { $exists: true } };

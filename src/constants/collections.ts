@@ -44,5 +44,6 @@ export const collections = {
     setup: {
         countries: 'countries',
         states: 'states',
+        cities: 'cities'
     }
 }

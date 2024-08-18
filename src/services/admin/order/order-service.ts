@@ -1,7 +1,7 @@
 import { pagination } from '../../../components/pagination';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
-import { cartDeatilProject, cartProductsLookup, cartProject, couponLookup, customerLookup, getOrderProductsWithCartLookup, orderListObjectLookup, paymentMethodLookup, pickupStoreLookup, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
+import { cartDeatilProject, cartProductsLookup, cartProject, couponLookup, customerLookup, getOrderProductsWithCartLookup, orderListObjectLookup, paymentMethodLookup, pickupStoreLookupPipeline, shippingAndBillingLookup, } from '../../../utils/config/cart-order-config';
 import { countriesLookup } from '../../../utils/config/customer-config';
 import { productLookup } from '../../../utils/config/product-config';
 import { productVariantsLookupValues } from '../../../utils/config/wishlist-config';
@@ -43,12 +43,7 @@ class OrderService {
         const pipeline: any[] = [
             ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cartProductsLookup]),
             ...((!getTotalCount && getCartProducts) ? [couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
-            ...(!getTotalCount ? [paymentMethodLookup, customerLookup, pickupStoreLookup, {
-                $unwind: {
-                    path: "$pickupFromStore",
-                    preserveNullAndEmptyArrays: true
-                }
-            }, orderListObjectLookup] : []),
+            ...(!getTotalCount ? [paymentMethodLookup, customerLookup, ...pickupStoreLookupPipeline , orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
             countriesLookup,
