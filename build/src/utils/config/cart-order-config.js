@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookup = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
+exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
@@ -73,14 +73,54 @@ exports.billingLookup = {
         as: 'billingAddress'
     }
 };
-exports.pickupStoreLookup = {
-    $lookup: {
-        from: `${collections_1.collections.stores.stores}`,
-        localField: 'pickupStoreId',
-        foreignField: '_id',
-        as: 'pickupFromStore',
+exports.pickupStoreLookupPipeline = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.stores.stores}`,
+            localField: 'pickupStoreId',
+            foreignField: '_id',
+            as: 'pickupFromStore',
+        }
+    },
+    {
+        $unwind: {
+            path: "$pickupFromStore",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections_1.collections.setup.cities}`,
+            let: { cityId: "$pickupFromStore.cityId" },
+            pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$cityId"] } } }
+            ],
+            as: 'pickupFromStore.city',
+        }
+    },
+    {
+        $unwind: {
+            path: "$pickupFromStore.city",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections_1.collections.setup.states}`,
+            let: { stateId: "$pickupFromStore.stateId" },
+            pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$stateId"] } } }
+            ],
+            as: 'pickupFromStore.state',
+        }
+    },
+    {
+        $unwind: {
+            path: "$pickupFromStore.state",
+            preserveNullAndEmptyArrays: true
+        }
     }
-};
+];
 exports.paymentMethodLookup = {
     $lookup: {
         from: `${collections_1.collections.cart.paymentmethods}`,

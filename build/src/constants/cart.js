@@ -21,6 +21,9 @@ exports.orderStatusArrayJson = {
     completed: "12",
     pickup: "13",
     partiallyDelivered: "14",
+    partiallyCanceled: "15",
+    partiallyReturned: "16",
+    partiallyRefunded: "17",
 };
 exports.orderStatusArray = [
     { value: exports.orderStatusArrayJson.pending, label: "Pending" },
@@ -37,6 +40,9 @@ exports.orderStatusArray = [
     { value: exports.orderStatusArrayJson.completed, label: "Completed" },
     { value: exports.orderStatusArrayJson.pickup, label: "Pickup" },
     { value: exports.orderStatusArrayJson.partiallyDelivered, label: "Partially Delivered" },
+    { value: exports.orderStatusArrayJson.partiallyCanceled, label: "Partially Canceled" },
+    { value: exports.orderStatusArrayJson.partiallyReturned, label: "Partially Returned" },
+    { value: exports.orderStatusArrayJson.partiallyRefunded, label: "Partially Refunded" },
 ];
 exports.orderStatusMessages = {
     [exports.orderStatusArrayJson.pending]: 'Order received successfully!',
@@ -52,7 +58,10 @@ exports.orderStatusMessages = {
     [exports.orderStatusArrayJson.failed]: 'Order has failed!',
     [exports.orderStatusArrayJson.completed]: 'Order has been completed!',
     [exports.orderStatusArrayJson.pickup]: 'Order is ready for pickup!',
-    [exports.orderStatusArrayJson.partiallyDelivered]: 'Order has been delivered!',
+    [exports.orderStatusArrayJson.partiallyDelivered]: 'Order has been partially delivered!',
+    [exports.orderStatusArrayJson.partiallyCanceled]: 'Order has been partially canceled!',
+    [exports.orderStatusArrayJson.partiallyReturned]: 'Order has been partially returned!',
+    [exports.orderStatusArrayJson.partiallyRefunded]: 'Order has been partially refunded!',
 };
 exports.orderProductStatusJson = {
     pending: "1",

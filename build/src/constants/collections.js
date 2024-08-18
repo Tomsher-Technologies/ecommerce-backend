@@ -45,5 +45,6 @@ exports.collections = {
     setup: {
         countries: 'countries',
         states: 'states',
+        cities: 'cities'
     }
 };
