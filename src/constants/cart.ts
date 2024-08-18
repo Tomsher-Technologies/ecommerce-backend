@@ -19,6 +19,9 @@ export const orderStatusArrayJson = {
     completed: "12",
     pickup: "13",
     partiallyDelivered: "14",
+    partiallyCanceled: "15",
+    partiallyReturned: "16",
+    partiallyRefunded: "17",
 };
 
 export const orderStatusArray = [
@@ -36,6 +39,9 @@ export const orderStatusArray = [
     { value: orderStatusArrayJson.completed, label: "Completed" },
     { value: orderStatusArrayJson.pickup, label: "Pickup" },
     { value: orderStatusArrayJson.partiallyDelivered, label: "Partially Delivered" },
+    { value: orderStatusArrayJson.partiallyCanceled, label: "Partially Canceled" },
+    { value: orderStatusArrayJson.partiallyReturned, label: "Partially Returned" },
+    { value: orderStatusArrayJson.partiallyRefunded, label: "Partially Refunded" },
 ];
 
 export const orderStatusMessages: { [key: string]: string } = {
@@ -52,7 +58,10 @@ export const orderStatusMessages: { [key: string]: string } = {
     [orderStatusArrayJson.failed]: 'Order has failed!',
     [orderStatusArrayJson.completed]: 'Order has been completed!',
     [orderStatusArrayJson.pickup]: 'Order is ready for pickup!',
-    [orderStatusArrayJson.partiallyDelivered]: 'Order has been delivered!',
+    [orderStatusArrayJson.partiallyDelivered]: 'Order has been partially delivered!',
+    [orderStatusArrayJson.partiallyCanceled]: 'Order has been partially canceled!',
+    [orderStatusArrayJson.partiallyReturned]: 'Order has been partially returned!',
+    [orderStatusArrayJson.partiallyRefunded]: 'Order has been partially refunded!',
 };
 
 export const orderProductStatusJson = {

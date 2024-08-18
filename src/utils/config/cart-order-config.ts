@@ -79,15 +79,54 @@ export const billingLookup = {
     }
 };
 
-export const pickupStoreLookup = {
-    $lookup: {
-        from: `${collections.stores.stores}`,
-        localField: 'pickupStoreId',
-        foreignField: '_id',
-        as: 'pickupFromStore',
-
+export const pickupStoreLookupPipeline = [
+    {
+        $lookup: {
+            from: `${collections.stores.stores}`,
+            localField: 'pickupStoreId',
+            foreignField: '_id',
+            as: 'pickupFromStore',
+        }
+    },
+    {
+        $unwind: {
+            path: "$pickupFromStore",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections.setup.cities}`,
+            let: { cityId: "$pickupFromStore.cityId" },
+            pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$cityId"] } } }
+            ],
+            as: 'pickupFromStore.city',
+        }
+    },
+    {
+        $unwind: {
+            path: "$pickupFromStore.city",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections.setup.states}`,
+            let: { stateId: "$pickupFromStore.stateId" },
+            pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$stateId"] } } }
+            ],
+            as: 'pickupFromStore.state',
+        }
+    },
+    {
+        $unwind: {
+            path: "$pickupFromStore.state",
+            preserveNullAndEmptyArrays: true
+        }
     }
-};
+];
 
 export const paymentMethodLookup = {
     $lookup: {
