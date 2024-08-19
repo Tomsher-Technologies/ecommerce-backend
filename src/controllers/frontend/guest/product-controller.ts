@@ -283,36 +283,13 @@ class ProductController extends BaseController {
                     getspecification,
                     hostName: req.get('origin'),
                     maxprice,
-                    minprice
+                    minprice,
+                    isCount: 1
                 });
-                // if (sortby == "price") {
-                //     productData.sort((a: any, b: any) => {
-                //         const getPrice = (product: any) => {
-                //             let variant = product.productVariants.find((v: any) => v.isDefault === 1 && v.quantity > 0) ||
-                //                 product.productVariants.find((v: any) => v.slug === product.slug && v.quantity > 0) ||
-                //                 product.productVariants.find((v: any) => v.quantity > 0) ||
-                //                 product.productVariants[0];
-                //             return variant.price;
-                //         };
-                //         const aPrice = getPrice(a);
-                //         const bPrice = getPrice(b);
-                //         if (sortorder === 'asc') {
-                //             return aPrice - bPrice;
-                //         } else {
-                //             return bPrice - aPrice;
-                //         }
-                //     });
-                // }
-                // const totalProductData: any = await ProductService.findProductList({
-                //     query,
-                //     collectionProductsData,
-                //     discount,
-                //     offers,
-                //     hostName: req.get('origin'),
-                // });
+
                 return controller.sendSuccessResponse(res, {
-                    requestedData: productData,
-                    // totalCount: totalProductData?.length || 0,
+                    requestedData: productData.products,
+                    totalCount: productData.totalCount || 0,
                     message: 'Success!'
                 }, 200);
             } else {

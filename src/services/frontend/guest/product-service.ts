@@ -25,8 +25,8 @@ import OffersModel from '../../../model/admin/marketing/offers-model';
 
 class ProductService {
 
-    async findProductList(productOption: any): Promise<ProductsProps[]> {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice } = productOption;
+    async findProductList(productOption: any): Promise<any> {
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         const defaultSort = { createdAt: -1 };
@@ -330,14 +330,33 @@ class ProductService {
             });
         }
 
-        if (skip) {
-            pipeline.push({ $skip: skip });
-        }
-        if (limit) {
-            pipeline.push({ $limit: limit });
-        }
+        pipeline.push({
+            $facet: {
+                data: [
+                    { $match: {} },
+                    ...(isCount === 1 ? [{ $skip: skip }, { $limit: limit }] : []),
+                ],
+                totalCount: [{ $count: "totalCount" }],
+
+            },
+        },
+            {
+                $project: {
+                    data: 1,
+                    totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
+                }
+            }
+        )
+
         productData = await ProductsModel.aggregate(pipeline).exec();
-        return productData
+        const products = productData[0].data;
+        const totalCount = productData[0].totalCount;
+        if (isCount == 1) {
+            return { products, totalCount }
+        } else {
+            return products
+        }
+
     }
 
 
