@@ -1062,8 +1062,6 @@ class OrdersController extends BaseController {
                 const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].country._id }, 'currencyCode')
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
-                // console.log("fgfdgfd", orderDetails[0].products[0].productDetails);
-                console.log("555555555555", orderDetails[0].country.countrySubDomain, orderDetails[0].country.countrySubDomain !== 'qa');
 
                 ejs.renderFile(path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
                     {
@@ -1078,6 +1076,7 @@ class OrdersController extends BaseController {
                         storePostalCode: basicDetailsSettings?.storePostalCode,
                         shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                         shopLogo: `${process.env.SHOPLOGO}`,
+                        shop: `${process.env.SHOPNAME}`,
                         appUrl: `${process.env.APPURL}`,
                         tax: tax,
                         currencyCode: currencyCode?.currencyCode
