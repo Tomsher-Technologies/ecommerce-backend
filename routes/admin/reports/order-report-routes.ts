@@ -11,6 +11,8 @@ const router: Router = express.Router();
 
 router.use(authMiddleware);
 router.get('/order-report', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, readOnly: 1 }), OrderReportController.orderReport);
+router.get('/monthly-order-report', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, readOnly: 1 }), OrderReportController.getMonthlyOrderReport);
+router.get('/daily-order-report', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, readOnly: 1 }), OrderReportController.getDailyOrderReport);
 
 
 export default router;

@@ -29,12 +29,28 @@ class ProductService {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
+        let finalSort: any = [];
+        finalSort = [
+            {
+                $addFields: {
+                    sortOrder: {
+                        $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+                    }
+                }
+            },
+            {
+                $sort: {
+                    sortOrder: 1,
+                    showOrder: 1,
+                    createdAt: -1
+                }
+            },
+            {
+                $project: {
+                    sortOrder: 0
+                }
+            },
+        ];
 
         const variantLookupMatch: any = {
             $expr: {
@@ -66,6 +82,7 @@ class ProductService {
                             productId: 1,
                             slug: 1,
                             variantSku: 1,
+                            showOrder: 1,
                             extraProductTitle: 1,
                             variantDescription: 1,
                             cartMaxQuantity: 1,
@@ -84,7 +101,7 @@ class ProductService {
         };
 
         let pipeline: any[] = [
-            { $sort: finalSort },
+            ...finalSort,
             modifiedPipeline,
             productCategoryLookup,
             ...(getbrand === '1' ? [brandLookup, brandObject] : []),
@@ -209,6 +226,7 @@ class ProductService {
                         _id: 1,
                         productTitle: 1,
                         slug: 1,
+                        showOrder: 1,
                         starRating: 1,
                         productImageUrl: 1,
                         description: 1,

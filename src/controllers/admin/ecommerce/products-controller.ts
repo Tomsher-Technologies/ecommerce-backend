@@ -90,7 +90,7 @@ class ProductsController extends BaseController {
             const userData = await res.locals.user;
 
             if (validatedData.success) {
-                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription,
+                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, showOrder,
                     completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
@@ -106,6 +106,7 @@ class ProductsController extends BaseController {
                     const productData: Partial<ProductsProps> = {
                         productTitle: capitalizeWords(productTitle),
                         slug: slugAndSkuData.slug,
+                        showOrder: showOrder,
                         brand: brand as any,
                         description,
                         longDescription,
@@ -796,6 +797,7 @@ class ProductsController extends BaseController {
                                                                     var finalData: Partial<ProductsProps> = {
                                                                         productTitle: capitalizeWords(data.Product_Title),
                                                                         slug: slugify(data.Product_Title),
+                                                                        showOrder: data.Show_Order,
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                         description: data.Description,
@@ -829,6 +831,7 @@ class ProductsController extends BaseController {
                                                                     var productVariants: any = {
                                                                         countryId: data.Country ? countryId : await getCountryIdWithSuperAdmin(userData),
                                                                         extraProductTitle: capitalizeWords(data.Product_Title),
+                                                                        showOrder: data.Show_Order,
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         variantImageUrl: data.Image,
@@ -910,15 +913,14 @@ class ProductsController extends BaseController {
                                                                                 }
 
                                                                                 slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index)
-                                                                                productVariants = {
-                                                                                    ...productVariants,
-                                                                                    slug: slugify(slugData)
-                                                                                }
 
                                                                                 const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
-                                                                                console.log("variantDetails", variantDetails);
 
                                                                                 if (!variantDetails) {
+                                                                                    productVariants = {
+                                                                                        ...productVariants,
+                                                                                        slug: slugify(slugData)
+                                                                                    }
                                                                                     const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
                                                                                     if (createVariant) {
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
@@ -1100,6 +1102,7 @@ class ProductsController extends BaseController {
 
                                                                         if (data.Parent_SKU) {
                                                                             const productDetails: any = await ProductsService.find({ sku: data.Parent_SKU })
+
                                                                             if (productDetails) {
                                                                                 var slugData
                                                                                 // if (data.Product_Title === product.productTitle) {
@@ -1112,14 +1115,13 @@ class ProductsController extends BaseController {
                                                                                 // if (data.Product_Title === productVariants.extraProductTitle) {
                                                                                 //     productVariants.extraProductTitle = ""
                                                                                 // }
-                                                                                productVariants = {
-                                                                                    ...productVariants,
-                                                                                    slug: slugify(slugData)
-                                                                                }
 
                                                                                 const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
-                                                                                    console.log("productVariantsproductVariantsproductVariants", productVariants);
+                                                                                    productVariants = {
+                                                                                        ...productVariants,
+                                                                                        slug: slugify(slugData)
+                                                                                    }
 
                                                                                     const createVariant = await ProductVariantService.create(productDetails._id, productVariants, userData)
                                                                                     if (createVariant) {

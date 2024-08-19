@@ -227,37 +227,7 @@ class OrderService {
         });
 
         const results = await CartOrderProductsModel.aggregate(pipeline);
-        const [aggregatedData] = results; // Assuming there is only one result from the aggregation
-
-        if (!aggregatedData) {
-            return {
-                totalCartAmount: 0,
-                totalQuantity: 0,
-                totalMRP: 0,
-                totalSubtotal: 0,
-                totalDiscountAmount: 0,
-                orders: [],
-            };
-        }
-
-        const paginatedOrders = aggregatedData.orders;
-
-        // Define pagination parameters for cartDetails
-        const cartLimit = 2; // Number of cartDetails per page, adjust as needed
-
-        // Paginate cartDetails within each order
-        const finalResult = paginatedOrders.map((order: any) => {
-            // Check if cartDetails is an array and paginate
-            const cartDetailsArray = Array.isArray(order.cartDetails) ? order.cartDetails : [];
-
-            // Paginate cartDetails
-            const paginatedCartDetails = cartDetailsArray.slice(0, cartLimit);
-
-            return {
-                ...order,
-                cartDetails: paginatedCartDetails, // Paginate items within the order
-            };
-        });
+        const [aggregatedData] = results;
 
         return {
             totalCartAmount: aggregatedData.totalCartAmount,
@@ -265,7 +235,7 @@ class OrderService {
             totalMRP: aggregatedData.totalMRP,
             totalSubtotal: aggregatedData.totalSubtotal,
             totalDiscountAmount: aggregatedData.totalDiscountAmount,
-            orders: finalResult,
+            orders: aggregatedData.orders
         };
     }
 }
