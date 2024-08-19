@@ -23,14 +23,30 @@ const product_variant_attribute_model_1 = __importDefault(require("../../../mode
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
-        const defaultSort = { createdAt: -1 };
-        let finalSort = sort || defaultSort;
-        const sortKeys = Object.keys(finalSort);
-        if (sortKeys.length === 0) {
-            finalSort = defaultSort;
-        }
+        let finalSort = [];
+        finalSort = [
+            {
+                $addFields: {
+                    sortOrder: {
+                        $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+                    }
+                }
+            },
+            {
+                $sort: {
+                    sortOrder: 1,
+                    showOrder: 1,
+                    createdAt: -1
+                }
+            },
+            {
+                $project: {
+                    sortOrder: 0
+                }
+            },
+        ];
         const variantLookupMatch = {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
@@ -58,6 +74,7 @@ class ProductService {
                             productId: 1,
                             slug: 1,
                             variantSku: 1,
+                            showOrder: 1,
                             extraProductTitle: 1,
                             variantDescription: 1,
                             cartMaxQuantity: 1,
@@ -75,7 +92,7 @@ class ProductService {
             }
         };
         let pipeline = [
-            { $sort: finalSort },
+            ...finalSort,
             modifiedPipeline,
             product_config_1.productCategoryLookup,
             ...(getbrand === '1' ? [product_config_1.brandLookup, product_config_1.brandObject] : []),
@@ -193,6 +210,7 @@ class ProductService {
                     _id: 1,
                     productTitle: 1,
                     slug: 1,
+                    showOrder: 1,
                     starRating: 1,
                     productImageUrl: 1,
                     description: 1,
@@ -307,14 +325,29 @@ class ProductService {
                 }
             });
         }
-        if (skip) {
-            pipeline.push({ $skip: skip });
-        }
-        if (limit) {
-            pipeline.push({ $limit: limit });
-        }
+        pipeline.push({
+            $facet: {
+                data: [
+                    { $match: {} },
+                    ...(isCount === 1 ? [{ $skip: skip }, { $limit: limit }] : []),
+                ],
+                totalCount: [{ $count: "totalCount" }],
+            },
+        }, {
+            $project: {
+                data: 1,
+                totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
+            }
+        });
         productData = await product_model_1.default.aggregate(pipeline).exec();
-        return productData;
+        const products = productData[0].data;
+        const totalCount = productData[0].totalCount;
+        if (isCount == 1) {
+            return { products, totalCount };
+        }
+        else {
+            return products;
+        }
     }
     async findAllAttributes(options) {
         let { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);

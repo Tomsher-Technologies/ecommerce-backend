@@ -5,6 +5,7 @@ export interface ProductVariantsProps extends Document {
     productId: Schema.Types.ObjectId;
     countryId: Schema.Types.ObjectId;
     slug: string;
+    showOrder: Number;
     extraProductTitle: string;
     variantSku: string;
     variantImageUrl: string;
@@ -55,6 +56,10 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
             message: 'Slug must be unique'
         },
         required: [true, 'Slug is required'],
+    },
+    showOrder: {
+        type: Number,
+        default: 0
     },
     extraProductTitle: {
         type: String,

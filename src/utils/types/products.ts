@@ -3,6 +3,7 @@ import { Document, Schema } from "mongoose";
 export interface ProductsProps extends Document {
     productTitle: string;
     slug: string;
+    showOrder: Number;
     isVariant: number;
     description: string;
     productImageUrl: string;

@@ -588,6 +588,7 @@ exports.productProject = {
         _id: 1,
         productTitle: 1,
         slug: 1,
+        showOrder: 1,
         productImageUrl: 1,
         description: 1,
         longDescription: 1,

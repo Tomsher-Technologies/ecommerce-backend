@@ -302,21 +302,21 @@ class CartController extends base_controller_1.default {
                     }
                     if (productVariantData.quantity < quantityProduct) {
                         return controller.sendErrorResponse(res, 200, {
-                            message: 'Validation error',
-                            validation: "Reached maximum quantity"
+                            // message: 'Validation error',
+                            message: "Reached maximum quantity"
                         });
                     }
                     if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
-                        if (Number(productVariantData.cartMinQuantity) > quantityProduct) {
+                        if ((productVariantData.cartMinQuantity != "") && Number(productVariantData.cartMinQuantity) > quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
-                                message: 'Validation error',
-                                validation: `The minimum purchase quantity is ${productVariantData.cartMinQuantity}`
+                                // message: 'Validation error',
+                                message: `The minimum purchase quantity is ${productVariantData.cartMinQuantity}`
                             });
                         }
-                        if (Number(productVariantData.cartMaxQuantity) < quantityProduct) {
+                        if ((productVariantData.cartMaxQuantity != "") && Number(productVariantData.cartMaxQuantity) < quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
-                                message: 'Validation error',
-                                validation: `The maximun purchase quantity is ${productVariantData.cartMaxQuantity}`
+                                // message: 'Validation error',
+                                message: `The maximum purchase quantity is ${productVariantData.cartMaxQuantity}`
                             });
                         }
                     }
@@ -382,17 +382,18 @@ class CartController extends base_controller_1.default {
                     }
                 }
                 else {
+                    console.log(Number(productVariantData.cartMaxQuantity));
                     if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
-                        if (Number(productVariantData.cartMinQuantity) > quantityProduct) {
+                        if ((productVariantData.cartMinQuantity != "") && Number(productVariantData.cartMinQuantity) > quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
-                                message: 'Validation error',
-                                validation: `The minimum purchase quantity is ${productVariantData.cartMinQuantity}`
+                                // message: 'Validation error',
+                                message: `The minimum purchase quantity is ${productVariantData.cartMinQuantity}`
                             });
                         }
-                        if (Number(productVariantData.cartMaxQuantity) < quantityProduct) {
+                        if ((productVariantData.cartMaxQuantity != "") && Number(productVariantData.cartMaxQuantity) < quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
-                                message: 'Validation error',
-                                validation: `The maximun purchase quantity is ${productVariantData.cartMaxQuantity}`
+                                // message: 'Validation error',
+                                message: `The maximum purchase quantity is ${productVariantData.cartMaxQuantity}`
                             });
                         }
                     }

@@ -85,7 +85,7 @@ class ProductsController extends base_controller_1.default {
             var newCategory;
             const userData = await res.locals.user;
             if (validatedData.success) {
-                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
+                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, showOrder, completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
                 const productImage = req.files.find((file) => file.fieldname === 'productImage');
                 const galleryImages = req.files.filter((file) => file.fieldname &&
@@ -96,6 +96,7 @@ class ProductsController extends base_controller_1.default {
                     const productData = {
                         productTitle: (0, helpers_1.capitalizeWords)(productTitle),
                         slug: slugAndSkuData.slug,
+                        showOrder: showOrder,
                         brand: brand,
                         description,
                         longDescription,
@@ -723,6 +724,7 @@ class ProductsController extends base_controller_1.default {
                                                                     var finalData = {
                                                                         productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                         slug: (0, helpers_1.slugify)(data.Product_Title),
+                                                                        showOrder: data.Show_Order,
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                         description: data.Description,
@@ -754,6 +756,7 @@ class ProductsController extends base_controller_1.default {
                                                                     var productVariants = {
                                                                         countryId: data.Country ? countryId : await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
                                                                         extraProductTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
+                                                                        showOrder: data.Show_Order,
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         variantImageUrl: data.Image,
@@ -829,13 +832,12 @@ class ProductsController extends base_controller_1.default {
                                                                                     }
                                                                                 }
                                                                                 slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index);
-                                                                                productVariants = {
-                                                                                    ...productVariants,
-                                                                                    slug: (0, helpers_1.slugify)(slugData)
-                                                                                };
                                                                                 const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
-                                                                                console.log("variantDetails", variantDetails);
                                                                                 if (!variantDetails) {
+                                                                                    productVariants = {
+                                                                                        ...productVariants,
+                                                                                        slug: (0, helpers_1.slugify)(slugData)
+                                                                                    };
                                                                                     const createVariant = await product_variant_service_1.default.create(createProduct._id, productVariants, userData);
                                                                                     if (createVariant) {
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
@@ -1020,13 +1022,12 @@ class ProductsController extends base_controller_1.default {
                                                                                 // if (data.Product_Title === productVariants.extraProductTitle) {
                                                                                 //     productVariants.extraProductTitle = ""
                                                                                 // }
-                                                                                productVariants = {
-                                                                                    ...productVariants,
-                                                                                    slug: (0, helpers_1.slugify)(slugData)
-                                                                                };
                                                                                 const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
-                                                                                    console.log("productVariantsproductVariantsproductVariants", productVariants);
+                                                                                    productVariants = {
+                                                                                        ...productVariants,
+                                                                                        slug: (0, helpers_1.slugify)(slugData)
+                                                                                    };
                                                                                     const createVariant = await product_variant_service_1.default.create(productDetails._id, productVariants, userData);
                                                                                     if (createVariant) {
                                                                                         console.log("productDetails", productDetails);
