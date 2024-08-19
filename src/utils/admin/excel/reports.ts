@@ -11,7 +11,7 @@ export const exportCustomerReport = async (res: Response, customerData: any) => 
         });
 
         return {
-            id: customer._id.toString(),
+            // id: customer._id.toString(),
             name: customer.firstName,
             phone: customer.phone,
             email: customer.email,
@@ -33,7 +33,7 @@ export const exportCustomerReport = async (res: Response, customerData: any) => 
         });
         return Array.from(new Set(acc));
     }, []);
-    await generateExcelFile(res, customersData, ['id', 'name', 'phone', 'email', 'guestEmail', 'isVerified', 'lastOrderDate', ...addressColumns, 'created_date', 'fromGuest', 'addressBook', 'credits', 'orderTotalAmount', 'totalOrderCount'], 'Customers')
+    await generateExcelFile(res, customersData, ['name', 'phone', 'email', 'guestEmail', 'isVerified', 'lastOrderDate', ...addressColumns, 'created_date', 'fromGuest', 'addressBook', 'credits', 'orderTotalAmount', 'totalOrderCount'], 'Customers')
 }
 
 export const exportOrderReport = async (res: Response, orderData: any, orderSum: any) => {
@@ -72,7 +72,7 @@ export const exportOrderReport = async (res: Response, orderData: any, orderSum:
             isGuest: order.billingAddress?.isGuest,
         }
         return {
-            Id: order._id.toString(),
+            // Id: order._id.toString(),
             'Order Id': order.cartDetails?.orderId,
             Brand: order.productsDetails?.brand.brandTitle,
             Category: categoryTitles,
@@ -98,8 +98,8 @@ export const exportOrderReport = async (res: Response, orderData: any, orderSum:
     });
 
     ordersData.push({
-        Id: 'Total',
-        'Order Id': '',
+        // Id: 'Total',
+        'Order Id': 'Total',
         Brand: '',
         Category: '',
         'Delivery instructions': '',
@@ -121,7 +121,7 @@ export const exportOrderReport = async (res: Response, orderData: any, orderSum:
         'Billing Address': '',
         'Billing Phone': '',
     });
-    await generateExcelFile(res, ordersData, ['Id', 'Order Id', 'Brand', 'Category', 'Delivery instructions', 'Product Title', 'SKU', 'Quantity', 'MRP', 'Discount Amount', 'Sub Total', 'Total With Cancel', 'Created At', 'Status', 'Delivered At', 'Billing Name', 'Shipping Name', 'Payment Method', 'Shipping Address', 'Shipping Phone', 'Billing Address', 'Billing Phone'], 'Orders')
+    await generateExcelFile(res, ordersData, ['Order Id', 'Brand', 'Category', 'Delivery instructions', 'Product Title', 'SKU', 'Quantity', 'MRP', 'Discount Amount', 'Sub Total', 'Total With Cancel', 'Created At', 'Status', 'Delivered At', 'Billing Name', 'Shipping Name', 'Payment Method', 'Shipping Address', 'Shipping Phone', 'Billing Address', 'Billing Phone'], 'Orders')
 }
 
 export const exportProductExcel = async (res: Response, products: any) => {
@@ -264,22 +264,22 @@ export const exportProductExcel = async (res: Response, products: any) => {
                 Width: product.measurements.width,
                 Weight: product.measurements.Weight,
                 Tags: product.tags,
-                Brand: product.brand.brandTitle,
-                Warehouse: product.warehouse,
-                Price: product.productVariants[0].price,
-                Discount_Price: product.productVariants[0].discountPrice,
-                Quantity: product.productVariants[0].quantity,
-                Total_Quantity: product.productVariants[0].quantity,
-                Cart_Min_Quantity: product.productVariants[0].cartMinQuantity,
-                Cart_Max_Quantity: product.productVariants[0].cartMaxQuantity,
+                Brand: product.brand?.brandTitle,
+                Warehouse: product?.warehouse,
+                Price: product.productVariants[0]?.price,
+                Discount_Price: product.productVariants[0]?.discountPrice,
+                Quantity: product.productVariants[0]?.quantity,
+                Total_Quantity: product.productVariants[0]?.quantity,
+                Cart_Min_Quantity: product.productVariants[0]?.cartMinQuantity,
+                Cart_Max_Quantity: product.productVariants[0]?.cartMaxQuantity,
                 Is_Default: product.productVariants[0].isDefault,
-                Meta_Title: product.productSeo.metaTitle,
-                Meta_Keywords: product.productSeo.metaKeywords,
-                Meta_Description: product.productSeo.metaDescription,
-                OG_Title: product.productSeo.ogTitle,
-                OG_Description: product.productSeo.ogDescription,
-                Twitter_Title: product.productSeo.twitterTitle,
-                Twitter_Description: product.productSeo.twitterDescription,
+                Meta_Title: product.productSeo?.metaTitle,
+                Meta_Keywords: product.productSeo?.metaKeywords,
+                Meta_Description: product.productSeo?.metaDescription,
+                OG_Title: product.productSeo?.ogTitle,
+                OG_Description: product.productSeo?.ogDescription,
+                Twitter_Title: product.productSeo?.twitterTitle,
+                Twitter_Description: product.productSeo?.twitterDescription,
                 ...specifications
             });
         }
