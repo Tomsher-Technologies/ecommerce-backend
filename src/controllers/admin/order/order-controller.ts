@@ -1183,34 +1183,62 @@ class OrdersController extends BaseController {
                 const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].country._id }, 'currencyCode')
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
-                // console.log("fgfdgfd", orderDetails[0].products[0].productDetails);
-                console.log("555555555555", orderDetails[0].country.countrySubDomain, orderDetails[0].country.countrySubDomain !== 'qa');
 
-                ejs.renderFile(path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
-                    {
-                        orderDetails: orderDetails[0],
-                        expectedDeliveryDate,
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        storePhone: basicDetailsSettings?.storePhone,
-                        storeAppartment: basicDetailsSettings?.storeAppartment,
-                        storeStreet: basicDetailsSettings?.storeStreet,
-                        storeCity: basicDetailsSettings?.storeCity,
-                        storeState: basicDetailsSettings?.storeState,
-                        storePostalCode: basicDetailsSettings?.storePostalCode,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        appUrl: `${process.env.APPURL}`,
-                        tax: tax,
-                        currencyCode: currencyCode?.currencyCode
-                    },
-                    async (err: any, html: any) => {
-                        if (err) {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Error generating invoice'
-                            });
-                        }
-                        await pdfGenerator({ html, res, preview: req.query.preview })
-                    });
+                if (req.query.deliverySlip === '1') {
+                    ejs.renderFile(path.join(__dirname, '../../../views/order', 'delivery-slip-invoice.ejs'),
+                        {
+                            orderDetails: orderDetails[0],
+                            expectedDeliveryDate,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            storeAppartment: basicDetailsSettings?.storeAppartment,
+                            storeStreet: basicDetailsSettings?.storeStreet,
+                            storeCity: basicDetailsSettings?.storeCity,
+                            storeState: basicDetailsSettings?.storeState,
+                            storePostalCode: basicDetailsSettings?.storePostalCode,
+                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shop: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`,
+                            tax: tax,
+                            currencyCode: currencyCode?.currencyCode
+                        },
+                        async (err: any, html: any) => {
+                            if (err) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Error generating invoice'
+                                });
+                            }
+                            await pdfGenerator({ html, res, preview: req.query.preview })
+                        });
+                } else {
+                    ejs.renderFile(path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
+                        {
+                            orderDetails: orderDetails[0],
+                            expectedDeliveryDate,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            storeAppartment: basicDetailsSettings?.storeAppartment,
+                            storeStreet: basicDetailsSettings?.storeStreet,
+                            storeCity: basicDetailsSettings?.storeCity,
+                            storeState: basicDetailsSettings?.storeState,
+                            storePostalCode: basicDetailsSettings?.storePostalCode,
+                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shop: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`,
+                            tax: tax,
+                            currencyCode: currencyCode?.currencyCode
+                        },
+                        async (err: any, html: any) => {
+                            if (err) {
+                                return controller.sendErrorResponse(res, 200, {
+                                    message: 'Error generating invoice'
+                                });
+                            }
+                            await pdfGenerator({ html, res, preview: req.query.preview })
+                        });
+                }
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Order not fount'
