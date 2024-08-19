@@ -47,7 +47,10 @@ export interface CartOrderProps extends Document {
     failedStatusAt?: Date;
     completedStatusAt?: Date;
     pickupStatusAt?: Date;
-    deliverStatusAt?: Date;
+    deliveryStatusAt?: Date;
+    partiallyRefundedStatusAt?: Date;
+    partiallyReturnedStatusAt?: Date;
+    partiallyCanceledStatusAt?: Date;
     createdBy?: string;
     isGuest: boolean;
     createdAt?: Date;
@@ -259,7 +262,19 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         type: Date,
         default: null
     },
-    deliverStatusAt: {
+    deliveryStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyCanceledStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyReturnedStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyRefundedStatusAt: {
         type: Date,
         default: null
     },
