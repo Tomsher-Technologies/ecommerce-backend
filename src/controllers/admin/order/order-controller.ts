@@ -801,13 +801,26 @@ class OrdersController extends BaseController {
 
 
             // Ensure that Refunded status is only possible after Returned
-            if ((orderStatus === orderStatusArrayJson.refunded || orderStatus === orderStatusArrayJson.canceled) &&
-                (orderDetails.orderStatus !== orderStatusArrayJson.returned && orderDetails.orderStatus !== orderStatusArrayJson.canceled &&
-                    orderDetails.orderStatus !== orderStatusArrayJson.partiallyCanceled && orderDetails.orderStatus !== orderStatusArrayJson.partiallyReturned)) {
+            if (orderStatus === orderStatusArrayJson.refunded && ![
+                orderStatusArrayJson.returned,
+                orderStatusArrayJson.canceled,
+                orderStatusArrayJson.partiallyCanceled,
+                orderStatusArrayJson.partiallyReturned
+            ].includes(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Refunded status is only possible after Returned or Canceled'
                 });
             }
+
+            if (orderStatus === orderStatusArrayJson.canceled && ![
+                orderStatusArrayJson.returned,
+                orderStatusArrayJson.partiallyReturned
+            ].includes(orderDetails.orderStatus)) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Canceled status is only possible after Returned or Partially Returned'
+                });
+            }
+
 
             if (orderStatusArrayJson.canceled === orderStatus && ([
                 orderStatusArrayJson.pending,
