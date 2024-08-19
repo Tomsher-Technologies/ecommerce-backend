@@ -137,7 +137,28 @@ exports.addressLookup = {
         from: `${collections_1.collections.customer.customeraddresses}`,
         localField: '_id',
         foreignField: 'customerId',
-        as: 'address'
+        as: 'address',
+        pipeline: [{
+                $project: {
+                    _id: 1,
+                    addressType: 1,
+                    defaultAddress: 1,
+                    addressMode: 1,
+                    name: 1,
+                    address1: 1,
+                    address2: 1,
+                    phoneNumber: 1,
+                    landlineNumber: 1,
+                    country: 1,
+                    state: 1,
+                    city: 1,
+                    street: 1,
+                    zipCode: 1,
+                    longitude: 1,
+                    latitude: 1,
+                    isGuest: 1
+                }
+            }]
     }
 };
 exports.orderWalletTransactionLookup = {
