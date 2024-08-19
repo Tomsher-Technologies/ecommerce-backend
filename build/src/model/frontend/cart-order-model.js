@@ -230,7 +230,19 @@ const cartOrderSchema = new mongoose_1.Schema({
         type: Date,
         default: null
     },
-    deliverStatusAt: {
+    deliveryStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyCanceledStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyReturnedStatusAt: {
+        type: Date,
+        default: null
+    },
+    partiallyRefundedStatusAt: {
         type: Date,
         default: null
     },

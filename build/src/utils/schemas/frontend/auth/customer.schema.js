@@ -15,7 +15,7 @@ exports.updateCustomerSchema = zod_1.z.object({
     }),
 });
 exports.changePassword = zod_1.z.object({
-    oldPassword: zod_1.z.string({ required_error: 'New password is required' }).min(6, 'New Password too short - should be 6 chars minimum'),
+    oldPassword: zod_1.z.string({ required_error: 'Old password is required' }).min(6, 'Old Password too short - should be 6 chars minimum'),
     newPassword: zod_1.z.string({ required_error: 'New password is required' }).min(6, 'New Password too short - should be 6 chars minimum'),
     confirmNewPassword: zod_1.z.string({ required_error: 'Confirm new password is required' }).min(6, 'Confirm new Password too short - should be 6 chars minimum'),
 }).superRefine(({ newPassword, confirmNewPassword }, ctx) => {

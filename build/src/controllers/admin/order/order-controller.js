@@ -271,31 +271,67 @@ class OrdersController extends base_controller_1.default {
         if (!updatedProduct) {
             return controller.sendErrorResponse(res, 200, { message: 'Failed to update product status. Please try again later.' });
         }
-        const updateOrderStatus = {};
-        if (orderProduct.orderProductStatus === cart_1.orderProductStatusJson.delivered) {
-            const otherProductsDelivered = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === cart_1.orderProductStatusJson.delivered);
-            if (otherProductsDelivered) {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.delivered;
-                updateOrderStatus.deliveredStatusAt = new Date();
+        if (orderProducts.length > 1) {
+            const allProductsInOrder = await cart_order_product_model_1.default.find({ cartId: updatedProduct.cartId });
+            const updateOrderStatus = {};
+            if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.delivered) {
+                const otherProductsDelivered = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.delivered);
+                if (otherProductsDelivered) {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.delivered;
+                    updateOrderStatus.deliveredStatusAt = new Date();
+                }
+                else {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyDelivered;
+                    updateOrderStatus.partiallyDeliveredStatusAt = new Date();
+                }
             }
-            else {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyDelivered;
-                updateOrderStatus.partiallyDeliveredStatusAt = new Date();
+            else if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.shipped) {
+                const otherProductsShipped = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.shipped);
+                if (otherProductsShipped) {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.shipped;
+                    updateOrderStatus.shippedStatusAt = new Date();
+                }
+                else {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyShipped;
+                    updateOrderStatus.partiallyShippedStatusAt = new Date();
+                }
             }
-        }
-        else if (orderProduct.orderProductStatus === cart_1.orderProductStatusJson.shipped) {
-            const otherProductsShipped = orderProducts.filter(product => product._id.toString() !== orderProductId).every(product => product.orderProductStatus === cart_1.orderProductStatusJson.shipped);
-            if (otherProductsShipped) {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.shipped;
-                updateOrderStatus.shippedStatusAt = new Date();
+            else if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.canceled) {
+                const otherProductsCanceled = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.canceled);
+                if (otherProductsCanceled) {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.canceled;
+                    updateOrderStatus.canceledStatusAt = new Date();
+                }
+                else {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyCanceled;
+                    updateOrderStatus.partiallyCanceledStatusAt = new Date();
+                }
             }
-            else {
-                updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyShipped;
-                updateOrderStatus.partiallyShippedStatusAt = new Date();
+            else if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.returned) {
+                const otherProductsReturned = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.returned);
+                if (otherProductsReturned) {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.returned;
+                    updateOrderStatus.returnedStatusAt = new Date();
+                }
+                else {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyReturned;
+                    updateOrderStatus.partiallyReturnedStatusAt = new Date();
+                }
             }
-        }
-        if (Object.keys(updateOrderStatus).length > 0) {
-            await cart_order_model_1.default.findByIdAndUpdate(orderProduct.cartId, updateOrderStatus);
+            else if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.refunded) {
+                const otherProductsRefunded = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.refunded);
+                if (otherProductsRefunded) {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.refunded;
+                    updateOrderStatus.refundedStatusAt = new Date();
+                }
+                else {
+                    updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.partiallyRefunded;
+                    updateOrderStatus.partiallyRefundedStatusAt = new Date();
+                }
+            }
+            if (Object.keys(updateOrderStatus).length > 0) {
+                await cart_order_model_1.default.findByIdAndUpdate(orderProduct.cartId, updateOrderStatus);
+            }
         }
         if (newStatus === cart_1.orderProductStatusJson.delivered || newStatus === cart_1.orderProductStatusJson.shipped) {
             const productDetails = await product_model_1.default.aggregate((0, product_config_1.productDetailsWithVariant)({ 'productvariants._id': orderProduct.variantId }));
@@ -693,8 +729,8 @@ class OrdersController extends base_controller_1.default {
                 cart_1.orderStatusArrayJson.packed,
                 cart_1.orderStatusArrayJson.shipped,
                 cart_1.orderStatusArrayJson.partiallyShipped,
+                cart_1.orderStatusArrayJson.pickup,
                 cart_1.orderStatusArrayJson.onHold,
-                cart_1.orderStatusArrayJson.pickup
             ].includes(orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Cannot change the status back to a previous state once delivered'
@@ -713,9 +749,33 @@ class OrdersController extends base_controller_1.default {
                 });
             }
             // Ensure that Refunded status is only possible after Returned
-            if (orderStatus === cart_1.orderStatusArrayJson.refunded && orderDetails.orderStatus !== cart_1.orderStatusArrayJson.returned) {
+            if (orderStatus === cart_1.orderStatusArrayJson.refunded && ![
+                cart_1.orderStatusArrayJson.returned,
+                cart_1.orderStatusArrayJson.canceled,
+                cart_1.orderStatusArrayJson.partiallyCanceled,
+                cart_1.orderStatusArrayJson.partiallyReturned
+            ].includes(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Refunded status is only possible after Returned'
+                    message: 'Refunded status is only possible after Returned or Canceled'
+                });
+            }
+            if (orderStatus === cart_1.orderStatusArrayJson.canceled && ![
+                cart_1.orderStatusArrayJson.returned,
+                cart_1.orderStatusArrayJson.partiallyReturned
+            ].includes(orderDetails.orderStatus)) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Canceled status is only possible after Returned or Partially Returned'
+                });
+            }
+            if (cart_1.orderStatusArrayJson.canceled === orderStatus && ([
+                cart_1.orderStatusArrayJson.pending,
+                cart_1.orderStatusArrayJson.processing,
+                cart_1.orderStatusArrayJson.packed,
+                cart_1.orderStatusArrayJson.shipped,
+                cart_1.orderStatusArrayJson.pickup,
+            ].includes(orderDetails.orderStatus))) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Cannot change the status Canceled Order'
                 });
             }
             // Ensure that Completed status is only possible after Delivered
@@ -742,9 +802,14 @@ class OrdersController extends base_controller_1.default {
                     message: 'Cannot change the status once it is refunded'
                 });
             }
-            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.canceled && (orderStatus !== cart_1.orderStatusArrayJson.refunded || orderDetails.orderStatus !== cart_1.orderStatusArrayJson.returned)) {
+            if ((orderDetails.orderStatus === cart_1.orderStatusArrayJson.failed) && (orderStatus === cart_1.orderStatusArrayJson.pending || orderStatus === cart_1.orderStatusArrayJson.packed || orderStatus === cart_1.orderStatusArrayJson.processing || orderStatus === cart_1.orderStatusArrayJson.shipped || orderStatus === cart_1.orderStatusArrayJson.delivered)) {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Cannot change the status Canceled Order'
+                    message: 'Failed status is cannot change to this status'
+                });
+            }
+            if (orderDetails.orderStatus === cart_1.orderStatusArrayJson.returned && (orderStatus !== cart_1.orderStatusArrayJson.refunded)) {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Completed status is only possible after Refunded'
                 });
             }
             const orderProductDetails = await cart_order_product_model_1.default.find({ cartId: orderDetails._id });
@@ -753,40 +818,41 @@ class OrdersController extends base_controller_1.default {
                     message: 'Order products are not found!'
                 });
             }
-            const checkOrderProductPartialStatus = orderProductDetails.find((product) => [cart_1.orderProductStatusJson.canceled, cart_1.orderProductStatusJson.returned, cart_1.orderProductStatusJson.refunded].includes(product.orderProductStatus));
-            const partialToFinalStatusMapping = {
-                [cart_1.orderStatusArrayJson.partiallyCanceled]: cart_1.orderStatusArrayJson.canceled,
-                [cart_1.orderStatusArrayJson.partiallyReturned]: cart_1.orderStatusArrayJson.returned,
-                [cart_1.orderStatusArrayJson.partiallyRefunded]: cart_1.orderStatusArrayJson.refunded,
-            };
-            // Define the statuses
-            const partialStatuses = [
-                cart_1.orderStatusArrayJson.partiallyCanceled,
-                cart_1.orderStatusArrayJson.partiallyReturned,
-                cart_1.orderStatusArrayJson.partiallyRefunded,
-            ];
-            // Initialize count for each partial status
-            const partialStatusesCount = partialStatuses.reduce((acc, status) => {
-                acc[status] = 0;
-                return acc;
-            }, {});
-            // Count occurrences of partial statuses
-            orderProductDetails.forEach(product => {
-                if (partialStatuses.includes(product.orderProductStatus)) {
-                    partialStatusesCount[product.orderProductStatus]++;
-                }
-            });
-            // Determine the most frequent partial status
-            const entries = Object.entries(partialStatusesCount);
-            const mostFrequentPartialStatus = entries.reduce((a, b) => b[1] > a[1] ? b : a)[0];
-            // Update the order status based on the most frequent partial status
-            if (partialStatusesCount[mostFrequentPartialStatus] === orderProductDetails.length) {
-                orderDetails.orderStatus = partialToFinalStatusMapping[mostFrequentPartialStatus];
-            }
-            else {
-                orderDetails.orderStatus = orderStatus;
-            }
+            orderDetails.orderStatus = orderStatus;
             const currentDate = new Date();
+            let orderProductStatus = orderDetails.orderStatus;
+            let allMatchFinalProductStatus = false;
+            if (orderProductDetails.length > 1) {
+                const partialStatusMapping = {
+                    [cart_1.orderProductStatusJson.delivered]: cart_1.orderStatusArrayJson.partiallyDelivered,
+                    [cart_1.orderProductStatusJson.shipped]: cart_1.orderStatusArrayJson.partiallyShipped,
+                    [cart_1.orderProductStatusJson.canceled]: cart_1.orderStatusArrayJson.partiallyCanceled,
+                    [cart_1.orderProductStatusJson.returned]: cart_1.orderStatusArrayJson.partiallyReturned,
+                    [cart_1.orderProductStatusJson.refunded]: cart_1.orderStatusArrayJson.partiallyRefunded,
+                };
+                for (const [productStatus, partialStatus] of Object.entries(partialStatusMapping)) {
+                    const hasPartialStatus = orderProductDetails.some((product) => product.orderProductStatus === productStatus);
+                    if (hasPartialStatus) {
+                        orderDetails.orderStatus = partialStatus;
+                        break;
+                    }
+                }
+                const statusToCheckMapping = {
+                    [cart_1.orderStatusArrayJson.partiallyDelivered]: cart_1.orderProductStatusJson.delivered,
+                    [cart_1.orderStatusArrayJson.partiallyShipped]: cart_1.orderProductStatusJson.shipped,
+                    [cart_1.orderStatusArrayJson.partiallyCanceled]: cart_1.orderProductStatusJson.canceled,
+                    [cart_1.orderStatusArrayJson.partiallyReturned]: cart_1.orderProductStatusJson.returned,
+                    [cart_1.orderStatusArrayJson.partiallyRefunded]: cart_1.orderProductStatusJson.refunded,
+                };
+                const currentPartialStatus = orderDetails.orderStatus;
+                if (statusToCheckMapping[currentPartialStatus]) {
+                    allMatchFinalProductStatus = orderProductDetails.every((product) => (product.orderProductStatus === statusToCheckMapping[currentPartialStatus] || product.orderProductStatus === orderStatus));
+                    if (allMatchFinalProductStatus) {
+                        orderDetails.orderStatus = orderStatus;
+                        orderProductStatus = orderStatus;
+                    }
+                }
+            }
             switch (orderStatus) {
                 case cart_1.orderStatusArrayJson.pending:
                     orderDetails.orderStatusAt = currentDate;
@@ -847,7 +913,6 @@ class OrdersController extends base_controller_1.default {
                     message: 'Something went wrong!'
                 });
             }
-            let orderProductStatus = orderDetails.orderStatus;
             if ([cart_1.orderStatusArrayJson.completed, cart_1.orderStatusArrayJson.delivered, cart_1.orderStatusArrayJson.pickup, cart_1.orderStatusArrayJson.shipped, cart_1.orderStatusArrayJson.packed, cart_1.orderStatusArrayJson.processing, cart_1.orderStatusArrayJson.onHold].includes(orderStatus)) {
                 switch (orderProductStatus) {
                     case cart_1.orderStatusArrayJson.partiallyCanceled:
@@ -863,10 +928,60 @@ class OrdersController extends base_controller_1.default {
                         break;
                 }
             }
+            const allMatchOrderProductStatus = orderProductDetails.every((product) => product.orderProductStatus === orderProductDetails[0].orderProductStatus);
+            let exclusionMappingStatus = {};
+            if (!allMatchOrderProductStatus) {
+                const commonExclusionsStatus = [
+                    cart_1.orderProductStatusJson.pending,
+                    cart_1.orderProductStatusJson.processing,
+                    cart_1.orderProductStatusJson.packed,
+                    cart_1.orderProductStatusJson.shipped,
+                    cart_1.orderProductStatusJson.delivered,
+                    cart_1.orderProductStatusJson.pickup,
+                    cart_1.orderProductStatusJson.canceled,
+                    cart_1.orderProductStatusJson.returned,
+                    cart_1.orderProductStatusJson.refunded,
+                ];
+                exclusionMappingStatus = {
+                    [cart_1.orderStatusArrayJson.pending]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.processing]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.shipped]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.packed]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.partiallyShipped]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.onHold]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.delivered]: commonExclusionsStatus,
+                    [cart_1.orderStatusArrayJson.partiallyDelivered]: [],
+                    [cart_1.orderStatusArrayJson.partiallyCanceled]: [
+                        cart_1.orderProductStatusJson.returned,
+                        cart_1.orderProductStatusJson.refunded,
+                    ],
+                    [cart_1.orderStatusArrayJson.partiallyReturned]: [
+                        cart_1.orderProductStatusJson.canceled,
+                        cart_1.orderProductStatusJson.refunded,
+                    ],
+                    [cart_1.orderStatusArrayJson.partiallyRefunded]: [
+                        cart_1.orderProductStatusJson.canceled,
+                        cart_1.orderProductStatusJson.returned,
+                    ],
+                    [cart_1.orderStatusArrayJson.canceled]: [
+                        cart_1.orderProductStatusJson.returned,
+                        cart_1.orderProductStatusJson.refunded,
+                    ],
+                    [cart_1.orderStatusArrayJson.returned]: [
+                        cart_1.orderProductStatusJson.canceled,
+                        cart_1.orderProductStatusJson.refunded,
+                    ],
+                    [cart_1.orderStatusArrayJson.refunded]: [
+                        cart_1.orderProductStatusJson.canceled,
+                        cart_1.orderProductStatusJson.returned,
+                    ],
+                };
+            }
+            const exclusionStatuses = allMatchFinalProductStatus ? [] : (exclusionMappingStatus[orderProductStatus] || []);
             await cart_order_product_model_1.default.updateMany({
                 cartId: orderDetails._id,
                 orderProductStatus: {
-                    $nin: [cart_1.orderStatusArrayJson.canceled, cart_1.orderStatusArrayJson.returned, cart_1.orderStatusArrayJson.refunded]
+                    $nin: exclusionStatuses
                 }
             }, {
                 $set: {
@@ -874,7 +989,7 @@ class OrdersController extends base_controller_1.default {
                     orderProductStatusAt: currentDate
                 }
             });
-            if (orderStatus === cart_1.orderStatusArrayJson.failed || orderStatus === cart_1.orderStatusArrayJson.returned) {
+            if (orderStatus === cart_1.orderStatusArrayJson.failed || orderStatus === cart_1.orderStatusArrayJson.returned || orderStatus === cart_1.orderStatusArrayJson.canceled) {
                 const cartProducts = await cart_order_product_model_1.default.find({ cartId: orderDetails._id }).select('variantId quantity');
                 const updateProductVariant = cartProducts.map((products) => ({
                     updateOne: {
@@ -958,7 +1073,6 @@ class OrdersController extends base_controller_1.default {
                     }
                 });
             }
-            // console.log('aaaaaaaa', updatedOrderDetails);
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
                 message: cart_1.orderStatusMessages[orderStatus] || 'Order status updated successfully!'
@@ -1011,30 +1125,58 @@ class OrdersController extends base_controller_1.default {
                 const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].country._id, status: "1" });
                 const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].country._id }, 'currencyCode');
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
-                ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
-                    orderDetails: orderDetails[0],
-                    expectedDeliveryDate,
-                    storeEmail: basicDetailsSettings?.storeEmail,
-                    storePhone: basicDetailsSettings?.storePhone,
-                    storeAppartment: basicDetailsSettings?.storeAppartment,
-                    storeStreet: basicDetailsSettings?.storeStreet,
-                    storeCity: basicDetailsSettings?.storeCity,
-                    storeState: basicDetailsSettings?.storeState,
-                    storePostalCode: basicDetailsSettings?.storePostalCode,
-                    shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                    shopLogo: `${process.env.SHOPLOGO}`,
-                    shop: `${process.env.SHOPNAME}`,
-                    appUrl: `${process.env.APPURL}`,
-                    tax: tax,
-                    currencyCode: currencyCode?.currencyCode
-                }, async (err, html) => {
-                    if (err) {
-                        return controller.sendErrorResponse(res, 200, {
-                            message: 'Error generating invoice'
-                        });
-                    }
-                    await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
-                });
+                if (req.query.deliverySlip === '1') {
+                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'delivery-slip-invoice.ejs'), {
+                        orderDetails: orderDetails[0],
+                        expectedDeliveryDate,
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        storePhone: basicDetailsSettings?.storePhone,
+                        storeAppartment: basicDetailsSettings?.storeAppartment,
+                        storeStreet: basicDetailsSettings?.storeStreet,
+                        storeCity: basicDetailsSettings?.storeCity,
+                        storeState: basicDetailsSettings?.storeState,
+                        storePostalCode: basicDetailsSettings?.storePostalCode,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shop: `${process.env.SHOPNAME}`,
+                        appUrl: `${process.env.APPURL}`,
+                        tax: tax,
+                        currencyCode: currencyCode?.currencyCode
+                    }, async (err, html) => {
+                        if (err) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Error generating invoice'
+                            });
+                        }
+                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+                    });
+                }
+                else {
+                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
+                        orderDetails: orderDetails[0],
+                        expectedDeliveryDate,
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        storePhone: basicDetailsSettings?.storePhone,
+                        storeAppartment: basicDetailsSettings?.storeAppartment,
+                        storeStreet: basicDetailsSettings?.storeStreet,
+                        storeCity: basicDetailsSettings?.storeCity,
+                        storeState: basicDetailsSettings?.storeState,
+                        storePostalCode: basicDetailsSettings?.storePostalCode,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shop: `${process.env.SHOPNAME}`,
+                        appUrl: `${process.env.APPURL}`,
+                        tax: tax,
+                        currencyCode: currencyCode?.currencyCode
+                    }, async (err, html) => {
+                        if (err) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Error generating invoice'
+                            });
+                        }
+                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+                    });
+                }
             }
             else {
                 return controller.sendErrorResponse(res, 200, {

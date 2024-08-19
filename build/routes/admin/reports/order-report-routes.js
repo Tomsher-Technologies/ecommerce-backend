@@ -11,4 +11,6 @@ const order_report_controller_1 = __importDefault(require("../../../src/controll
 const router = express_1.default.Router();
 router.use(auth_middleware_1.default);
 router.get('/order-report', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, readOnly: 1 }), order_report_controller_1.default.orderReport);
+router.get('/monthly-order-report', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, readOnly: 1 }), order_report_controller_1.default.getMonthlyOrderReport);
+router.get('/daily-order-report', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, readOnly: 1 }), order_report_controller_1.default.getDailyOrderReport);
 exports.default = router;

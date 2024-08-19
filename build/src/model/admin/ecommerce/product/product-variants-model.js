@@ -54,6 +54,10 @@ const productVariantsSchema = new mongoose_1.Schema({
         },
         required: [true, 'Slug is required'],
     },
+    showOrder: {
+        type: Number,
+        default: 0
+    },
     extraProductTitle: {
         type: String,
         default: ''
