@@ -20,7 +20,7 @@ export const updateCustomerSchema = zod.object({
 
 
 export const changePassword = zod.object({
-    oldPassword: zod.string({ required_error: 'New password is required' }).min(6, 'New Password too short - should be 6 chars minimum'),
+    oldPassword: zod.string({ required_error: 'Old password is required' }).min(6, 'Old Password too short - should be 6 chars minimum'),
     newPassword: zod.string({ required_error: 'New password is required' }).min(6, 'New Password too short - should be 6 chars minimum'),
     confirmNewPassword: zod.string({ required_error: 'Confirm new password is required' }).min(6, 'Confirm new Password too short - should be 6 chars minimum'),
 
