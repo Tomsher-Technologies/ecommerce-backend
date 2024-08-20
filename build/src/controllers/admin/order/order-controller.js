@@ -263,17 +263,38 @@ class OrdersController extends base_controller_1.default {
         if (!newStatus || !Object.values(cart_1.orderProductStatusJson).includes(newStatus)) {
             return controller.sendErrorResponse(res, 200, { message: 'Invalid status provided.' });
         }
-        const updateProductStatus = {
+        let updateProductStatus = {
             orderProductStatus: newStatus,
             orderProductStatusAt: new Date()
         };
+        const updateOrderStatus = {};
+        if (newStatus === cart_1.orderProductStatusJson.canceled) {
+            if (orderProduct.orderProductStatus !== cart_1.orderProductStatusJson.pending) {
+                return controller.sendErrorResponse(res, 200, { message: 'Pending products only to change cancelled status.' });
+            }
+            else {
+                updateProductStatus = {
+                    ...updateProductStatus,
+                    orderRequestedProductCancelStatus: cart_1.orderProductCancelStatusJson.pending,
+                    orderRequestedProductCancelStatusAt: new Date()
+                };
+            }
+        }
+        else if (newStatus === cart_1.orderProductStatusJson.refunded) {
+            updateOrderStatus.totalReturnedProductAmount = ((orderDetails.totalReturnedProductAmount + orderProduct.productAmount) || 0);
+            updateProductStatus = {
+                ...updateProductStatus,
+                returnedProductAmount: orderProduct.productAmount,
+                orderRequestedProductCancelStatus: cart_1.orderProductCancelStatusJson.refunded,
+                orderRequestedProductCancelStatusAt: new Date()
+            };
+        }
         const updatedProduct = await cart_order_product_model_1.default.findByIdAndUpdate(orderProduct._id, updateProductStatus, { new: true });
         if (!updatedProduct) {
             return controller.sendErrorResponse(res, 200, { message: 'Failed to update product status. Please try again later.' });
         }
         if (orderProducts.length > 1) {
             const allProductsInOrder = await cart_order_product_model_1.default.find({ cartId: updatedProduct.cartId });
-            const updateOrderStatus = {};
             if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.delivered) {
                 const otherProductsDelivered = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.delivered);
                 if (otherProductsDelivered) {
@@ -412,6 +433,125 @@ class OrdersController extends base_controller_1.default {
         }
         else {
             return controller.sendErrorResponse(res, 200, {
+                message: 'Order not fount'
+            });
+        }
+    }
+    async orderProductCancelStatusChange(req, res) {
+        try {
+            const orderProductId = req.params.orderProductId;
+            const orderProductDetails = await cart_order_product_model_1.default.findOne({ _id: new mongoose_1.default.Types.ObjectId(orderProductId) });
+            const { newStatus } = req.body;
+            if (!orderProductDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
+            }
+            if (orderProductDetails.orderProductStatus === cart_1.orderProductCancelStatusJson.refunded) {
+                return controller.sendErrorResponse(res, 200, { message: `This product allready refunded` });
+            }
+            if (orderProductDetails.orderProductStatus !== cart_1.orderProductStatusJson.canceled) {
+                return controller.sendErrorResponse(res, 200, { message: 'The product must be canceled before it can be refunded.' });
+            }
+            if (orderProductDetails.orderRequestedProductCancelStatus !== cart_1.orderProductCancelStatusJson.pending) {
+                return controller.sendErrorResponse(res, 200, { message: 'You cannot change to this status without canceling the pending status.' });
+            }
+            const orderDetails = await cart_order_model_1.default.findById(orderProductDetails.cartId);
+            if (!orderDetails) {
+                return controller.sendErrorResponse(res, 200, { message: 'Your order not found!' });
+            }
+            const updateOrderStatus = { totalReturnedProductAmount: ((orderDetails.totalReturnedProductAmount + orderProductDetails.productAmount) || 0) };
+            await cart_order_model_1.default.findByIdAndUpdate(orderDetails._id, updateOrderStatus);
+            const updateProductStatus = {
+                returnedProductAmount: orderProductDetails.productAmount,
+                orderRequestedProductCancelStatus: cart_1.orderProductCancelStatusJson.refunded,
+                orderProductStatus: cart_1.orderProductStatusJson.refunded,
+                orderProductStatusAt: new Date(),
+                orderRequestedProductCancelStatusAt: new Date()
+            };
+            const updatedProduct = await cart_order_product_model_1.default.findByIdAndUpdate(orderProductDetails._id, updateProductStatus, { new: true });
+            if (updatedProduct) {
+                const customerDetails = await customers_model_1.default.findOne({ _id: orderDetails.customerId });
+                if (customerDetails) {
+                    const productDetails = await product_model_1.default.aggregate((0, product_config_1.productDetailsWithVariant)({ 'productvariants._id': orderProductDetails.variantId }));
+                    let query = { _id: { $exists: true } };
+                    query = {
+                        ...query,
+                        countryId: orderDetails.countryId,
+                        block: website_setup_1.websiteSetup.basicSettings,
+                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia, website_setup_1.blockReferences.appUrls] },
+                        status: '1',
+                    };
+                    const settingsDetails = await website_setup_model_1.default.find(query);
+                    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
+                        firstName: customerDetails?.firstName,
+                        orderId: orderDetails.orderId,
+                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductCancelStatusMessages[newStatus]}.`,
+                        subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+                        appUrl: `${process.env.APPURL}`,
+                        socialMedia,
+                        appUrls,
+                    }, async (err, template) => {
+                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        if (process.env.SHOPNAME === 'Timehouse') {
+                            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                                email: customerEmail
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Homestyle') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Beyondfresh') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template);
+                        }
+                        else if (process.env.SHOPNAME === 'Smartbaby') {
+                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                                email: customerEmail,
+                            }, template);
+                        }
+                    });
+                }
+            }
+            const updatedOrderDetails = await order_service_1.default.OrderList({
+                query: {
+                    _id: orderProductDetails.cartId
+                },
+                getAddress: '1',
+                getCartProducts: '1',
+                hostName: req.get('origin'),
+            });
+            if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                return controller.sendSuccessResponse(res, {
+                    requestedData: updatedOrderDetails[0],
+                    message: 'Your Order is ready!'
+                });
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Order not fount'
+                });
+            }
+        }
+        catch (error) {
+            console.log('error', error);
+            return controller.sendErrorResponse(res, 500, {
                 message: 'Order not fount'
             });
         }
@@ -759,7 +899,7 @@ class OrdersController extends base_controller_1.default {
                     message: 'Refunded status is only possible after Returned or Canceled'
                 });
             }
-            if (orderStatus === cart_1.orderStatusArrayJson.canceled && ![
+            if (orderStatus === cart_1.orderStatusArrayJson.canceled && [
                 cart_1.orderStatusArrayJson.returned,
                 cart_1.orderStatusArrayJson.partiallyReturned
             ].includes(orderDetails.orderStatus)) {
@@ -999,6 +1139,20 @@ class OrdersController extends base_controller_1.default {
                 }));
                 await product_variants_model_1.default.bulkWrite(updateProductVariant);
             }
+            if (orderStatus === cart_1.orderStatusArrayJson.refunded || orderStatus === cart_1.orderStatusArrayJson.partiallyRefunded) {
+                const cartProducts = await cart_order_product_model_1.default.find({ cartId: orderDetails._id, orderProductStatus: { $in: [cart_1.orderProductStatusJson.returned, cart_1.orderProductStatusJson.refunded] } }).select('productAmount');
+                if (cartProducts && cartProducts.length > 0) {
+                    const bulkOperations = cartProducts.map((product) => ({
+                        updateOne: {
+                            filter: { _id: product._id },
+                            update: { $set: { returnedProductAmount: product.productAmount } }
+                        }
+                    }));
+                    await cart_order_product_model_1.default.bulkWrite(bulkOperations, { ordered: false });
+                    const totalReturnedAmount = cartProducts.reduce((sum, product) => sum + product.productAmount, 0);
+                    await cart_order_model_1.default.findByIdAndUpdate(orderDetails._id, { returnedProductAmount: totalReturnedAmount }, { new: true, useFindAndModify: false });
+                }
+            }
             let customerDetails = null;
             if (orderDetails.customerId) {
                 customerDetails = await customer_service_1.default.findOne({ _id: orderDetails?.customerId });
@@ -1006,7 +1160,7 @@ class OrdersController extends base_controller_1.default {
                     await order_service_1.default.orderWalletAmountTransactions(orderStatus, orderDetails, customerDetails);
                 }
             }
-            if (orderStatus === cart_1.orderStatusArrayJson.shipped || orderStatus === cart_1.orderStatusArrayJson.delivered) {
+            if (orderStatus === cart_1.orderStatusArrayJson.shipped || orderStatus === cart_1.orderStatusArrayJson.delivered || orderStatus === cart_1.orderStatusArrayJson.canceled) {
                 let query = { _id: { $exists: true } };
                 query = {
                     ...query,

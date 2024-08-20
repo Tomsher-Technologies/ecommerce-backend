@@ -98,6 +98,15 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         type: Date,
         default: null
     },
+    orderRequestedProductCancelStatus: {
+        type: String,
+        required: true,
+        default: '0'
+    },
+    orderRequestedProductCancelStatusAt: {
+        type: Date,
+        default: null
+    },
     orderRequestedProductQuantityStatus: {
         type: String,
         required: true,

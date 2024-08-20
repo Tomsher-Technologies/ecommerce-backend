@@ -541,6 +541,43 @@ class CheckoutController extends base_controller_1.default {
             return false;
         }
     }
+    async tabbyPaymentCapture(req, res) {
+        const { payment_id, id, status } = req.body;
+        if (!payment_id) {
+            return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'}` });
+        }
+        const paymentDetails = await payment_transaction_model_1.default.findOne({ paymentId: payment_id });
+        if (!paymentDetails) {
+            return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'}` });
+        }
+        const paymentMethod = await payment_methods_model_1.default.findOne({ _id: paymentDetails?.paymentMethodId });
+        if (!paymentMethod) {
+            return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'} Payment method not found.` });
+        }
+        const tabbyResponse = await (0, tabby_payment_1.tabbyPaymentRetrieve)(payment_id, paymentMethod.paymentMethodValues);
+        await payment_transaction_model_1.default.findByIdAndUpdate(paymentDetails._id, { $set: { data: tabbyResponse } }, { new: true, runValidators: true });
+        if (tabbyResponse.status) {
+            const retValResponse = await checkout_service_1.default.paymentResponse({
+                paymentDetails,
+                allPaymentResponseData: tabbyResponse,
+                paymentStatus: (tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.closed) ?
+                    cart_1.orderPaymentStatus.success : ((tabbyResponse.status === cart_1.tabbyPaymentGatwaySuccessStatus.rejected) ? cart_1.orderPaymentStatus.cancelled : cart_1.orderPaymentStatus.expired)
+            });
+            if (retValResponse.status) {
+                return controller.sendSuccessResponse(res, {
+                    message: `Payment ${tabbyResponse?.status}`
+                }, 200);
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: `Payment ${tabbyResponse?.status}`
+                });
+            }
+        }
+        else {
+            return controller.sendErrorResponse(res, 200, { message: `Payment ${tabbyResponse?.status}` });
+        }
+    }
     async tamaraSuccessResponse(req, res) {
         const { orderId, paymentStatus } = req.query;
         if (!orderId) {

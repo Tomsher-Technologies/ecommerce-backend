@@ -9,8 +9,9 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const mongoose_1 = __importDefault(require("mongoose"));
 const state_model_1 = __importDefault(require("../../../model/admin/setup/state-model"));
 const city_model_1 = __importDefault(require("../../../model/admin/setup/city-model"));
+const store_model_1 = __importDefault(require("../../../model/admin/stores/store-model"));
 const controller = new base_controller_1.default();
-class HomeController extends base_controller_1.default {
+class CommonController extends base_controller_1.default {
     async findAllCountries(req, res) {
         try {
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
@@ -33,27 +34,31 @@ class HomeController extends base_controller_1.default {
     }
     async findAllStates(req, res) {
         try {
-            const { countryId = '', stateId = '' } = req.query;
-            let query = { _id: { $exists: true } };
-            query.status = '1';
+            const { countryId = '', stateId = '', getStores = '0' } = req.query;
+            let query = { _id: { $exists: true }, status: '1' };
             if (countryId) {
                 query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             if (stateId) {
                 query._id = new mongoose_1.default.Types.ObjectId(stateId);
             }
+            if (getStores === '1') {
+                const storeStateIds = await store_model_1.default.distinct('stateId');
+                query._id = { $in: storeStateIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) };
+            }
+            const states = await state_model_1.default.find(query);
             return controller.sendSuccessResponse(res, {
-                requestedData: await state_model_1.default.find(query),
+                requestedData: states,
                 message: 'Success!'
             }, 200);
         }
         catch (error) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching states.' });
         }
     }
     async findAllCities(req, res) {
         try {
-            const { countryId = '', stateId = '', cityId = '' } = req.query;
+            const { countryId = '', stateId = '', cityId = '', getStores = '0' } = req.query;
             let query = { _id: { $exists: true } };
             query.status = '1';
             if (countryId) {
@@ -65,9 +70,14 @@ class HomeController extends base_controller_1.default {
             if (cityId) {
                 query._id = new mongoose_1.default.Types.ObjectId(cityId);
             }
+            if (getStores === '1') {
+                const storeCityIds = await store_model_1.default.distinct("cityId", { cityId: { $exists: true } });
+                query._id = { $in: storeCityIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) };
+            }
+            const requestedData = await city_model_1.default.find(query);
             return controller.sendSuccessResponse(res, {
-                requestedData: await city_model_1.default.find(query),
-                message: 'Success!'
+                requestedData,
+                message: 'Success!',
             }, 200);
         }
         catch (error) {
@@ -442,4 +452,4 @@ class HomeController extends base_controller_1.default {
         }
     }
 }
-exports.default = new HomeController();
+exports.default = new CommonController();

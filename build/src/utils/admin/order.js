@@ -46,6 +46,15 @@ const findOrderStatusDateCheck = (orderStatus) => {
         case '14':
             statusAt = 'partiallyDeliveredStatusAt';
             break;
+        case '15':
+            statusAt = 'partiallyCanceledStatusAt';
+            break;
+        case '16':
+            statusAt = 'partiallyReturnedStatusAt';
+            break;
+        case '17':
+            statusAt = 'partiallyRefundedStatusAt';
+            break;
         default:
             statusAt = '';
             break;

@@ -25,6 +25,7 @@ router.get('/tap-failure-response', CheckoutController.tapSuccessResponse);
 
 router.get('/tabby-success-response', CheckoutController.tabbySuccessResponse);
 router.get('/tabby-failure-response', CheckoutController.tabbySuccessResponse);
+router.post('/tabby-payment-capture', CheckoutController.tabbyPaymentCapture);
 
 router.get('/tamara-payment-response', CheckoutController.tamaraSuccessResponse);
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductCancelStatusMessages = exports.orderProductCancelStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -95,6 +95,14 @@ exports.orderProductStatussMessages = {
     [exports.orderProductStatusJson.returned]: 'Your product has been returned.',
     [exports.orderProductStatusJson.refunded]: 'Your product has been refunded.',
     [exports.orderProductStatusJson.pickup]: 'Your product is ready for pickup.',
+};
+exports.orderProductCancelStatusJson = {
+    pending: "1",
+    refunded: "2",
+};
+exports.orderProductCancelStatusMessages = {
+    [exports.orderProductCancelStatusJson.pending]: 'Your product cancel has been received successfully.',
+    [exports.orderProductCancelStatusJson.refunded]: 'Your product cancel request is now refunded.',
 };
 exports.orderProductReturnStatusJson = {
     pending: "1",
