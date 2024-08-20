@@ -48,9 +48,9 @@ export interface CartOrderProps extends Document {
     completedStatusAt?: Date;
     pickupStatusAt?: Date;
     deliveryStatusAt?: Date;
-    partiallyRefundedStatusAt?: Date;
-    partiallyReturnedStatusAt?: Date;
     partiallyCanceledStatusAt?: Date;
+    partiallyReturnedStatusAt?: Date;
+    partiallyRefundedStatusAt?: Date;
     createdBy?: string;
     isGuest: boolean;
     createdAt?: Date;

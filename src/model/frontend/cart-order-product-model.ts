@@ -16,6 +16,10 @@ export interface CartOrderProductProps extends Document {
     changedQuantityStatusAt?: Date;
     orderProductStatus: string;
     orderProductStatusAt?: Date;
+
+    orderRequestedProductCancelStatus: string;
+    orderRequestedProductCancelStatusAt?: Date;
+    
     orderProductReturnStatus: string; // from customer choose return
     orderProductReturnStatusAt?: Date; // from customer choose return
     orderProductReturnRefundStatusAt?: Date;
@@ -106,6 +110,15 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
         default: '1'
     },
     orderProductStatusAt: {
+        type: Date,
+        default: null
+    },
+    orderRequestedProductCancelStatus: {
+        type: String,
+        required: true,
+        default: '0'
+    },
+    orderRequestedProductCancelStatusAt: {
         type: Date,
         default: null
     },

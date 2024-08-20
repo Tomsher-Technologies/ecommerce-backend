@@ -9,6 +9,7 @@ import CommonService from '../../../services/frontend/guest/common-service';
 import mongoose from 'mongoose';
 import StateModel from '../../../model/admin/setup/state-model';
 import CityModel from '../../../model/admin/setup/city-model';
+import StoreModel from '../../../model/admin/stores/store-model';
 
 const controller = new BaseController();
 
@@ -35,28 +36,36 @@ class HomeController extends BaseController {
     }
     async findAllStates(req: Request, res: Response): Promise<void> {
         try {
-            const { countryId = '', stateId = '' } = req.query as any;
-            let query: any = { _id: { $exists: true } };
-            query.status = '1';
+            const { countryId = '', stateId = '', getStores = '1' } = req.query as any;
+            let query: any = { _id: { $exists: true }, status: '1' };
+
             if (countryId) {
                 query.countryId = new mongoose.Types.ObjectId(countryId);
             }
             if (stateId) {
                 query._id = new mongoose.Types.ObjectId(stateId);
             }
+
+            if (getStores === '1') {
+                const storeStateIds = await StoreModel.distinct('stateId');
+                query._id = { $in: storeStateIds.map((id: any) => new mongoose.Types.ObjectId(id)) };
+            }
+
+            const states = await StateModel.find(query);
+
             return controller.sendSuccessResponse(res, {
-                requestedData: await StateModel.find(query),
+                requestedData: states,
                 message: 'Success!'
             }, 200);
 
-
         } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching states.' });
         }
     }
+
     async findAllCities(req: Request, res: Response): Promise<void> {
         try {
-            const { countryId = '', stateId = '', cityId = '' } = req.query as any;
+            const { countryId = '', stateId = '', cityId = '', getStores = '1' } = req.query as any;
             let query: any = { _id: { $exists: true } };
             query.status = '1';
             if (countryId) {
@@ -68,12 +77,16 @@ class HomeController extends BaseController {
             if (cityId) {
                 query._id = new mongoose.Types.ObjectId(cityId);
             }
+            if (getStores === '1') {
+                const storeCityIds = await StoreModel.distinct("cityId", { cityId: { $exists: true } });
+                query._id = { $in: storeCityIds.map((id: any) => new mongoose.Types.ObjectId(id)) };
+            }
+
+            const requestedData = await CityModel.find(query);
             return controller.sendSuccessResponse(res, {
-                requestedData: await CityModel.find(query),
-                message: 'Success!'
+                requestedData,
+                message: 'Success!',
             }, 200);
-
-
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching ' });
         }
