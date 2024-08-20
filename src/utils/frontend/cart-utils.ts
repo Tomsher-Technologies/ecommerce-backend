@@ -225,7 +225,7 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
         "action": "PURCHASE",
         "amount": {
             "currencyCode": countryData.currencyCode,
-            "value": cartData.totalAmount * 100
+            "value": Math.round(cartData.totalAmount * 100)
         },
         "emailAddress": customerDetails.email,
         "billingAddress": {

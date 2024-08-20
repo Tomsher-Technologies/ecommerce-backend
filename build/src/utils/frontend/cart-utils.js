@@ -201,7 +201,7 @@ const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetail
         "action": "PURCHASE",
         "amount": {
             "currencyCode": countryData.currencyCode,
-            "value": cartData.totalAmount * 100
+            "value": Math.round(cartData.totalAmount * 100)
         },
         "emailAddress": customerDetails.email,
         "billingAddress": {

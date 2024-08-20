@@ -18,4 +18,5 @@ router.get('/order-return-products', (0, admin_user_permission_roll_middleware_1
 router.post('/order-return-status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductReturnStatusChange);
 router.post('/order-quantity-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductReturnQuantityChange);
 router.post('/order-product-status-change/:orderID/:orderProductId', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductStatusChange);
+router.post('/order-product-cancel-status-change/:orderID/:orderProductId', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductCancelStatusChange);
 exports.default = router;
