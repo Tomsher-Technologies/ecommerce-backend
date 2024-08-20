@@ -194,6 +194,15 @@ export const orderPaymentStatus = {
     expired: "5",
 }
 
+export const orderPaymentStatusMessages = {
+    "1": "pending",
+    "2": "successfull",
+    "3": " Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order' appears.",
+    "4": "You aborted the payment. Please retry or choose another payment method.",
+    "5": "Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order",
+};
+
+
 export const orderTypes = {
     tap: "tap",
     network: "network",

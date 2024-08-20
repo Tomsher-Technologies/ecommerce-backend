@@ -10,10 +10,11 @@ const sub_domain_1 = require("../../../utils/frontend/sub-domain");
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
+const cart_1 = require("../../../constants/cart");
 class OederService {
     async orderList(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
-        const { getAddress, getCartProducts } = options;
+        const { getAddress, getCartProducts, getReturnProduct = '0' } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -49,6 +50,25 @@ class OederService {
             { $sort: finalSort },
             ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
         ];
+        if (getReturnProduct) {
+            pipeline.push({
+                $addFields: {
+                    products: {
+                        $filter: {
+                            input: "$products",
+                            as: "product",
+                            cond: {
+                                $in: ["$$product.orderProductStatus", [
+                                        cart_1.orderProductStatusJson.delivered,
+                                        cart_1.orderProductStatusJson.returned,
+                                        cart_1.orderProductStatusJson.refunded
+                                    ]]
+                            }
+                        }
+                    }
+                }
+            });
+        }
         if (skip) {
             pipeline.push({ $skip: skip });
         }

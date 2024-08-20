@@ -11,6 +11,8 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const order_service_1 = __importDefault(require("../../../services/frontend/auth/order-service"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
+const payment_transaction_model_1 = __importDefault(require("../../../model/frontend/payment-transaction-model"));
+const payment_methods_model_1 = __importDefault(require("../../../model/admin/setup/payment-methods-model"));
 const controller = new base_controller_1.default();
 class OrderController extends base_controller_1.default {
     async orderList(req, res) {
@@ -61,6 +63,7 @@ class OrderController extends base_controller_1.default {
             const orderId = req.params.id;
             const uuid = req.header('User-Token');
             const origin = req.get('origin');
+            const { getReturnProduct = '0' } = req.query;
             let countryData = await common_service_1.default.findOneCountrySubDomainWithId(origin, true);
             if (!countryData) {
                 return controller.sendErrorResponse(res, 200, { message: 'Country is missing' });
@@ -68,7 +71,7 @@ class OrderController extends base_controller_1.default {
             if (!customerId && !uuid) {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }
-            const query = {
+            let query = {
                 $and: [
                     { countryId: countryData._id },
                     { _id: new mongoose_1.default.Types.ObjectId(orderId) }
@@ -91,11 +94,26 @@ class OrderController extends base_controller_1.default {
                 hostName: origin,
                 getAddress: '1',
                 getCartProducts: '1',
+                getReturnProduct,
             });
+            console.log('getReturnProductQ', order);
             if (order && order.length > 0) {
+                let message = 'Your Order is ready!';
+                if (order[0].cartStatus === cart_1.cartStatus.active) {
+                    const paymentDetails = await payment_methods_model_1.default.findOne({ countryId: countryData._id, slug: cart_1.paymentMethods.tabby });
+                    if (paymentDetails) {
+                        const paymentLastTransaction = await payment_transaction_model_1.default.findOne({ paymentMethodId: paymentDetails._id, orderId: order[0]._id }).sort({ createdAt: -1 });
+                        if (paymentLastTransaction) {
+                            const paymentStatusMessageTemplate = cart_1.orderPaymentStatusMessages[paymentLastTransaction.status];
+                            const paymentMethodTitle = paymentDetails.paymentMethodTitle || "Tabby";
+                            const paymentStatusMessage = paymentStatusMessageTemplate.replace(/Tabby/g, paymentMethodTitle);
+                            message = `Your order is ${paymentStatusMessage}.`;
+                        }
+                    }
+                }
                 return controller.sendSuccessResponse(res, {
                     requestedData: order[0],
-                    message: 'Your Order is ready!'
+                    message
                 });
             }
             else {
@@ -134,7 +152,7 @@ class OrderController extends base_controller_1.default {
             if (!orderDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
-            if (Number(orderDetails.orderStatus) > Number(cart_1.orderStatusArrayJson.delivered)) {
+            if (Number(cart_1.orderStatusArrayJson.delivered) > Number(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
             const statusMessages = {

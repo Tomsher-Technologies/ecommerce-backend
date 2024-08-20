@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductCancelStatusMessages = exports.orderProductCancelStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatusMessages = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductCancelStatusMessages = exports.orderProductCancelStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
@@ -176,6 +176,13 @@ exports.orderPaymentStatus = {
     failure: "3",
     cancelled: "4",
     expired: "5",
+};
+exports.orderPaymentStatusMessages = {
+    "1": "pending",
+    "2": "successfull",
+    "3": " Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order' appears.",
+    "4": "You aborted the payment. Please retry or choose another payment method.",
+    "5": "Sorry, Tabby is unable to approve this purchase, please use an alternative payment method for your order",
 };
 exports.orderTypes = {
     tap: "tap",

@@ -99,12 +99,11 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                 "phone": customerDetails.phone,
                 "email": customerDetails.email,
                 "name": customerDetails.firstName,
-                "dob": "2000-08-24"
             },
             "buyer_history": {
                 "registered_since": "2019-08-24T14:15:22Z",
-                "loyalty_level": 10,
-                "wishlist_count": 2,
+                "loyalty_level": cartData.totalCustomerBuyedCount,
+                "wishlist_count": 0,
                 "is_social_networks_connected": true,
                 "is_phone_number_verified": true,
                 "is_email_verified": true
@@ -123,14 +122,12 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                     "discount_amount": "0.00",
                     "reference_id": product.productDetails.variantDetails._id, // variant Id
                     "image_url": product.productDetails.productImageUrl,
-                    "product_url": "http://example.com",
-                    "gender": "Male",
                     "category": "string",
-                    "color": "string",
-                    "product_material": "string",
-                    "size_type": "string",
-                    "size": "string",
-                    "brand": "string"
+                    // "color": "string",
+                    // "product_material": "string",
+                    // "size_type": "string",
+                    // "size": "string",
+                    // "brand": "string"
                 }))
             },
             "order_history": [

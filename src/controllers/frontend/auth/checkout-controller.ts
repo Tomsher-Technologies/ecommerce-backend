@@ -8,7 +8,7 @@ import { paymentMethods, orderPaymentStatus, tapPaymentGatwayStatus, tabbyPaymen
 import WebsiteSetupModel from "../../../model/admin/setup/website-setup-model";
 import { blockReferences, shippingTypes } from "../../../constants/website-setup";
 import CouponService from "../../../services/frontend/auth/coupon-service";
-import { checkoutSchema } from "../../../utils/schemas/frontend/auth/checkout-schema";
+import { checkoutSchema, tabbyPaymentCaptureSchema } from "../../../utils/schemas/frontend/auth/checkout-schema";
 import { formatZodError } from "../../../utils/helpers";
 import { tabbyCheckoutRetrieve, tabbyPaymentCreate, tabbyPaymentRetrieve } from "../../../lib/payment-gateway/tabby-payment";
 
@@ -215,7 +215,7 @@ class CheckoutController extends BaseController {
                             if (!shippingAddressDetails && shippingId) {
                                 shippingAddressDetails = await CustomerAddress.findById(shippingId);
                             }
-                            const setPaymentDefualtValues = {
+                            let setPaymentDefualtValues = {
                                 ...cartUpdate,
                                 _id: cartDetails._id,
                                 orderComments: cartDetails.orderComments,
@@ -231,6 +231,7 @@ class CheckoutController extends BaseController {
                                 if (billingId) {
                                     billingAddressDetails = await CustomerAddress.findById(billingId);
                                 }
+
                                 const tamaraDefaultValues = tamaraPaymentGatwayDefaultValues(
                                     countryData,
                                     setPaymentDefualtValues,
@@ -249,7 +250,7 @@ class CheckoutController extends BaseController {
                                         transactionId: tamaraResponse.order_id,
                                         paymentId: tamaraResponse.checkout_id,
                                         orderId: cartDetails._id,
-                                        data: JSON.stringify(tamaraResponse),
+                                        data: tamaraResponse,
                                         orderStatus: orderPaymentStatus.pending, // Pending
                                         createdAt: new Date(),
                                     });
@@ -263,6 +264,15 @@ class CheckoutController extends BaseController {
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
                             } else if (paymentMethod.slug == paymentMethods.tabby) {
+                                const totalCustomerBuyedCount = await CartOrdersModel.countDocuments({
+                                    customerId: customerId,
+                                    cartStatus: { $ne: cartStatus.active },
+                                    paymentMethodId: paymentMethod._id,
+                                });
+                                setPaymentDefualtValues = {
+                                    ...setPaymentDefualtValues,
+                                    totalCustomerBuyedCount
+                                }
                                 const tabbyDefaultValues = tabbyPaymentGatwayDefaultValues(countryData, setPaymentDefualtValues,
                                     customerDetails,
                                     paymentMethod,
@@ -275,7 +285,7 @@ class CheckoutController extends BaseController {
                                         transactionId: tabbyResponse.id,
                                         paymentId: tabbyResponse.payment.id,
                                         orderId: cartDetails._id,
-                                        data: JSON.stringify(tabbyResponse),
+                                        data: tabbyResponse,
                                         orderStatus: orderPaymentStatus.pending, // Pending
                                         createdAt: new Date(),
                                     });
@@ -319,7 +329,7 @@ class CheckoutController extends BaseController {
                                         transactionId: networkResult._id,
                                         paymentId: networkResult.reference,
                                         orderId: cartDetails._id,
-                                        data: JSON.stringify(networkResult),
+                                        data: networkResult,
                                         orderStatus: networkResult.pending, // Pending
                                         createdAt: new Date(),
                                     });
@@ -449,7 +459,13 @@ class CheckoutController extends BaseController {
         const tapResponse = await tapPaymentRetrieve(tap_id, paymentMethod.paymentMethodValues);
         await PaymentTransactionModel.findByIdAndUpdate(
             paymentDetails._id,
-            { $set: { data: tapResponse } },
+            {
+                $set: {
+                    data: tapResponse,
+                    status: (tapResponse.status === tapPaymentGatwayStatus.authorized || tapResponse.status === tapPaymentGatwayStatus.captured) ?
+                        orderPaymentStatus.success : ((tapResponse.status === tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : orderPaymentStatus.failure)
+                }
+            },
             { new: true, runValidators: true }
         );
         if (tapResponse.status) {
@@ -497,13 +513,19 @@ class CheckoutController extends BaseController {
                 res.redirect(`${process.env.APPURL}/order-response/${paymentMethod?.orderId}?status=failure&message=Something went wrong on payment transaction. Please contact administrator`); // failure
                 return false
             }
+            const status = networkResponse._embedded.payment[0].state;
             await PaymentTransactionModel.findByIdAndUpdate(
                 paymentDetails._id,
-                { $set: { data: networkResponse } },
+                {
+                    $set: {
+                        data: networkResponse,
+                        status: (status !== networkPaymentGatwayStatus.failed) ?
+                            orderPaymentStatus.success : ((status === networkPaymentGatwayStatus.failed) ? orderPaymentStatus.failure : orderPaymentStatus.failure)
+                    }
+                },
                 { new: true, runValidators: true }
             );
             if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
-                const status = networkResponse._embedded.payment[0].state;
                 const retValResponse = await CheckoutService.paymentResponse({
                     paymentDetails,
                     allPaymentResponseData: data,
@@ -545,7 +567,13 @@ class CheckoutController extends BaseController {
         const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
         await PaymentTransactionModel.findByIdAndUpdate(
             paymentDetails._id,
-            { $set: { data: tabbyResponse } },
+            {
+                $set: {
+                    data: tabbyResponse,
+                    status: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
+                        orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
+                }
+            },
             { new: true, runValidators: true }
         );
         if (tabbyResponse.status) {
@@ -570,43 +598,48 @@ class CheckoutController extends BaseController {
     }
 
     async tabbyPaymentCapture(req: Request, res: Response): Promise<any> {
-        const { payment_id, id, status }: any = req.body
-        if (!payment_id) {
-            return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'}` });
-        }
-        const paymentDetails: any = await PaymentTransactionModel.findOne({ paymentId: payment_id });
-        if (!paymentDetails) {
-            return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'}` });
-        }
-        const paymentMethod: any = await PaymentMethodModel.findOne({ _id: paymentDetails?.paymentMethodId })
-        if (!paymentMethod) {
-            return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'} Payment method not found.` });
-        }
-        const tabbyResponse = await tabbyPaymentRetrieve(payment_id, paymentMethod.paymentMethodValues);
-        await PaymentTransactionModel.findByIdAndUpdate(
-            paymentDetails._id,
-            { $set: { data: tabbyResponse } },
-            { new: true, runValidators: true }
-        );
-        if (tabbyResponse.status) {
-            const retValResponse = await CheckoutService.paymentResponse({
-                paymentDetails,
-                allPaymentResponseData: tabbyResponse,
-                paymentStatus: (tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.authorized || tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.closed) ?
-                    orderPaymentStatus.success : ((tabbyResponse.status === tabbyPaymentGatwaySuccessStatus.rejected) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
-            });
+        const validatedData = tabbyPaymentCaptureSchema.safeParse(req.body);
+        if (validatedData.success) {
+            const { id, status, order } = validatedData.data;
+            let paymentDetails: any = await PaymentTransactionModel.findOne({ paymentId: id });
+            if (!paymentDetails) {
+                paymentDetails = await PaymentTransactionModel.findOne({ orderId: new mongoose.Types.ObjectId(order.reference_id) });
+                if (!paymentDetails) {
+                    return controller.sendErrorResponse(res, 200, { message: `Payment ${status ?? 'failure'}` });
+                }
+            }
 
-            if (retValResponse.status) {
-                return controller.sendSuccessResponse(res, {
-                    message: `Payment ${tabbyResponse?.status}`
-                }, 200);
+            if (tabbyPaymentGatwaySuccessStatus.authorized.toLocaleLowerCase() === status.toLocaleLowerCase()) {
+                const retValResponse = await CheckoutService.paymentResponse({
+                    paymentDetails,
+                    allPaymentResponseData: req.body,
+                    paymentStatus: (status === tabbyPaymentGatwaySuccessStatus.authorized || status === tabbyPaymentGatwaySuccessStatus.closed) ?
+                        orderPaymentStatus.success : ((status === tabbyPaymentGatwaySuccessStatus.rejected) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
+                });
+                if (retValResponse.status) {
+                    return controller.sendSuccessResponse(res, {
+                        message: retValResponse.message || `Payment ${status}`
+                    }, 200);
+                } else {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: retValResponse.message || `Payment ${status}`
+                    });
+                }
             } else {
+                await PaymentTransactionModel.findByIdAndUpdate(
+                    paymentDetails._id,
+                    { $set: { data: req.body } },
+                    { new: true, runValidators: true }
+                );
                 return controller.sendErrorResponse(res, 200, {
-                    message: `Payment ${tabbyResponse?.status}`
+                    message: `Payment ${status}`
                 });
             }
         } else {
-            return controller.sendErrorResponse(res, 200, { message: `Payment ${tabbyResponse?.status}` });
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Validation error',
+                validation: formatZodError(validatedData.error.errors)
+            });
         }
     }
     async tamaraSuccessResponse(req: Request, res: Response): Promise<any> {
@@ -629,7 +662,13 @@ class CheckoutController extends BaseController {
         }
         await PaymentTransactionModel.findByIdAndUpdate(
             paymentDetails._id,
-            { $set: { data: tamaraResponse } },
+            {
+                $set: {
+                    data: tamaraResponse,
+                    status: (tamaraResponse.status === tamaraPaymentGatwayStatus.authorised || tamaraResponse.status === tamaraPaymentGatwayStatus.approved) ?
+                        orderPaymentStatus.success : ((tamaraResponse.status === tamaraPaymentGatwayStatus.declined) ? orderPaymentStatus.cancelled : orderPaymentStatus.expired)
+                }
+            },
             { new: true, runValidators: true }
         );
         if (tamaraResponse.status === tamaraPaymentGatwayStatus.authorised) {

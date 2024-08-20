@@ -7,13 +7,14 @@ import { cartDeatilProject, cartProductsLookup, cartProject, orderListObjectLook
 
 import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
+import { orderProductStatusJson } from '../../../constants/cart';
 
 class OederService {
 
     async orderList(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
-        const { getAddress, getCartProducts } = options;
+        const { getAddress, getCartProducts, getReturnProduct = '0' } = options;
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -56,6 +57,26 @@ class OederService {
             ...(getCartProducts === '1' ? [cartDeatilProject] : [cartProject]),
 
         ];
+
+        if (getReturnProduct) {
+            pipeline.push({
+                $addFields: {
+                    products: {
+                        $filter: {
+                            input: "$products",
+                            as: "product",
+                            cond: {
+                                $in: ["$$product.orderProductStatus", [
+                                    orderProductStatusJson.delivered,
+                                    orderProductStatusJson.returned,
+                                    orderProductStatusJson.refunded
+                                ]]
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         if (skip) {
             pipeline.push({ $skip: skip });

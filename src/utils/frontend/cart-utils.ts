@@ -4,7 +4,7 @@ import { PaymentMethodProps } from "../../model/admin/setup/payment-methods-mode
 import { CustomerAddressProps } from "../../model/frontend/customer-address-model"
 
 export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
-   
+
     return {
         "amount": cartData.totalAmount,
         "currency": countryData.currencyCode,
@@ -44,7 +44,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { tota
             "url": `${process.env.APP_API_URL}/api/common/tap-success-response`
         }
     }
-    
+
     // {
 
     //     "amount": cartData.totalAmount,
@@ -104,6 +104,7 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
         orderComments: string;
         cartStatusAt: Date | null;
         products: any,
+        totalCustomerBuyedCount: number;
     },
     customerDetails: CustomrProps,
     paymentMethod: PaymentMethodProps,
@@ -118,12 +119,11 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
                 "phone": customerDetails.phone,
                 "email": customerDetails.email,
                 "name": customerDetails.firstName,
-                "dob": "2000-08-24"
             },
             "buyer_history": {
                 "registered_since": "2019-08-24T14:15:22Z",
-                "loyalty_level": 10,
-                "wishlist_count": 2,
+                "loyalty_level": cartData.totalCustomerBuyedCount,
+                "wishlist_count": 0,
                 "is_social_networks_connected": true,
                 "is_phone_number_verified": true,
                 "is_email_verified": true
@@ -143,14 +143,12 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
                         "discount_amount": "0.00",
                         "reference_id": product.productDetails.variantDetails._id, // variant Id
                         "image_url": product.productDetails.productImageUrl,
-                        "product_url": "http://example.com",
-                        "gender": "Male",
                         "category": "string",
-                        "color": "string",
-                        "product_material": "string",
-                        "size_type": "string",
-                        "size": "string",
-                        "brand": "string"
+                        // "color": "string",
+                        // "product_material": "string",
+                        // "size_type": "string",
+                        // "size": "string",
+                        // "brand": "string"
                     }
                 ))
 
