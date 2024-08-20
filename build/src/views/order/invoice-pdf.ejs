@@ -232,7 +232,7 @@
           </p>
           <% } %>
 
-          <% if(orderDetails.pickupFromStore) { %>
+          <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length > 0) { %>
             <strong>Pickup store address:</strong>
               <p>
                 <%= orderDetails.pickupFromStore.storeTitle %><br>

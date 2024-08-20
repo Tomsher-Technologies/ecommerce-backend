@@ -99,6 +99,16 @@ export const orderProductStatussMessages: { [key: string]: string } = {
     [orderProductStatusJson.pickup]: 'Your product is ready for pickup.',
 };
 
+export const orderProductCancelStatusJson = {
+    pending: "1",
+    refunded: "2",
+};
+
+export const orderProductCancelStatusMessages: { [key: string]: string } = {
+    [orderProductCancelStatusJson.pending]: 'Your product cancel has been received successfully.',
+    [orderProductCancelStatusJson.refunded]: 'Your product cancel request is now refunded.',
+};
+
 export const orderProductReturnStatusJson = {
     pending: "1",
     approved: "2",
