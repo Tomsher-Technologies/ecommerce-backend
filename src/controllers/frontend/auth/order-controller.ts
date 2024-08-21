@@ -193,7 +193,7 @@ class OrderController extends BaseController {
                     return null;
                 }
 
-                if (!['5'].includes(productDetail.orderProductStatus)) {
+                if (![orderProductStatusJson.delivered].includes(productDetail.orderProductStatus)) {
                     if (!hasErrorOccurred) {
                         errorMessage = `Order product with ID ${orderProduct.orderProductId} cannot be updated as its status is not '5' or '13'`
                         hasErrorOccurred = true;

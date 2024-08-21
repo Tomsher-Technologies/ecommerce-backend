@@ -292,6 +292,11 @@ class OrdersController extends BaseController {
         if (!newStatus || !Object.values(orderProductStatusJson).includes(newStatus)) {
             return controller.sendErrorResponse(res, 200, { message: 'Invalid status provided.' });
         }
+
+        if ((Number(orderProduct.orderProductStatus) < Number(orderProductStatusJson.delivered)) && (newStatus === orderProductStatusJson.returned || newStatus === orderProductStatusJson.refunded)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Status can only be changed to a value after "Delivered"' });
+        }
+
         let updateProductStatus: any = {
             orderProductStatus: newStatus,
             orderProductStatusAt: new Date()
@@ -307,16 +312,23 @@ class OrdersController extends BaseController {
                     orderRequestedProductCancelStatusAt: new Date()
                 }
             }
+        } else if (newStatus === orderProductStatusJson.returned) {
+            updateProductStatus = {
+                ...updateProductStatus,
+                orderProductReturnStatus: orderProductReturnStatusJson.pending,
+                orderProductReturnStatusAt: new Date()
+            }
         } else if (newStatus === orderProductStatusJson.refunded) {
             updateOrderStatus.totalReturnedProductAmount = ((orderDetails.totalReturnedProductAmount + orderProduct.productAmount) || 0);
             updateProductStatus = {
                 ...updateProductStatus,
                 returnedProductAmount: orderProduct.productAmount,
-                orderRequestedProductCancelStatus: orderProductCancelStatusJson.refunded,
-                orderRequestedProductCancelStatusAt: new Date()
+                ...(orderProduct.orderProductStatus === orderProductStatusJson.canceled ? {
+                    orderRequestedProductCancelStatus: orderProductCancelStatusJson.refunded,
+                    orderRequestedProductCancelStatusAt: new Date()
+                } : {})
             }
         }
-
         const updatedProduct: any = await CartOrderProductsModel.findByIdAndUpdate(orderProduct._id, updateProductStatus, { new: true });
 
         if (!updatedProduct) {
@@ -646,8 +658,11 @@ class OrdersController extends BaseController {
                 const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
                 orderProductUpdateFields['returnedProductAmount'] = quantityChange ? ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : orderProductDetails.productAmount;
                 orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
-                orderProductUpdateFields['orderProductStatus'] = orderProductStatusJson.canceled;
+                orderProductUpdateFields['orderProductStatus'] = orderProductStatusJson.refunded;
+                orderProductUpdateFields['orderProductStatusAt'] = new Date();
             } else if (newStatus === statusJson.received) {
+                orderProductUpdateFields['orderProductStatus'] = orderProductStatusJson.refunded;
+                orderProductUpdateFields['orderProductStatusAt'] = new Date();
                 orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityReceivedStatusAt' : 'orderProductReturnReceivedStatusAt'] = new Date();
                 if (!quantityChange) {
                     updateVariantProductQuantity = orderProductDetails.quantity;
