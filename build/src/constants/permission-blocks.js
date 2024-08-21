@@ -24,6 +24,9 @@ exports.permissionBlocks = {
     customers: {
         customers: 'customers',
         whishlists: 'whishlists',
+        reviews: 'reviews',
+        newsletter: 'newsletter',
+        contactus: 'contactus'
     },
     reports: {
         customers: {
@@ -82,11 +85,5 @@ exports.permissionBlocks = {
     marketing: {
         coupons: 'coupons',
         offers: 'offers',
-    },
-    newsletter: {
-        newsletter: 'newsletter'
-    },
-    contactus: {
-        contactus: 'contactus'
     },
 };

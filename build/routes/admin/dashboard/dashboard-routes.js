@@ -10,5 +10,7 @@ const permission_blocks_1 = require("../../../src/constants/permission-blocks");
 const dashboard_controller_1 = __importDefault(require("../../../src/controllers/admin/dashboard/dashboard-controller"));
 const router = express_1.default.Router();
 router.use(auth_middleware_1.default);
-router.get('/', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.orders, readOnly: 1 }), dashboard_controller_1.default.dashboard);
+router.get('/', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.orders, readOnly: 1 }), dashboard_controller_1.default.dashboardOrder);
+router.get('/dashboard-analytics', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.analytics, readOnly: 1 }), dashboard_controller_1.default.dashboardAnalytics);
+router.get('/dashboard-customers', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.analytics, readOnly: 1 }), dashboard_controller_1.default.dashboardCustomers);
 exports.default = router;

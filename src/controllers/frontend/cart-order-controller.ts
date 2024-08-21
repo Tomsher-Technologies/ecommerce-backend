@@ -169,7 +169,7 @@ class CartController extends BaseController {
                 if (!country) {
                     return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
                 }
-                const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
+                const { variantId, quantity, slug, orderStatus, quantityChange, addOnQuantity } = req.body;
 
                 let newCartOrder;
                 let totalAmountOfProduct = 0;
@@ -270,7 +270,10 @@ class CartController extends BaseController {
                     });
                     if (quantity === 1) {
                         quantityProduct = existingCartProduct ? (quantityChange ? quantity : existingCartProduct.quantity + 1) : quantity
-                    } else if (quantity == 0) {
+                    } else if (addOnQuantity) {
+                        quantityProduct = existingCartProduct.quantity + quantity
+                    }
+                    else if (quantity == 0) {
                         if (existingCartProduct) {
                             const deletedData = await CartService.destroyCartProduct(existingCartProduct._id);
                             if (deletedData) {

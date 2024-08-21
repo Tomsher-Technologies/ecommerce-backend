@@ -231,7 +231,7 @@ export const cartDeatilProject = {
     $project: {
         _id: 1,
         orderId: 1,
-        // customerId: 1,
+        customerId: 1,
         // countryId: 1,
         couponId: 1,
         guestUserId: 1,
@@ -847,5 +847,25 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
         }
     });
 
+    return pipeline;
+};
+
+
+export const getOrderProductsDetailsLookup = (query: any, getCartProducts: string) => {
+    const modifiedPipeline = {
+        $lookup: {
+            ...cartProductsLookup.$lookup,
+            pipeline: [
+                productLookup,
+                { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+            ]
+        }
+    };
+
+    const pipeline: any[] = [
+        ...(getCartProducts === '1' ? [modifiedPipeline] : [cartProductsLookup]),
+        ...(getCartProducts === '1' ? [cartDeatilProject] : [cartProject]),
+        { $match: query },
+    ];
     return pipeline;
 };

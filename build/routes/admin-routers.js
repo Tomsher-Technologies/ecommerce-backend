@@ -45,11 +45,12 @@ const store_routes_1 = __importDefault(require("./admin/stores/store-routes"));
 const orders_routes_1 = __importDefault(require("./admin/orders/orders-routes"));
 //customer
 const customers_routes_1 = __importDefault(require("./admin/customers/customers-routes"));
+const review_routes_1 = __importDefault(require("./admin/customers/review-routes"));
 //dashboard
 const dashboard_routes_1 = __importDefault(require("./admin/dashboard/dashboard-routes"));
 //newsletter
-const newsletter_routes_1 = __importDefault(require("./admin/website-information/newsletter-routes"));
-const contact_us_routes_1 = __importDefault(require("./admin/website-information/contact-us-routes"));
+const newsletter_routes_1 = __importDefault(require("./admin/customers/newsletter-routes"));
+const contact_us_routes_1 = __importDefault(require("./admin/customers/contact-us-routes"));
 //report
 const order_report_routes_1 = __importDefault(require("./admin/reports/order-report-routes"));
 const adminRouter = express_1.default.Router();
@@ -94,13 +95,13 @@ adminRouter.use('/stores/warehouse', warehouse_routes_1.default);
 adminRouter.use('/stores/store', store_routes_1.default);
 //order
 adminRouter.use('/orders', orders_routes_1.default);
-//customer
+//customers
 adminRouter.use('/customers', customers_routes_1.default);
+adminRouter.use('/reviews', review_routes_1.default);
+adminRouter.use('/customers/newsletter', newsletter_routes_1.default);
+adminRouter.use('/customers/contact-us', contact_us_routes_1.default);
 //dashboard
 adminRouter.use('/dashboard', dashboard_routes_1.default);
-//newsletter
-adminRouter.use('/newsletter', newsletter_routes_1.default);
-adminRouter.use('/contact-us', contact_us_routes_1.default);
 //report
 adminRouter.use('/report/order', order_report_routes_1.default);
 exports.default = adminRouter;

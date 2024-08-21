@@ -12,4 +12,7 @@ export interface CommonQueryParams {
     blockReference?: string;
     getspecification?: string;
     getattribute?: string;
+    collectionproduct?: string;
+    collectioncategory?: string;
+    collectionbrand?: string;
 }

@@ -248,7 +248,20 @@ class CategoryService {
     }
 
     async findCategoryId(categoryTitle: string): Promise<void | any> {
-        const slug = categorySlugify(categoryTitle);
+
+        function createSlug(input: any) {
+            return input
+                .toLowerCase() // Convert to lowercase
+                .replace(/(?<=\d)-(?=\d)/g, '_') // Replace hyphens between numbers with underscores
+                .replace(/\s+/g, '_') // Replace spaces with underscores
+                .replace(/[^a-z0-9-_]+/g, '') // Remove all non-alphanumeric characters except hyphens and underscores
+                .replace(/_+/g, '_') // Replace multiple underscores with a single underscore
+                .replace(/-+/g, '-') // Replace multiple hyphens with a single hyphen
+        }
+
+        const slug = createSlug(categoryTitle);
+
+        // const slug = categorySlugify(categoryTitle);
         let categoryResult = await this.findOneCategory({ slug: slug });
         if (categoryResult) {
             return categoryResult;
