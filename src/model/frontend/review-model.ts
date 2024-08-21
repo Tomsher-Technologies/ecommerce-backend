@@ -27,13 +27,13 @@ const reviewSchema: Schema<ReviewProps> = new Schema({
         ref: 'Products',
         required: true,
     },
-    name: {
-        type: String,
-        default: '',
-    },
     reviewTitle: {
         type: String,
         required: true,
+    },
+    name: {
+        type: String,
+        default: '',
     },
     reviewContent: {
         type: String,
