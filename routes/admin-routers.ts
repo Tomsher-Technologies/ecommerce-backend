@@ -55,8 +55,8 @@ import ReviewRoutes from './admin/customers/review-routes';
 import DashboardRoutes from './admin/dashboard/dashboard-routes';
 
 //newsletter
-import NewsletterRoutes from './admin/website-information/newsletter-routes';
-import ContactUsRoutes from './admin/website-information/contact-us-routes';
+import NewsletterRoutes from './admin/customers/newsletter-routes';
+import ContactUsRoutes from './admin/customers/contact-us-routes';
 
 //report
 import OrderReportRoutes from './admin/reports/order-report-routes';
@@ -113,16 +113,15 @@ adminRouter.use('/stores/store', StoreRoutes);
 //order
 adminRouter.use('/orders', OrderRoutes);
 
-//customer
+//customers
 adminRouter.use('/customers', CustomerRoutes);
 adminRouter.use('/reviews', ReviewRoutes);
+adminRouter.use('/newsletter', NewsletterRoutes);
+adminRouter.use('/contact-us', ContactUsRoutes);
 
 //dashboard
 adminRouter.use('/dashboard', DashboardRoutes);
 
-//newsletter
-adminRouter.use('/newsletter', NewsletterRoutes);
-adminRouter.use('/contact-us', ContactUsRoutes);
 
 //report
 adminRouter.use('/report/order', OrderReportRoutes);

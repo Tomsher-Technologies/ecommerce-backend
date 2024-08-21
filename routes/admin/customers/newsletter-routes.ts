@@ -4,13 +4,13 @@ import authMiddleware from '../../../middleware/admin/auth-middleware';
 import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
 import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
-import ContactUsService from '../../../src/controllers/admin/website-information/contact-us-controller';
+import NewsletterService from '../../../src/controllers/admin/customer/newsletter-controller';
 
 const router: Router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.contactus.contactus, readOnly: 1 }), ContactUsService.findAll);
-router.get('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.contactus.contactus, readOnly: 1 }), ContactUsService.findOne);
+router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.newsletter, readOnly: 1 }), NewsletterService.findAll);
+router.get('/export', NewsletterService.exportNewsletter);
 
 export default router;

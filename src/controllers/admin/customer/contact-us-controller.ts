@@ -1,11 +1,13 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 
 import { QueryParamsWithPage } from '../../../utils/types/common';
 
 import BaseController from '../base-controller';
+import { getCountryId } from '../../../utils/helpers';
 
-import ContactUsService from '../../../services/admin/website-information/contact-us-service';
+import ContactUsService from '../../../services/admin/customer/contact-us-service';
 import ContactUsModel from '../../../model/frontend/contact-us-model';
 
 const controller = new BaseController();
@@ -18,12 +20,12 @@ class ContactUsController extends BaseController {
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
 
-            // const country = getCountryId(userData);
-            // if (country) {
-            //     query.countryId = country;
-            // } else if (countryId) {
-            //     query.countryId = new mongoose.Types.ObjectId(countryId)
-            // }
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
+            }
 
             if (status && status !== '') {
                 query.status = { $in: Array.isArray(status) ? status : [status] };
