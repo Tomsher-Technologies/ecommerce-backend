@@ -49,6 +49,9 @@ export const adminTaskLog = {
         warehouse: 'warehouse',
         store: 'store',
     },
+    customers:{
+        review: 'review'
+    }
 
 }
 export const adminTaskLogStatus = {
