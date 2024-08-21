@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction, Router } from 'express';
+import express, { Router } from 'express';
 
 import authMiddleware from '../../../middleware/admin/auth-middleware';
 import userPermissionMiddleware from '../../../middleware/admin/admin-user-permission-roll-middleware';
