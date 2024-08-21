@@ -180,7 +180,7 @@ class OrderController extends base_controller_1.default {
                     }
                     return null;
                 }
-                if (!['5'].includes(productDetail.orderProductStatus)) {
+                if (![cart_1.orderProductStatusJson.delivered].includes(productDetail.orderProductStatus)) {
                     if (!hasErrorOccurred) {
                         errorMessage = `Order product with ID ${orderProduct.orderProductId} cannot be updated as its status is not '5' or '13'`;
                         hasErrorOccurred = true;

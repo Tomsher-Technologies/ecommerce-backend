@@ -40,6 +40,8 @@ class CollectionsProductsController extends BaseController {
 
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
+                console.log('keywordRegex', keywordRegex);
+
                 query = {
                     $or: [
                         { collectionTitle: keywordRegex },

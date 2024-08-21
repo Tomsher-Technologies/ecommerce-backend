@@ -11,7 +11,7 @@ const cart_order_config_1 = require("../../../utils/config/cart-order-config");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 const cart_1 = require("../../../constants/cart");
-class OederService {
+class OrderService {
     async orderList(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
         const { getAddress, getCartProducts, getReturnProduct = '0' } = options;
@@ -81,4 +81,4 @@ class OederService {
         // return CartOrderModel.findOne(data);
     }
 }
-exports.default = new OederService();
+exports.default = new OrderService();

@@ -263,6 +263,9 @@ class OrdersController extends base_controller_1.default {
         if (!newStatus || !Object.values(cart_1.orderProductStatusJson).includes(newStatus)) {
             return controller.sendErrorResponse(res, 200, { message: 'Invalid status provided.' });
         }
+        if ((Number(orderProduct.orderProductStatus) < Number(cart_1.orderProductStatusJson.delivered)) && (newStatus === cart_1.orderProductStatusJson.returned || newStatus === cart_1.orderProductStatusJson.refunded)) {
+            return controller.sendErrorResponse(res, 200, { message: 'Status can only be changed to a value after "Delivered"' });
+        }
         let updateProductStatus = {
             orderProductStatus: newStatus,
             orderProductStatusAt: new Date()
@@ -280,13 +283,22 @@ class OrdersController extends base_controller_1.default {
                 };
             }
         }
+        else if (newStatus === cart_1.orderProductStatusJson.returned) {
+            updateProductStatus = {
+                ...updateProductStatus,
+                orderProductReturnStatus: cart_1.orderProductReturnStatusJson.pending,
+                orderProductReturnStatusAt: new Date()
+            };
+        }
         else if (newStatus === cart_1.orderProductStatusJson.refunded) {
             updateOrderStatus.totalReturnedProductAmount = ((orderDetails.totalReturnedProductAmount + orderProduct.productAmount) || 0);
             updateProductStatus = {
                 ...updateProductStatus,
                 returnedProductAmount: orderProduct.productAmount,
-                orderRequestedProductCancelStatus: cart_1.orderProductCancelStatusJson.refunded,
-                orderRequestedProductCancelStatusAt: new Date()
+                ...(orderProduct.orderProductStatus === cart_1.orderProductStatusJson.canceled ? {
+                    orderRequestedProductCancelStatus: cart_1.orderProductCancelStatusJson.refunded,
+                    orderRequestedProductCancelStatusAt: new Date()
+                } : {})
             };
         }
         const updatedProduct = await cart_order_product_model_1.default.findByIdAndUpdate(orderProduct._id, updateProductStatus, { new: true });
@@ -609,9 +621,12 @@ class OrdersController extends base_controller_1.default {
                 const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
                 orderProductUpdateFields['returnedProductAmount'] = quantityChange ? ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : orderProductDetails.productAmount;
                 orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
-                orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.canceled;
+                orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.refunded;
+                orderProductUpdateFields['orderProductStatusAt'] = new Date();
             }
             else if (newStatus === statusJson.received) {
+                orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.refunded;
+                orderProductUpdateFields['orderProductStatusAt'] = new Date();
                 orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityReceivedStatusAt' : 'orderProductReturnReceivedStatusAt'] = new Date();
                 if (!quantityChange) {
                     updateVariantProductQuantity = orderProductDetails.quantity;
