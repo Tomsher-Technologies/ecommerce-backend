@@ -116,8 +116,8 @@ adminRouter.use('/orders', OrderRoutes);
 //customers
 adminRouter.use('/customers', CustomerRoutes);
 adminRouter.use('/reviews', ReviewRoutes);
-adminRouter.use('/newsletter', NewsletterRoutes);
-adminRouter.use('/contact-us', ContactUsRoutes);
+adminRouter.use('/customers/newsletter', NewsletterRoutes);
+adminRouter.use('/customers/contact-us', ContactUsRoutes);
 
 //dashboard
 adminRouter.use('/dashboard', DashboardRoutes);

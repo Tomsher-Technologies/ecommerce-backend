@@ -29,6 +29,7 @@ import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 import CountryModel from '../../../model/admin/setup/country-model';
 import CustomerModel from '../../../model/frontend/customers-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 const controller = new BaseController();
 
@@ -470,6 +471,13 @@ class OrdersController extends BaseController {
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails[0],
                 message: orderProductStatussMessages[newStatus]
+            }, 200, { // task log
+                sourceFromId: orderID,
+                sourceFromReferenceId: orderProductId,
+                sourceFrom: adminTaskLog.orders.order,
+                activityComment: `Order product status changed to: ${orderReturnStatusMessages[newStatus]}`,
+                activity: adminTaskLogActivity.update,
+                activityStatus: adminTaskLogStatus.success
             });
         } else {
             return controller.sendErrorResponse(res, 200, {
@@ -588,6 +596,13 @@ class OrdersController extends BaseController {
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
+                }, 200, { // task log
+                    sourceFromId: orderProductDetails.cartId as any,
+                    sourceFromReferenceId: orderProductId,
+                    sourceFrom: adminTaskLog.orders.order,
+                    activityComment: `Order product status changed to: ${orderProductCancelStatusMessages[newStatus]}`,
+                    activity: adminTaskLogActivity.update,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -764,6 +779,13 @@ class OrdersController extends BaseController {
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
+                }, 200, { // task log
+                    sourceFromId: orderProductDetails.cartId as any,
+                    sourceFromReferenceId: orderProductId,
+                    sourceFrom: adminTaskLog.orders.order,
+                    activityComment: `Order product status changed to: ${orderReturnStatusMessages[newStatus]}`,
+                    activity: adminTaskLogActivity.update,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -900,6 +922,13 @@ class OrdersController extends BaseController {
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
+                }, 200, { // task log
+                    sourceFromId: orderProductDetails.cartId as any,
+                    sourceFromReferenceId: orderProductId,
+                    sourceFrom: adminTaskLog.orders.order,
+                    activityComment: `Order product status changed to: ${orderReturnStatusMessages[newStatus]}`,
+                    activity: adminTaskLogActivity.update,
+                    activityStatus: adminTaskLogStatus.success
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -1301,6 +1330,12 @@ class OrdersController extends BaseController {
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
                 message: orderStatusMessages[orderStatus] || 'Order status updated successfully!'
+            }, 200, { // task log
+                sourceFromId: orderId,
+                sourceFrom: adminTaskLog.orders.order,
+                activityComment: `Order product status changed to: ${orderStatusMessages[orderStatus]}`,
+                activity: adminTaskLogActivity.update,
+                activityStatus: adminTaskLogStatus.success
             });
         } catch (error: any) {
             console.log('error', error);

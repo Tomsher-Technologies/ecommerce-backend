@@ -161,7 +161,7 @@ class CartController extends base_controller_1.default {
                 if (!country) {
                     return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
                 }
-                const { variantId, quantity, slug, orderStatus, quantityChange } = req.body;
+                const { variantId, quantity, slug, orderStatus, quantityChange, addOnQuantity } = req.body;
                 let newCartOrder;
                 let totalAmountOfProduct = 0;
                 let totalDiscountAmountOfProduct = 0;
@@ -256,6 +256,9 @@ class CartController extends base_controller_1.default {
                     });
                     if (quantity === 1) {
                         quantityProduct = existingCartProduct ? (quantityChange ? quantity : existingCartProduct.quantity + 1) : quantity;
+                    }
+                    else if (addOnQuantity) {
+                        quantityProduct = existingCartProduct.quantity + quantity;
                     }
                     else if (quantity == 0) {
                         if (existingCartProduct) {

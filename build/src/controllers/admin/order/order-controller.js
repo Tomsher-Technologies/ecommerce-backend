@@ -28,6 +28,7 @@ const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-g
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
+const task_log_1 = require("../../../constants/admin/task-log");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -441,6 +442,13 @@ class OrdersController extends base_controller_1.default {
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails[0],
                 message: cart_1.orderProductStatussMessages[newStatus]
+            }, 200, {
+                sourceFromId: orderID,
+                sourceFromReferenceId: orderProductId,
+                sourceFrom: task_log_1.adminTaskLog.orders.order,
+                activityComment: `Order product status changed to: ${cart_1.orderReturnStatusMessages[newStatus]}`,
+                activity: task_log_1.adminTaskLogActivity.update,
+                activityStatus: task_log_1.adminTaskLogStatus.success
             });
         }
         else {
@@ -553,6 +561,13 @@ class OrdersController extends base_controller_1.default {
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
+                }, 200, {
+                    sourceFromId: orderProductDetails.cartId,
+                    sourceFromReferenceId: orderProductId,
+                    sourceFrom: task_log_1.adminTaskLog.orders.order,
+                    activityComment: `Order product status changed to: ${cart_1.orderProductCancelStatusMessages[newStatus]}`,
+                    activity: task_log_1.adminTaskLogActivity.update,
+                    activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
             else {
@@ -723,6 +738,13 @@ class OrdersController extends base_controller_1.default {
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
+                }, 200, {
+                    sourceFromId: orderProductDetails.cartId,
+                    sourceFromReferenceId: orderProductId,
+                    sourceFrom: task_log_1.adminTaskLog.orders.order,
+                    activityComment: `Order product status changed to: ${cart_1.orderReturnStatusMessages[newStatus]}`,
+                    activity: task_log_1.adminTaskLogActivity.update,
+                    activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
             else {
@@ -847,6 +869,13 @@ class OrdersController extends base_controller_1.default {
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
+                }, 200, {
+                    sourceFromId: orderProductDetails.cartId,
+                    sourceFromReferenceId: orderProductId,
+                    sourceFrom: task_log_1.adminTaskLog.orders.order,
+                    activityComment: `Order product status changed to: ${cart_1.orderReturnStatusMessages[newStatus]}`,
+                    activity: task_log_1.adminTaskLogActivity.update,
+                    activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
             else {
@@ -1245,6 +1274,12 @@ class OrdersController extends base_controller_1.default {
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
                 message: cart_1.orderStatusMessages[orderStatus] || 'Order status updated successfully!'
+            }, 200, {
+                sourceFromId: orderId,
+                sourceFrom: task_log_1.adminTaskLog.orders.order,
+                activityComment: `Order product status changed to: ${cart_1.orderStatusMessages[orderStatus]}`,
+                activity: task_log_1.adminTaskLogActivity.update,
+                activityStatus: task_log_1.adminTaskLogStatus.success
             });
         }
         catch (error) {

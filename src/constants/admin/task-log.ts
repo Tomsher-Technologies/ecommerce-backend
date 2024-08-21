@@ -10,6 +10,13 @@ export const adminTaskLog = {
         productVariants: 'productVariants',
         specifications: 'specifications'
     },
+    customers: {
+        review: 'review'
+    },
+    orders: {
+        order: 'order',
+        orderReturn:'order return'
+    },
     website: {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsbrands',
@@ -49,9 +56,7 @@ export const adminTaskLog = {
         warehouse: 'warehouse',
         store: 'store',
     },
-    customers:{
-        review: 'review'
-    }
+
 
 }
 export const adminTaskLogStatus = {

@@ -75,7 +75,7 @@ class CommonController extends BaseController {
             if (cityId) {
                 query._id = new mongoose.Types.ObjectId(cityId);
             }
-            
+
             if (getStores === '1') {
                 const storeCityIds = await StoreModel.distinct("cityId", { cityId: { $exists: true } });
                 query._id = { $in: storeCityIds.map((id: any) => new mongoose.Types.ObjectId(id)) };
@@ -310,38 +310,40 @@ class CommonController extends BaseController {
 
     async findCollectionProducts(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, page, pageReference, getspecification, getattribute } = req.query as CommonQueryParams;
+            const { page_size = 1, page, pageReference, getspecification, getattribute, collectionproduct } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
-                if (page && pageReference) {
-                    query = {
-                        ...query,
-                        countryId,
-                        page: page,
-                        pageReference: pageReference,
-                        status: '1',
-                    } as any;
-
-                    const products = await CommonService.findCollectionProducts({
-                        hostName: req.get('origin'),
-                        query,
-                        getspecification,
-                        getattribute
-                    });
-
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: products,
-                        message: 'Success!'
-                    }, 200);
-                } else {
+                if ((!page && !pageReference) || !collectionproduct) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
                         validation: 'page and pageReference is missing! please check'
                     }, req);
                 }
+                query = {
+                    ...query,
+                    countryId,
+                    ...(collectionproduct ? { _id: collectionproduct } : {
+                        page: page,
+                        pageReference: pageReference
+                    }),
+                    status: '1',
+                } as any;
+
+                const products = await CommonService.findCollectionProducts({
+                    hostName: req.get('origin'),
+                    query,
+                    getspecification,
+                    getattribute
+                });
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: products,
+                    message: 'Success!'
+                }, 200);
+
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
@@ -356,7 +358,7 @@ class CommonController extends BaseController {
 
     async findCollectionCategories(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, page, pageReference } = req.query as CommonQueryParams;
+            const { page_size = 1, page, pageReference, collectioncategory } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -366,8 +368,10 @@ class CommonController extends BaseController {
                     query = {
                         ...query,
                         countryId,
-                        page: page,
-                        pageReference: pageReference,
+                        ...(collectioncategory ? { _id: collectioncategory } : {
+                            page: page,
+                            pageReference: pageReference
+                        }),
                         status: '1',
                     } as any;
 
@@ -400,7 +404,7 @@ class CommonController extends BaseController {
 
     async findCollectionBrands(req: Request, res: Response): Promise<void> {
         try {
-            const { page, pageReference } = req.query as CommonQueryParams;
+            const { page, pageReference, collectionbrand } = req.query as CommonQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
@@ -410,8 +414,10 @@ class CommonController extends BaseController {
                     query = {
                         ...query,
                         countryId,
-                        page: page,
-                        pageReference: pageReference,
+                        ...(collectionbrand ? { _id: collectionbrand } : {
+                            page: page,
+                            pageReference: pageReference
+                        }),
                         status: '1',
                     } as any;
 

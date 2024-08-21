@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
+exports.getOrderProductsDetailsLookup = exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
@@ -218,7 +218,7 @@ exports.cartDeatilProject = {
     $project: {
         _id: 1,
         orderId: 1,
-        // customerId: 1,
+        customerId: 1,
         // countryId: 1,
         couponId: 1,
         guestUserId: 1,
@@ -799,3 +799,21 @@ const getOrderProductsWithCartLookup = (query, notCallLookups, getCategory, getB
     return pipeline;
 };
 exports.getOrderProductsWithCartLookup = getOrderProductsWithCartLookup;
+const getOrderProductsDetailsLookup = (query, getCartProducts) => {
+    const modifiedPipeline = {
+        $lookup: {
+            ...exports.cartProductsLookup.$lookup,
+            pipeline: [
+                product_config_1.productLookup,
+                { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+            ]
+        }
+    };
+    const pipeline = [
+        ...(getCartProducts === '1' ? [modifiedPipeline] : [exports.cartProductsLookup]),
+        ...(getCartProducts === '1' ? [exports.cartDeatilProject] : [exports.cartProject]),
+        { $match: query },
+    ];
+    return pipeline;
+};
+exports.getOrderProductsDetailsLookup = getOrderProductsDetailsLookup;

@@ -12,6 +12,13 @@ exports.adminTaskLog = {
         productVariants: 'productVariants',
         specifications: 'specifications'
     },
+    customers: {
+        review: 'review'
+    },
+    orders: {
+        order: 'order',
+        orderReturn: 'order return'
+    },
     website: {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsbrands',
