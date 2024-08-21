@@ -20,15 +20,41 @@ class ReviewController extends BaseController {
             const validatedData = reviewSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { name, productId, reviewTitle, reviewContent, rating } = validatedData.data;
+                const { customerName, productId, reviewTitle, reviewContent, rating } = validatedData.data;
                 const user = res.locals.user;
                 const reviewImageUrl1 = (req as any).files.find((file: any) => file.fieldname === 'reviewImage1');
                 const reviewImageUrl2 = (req as any).files.find((file: any) => file.fieldname === 'reviewImage2');
 
+                let query = {
+                    $and: [
+                        { customerId: user._id },
+                        { 'products.productId': new mongoose.Types.ObjectId(productId) },
+                    ]
+                }
+                const order = await CartOrderModel.aggregate(getOrderProductsDetailsLookup(query, "1"));
+                const filteredProducts = [];
+                for (const singleOrder of order) {
+                    const products = singleOrder.products.filter((product: any) =>
+                        product.productId.equals(new mongoose.Types.ObjectId(productId)) &&
+                        (
+                            product.orderProductStatus === orderProductStatusJson.delivered ||
+                            product.orderProductStatus === orderProductStatusJson.returned ||
+                            product.orderProductStatus === orderProductStatusJson.refunded ||
+                            product.orderProductStatus === orderProductStatusJson.pickup
+                        )
+                    );
+
+                    if (products.length > 0) {
+                        filteredProducts.push(...products);
+                    }
+                }
+                const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
+
                 const reviewData = {
-                    name,
+                    customerName,
                     customerId: user._id,
                     productId,
+                    variantId: targetProduct.variantId,
                     reviewTitle,
                     reviewContent,
                     rating: Number(rating),
@@ -37,8 +63,8 @@ class ReviewController extends BaseController {
                     reviewImageUrl2: handleFileUpload(req, null, (req.file || reviewImageUrl2), 'reviewImageUrl2', 'review'),
                     updatedAt: new Date()
                 };
+console.log(reviewData);
 
-                // Check if the review already exists
                 const existingReview = await ReviewService.findOne({
                     customerId: user._id,
                     productId
@@ -48,14 +74,12 @@ class ReviewController extends BaseController {
                 let reviewResult;
 
                 if (existingReview) {
-                    // Update the existing review
                     reviewResult = await ReviewService.updateOne(
                         { _id: existingReview._id },
                         { $set: reviewData }
                     );
                     responseMessage = 'Review updated successfully!';
                 } else {
-                    // Create a new review
                     reviewResult = await ReviewService.create({
                         ...reviewData,
                         createdAt: new Date()

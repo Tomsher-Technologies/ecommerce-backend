@@ -1,7 +1,7 @@
 import { z as zod } from 'zod';
 
 export const reviewSchema = zod.object({
-    name: zod.string({ required_error: 'Name is required', }).min(3, 'Name is should be 3 chars minimum'),
+    customerName: zod.string({ required_error: 'Customer Name is required', }).min(3, 'Name is should be 3 chars minimum'),
     productId: zod.string({ required_error: 'productId is required', }),
     reviewTitle: zod.string({ required_error: 'Review Title is required', }),
     reviewContent: zod.string({ required_error: 'Review Content is required', }),
