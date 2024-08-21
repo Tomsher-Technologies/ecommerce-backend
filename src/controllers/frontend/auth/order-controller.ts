@@ -2,13 +2,15 @@ import mongoose from "mongoose";
 import { Request, Response, query } from 'express';
 
 import BaseController from "../../admin/base-controller";
-import { cartStatus, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJson } from "../../../constants/cart";
+import { cartStatus, orderPaymentStatus, orderPaymentStatusMessages, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJson, paymentMethods } from "../../../constants/cart";
 
 import CustomerModel from "../../../model/frontend/customers-model";
 import CommonService from '../../../services/frontend/guest/common-service'
 import OrderService from "../../../services/frontend/auth/order-service";
 import CartOrdersModel from "../../../model/frontend/cart-order-model";
 import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
+import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
+import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
 
 const controller = new BaseController();
 class OrderController extends BaseController {
@@ -64,6 +66,7 @@ class OrderController extends BaseController {
             const orderId = req.params.id;
             const uuid = req.header('User-Token');
             const origin = req.get('origin');
+            const { getReturnProduct = '0' } = req.query;
 
             let countryData = await CommonService.findOneCountrySubDomainWithId(origin, true);
             if (!countryData) {
@@ -74,7 +77,7 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Customer or guest user information is missing' });
             }
 
-            const query: any = {
+            let query: any = {
                 $and: [
                     { countryId: countryData._id },
                     { _id: new mongoose.Types.ObjectId(orderId) }
@@ -98,12 +101,26 @@ class OrderController extends BaseController {
                 hostName: origin,
                 getAddress: '1',
                 getCartProducts: '1',
-            });
+                getReturnProduct,
+            }); console.log('getReturnProductQ', order);
 
             if (order && order.length > 0) {
+                let message = 'Your Order is ready!';
+                if (order[0].cartStatus === cartStatus.active) {
+                    const paymentDetails = await PaymentMethodModel.findOne({ countryId: countryData._id, slug: paymentMethods.tabby });
+                    if (paymentDetails) {
+                        const paymentLastTransaction = await PaymentTransactionModel.findOne({ paymentMethodId: paymentDetails._id, orderId: order[0]._id }).sort({ createdAt: -1 });
+                        if (paymentLastTransaction) {
+                            const paymentStatusMessageTemplate = orderPaymentStatusMessages[paymentLastTransaction.status as keyof typeof orderPaymentStatusMessages];
+                            const paymentMethodTitle = paymentDetails.paymentMethodTitle || "Tabby";
+                            const paymentStatusMessage = paymentStatusMessageTemplate.replace(/Tabby/g, paymentMethodTitle);
+                            message = `Your order is ${paymentStatusMessage}.`;
+                        }
+                    }
+                }
                 return controller.sendSuccessResponse(res, {
                     requestedData: order[0],
-                    message: 'Your Order is ready!'
+                    message
                 });
             } else {
                 return controller.sendErrorResponse(res, 200, {
@@ -123,7 +140,7 @@ class OrderController extends BaseController {
             const orderId = req.params.id;
             const { orderProducts, returnReason } = req.body;
 
-            if (returnReason==='') {
+            if (returnReason === '') {
                 return controller.sendErrorResponse(res, 200, { message: 'Return eeason is required' });
             }
 
@@ -144,7 +161,8 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Order details not found!' });
             }
 
-            if (Number(orderDetails.orderStatus) > Number(orderStatusArrayJson.delivered)) {
+
+            if (Number(orderStatusArrayJson.delivered) > Number(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has not been delivered yet! Please return after the product is delivered' });
             }
             const statusMessages: { [key: string]: string } = {
@@ -175,7 +193,7 @@ class OrderController extends BaseController {
                     return null;
                 }
 
-                if (!['5'].includes(productDetail.orderProductStatus)) {
+                if (![orderProductStatusJson.delivered].includes(productDetail.orderProductStatus)) {
                     if (!hasErrorOccurred) {
                         errorMessage = `Order product with ID ${orderProduct.orderProductId} cannot be updated as its status is not '5' or '13'`
                         hasErrorOccurred = true;

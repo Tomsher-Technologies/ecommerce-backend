@@ -30,3 +30,23 @@ export const checkoutSchema = zod.object({
         });
     }
 });
+
+const orderSchema = zod.object({
+    reference_id: zod.string({ required_error: 'Reference id is required' }).min(3, 'Please choose reference id'),
+});
+
+const captureSchema = zod.object({
+    id: zod.string().optional(),
+    amount: zod.string().regex(/^\d+(\.\d{1,2})?$/, { message: "Invalid amount format" }),
+});
+
+export const tabbyPaymentCaptureSchema = zod.object({
+    id: zod.string({ required_error: 'Id is required' }).min(3, 'Please choose id'),
+    status: zod.enum(["authorized", "closed", "rejected", "expired"]),
+    is_test: zod.boolean().refine(value => value === true, { message: 'This is a test webhook' }),
+    is_expired: zod.boolean(),
+    amount: zod.string().regex(/^\d+(\.\d{1,2})?$/, { message: "Invalid amount format" }),
+    currency: zod.string().length(3),
+    order: orderSchema,
+    captures: zod.array(captureSchema).nonempty({ message: "Captures cannot be empty" }),
+});

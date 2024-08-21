@@ -11,7 +11,6 @@ import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, 
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import { collections } from '../../../constants/collections';
 import { ProductsProps } from '../../../utils/types/products';
-import { offers, offerTypes } from '../../../constants/offers';
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from '../../../utils/config/offer-config';
 
 import CollectionsProductsModel from '../../../model/admin/website/collections-products-model';
@@ -20,7 +19,6 @@ import CollectionsCategoriesModel from '../../../model/admin/website/collections
 import CommonService from '../../../services/frontend/guest/common-service';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
-import OffersModel from '../../../model/admin/marketing/offers-model';
 
 
 class ProductService {

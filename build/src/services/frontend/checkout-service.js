@@ -71,7 +71,7 @@ class CheckoutService {
                     _id: cartDetails._id,
                     orderId: cartDetails.orderId,
                     status: true,
-                    message: 'Payment success'
+                    message: 'Payment successfully recieved'
                 };
             }
             else {
