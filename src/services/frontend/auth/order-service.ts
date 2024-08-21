@@ -9,7 +9,7 @@ import CartOrderModel, { CartOrderProps } from '../../../model/frontend/cart-ord
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { orderProductStatusJson } from '../../../constants/cart';
 
-class OederService {
+class OrderService {
 
     async orderList(options: any): Promise<CartOrderProps[]> {
 
@@ -94,4 +94,4 @@ class OederService {
     }
 }
 
-export default new OederService();
+export default new OrderService();
