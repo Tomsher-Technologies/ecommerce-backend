@@ -51,9 +51,6 @@ class ReviewController extends BaseController {
                 query,
                 sort
             })
-            // const reviews = await ReviewService.listReviews("2", productId);
-            console.log(query);
-
             return controller.sendSuccessResponse(res, {
                 requestedData: reviews[0]?.reviewData || [],
                 totalCount: reviews[0]?.totalCount || 0,

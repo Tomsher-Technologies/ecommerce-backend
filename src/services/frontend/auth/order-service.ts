@@ -10,9 +10,7 @@ import LanguagesModel from '../../../model/admin/setup/language-model';
 import { orderProductStatusJson } from '../../../constants/cart';
 
 class OrderService {
-
     async orderList(options: any): Promise<CartOrderProps[]> {
-
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
         const { getAddress, getCartProducts, getReturnProduct = '0' } = options;
 

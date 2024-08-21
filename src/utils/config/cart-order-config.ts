@@ -851,7 +851,7 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
 };
 
 
-export const getOrderProductsLookup = (query: any, getCartProducts: string) => {
+export const getOrderProductsDetailsLookup = (query: any, getCartProducts: string) => {
     const modifiedPipeline = {
         $lookup: {
             ...cartProductsLookup.$lookup,

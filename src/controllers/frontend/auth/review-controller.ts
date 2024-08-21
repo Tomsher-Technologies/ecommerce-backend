@@ -7,7 +7,7 @@ import { formatZodError, handleFileUpload } from "../../../utils/helpers";
 import OrderService from "../../../services/frontend/auth/order-service";
 import mongoose from "mongoose";
 import { orderProductStatusJson } from "../../../constants/cart";
-import { getOrderProductsLookup } from "../../../utils/config/cart-order-config";
+import { getOrderProductsDetailsLookup } from "../../../utils/config/cart-order-config";
 import CartOrderModel from '../../../model/frontend/cart-order-model';
 import { reviewArrayJson } from "../../../constants/review";
 
@@ -92,21 +92,7 @@ class ReviewController extends BaseController {
                     { 'products.orderProductStatus': orderProductStatusJson.delivered }
                 ]
             }
-            let pipeline: any[] = getOrderProductsLookup(query, "1");
-            const order = await CartOrderModel.aggregate(pipeline);
-
-            // const order: any = await OrderService.orderList({
-            //     query: {
-            //         $and: [
-            //             { customerId: user._id },
-            //             { 'products.productId': new mongoose.Types.ObjectId(productId) },
-            //             { 'products.orderProductStatus': orderProductStatusJson.delivered }
-            //         ]
-            //     },
-            //     hostName: req.get('origin'),
-            //     getCartProducts: '1',
-            // });
-            console.log(order[0]);
+            const order = await CartOrderModel.aggregate(getOrderProductsDetailsLookup(query, "1"));
 
             const filteredProducts = order[0].products.filter((product: any) =>
                 product.productId.equals(new mongoose.Types.ObjectId(productId)) &&
@@ -123,7 +109,6 @@ class ReviewController extends BaseController {
             } else {
                 hasBought = false
             }
-
             return controller.sendSuccessResponse(res, {
                 requestedData: {
                     hasBought: {
