@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import { QueryParamsWithPage } from '../../../utils/types/common';
 
 import BaseController from '../base-controller';
-import NewsletterService from '../../../services/admin/website-information/newsletter-service';
+import NewsletterService from '../../../services/admin/customer/newsletter-service';
 import { generateExcelFile } from '../../../lib/excel/excel-generator';
 
 const controller = new BaseController();
