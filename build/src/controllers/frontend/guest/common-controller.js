@@ -292,20 +292,20 @@ class CommonController extends base_controller_1.default {
     }
     async findCollectionProducts(req, res) {
         try {
-            const { page_size = 1, page, pageReference, getspecification, getattribute, collectionproduct } = req.query;
+            const { page_size = 1, page = '', pageReference = '', getspecification, getattribute, collectionproduct = '' } = req.query;
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                if ((!page && !pageReference) || !collectionproduct) {
+                if ((page === '' && pageReference === '') && (collectionproduct === '')) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
-                        validation: 'page and pageReference is missing! please check'
+                        validation: 'Either page and pageReference or collectionproduct must be provided! Please check your input.'
                     }, req);
                 }
                 query = {
                     ...query,
                     countryId,
-                    ...(collectionproduct ? { _id: collectionproduct } : {
+                    ...(collectionproduct ? { _id: new mongoose_1.default.Types.ObjectId(collectionproduct) } : {
                         page: page,
                         pageReference: pageReference
                     }),
@@ -335,7 +335,7 @@ class CommonController extends base_controller_1.default {
     }
     async findCollectionCategories(req, res) {
         try {
-            const { page_size = 1, page, pageReference, collectioncategory } = req.query;
+            const { page_size = 1, page = '', pageReference = '', collectioncategory = '' } = req.query;
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
@@ -343,7 +343,7 @@ class CommonController extends base_controller_1.default {
                     query = {
                         ...query,
                         countryId,
-                        ...(collectioncategory ? { _id: collectioncategory } : {
+                        ...(collectioncategory ? { _id: new mongoose_1.default.Types.ObjectId(collectioncategory) } : {
                             page: page,
                             pageReference: pageReference
                         }),
@@ -378,7 +378,7 @@ class CommonController extends base_controller_1.default {
     }
     async findCollectionBrands(req, res) {
         try {
-            const { page, pageReference, collectionbrand } = req.query;
+            const { page = '', pageReference = '', collectionbrand = '' } = req.query;
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
@@ -386,7 +386,7 @@ class CommonController extends base_controller_1.default {
                     query = {
                         ...query,
                         countryId,
-                        ...(collectionbrand ? { _id: collectionbrand } : {
+                        ...(collectionbrand ? { _id: new mongoose_1.default.Types.ObjectId(collectionbrand) } : {
                             page: page,
                             pageReference: pageReference
                         }),

@@ -35,11 +35,16 @@ const reviewSchema = new mongoose_1.Schema({
         ref: 'Products',
         required: true,
     },
+    variantId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'ProductVariants',
+        required: true,
+    },
     reviewTitle: {
         type: String,
         required: true,
     },
-    name: {
+    customerName: {
         type: String,
         default: '',
     },

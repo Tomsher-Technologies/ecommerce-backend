@@ -8,11 +8,12 @@ const review_service_1 = __importDefault(require("../../../services/admin/custom
 const helpers_1 = require("../../../utils/helpers");
 const mongoose_1 = __importDefault(require("mongoose"));
 const review_schema_1 = require("../../../utils/schemas/frontend/auth/review-schema");
+const task_log_1 = require("../../../constants/admin/task-log");
 const controller = new base_controller_1.default();
 class ReviewController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { countryId = '', page_size = 1, limit = 10, status = ['1', '2', '3'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { countryId = '', page_size = 1, limit = 10, status = '', sortby = '', sortorder = '', keyword = '' } = req.query;
             const reviewStatus = status;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
@@ -73,7 +74,12 @@ class ReviewController extends base_controller_1.default {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedReview,
                             message: 'Review status updated successfully!'
-                        }, 200);
+                        }, 200, {
+                            sourceFromId: reviewId,
+                            sourceFrom: task_log_1.adminTaskLog.customers.review,
+                            activity: task_log_1.adminTaskLogActivity.update,
+                            activityStatus: task_log_1.adminTaskLogStatus.success
+                        });
                     }
                     else {
                         return controller.sendErrorResponse(res, 200, {

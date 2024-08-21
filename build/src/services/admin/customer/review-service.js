@@ -3,9 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
-const customer_config_1 = require("../../../utils/config/customer-config");
 const review_model_1 = __importDefault(require("../../../model/frontend/review-model"));
 class ReviewService {
     async findAll(options = {}) {
@@ -19,11 +17,69 @@ class ReviewService {
         const pipeline = [
             { $match: query },
             {
+                $lookup: {
+                    from: 'products',
+                    localField: 'productId',
+                    foreignField: '_id',
+                    as: 'productDetails'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$productDetails',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // Lookup for variant details
+            {
+                $lookup: {
+                    from: 'productvariants',
+                    localField: 'variantId',
+                    foreignField: '_id',
+                    as: 'variantDetails'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$variantDetails',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
                 $facet: {
                     reviewData: [
                         { $skip: skip },
                         { $limit: limit },
-                        { $sort: finalSort }
+                        { $sort: finalSort },
+                        {
+                            $project: {
+                                _id: 1,
+                                customerId: 1,
+                                productId: {
+                                    _id: '$productDetails._id',
+                                    productTitle: '$productDetails.productTitle',
+                                    slug: '$productDetails.slug'
+                                },
+                                name: 1,
+                                reviewTitle: 1,
+                                reviewContent: 1,
+                                reviewImageUrl1: 1,
+                                reviewImageUrl2: 1,
+                                ReviewStatus: 1,
+                                approvedBy: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
+                                __v: 1,
+                                customerName: 1,
+                                reviewStatus: 1,
+                                variantId: {
+                                    _id: '$variantDetails._id',
+                                    variantSku: '$variantDetails.variantSku',
+                                    slug: '$variantDetails.slug',
+                                    extraProductTitle: '$variantDetails.extraProductTitle',
+                                }
+                            }
+                        }
                     ],
                     totalCount: [
                         { $count: 'count' }
@@ -40,22 +96,22 @@ class ReviewService {
         const createdCartWithValues = await review_model_1.default.aggregate(pipeline);
         return createdCartWithValues;
     }
-    async findOne(reviewId) {
-        const pipeline = [
-            customer_config_1.countriesLookup,
-            customer_config_1.whishlistLookup,
-            customer_config_1.orderLookup,
-            customer_config_1.addField,
-            customer_config_1.billingLookup,
-            customer_config_1.shippingLookup,
-            customer_config_1.orderWalletTransactionLookup,
-            customer_config_1.referredWalletTransactionLookup,
-            customer_config_1.referrerWalletTransactionLookup,
-            { $match: { _id: mongoose_1.default.Types.ObjectId.createFromHexString(reviewId) } },
-        ];
-        const result = await review_model_1.default.aggregate(pipeline).exec();
-        return result?.length > 0 ? result[0] : [];
-    }
+    // async findOne(reviewId: string): Promise<any | null> {
+    //     const pipeline = [
+    //         countriesLookup,
+    //         whishlistLookup,
+    //         orderLookup,
+    //         addField,
+    //         billingLookup,
+    //         shippingLookup,
+    //         orderWalletTransactionLookup,
+    //         referredWalletTransactionLookup,
+    //         referrerWalletTransactionLookup,
+    //         { $match: { _id: mongoose.Types.ObjectId.createFromHexString(reviewId) } },
+    //     ];
+    //     const result: any = await ReviewModel.aggregate(pipeline).exec();
+    //     return result?.length > 0 ? result[0] : []
+    // }
     async update(brandId, brandData) {
         const updatedBrand = await review_model_1.default.findByIdAndUpdate(brandId, brandData, { new: true, useFindAndModify: false });
         if (updatedBrand) {
