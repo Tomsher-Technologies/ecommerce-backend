@@ -49,6 +49,7 @@ import OrderRoutes from './admin/orders/orders-routes';
 
 //customer
 import CustomerRoutes from './admin/customers/customers-routes';
+import ReviewRoutes from './admin/customers/review-routes';
 
 //dashboard
 import DashboardRoutes from './admin/dashboard/dashboard-routes';
@@ -114,6 +115,7 @@ adminRouter.use('/orders', OrderRoutes);
 
 //customer
 adminRouter.use('/customers', CustomerRoutes);
+adminRouter.use('/reviews', ReviewRoutes);
 
 //dashboard
 adminRouter.use('/dashboard', DashboardRoutes);

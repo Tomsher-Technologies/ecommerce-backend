@@ -24,6 +24,7 @@ export const permissionBlocks = {
     customers: {
         customers: 'customers',
         whishlists: 'whishlists',
+        reviews: 'reviews'
     },
     reports: {
         customers: {

@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
-import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-model';
 import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup, countriesLookup, reportOrderLookup, addressLookup } from '../../../utils/config/customer-config';
+import ReviewModel, { ReviewProps } from '../../../model/frontend/review-model';
+import { productLookup } from '../../../utils/config/product-config';
 
 
-class CustomerService {
-    async findAll(options: FilterOptionsProps = {}, isExcel?: any): Promise<CustomrProps[]> {
+class ReviewService {
+    async findAll(options: FilterOptionsProps = {}): Promise<ReviewProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -15,16 +16,11 @@ class CustomerService {
         }
 
         const pipeline: any[] = [
-            whishlistLookup,
-            orderLookup,
-            addField,
-            customerProject,
-            ...reportOrderLookup,
-            ...((isExcel === '1') ? [addressLookup] : []),
+            // productLookup,
             { $match: query },
             {
                 $facet: {
-                    customerData: [
+                    reviewData: [
                         { $skip: skip },
                         { $limit: limit },
                         { $sort: finalSort }
@@ -36,29 +32,18 @@ class CustomerService {
             },
             {
                 $project: {
-                    customerData: 1,
+                    reviewData: 1,
                     totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
                 }
             }
         ];
-        const createdCartWithValues = await CustomerModel.aggregate(pipeline);
+        const createdCartWithValues = await ReviewModel.aggregate(pipeline);
         console.log(createdCartWithValues);
 
         return createdCartWithValues;
     }
 
-    async getTotalCount(query: any = {}): Promise<number> {
-        try {
-            const totalCount = await CustomerModel.countDocuments(query);
-            return totalCount;
-        } catch (error) {
-            throw new Error('Error fetching total count of customers');
-        }
-    }
-
-
-
-    async findOne(customerId: string): Promise<any | null> {
+    async findOne(reviewId: string): Promise<any | null> {
         const pipeline = [
             countriesLookup,
             whishlistLookup,
@@ -69,18 +54,33 @@ class CustomerService {
             orderWalletTransactionLookup,
             referredWalletTransactionLookup,
             referrerWalletTransactionLookup,
-            customerDetailProject,
-            { $match: { _id: mongoose.Types.ObjectId.createFromHexString(customerId) } },
+            { $match: { _id: mongoose.Types.ObjectId.createFromHexString(reviewId) } },
 
         ];
 
-        const result: any = await CustomerModel.aggregate(pipeline).exec();
+        const result: any = await ReviewModel.aggregate(pipeline).exec();
         return result?.length > 0 ? result[0] : []
     }
-    async create(customerData: any): Promise<CustomrProps> {
-        return CustomerModel.create(customerData);
-    }
 
+    async update(brandId: string, brandData: any): Promise<ReviewProps | null> {
+        const updatedBrand = await ReviewModel.findByIdAndUpdate(
+            brandId,
+            brandData,
+            { new: true, useFindAndModify: false }
+        );
+
+        if (updatedBrand) {
+            const pipeline = [
+                { $match: { _id: updatedBrand._id } },
+            ];
+
+            const updatedBrandWithValues = await ReviewModel.aggregate(pipeline);
+
+            return updatedBrandWithValues[0];
+        } else {
+            return null;
+        }
+    }
 }
 
-export default new CustomerService();
+export default new ReviewService();
