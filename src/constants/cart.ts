@@ -73,6 +73,7 @@ export const orderProductStatusJson = {
     canceled: "6",
     returned: "7",
     refunded: "8",
+    completed: "12",
     pickup: "13"
 };
 export const orderProductStatusArray = [
