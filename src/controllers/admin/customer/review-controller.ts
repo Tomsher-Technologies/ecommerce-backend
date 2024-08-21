@@ -6,13 +6,14 @@ import { formatZodError, getCountryId } from "../../../utils/helpers";
 import { QueryParams } from "../../../utils/types/common";
 import mongoose from "mongoose";
 import { reviewStatusSchema } from "../../../utils/schemas/frontend/auth/review-schema";
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from "../../../constants/admin/task-log";
 
 const controller = new BaseController();
 
 class ReviewController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { countryId = '', page_size = 1, limit = 10, status = ['1', '2', '3'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { countryId = '', page_size = 1, limit = 10, status = '', sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             const reviewStatus = status
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
@@ -77,12 +78,12 @@ class ReviewController extends BaseController {
                             requestedData: updatedReview,
                             message: 'Review status updated successfully!'
                         }, 200,
-                            // { // task log
-                            //     sourceFromId: reviewId,
-                            //     sourceFrom: adminTaskLog.ecommerce.reviews,
-                            //     activity: adminTaskLogActivity.update,
-                            //     activityStatus: adminTaskLogStatus.success
-                            // }
+                            { // task log
+                                sourceFromId: reviewId,
+                                sourceFrom: adminTaskLog.customers.review,
+                                activity: adminTaskLogActivity.update,
+                                activityStatus: adminTaskLogStatus.success
+                            }
                         );
                     } else {
                         return controller.sendErrorResponse(res, 200, {

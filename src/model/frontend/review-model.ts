@@ -3,7 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ReviewProps extends Document {
     customerId: Schema.Types.ObjectId;
     productId: Schema.Types.ObjectId;
-    name: string;
+    variantId: Schema.Types.ObjectId;
+    customerName: string;
     reviewTitle: string;
     reviewContent: string;
     reviewImageUrl1: string;
@@ -27,11 +28,16 @@ const reviewSchema: Schema<ReviewProps> = new Schema({
         ref: 'Products',
         required: true,
     },
+    variantId: {
+        type: Schema.Types.ObjectId,
+        ref: 'ProductVariants',
+        required: true,
+    },
     reviewTitle: {
         type: String,
         required: true,
     },
-    name: {
+    customerName: {
         type: String,
         default: '',
     },
