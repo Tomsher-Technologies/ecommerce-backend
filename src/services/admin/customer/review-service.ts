@@ -16,7 +16,6 @@ class ReviewService {
         }
 
         const pipeline: any[] = [
-            // productLookup,
             { $match: query },
             {
                 $facet: {
@@ -38,8 +37,6 @@ class ReviewService {
             }
         ];
         const createdCartWithValues = await ReviewModel.aggregate(pipeline);
-        console.log(createdCartWithValues);
-
         return createdCartWithValues;
     }
 
