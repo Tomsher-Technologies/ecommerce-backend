@@ -22,9 +22,31 @@ class ContactUsService {
             { $match: query },
             countriesLookup,
             customerLookup,
+            { $unwind: { path: "$country", preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    email: 1,
+                    phone: 1,
+                    subject: 1,
+                    message: 1,
+                    status: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    __v: 1,
+                    "country._id": 1,
+                    "country.countryTitle": 1,
+                    "country.slug": 1,
+                    "country.countryCode": 1,
+                    "country.currencyCode": 1,
+                    "customer": 1,
+                }
+            }
         ];
 
         return ContactUsModel.aggregate(pipeline).exec();
