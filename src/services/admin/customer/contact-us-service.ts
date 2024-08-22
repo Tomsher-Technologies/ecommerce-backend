@@ -24,9 +24,9 @@ class ContactUsService {
             customerLookup,
             { $unwind: { path: "$country", preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
+            { $sort: finalSort },
             { $skip: skip },
             { $limit: limit },
-            { $sort: finalSort },
             {
                 $project: {
                     _id: 1,
