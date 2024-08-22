@@ -41,41 +41,48 @@ class ReviewController extends base_controller_1.default {
                     }
                 }
                 const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
-                const reviewData = {
-                    customerName,
-                    customerId: user._id,
-                    productId,
-                    variantId: targetProduct.variantId,
-                    reviewTitle,
-                    reviewContent,
-                    rating: Number(rating),
-                    reviewStatus: '1',
-                    reviewImageUrl1: (0, helpers_1.handleFileUpload)(req, null, (req.file || reviewImageUrl1), 'reviewImageUrl1', 'review'),
-                    reviewImageUrl2: (0, helpers_1.handleFileUpload)(req, null, (req.file || reviewImageUrl2), 'reviewImageUrl2', 'review'),
-                    updatedAt: new Date()
-                };
-                console.log(reviewData);
-                const existingReview = await review_service_1.default.findOne({
-                    customerId: user._id,
-                    productId
-                });
-                let responseMessage;
-                let reviewResult;
-                if (existingReview) {
-                    reviewResult = await review_service_1.default.updateOne({ _id: existingReview._id }, { $set: reviewData });
-                    responseMessage = 'Review updated successfully!';
+                if (targetProduct) {
+                    const reviewData = {
+                        customerName,
+                        customerId: user._id,
+                        productId,
+                        variantId: targetProduct.variantId,
+                        reviewTitle,
+                        reviewContent,
+                        rating: Number(rating),
+                        reviewStatus: '1',
+                        reviewImageUrl1: (0, helpers_1.handleFileUpload)(req, null, (req.file || reviewImageUrl1), 'reviewImageUrl1', 'review'),
+                        reviewImageUrl2: (0, helpers_1.handleFileUpload)(req, null, (req.file || reviewImageUrl2), 'reviewImageUrl2', 'review'),
+                        updatedAt: new Date()
+                    };
+                    console.log(reviewData);
+                    const existingReview = await review_service_1.default.findOne({
+                        customerId: user._id,
+                        productId
+                    });
+                    let responseMessage;
+                    let reviewResult;
+                    if (existingReview) {
+                        reviewResult = await review_service_1.default.updateOne({ _id: existingReview._id }, { $set: reviewData });
+                        responseMessage = 'Review updated successfully!';
+                    }
+                    else {
+                        reviewResult = await review_service_1.default.create({
+                            ...reviewData,
+                            createdAt: new Date()
+                        });
+                        responseMessage = 'Review added successfully!';
+                    }
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: reviewResult,
+                        message: responseMessage
+                    }, 200);
                 }
                 else {
-                    reviewResult = await review_service_1.default.create({
-                        ...reviewData,
-                        createdAt: new Date()
-                    });
-                    responseMessage = 'Review added successfully!';
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'You are not permitted to add a review'
+                    }, req);
                 }
-                return controller.sendSuccessResponse(res, {
-                    requestedData: reviewResult,
-                    message: responseMessage
-                }, 200);
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
@@ -99,15 +106,21 @@ class ReviewController extends base_controller_1.default {
                 $and: [
                     { customerId: user._id },
                     { 'products.productId': new mongoose_1.default.Types.ObjectId(productId) },
-                    { 'products.orderProductStatus': cart_1.orderProductStatusJson.delivered }
+                    // { 'products.orderProductStatus': orderProductStatusJson.delivered }
                 ]
             };
             const order = await cart_order_model_1.default.aggregate((0, cart_order_config_1.getOrderProductsDetailsLookup)(query, "1"));
-            const filteredProducts = order[0].products.filter((product) => product.productId.equals(new mongoose_1.default.Types.ObjectId(productId)) &&
-                product.orderProductStatus === cart_1.orderProductStatusJson.delivered ||
-                product.orderProductStatus === cart_1.orderProductStatusJson.returned ||
-                product.orderProductStatus === cart_1.orderProductStatusJson.refunded ||
-                product.orderProductStatus === cart_1.orderProductStatusJson.pickup);
+            const filteredProducts = [];
+            for (const singleOrder of order) {
+                const products = singleOrder.products.filter((product) => product.productId.equals(new mongoose_1.default.Types.ObjectId(productId)) &&
+                    (product.orderProductStatus === cart_1.orderProductStatusJson.delivered ||
+                        product.orderProductStatus === cart_1.orderProductStatusJson.returned ||
+                        product.orderProductStatus === cart_1.orderProductStatusJson.refunded ||
+                        product.orderProductStatus === cart_1.orderProductStatusJson.pickup));
+                if (products.length > 0) {
+                    filteredProducts.push(...products);
+                }
+            }
             const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
             var hasBought;
             if (targetProduct) {
@@ -122,7 +135,8 @@ class ReviewController extends base_controller_1.default {
                         hasBoughtProduct: hasBought,
                         message: "Customer has purchased this product."
                     },
-                    reviews
+                    reviews: reviews.reviews,
+                    startRating: reviews.statistics
                 },
                 message: "Customer has purchased this product."
             }, 200);

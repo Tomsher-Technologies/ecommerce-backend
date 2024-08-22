@@ -95,6 +95,7 @@ class PageController extends base_controller_1.default {
         }
         const { name, email, phone, subject, message } = validatedData.data;
         const customerId = res.locals.user || null;
+        // const guestUser = res.locals.uuid || null;
         const insertContactUsData = {
             customerId,
             countryId,

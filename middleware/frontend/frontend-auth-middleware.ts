@@ -11,12 +11,12 @@ export const frontendAuthMiddleware = async (req: CustomRequest, res: Response, 
     try {
         const authHeader = req.header('Authorization');
         if (!authHeader) {
-            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
+            return res.status(401).json({ message: 'Please login', status: false });
         }
 
         const token = authHeader.split(' ')[1];
         if (!token) {
-            return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+            return res.status(401).json({ message: 'Please login - Missing user', status: false });
         }
         const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
@@ -30,7 +30,7 @@ export const frontendAuthMiddleware = async (req: CustomRequest, res: Response, 
                 return res.status(404).json({ message: 'User data not found!', status: false });
             }
         } else {
-            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
+            return res.status(401).json({ message: 'Please login - Invalid user', status: false, reLogin: true });
         }
     } catch (error) {
         console.error(error);
@@ -47,13 +47,13 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
         const uuid = req.header('User-Token')
 
         if (!authHeader && !uuid) {
-            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
+            return res.status(401).json({ message: 'Please login - Missing user', status: false });
         }
   
         if (authHeader && uuid) {
             const token = authHeader.split(' ')[1];
             if (!token) {
-                return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+                return res.status(401).json({ message: 'Please login - Missing user', status: false });
             }
             const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
@@ -71,7 +71,7 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
         } else if (authHeader) {
             const token = authHeader.split(' ')[1];
             if (!token) {
-                return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+                return res.status(401).json({ message: 'Please login - Missing user', status: false });
             }
             const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
@@ -89,7 +89,7 @@ export const frontendAuthAndUnAuthMiddleware = async (req: CustomRequest, res: R
             res.locals.uuid = uuid;
             next();
         } else {
-            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
+            return res.status(401).json({ message: 'Please login - Invalid user', status: false, reLogin: true });
         }
     } catch (error) {
         console.error(error);

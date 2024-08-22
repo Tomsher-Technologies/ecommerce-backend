@@ -97,7 +97,8 @@ class PageController extends BaseController {
             });
         }
         const { name, email, phone, subject, message } = validatedData.data;
-        const customerId: any = res.locals.user || null;
+        const customerId = res.locals.user || null;
+        // const guestUser = res.locals.uuid || null;
 
         const insertContactUsData = {
             customerId,

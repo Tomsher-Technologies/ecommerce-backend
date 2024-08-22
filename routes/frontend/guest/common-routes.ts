@@ -3,6 +3,8 @@ import express, { Router } from 'express';
 import CommonController from '../../../src/controllers/frontend/guest/common-controller';
 import CheckoutController from '../../../src/controllers/frontend/auth/checkout-controller';
 import PagesController from '../../../src/controllers/frontend/guest/pages-controller';
+import { frontendAuthAndUnAuthMiddleware } from '../../../middleware/frontend/frontend-auth-middleware';
+
 const router: Router = express.Router();
 
 router.get('/countries', CommonController.findAllCountries);
@@ -17,7 +19,7 @@ router.get('/collection-categories', CommonController.findCollectionCategories);
 router.get('/collection-brands', CommonController.findCollectionBrands);
 router.get('/payment-methods', CommonController.findPaymentMethods);
 router.get('/stores', CommonController.findAllStores);
-router.post('/contact-us-submit', PagesController.contactUsSubmit);
+router.post('/contact-us-submit',frontendAuthAndUnAuthMiddleware, PagesController.contactUsSubmit);
 router.post('/newsletter-submit', PagesController.newsletterSubmit);
 
 router.get('/tap-success-response', CheckoutController.tapSuccessResponse);

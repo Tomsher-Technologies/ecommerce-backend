@@ -62,12 +62,16 @@ const reviewSchema = new mongoose_1.Schema({
         type: String,
         required: true
     },
+    rating: {
+        type: Number,
+        required: true
+    },
     editStatus: {
         type: String,
     },
     approvedBy: {
         type: String,
-        required: true
+        // required: true
     },
     createdAt: {
         type: Date,
