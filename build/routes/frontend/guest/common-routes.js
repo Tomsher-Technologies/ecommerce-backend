@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const common_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/common-controller"));
 const checkout_controller_1 = __importDefault(require("../../../src/controllers/frontend/auth/checkout-controller"));
 const pages_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/pages-controller"));
+const frontend_auth_middleware_1 = require("../../../middleware/frontend/frontend-auth-middleware");
 const router = express_1.default.Router();
 router.get('/countries', common_controller_1.default.findAllCountries);
 router.get('/states', common_controller_1.default.findAllStates);
@@ -20,7 +21,7 @@ router.get('/collection-categories', common_controller_1.default.findCollectionC
 router.get('/collection-brands', common_controller_1.default.findCollectionBrands);
 router.get('/payment-methods', common_controller_1.default.findPaymentMethods);
 router.get('/stores', common_controller_1.default.findAllStores);
-router.post('/contact-us-submit', pages_controller_1.default.contactUsSubmit);
+router.post('/contact-us-submit', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, pages_controller_1.default.contactUsSubmit);
 router.post('/newsletter-submit', pages_controller_1.default.newsletterSubmit);
 router.get('/tap-success-response', checkout_controller_1.default.tapSuccessResponse);
 router.get('/tap-failure-response', checkout_controller_1.default.tapSuccessResponse);

@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const newsletter_model_1 = __importDefault(require("../../../model/frontend/newsletter-model"));
+const customer_config_1 = require("../../../utils/config/customer-config");
+const cart_order_config_1 = require("../../../utils/config/cart-order-config");
 class NewsletterService {
     constructor() { }
     async findAll(options = {}) {
@@ -17,6 +19,8 @@ class NewsletterService {
         }
         let pipeline = [
             { $match: query },
+            customer_config_1.countriesLookup,
+            cart_order_config_1.customerLookup,
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },

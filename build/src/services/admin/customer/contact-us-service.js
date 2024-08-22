@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const contact_us_model_1 = __importDefault(require("../../../model/frontend/contact-us-model"));
+const cart_order_config_1 = require("../../../utils/config/cart-order-config");
+const customer_config_1 = require("../../../utils/config/customer-config");
 class ContactUsService {
     constructor() { }
     async findAll(options = {}) {
@@ -17,9 +19,33 @@ class ContactUsService {
         }
         let pipeline = [
             { $match: query },
+            customer_config_1.countriesLookup,
+            cart_order_config_1.customerLookup,
+            { $unwind: { path: "$country", preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    email: 1,
+                    phone: 1,
+                    subject: 1,
+                    message: 1,
+                    status: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    __v: 1,
+                    "country._id": 1,
+                    "country.countryTitle": 1,
+                    "country.slug": 1,
+                    "country.countryCode": 1,
+                    "country.currencyCode": 1,
+                    "customer": 1,
+                }
+            }
         ];
         return contact_us_model_1.default.aggregate(pipeline).exec();
     }

@@ -10,11 +10,11 @@ const frontendAuthMiddleware = async (req, res, next) => {
     try {
         const authHeader = req.header('Authorization');
         if (!authHeader) {
-            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
+            return res.status(401).json({ message: 'Please login', status: false });
         }
         const token = authHeader.split(' ')[1];
         if (!token) {
-            return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+            return res.status(401).json({ message: 'Please login - Missing user', status: false });
         }
         const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
         if (checkToken && checkToken?.userId) {
@@ -29,7 +29,7 @@ const frontendAuthMiddleware = async (req, res, next) => {
             }
         }
         else {
-            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
+            return res.status(401).json({ message: 'Please login - Invalid user', status: false, reLogin: true });
         }
     }
     catch (error) {
@@ -46,12 +46,12 @@ const frontendAuthAndUnAuthMiddleware = async (req, res, next) => {
         const authHeader = req.header('Authorization');
         const uuid = req.header('User-Token');
         if (!authHeader && !uuid) {
-            return res.status(401).json({ message: 'Unauthorized - Missing Authorization header', status: false });
+            return res.status(401).json({ message: 'Please login - Missing user', status: false });
         }
         if (authHeader && uuid) {
             const token = authHeader.split(' ')[1];
             if (!token) {
-                return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+                return res.status(401).json({ message: 'Please login - Missing user', status: false });
             }
             const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
             if (checkToken?.userId) {
@@ -69,7 +69,7 @@ const frontendAuthAndUnAuthMiddleware = async (req, res, next) => {
         else if (authHeader) {
             const token = authHeader.split(' ')[1];
             if (!token) {
-                return res.status(401).json({ message: 'Unauthorized - Missing token', status: false });
+                return res.status(401).json({ message: 'Please login - Missing user', status: false });
             }
             const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
             if (checkToken?.userId) {
@@ -88,7 +88,7 @@ const frontendAuthAndUnAuthMiddleware = async (req, res, next) => {
             next();
         }
         else {
-            return res.status(401).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
+            return res.status(401).json({ message: 'Please login - Invalid user', status: false, reLogin: true });
         }
     }
     catch (error) {
