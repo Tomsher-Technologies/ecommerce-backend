@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 
-import { QueryParamsWithPage } from '../../../utils/types/common';
+import { QueryParams } from '../../../utils/types/common';
 
 import BaseController from '../base-controller';
 import { getCountryId } from '../../../utils/helpers';
@@ -16,7 +16,7 @@ class ContactUsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '', countryId = '' } = req.query as QueryParamsWithPage;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId = '', subject = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
 
@@ -37,22 +37,21 @@ class ContactUsController extends BaseController {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { email: keywordRegex }
+                        { email: keywordRegex },
+                        { subject: keywordRegex },
+                        { message: keywordRegex },
+                        { phone: keywordRegex },
+                        { name: keywordRegex }
                     ],
                     ...query
                 } as any;
             }
-            if (page) {
+            if (subject) {
                 query = {
-                    ...query, page: page
+                    ...query, subject: subject
                 } as any;
             }
 
-            if (pageReference) {
-                query = {
-                    ...query, pageReference: pageReference
-                } as any;
-            }
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;

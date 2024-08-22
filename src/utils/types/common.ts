@@ -9,6 +9,7 @@ export interface QueryParams {
     keyword?: string;
     countryId?: string;
     userTypeID?: string;
+    subject?: string;
 }
 
 export interface UserDataProps {
