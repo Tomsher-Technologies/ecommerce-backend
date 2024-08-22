@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import NewsletterModel, { NewsletterProps } from '../../../model/frontend/newsletter-model';
+import { countriesLookup } from '../../../utils/config/customer-config';
+import { customerLookup } from '../../../utils/config/cart-order-config';
 
 class NewsletterService {
 
@@ -19,6 +21,8 @@ class NewsletterService {
 
         let pipeline: any[] = [
             { $match: query },
+            countriesLookup,
+            customerLookup,
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },

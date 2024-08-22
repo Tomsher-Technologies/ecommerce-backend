@@ -1,6 +1,8 @@
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import ContactUsModel, { ContactUsProps } from '../../../model/frontend/contact-us-model';
+import { customerLookup } from '../../../utils/config/cart-order-config';
+import { countriesLookup } from '../../../utils/config/customer-config';
 
 class ContactUsService {
 
@@ -18,6 +20,8 @@ class ContactUsService {
 
         let pipeline: any[] = [
             { $match: query },
+            countriesLookup,
+            customerLookup,
             { $skip: skip },
             { $limit: limit },
             { $sort: finalSort },
