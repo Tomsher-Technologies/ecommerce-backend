@@ -44,6 +44,7 @@ class ContactUsService {
                     "country.slug": 1,
                     "country.countryCode": 1,
                     "country.currencyCode": 1,
+                    "country.countryShortTitle": 1,
                     "customer": 1,
                 }
             }

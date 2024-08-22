@@ -45,6 +45,7 @@ class NewsletterService {
                         slug: "$country.slug",
                         countryCode: "$country.countryCode",
                         currencyCode: "$country.currencyCode",
+                        countryShortTitle: "$country.countryShortTitle",
                     },
                     customer: 1
                 }
