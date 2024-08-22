@@ -15,7 +15,6 @@ const customer_service_2 = __importDefault(require("../../../services/frontend/c
 const country_service_1 = __importDefault(require("../../../services/admin/setup/country-service"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
-const customer_address_model_1 = __importDefault(require("../../../model/frontend/customer-address-model"));
 const auth_schema_1 = require("../../../utils/schemas/frontend/guest/auth-schema");
 const reports_1 = require("../../../utils/admin/excel/reports");
 const controller = new base_controller_1.default();
@@ -175,31 +174,31 @@ class CustomerController extends base_controller_1.default {
                                                             phone: data.phoneNumber,
                                                             password: await bcrypt_1.default.hash('12345678', 10),
                                                             isVerified: data.isVerified === 'FALSE' ? false : true,
-                                                            totalRewardPoint: data.credits,
+                                                            totalWalletAmount: data.credits,
                                                             referralCode: generatedReferralCode,
-                                                            totalWalletAmount: 0,
+                                                            totalRewardPoint: 0,
                                                             isExcel: true
                                                         };
                                                         const newCustomer = await customer_service_1.default.create(customerData);
-                                                        if (newCustomer && data.addressBook) {
-                                                            const address = JSON.parse(data.addressBook)[0];
-                                                            if (address.fullName && address.phone && address.address1 && address.country && address.state && address.city) {
-                                                                var customerData = {
-                                                                    customerId: newCustomer._id,
-                                                                    addressType: 'others',
-                                                                    addressMode: 'shipping-address',
-                                                                    name: address.fullName,
-                                                                    address1: address.address1,
-                                                                    phoneNumber: address.phone,
-                                                                    country: address.country,
-                                                                    state: address.state,
-                                                                    city: address.city,
-                                                                    isExcel: true
-                                                                };
-                                                            }
-                                                            const createAddress = await customer_address_model_1.default.create(customerData);
-                                                            console.log("ccccccccccccccccccc", createAddress);
-                                                        }
+                                                        // if (newCustomer && data.addressBook) {
+                                                        //     const address = JSON.parse(data.addressBook)[0]
+                                                        //     if (address.fullName && address.phone && address.address1 && address.country && address.state && address.city) {
+                                                        //         var customerData: any = {
+                                                        //             customerId: newCustomer._id,
+                                                        //             addressType: 'others',
+                                                        //             addressMode: 'shipping-address',
+                                                        //             name: address.fullName,
+                                                        //             address1: address.address1,
+                                                        //             phoneNumber: address.phone,
+                                                        //             country: address.country,
+                                                        //             state: address.state,
+                                                        //             city: address.city,
+                                                        //             isExcel: true
+                                                        //         }
+                                                        //     }
+                                                        //     const createAddress = await CustomerAddress.create(customerData)
+                                                        //     console.log("ccccccccccccccccccc", createAddress);
+                                                        // }
                                                     }
                                                 }
                                             }
