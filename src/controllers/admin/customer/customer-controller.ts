@@ -198,36 +198,36 @@ class CustomerController extends BaseController {
                                                             phone: data.phoneNumber,
                                                             password: await bcrypt.hash('12345678', 10),
                                                             isVerified: data.isVerified === 'FALSE' ? false : true,
-                                                            totalRewardPoint: data.credits,
+                                                            totalWalletAmount: data.credits,
                                                             referralCode: generatedReferralCode,
-                                                            totalWalletAmount: 0,
+                                                            totalRewardPoint: 0,
                                                             isExcel: true
                                                         }
 
                                                         const newCustomer = await CustomerService.create(customerData);
-                                                        if (newCustomer && data.addressBook) {
+                                                        // if (newCustomer && data.addressBook) {
 
-                                                            const address = JSON.parse(data.addressBook)[0]
-                                                            if (address.fullName && address.phone && address.address1 && address.country && address.state && address.city) {
-                                                                var customerData: any = {
-                                                                    customerId: newCustomer._id,
-                                                                    addressType: 'others',
-                                                                    addressMode: 'shipping-address',
-                                                                    name: address.fullName,
-                                                                    address1: address.address1,
-                                                                    phoneNumber: address.phone,
-                                                                    country: address.country,
-                                                                    state: address.state,
-                                                                    city: address.city,
-                                                                    isExcel: true
+                                                        //     const address = JSON.parse(data.addressBook)[0]
+                                                        //     if (address.fullName && address.phone && address.address1 && address.country && address.state && address.city) {
+                                                        //         var customerData: any = {
+                                                        //             customerId: newCustomer._id,
+                                                        //             addressType: 'others',
+                                                        //             addressMode: 'shipping-address',
+                                                        //             name: address.fullName,
+                                                        //             address1: address.address1,
+                                                        //             phoneNumber: address.phone,
+                                                        //             country: address.country,
+                                                        //             state: address.state,
+                                                        //             city: address.city,
+                                                        //             isExcel: true
 
-                                                                }
-                                                            }
+                                                        //         }
+                                                        //     }
 
-                                                            const createAddress = await CustomerAddress.create(customerData)
-                                                            console.log("ccccccccccccccccccc", createAddress);
+                                                        //     const createAddress = await CustomerAddress.create(customerData)
+                                                        //     console.log("ccccccccccccccccccc", createAddress);
 
-                                                        }
+                                                        // }
                                                     }
                                                 }
                                             }
