@@ -20,6 +20,7 @@ export const permissionBlocks = {
     orders: {
         orders: 'orders',
         orderReturn: 'order-return',
+        transactions: 'transactions'
     },
     customers: {
         customers: 'customers',

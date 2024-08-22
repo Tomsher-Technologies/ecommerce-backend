@@ -869,3 +869,103 @@ export const getOrderProductsDetailsLookup = (query: any, getCartProducts: strin
     ];
     return pipeline;
 };
+
+export const cartOrderLookup = [
+    {
+        $lookup: {
+            from: `${collections.cart.cartorders}`,
+            localField: 'orderId',
+            foreignField: '_id',
+            as: 'orders',
+        },
+    },
+    {
+        $unwind: {
+            path: "$orders",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections.setup.countries}`,
+            localField: "orders.countryId",
+            foreignField: "_id",
+            as: "country"
+        }
+    },
+    {
+        $unwind: {
+            path: "$country",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections.customer.customers}`,
+            localField: "orders.customerId",
+            foreignField: "_id",
+            as: "customer"
+        }
+    },
+    {
+        $unwind: {
+            path: "$customer",
+            preserveNullAndEmptyArrays: true
+        }
+    }
+
+]
+export const orderPaymentTransactionProject = {
+    $project: {
+        _id: 1,
+        paymentMethodId: {
+            _id: "$paymentMethodId._id",
+            paymentMethodTitle: "$paymentMethodId.paymentMethodTitle",
+            slug: "$paymentMethodId.slug",
+            description: "$paymentMethodId.description"
+        },
+        transactionId: 1,
+        paymentId: 1,
+        data: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        __v: 1,
+        orders: {
+            _id: "$orders._id",
+            orderId: "$orders.orderId",
+            couponId: "$orders.couponId",
+            guestUserId: "$orders.guestUserId",
+            paymentMethodId: "$orders.paymentMethodId",
+            orderComments: "$orders.orderComments",
+            paymentMethodCharge: "$orders.paymentMethodCharge",
+            rewardPoints: "$orders.rewardPoints",
+            rewardAmount: "$orders.rewardAmount",
+            totalReturnedProductAmount: "$orders.totalReturnedProductAmount",
+            totalDiscountAmount: "$orders.totalDiscountAmount",
+            totalShippingAmount: "$orders.totalShippingAmount",
+            totalProductOriginalPrice: "$orders.totalProductOriginalPrice",
+            totalProductAmount: "$orders.totalProductAmount",
+            totalGiftWrapAmount: "$orders.totalGiftWrapAmount",
+            totalAmount: "$orders.totalAmount",
+            cartStatus: "$orders.cartStatus",
+            orderStatus: "$orders.orderStatus",
+            orderStatusAt: "$orders.orderStatusAt",
+            isGuest: "$orders.isGuest",
+            country: {
+                _id: "$country._id",
+                countryTitle: "$country.countryTitle",
+                slug: "$country.slug",
+                countryCode: "$country.countryCode",
+                currencyCode: "$country.currencyCode",
+                countryShortTitle: "$country.countryShortTitle"
+            },
+            customer: {
+                _id: "$customer._id",
+                firstName: "$customer.firstName",
+                email: "$customer.email",
+                phone: "$customer.phone"
+            }
+        }
+    }
+}
