@@ -1,13 +1,11 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
 
-import { QueryParams } from '../../../utils/types/common';
-
 import BaseController from '../../../controllers/admin/base-controller';
 import mongoose from 'mongoose';
 import TransactionService from '../../../services/admin/order/transaction-service';
 import { OrderQueryParams } from '../../../utils/types/order';
-import { getCountryId } from '../../../utils/helpers';
+import { dateConvertPm, getCountryId } from '../../../utils/helpers';
 
 const controller = new BaseController();
 
@@ -15,7 +13,7 @@ class TransactionsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, keyword = '', paymentMethodId = '', status = '', paymentTransactionId = '' } = req.query as OrderQueryParams;
+            const { paymentMethodId = '', paymentTransactionId = '', countryId, paymentFromDate = '', paymentEndDate, page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '', status = '' } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -63,6 +61,12 @@ class TransactionsController extends BaseController {
                 } as any;
             }
 
+            if (paymentFromDate || paymentEndDate) {
+                query.createdAt = {
+                    ...(paymentFromDate && { $gte: new Date(paymentFromDate) }),
+                    ...(paymentEndDate && { $lte: dateConvertPm(paymentEndDate) })
+                };
+            }
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;

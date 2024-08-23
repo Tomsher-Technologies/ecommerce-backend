@@ -8,6 +8,7 @@ const auth_middleware_1 = __importDefault(require("../../../middleware/admin/aut
 const admin_user_permission_roll_middleware_1 = __importDefault(require("../../../middleware/admin/admin-user-permission-roll-middleware"));
 const permission_blocks_1 = require("../../../src/constants/permission-blocks");
 const order_controller_1 = __importDefault(require("../../../src/controllers/admin/order/order-controller"));
+const transactions_controller_1 = __importDefault(require("../../../src/controllers/admin/order/transactions-controller"));
 const router = express_1.default.Router();
 router.get('/invoice-detail/:id', order_controller_1.default.getInvoice);
 router.use(auth_middleware_1.default);
@@ -19,4 +20,5 @@ router.post('/order-return-status-change/:id', (0, admin_user_permission_roll_mi
 router.post('/order-quantity-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductReturnQuantityChange);
 router.post('/order-product-status-change/:orderID/:orderProductId', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductStatusChange);
 router.post('/order-product-cancel-status-change/:orderID/:orderProductId', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.orders, writeOnly: 1 }), order_controller_1.default.orderProductCancelStatusChange);
+router.get('/payment-transactions', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.orders.paymentTransactions, writeOnly: 1 }), transactions_controller_1.default.findAll);
 exports.default = router;

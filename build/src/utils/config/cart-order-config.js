@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderProductsDetailsLookup = exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
+exports.orderPaymentTransactionProject = exports.cartOrderLookup = exports.getOrderProductsDetailsLookup = exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
@@ -817,3 +817,101 @@ const getOrderProductsDetailsLookup = (query, getCartProducts) => {
     return pipeline;
 };
 exports.getOrderProductsDetailsLookup = getOrderProductsDetailsLookup;
+exports.cartOrderLookup = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.cart.cartorders}`,
+            localField: 'orderId',
+            foreignField: '_id',
+            as: 'orders',
+        },
+    },
+    {
+        $unwind: {
+            path: "$orders",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections_1.collections.setup.countries}`,
+            localField: "orders.countryId",
+            foreignField: "_id",
+            as: "country"
+        }
+    },
+    {
+        $unwind: {
+            path: "$country",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $lookup: {
+            from: `${collections_1.collections.customer.customers}`,
+            localField: "orders.customerId",
+            foreignField: "_id",
+            as: "customer"
+        }
+    },
+    {
+        $unwind: {
+            path: "$customer",
+            preserveNullAndEmptyArrays: true
+        }
+    }
+];
+exports.orderPaymentTransactionProject = {
+    $project: {
+        _id: 1,
+        paymentMethodId: {
+            _id: "$paymentMethodId._id",
+            paymentMethodTitle: "$paymentMethodId.paymentMethodTitle",
+            slug: "$paymentMethodId.slug",
+            description: "$paymentMethodId.description"
+        },
+        transactionId: 1,
+        paymentId: 1,
+        data: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        __v: 1,
+        orders: {
+            _id: "$orders._id",
+            orderId: "$orders.orderId",
+            couponId: "$orders.couponId",
+            guestUserId: "$orders.guestUserId",
+            paymentMethodId: "$orders.paymentMethodId",
+            orderComments: "$orders.orderComments",
+            paymentMethodCharge: "$orders.paymentMethodCharge",
+            rewardPoints: "$orders.rewardPoints",
+            rewardAmount: "$orders.rewardAmount",
+            totalReturnedProductAmount: "$orders.totalReturnedProductAmount",
+            totalDiscountAmount: "$orders.totalDiscountAmount",
+            totalShippingAmount: "$orders.totalShippingAmount",
+            totalProductOriginalPrice: "$orders.totalProductOriginalPrice",
+            totalProductAmount: "$orders.totalProductAmount",
+            totalGiftWrapAmount: "$orders.totalGiftWrapAmount",
+            totalAmount: "$orders.totalAmount",
+            cartStatus: "$orders.cartStatus",
+            orderStatus: "$orders.orderStatus",
+            orderStatusAt: "$orders.orderStatusAt",
+            isGuest: "$orders.isGuest",
+            country: {
+                _id: "$country._id",
+                countryTitle: "$country.countryTitle",
+                slug: "$country.slug",
+                countryCode: "$country.countryCode",
+                currencyCode: "$country.currencyCode",
+                countryShortTitle: "$country.countryShortTitle"
+            },
+            customer: {
+                _id: "$customer._id",
+                firstName: "$customer.firstName",
+                email: "$customer.email",
+                phone: "$customer.phone"
+            }
+        }
+    }
+};

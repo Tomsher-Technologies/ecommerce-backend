@@ -179,7 +179,7 @@ class OrdersController extends base_controller_1.default {
         const userData = await res.locals.user;
         let query = {
             _id: { $exists: true },
-            'cartDetails.orderStatus': cart_1.orderProductStatusJson.delivered,
+            // 'cartDetails.orderStatus': orderProductStatusJson.delivered,
             'cartDetails.cartStatus': { $ne: cart_1.cartStatus.active },
             $or: [
                 { orderRequestedProductQuantity: { $gt: 0 } },
@@ -951,15 +951,25 @@ class OrdersController extends base_controller_1.default {
                     message: 'Canceled status is only possible after Returned or Partially Returned'
                 });
             }
-            if (cart_1.orderStatusArrayJson.canceled === orderStatus && ([
-                cart_1.orderStatusArrayJson.pending,
+            const nonCancelableStatuses = [
                 cart_1.orderStatusArrayJson.processing,
                 cart_1.orderStatusArrayJson.packed,
                 cart_1.orderStatusArrayJson.shipped,
                 cart_1.orderStatusArrayJson.pickup,
-            ].includes(orderDetails.orderStatus))) {
+                cart_1.orderStatusArrayJson.delivered,
+                cart_1.orderStatusArrayJson.returned,
+                cart_1.orderStatusArrayJson.refunded,
+                cart_1.orderStatusArrayJson.partiallyShipped,
+                cart_1.orderStatusArrayJson.onHold,
+                cart_1.orderStatusArrayJson.failed,
+                cart_1.orderStatusArrayJson.completed,
+                cart_1.orderStatusArrayJson.partiallyDelivered,
+                cart_1.orderStatusArrayJson.partiallyReturned,
+                cart_1.orderStatusArrayJson.partiallyRefunded,
+            ];
+            if (orderStatus === cart_1.orderStatusArrayJson.canceled && nonCancelableStatuses.includes(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Cannot change the status Canceled Order'
+                    message: 'Cannot change the status of a Canceled Order',
                 });
             }
             // Ensure that Completed status is only possible after Delivered

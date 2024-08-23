@@ -21,9 +21,33 @@ class NewsletterService {
             { $match: query },
             customer_config_1.countriesLookup,
             cart_order_config_1.customerLookup,
+            { $unwind: { path: "$country", preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
+            { $sort: finalSort },
             { $skip: skip },
             { $limit: limit },
-            { $sort: finalSort },
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    email: 1,
+                    phone: 1,
+                    subject: 1,
+                    message: 1,
+                    status: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    country: {
+                        _id: "$country._id",
+                        countryTitle: "$country.countryTitle",
+                        slug: "$country.slug",
+                        countryCode: "$country.countryCode",
+                        currencyCode: "$country.currencyCode",
+                        countryShortTitle: "$country.countryShortTitle",
+                    },
+                    customer: 1
+                }
+            }
         ];
         return newsletter_model_1.default.aggregate(pipeline).exec();
     }

@@ -5,7 +5,7 @@ export const permissionBlocks = {
         orders: 'orders',
         analytics: 'analytics',
         customers: 'customers',
-        topSellingProducts: 'topSellingProducts',
+        topSellingProducts: 'top-selling-products',
     },
     ecommerce: {
         products: 'products',
@@ -20,7 +20,7 @@ export const permissionBlocks = {
     orders: {
         orders: 'orders',
         orderReturn: 'order-return',
-        transactions: 'transactions'
+        paymentTransactions: 'payment-transactions'
     },
     customers: {
         customers: 'customers',
