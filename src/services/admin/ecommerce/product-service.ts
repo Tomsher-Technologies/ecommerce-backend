@@ -1,11 +1,10 @@
+import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 
 import { ProductsProps } from '../../../utils/types/products';
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
-import InventryPricingModel, { InventryPricingProps } from '../../../model/admin/ecommerce/inventry-pricing-model';
-import mongoose from 'mongoose';
 import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoObject, productSpecificationsLookup, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
 import { seoLookup } from '../../../utils/config/common-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
@@ -164,43 +163,7 @@ class ProductsService {
         return ProductGalleryImagesModel.findOneAndDelete({ _id: gallaryImageID });
     }
 
-    async findInventryPricingByProductId(_id?: string, productId?: string): Promise<InventryPricingProps[]> {
-        let query: any = {};
-        if (_id) {
-            query._id = _id;
-        }
-        if (productId) {
-            query.productId = productId;
-        }
-        return await InventryPricingModel.find(query);
-    }
 
-    async inventryDetailsService(productId: string, inventryDetails: any): Promise<InventryPricingProps[]> {
-        try {
-            const existingEntries = await InventryPricingModel.find({ productId: productId });
-
-            const inventryPricingPromises = await Promise.all(inventryDetails.map(async (data: any) => {
-                const existingEntry = existingEntries.find(entry => entry.countryID.toString() === data.countryID.toString());
-                if (existingEntry) {
-                    await InventryPricingModel.updateOne({ _id: existingEntry._id }, { ...data, productId: productId });
-                } else {
-                    await InventryPricingModel.create({ ...data, productId: productId });
-                }
-            }));
-
-            await Promise.all(inventryPricingPromises);
-
-            const countryIDsToRemove = existingEntries
-                .filter(entry => !inventryDetails.some((data: any) => data.countryID.toString() === entry.countryID.toString()))
-                .map(entry => entry.countryID);
-            await InventryPricingModel.deleteMany({ productId: productId, countryID: { $in: countryIDsToRemove } });
-
-            return await InventryPricingModel.find({ productId: productId });
-        } catch (error) {
-            console.error('Error in inventryDetailsService:', error);
-            throw error;
-        }
-    }
 
     async updateWebsitePriority(container1: any[] | undefined, columnKey: keyof ProductsProps): Promise<void> {
         try {

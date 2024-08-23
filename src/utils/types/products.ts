@@ -94,7 +94,8 @@ export interface ProductsFrontendQueryParams {
     collectionproduct?: any;
     collectionbrand?: any;
     collectioncategory?: any;
-    getimagegallery?: number;
+    getbrand?: number | string;
+    getimagegallery?: number | string;
     getattribute?: number | string;
     getspecification?: number | string;
     categories?: any;

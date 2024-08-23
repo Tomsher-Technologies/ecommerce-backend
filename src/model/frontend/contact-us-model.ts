@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../constants/collections';
 
 export interface ContactUsProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -16,12 +17,12 @@ export interface ContactUsProps extends Document {
 const contactUsSchema = new Schema<ContactUsProps>({
     countryId: {
         type: Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
         required: [true, 'Country is required'],
     },
     customerId: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections.customer.customers}`,
         default: null
     },
     name: {

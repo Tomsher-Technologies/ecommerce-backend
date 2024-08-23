@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { earnTypes } from '../../constants/wallet';
+import { collections } from '../../constants/collections';
 
 export interface CustomerWalletTransactionsProps extends Document {
     customerId: mongoose.Schema.Types.ObjectId; // Foreign key reference to Customer
@@ -18,22 +19,22 @@ export interface CustomerWalletTransactionsProps extends Document {
 const customerWalletTransactionsSchema: Schema<CustomerWalletTransactionsProps> = new Schema({
     customerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref:`${collections.customer.customers}`,
         required: true
     },
     referredCustomerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref:`${collections.customer.customers}`,
         default: null
     },
     referrerCustomerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref:`${collections.customer.customers}`,
         default: null
     },
     orderId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'CartOrders',
+        ref: `${collections.cart.cartorders}`,
         default: null
     },
     earnType: {
