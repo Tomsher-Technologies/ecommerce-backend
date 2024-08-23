@@ -25,25 +25,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const customer_1 = require("../../constants/customer");
+const collections_1 = require("../../constants/collections");
 const customerAddressSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections_1.collections.setup.countries}`,
         required: true
     },
     customerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         required: [true, 'Customer ID is required'],
     },
     stateId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'States',
+        ref: `${collections_1.collections.setup.states}`,
         default: null
     },
     cityId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Cities',
+        ref: `${collections_1.collections.setup.cities}`,
         default: null
     },
     addressType: {

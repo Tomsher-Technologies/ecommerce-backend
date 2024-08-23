@@ -24,14 +24,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../constants/collections");
 const cartOrderSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections_1.collections.setup.countries}`,
     },
     customerId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         default: null
     },
     orderId: {
@@ -50,7 +51,7 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     couponId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Coupon',
+        ref: `${collections_1.collections.marketing.coupons}`,
         default: null
     },
     guestUserId: {
@@ -64,32 +65,32 @@ const cartOrderSchema = new mongoose_1.Schema({
     },
     shippingId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'CustomerAddress',
+        ref: `${collections_1.collections.customer.customeraddresses}`,
         default: null
     },
     billingId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'CustomerAddress',
+        ref: `${collections_1.collections.customer.customeraddresses}`,
         default: null
     },
     stateId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'States',
+        ref: `${collections_1.collections.setup.states}`,
         default: null
     },
     cityId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Cities',
+        ref: `${collections_1.collections.setup.states}`,
         default: null
     },
     pickupStoreId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Store',
+        ref: `${collections_1.collections.stores.stores}`,
         default: null
     },
     paymentMethodId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'PaymentMethods',
+        ref: `${collections_1.collections.cart.paymentmethods}`,
         default: null
     },
     orderComments: {
@@ -259,5 +260,5 @@ const cartOrderSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const CartOrdersModel = mongoose_1.default.model('CartOrders', cartOrderSchema);
+const CartOrdersModel = mongoose_1.default.model(`${collections_1.collections.cart.cartorders}`, cartOrderSchema);
 exports.default = CartOrdersModel;

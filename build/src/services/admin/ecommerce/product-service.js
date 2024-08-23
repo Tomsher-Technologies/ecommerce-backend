@@ -3,11 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
 const pagination_1 = require("../../../components/pagination");
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const product_gallery_images_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-gallery-images-model"));
-const inventry_pricing_model_1 = __importDefault(require("../../../model/admin/ecommerce/inventry-pricing-model"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const product_config_1 = require("../../../utils/config/product-config");
 const common_config_1 = require("../../../utils/config/common-config");
 const multi_languages_1 = require("../../../constants/multi-languages");
@@ -146,40 +145,6 @@ class ProductsService {
     }
     async destroyGalleryImages(gallaryImageID) {
         return product_gallery_images_model_1.default.findOneAndDelete({ _id: gallaryImageID });
-    }
-    async findInventryPricingByProductId(_id, productId) {
-        let query = {};
-        if (_id) {
-            query._id = _id;
-        }
-        if (productId) {
-            query.productId = productId;
-        }
-        return await inventry_pricing_model_1.default.find(query);
-    }
-    async inventryDetailsService(productId, inventryDetails) {
-        try {
-            const existingEntries = await inventry_pricing_model_1.default.find({ productId: productId });
-            const inventryPricingPromises = await Promise.all(inventryDetails.map(async (data) => {
-                const existingEntry = existingEntries.find(entry => entry.countryID.toString() === data.countryID.toString());
-                if (existingEntry) {
-                    await inventry_pricing_model_1.default.updateOne({ _id: existingEntry._id }, { ...data, productId: productId });
-                }
-                else {
-                    await inventry_pricing_model_1.default.create({ ...data, productId: productId });
-                }
-            }));
-            await Promise.all(inventryPricingPromises);
-            const countryIDsToRemove = existingEntries
-                .filter(entry => !inventryDetails.some((data) => data.countryID.toString() === entry.countryID.toString()))
-                .map(entry => entry.countryID);
-            await inventry_pricing_model_1.default.deleteMany({ productId: productId, countryID: { $in: countryIDsToRemove } });
-            return await inventry_pricing_model_1.default.find({ productId: productId });
-        }
-        catch (error) {
-            console.error('Error in inventryDetailsService:', error);
-            throw error;
-        }
     }
     async updateWebsitePriority(container1, columnKey) {
         try {

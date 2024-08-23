@@ -8,6 +8,7 @@ const response_status_1 = require("../../../src/components/response-status");
 const product_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/product-controller"));
 const category_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/category-controller"));
 const brand_controller_1 = __importDefault(require("../../../src/controllers/frontend/guest/brand-controller"));
+const frontend_auth_middleware_1 = require("../../../middleware/frontend/frontend-auth-middleware");
 const router = express_1.default.Router();
 router.get('/category', response_status_1.logResponseStatus, category_controller_1.default.findAllCategory);
 router.get('/find-category/:slug', response_status_1.logResponseStatus, category_controller_1.default.findOne);
@@ -17,7 +18,8 @@ router.get('/specification', response_status_1.logResponseStatus, product_contro
 router.get('/product-detail/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetail);
 router.get('/product-detail-specification/:slug', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSpecification);
 router.get('/product-detail-seo/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSeo);
-router.get('/product-list', response_status_1.logResponseStatus, product_controller_1.default.findAllProducts);
+router.get('/product-list', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.findAllProducts);
+router.get('/you-may-like-also', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.youMayLikeAlso);
 router.get('/related-products', response_status_1.logResponseStatus, product_controller_1.default.relatedProducts);
 router.get('/all-product-variants-list-with-basic-details', response_status_1.logResponseStatus, product_controller_1.default.findAllProductVariantsListWithBasicDetails);
 exports.default = router;
