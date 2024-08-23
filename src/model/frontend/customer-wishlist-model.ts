@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../constants/collections';
 
 export interface CustomerWishlistModelProps extends Document {
     userId: Schema.Types.ObjectId;
@@ -21,17 +22,17 @@ const wishlistSchema: Schema<CustomerWishlistModelProps> = new Schema({
     },
     userId: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref:`${collections.customer.customers}`,
         default: null
     },
     productId: {
         type: Schema.Types.ObjectId,
-        ref: 'Products',
+        ref:`${collections.ecommerce.products}`,
         required: true,
     },
     variantId: {
         type: Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections.ecommerce.products.productvariants}`,
         required: true
     },
     slug: {
@@ -57,6 +58,6 @@ const wishlistSchema: Schema<CustomerWishlistModelProps> = new Schema({
     }
 });
 
-const CustomerWishlistModel = mongoose.model<CustomerWishlistModelProps>('Wishlist', wishlistSchema);
+const CustomerWishlistModel = mongoose.model<CustomerWishlistModelProps>(`${collections.customer.wishlists}`, wishlistSchema);
 
 export default CustomerWishlistModel;

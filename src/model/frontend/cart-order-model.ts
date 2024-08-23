@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../constants/collections';
 
 export interface CartOrderProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -60,11 +61,11 @@ export interface CartOrderProps extends Document {
 const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
     },
     customerId: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections.customer.customers}`,
         default: null
     },
     orderId: {
@@ -82,7 +83,7 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     couponId: {
         type: Schema.Types.ObjectId,
-        ref: 'Coupon',
+        ref: `${collections.marketing.coupons}`,
         default: null
     },
     guestUserId: {
@@ -96,32 +97,32 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     },
     shippingId: {
         type: Schema.Types.ObjectId,
-        ref: 'CustomerAddress',
+        ref: `${collections.customer.customeraddresses}`,
         default: null
     },
     billingId: {
         type: Schema.Types.ObjectId,
-        ref: 'CustomerAddress',
+        ref: `${collections.customer.customeraddresses}`,
         default: null
     },
     stateId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'States',
+        ref: `${collections.setup.states}`,
         default: null
     },
     cityId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Cities',
+        ref: `${collections.setup.states}`,
         default: null
     },
     pickupStoreId: {
         type: Schema.Types.ObjectId,
-        ref: 'Store',
+        ref: `${collections.stores.stores}`,
         default: null
     },
     paymentMethodId: {
         type: Schema.Types.ObjectId,
-        ref: 'PaymentMethods',
+        ref: `${collections.cart.paymentmethods}`,
         default: null
     },
     orderComments: {
@@ -292,6 +293,6 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     }
 });
 
-const CartOrdersModel = mongoose.model<CartOrderProps>('CartOrders', cartOrderSchema);
+const CartOrdersModel = mongoose.model<CartOrderProps>(`${collections.cart.cartorders}`, cartOrderSchema);
 
 export default CartOrdersModel;

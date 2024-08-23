@@ -19,6 +19,7 @@ import CollectionsCategoriesModel from '../../../model/admin/website/collections
 import CommonService from '../../../services/frontend/guest/common-service';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
+import SearchQueriesModel from '../../../model/frontend/search-query-model';
 
 
 class ProductService {
@@ -375,6 +376,50 @@ class ProductService {
 
     }
 
+    async insertOrUpdateSearchQuery(
+        keyword: string,
+        customerId: mongoose.Types.ObjectId | null,
+        guestUserId?: string
+    ) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+            const query = {
+                $or: [
+                    { customerId, searchQuery: keyword },
+                    { guestUserId, searchQuery: keyword }
+                ]
+            };
+
+            const update = {
+                $set: {
+                    searchQuery: keyword,
+                    lastSearchedAt: new Date(),
+                    ...(customerId ? { customerId } : {}),
+                    ...(guestUserId ? { guestUserId } : {})
+                },
+                $inc: { searchCount: 1 }
+            };
+
+            const searchQuery = await SearchQueriesModel.findOneAndUpdate(
+                query,
+                update,
+                {
+                    upsert: true,
+                    new: true,
+                    session 
+                }
+            );
+
+            await session.commitTransaction();
+            session.endSession();
+
+            return searchQuery;
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+        }
+    }
 
     async findAllAttributes(options: any): Promise<ProductsProps[]> {
         let { query, hostName } = pagination(options.query || {}, options);

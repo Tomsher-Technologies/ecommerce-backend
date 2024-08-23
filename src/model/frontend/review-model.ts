@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../constants/collections';
 
 export interface ReviewProps extends Document {
     customerId: Schema.Types.ObjectId;
@@ -20,17 +21,17 @@ export interface ReviewProps extends Document {
 const reviewSchema: Schema<ReviewProps> = new Schema({
     customerId: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections.customer.customers}`,
         required: true
     },
     productId: {
         type: Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections.ecommerce.products}`,
         required: true,
     },
     variantId: {
         type: Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections.ecommerce.products.productvariants}`,
         required: true,
     },
     reviewTitle: {
@@ -76,5 +77,5 @@ const reviewSchema: Schema<ReviewProps> = new Schema({
 });
 
 
-const ReviewModel = mongoose.model<ReviewProps>('Reviews', reviewSchema);
+const ReviewModel = mongoose.model<ReviewProps>(`${collections.ecommerce.reviews}`, reviewSchema);
 export default ReviewModel;

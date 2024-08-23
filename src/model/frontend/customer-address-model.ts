@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ADDRESS_MODES, ADDRESS_TYPES } from '../../constants/customer';
+import { collections } from '../../constants/collections';
 
 export interface CustomerAddressProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -31,22 +32,22 @@ export interface CustomerAddressProps extends Document {
 const customerAddressSchema: Schema<CustomerAddressProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
         required: true
     },
     customerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections.customer.customers}`,
         required: [true, 'Customer ID is required'],
     },
     stateId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'States',
+        ref: `${collections.setup.states}`,
         default: null
     },
     cityId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Cities',
+        ref: `${collections.setup.cities}`,
         default: null
     },
     addressType: {

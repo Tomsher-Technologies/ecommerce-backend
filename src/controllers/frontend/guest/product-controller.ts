@@ -3,22 +3,21 @@ import { Request, Response } from 'express';
 
 import BaseController from '../../admin/base-controller';
 import ProductService from '../../../services/frontend/guest/product-service'
-import { ProductsFrontendQueryParams, ProductsQueryParams } from '../../../utils/types/products';
+import { ProductsFrontendQueryParams } from '../../../utils/types/products';
 import CommonService from '../../../services/frontend/guest/common-service';
 import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
-import SeoPageModel, { SeoPageProps } from '../../../model/admin/seo-page-model';
+import SeoPageModel from '../../../model/admin/seo-page-model';
 import ProductGalleryImagesModel from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
-import { collections } from '../../../constants/collections';
 import { frontendSpecificationLookup } from '../../../utils/config/specification-config';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import { frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
-import { productDetailsWithVariant } from '../../../utils/config/product-config';
-const controller = new BaseController();
+import SearchQueriesModel from '../../../model/frontend/search-query-model';
 
+const controller = new BaseController();
 class ProductController extends BaseController {
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
@@ -63,6 +62,10 @@ class ProductController extends BaseController {
                         ],
                         ...query
                     } as any;
+                    const customer = null;
+                    const guestUser = res.locals.uuid || null;
+                    
+                    await ProductService.insertOrUpdateSearchQuery(keyword, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
                 }
 
                 if (category) {
@@ -730,6 +733,91 @@ class ProductController extends BaseController {
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
         }
+    }
+
+    async youMayLikeAlso(req: Request, res: Response): Promise<void> {
+        const { getbrand = '0', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query as ProductsFrontendQueryParams;
+        const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Error',
+                validation: 'Country is missing'
+            }, req);
+        }
+        const customerId = res.locals.user || null;
+        const guestUserId = res.locals.uuid || null;
+        const searchQueryFilter: any = {
+            $or: [
+                { customerId },
+                { guestUserId }
+            ]
+        };
+        console.log('res.locals', res.locals);
+
+        const searchQueries = await SearchQueriesModel.find(searchQueryFilter);
+        let keywords = searchQueries.map(query => query.searchQuery).filter(Boolean);
+        if (keywords.length === 0) {
+            const topSearchQueries = await SearchQueriesModel.find().sort({ searchCount: -1 }).limit(10).exec();
+            if (topSearchQueries.length === 0) {
+                const randomProducts = await ProductService.findProductList({
+                    countryId,
+                    query: { _id: { $exists: true } },
+                    getattribute,
+                    getspecification,
+                    getbrand,
+                    page: 1,
+                    limit: parseInt(limit as string),
+                    hostName: req.get('origin'),
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: randomProducts,
+                    message: 'No search queries or frequent queries found. Here are some random products!'
+                }, 200);
+            }
+            keywords = topSearchQueries.map(query => query.searchQuery).filter(Boolean);
+            if (keywords.length === 0) {
+                const randomProducts = await ProductService.findProductList({
+                    countryId,
+                    query: { _id: { $exists: true } },
+                    getattribute,
+                    getspecification,
+                    getbrand,
+                    page: 1,
+                    limit: parseInt(limit as string),
+                    hostName: req.get('origin'),
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: randomProducts,
+                    message: 'No valid search queries available. Here are some random products!'
+                }, 200);
+            }
+        }
+        const keywordRegex = new RegExp(keywords.join('|'), 'i');
+        const productQuery = {
+            _id: { $exists: true },
+            $or: [
+                { productTitle: keywordRegex },
+                { 'productCategory.category.categoryTitle': keywordRegex },
+                { 'brand.brandTitle': keywordRegex },
+                { 'productCategory.category.slug': keywordRegex },
+                { 'productVariants.extraProductTitle': keywordRegex },
+            ],
+            status: '1'
+        };
+        const productData: any = await ProductService.findProductList({
+            countryId,
+            query: productQuery,
+            getattribute,
+            getspecification,
+            getbrand,
+            page: parseInt(page_size as string),
+            limit: parseInt(limit as string),
+            hostName: req.get('origin'),
+        });
+        return controller.sendSuccessResponse(res, {
+            requestedData: productData,
+            message: 'Success!'
+        }, 200);
     }
 
     async relatedProducts(req: Request, res: Response): Promise<void> {

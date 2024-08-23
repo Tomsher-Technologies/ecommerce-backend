@@ -21,9 +21,11 @@ export const collections = {
         seopages: 'seopages',
         attributedetails: 'attributedetails',
         specificationdetails: 'specificationdetails',
+        reviews: 'reviews',
         offers: 'offers',
     },
     multilanguagefieleds: 'multilanguagefieleds',
+    searchQueries: 'searchqueries',
     customer: {
         customers: 'customers',
         wishlists: 'wishlists',
