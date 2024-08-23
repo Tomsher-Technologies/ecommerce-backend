@@ -24,20 +24,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../constants/collections");
 const reviewSchema = new mongoose_1.Schema({
     customerId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         required: true
     },
     productId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections_1.collections.ecommerce.products}`,
         required: true,
     },
     variantId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections_1.collections.ecommerce.products.productvariants}`,
         required: true,
     },
     reviewTitle: {
@@ -81,5 +82,5 @@ const reviewSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const ReviewModel = mongoose_1.default.model('Reviews', reviewSchema);
+const ReviewModel = mongoose_1.default.model(`${collections_1.collections.ecommerce.reviews}`, reviewSchema);
 exports.default = ReviewModel;

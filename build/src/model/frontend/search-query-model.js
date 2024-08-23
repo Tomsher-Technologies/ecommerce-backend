@@ -25,57 +25,31 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const collections_1 = require("../../constants/collections");
-const contactUsSchema = new mongoose_1.Schema({
-    countryId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: `${collections_1.collections.setup.countries}`,
-        required: [true, 'Country is required'],
-    },
+const searchQuerySchema = new mongoose_1.Schema({
     customerId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: `${collections_1.collections.customer.customers}`,
         default: null
     },
-    name: {
+    guestUserId: {
         type: String,
-        required: [true, 'Name is required'],
-        minlength: [1, 'Name is required'],
+        default: null
     },
-    email: {
+    searchQuery: {
         type: String,
-        required: [true, 'Email is required'],
-        match: [/.+@.+\..+/, 'Please provide a valid email address'],
+        required: true
     },
-    phone: {
-        type: String,
-        required: [true, 'Phone number is required'],
-        validate: {
-            validator: (value) => /^\d+$/.test(value) && value.length >= 9,
-            message: 'Phone number should contain only numbers and be at least 9 digits long',
-        },
+    searchCount: {
+        type: Number,
+        required: true
     },
-    subject: {
-        type: String,
-        required: [true, 'Subject is required'],
-        minlength: [3, 'Please enter at least 3 characters for the subject'],
-    },
-    message: {
-        type: String,
-        required: [true, 'Message is required'],
-        minlength: [3, 'Please enter at least 3 characters for the message'],
-    },
-    status: {
-        type: String,
-        default: '1' // Pending
+    lastSearchedAt: {
+        type: Date,
     },
     createdAt: {
         type: Date,
         default: Date.now
     },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
 });
-const ContactUsModel = mongoose_1.default.model('ContactUs', contactUsSchema);
-exports.default = ContactUsModel;
+const SearchQueriesModel = mongoose_1.default.model(collections_1.collections.searchQueries, searchQuerySchema);
+exports.default = SearchQueriesModel;

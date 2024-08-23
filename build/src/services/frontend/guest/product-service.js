@@ -21,6 +21,7 @@ const collections_categories_model_1 = __importDefault(require("../../../model/a
 const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
+const search_query_model_1 = __importDefault(require("../../../model/frontend/search-query-model"));
 class ProductService {
     async findProductList(productOption) {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
@@ -347,6 +348,39 @@ class ProductService {
         }
         else {
             return products;
+        }
+    }
+    async insertOrUpdateSearchQuery(keyword, customerId, guestUserId) {
+        const session = await mongoose_1.default.startSession();
+        session.startTransaction();
+        try {
+            const query = {
+                $or: [
+                    { customerId, searchQuery: keyword },
+                    { guestUserId, searchQuery: keyword }
+                ]
+            };
+            const update = {
+                $set: {
+                    searchQuery: keyword,
+                    lastSearchedAt: new Date(),
+                    ...(customerId ? { customerId } : {}),
+                    ...(guestUserId ? { guestUserId } : {})
+                },
+                $inc: { searchCount: 1 }
+            };
+            const searchQuery = await search_query_model_1.default.findOneAndUpdate(query, update, {
+                upsert: true,
+                new: true,
+                session
+            });
+            await session.commitTransaction();
+            session.endSession();
+            return searchQuery;
+        }
+        catch (error) {
+            await session.abortTransaction();
+            session.endSession();
         }
     }
     async findAllAttributes(options) {

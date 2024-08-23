@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../constants/collections");
 const wishlistSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -32,17 +33,17 @@ const wishlistSchema = new mongoose_1.Schema({
     },
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         default: null
     },
     productId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections_1.collections.ecommerce.products}`,
         required: true,
     },
     variantId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections_1.collections.ecommerce.products.productvariants}`,
         required: true
     },
     slug: {
@@ -67,5 +68,5 @@ const wishlistSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const CustomerWishlistModel = mongoose_1.default.model('Wishlist', wishlistSchema);
+const CustomerWishlistModel = mongoose_1.default.model(`${collections_1.collections.customer.wishlists}`, wishlistSchema);
 exports.default = CustomerWishlistModel;

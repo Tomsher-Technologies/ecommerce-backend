@@ -25,25 +25,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const wallet_1 = require("../../constants/wallet");
+const collections_1 = require("../../constants/collections");
 const customerWalletTransactionsSchema = new mongoose_1.Schema({
     customerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         required: true
     },
     referredCustomerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         default: null
     },
     referrerCustomerId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Customer',
+        ref: `${collections_1.collections.customer.customers}`,
         default: null
     },
     orderId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'CartOrders',
+        ref: `${collections_1.collections.cart.cartorders}`,
         default: null
     },
     earnType: {

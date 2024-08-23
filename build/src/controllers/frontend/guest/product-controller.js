@@ -17,6 +17,7 @@ const specification_config_1 = require("../../../utils/config/specification-conf
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 const attribute_config_1 = require("../../../utils/config/attribute-config");
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
+const search_query_model_1 = __importDefault(require("../../../model/frontend/search-query-model"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllProducts(req, res) {
@@ -61,6 +62,9 @@ class ProductController extends base_controller_1.default {
                         ],
                         ...query
                     };
+                    const customer = null;
+                    const guestUser = res.locals.uuid || null;
+                    await product_service_1.default.insertOrUpdateSearchQuery(keyword, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
                 }
                 if (category) {
                     const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
@@ -706,6 +710,89 @@ class ProductController extends base_controller_1.default {
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
         }
+    }
+    async youMayLikeAlso(req, res) {
+        const { getbrand = '0', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query;
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Error',
+                validation: 'Country is missing'
+            }, req);
+        }
+        const customerId = res.locals.user || null;
+        const guestUserId = res.locals.uuid || null;
+        const searchQueryFilter = {
+            $or: [
+                { customerId },
+                { guestUserId }
+            ]
+        };
+        console.log('res.locals', res.locals);
+        const searchQueries = await search_query_model_1.default.find(searchQueryFilter);
+        let keywords = searchQueries.map(query => query.searchQuery).filter(Boolean);
+        if (keywords.length === 0) {
+            const topSearchQueries = await search_query_model_1.default.find().sort({ searchCount: -1 }).limit(10).exec();
+            if (topSearchQueries.length === 0) {
+                const randomProducts = await product_service_1.default.findProductList({
+                    countryId,
+                    query: { _id: { $exists: true } },
+                    getattribute,
+                    getspecification,
+                    getbrand,
+                    page: 1,
+                    limit: parseInt(limit),
+                    hostName: req.get('origin'),
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: randomProducts,
+                    message: 'No search queries or frequent queries found. Here are some random products!'
+                }, 200);
+            }
+            keywords = topSearchQueries.map(query => query.searchQuery).filter(Boolean);
+            if (keywords.length === 0) {
+                const randomProducts = await product_service_1.default.findProductList({
+                    countryId,
+                    query: { _id: { $exists: true } },
+                    getattribute,
+                    getspecification,
+                    getbrand,
+                    page: 1,
+                    limit: parseInt(limit),
+                    hostName: req.get('origin'),
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: randomProducts,
+                    message: 'No valid search queries available. Here are some random products!'
+                }, 200);
+            }
+        }
+        const keywordRegex = new RegExp(keywords.join('|'), 'i');
+        const productQuery = {
+            _id: { $exists: true },
+            $or: [
+                { productTitle: keywordRegex },
+                { 'productCategory.category.categoryTitle': keywordRegex },
+                { 'brand.brandTitle': keywordRegex },
+                { 'productCategory.category.slug': keywordRegex },
+                { 'productVariants.extraProductTitle': keywordRegex },
+            ],
+            status: '1'
+        };
+        const productData = await product_service_1.default.findProductList({
+            countryId,
+            query: productQuery,
+            getattribute,
+            getspecification,
+            getbrand,
+            page: parseInt(page_size),
+            limit: parseInt(limit),
+            hostName: req.get('origin'),
+        });
+        return controller.sendSuccessResponse(res, {
+            requestedData: productData,
+            message: 'Success!'
+        }, 200);
     }
     async relatedProducts(req, res) {
         const { categories = '', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query;
