@@ -62,10 +62,8 @@ class GalleryImageController extends BaseController {
             const validatedData = galleryImageSchema.safeParse(req.body);
 
             if (validatedData.success) {
-                const { sourceFrom, sourceFromId, status, page, pageReference, } = validatedData.data;
+                const { imageTitle, sourceFrom, sourceFromId, status, page, pageReference, } = validatedData.data;
                 const user = res.locals.user;
-                // const galleryImage = (req as any).files.find((file: any) => file.fieldname === 'galleryImage');
-                // console.log(galleryImage);
                 const galleryImage = (req as any).files.filter((file: any) =>
                     file.fieldname &&
                     file.fieldname.startsWith('galleryImage')
@@ -74,9 +72,9 @@ class GalleryImageController extends BaseController {
                 if (galleryImage?.length > 0) {
                     const resultArray = []
                     for (let i = 0; i < galleryImage.length; i++) {
-
                         const galleryImageData = {
-                            galleryImageUrl: handleFileUpload(req, null, (req.file || galleryImage[i]), 'galleryImageUrl', 'galleryimages'),
+                            imageTitle: galleryImage[i].originalname,
+                            galleryImageUrl: handleFileUpload(req, null, (galleryImage[i]), 'galleryImageUrl', 'galleryimages'),
                             sourceFromId: sourceFromId === '' ? null : sourceFromId,
                             sourceFrom: sourceFrom,
                             page,
@@ -188,7 +186,7 @@ class GalleryImageController extends BaseController {
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
-        } catch (error: any) { 
+        } catch (error: any) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating galleryImage'
             }, req);
@@ -231,7 +229,7 @@ class GalleryImageController extends BaseController {
                     validation: formatZodError(validatedData.error.errors)
                 }, req);
             }
-        } catch (error: any) { 
+        } catch (error: any) {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating galleryImage'
             }, req);
@@ -248,7 +246,7 @@ class GalleryImageController extends BaseController {
 
                     return controller.sendSuccessResponse(res,
                         { message: 'Gallery Image deleted successfully!' },
-                        200, { 
+                        200, {
                         sourceFromId: galleryImageId,
                         sourceFrom: adminTaskLog.website.galleryimages,
                         activity: adminTaskLogActivity.delete,

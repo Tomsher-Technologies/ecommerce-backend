@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface GalleryImagesProps extends Document {
+    imageTitle: string;
     galleryImageUrl: string;
     sourceFrom: string;
     sourceFromId: Schema.Types.ObjectId;
@@ -14,6 +15,10 @@ export interface GalleryImagesProps extends Document {
 }
 
 const gallaryImagesSchema: Schema<GalleryImagesProps> = new Schema({
+    imageTitle: {
+        type: String,
+        default: ''
+    },
     galleryImageUrl: {
         type: String,
         default: ''
