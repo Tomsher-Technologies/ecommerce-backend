@@ -198,7 +198,7 @@ class OrdersController extends BaseController {
         const userData = await res.locals.user;
         let query: any = {
             _id: { $exists: true },
-            'cartDetails.orderStatus': orderProductStatusJson.delivered,
+            // 'cartDetails.orderStatus': orderProductStatusJson.delivered,
             'cartDetails.cartStatus': { $ne: cartStatusJson.active },
             $or: [
                 { orderRequestedProductQuantity: { $gt: 0 } },
@@ -1007,15 +1007,25 @@ class OrdersController extends BaseController {
                 });
             }
 
-            if (orderStatusArrayJson.canceled === orderStatus && ([
-                orderStatusArrayJson.pending,
+            const nonCancelableStatuses = [
                 orderStatusArrayJson.processing,
                 orderStatusArrayJson.packed,
                 orderStatusArrayJson.shipped,
                 orderStatusArrayJson.pickup,
-            ].includes(orderDetails.orderStatus))) {
+                orderStatusArrayJson.delivered,
+                orderStatusArrayJson.returned,
+                orderStatusArrayJson.refunded,
+                orderStatusArrayJson.partiallyShipped,
+                orderStatusArrayJson.onHold,
+                orderStatusArrayJson.failed,
+                orderStatusArrayJson.completed,
+                orderStatusArrayJson.partiallyDelivered,
+                orderStatusArrayJson.partiallyReturned,
+                orderStatusArrayJson.partiallyRefunded,
+            ];
+            if (orderStatus === orderStatusArrayJson.canceled && nonCancelableStatuses.includes(orderDetails.orderStatus)) {
                 return controller.sendErrorResponse(res, 200, {
-                    message: 'Cannot change the status Canceled Order'
+                    message: 'Cannot change the status of a Canceled Order',
                 });
             }
             // Ensure that Completed status is only possible after Delivered

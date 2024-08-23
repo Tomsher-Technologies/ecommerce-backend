@@ -6,6 +6,7 @@ import userPermissionMiddleware from '../../../middleware/admin/admin-user-permi
 import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
 import OrdersController from '../../../src/controllers/admin/order/order-controller';
+import TransactionsController from '../../../src/controllers/admin/order/transactions-controller';
 
 const router: Router = express.Router();
 router.get('/invoice-detail/:id', OrdersController.getInvoice);
@@ -20,6 +21,7 @@ router.post('/order-return-status-change/:id', userPermissionMiddleware({ permis
 router.post('/order-quantity-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, writeOnly: 1 }), OrdersController.orderProductReturnQuantityChange);
 router.post('/order-product-status-change/:orderID/:orderProductId', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, writeOnly: 1 }), OrdersController.orderProductStatusChange);
 router.post('/order-product-cancel-status-change/:orderID/:orderProductId', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.orders, writeOnly: 1 }), OrdersController.orderProductCancelStatusChange);
+router.get('/payment-transactions', userPermissionMiddleware({ permissionBlock: permissionBlocks.orders.paymentTransactions, writeOnly: 1 }), TransactionsController.findAll);
 
 
 export default router;

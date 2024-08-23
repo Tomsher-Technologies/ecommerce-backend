@@ -23,9 +23,9 @@ class ContactUsService {
             cart_order_config_1.customerLookup,
             { $unwind: { path: "$country", preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
+            { $sort: finalSort },
             { $skip: skip },
             { $limit: limit },
-            { $sort: finalSort },
             {
                 $project: {
                     _id: 1,
@@ -43,6 +43,7 @@ class ContactUsService {
                     "country.slug": 1,
                     "country.countryCode": 1,
                     "country.currencyCode": 1,
+                    "country.countryShortTitle": 1,
                     "customer": 1,
                 }
             }

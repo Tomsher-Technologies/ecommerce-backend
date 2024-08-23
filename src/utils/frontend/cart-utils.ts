@@ -44,54 +44,6 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { tota
             "url": `${process.env.APP_API_URL}/api/common/tap-success-response`
         }
     }
-
-    // {
-
-    //     "amount": cartData.totalAmount,
-    //     "currency": countryData.currencyCode,
-    //     "customer_initiated": "true",
-    //     "threeDSecure": true,
-    //     "save_card": false,
-    //     "statement_descriptor": "sample",
-    //     "metadata": {
-    //         "udf1": "test_data_1",
-    //         "udf2": "test_data_2",
-    //         "udf3": "test_data_3"
-    //     },
-    //     "reference": {
-    //         "transaction": cartData._id,
-    //         "order": cartData._id
-    //     },
-    //     "receipt": {
-    //         "email": true,
-    //         "sms": true
-    //     },
-    //     "customer": {
-    //         "first_name": customerDetails.firstName,
-    //         "email": customerDetails.email,
-    //         "phone": {
-    //             "country_code": countryData.countryCode,
-    //             "number": customerDetails.phone
-    //         }
-    //     },
-    //     "merchant": {
-    //         "id": paymentMethodValues.merchantCode
-    //     },
-    //     "source": {
-    //         "id": "src_card"
-    //     },
-    //     "authorize_debit": false,
-    //     "auto": {
-    //         "type": "VOID",
-    //         "time": 100
-    //     },
-    //     "post": {
-    //         "url": `${process.env.APP_API_URL}/api/common/tap-success-response`
-    //     },
-    //     "redirect": {
-    //         "url": `${process.env.APP_API_URL}/api/common/tap-success-response`
-    //     }
-    // }
 }
 
 export const tabbyPaymentGatwayDefaultValues = (countryData: any,

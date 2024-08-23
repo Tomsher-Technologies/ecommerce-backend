@@ -22,4 +22,7 @@ export interface OrderQueryParams {
     fromDate?: string;
     endDate?: string;
     orderStatus?: string;
+    paymentTransactionId?: string;
+    paymentFromDate?: string;
+    paymentEndDate?: string;
 }

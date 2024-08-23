@@ -7,7 +7,7 @@ import { dateConvertPm, getCountryId } from '../../../utils/helpers';
 import BaseController from '../../../controllers/admin/base-controller';
 import CustomerService from '../../../services/admin/customer/customer-service'
 
-import { QueryParams, QueryParamsWithPage } from '../../../utils/types/common';
+import { QueryParams } from '../../../utils/types/common';
 import DashboardService from '../../../services/admin/dashboard/dashboard-service';
 import { DashboardQueryParams } from '../../../utils/types/dashboard';
 import OrderService from '../../../services/admin/order/order-service'

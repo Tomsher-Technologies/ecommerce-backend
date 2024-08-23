@@ -13,7 +13,7 @@ const controller = new base_controller_1.default();
 class ContactUsController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', page = '', pageReference = '', countryId = '' } = req.query;
+            const { page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '', countryId = '', subject = '' } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -33,19 +33,18 @@ class ContactUsController extends base_controller_1.default {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
                     $or: [
-                        { email: keywordRegex }
+                        { email: keywordRegex },
+                        { subject: keywordRegex },
+                        { message: keywordRegex },
+                        { phone: keywordRegex },
+                        { name: keywordRegex }
                     ],
                     ...query
                 };
             }
-            if (page) {
+            if (subject) {
                 query = {
-                    ...query, page: page
-                };
-            }
-            if (pageReference) {
-                query = {
-                    ...query, pageReference: pageReference
+                    ...query, subject: subject
                 };
             }
             const sort = {};

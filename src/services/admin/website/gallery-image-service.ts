@@ -1,9 +1,7 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
-import { multiLanguageSources } from '../../../constants/multi-languages';
 
 import GalleryImageModel, { GalleryImagesProps } from '../../../model/admin/website/gallery-image-model';
-import { capitalizeWords, slugify } from '../../../utils/helpers';
 
 
 class GalleryImageService {

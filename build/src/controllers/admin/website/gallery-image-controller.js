@@ -55,17 +55,16 @@ class GalleryImageController extends base_controller_1.default {
         try {
             const validatedData = gallery_image_schema_1.galleryImageSchema.safeParse(req.body);
             if (validatedData.success) {
-                const { sourceFrom, sourceFromId, status, page, pageReference, } = validatedData.data;
+                const { imageTitle, sourceFrom, sourceFromId, status, page, pageReference, } = validatedData.data;
                 const user = res.locals.user;
-                // const galleryImage = (req as any).files.find((file: any) => file.fieldname === 'galleryImage');
-                // console.log(galleryImage);
                 const galleryImage = req.files.filter((file) => file.fieldname &&
                     file.fieldname.startsWith('galleryImage'));
                 if (galleryImage?.length > 0) {
                     const resultArray = [];
                     for (let i = 0; i < galleryImage.length; i++) {
                         const galleryImageData = {
-                            galleryImageUrl: (0, helpers_1.handleFileUpload)(req, null, (req.file || galleryImage[i]), 'galleryImageUrl', 'galleryimages'),
+                            imageTitle: galleryImage[i].originalname,
+                            galleryImageUrl: (0, helpers_1.handleFileUpload)(req, null, (galleryImage[i]), 'galleryImageUrl', 'galleryimages'),
                             sourceFromId: sourceFromId === '' ? null : sourceFromId,
                             sourceFrom: sourceFrom,
                             page,
