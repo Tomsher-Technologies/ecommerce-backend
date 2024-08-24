@@ -64,6 +64,7 @@ class ProductController extends base_controller_1.default {
                     };
                     const customer = null;
                     const guestUser = res.locals.uuid || null;
+                    console.log('keyword', keyword);
                     await product_service_1.default.insertOrUpdateSearchQuery(keyword, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
                 }
                 if (category) {

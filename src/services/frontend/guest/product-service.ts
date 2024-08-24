@@ -381,45 +381,35 @@ class ProductService {
         customerId: mongoose.Types.ObjectId | null,
         guestUserId?: string
     ) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-        try {
-            const query = {
-                $or: [
-                    { customerId, searchQuery: keyword },
-                    { guestUserId, searchQuery: keyword }
-                ]
-            };
+        const query = {
+            $or: [
+                { customerId, searchQuery: keyword },
+                { guestUserId, searchQuery: keyword }
+            ]
+        };
 
-            const update = {
-                $set: {
-                    searchQuery: keyword,
-                    lastSearchedAt: new Date(),
-                    ...(customerId ? { customerId } : {}),
-                    ...(guestUserId ? { guestUserId } : {})
-                },
-                $inc: { searchCount: 1 }
-            };
+        const update = {
+            $set: {
+                searchQuery: keyword,
+                lastSearchedAt: new Date(),
+                ...(customerId ? { customerId } : {}),
+                ...(guestUserId ? { guestUserId } : {})
+            },
+            $inc: { searchCount: 1 }
+        };
 
-            const searchQuery = await SearchQueriesModel.findOneAndUpdate(
-                query,
-                update,
-                {
-                    upsert: true,
-                    new: true,
-                    session
-                }
-            );
-            console.log('searchQuery',searchQuery);
+        const searchQuery = await SearchQueriesModel.findOneAndUpdate(
+            query,
+            update,
+            {
+                upsert: true,
+                new: true,
+            }
+        );
+        console.log('searchQuery', searchQuery);
 
-            await session.commitTransaction();
-            session.endSession();
 
-            return searchQuery;
-        } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-        }
+        return searchQuery;
     }
 
     async findAllAttributes(options: any): Promise<ProductsProps[]> {

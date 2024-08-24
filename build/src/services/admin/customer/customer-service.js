@@ -16,35 +16,28 @@ class CustomerService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        const pipeline = [
-            customer_config_1.whishlistLookup,
-            customer_config_1.orderLookup,
-            customer_config_1.addField,
-            customer_config_1.customerProject,
-            ...customer_config_1.reportOrderLookup,
-            ...((isExcel === '1') ? [customer_config_1.addressLookup] : []),
-            { $match: query },
-            {
-                $facet: {
-                    customerData: [
-                        { $skip: skip },
-                        { $limit: limit },
-                        { $sort: finalSort }
-                    ],
-                    totalCount: [
-                        { $count: 'count' }
-                    ]
-                }
-            },
-            {
-                $project: {
-                    customerData: 1,
-                    totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
-                }
+        const pipeline = [];
+        if (!options?.includeLookups) {
+            pipeline.push(customer_config_1.whishlistLookup, customer_config_1.orderLookup, customer_config_1.addField, ...customer_config_1.reportOrderLookup, ...(isExcel === '1' ? [customer_config_1.addressLookup] : []));
+        }
+        pipeline.push(customer_config_1.customerProject, { $match: query }, {
+            $facet: {
+                customerData: [
+                    { $sort: finalSort },
+                    { $skip: skip },
+                    { $limit: limit },
+                ],
+                totalCount: [
+                    { $count: 'count' }
+                ]
             }
-        ];
+        }, {
+            $project: {
+                customerData: 1,
+                totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
+            }
+        });
         const createdCartWithValues = await customers_model_1.default.aggregate(pipeline);
-        console.log(createdCartWithValues);
         return createdCartWithValues;
     }
     async getTotalCount(query = {}) {
