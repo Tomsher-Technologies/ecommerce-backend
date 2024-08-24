@@ -5,7 +5,7 @@ import { whishlistLookup, customerProject, addField, orderLookup, billingLookup,
 
 
 class CustomerService {
-    async findAll(options: FilterOptionsProps = {}, isExcel?: any): Promise<CustomrProps[]> {
+    async findAll(options: any = {}, isExcel?: any): Promise<CustomrProps[]> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -14,20 +14,21 @@ class CustomerService {
             finalSort = defaultSort;
         }
 
-        const pipeline: any[] = [
-            whishlistLookup,
-            orderLookup,
-            addField,
+        const pipeline: any[] = [];
+
+        if (!options?.includeLookups) {
+            pipeline.push(whishlistLookup, orderLookup, addField, ...reportOrderLookup, ...(isExcel === '1' ? [addressLookup] : []));
+        }
+
+        pipeline.push(
             customerProject,
-            ...reportOrderLookup,
-            ...((isExcel === '1') ? [addressLookup] : []),
             { $match: query },
             {
                 $facet: {
                     customerData: [
+                        { $sort: finalSort },
                         { $skip: skip },
                         { $limit: limit },
-                        { $sort: finalSort }
                     ],
                     totalCount: [
                         { $count: 'count' }
@@ -40,12 +41,12 @@ class CustomerService {
                     totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
                 }
             }
-        ];
-        const createdCartWithValues = await CustomerModel.aggregate(pipeline);
-        console.log(createdCartWithValues);
+        );
 
+        const createdCartWithValues = await CustomerModel.aggregate(pipeline);
         return createdCartWithValues;
     }
+
 
     async getTotalCount(query: any = {}): Promise<number> {
         try {
