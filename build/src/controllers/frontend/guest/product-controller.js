@@ -64,7 +64,6 @@ class ProductController extends base_controller_1.default {
                     };
                     const customer = null;
                     const guestUser = res.locals.uuid || null;
-                    console.log('keyword', keyword);
                     await product_service_1.default.insertOrUpdateSearchQuery(keyword, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
                 }
                 if (category) {
@@ -729,7 +728,6 @@ class ProductController extends base_controller_1.default {
                 { guestUserId }
             ]
         };
-        console.log('res.locals', res.locals);
         const searchQueries = await search_query_model_1.default.find(searchQueryFilter);
         let keywords = searchQueries.map(query => query.searchQuery).filter(Boolean);
         if (keywords.length === 0) {
@@ -745,6 +743,7 @@ class ProductController extends base_controller_1.default {
                     limit: parseInt(limit),
                     hostName: req.get('origin'),
                 });
+                console.log('randomProducts', randomProducts);
                 return controller.sendSuccessResponse(res, {
                     requestedData: randomProducts,
                     message: 'No search queries or frequent queries found. Here are some random products!'

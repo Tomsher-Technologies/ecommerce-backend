@@ -328,12 +328,12 @@
                 <% orderDetails.products.forEach((product, index) => { %>
                 <tr>
                     <td><%= index + 1 %></td>
-                    <td><img src="<%= appUrl%>/<% if (product.productDetails.variantDetails.variantImageUrl &&
+                    <td><img src="<% if (product.productDetails.variantDetails.variantImageUrl &&
                         product.productDetails.variantDetails.variantImageUrl !=='' ) { %>
-                        <%= product.productDetails.variantDetails.variantImageUrl %>
+                            <%= apiAppUrl%><%= product.productDetails.variantDetails.variantImageUrl %>
                           <% } else { %>
-                            <%= product.productDetails.productImageUrl %>
-                              <% } %>" class="product-img" alt="Product Image"></td>
+                            <%= apiAppUrl%><%= product.productDetails.productImageUrl %>
+                              <% } %>" class="product-img" alt="Product Image" crossorigin="anonymous"></td>
                     <td><% if (product.productDetails.variantDetails.extraProductTitle &&
                         product.productDetails.variantDetails.extraProductTitle !=='' ) { %>
                         <%= product.productDetails.variantDetails.extraProductTitle %>

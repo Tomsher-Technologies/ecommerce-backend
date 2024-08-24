@@ -347,28 +347,39 @@ class ProductService {
             });
         }
 
+        const dataPipeline: any[] = [{ $match: {} }];
+
+        if (skip) {
+            dataPipeline.push({ $skip: skip });
+        }
+
+        if (limit) {
+            dataPipeline.push({ $limit: limit });
+        }
+
         pipeline.push({
             $facet: {
-                data: [
-                    { $match: {} },
-                    ...(isCount === 1 ? [{ $skip: skip }, { $limit: limit }] : []),
-                ],
-                totalCount: [{ $count: "totalCount" }],
-
+                data: dataPipeline,
+                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
             },
         },
-            {
+            (isCount === 1 ? {
                 $project: {
                     data: 1,
                     totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
                 }
-            }
+            } :
+                {
+                    $project: {
+                        data: 1,
+                    }
+                })
         )
 
         productData = await ProductsModel.aggregate(pipeline).exec();
         const products = productData[0].data;
-        const totalCount = productData[0].totalCount;
         if (isCount == 1) {
+            const totalCount = productData[0].totalCount;
             return { products, totalCount }
         } else {
             return products
@@ -406,9 +417,6 @@ class ProductService {
                 new: true,
             }
         );
-        console.log('searchQuery', searchQuery);
-
-
         return searchQuery;
     }
 
