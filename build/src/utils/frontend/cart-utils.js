@@ -56,7 +56,7 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
             },
             "buyer_history": {
                 "registered_since": "2019-08-24T14:15:22Z",
-                "loyalty_level": cartData.totalCustomerBuyedCount,
+                "loyalty_level": cartData?.totalCustomerBuyedCount || 0,
                 "wishlist_count": 0,
                 "is_social_networks_connected": true,
                 "is_phone_number_verified": true,

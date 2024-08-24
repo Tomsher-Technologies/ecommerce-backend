@@ -72,8 +72,8 @@ class TransactionsController extends base_controller_1.default {
                 sort
             });
             controller.sendSuccessResponse(res, {
-                requestedData: transactions,
-                // totalCount: await SpecificationService.getTotalCount(query),
+                requestedData: transactions.data,
+                totalCount: transactions.total,
                 message: 'Success!'
             }, 200);
         }

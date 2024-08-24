@@ -24,11 +24,28 @@ class TransactionService {
             { $unwind: { path: "$paymentMethodId", preserveNullAndEmptyArrays: true } },
             cart_order_config_1.orderPaymentTransactionProject,
             { $match: query },
-            { $sort: finalSort },
-            { $skip: skip },
-            { $limit: limit },
+            {
+                $facet: {
+                    data: [
+                        { $sort: finalSort },
+                        { $skip: skip },
+                        { $limit: limit },
+                    ],
+                    total: [{ $count: "count" }]
+                }
+            },
+            {
+                $project: {
+                    data: 1,
+                    total: { $arrayElemAt: ["$total.count", 0] }
+                }
+            }
         ];
-        return payment_transaction_model_1.default.aggregate(pipeline).exec();
+        const result = await payment_transaction_model_1.default.aggregate(pipeline).exec();
+        return {
+            total: result[0]?.total || 0,
+            data: result[0]?.data || []
+        };
     }
 }
 exports.default = new TransactionService();
