@@ -2,6 +2,7 @@ export const page = [
     { value: 'home', label: "Home" },
     { value: 'header', label: "Header" },
     { value: 'footer', label: "Footer" },
+    { value: 'search', label: "Search" },
     { value: 'product-list', label: "Product List" },
     { value: 'product-details', label: "Product Details" },
     { value: 'cart', label: "Cart" },

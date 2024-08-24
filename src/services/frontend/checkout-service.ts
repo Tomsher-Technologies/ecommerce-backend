@@ -124,7 +124,8 @@ class CheckoutService {
                 totalShippingAmount: cartDetails?.totalShippingAmount,
                 totalCouponAmount: cartDetails.totalCouponAmount > 0 ? cartDetails.totalCouponAmount : 0,
                 couponId: cartDetails?.couponId,
-                paymentMethodId: cartDetails?.paymentMethodId
+                paymentMethodId: cartDetails?.paymentMethodId,
+                pickupStoreId: cartDetails?.pickupStoreId
             }
             if (!paymentSuccess) {
                 cartUpdate = {
@@ -284,7 +285,10 @@ class CheckoutService {
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
                     const taxDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
+                    let pickupStoreDetails = null
+                    if (cartUpdate.pickupStoreId) {
 
+                    }
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,

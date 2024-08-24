@@ -117,7 +117,8 @@ class CheckoutService {
                 totalShippingAmount: cartDetails?.totalShippingAmount,
                 totalCouponAmount: cartDetails.totalCouponAmount > 0 ? cartDetails.totalCouponAmount : 0,
                 couponId: cartDetails?.couponId,
-                paymentMethodId: cartDetails?.paymentMethodId
+                paymentMethodId: cartDetails?.paymentMethodId,
+                pickupStoreId: cartDetails?.pickupStoreId
             };
             if (!paymentSuccess) {
                 cartUpdate = {
@@ -272,6 +273,9 @@ class CheckoutService {
                     }
                     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
                     const taxDetails = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
+                    let pickupStoreDetails = null;
+                    if (cartUpdate.pickupStoreId) {
+                    }
                     ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
                         orderId: orderId,

@@ -289,13 +289,10 @@ class CheckoutController extends BaseController {
                                         orderStatus: orderPaymentStatus.pending, // Pending
                                         createdAt: new Date(),
                                     });
-                                    console.log('paymentTransaction', paymentTransaction);
-
                                     if (!paymentTransaction) {
                                         return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                     }
                                 } else {
-                                    console.log('tabbyResponse', tabbyResponse);
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
 
@@ -374,7 +371,15 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && (paymentMethod.slug == paymentMethods.cashOnDelivery || paymentMethod.slug == paymentMethods.cardOnDelivery)) {
-                    await CheckoutService.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails, shippingAddressDetails, countryData }, true)
+                    await CheckoutService.cartUpdation({
+                        ...updateCart.toObject(),
+                        products: cartDetails.products,
+                        customerDetails,
+                        paymentMethod,
+                        shippingChargeDetails,
+                        shippingAddressDetails,
+                        countryData
+                    }, true)
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
