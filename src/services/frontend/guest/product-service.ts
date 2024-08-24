@@ -351,18 +351,23 @@ class ProductService {
             $facet: {
                 data: [
                     { $match: {} },
-                    ...(isCount === 1 ? [{ $skip: skip }, { $limit: limit }] : []),
+                    { $skip: skip },
+                    { $limit: limit },
                 ],
-                totalCount: [{ $count: "totalCount" }],
-
+                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : []),
             },
         },
-            {
+            (isCount === 1 ? {
                 $project: {
                     data: 1,
                     totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
                 }
-            }
+            } :
+                {
+                    $project: {
+                        data: 1,
+                    }
+                })
         )
 
         productData = await ProductsModel.aggregate(pipeline).exec();
