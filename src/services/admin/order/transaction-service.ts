@@ -6,7 +6,7 @@ class TransactionService {
 
     constructor() {
     }
-    async findAll(options: FilterOptionsProps = {}): Promise<PaymentTransactionModelProps[]> {
+    async findAll(options: FilterOptionsProps = {}): Promise<{ total: number; data: PaymentTransactionModelProps[] }> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
 
         const defaultSort = { createdAt: -1 };
@@ -23,12 +23,29 @@ class TransactionService {
             { $unwind: { path: "$paymentMethodId", preserveNullAndEmptyArrays: true } },
             orderPaymentTransactionProject,
             { $match: query },
-            { $sort: finalSort },
-            { $skip: skip },
-            { $limit: limit },
+            {
+                $facet: {
+                    data: [
+                        { $sort: finalSort },
+                        { $skip: skip },
+                        { $limit: limit },
+                    ],
+                    total: [{ $count: "count" }]
+                }
+            },
+            {
+                $project: {
+                    data: 1,
+                    total: { $arrayElemAt: ["$total.count", 0] }
+                }
+            }
         ];
 
-        return PaymentTransactionModel.aggregate(pipeline).exec();
+        const result = await PaymentTransactionModel.aggregate(pipeline).exec();
+        return {
+            total: result[0]?.total || 0,
+            data: result[0]?.data || []
+        };
     }
 }
 
