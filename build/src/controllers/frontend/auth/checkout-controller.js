@@ -274,13 +274,11 @@ class CheckoutController extends base_controller_1.default {
                                         orderStatus: cart_1.orderPaymentStatus.pending, // Pending
                                         createdAt: new Date(),
                                     });
-                                    console.log('paymentTransaction', paymentTransaction);
                                     if (!paymentTransaction) {
                                         return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                     }
                                 }
                                 else {
-                                    console.log('tabbyResponse', tabbyResponse);
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
                                 if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {
@@ -361,7 +359,15 @@ class CheckoutController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
                 }
                 if (paymentMethod && (paymentMethod.slug == cart_1.paymentMethods.cashOnDelivery || paymentMethod.slug == cart_1.paymentMethods.cardOnDelivery)) {
-                    await checkout_service_1.default.cartUpdation({ ...updateCart.toObject(), products: cartDetails.products, customerDetails, paymentMethod, shippingChargeDetails, shippingAddressDetails, countryData }, true);
+                    await checkout_service_1.default.cartUpdation({
+                        ...updateCart.toObject(),
+                        products: cartDetails.products,
+                        customerDetails,
+                        paymentMethod,
+                        shippingChargeDetails,
+                        shippingAddressDetails,
+                        countryData
+                    }, true);
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: {

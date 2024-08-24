@@ -407,9 +407,10 @@ class ProductService {
                 {
                     upsert: true,
                     new: true,
-                    session 
+                    session
                 }
             );
+            console.log('searchQuery',searchQuery);
 
             await session.commitTransaction();
             session.endSession();

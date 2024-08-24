@@ -374,6 +374,7 @@ class ProductService {
                 new: true,
                 session
             });
+            console.log('searchQuery', searchQuery);
             await session.commitTransaction();
             session.endSession();
             return searchQuery;
