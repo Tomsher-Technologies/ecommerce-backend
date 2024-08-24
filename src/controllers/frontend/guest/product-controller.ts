@@ -786,8 +786,6 @@ class ProductController extends BaseController {
                     limit: parseInt(limit as string),
                     hostName: req.get('origin'),
                 });
-                console.log('keywordsrandomProducts',randomProducts);
-
                 return controller.sendSuccessResponse(res, {
                     requestedData: randomProducts,
                     message: 'No valid search queries available. Here are some random products!'
@@ -816,7 +814,6 @@ class ProductController extends BaseController {
             limit: parseInt(limit as string),
             hostName: req.get('origin'),
         });
-        console.log('productData',productData);
         return controller.sendSuccessResponse(res, {
             requestedData: productData,
             message: 'Success!'

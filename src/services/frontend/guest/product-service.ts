@@ -378,8 +378,8 @@ class ProductService {
 
         productData = await ProductsModel.aggregate(pipeline).exec();
         const products = productData[0].data;
-        const totalCount = productData[0].totalCount;
         if (isCount == 1) {
+            const totalCount = productData[0].totalCount;
             return { products, totalCount }
         } else {
             return products

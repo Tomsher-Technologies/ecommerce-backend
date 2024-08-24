@@ -326,24 +326,33 @@ class ProductService {
                 }
             });
         }
+        const dataPipeline = [{ $match: {} }];
+        if (skip) {
+            dataPipeline.push({ $skip: skip });
+        }
+        if (limit) {
+            dataPipeline.push({ $limit: limit });
+        }
         pipeline.push({
             $facet: {
-                data: [
-                    { $match: {} },
-                    ...(isCount === 1 ? [{ $skip: skip }, { $limit: limit }] : []),
-                ],
-                totalCount: [{ $count: "totalCount" }],
+                data: dataPipeline,
+                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
             },
-        }, {
+        }, (isCount === 1 ? {
             $project: {
                 data: 1,
                 totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
             }
-        });
+        } :
+            {
+                $project: {
+                    data: 1,
+                }
+            }));
         productData = await product_model_1.default.aggregate(pipeline).exec();
         const products = productData[0].data;
-        const totalCount = productData[0].totalCount;
         if (isCount == 1) {
+            const totalCount = productData[0].totalCount;
             return { products, totalCount };
         }
         else {
@@ -370,7 +379,6 @@ class ProductService {
             upsert: true,
             new: true,
         });
-        console.log('searchQuery', searchQuery);
         return searchQuery;
     }
     async findAllAttributes(options) {

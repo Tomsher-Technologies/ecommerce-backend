@@ -1354,6 +1354,34 @@ class OrdersController extends base_controller_1.default {
                         shopLogo: `${process.env.SHOPLOGO}`,
                         shop: `${process.env.SHOPNAME}`,
                         appUrl: `${process.env.APPURL}`,
+                        apiAppUrl: `${process.env.APP_API_URL}`,
+                        tax: tax,
+                        currencyCode: currencyCode?.currencyCode
+                    }, async (err, html) => {
+                        if (err) {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'Error generating invoice'
+                            });
+                        }
+                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+                    });
+                }
+                else if (req.query.customer === '1') {
+                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'customer-invoice.ejs'), {
+                        orderDetails: orderDetails[0],
+                        expectedDeliveryDate,
+                        storeEmail: basicDetailsSettings?.storeEmail,
+                        storePhone: basicDetailsSettings?.storePhone,
+                        storeAppartment: basicDetailsSettings?.storeAppartment,
+                        storeStreet: basicDetailsSettings?.storeStreet,
+                        storeCity: basicDetailsSettings?.storeCity,
+                        storeState: basicDetailsSettings?.storeState,
+                        storePostalCode: basicDetailsSettings?.storePostalCode,
+                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                        shopLogo: `${process.env.SHOPLOGO}`,
+                        shop: `${process.env.SHOPNAME}`,
+                        appUrl: `${process.env.APPURL}`,
+                        apiAppUrl: `${process.env.APP_API_URL}`,
                         tax: tax,
                         currencyCode: currencyCode?.currencyCode
                     }, async (err, html) => {
