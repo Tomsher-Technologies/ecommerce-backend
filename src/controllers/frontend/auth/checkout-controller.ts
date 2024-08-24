@@ -289,10 +289,13 @@ class CheckoutController extends BaseController {
                                         orderStatus: orderPaymentStatus.pending, // Pending
                                         createdAt: new Date(),
                                     });
+                                    console.log('paymentTransaction', paymentTransaction);
+
                                     if (!paymentTransaction) {
                                         return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                     }
                                 } else {
+                                    console.log('tabbyResponse', tabbyResponse);
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
 

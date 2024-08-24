@@ -274,11 +274,13 @@ class CheckoutController extends base_controller_1.default {
                                         orderStatus: cart_1.orderPaymentStatus.pending, // Pending
                                         createdAt: new Date(),
                                     });
+                                    console.log('paymentTransaction', paymentTransaction);
                                     if (!paymentTransaction) {
                                         return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                     }
                                 }
                                 else {
+                                    console.log('tabbyResponse', tabbyResponse);
                                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Payment transaction is failed. Please try again' });
                                 }
                                 if (tabbyResponse && tabbyResponse.configuration && tabbyResponse.configuration.available_products && tabbyResponse.configuration.available_products.installments?.length > 0) {

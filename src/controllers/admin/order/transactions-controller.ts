@@ -80,8 +80,8 @@ class TransactionsController extends BaseController {
             });
 
             controller.sendSuccessResponse(res, {
-                requestedData: transactions,
-                // totalCount: await SpecificationService.getTotalCount(query),
+                requestedData: transactions.data,
+                totalCount: transactions.total,
                 message: 'Success!'
             }, 200);
         } catch (error: any) {
