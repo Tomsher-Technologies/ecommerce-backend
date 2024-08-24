@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #118497</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            font-size: 10px; /* Reduced font size */
+        }
+
+        .invoice-box {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #eee;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            page-break-after: always;
+        }
+
+        @media print {
+            .invoice-box {
+                box-shadow: none;
+                margin: 0;
+                page-break-after: always;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-container {
+            width: 50%;
+        }
+
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .logo-container .image-placeholder {
+            width: 200px;
+            height: 100px;
+            background-color: #eee;
+            border: 1px dashed #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #999;
+        }
+
+        .invoice-details {
+            text-align: right;
+            font-size: 10px; /* Reduced font size */
+        }
+
+        .company-details {
+            margin-bottom: 20px;
+            font-size: 10px; /* Reduced font size */
+        }
+
+        .company-details p,
+        .invoice-details p {
+            margin: 5px 0;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin: 20px 0 10px;
+            text-align: center;
+            font-size: 12px; /* Slightly larger for the section title */
+        }
+
+        .order-summary {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .order-summary th,
+        .order-summary td {
+            padding: 6px; /* Reduced padding */
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 10px; /* Reduced font size */
+        }
+
+        .order-summary th {
+            background-color: #f8f8f8;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .total-section {
+            width: 100%;
+            text-align: right;
+            margin-top: 20px;
+            table-layout: fixed;
+            margin-bottom: 30px;
+        }
+
+        .total-section td {
+            padding: 6px; /* Reduced padding */
+            font-size: 10px; /* Reduced font size */
+            border: 1px solid #ddd;
+        }
+
+        .total-section .highlight-right {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 8px; /* Reduced font size for footer */
+            margin-top: 30px;
+            color: #777;
+        }
+
+        .amount-in-words {
+            margin-top: 20px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .print-button {
+            display: block;
+            width: 100px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .print-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-box">
+        <div class="header-section">
+            <div class="logo-container">
+                <!-- Replace the placeholder with your logo -->
+                <div class="image-placeholder"><img src="<%= shopLogo%>" alt="Logo"></div>
+            </div>
+            <div class="invoice-details">
+                <p><strong>Invoice No:</strong> #<%= orderDetails.orderId %></p>
+                <p><strong>Invoice Date:</strong> <%= new Date(orderDetails.orderStatusAt).toLocaleDateString() %></p>
+                <p><strong>Payment Method:</strong> <%= orderDetails.paymentMethod.paymentMethodTitle %></p>
+            </div>
+        </div>
+
+        <div class="company-details">
+            <p><strong><%= shopName %></strong></p>
+            <p><%= storeAppartment %></p>
+            <p><%= storeCity %>, <%= storeState %>, <%= storeStreet %></p>
+            <p><%= storePostalCode %></p>
+        </div>
+
+        <div class="section-title">TAX INVOICE</div>
+
+        <div style="display: flex; justify-content: space-between;">
+            <div>
+                <p><strong>Billed To:</strong></p>
+                <% if (orderDetails.billingAddress && orderDetails.billingAddress.name) { %>
+                    <p>
+                      <%= orderDetails.billingAddress.name %><br>
+                        <%= orderDetails.billingAddress.address1 %>,<br>
+                          <%= orderDetails.billingAddress.city %>, <%= orderDetails.billingAddress.state %>, <%=
+                                orderDetails.billingAddress.country %>
+                    </p>
+                    <% } else { %>
+                      <p>
+                        <% if(orderDetails.shippingAddress!=null) { %>
+                        <%= orderDetails.shippingAddress.name %><br>
+                          <%= orderDetails.shippingAddress.address1 %>,<br>
+                            <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
+                                  orderDetails.shippingAddress.country %>
+                                  <% } %>
+             
+                      </p>
+                      <% } %>
+            </div>
+            <div>
+                <% if(orderDetails.shippingAddress) { %>
+                    <strong>Shipped To:</strong>
+                    <p>
+                      <%= orderDetails.shippingAddress.name %><br>
+                        <%= orderDetails.shippingAddress.address1 %>,<br>
+                          <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
+                                orderDetails.shippingAddress.country %><br>
+                                Phone No. - <%= orderDetails.shippingAddress.phoneNumber %>
+                    </p>
+                    <% } %>
+            </div>
+        </div>
+
+        <table class="order-summary">
+            <thead>
+                <tr>
+                    <th>SN</th>
+                    <th>Description</th>
+                    <th>QTY</th>
+                    <th>Unit</th>
+                    <th>Unit Price (<%=currencyCode %>)</th>
+                    <th>Net Amount (<%=currencyCode %>)</th>
+                    <th>Total Amount (<%=currencyCode %>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% orderDetails.products.forEach((product, index) => { %>
+                <tr>
+                    <td><%= index + 1 %></td>
+                    <td>Ponkathir Puttu Podi 1Kg (PonkathirPP1)</td>
+                    <td style="text-align: center;"><%= product.quantity %></td>
+                    <td style="text-align: center;"><% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %><% } %></td>
+                    <td style="text-align: right;"> <%= product.productAmount.toFixed(2) / product.quantity %></td>
+                    <td style="text-align: right;"><%= product.productAmount.toFixed(2) %></td>
+                    <td style="text-align: right;"><%= product.productAmount.toFixed(2) %></td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <table class="total-section">
+            <% if (orderDetails.totalProductOriginalPrice> 0) { %>
+            <tr>
+                <td>Total <%=currencyCode %></td>
+                <td class="highlight-right"><%= orderDetails.totalProductAmount.toFixed(2) %></td>
+            </tr>
+            <% } %>
+
+            <% if (orderDetails.totalCouponAmount> 0) { %>
+                <tr>
+                    <td>Coupon <%=currencyCode %></td>
+                    <td class="highlight-right"><%= orderDetails.totalCouponAmount.toFixed(2) %></td>
+                </tr>
+            <% } %>
+
+            <% if (orderDetails.totalGiftWrapAmount> 0) { %>
+                <tr>
+                    <td>Gift wrap charge <%=currencyCode %></td>
+                    <td class="highlight-right"><%= orderDetails.totalGiftWrapAmount.toFixed(2) %></td>
+                </tr>
+            <% } %>
+            <% if (orderDetails.totalShippingAmount> 0) { %>
+            <tr>
+                <td>Delivery Charges</td>
+                <td class="highlight-right"><%= orderDetails.totalShippingAmount.toFixed(2) %></td>
+            </tr>
+            <% } %>
+
+            <% if (orderDetails.paymentMethodCharge> 0) { %>
+                <tr>
+                    <td>Payment Method Charges</td>
+                    <td class="highlight-right"><%= orderDetails.paymentMethodCharge.toFixed(2) %></td>
+                </tr>
+                <% } %>
+
+            
+            <% if (tax && Number(tax.taxPercentage)> 0) { %>
+            <tr>
+                <td><%=tax.taxTitle%> [<%=tax.taxPercentage%>%] inclusive</td>
+                <td class="highlight-right"><%= orderDetails.totalTaxAmount %></td>
+            </tr>
+            <% } %>
+            
+            <tr class="highlight">
+                <td><strong>Total Payable <%=currencyCode %></strong></td>
+                <td class="highlight-right"><strong><%= (orderDetails.totalAmount-orderDetails.totalReturnedProductAmount).toFixed(2) %></strong></td>
+            </tr>
+        </table>
+
+        <div class="amount-in-words">
+            <!-- Amount in words: <%=currencyCode %> Seventy Four Point Forty Nine -->
+        </div>
+
+        <div class="footer">
+            <p>This document is computer generated and does not require the signature or the stamp in order to be considered valid.</p>
+        </div>
+    </div>
+
+</body>
+
+</html>
