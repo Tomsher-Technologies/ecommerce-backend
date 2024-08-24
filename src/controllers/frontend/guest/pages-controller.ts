@@ -150,12 +150,14 @@ class PageController extends BaseController {
                         }
                         const emailValues = {
                             subject,
-                            email,
-                            ccmail: [basicDetailsSettings?.storeEmail]
+                            email:basicDetailsSettings?.storeEmail,
+                            // ccmail: 
                         }
                         if (process.env.SHOPNAME === 'Timehouse') {
                             const sendEmail = await mailChimpEmailGateway(emailValues, template);
                         } else if (process.env.SHOPNAME === 'Homestyle') {
+                            console.log(emailValues);
+                            
                             const sendEmail = await smtpEmailGateway(emailValues, template);
                         } else if (process.env.SHOPNAME === 'Beyondfresh') {
                             const sendEmail = await smtpEmailGateway(emailValues, template);
