@@ -328,7 +328,7 @@
                 <% orderDetails.products.forEach((product, index) => { %>
                 <tr>
                     <td><%= index + 1 %></td>
-                    <td><img src="<%= appUrl%>/<% if (product.productDetails.variantDetails.variantImageUrl &&
+                    <td><img src="<%= apiAppUrl%>/<% if (product.productDetails.variantDetails.variantImageUrl &&
                         product.productDetails.variantDetails.variantImageUrl !=='' ) { %>
                         <%= product.productDetails.variantDetails.variantImageUrl %>
                           <% } else { %>

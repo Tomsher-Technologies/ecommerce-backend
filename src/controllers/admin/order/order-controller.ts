@@ -1418,6 +1418,7 @@ class OrdersController extends BaseController {
                             shopLogo: `${process.env.SHOPLOGO}`,
                             shop: `${process.env.SHOPNAME}`,
                             appUrl: `${process.env.APPURL}`,
+                            apiAppUrl: `${process.env.APP_API_URL}`,
                             tax: tax,
                             currencyCode: currencyCode?.currencyCode
                         },
