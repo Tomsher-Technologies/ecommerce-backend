@@ -347,14 +347,20 @@ class ProductService {
             });
         }
 
+        const dataPipeline: any[] = [{ $match: {} }];
+
+        if (skip) {
+            dataPipeline.push({ $skip: skip });
+        }
+
+        if (limit) {
+            dataPipeline.push({ $limit: limit });
+        }
+
         pipeline.push({
             $facet: {
-                data: [
-                    { $match: {} },
-                    { $skip: skip },
-                    { $limit: limit },
-                ],
-                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : []),
+                data: dataPipeline,
+                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
             },
         },
             (isCount === 1 ? {
