@@ -64,7 +64,6 @@ class ProductController extends BaseController {
                     } as any;
                     const customer = null;
                     const guestUser = res.locals.uuid || null;
-                    console.log('keyword', keyword);
 
                     await ProductService.insertOrUpdateSearchQuery(keyword, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
                 }
@@ -753,8 +752,6 @@ class ProductController extends BaseController {
                 { guestUserId }
             ]
         };
-        console.log('res.locals', res.locals);
-
         const searchQueries = await SearchQueriesModel.find(searchQueryFilter);
         let keywords = searchQueries.map(query => query.searchQuery).filter(Boolean);
         if (keywords.length === 0) {
@@ -770,6 +767,8 @@ class ProductController extends BaseController {
                     limit: parseInt(limit as string),
                     hostName: req.get('origin'),
                 });
+                console.log('randomProducts',randomProducts);
+                
                 return controller.sendSuccessResponse(res, {
                     requestedData: randomProducts,
                     message: 'No search queries or frequent queries found. Here are some random products!'
@@ -787,6 +786,8 @@ class ProductController extends BaseController {
                     limit: parseInt(limit as string),
                     hostName: req.get('origin'),
                 });
+                console.log('keywordsrandomProducts',randomProducts);
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: randomProducts,
                     message: 'No valid search queries available. Here are some random products!'
@@ -815,6 +816,7 @@ class ProductController extends BaseController {
             limit: parseInt(limit as string),
             hostName: req.get('origin'),
         });
+        console.log('productData',productData);
         return controller.sendSuccessResponse(res, {
             requestedData: productData,
             message: 'Success!'

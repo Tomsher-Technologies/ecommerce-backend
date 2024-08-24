@@ -406,9 +406,6 @@ class ProductService {
                 new: true,
             }
         );
-        console.log('searchQuery', searchQuery);
-
-
         return searchQuery;
     }
 
