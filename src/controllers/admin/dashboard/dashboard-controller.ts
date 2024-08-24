@@ -160,7 +160,8 @@ class DashboardController {
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
-                sort
+                sort,
+                includeLookups:"1"
             });
 
             controller.sendSuccessResponse(res, {

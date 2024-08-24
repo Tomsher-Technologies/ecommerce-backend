@@ -131,7 +131,8 @@ class DashboardController {
                 page: parseInt(page_size),
                 limit: parseInt(limit),
                 query,
-                sort
+                sort,
+                includeLookups: "1"
             });
             controller.sendSuccessResponse(res, {
                 requestedData: customers[0].customerData,

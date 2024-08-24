@@ -351,38 +351,27 @@ class ProductService {
         }
     }
     async insertOrUpdateSearchQuery(keyword, customerId, guestUserId) {
-        const session = await mongoose_1.default.startSession();
-        session.startTransaction();
-        try {
-            const query = {
-                $or: [
-                    { customerId, searchQuery: keyword },
-                    { guestUserId, searchQuery: keyword }
-                ]
-            };
-            const update = {
-                $set: {
-                    searchQuery: keyword,
-                    lastSearchedAt: new Date(),
-                    ...(customerId ? { customerId } : {}),
-                    ...(guestUserId ? { guestUserId } : {})
-                },
-                $inc: { searchCount: 1 }
-            };
-            const searchQuery = await search_query_model_1.default.findOneAndUpdate(query, update, {
-                upsert: true,
-                new: true,
-                session
-            });
-            console.log('searchQuery', searchQuery);
-            await session.commitTransaction();
-            session.endSession();
-            return searchQuery;
-        }
-        catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-        }
+        const query = {
+            $or: [
+                { customerId, searchQuery: keyword },
+                { guestUserId, searchQuery: keyword }
+            ]
+        };
+        const update = {
+            $set: {
+                searchQuery: keyword,
+                lastSearchedAt: new Date(),
+                ...(customerId ? { customerId } : {}),
+                ...(guestUserId ? { guestUserId } : {})
+            },
+            $inc: { searchCount: 1 }
+        };
+        const searchQuery = await search_query_model_1.default.findOneAndUpdate(query, update, {
+            upsert: true,
+            new: true,
+        });
+        console.log('searchQuery', searchQuery);
+        return searchQuery;
     }
     async findAllAttributes(options) {
         let { query, hostName } = (0, pagination_1.pagination)(options.query || {}, options);
