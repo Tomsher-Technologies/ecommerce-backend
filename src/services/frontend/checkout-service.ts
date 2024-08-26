@@ -253,6 +253,11 @@ class CheckoutService {
                 }
             } else {
                 if (cartProducts) {
+                    await CartOrderProductsModel.updateMany(
+                        { cartId: cartDetails._id },
+                        { orderProductStatusAt: new Date() },
+                        { new: true, useFindAndModify: false }
+                    );
                     const updateProductVariant = cartProducts.map((products: any) => ({
                         updateOne: {
                             filter: { _id: products.variantId },
@@ -285,7 +290,6 @@ class CheckoutService {
 
                     const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
                     const taxDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
-                    let pickupStoreDetails = null
                     if (cartUpdate.pickupStoreId) {
 
                     }

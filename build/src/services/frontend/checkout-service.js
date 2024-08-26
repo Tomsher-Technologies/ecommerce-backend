@@ -244,6 +244,7 @@ class CheckoutService {
             }
             else {
                 if (cartProducts) {
+                    await cart_order_product_model_1.default.updateMany({ cartId: cartDetails._id }, { orderProductStatusAt: new Date() }, { new: true, useFindAndModify: false });
                     const updateProductVariant = cartProducts.map((products) => ({
                         updateOne: {
                             filter: { _id: products.variantId },
@@ -273,7 +274,6 @@ class CheckoutService {
                     }
                     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
                     const taxDetails = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
-                    let pickupStoreDetails = null;
                     if (cartUpdate.pickupStoreId) {
                     }
                     ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {

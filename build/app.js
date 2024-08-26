@@ -11,20 +11,17 @@ const path_1 = __importDefault(require("path"));
 require('dotenv').config();
 const admin_routers_1 = __importDefault(require("./routes/admin-routers"));
 const frontend_router_1 = __importDefault(require("./routes/frontend-router"));
+const sap_routes_1 = __importDefault(require("./routes/sap/sap-routes"));
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 const corsOptions = {
-    origin: '*', // Replace '*' with your domain for security, e.g., 'https://yourdomain.com'
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
     exposedHeaders: ['Content-Length', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Origin', 'User-Token'],
 };
 app.use((0, cors_1.default)(corsOptions));
-app.use((0, helmet_1.default)());
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: false }));
-app.use('/public', express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.use((0, helmet_1.default)({
     crossOriginResourcePolicy: false,
     crossOriginEmbedderPolicy: false,
@@ -35,6 +32,9 @@ app.use((0, helmet_1.default)({
         }
     }
 }));
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: false }));
+app.use('/public', express_1.default.static(path_1.default.join(__dirname, 'public')));
 mongoose_1.default.Promise = global.Promise;
 mongoose_1.default
     .connect(process.env.MONGODB_URI)
@@ -47,6 +47,7 @@ mongoose_1.default
 app.get('/', (req, res) => {
     res.json({ message: "Ecommerce" });
 });
+app.use('/api/v1', sap_routes_1.default);
 app.use('/admin', admin_routers_1.default);
 app.use('/api', frontend_router_1.default);
 app.listen(port, () => {

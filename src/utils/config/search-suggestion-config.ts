@@ -60,6 +60,9 @@ export const searchSuggestionProductsLookup = [
         }
     },
     {
+        $limit: 7
+    },
+    {
         $project: {
             _id: 0,
             productTitle: 1
@@ -76,6 +79,9 @@ export const searchSuggestionCategoryLookup = [
     },
     {
         $unwind: "$categoryTitle"
+    },
+    {
+        $limit: 7
     },
     {
         $project: {
@@ -95,6 +101,9 @@ export const searchSuggestionBrandsLookup = [
     },
     {
         $unwind: "$brandTitle"
+    },
+    {
+        $limit: 7
     },
     {
         $project: {
