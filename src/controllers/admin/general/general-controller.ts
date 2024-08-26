@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 
 import { blockReferences } from '../../../constants/website-setup';
 
@@ -6,7 +7,6 @@ import BaseController from '../../../controllers/admin/base-controller';
 import CountryModel from '../../../model/admin/setup/country-model';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import SeoPageModel from '../../../model/admin/seo-page-model';
-import mongoose from 'mongoose';
 
 const controller = new BaseController();
 class GeneralController extends BaseController {
