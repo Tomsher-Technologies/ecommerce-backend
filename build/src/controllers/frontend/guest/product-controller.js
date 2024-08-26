@@ -857,11 +857,57 @@ class ProductController extends base_controller_1.default {
             let results = null;
             if (query) {
                 const searchQuery = query;
-                const productsPromise = product_model_1.default.find({
-                    status: '1'
-                }).select('productTitle ').exec();
-                const brandsPromise = brands_model_1.default.find({}).select('brandTitle').exec();
-                const categoriesPromise = category_model_1.default.find({}).select('categoryTitle').exec();
+                const productsPromise = product_model_1.default.aggregate([
+                    {
+                        $match: { status: '1' }
+                    },
+                    {
+                        $group: {
+                            _id: { productTitle: "$productTitle" },
+                            productTitle: { $first: "$productTitle" }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            productTitle: 1
+                        }
+                    }
+                ]).exec();
+                const brandsPromise = brands_model_1.default.aggregate([
+                    {
+                        $group: {
+                            _id: null,
+                            brandTitle: { $addToSet: "$brandTitle" }
+                        }
+                    },
+                    {
+                        $unwind: "$brandTitle"
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            brandTitle: 1
+                        }
+                    }
+                ]).exec();
+                const categoriesPromise = category_model_1.default.aggregate([
+                    {
+                        $group: {
+                            _id: null,
+                            categoryTitle: { $addToSet: "$categoryTitle" }
+                        }
+                    },
+                    {
+                        $unwind: "$categoryTitle"
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            categoryTitle: 1
+                        }
+                    }
+                ]).exec();
                 const [products, brands, categories] = await Promise.all([
                     productsPromise,
                     brandsPromise,
