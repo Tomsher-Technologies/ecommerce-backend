@@ -894,9 +894,34 @@ class ProductController extends BaseController {
                         $match: { status: '1' }
                     },
                     {
+                        $addFields: {
+                            wordsArray: { $split: ["$productTitle", " "] }
+                        }
+                    },
+                    {
+                        $addFields: {
+                            firstFiveWords: { $slice: ["$wordsArray", 5] }
+                        }
+                    },
+                    {
+                        $addFields: {
+                            truncatedTitle: { $reduce: {
+                                input: "$firstFiveWords",
+                                initialValue: "",
+                                in: {
+                                    $cond: {
+                                        if: { $eq: ["$$value", ""] },
+                                        then: "$$this",
+                                        else: { $concat: ["$$value", " ", "$$this"] }
+                                    }
+                                }
+                            }}
+                        }
+                    },
+                    {
                         $group: {
-                            _id: { productTitle: "$productTitle" },
-                            productTitle: { $first: "$productTitle" }
+                            _id: "$truncatedTitle",
+                            productTitle: { $first: "$truncatedTitle" }
                         }
                     },
                     {
@@ -972,25 +997,25 @@ class ProductController extends BaseController {
                 const seenTitles = new Set<string>();
                 const maxWords = 6;
 
-                const uniqueProducts = productResults
-                    .map(product => ({
-                        ...product,
-                        productTitle: truncateWord(product.productTitle, maxWords)
-                    }))
-                    .filter(product => {
-                        const normalizedTitle = normalizeWord(product.productTitle);
-                        if (seenTitles.has(normalizedTitle)) {
-                            return false;
-                        }
-                        seenTitles.add(normalizedTitle);
-                        return true;
-                    })
-                    .map(product => ({
-                        productTitle: truncateWord(product.productTitle, maxWords)
-                    }));
+                // const uniqueProducts = productResults
+                //     .map(product => ({
+                //         ...product,
+                //         productTitle: truncateWord(product.productTitle, maxWords)
+                //     }))
+                //     .filter(product => {
+                //         const normalizedTitle = normalizeWord(product.productTitle);
+                //         if (seenTitles.has(normalizedTitle)) {
+                //             return false;
+                //         }
+                //         seenTitles.add(normalizedTitle);
+                //         return true;
+                //     })
+                //     .map(product => ({
+                //         productTitle: truncateWord(product.productTitle, maxWords)
+                //     }));
 
                 results = {
-                    products: uniqueProducts,
+                    products: productResults,
                     brands: brandResults,
                     categories: categoryResults
                 };

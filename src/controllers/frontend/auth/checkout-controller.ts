@@ -499,6 +499,7 @@ class CheckoutController extends BaseController {
 
     async networkPaymentResponse(req: Request, res: Response): Promise<any> {
         const { ref, data }: any = req.query
+
         if (!ref) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure`); // failure
             return false
@@ -514,6 +515,7 @@ class CheckoutController extends BaseController {
         if (!paymentMethod) {
             res.redirect(`${process.env.APPURL}/order-response?status=failure&message=Payment method not found. Please contact administrator`); // failure
         }
+
         const networkAccesTokenResponse = await networkAccessToken(paymentMethod.paymentMethodValues);
         if (networkAccesTokenResponse && networkAccesTokenResponse.access_token) {
             const networkResponse = await networkCreateOrderStatus(networkAccesTokenResponse.access_token, paymentMethod.paymentMethodValues, ref);
@@ -533,13 +535,15 @@ class CheckoutController extends BaseController {
                 },
                 { new: true, runValidators: true }
             );
+            
             if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
                 const retValResponse = await CheckoutService.paymentResponse({
                     paymentDetails,
-                    allPaymentResponseData: data,
+                    allPaymentResponseData: networkResponse,
                     paymentStatus: (status !== networkPaymentGatwayStatus.failed) ?
                         orderPaymentStatus.success : ((status === networkPaymentGatwayStatus.failed) ? orderPaymentStatus.failure : orderPaymentStatus.failure)
                 });
+
                 if (retValResponse.status) {
                     res.redirect(`${process.env.APPURL}/order-response/${retValResponse?._id}?status=success`); // success
                     return true
