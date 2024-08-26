@@ -18,6 +18,8 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const attribute_config_1 = require("../../../utils/config/attribute-config");
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const search_query_model_1 = __importDefault(require("../../../model/frontend/search-query-model"));
+const fuse_js_1 = __importDefault(require("fuse.js"));
+const helpers_1 = require("../../../utils/helpers");
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllProducts(req, res) {
@@ -848,6 +850,77 @@ class ProductController extends base_controller_1.default {
             requestedData: productData,
             message: 'Success!'
         }, 200);
+    }
+    async getSearchSuggestions(req, res) {
+        try {
+            const { query } = req.query;
+            let results = null;
+            if (query) {
+                const searchQuery = query;
+                const productsPromise = product_model_1.default.find({
+                    status: '1'
+                }).select('productTitle ').exec();
+                const brandsPromise = brands_model_1.default.find({}).select('brandTitle').exec();
+                const categoriesPromise = category_model_1.default.find({}).select('categoryTitle').exec();
+                const [products, brands, categories] = await Promise.all([
+                    productsPromise,
+                    brandsPromise,
+                    categoriesPromise
+                ]);
+                const fuseProducts = new fuse_js_1.default(products, {
+                    keys: ['productTitle'],
+                    includeScore: true,
+                    threshold: 0.4
+                });
+                const fuseBrands = new fuse_js_1.default(brands, {
+                    keys: ['brandTitle'],
+                    includeScore: true,
+                    threshold: 0.4
+                });
+                const fuseCategories = new fuse_js_1.default(categories, {
+                    keys: ['categoryTitle'],
+                    includeScore: true,
+                    threshold: 0.4
+                });
+                const productResults = fuseProducts.search(searchQuery).map(result => result.item);
+                const brandResults = fuseBrands.search(searchQuery).map(result => result.item);
+                const categoryResults = fuseCategories.search(searchQuery).map(result => result.item);
+                const seenTitles = new Set();
+                const maxWords = 6;
+                const uniqueProducts = productResults
+                    .map(product => ({
+                    ...product,
+                    productTitle: (0, helpers_1.truncateWord)(product.productTitle, maxWords)
+                }))
+                    .filter(product => {
+                    const normalizedTitle = (0, helpers_1.normalizeWord)(product.productTitle);
+                    if (seenTitles.has(normalizedTitle)) {
+                        return false;
+                    }
+                    seenTitles.add(normalizedTitle);
+                    return true;
+                })
+                    .map(product => ({
+                    productTitle: (0, helpers_1.truncateWord)(product.productTitle, maxWords)
+                }));
+                results = {
+                    products: uniqueProducts,
+                    brands: brandResults,
+                    categories: categoryResults
+                };
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: results,
+                message: 'Success!'
+            }, 200);
+        }
+        catch (error) {
+            console.error('Search Error:', error);
+            return controller.sendErrorResponse(res, 500, {
+                message: 'An error occurred while performing the search.',
+                validation: 'Search query failed'
+            }, req);
+        }
     }
 }
 exports.default = new ProductController();

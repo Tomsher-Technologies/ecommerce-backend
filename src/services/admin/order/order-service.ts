@@ -75,7 +75,7 @@ class OrderService {
 
     async getOrdeReturnProducts(options: any): Promise<any> {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
-        const defaultSort = { orderStatusAt: -1 };
+        const defaultSort = { orderProductReturnStatusAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {

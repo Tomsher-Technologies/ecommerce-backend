@@ -201,9 +201,9 @@ class OrdersController extends BaseController {
             // 'cartDetails.orderStatus': orderProductStatusJson.delivered,
             'cartDetails.cartStatus': { $ne: cartStatusJson.active },
             $or: [
-                { orderRequestedProductQuantity: { $gt: 0 } },
-                { orderRequestedProductQuantityStatus: { $ne: "0" } },
-                { orderProductReturnStatus: { $ne: "0" } },
+                { orderRequestedProductQuantity: { $exists: true, $gt: 0 } },
+                { orderRequestedProductQuantityStatus:  { $exists: true, $ne: "0" } },
+                { orderProductReturnStatus:  { $exists: true, $ne: "0" } },
             ]
         };
 
