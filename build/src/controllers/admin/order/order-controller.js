@@ -182,9 +182,9 @@ class OrdersController extends base_controller_1.default {
             // 'cartDetails.orderStatus': orderProductStatusJson.delivered,
             'cartDetails.cartStatus': { $ne: cart_1.cartStatus.active },
             $or: [
-                { orderRequestedProductQuantity: { $gt: 0 } },
-                { orderRequestedProductQuantityStatus: { $ne: "0" } },
-                { orderProductReturnStatus: { $ne: "0" } },
+                { orderRequestedProductQuantity: { $exists: true, $gt: 0 } },
+                { orderRequestedProductQuantityStatus: { $exists: true, $ne: "0" } },
+                { orderProductReturnStatus: { $exists: true, $ne: "0" } },
             ]
         };
         const country = (0, helpers_1.getCountryId)(userData);

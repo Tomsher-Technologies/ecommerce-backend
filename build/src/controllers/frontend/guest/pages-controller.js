@@ -143,13 +143,14 @@ class PageController extends base_controller_1.default {
                     }
                     const emailValues = {
                         subject,
-                        email,
-                        ccmail: [basicDetailsSettings?.storeEmail]
+                        email: basicDetailsSettings?.storeEmail,
+                        // ccmail: 
                     };
                     if (process.env.SHOPNAME === 'Timehouse') {
                         const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
                     }
                     else if (process.env.SHOPNAME === 'Homestyle') {
+                        console.log(emailValues);
                         const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
                     }
                     else if (process.env.SHOPNAME === 'Beyondfresh') {

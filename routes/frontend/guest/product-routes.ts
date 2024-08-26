@@ -21,5 +21,6 @@ router.get('/product-list', frontendAuthAndUnAuthMiddleware, logResponseStatus, 
 router.get('/you-may-like-also', frontendAuthAndUnAuthMiddleware, logResponseStatus, ProductController.youMayLikeAlso);
 router.get('/related-products', logResponseStatus, ProductController.relatedProducts);
 router.get('/all-product-variants-list-with-basic-details', logResponseStatus, ProductController.findAllProductVariantsListWithBasicDetails);
+router.get('/query-suggestions', logResponseStatus, ProductController.getSearchSuggestions);
 
 export default router;

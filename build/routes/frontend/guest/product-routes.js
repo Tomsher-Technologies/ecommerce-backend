@@ -22,4 +22,5 @@ router.get('/product-list', frontend_auth_middleware_1.frontendAuthAndUnAuthMidd
 router.get('/you-may-like-also', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.youMayLikeAlso);
 router.get('/related-products', response_status_1.logResponseStatus, product_controller_1.default.relatedProducts);
 router.get('/all-product-variants-list-with-basic-details', response_status_1.logResponseStatus, product_controller_1.default.findAllProductVariantsListWithBasicDetails);
+router.get('/query-suggestions', response_status_1.logResponseStatus, product_controller_1.default.getSearchSuggestions);
 exports.default = router;

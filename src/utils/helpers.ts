@@ -370,3 +370,16 @@ export const calculateExpectedDeliveryDate = (orderStatusAt: string, commonDeliv
 
     return `${year}-${month}-${day}`;
 };
+
+
+export const normalizeWord = (word: string): string => {
+    return word.replace(/ - [A-Z0-9-]+$/, '').trim();
+};
+
+export const truncateWord = (word: string, maxWords: number): string => {
+    const words = word.split(' ');
+    if (words.length > maxWords) {
+        return words.slice(0, maxWords).join(' ') + '...';
+    }
+    return word;
+};
