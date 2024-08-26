@@ -102,7 +102,7 @@ class OrderController extends BaseController {
                 getAddress: '1',
                 getCartProducts: '1',
                 getReturnProduct,
-            }); console.log('getReturnProductQ', order);
+            });
 
             if (order && order.length > 0) {
                 let message = 'Your Order is ready!';

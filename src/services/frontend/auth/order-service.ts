@@ -56,7 +56,7 @@ class OrderService {
 
         ];
 
-        if (getReturnProduct) {
+        if (getReturnProduct === '1') {
             pipeline.push({
                 $addFields: {
                     products: {

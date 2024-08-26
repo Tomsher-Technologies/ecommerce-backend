@@ -889,12 +889,58 @@ class ProductController extends BaseController {
 
             if (query) {
                 const searchQuery = query as string;
-                const productsPromise = ProductsModel.find({
-                    status: '1'
-                }).select('productTitle ').exec();
-
-                const brandsPromise = BrandsModel.find({}).select('brandTitle').exec();
-                const categoriesPromise = CategoryModel.find({}).select('categoryTitle').exec();
+                const productsPromise = ProductsModel.aggregate([
+                    {
+                        $match: { status: '1' }
+                    },
+                    {
+                        $group: {
+                            _id: { productTitle: "$productTitle" },
+                            productTitle: { $first: "$productTitle" }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            productTitle: 1
+                        }
+                    }
+                ]).exec();
+                
+                const brandsPromise = BrandsModel.aggregate([
+                    {
+                        $group: {
+                            _id: null,
+                            brandTitle: { $addToSet: "$brandTitle" }
+                        }
+                    },
+                    {
+                        $unwind: "$brandTitle"
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            brandTitle: 1
+                        }
+                    }
+                ]).exec();
+                const categoriesPromise = CategoryModel.aggregate([
+                    {
+                        $group: {
+                            _id: null,
+                            categoryTitle: { $addToSet: "$categoryTitle" }
+                        }
+                    },
+                    {
+                        $unwind: "$categoryTitle"
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            categoryTitle: 1
+                        }
+                    }
+                ]).exec();
                 const [products, brands, categories] = await Promise.all([
                     productsPromise,
                     brandsPromise,
