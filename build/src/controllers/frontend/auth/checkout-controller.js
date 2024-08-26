@@ -510,7 +510,7 @@ class CheckoutController extends base_controller_1.default {
             if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
                 const retValResponse = await checkout_service_1.default.paymentResponse({
                     paymentDetails,
-                    allPaymentResponseData: data,
+                    allPaymentResponseData: networkResponse,
                     paymentStatus: (status !== cart_1.networkPaymentGatwayStatus.failed) ?
                         cart_1.orderPaymentStatus.success : ((status === cart_1.networkPaymentGatwayStatus.failed) ? cart_1.orderPaymentStatus.failure : cart_1.orderPaymentStatus.failure)
                 });
