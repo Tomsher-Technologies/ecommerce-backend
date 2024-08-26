@@ -3,6 +3,7 @@ import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup, countriesLookup, reportOrderLookup, addressLookup } from '../../../utils/config/customer-config';
 import ReviewModel, { ReviewProps } from '../../../model/frontend/review-model';
 import { productLookup, variantLookup } from '../../../utils/config/product-config';
+import { collections } from '../../../constants/collections';
 
 
 class ReviewService {
@@ -19,7 +20,7 @@ class ReviewService {
             { $match: query },
             {
                 $lookup: {
-                    from: 'products',
+                    from:`${collections.ecommerce.products.products}`,
                     localField: 'productId',
                     foreignField: '_id',
                     as: 'productDetails'
@@ -35,7 +36,7 @@ class ReviewService {
             // Lookup for variant details
             {
                 $lookup: {
-                    from: 'productvariants',
+                    from:`${collections.ecommerce.products.productvariants.productvariants}`,
                     localField: 'variantId',
                     foreignField: '_id',
                     as: 'variantDetails'

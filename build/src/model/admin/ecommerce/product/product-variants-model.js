@@ -24,15 +24,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../../constants/collections");
 const productVariantsSchema = new mongoose_1.Schema({
     productId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections_1.collections.ecommerce.products.products}`,
         required: true,
     },
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections_1.collections.setup.countries}`,
         required: true,
     },
     variantSku: {
@@ -46,7 +47,7 @@ const productVariantsSchema = new mongoose_1.Schema({
         type: String,
         validate: {
             validator: async function (value) {
-                const count = await this.model('ProductVariants').countDocuments({ slug: value });
+                const count = await this.model(`${collections_1.collections.ecommerce.products.productvariants.productvariants}`).countDocuments({ slug: value });
                 // await deleteFunction(this.productId)
                 return count === 0;
             },
@@ -133,5 +134,5 @@ const productVariantsSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const ProductVariantsModel = mongoose_1.default.model('ProductVariants', productVariantsSchema);
+const ProductVariantsModel = mongoose_1.default.model(`${collections_1.collections.ecommerce.products.productvariants.productvariants}`, productVariantsSchema);
 exports.default = ProductVariantsModel;

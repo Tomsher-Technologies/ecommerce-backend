@@ -18,6 +18,8 @@ import ProductVariantAttributesModel from '../../../model/admin/ecommerce/produc
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
 import Fuse from 'fuse.js';
 import { normalizeWord, truncateWord } from '../../../utils/helpers';
+import { searchSuggestionBrandsLookup, searchSuggestionCategoryLookup, searchSuggestionProductsLookup, topSearchesLookup } from '../../../utils/config/search-suggestion-config';
+import { pagesJson } from '../../../constants/pages';
 
 const controller = new BaseController();
 class ProductController extends BaseController {
@@ -38,8 +40,10 @@ class ProductController extends BaseController {
                 }
                 if (keyword) {
                     const keywordRegex = new RegExp(keyword, 'i');
+                    // const keywordRegex = new RegExp(keyword.split('').join('.*'), 'i');
                     query = {
                         $or: [
+                            // { productTitle:  { $regex: regexQuery } },
                             { productTitle: keywordRegex },
                             { slug: keywordRegex },
                             { sku: keywordRegex },
@@ -67,7 +71,7 @@ class ProductController extends BaseController {
                     const customer = null;
                     const guestUser = res.locals.uuid || null;
 
-                    await ProductService.insertOrUpdateSearchQuery(keyword, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
+                    await ProductService.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
                 }
 
                 if (category) {
@@ -884,98 +888,25 @@ class ProductController extends BaseController {
 
     async getSearchSuggestions(req: Request, res: Response): Promise<any> {
         try {
-            const { query } = req.query;
+            const { query = '' } = req.query;
             let results: any = null;
 
             if (query) {
                 const searchQuery = query as string;
-                const productsPromise = ProductsModel.aggregate([
-                    {
-                        $match: { status: '1' }
-                    },
-                    {
-                        $addFields: {
-                            wordsArray: { $split: ["$productTitle", " "] }
-                        }
-                    },
-                    {
-                        $addFields: {
-                            firstFiveWords: { $slice: ["$wordsArray", 5] }
-                        }
-                    },
-                    {
-                        $addFields: {
-                            truncatedTitle: { $reduce: {
-                                input: "$firstFiveWords",
-                                initialValue: "",
-                                in: {
-                                    $cond: {
-                                        if: { $eq: ["$$value", ""] },
-                                        then: "$$this",
-                                        else: { $concat: ["$$value", " ", "$$this"] }
-                                    }
-                                }
-                            }}
-                        }
-                    },
-                    {
-                        $group: {
-                            _id: "$truncatedTitle",
-                            productTitle: { $first: "$truncatedTitle" }
-                        }
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            productTitle: 1
-                        }
-                    }
-                ]).exec();
-                
-                const brandsPromise = BrandsModel.aggregate([
-                    {
-                        $group: {
-                            _id: null,
-                            brandTitle: { $addToSet: "$brandTitle" }
-                        }
-                    },
-                    {
-                        $unwind: "$brandTitle"
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            brandTitle: 1
-                        }
-                    }
-                ]).exec();
-                const categoriesPromise = CategoryModel.aggregate([
-                    {
-                        $group: {
-                            _id: null,
-                            categoryTitle: { $addToSet: "$categoryTitle" }
-                        }
-                    },
-                    {
-                        $unwind: "$categoryTitle"
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            categoryTitle: 1
-                        }
-                    }
-                ]).exec();
+                const productsPromise = ProductsModel.aggregate(searchSuggestionProductsLookup).exec();
+                const brandsPromise = BrandsModel.aggregate(searchSuggestionBrandsLookup).exec();
+                const categoriesPromise = CategoryModel.aggregate(searchSuggestionCategoryLookup).exec();
+
                 const [products, brands, categories] = await Promise.all([
                     productsPromise,
                     brandsPromise,
-                    categoriesPromise
+                    categoriesPromise,
                 ]);
 
                 const fuseProducts = new Fuse(products, {
                     keys: ['productTitle'],
                     includeScore: true,
-                    threshold: 0.4
+                    threshold: 0.3
                 });
 
                 const fuseBrands = new Fuse(brands, {
@@ -994,33 +925,66 @@ class ProductController extends BaseController {
                 const brandResults = fuseBrands.search(searchQuery).map(result => result.item);
                 const categoryResults = fuseCategories.search(searchQuery).map(result => result.item);
 
-                const seenTitles = new Set<string>();
-                const maxWords = 6;
+                const uniqueTitles = new Set<string>();
 
-                // const uniqueProducts = productResults
-                //     .map(product => ({
-                //         ...product,
-                //         productTitle: truncateWord(product.productTitle, maxWords)
-                //     }))
-                //     .filter(product => {
-                //         const normalizedTitle = normalizeWord(product.productTitle);
-                //         if (seenTitles.has(normalizedTitle)) {
-                //             return false;
-                //         }
-                //         seenTitles.add(normalizedTitle);
-                //         return true;
-                //     })
-                //     .map(product => ({
-                //         productTitle: truncateWord(product.productTitle, maxWords)
-                //     }));
+                const deduplicate = (results: any[]) => {
+                    return results.filter(item => {
+                        const title = item.productTitle || item.brandTitle || item.categoryTitle;
+                        if (uniqueTitles.has(title)) {
+                            return false;
+                        }
+                        uniqueTitles.add(title);
+                        return true;
+                    });
+                };
 
                 results = {
-                    products: productResults,
-                    brands: brandResults,
-                    categories: categoryResults
+                    products: deduplicate(productResults),
+                    brands: deduplicate(brandResults),
+                    categories: deduplicate(categoryResults),
                 };
             }
+            if (query === '') {
+                const origin = req.get('origin');
+                const countryId = await CommonService.findOneCountrySubDomainWithId(origin);
 
+                const dataFetchers = [
+                    {
+                        key: 'topSearches',
+                        promise: SearchQueriesModel.aggregate(topSearchesLookup).exec(),
+                    },
+                    {
+                        key: 'collectionProducts',
+                        promise: CommonService.findCollectionProducts({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pagesJson.search, countryId },
+                            getspecification: '0',
+                            getattribute: '0',
+                        }),
+                    },
+                    {
+                        key: 'collectionCategories',
+                        promise: CommonService.findCollectionCategories({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pagesJson.search, countryId },
+                        }),
+                    },
+                    {
+                        key: 'collectionBrands',
+                        promise: CommonService.findCollectionBrands({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pagesJson.search, countryId },
+                        }),
+                    },
+                ];
+
+                for (const { key, promise } of dataFetchers) {
+                    const data = await promise;
+                    if (data.length > 0) {
+                        results = { ...results, [key]: data };
+                    }
+                }
+            }
             return controller.sendSuccessResponse(res, {
                 requestedData: results,
                 message: 'Success!'

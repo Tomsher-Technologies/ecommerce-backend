@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pageReference = exports.page = void 0;
+exports.pageReference = exports.page = exports.pagesJson = void 0;
+exports.pagesJson = {
+    search: 'search'
+};
 exports.page = [
     { value: 'home', label: "Home" },
     { value: 'header', label: "Header" },

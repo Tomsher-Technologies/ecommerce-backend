@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { collections } from '../../constants/collections';
 
 export interface SearchQueryProps extends Document {
+    countryId: Schema.Types.ObjectId;
     customerId: Schema.Types.ObjectId;
     guestUserId?: string;
     searchQuery?: string;
@@ -11,6 +12,11 @@ export interface SearchQueryProps extends Document {
 }
 
 const searchQuerySchema: Schema<SearchQueryProps> = new Schema({
+    countryId: {
+        type: Schema.Types.ObjectId,
+        ref: `${collections.setup.countries}`,
+        required: true,
+    },
     customerId: {
         type: Schema.Types.ObjectId,
         ref: `${collections.customer.customers}`,

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface CollectionsProductsProps extends Document {
     collectionTitle?: string;
@@ -22,7 +23,7 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
         // unique: false,
         // validate: {
         //     validator: async function (this: any, value: string): Promise<boolean> {
-        //         const count = await this.model('CollectionsProducts').countDocuments({ collectionTitle: value });
+        //         const count = await this.model(`${collections.website.collectionsProducts}`).countDocuments({ collectionTitle: value });
         //         return count === 0;
         //     },
         //     message: 'Collections products code must be unique'
@@ -38,7 +39,7 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('CollectionsProducts').countDocuments({ slug: value });
+                const count = await this.model(`${collections.website.collectionsProducts}`).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -59,7 +60,7 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
     },
     page: {
         type: String,
@@ -86,6 +87,6 @@ const collectionProductSchema: Schema<CollectionsProductsProps> = new Schema({
     }
 });
 
-const CollectionsProductsModel = mongoose.model<CollectionsProductsProps>('CollectionsProducts', collectionProductSchema);
+const CollectionsProductsModel = mongoose.model<CollectionsProductsProps>(`${collections.website.collectionsProducts}`, collectionProductSchema);
 
 export default CollectionsProductsModel;

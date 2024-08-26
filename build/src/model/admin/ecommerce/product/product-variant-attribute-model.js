@@ -24,25 +24,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../../constants/collections");
 const productVariantAttributesSchema = new mongoose_1.Schema({
     variantId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
         required: true
     },
     productId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections_1.collections.ecommerce.products.products}`,
         required: true
     },
     attributeId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Attributes',
+        ref: `${collections_1.collections.ecommerce.attributes}`,
         required: true
     },
     attributeDetailId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'AttributeDetail',
+        ref: `${collections_1.collections.ecommerce.attributedetails}`,
         required: true
     },
     createdAt: {
@@ -50,5 +51,5 @@ const productVariantAttributesSchema = new mongoose_1.Schema({
         default: Date.now
     },
 });
-const ProductVariantAttributesModel = mongoose_1.default.model('ProductVariantAttributes', productVariantAttributesSchema);
+const ProductVariantAttributesModel = mongoose_1.default.model(`${collections_1.collections.ecommerce.products.productvariants.productvariantattributes}`, productVariantAttributesSchema);
 exports.default = ProductVariantAttributesModel;
