@@ -26,6 +26,10 @@ export const collections = {
     },
     multilanguagefieleds: 'multilanguagefieleds',
     searchQueries: 'searchqueries',
+    cartOrder: {
+        cartOrders: 'cartorders',
+        cartOrderProducts: 'cartorderproducts'
+    },
     customer: {
         customers: 'customers',
         wishlists: 'wishlists',
@@ -39,6 +43,11 @@ export const collections = {
     },
     marketing: {
         coupons: 'coupons'
+    },
+    website: {
+        collectionsProducts: 'collectionsproducts',
+        collectionsBrands: 'collectionsnrands',
+        collectionsCategories: 'collectionscategories',
     },
     stores: {
         stores: 'stores'

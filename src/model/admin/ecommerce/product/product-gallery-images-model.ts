@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../../constants/collections';
 
 export interface ProductGalleryImagesProps extends Document {
     galleryImageUrl: string;
@@ -16,11 +17,11 @@ const productGallaryImagesSchema: Schema<ProductGalleryImagesProps> = new Schema
     },
     productID: {
         type: Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections.ecommerce.products.products}`,
     },
     variantId: {
         type: Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections.ecommerce.products.productvariants.productvariants}`,
     },
     status: {
         type: String,
@@ -36,6 +37,6 @@ const productGallaryImagesSchema: Schema<ProductGalleryImagesProps> = new Schema
     },
 });
 
-const ProductGalleryImagesModel = mongoose.model<ProductGalleryImagesProps>('ProductGallaryImages', productGallaryImagesSchema);
+const ProductGalleryImagesModel = mongoose.model<ProductGalleryImagesProps>(`${collections.ecommerce.products.productgallaryimages}`, productGallaryImagesSchema);
 
 export default ProductGalleryImagesModel;

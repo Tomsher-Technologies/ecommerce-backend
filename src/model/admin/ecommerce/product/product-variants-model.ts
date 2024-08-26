@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { deleteFunction } from '../../../../utils/admin/products';
+import { collections } from '../../../../constants/collections';
 
 export interface ProductVariantsProps extends Document {
     productId: Schema.Types.ObjectId;
@@ -30,12 +31,12 @@ export interface ProductVariantsProps extends Document {
 const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     productId: {
         type: Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections.ecommerce.products.products}`,
         required: true,
     },
     countryId: {
         type: Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
         required: true,
     },
     variantSku: {
@@ -49,7 +50,7 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: String,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('ProductVariants').countDocuments({ slug: value });
+                const count = await this.model(`${collections.ecommerce.products.productvariants.productvariants}`).countDocuments({ slug: value });
                 // await deleteFunction(this.productId)
                 return count === 0;
             },
@@ -137,6 +138,6 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     }
 });
 
-const ProductVariantsModel = mongoose.model<ProductVariantsProps>('ProductVariants', productVariantsSchema);
+const ProductVariantsModel = mongoose.model<ProductVariantsProps>(`${collections.ecommerce.products.productvariants.productvariants}`, productVariantsSchema);
 
 export default ProductVariantsModel;

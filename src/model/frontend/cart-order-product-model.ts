@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../constants/collections';
 
 export interface CartOrderProductProps extends Document {
     cartId: Schema.Types.ObjectId;
@@ -42,7 +43,17 @@ export interface CartOrderProductProps extends Document {
 const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     cartId: {
         type: Schema.Types.ObjectId,
-        ref: 'CartOrders',
+        ref: `${collections.cartOrder.cartOrders}`,
+    },
+    variantId: {
+        type: Schema.Types.ObjectId,
+        ref: `${collections.ecommerce.products.productvariants.productvariants}`,
+        required: false
+    },
+    productId: {
+        type: Schema.Types.ObjectId,
+        ref: `${collections.ecommerce.products.products}`,
+        required: false
     },
     slug: {
         type: String,
@@ -93,16 +104,6 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     giftWrapAmount: {
         type: Number,
         default: 0
-    },
-    variantId: {
-        type: Schema.Types.ObjectId,
-        ref: 'ProductVariants',
-        required: false
-    },
-    productId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Products',
-        required: false
     },
     orderProductStatus: {
         type: String,
@@ -182,6 +183,6 @@ const cartOrderProductSchema: Schema<CartOrderProductProps> = new Schema({
     }
 });
 
-const CartOrderProductsModel = mongoose.model<CartOrderProductProps>('CartOrderProducts', cartOrderProductSchema);
+const CartOrderProductsModel = mongoose.model<CartOrderProductProps>(`${collections.cartOrder.cartOrderProducts}`, cartOrderProductSchema);
 
 export default CartOrderProductsModel;

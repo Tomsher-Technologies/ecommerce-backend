@@ -19,6 +19,8 @@ const attribute_config_1 = require("../../../utils/config/attribute-config");
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const search_query_model_1 = __importDefault(require("../../../model/frontend/search-query-model"));
 const fuse_js_1 = __importDefault(require("fuse.js"));
+const search_suggestion_config_1 = require("../../../utils/config/search-suggestion-config");
+const pages_1 = require("../../../constants/pages");
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllProducts(req, res) {
@@ -37,8 +39,10 @@ class ProductController extends base_controller_1.default {
                 }
                 if (keyword) {
                     const keywordRegex = new RegExp(keyword, 'i');
+                    // const keywordRegex = new RegExp(keyword.split('').join('.*'), 'i');
                     query = {
                         $or: [
+                            // { productTitle:  { $regex: regexQuery } },
                             { productTitle: keywordRegex },
                             { slug: keywordRegex },
                             { sku: keywordRegex },
@@ -65,7 +69,7 @@ class ProductController extends base_controller_1.default {
                     };
                     const customer = null;
                     const guestUser = res.locals.uuid || null;
-                    await product_service_1.default.insertOrUpdateSearchQuery(keyword, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
+                    await product_service_1.default.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
                 }
                 if (category) {
                     const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
@@ -852,95 +856,22 @@ class ProductController extends base_controller_1.default {
     }
     async getSearchSuggestions(req, res) {
         try {
-            const { query } = req.query;
+            const { query = '' } = req.query;
             let results = null;
             if (query) {
                 const searchQuery = query;
-                const productsPromise = product_model_1.default.aggregate([
-                    {
-                        $match: { status: '1' }
-                    },
-                    {
-                        $addFields: {
-                            wordsArray: { $split: ["$productTitle", " "] }
-                        }
-                    },
-                    {
-                        $addFields: {
-                            firstFiveWords: { $slice: ["$wordsArray", 5] }
-                        }
-                    },
-                    {
-                        $addFields: {
-                            truncatedTitle: { $reduce: {
-                                    input: "$firstFiveWords",
-                                    initialValue: "",
-                                    in: {
-                                        $cond: {
-                                            if: { $eq: ["$$value", ""] },
-                                            then: "$$this",
-                                            else: { $concat: ["$$value", " ", "$$this"] }
-                                        }
-                                    }
-                                } }
-                        }
-                    },
-                    {
-                        $group: {
-                            _id: "$truncatedTitle",
-                            productTitle: { $first: "$truncatedTitle" }
-                        }
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            productTitle: 1
-                        }
-                    }
-                ]).exec();
-                const brandsPromise = brands_model_1.default.aggregate([
-                    {
-                        $group: {
-                            _id: null,
-                            brandTitle: { $addToSet: "$brandTitle" }
-                        }
-                    },
-                    {
-                        $unwind: "$brandTitle"
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            brandTitle: 1
-                        }
-                    }
-                ]).exec();
-                const categoriesPromise = category_model_1.default.aggregate([
-                    {
-                        $group: {
-                            _id: null,
-                            categoryTitle: { $addToSet: "$categoryTitle" }
-                        }
-                    },
-                    {
-                        $unwind: "$categoryTitle"
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            categoryTitle: 1
-                        }
-                    }
-                ]).exec();
+                const productsPromise = product_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionProductsLookup).exec();
+                const brandsPromise = brands_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionBrandsLookup).exec();
+                const categoriesPromise = category_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionCategoryLookup).exec();
                 const [products, brands, categories] = await Promise.all([
                     productsPromise,
                     brandsPromise,
-                    categoriesPromise
+                    categoriesPromise,
                 ]);
                 const fuseProducts = new fuse_js_1.default(products, {
                     keys: ['productTitle'],
                     includeScore: true,
-                    threshold: 0.4
+                    threshold: 0.3
                 });
                 const fuseBrands = new fuse_js_1.default(brands, {
                     keys: ['brandTitle'],
@@ -955,29 +886,61 @@ class ProductController extends base_controller_1.default {
                 const productResults = fuseProducts.search(searchQuery).map(result => result.item);
                 const brandResults = fuseBrands.search(searchQuery).map(result => result.item);
                 const categoryResults = fuseCategories.search(searchQuery).map(result => result.item);
-                const seenTitles = new Set();
-                const maxWords = 6;
-                // const uniqueProducts = productResults
-                //     .map(product => ({
-                //         ...product,
-                //         productTitle: truncateWord(product.productTitle, maxWords)
-                //     }))
-                //     .filter(product => {
-                //         const normalizedTitle = normalizeWord(product.productTitle);
-                //         if (seenTitles.has(normalizedTitle)) {
-                //             return false;
-                //         }
-                //         seenTitles.add(normalizedTitle);
-                //         return true;
-                //     })
-                //     .map(product => ({
-                //         productTitle: truncateWord(product.productTitle, maxWords)
-                //     }));
-                results = {
-                    products: productResults,
-                    brands: brandResults,
-                    categories: categoryResults
+                const uniqueTitles = new Set();
+                const deduplicate = (results) => {
+                    return results.filter(item => {
+                        const title = item.productTitle || item.brandTitle || item.categoryTitle;
+                        if (uniqueTitles.has(title)) {
+                            return false;
+                        }
+                        uniqueTitles.add(title);
+                        return true;
+                    });
                 };
+                results = {
+                    products: deduplicate(productResults),
+                    brands: deduplicate(brandResults),
+                    categories: deduplicate(categoryResults),
+                };
+            }
+            if (query === '') {
+                const origin = req.get('origin');
+                const countryId = await common_service_1.default.findOneCountrySubDomainWithId(origin);
+                const dataFetchers = [
+                    {
+                        key: 'topSearches',
+                        promise: search_query_model_1.default.aggregate(search_suggestion_config_1.topSearchesLookup).exec(),
+                    },
+                    {
+                        key: 'collectionProducts',
+                        promise: common_service_1.default.findCollectionProducts({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pages_1.pagesJson.search, countryId },
+                            getspecification: '0',
+                            getattribute: '0',
+                        }),
+                    },
+                    {
+                        key: 'collectionCategories',
+                        promise: common_service_1.default.findCollectionCategories({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pages_1.pagesJson.search, countryId },
+                        }),
+                    },
+                    {
+                        key: 'collectionBrands',
+                        promise: common_service_1.default.findCollectionBrands({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pages_1.pagesJson.search, countryId },
+                        }),
+                    },
+                ];
+                for (const { key, promise } of dataFetchers) {
+                    const data = await promise;
+                    if (data.length > 0) {
+                        results = { ...results, [key]: data };
+                    }
+                }
             }
             return controller.sendSuccessResponse(res, {
                 requestedData: results,

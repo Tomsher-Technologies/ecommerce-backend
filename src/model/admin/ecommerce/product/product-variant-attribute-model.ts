@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../../constants/collections';
 
 export interface ProductVariantAttributesProps extends Document {
     productId: Schema.Types.ObjectId;
@@ -11,22 +12,22 @@ export interface ProductVariantAttributesProps extends Document {
 const productVariantAttributesSchema: Schema<ProductVariantAttributesProps> = new Schema({
     variantId: {
         type: Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref:`${collections.ecommerce.products.productvariants.productvariants}`,
         required: true
     },
     productId: {
         type: Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections.ecommerce.products.products}`,
         required: true
     },
     attributeId: {
         type: Schema.Types.ObjectId,
-        ref: 'Attributes',
+        ref: `${collections.ecommerce.attributes}`,
         required: true
     },
     attributeDetailId: {
         type: Schema.Types.ObjectId,
-        ref: 'AttributeDetail',
+        ref: `${collections.ecommerce.attributedetails}`,
         required: true
     },
     createdAt: {
@@ -35,6 +36,6 @@ const productVariantAttributesSchema: Schema<ProductVariantAttributesProps> = ne
     },
 });
 
-const ProductVariantAttributesModel = mongoose.model<ProductVariantAttributesProps>('ProductVariantAttributes', productVariantAttributesSchema);
+const ProductVariantAttributesModel = mongoose.model<ProductVariantAttributesProps>(`${collections.ecommerce.products.productvariants.productvariantattributes}`, productVariantAttributesSchema);
 
 export default ProductVariantAttributesModel;
