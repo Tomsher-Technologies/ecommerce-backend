@@ -202,8 +202,8 @@ class OrdersController extends BaseController {
             'cartDetails.cartStatus': { $ne: cartStatusJson.active },
             $or: [
                 { orderRequestedProductQuantity: { $exists: true, $gt: 0 } },
-                { orderRequestedProductQuantityStatus:  { $exists: true, $ne: "0" } },
-                { orderProductReturnStatus:  { $exists: true, $ne: "0" } },
+                { orderRequestedProductQuantityStatus: { $exists: true, $ne: "0" } },
+                { orderProductReturnStatus: { $exists: true, $ne: "0" } },
             ]
         };
 
@@ -1442,6 +1442,8 @@ class OrdersController extends BaseController {
                             storeCity: basicDetailsSettings?.storeCity,
                             storeState: basicDetailsSettings?.storeState,
                             storePostalCode: basicDetailsSettings?.storePostalCode,
+                            TRNNo: basicDetailsSettings?.TRNNo,
+                            tollFreeNo: basicDetailsSettings?.tollFreeNo,
                             shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                             shopLogo: `${process.env.SHOPLOGO}`,
                             shop: `${process.env.SHOPNAME}`,
@@ -1496,6 +1498,8 @@ class OrdersController extends BaseController {
                             storeStreet: basicDetailsSettings?.storeStreet,
                             storeCity: basicDetailsSettings?.storeCity,
                             storeState: basicDetailsSettings?.storeState,
+                            TRNNo: basicDetailsSettings?.TRNNo,
+                            tollFreeNo: basicDetailsSettings?.tollFreeNo,
                             storePostalCode: basicDetailsSettings?.storePostalCode,
                             shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
                             shopLogo: `${process.env.SHOPLOGO}`,
