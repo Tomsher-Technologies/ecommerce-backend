@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Request, Response, query } from 'express';
 
 import BaseController from "../../admin/base-controller";
-import { cartStatus, orderPaymentStatus, orderPaymentStatusMessages, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJson, paymentMethods } from "../../../constants/cart";
+import { cartStatus, orderPaymentStatus, orderPaymentStatusMessages, orderProductCancelStatusJson, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderStatusArrayJson, paymentMethods } from "../../../constants/cart";
 
 import CustomerModel from "../../../model/frontend/customers-model";
 import CommonService from '../../../services/frontend/guest/common-service'
@@ -307,8 +307,17 @@ class OrderController extends BaseController {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
             }
 
-            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReason });
-
+            await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: orderStatusArrayJson.canceled, canceledStatusAt: new Date(), cancelReason });
+            await CartOrderProductsModel.updateMany(
+                { cartId: orderObjectId },
+                {
+                    orderProductStatus: orderProductStatusJson.canceled,
+                    orderProductStatusAt: new Date(),
+                    orderRequestedProductCancelStatus: orderProductCancelStatusJson.pending,
+                    orderRequestedProductCancelStatusAt: new Date(),
+                },
+                { new: true, useFindAndModify: false }
+            );
             const orderList = await OrderService.orderList({
                 query: {
                     $and: [

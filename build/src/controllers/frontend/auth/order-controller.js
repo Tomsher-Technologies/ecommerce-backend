@@ -287,7 +287,13 @@ class OrderController extends base_controller_1.default {
             if (Number(orderDetails.orderStatus) > 1) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
             }
-            await cart_order_model_1.default.findByIdAndUpdate(orderObjectId, { orderStatus: "6", cancelReason });
+            await cart_order_model_1.default.findByIdAndUpdate(orderObjectId, { orderStatus: cart_1.orderStatusArrayJson.canceled, canceledStatusAt: new Date(), cancelReason });
+            await cart_order_product_model_1.default.updateMany({ cartId: orderObjectId }, {
+                orderProductStatus: cart_1.orderProductStatusJson.canceled,
+                orderProductStatusAt: new Date(),
+                orderRequestedProductCancelStatus: cart_1.orderProductCancelStatusJson.pending,
+                orderRequestedProductCancelStatusAt: new Date(),
+            }, { new: true, useFindAndModify: false });
             const orderList = await order_service_1.default.orderList({
                 query: {
                     $and: [

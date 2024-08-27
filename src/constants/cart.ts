@@ -4,6 +4,11 @@ export const cartStatus = {
     delivered: "3"
 }
 
+export const deliveryTypesJson: any = {
+    shipping: 'shipping',
+    pickupFromSrore: 'pickup-from-store',
+}
+
 export const orderStatusArrayJson = {
     pending: "1",
     processing: "2",

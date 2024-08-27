@@ -7,7 +7,7 @@ export const topSearchesLookup: any = [
         }
     },
     {
-        $sort: { searchCount: -1 } // Use -1 for descending order
+        $sort: { searchCount: -1 }
     },
     {
         $limit: 10
@@ -112,3 +112,62 @@ export const searchSuggestionBrandsLookup = [
         }
     }
 ]
+
+
+
+
+// const searchQuery = query as string;
+// const productsPromise = ProductsModel.find({ status: '1' }).exec();
+// const brandsPromise = BrandsModel.find({}).exec();
+// const categoriesPromise = CategoryModel.find({}).exec();
+// const [products, brands, categories] = await Promise.all([
+//     productsPromise,
+//     brandsPromise,
+//     categoriesPromise
+// ]);
+
+// const fuseProducts = new Fuse(products, {
+//     keys: ['productTitle'],
+//     includeScore: true,
+//     threshold: 0.4
+// });
+
+// const fuseBrands = new Fuse(brands, {
+//     keys: ['brandTitle'],
+//     includeScore: true,
+//     threshold: 0.4
+// });
+
+// const fuseCategories = new Fuse(categories, {
+//     keys: ['categoryTitle'],
+//     includeScore: true,
+//     threshold: 0.4
+// });
+
+// const productResults = fuseProducts.search(searchQuery).map(result => result.item);
+// const brandResults = fuseBrands.search(searchQuery).map(result => result.item);
+// const categoryResults = fuseCategories.search(searchQuery).map(result => result.item);
+
+// const seenTitles = new Set<string>();
+// const maxWords = 6;
+
+// const uniqueProducts = productResults
+//     .map(product => ({
+//         ...product,
+//         productTitle: truncateWord(product.productTitle, maxWords)
+//     }))
+//     .filter(product => {
+//         const normalizedTitle = normalizeWord(product.productTitle);
+//         if (seenTitles.has(normalizedTitle)) {
+//             return false;
+//         }
+//         seenTitles.add(normalizedTitle);
+//         return true;
+//     })
+//     .map(product => ({
+        
+//         productTitle: truncateWord(product.productTitle, maxWords)
+//     }));
+
+// results = {
+//     products: uniqueProducts,

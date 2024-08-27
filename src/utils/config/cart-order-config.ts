@@ -200,6 +200,7 @@ export const cartProject = {
         createdAt: 1,
         updatedAt: 1,
         __v: 1,
+        products: 1,
         totalProductCount: { $size: '$products' },
         totalQuantity: {
             $sum: '$products.quantity'
@@ -219,9 +220,9 @@ export const cartProject = {
         billingAddress: {
             $ifNull: ['$billingAddress', null]
         },
-        // pickupFromStore: {
-        //     $ifNull: ['$pickupFromStore', null]
-        // }
+        pickupFromStore: {
+            $ifNull: ['$pickupFromStore', null]
+        }
 
     }
 

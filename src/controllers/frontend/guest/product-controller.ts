@@ -1,9 +1,15 @@
 import mongoose from 'mongoose';
 import { Request, Response } from 'express';
+import Fuse from 'fuse.js';
+
+import { pagesJson } from '../../../constants/pages';
+import { frontendSpecificationLookup } from '../../../utils/config/specification-config';
+import { ProductsFrontendQueryParams } from '../../../utils/types/products';
+import { frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
+import { searchSuggestionBrandsLookup, searchSuggestionCategoryLookup, searchSuggestionProductsLookup, topSearchesLookup } from '../../../utils/config/search-suggestion-config';
 
 import BaseController from '../../admin/base-controller';
 import ProductService from '../../../services/frontend/guest/product-service'
-import { ProductsFrontendQueryParams } from '../../../utils/types/products';
 import CommonService from '../../../services/frontend/guest/common-service';
 import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
@@ -11,15 +17,9 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SeoPageModel from '../../../model/admin/seo-page-model';
 import ProductGalleryImagesModel from '../../../model/admin/ecommerce/product/product-gallery-images-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
-import { frontendSpecificationLookup } from '../../../utils/config/specification-config';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
-import { frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
-import Fuse from 'fuse.js';
-import { normalizeWord, truncateWord } from '../../../utils/helpers';
-import { searchSuggestionBrandsLookup, searchSuggestionCategoryLookup, searchSuggestionProductsLookup, topSearchesLookup } from '../../../utils/config/search-suggestion-config';
-import { pagesJson } from '../../../constants/pages';
 
 const controller = new BaseController();
 class ProductController extends BaseController {
@@ -39,29 +39,29 @@ class ProductController extends BaseController {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 if (keyword) {
-                    const keywordRegex = new RegExp(keyword, 'i');
-                    // const keywordRegex = new RegExp(keyword.split('').join('.*'), 'i');
+                    // const keywordRegex = new RegExp(keyword, 'i');
+                    const keywordRegex = new RegExp(`^${keyword}`, 'i');
                     query = {
                         $or: [
                             // { productTitle:  { $regex: regexQuery } },
-                            { productTitle: keywordRegex },
-                            { slug: keywordRegex },
-                            { sku: keywordRegex },
-                            { 'productCategory.category.categoryTitle': keywordRegex },
-                            { 'brand.brandTitle': keywordRegex },
-                            { 'productCategory.category.slug': keywordRegex },
-                            { 'productVariants.slug': keywordRegex },
-                            { 'productVariants.extraProductTitle': keywordRegex },
-                            { 'productVariants.variantSku': keywordRegex },
-                            // { 'productSpecification.specificationTitle': keywordRegex },
-                            { 'productSpecification.specificationDetail.itemName': keywordRegex },
-                            { 'productSpecification.specificationDetail.itemValue': keywordRegex },
-                            // { 'productVariants.productSpecification.specificationTitle': keywordRegex },
-                            { 'productVariants.productSpecification.specificationDetail.itemName': keywordRegex },
-                            { 'productVariants.productSpecification.specificationDetail.itemValue': keywordRegex },
-                            // { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
-                            { 'productVariants.productVariantAttributes.attributeDetail.itemName': keywordRegex },
-                            { 'productVariants.productVariantAttributes.attributeDetail.itemValue': keywordRegex }
+                            { productTitle: { $regex: keywordRegex } },
+                            { slug: { $regex: keywordRegex } },
+                            { sku: { $regex: keywordRegex } },
+                            { 'productCategory.category.categoryTitle': { $regex: keywordRegex } },
+                            { 'brand.brandTitle': { $regex: keywordRegex } },
+                            { 'productCategory.category.slug': { $regex: keywordRegex } },
+                            { 'productVariants.slug': { $regex: keywordRegex } },
+                            { 'productVariants.extraProductTitle': { $regex: keywordRegex } },
+                            { 'productVariants.variantSku': { $regex: keywordRegex } },
+                            // { 'productSpecification.specificationTitle': { $regex: keywordRegex } },
+                            { 'productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
+                            { 'productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
+                            // { 'productVariants.productSpecification.specificationTitle': { $regex: keywordRegex } },
+                            { 'productVariants.productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
+                            { 'productVariants.productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
+                            // { 'productVariants.productVariantAttributes.attributeTitle': { $regex: keywordRegex } },
+                            { 'productVariants.productVariantAttributes.attributeDetail.itemName': { $regex: keywordRegex } },
+                            { 'productVariants.productVariantAttributes.attributeDetail.itemValue': { $regex: keywordRegex } }
                         ],
                         ...query
                     } as any;
@@ -910,7 +910,7 @@ class ProductController extends BaseController {
                 const fuseProducts = new Fuse(products, {
                     keys: ['productTitle'],
                     includeScore: true,
-                    threshold: 0.3
+                    threshold: 0.4
                 });
 
                 const fuseBrands = new Fuse(brands, {

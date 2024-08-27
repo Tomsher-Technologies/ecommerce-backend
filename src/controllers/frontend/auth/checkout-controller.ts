@@ -110,6 +110,7 @@ class CheckoutController extends BaseController {
                     paymentMethodId: paymentMethod._id,
                     couponId: null,
                     pickupStoreId: pickupStoreId || null,
+                    pickupStatusAt: pickupStoreId ? new Date() : null,
                     stateId: stateId || null,
                     cityId: cityId || null,
                     cartStatus: cartStatus.active,
@@ -535,7 +536,7 @@ class CheckoutController extends BaseController {
                 },
                 { new: true, runValidators: true }
             );
-            
+
             if (networkResponse._embedded && networkResponse._embedded.payment && networkResponse._embedded.payment.length > 0 && networkResponse._embedded.payment[0].state) {
                 const retValResponse = await CheckoutService.paymentResponse({
                     paymentDetails,
