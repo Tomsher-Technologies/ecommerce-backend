@@ -17,7 +17,9 @@ class TransactionsController extends base_controller_1.default {
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
             if (country) {
-                query.orders.country._id = country;
+                query = {
+                    ...query, 'orders.country._id': new mongoose_1.default.Types.ObjectId(country)
+                };
             }
             else if (countryId) {
                 query = {
