@@ -20,7 +20,9 @@ class TransactionsController extends BaseController {
             const country = getCountryId(userData);
 
             if (country) {
-                query.orders.country._id = country;
+                query = {
+                    ...query, 'orders.country._id': new mongoose.Types.ObjectId(country)
+                } as any;
             } else if (countryId) {
                 query = {
                     ...query, 'orders.country._id': new mongoose.Types.ObjectId(countryId)
