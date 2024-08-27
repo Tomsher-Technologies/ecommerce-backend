@@ -892,11 +892,11 @@ class ProductController extends BaseController {
 
     async getSearchSuggestions(req: Request, res: Response): Promise<any> {
         try {
-            const { query = '' } = req.query;
+            const { query = '' }: any = req.query;
             let results: any = null;
 
             if (query) {
-                const searchQuery = query as string;
+                const searchQuery = query?.toLowerCase() as string;
                 const productsPromise = ProductsModel.aggregate(searchSuggestionProductsLookup).exec();
                 const brandsPromise = BrandsModel.aggregate(searchSuggestionBrandsLookup).exec();
                 const categoriesPromise = CategoryModel.aggregate(searchSuggestionCategoryLookup).exec();
