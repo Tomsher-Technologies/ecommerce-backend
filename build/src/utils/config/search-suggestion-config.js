@@ -56,7 +56,7 @@ exports.searchSuggestionProductsLookup = [
     {
         $group: {
             _id: "$truncatedTitle",
-            productTitle: { $first: { $toLower: "$truncatedTitle" } }
+            productTitle: { $first: "$truncatedTitle" }
         }
     },
     {
@@ -85,7 +85,7 @@ exports.searchSuggestionCategoryLookup = [
     {
         $project: {
             _id: 0,
-            categoryTitle: { $toLower: "$categoryTitle" }
+            categoryTitle: 1
         }
     }
 ];
@@ -105,7 +105,7 @@ exports.searchSuggestionBrandsLookup = [
     {
         $project: {
             _id: 0,
-            brandTitle: { $toLower: "$brandTitle" }
+            brandTitle: 1
         }
     }
 ];
