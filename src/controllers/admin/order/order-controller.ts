@@ -14,7 +14,7 @@ import { productDetailsWithVariant } from '../../../utils/config/product-config'
 import { OrderQueryParams } from '../../../utils/types/order';
 import { exportOrderReport } from '../../../utils/admin/excel/reports';
 import { findOrderStatusDateCheck } from '../../../utils/admin/order';
-import { cartStatus as cartStatusJson, orderProductCancelStatusJson, orderProductCancelStatusMessages, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderProductStatussMessages, orderReturnStatusMessages, orderStatusArray, orderStatusArrayJson, orderStatusMap, orderStatusMessages } from '../../../constants/cart';
+import { cartStatus as cartStatusJson, deliveryTypesJson, orderProductCancelStatusJson, orderProductCancelStatusMessages, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderProductStatussMessages, orderReturnStatusMessages, orderStatusArray, orderStatusArrayJson, orderStatusMap, orderStatusMessages } from '../../../constants/cart';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
 
 import CustomerService from '../../../services/frontend/customer-service';
@@ -37,7 +37,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -93,7 +93,16 @@ class OrdersController extends BaseController {
                     ...query, pickupStoreId: new mongoose.Types.ObjectId(pickupStoreId)
                 } as any;
             }
-
+            if (deliveryType == deliveryTypesJson.shipping) {
+                query = {
+                    ...query, pickupStoreId: null
+                } as any;
+            }
+            if (deliveryType == deliveryTypesJson.pickupFromSrore) {
+                query = {
+                    ...query, pickupStoreId: { $ne: null }
+                } as any;
+            }
             if (stateId) {
                 query = {
                     ...query, stateId: new mongoose.Types.ObjectId(stateId)
