@@ -892,11 +892,11 @@ class ProductController extends BaseController {
 
     async getSearchSuggestions(req: Request, res: Response): Promise<any> {
         try {
-            const { query = '' }: any = req.query;
+            const { query = '' } = req.query;
             let results: any = null;
 
             if (query) {
-                const searchQuery = query?.toLowerCase() as string;
+                const searchQuery = query as string;
                 const productsPromise = ProductsModel.aggregate(searchSuggestionProductsLookup).exec();
                 const brandsPromise = BrandsModel.aggregate(searchSuggestionBrandsLookup).exec();
                 const categoriesPromise = CategoryModel.aggregate(searchSuggestionCategoryLookup).exec();
@@ -942,10 +942,14 @@ class ProductController extends BaseController {
                     });
                 };
 
+                const limitResults = (results: any[], limit: number) => {
+                    return results?.slice(0, limit);
+                };
+
                 results = {
-                    products: deduplicate(productResults),
-                    brands: deduplicate(brandResults),
-                    categories: deduplicate(categoryResults),
+                    brands: limitResults(deduplicate(brandResults), 10),
+                    categories: limitResults(deduplicate(categoryResults), brandResults?.length > 10 ? 10 : 15),
+                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 20),
                 };
             }
             if (query === '') {

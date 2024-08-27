@@ -60,7 +60,7 @@ exports.searchSuggestionProductsLookup = [
         }
     },
     {
-        $limit: 7
+        $limit: 200
     },
     {
         $project: {
@@ -80,7 +80,7 @@ exports.searchSuggestionCategoryLookup = [
         $unwind: "$categoryTitle"
     },
     {
-        $limit: 7
+        $limit: 100
     },
     {
         $project: {
@@ -100,7 +100,7 @@ exports.searchSuggestionBrandsLookup = [
         $unwind: "$brandTitle"
     },
     {
-        $limit: 7
+        $limit: 100
     },
     {
         $project: {

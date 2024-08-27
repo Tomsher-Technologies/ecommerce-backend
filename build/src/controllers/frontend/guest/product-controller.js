@@ -858,7 +858,7 @@ class ProductController extends base_controller_1.default {
             const { query = '' } = req.query;
             let results = null;
             if (query) {
-                const searchQuery = query?.toLowerCase();
+                const searchQuery = query;
                 const productsPromise = product_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionProductsLookup).exec();
                 const brandsPromise = brands_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionBrandsLookup).exec();
                 const categoriesPromise = category_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionCategoryLookup).exec();
@@ -896,10 +896,13 @@ class ProductController extends base_controller_1.default {
                         return true;
                     });
                 };
+                const limitResults = (results, limit) => {
+                    return results?.slice(0, limit);
+                };
                 results = {
-                    products: deduplicate(productResults),
-                    brands: deduplicate(brandResults),
-                    categories: deduplicate(categoryResults),
+                    brands: limitResults(deduplicate(brandResults), 10),
+                    categories: limitResults(deduplicate(categoryResults), brandResults?.length > 10 ? 10 : 15),
+                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 20),
                 };
             }
             if (query === '') {
