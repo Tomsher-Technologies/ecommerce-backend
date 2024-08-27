@@ -93,12 +93,12 @@ class OrdersController extends BaseController {
                     ...query, pickupStoreId: new mongoose.Types.ObjectId(pickupStoreId)
                 } as any;
             }
-            if (deliveryType == deliveryTypesJson.shipping) {
+            if (deliveryType === deliveryTypesJson.shipping) {
                 query = {
                     ...query, pickupStoreId: null
                 } as any;
             }
-            if (deliveryType == deliveryTypesJson.pickupFromSrore) {
+            if (deliveryType === deliveryTypesJson.pickupFromSrore) {
                 query = {
                     ...query, pickupStoreId: { $ne: null }
                 } as any;
@@ -133,20 +133,19 @@ class OrdersController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
             if (isExcel !== '1') {
-                const order = await OrderService.OrderList({
+                const order: any = await OrderService.OrderList({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
+                    getAddress: '1',
                     query,
-                    sort
+                    sort,
+                    getTotalCount: true,
+                    hostName: req.get('origin'),
                 });
-                const totalCount = await OrderService.OrderList({
-                    page: parseInt(page_size as string),
-                    query,
-                    getTotalCount: true
-                })
+
                 return controller.sendSuccessResponse(res, {
-                    requestedData: order,
-                    totalCount: totalCount.length,
+                    requestedData: order.orders,
+                    totalCount: order.totalCount,
                     message: 'Success!'
                 }, 200);
             } else {

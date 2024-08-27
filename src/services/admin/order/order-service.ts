@@ -15,7 +15,7 @@ import CartOrderProductsModel from '../../../model/frontend/cart-order-product-m
 
 class OrderService {
 
-    async OrderList(options: any): Promise<CartOrderProps[]> {
+    async OrderList(options: any): Promise<any> {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
         const { getAddress, getCartProducts } = options;
 
@@ -43,8 +43,8 @@ class OrderService {
         const pipeline: any[] = [
             ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cartProductsLookup]),
             ...((!getTotalCount && getCartProducts) ? [couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
-            ...(!getTotalCount ? [paymentMethodLookup, customerLookup, ...pickupStoreLookupPipeline , orderListObjectLookup] : []),
-            ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
+            ...(getTotalCount ? [paymentMethodLookup, customerLookup, ...pickupStoreLookupPipeline, orderListObjectLookup] : []),
+            ...((getAddress === '1') ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
             countriesLookup,
             {
@@ -55,23 +55,42 @@ class OrderService {
             },
             { $match: query },
             ...((!getTotalCount && getCartProducts === '1') ? [cartDeatilProject] : [cartProject]),
+            { $sort: finalSort },
+            ...(skip ? [{ $skip: skip }] : []),
+            ...(limit ? [{ $limit: limit }] : [])
         ];
 
-        if (!getTotalCount) {
-            pipeline.push({ $sort: finalSort });
-        }
+        const pipelinedata: any[] = [
+            {
+                $facet: {
+                    data: pipeline,
+                    ...(getTotalCount === true ? { totalCount: [{ $match: { cartStatus: { $ne: "1" } } }, { $count: "totalCount" }] } : {}),
+                },
+            },
+            (getTotalCount === true ? {
+                $project: {
+                    data: 1,
+                    totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
+                }
+            } : {
+                $project: {
+                    data: 1,
+                }
+            })
+        ];
 
-        if (!getTotalCount && skip) {
-            pipeline.push({ $skip: skip });
-        }
+        const orderData = await CartOrderModel.aggregate(pipelinedata).exec();
+        const orders = orderData[0].data;
 
-        if (!getTotalCount && limit) {
-            pipeline.push({ $limit: limit });
+       if (getTotalCount === true) {
+            const totalCount = orderData[0].totalCount;
+            return { orders, totalCount };
+        } else {
+            return orders;
         }
-
-        const createdCartWithValues = await CartOrderModel.aggregate(pipeline);
-        return createdCartWithValues;
     }
+
+
 
     async getOrdeReturnProducts(options: any): Promise<any> {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);

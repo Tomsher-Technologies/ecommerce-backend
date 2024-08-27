@@ -219,9 +219,9 @@ export const cartProject = {
         billingAddress: {
             $ifNull: ['$billingAddress', null]
         },
-        // pickupFromStore: {
-        //     $ifNull: ['$pickupFromStore', null]
-        // }
+        pickupFromStore: {
+            $ifNull: ['$pickupFromStore', null]
+        }
 
     }
 
