@@ -236,6 +236,18 @@
                                         Phone: <%= orderDetails.shippingAddress.phoneNumber %>
                 </div>
                 <% } %>
+
+                <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length > 0) { %>
+                    <div>
+                    <strong>Pickup store address:</strong>
+                      
+                        <%= orderDetails.pickupFromStore.storeTitle %><br>
+                          <%= orderDetails.pickupFromStore.storeAddress %>,<br>
+                            <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,--> Email -<%= 
+                                  orderDetails.pickupFromStore.storeEmail %><br>
+                                  Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
+                    </div>
+                      <% } %>
         </div>
 
         <div class="separator"></div>

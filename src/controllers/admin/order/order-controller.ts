@@ -22,7 +22,7 @@ import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gatewa
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import CartOrdersModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
-import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
+import { bulkPdfGenerator, pdfGenerator } from '../../../lib/pdf/pdf-generator';
 import TaxsModel from '../../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
@@ -37,7 +37,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isInvoice, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -133,22 +133,121 @@ class OrdersController extends BaseController {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
             if (isExcel !== '1') {
-                const order: any = await OrderService.OrderList({
+                const orders: any = await OrderService.OrderList({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
-                    getAddress: '1',
                     query,
                     sort,
-                    getTotalCount: true,
+                    getCartProducts: '1',
+                    getAddress: '1',
                     hostName: req.get('origin'),
                 });
+                const totalCount = await OrderService.OrderList({
+                    page: parseInt(page_size as string),
+                    query,
+                    getTotalCount: true
+                })
 
-                return controller.sendSuccessResponse(res, {
-                    requestedData: order.orders,
-                    totalCount: order.totalCount,
-                    message: 'Success!'
-                }, 200);
-            } else {
+
+                if (isInvoice == '1') {
+                    let websiteSettingsQuery: any = { _id: { $exists: true } };
+                    websiteSettingsQuery = {
+                        ...websiteSettingsQuery,
+                        countryId: orders[0].country._id,
+                        block: websiteSetup.basicSettings,
+                        blockReference: { $in: [blockReferences.defualtSettings, blockReferences.basicDetailsSettings, blockReferences.socialMedia] },
+                        status: '1',
+                    } as any;
+
+                    const settingsDetails = await WebsiteSetupModel.find(websiteSettingsQuery);
+                    if (!settingsDetails) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Settings details not found'
+                        });
+                    }
+
+                    const defualtSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.defualtSettings);
+                    const basicDetailsSettings = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
+
+                    if (!basicDetailsSettings) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Basic details settings not found'
+                        });
+                    }
+
+                    let commonDeliveryDays = '6';
+                    if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
+                        commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
+                    }
+
+                    const htmlArray = [];
+                    for (const order of orders) {
+                        const tax = await TaxsModel.findOne({ countryId: order.country._id, status: "1" });
+                        const currencyCode = await CountryModel.findOne({ _id: order.country._id }, 'currencyCode');
+
+                        const expectedDeliveryDate = calculateExpectedDeliveryDate(order.orderStatusAt, Number(commonDeliveryDays));
+
+                        const invoice = await ejs.renderFile(
+                            path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
+                            {
+                                orderDetails: order,
+                                expectedDeliveryDate,
+                                TRNNo: basicDetailsSettings?.TRNNo,
+                                tollFreeNo: basicDetailsSettings?.tollFreeNo,
+                                storeEmail: basicDetailsSettings?.storeEmail,
+                                storePhone: basicDetailsSettings?.storePhone,
+                                storeAppartment: basicDetailsSettings?.storeAppartment,
+                                storeStreet: basicDetailsSettings?.storeStreet,
+                                storeCity: basicDetailsSettings?.storeCity,
+                                storeState: basicDetailsSettings?.storeState,
+                                storePostalCode: basicDetailsSettings?.storePostalCode,
+                                shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                                shopLogo: `${process.env.SHOPLOGO}`,
+                                shop: `${process.env.SHOPNAME}`,
+                                appUrl: `${process.env.APPURL}`,
+                                apiAppUrl: `${process.env.APP_API_URL}`,
+                                tax: tax,
+                                currencyCode: currencyCode?.currencyCode
+                            }
+                        );
+                        htmlArray.push(invoice);
+
+                        const purchase = await ejs.renderFile(path.join(__dirname, '../../../views/order', 'purchase-order-invoice.ejs'),
+                            {
+                                orderDetails: order,
+                                expectedDeliveryDate,
+                                storeEmail: basicDetailsSettings?.storeEmail,
+                                storePhone: basicDetailsSettings?.storePhone,
+                                storeAppartment: basicDetailsSettings?.storeAppartment,
+                                storeStreet: basicDetailsSettings?.storeStreet,
+                                storeCity: basicDetailsSettings?.storeCity,
+                                storeState: basicDetailsSettings?.storeState,
+                                storePostalCode: basicDetailsSettings?.storePostalCode,
+                                shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                                shopLogo: `${process.env.SHOPLOGO}`,
+                                shop: `${process.env.SHOPNAME}`,
+                                appUrl: `${process.env.APPURL}`,
+                                tax: tax,
+                                currencyCode: currencyCode?.currencyCode
+                            });
+                        htmlArray.push(purchase);
+                    }
+
+                    await bulkPdfGenerator({
+                        htmlArray: htmlArray,
+                        res,
+                        preview: req.query.preview || '0',  // Ensure preview is passed, provide a default value if undefined
+                    });
+
+                } else {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: orders,
+                        totalCount: totalCount.length,
+                        message: 'Success!'
+                    }, 200);
+                }
+            }
+            else {
                 const orderData: any = await OrderService.orderListExcelExport({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
