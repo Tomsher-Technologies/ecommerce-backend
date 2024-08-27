@@ -56,11 +56,11 @@ export const searchSuggestionProductsLookup = [
     {
         $group: {
             _id: "$truncatedTitle",
-            productTitle: { $first: "$truncatedTitle" }
+            productTitle:  { $first: { $toLower: "$truncatedTitle" }  }
         }
     },
     {
-        $limit: 7
+        $limit: 200
     },
     {
         $project: {
@@ -81,12 +81,12 @@ export const searchSuggestionCategoryLookup = [
         $unwind: "$categoryTitle"
     },
     {
-        $limit: 7
+        $limit: 100
     },
     {
         $project: {
             _id: 0,
-            categoryTitle: 1
+            categoryTitle: { $toLower: "$categoryTitle" } 
         }
     }
 ]
@@ -103,12 +103,12 @@ export const searchSuggestionBrandsLookup = [
         $unwind: "$brandTitle"
     },
     {
-        $limit: 7
+        $limit: 100
     },
     {
         $project: {
             _id: 0,
-            brandTitle: 1
+            brandTitle:  { $toLower: "$brandTitle" }
         }
     }
 ]

@@ -896,10 +896,13 @@ class ProductController extends base_controller_1.default {
                         return true;
                     });
                 };
+                const limitResults = (results, limit) => {
+                    return results?.slice(0, limit);
+                };
                 results = {
-                    products: deduplicate(productResults),
-                    brands: deduplicate(brandResults),
-                    categories: deduplicate(categoryResults),
+                    brands: limitResults(deduplicate(brandResults), 10),
+                    categories: limitResults(deduplicate(categoryResults), brandResults?.length > 10 ? 10 : 15),
+                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 20),
                 };
             }
             if (query === '') {
