@@ -196,6 +196,9 @@
       <div>
         <h4>Order # <%= orderDetails.orderId %>
         </h4>
+        <% if (TRNNo) { %>
+          <h6>TRN - <%= TRNNo %></h6>
+          <% } %>
         <!-- <h6>GSTIN - 1234ABC5678XYZ</h6> -->
       </div>
     </div>
@@ -219,6 +222,9 @@
                       <%= storePostalCode %>
           </p>
           <% } %>
+          <% if (tollFreeNo) { %>
+            <p> Toll free number: <%= tollFreeNo %></p>
+        <% } %>
       </div>
       <div class="column text-right">
         <% if(orderDetails.shippingAddress) { %>

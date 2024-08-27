@@ -55,8 +55,8 @@
         .logo-container .image-placeholder {
             width: 200px;
             height: 100px;
-            background-color: #eee;
-            border: 1px dashed #ccc;
+            /* background-color: #eee; */
+            /* border: 1px dashed #ccc; */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -175,6 +175,13 @@
             <p><%= storeAppartment %></p>
             <p><%= storeCity %>, <%= storeState %>, <%= storeStreet %></p>
             <p><%= storePostalCode %></p>
+            <% if (TRNNo) { %>
+                <p>TRN: <%= TRNNo %></p>
+            <% } %>
+
+            <% if (tollFreeNo) { %>
+                <p> <b>Toll free number:</b> <%= tollFreeNo %></p>
+            <% } %>
         </div>
 
         <div class="section-title">TAX INVOICE</div>
@@ -231,9 +238,14 @@
                 <% orderDetails.products.forEach((product, index) => { %>
                 <tr>
                     <td><%= index + 1 %></td>
-                    <td>Ponkathir Puttu Podi 1Kg (PonkathirPP1)</td>
+                    <td><% if (product.productDetails.variantDetails.extraProductTitle &&
+                        product.productDetails.variantDetails.extraProductTitle !=='' ) { %>
+                        <%= product.productDetails.variantDetails.extraProductTitle %>
+                          <% } else { %>
+                            <%= product.productDetails.productTitle %>
+                              <% } %></td>
                     <td style="text-align: center;"><%= product.quantity %></td>
-                    <td style="text-align: center;"><% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %><% } %></td>
+                    <td style="text-align: center;"><% if (product.productDetails.unit> 0) { %> <%= product.productDetails.unit %><% } %></td>
                     <td style="text-align: right;"> <%= product.productAmount.toFixed(2) / product.quantity %></td>
                     <td style="text-align: right;"><%= product.productAmount.toFixed(2) %></td>
                     <td style="text-align: right;"><%= product.productAmount.toFixed(2) %></td>
