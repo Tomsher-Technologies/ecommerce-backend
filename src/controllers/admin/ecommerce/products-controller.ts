@@ -106,7 +106,7 @@ class ProductsController extends BaseController {
                     const productData: Partial<ProductsProps> = {
                         productTitle: capitalizeWords(productTitle),
                         slug: slugAndSkuData.slug,
-                        showOrder: showOrder,
+                        showOrder: Number(showOrder),
                         brand: brand as any,
                         description,
                         longDescription,
@@ -782,7 +782,7 @@ class ProductsController extends BaseController {
                                                                     var finalData: Partial<ProductsProps> = {
                                                                         productTitle: capitalizeWords(data.Product_Title),
                                                                         slug: slugify(data.Product_Title),
-                                                                        showOrder: data.Show_Order,
+                                                                        showOrder: Number(data.Show_Order),
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                         description: data.Description,
@@ -816,7 +816,7 @@ class ProductsController extends BaseController {
                                                                     var productVariants: any = {
                                                                         countryId: data.Country ? countryId : await getCountryIdWithSuperAdmin(userData),
                                                                         extraProductTitle: capitalizeWords(data.Product_Title),
-                                                                        showOrder: data.Show_Order,
+                                                                        showOrder: Number(data.Show_Order),
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         variantImageUrl: data.Image,

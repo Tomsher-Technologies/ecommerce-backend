@@ -21,7 +21,7 @@ exports.productSchema = zod_1.z.object({
     _id: zod_1.z.string().optional(),
     productTitle: zod_1.z.string().min(1, { message: 'Product name is required' }),
     sku: zod_1.z.string().optional(),
-    showOrder: zod_1.z.number().optional(),
+    showOrder: zod_1.z.string().optional(),
     productCategory: zod_1.z.string(zod_1.z.unknown()),
     brand: zod_1.z.string().min(1, { message: 'Brand is required' }),
     measurements: zod_1.z.object({

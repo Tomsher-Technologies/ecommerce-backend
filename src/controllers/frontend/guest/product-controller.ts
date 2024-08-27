@@ -53,25 +53,29 @@ class ProductController extends BaseController {
                             { 'productVariants.slug': keywordRegex },
                             { 'productVariants.extraProductTitle': keywordRegex },
                             { 'productVariants.variantSku': keywordRegex },
-                            { 'productSpecification.specificationTitle': keywordRegex },
-                            { 'productSpecification.slug': keywordRegex },
+                            // { 'productSpecification.specificationTitle': keywordRegex },
                             { 'productSpecification.specificationDetail.itemName': keywordRegex },
                             { 'productSpecification.specificationDetail.itemValue': keywordRegex },
-                            { 'productVariants.productSpecification.specificationTitle': keywordRegex },
-                            { 'productVariants.productSpecification.slug': keywordRegex },
+                            // { 'productVariants.productSpecification.specificationTitle': keywordRegex },
                             { 'productVariants.productSpecification.specificationDetail.itemName': keywordRegex },
                             { 'productVariants.productSpecification.specificationDetail.itemValue': keywordRegex },
-                            { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
-                            { 'productVariants.productVariantAttributes.slug': keywordRegex },
+                            // { 'productVariants.productVariantAttributes.attributeTitle': keywordRegex },
                             { 'productVariants.productVariantAttributes.attributeDetail.itemName': keywordRegex },
                             { 'productVariants.productVariantAttributes.attributeDetail.itemValue': keywordRegex }
                         ],
                         ...query
                     } as any;
-                    const customer = null;
-                    const guestUser = res.locals.uuid || null;
+                    if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                        const customer = null;
+                        const guestUser = res.locals.uuid || null;
 
-                    await ProductService.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
+                        await ProductService.insertOrUpdateSearchQuery(
+                            keyword,
+                            countryId,
+                            customer ? new mongoose.Types.ObjectId(customer) : null,
+                            guestUser
+                        );
+                    }
                 }
 
                 if (category) {
