@@ -33,7 +33,7 @@ export const searchSuggestionProductsLookup = [
     },
     {
         $addFields: {
-            firstFiveWords: { $slice: ["$wordsArray", 3] }
+            firstFiveWords: { $slice: ["$wordsArray", 4] }
         }
     },
     {
@@ -56,7 +56,7 @@ export const searchSuggestionProductsLookup = [
     {
         $group: {
             _id: "$truncatedTitle",
-            productTitle: { $first: "$truncatedTitle" }
+            productTitle:  { $first: { $toLower: "$truncatedTitle" }  }
         }
     },
     {
@@ -108,7 +108,7 @@ export const searchSuggestionBrandsLookup = [
     {
         $project: {
             _id: 0,
-            brandTitle: 1
+            brandTitle:  { $toLower: "$brandTitle" }
         }
     }
 ]

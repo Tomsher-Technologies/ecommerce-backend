@@ -858,7 +858,7 @@ class ProductController extends base_controller_1.default {
             const { query = '' } = req.query;
             let results = null;
             if (query) {
-                const searchQuery = query;
+                const searchQuery = query?.toLowerCase();
                 const productsPromise = product_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionProductsLookup).exec();
                 const brandsPromise = brands_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionBrandsLookup).exec();
                 const categoriesPromise = category_model_1.default.aggregate(search_suggestion_config_1.searchSuggestionCategoryLookup).exec();
