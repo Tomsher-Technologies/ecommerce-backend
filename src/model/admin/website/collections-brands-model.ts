@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface CollectionsBrandsProps extends Document {
     collectionTitle?: string;
@@ -38,7 +39,7 @@ const collectionBrandschema: Schema<CollectionsBrandsProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('CollectionsBrands').countDocuments({ slug: value });
+                const count = await this.model(`${collections.website.collectionsBrands}`).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -59,7 +60,7 @@ const collectionBrandschema: Schema<CollectionsBrandsProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
     },
     page: {
         type: String,
@@ -86,6 +87,6 @@ const collectionBrandschema: Schema<CollectionsBrandsProps> = new Schema({
     }
 });
 
-const CollectionsBrandsModel = mongoose.model<CollectionsBrandsProps>('CollectionsBrands', collectionBrandschema);
+const CollectionsBrandsModel = mongoose.model<CollectionsBrandsProps>(`${collections.website.collectionsBrands}`, collectionBrandschema);
 
 export default CollectionsBrandsModel;

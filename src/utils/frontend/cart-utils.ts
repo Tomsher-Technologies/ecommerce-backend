@@ -182,7 +182,8 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
             "firstName": customerDetails.firstName
         },
         "merchantAttributes": {
-            "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`
+            "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`,
+            "skipConfirmationPage": true
         }
     }
 }

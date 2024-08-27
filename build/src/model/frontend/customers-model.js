@@ -24,10 +24,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../constants/collections");
 const customerSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections_1.collections.setup.countries}`,
         required: true,
     },
     guestUserId: {
@@ -50,7 +51,7 @@ const customerSchema = new mongoose_1.Schema({
                 validator: async function (value) {
                     if (this.isGuest)
                         return true;
-                    const count = await this.model('Customer').countDocuments({ email: value });
+                    const count = await this.model(`${collections_1.collections.customer.customers}`).countDocuments({ email: value });
                     return count === 0;
                 },
                 message: 'Email already exists'
@@ -78,7 +79,7 @@ const customerSchema = new mongoose_1.Schema({
                 validator: async function (value) {
                     if (this.isGuest)
                         return true;
-                    const count = await this.model('Customer').countDocuments({ phone: value });
+                    const count = await this.model(`${collections_1.collections.customer.customers}`).countDocuments({ phone: value });
                     return count === 0;
                 },
                 message: 'Phone number already exists'
@@ -110,7 +111,7 @@ const customerSchema = new mongoose_1.Schema({
         // validate: {
         //     validator: async function (this: CustomrProps, value: string): Promise<boolean> {
         //         if (this.isGuest || !value) return true;
-        //         const count = await this.model('Customer').countDocuments({ referralCode: value });
+        //         const count = await this.model(`${collections.customer.customers}`).countDocuments({ referralCode: value });
         //         return count === 0;
         //     },
         //     message: 'Referral code already exists'
@@ -190,5 +191,5 @@ customerSchema.pre('save', async function (next) {
     }
     next();
 });
-const CustomerModel = mongoose_1.default.model('Customer', customerSchema);
+const CustomerModel = mongoose_1.default.model(`${collections_1.collections.customer.customers}`, customerSchema);
 exports.default = CustomerModel;

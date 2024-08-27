@@ -27,6 +27,10 @@ exports.collections = {
     },
     multilanguagefieleds: 'multilanguagefieleds',
     searchQueries: 'searchqueries',
+    cartOrder: {
+        cartOrders: 'cartorders',
+        cartOrderProducts: 'cartorderproducts'
+    },
     customer: {
         customers: 'customers',
         wishlists: 'wishlists',
@@ -40,6 +44,11 @@ exports.collections = {
     },
     marketing: {
         coupons: 'coupons'
+    },
+    website: {
+        collectionsProducts: 'collectionsproducts',
+        collectionsBrands: 'collectionsnrands',
+        collectionsCategories: 'collectionscategories',
     },
     stores: {
         stores: 'stores'

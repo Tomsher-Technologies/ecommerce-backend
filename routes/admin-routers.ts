@@ -61,6 +61,8 @@ import ContactUsRoutes from './admin/customers/contact-us-routes';
 //report
 import OrderReportRoutes from './admin/reports/order-report-routes';
 
+
+
 const adminRouter = express.Router();
 
 // admin
@@ -124,7 +126,6 @@ adminRouter.use('/dashboard', DashboardRoutes);
 
 
 //report
-adminRouter.use('/report/order', OrderReportRoutes);
 
 
 export default adminRouter;

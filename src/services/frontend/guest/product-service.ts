@@ -389,6 +389,7 @@ class ProductService {
 
     async insertOrUpdateSearchQuery(
         keyword: string,
+        countryId: mongoose.Types.ObjectId,
         customerId: mongoose.Types.ObjectId | null,
         guestUserId?: string
     ) {
@@ -401,6 +402,7 @@ class ProductService {
 
         const update = {
             $set: {
+                countryId,
                 searchQuery: keyword,
                 lastSearchedAt: new Date(),
                 ...(customerId ? { customerId } : {}),

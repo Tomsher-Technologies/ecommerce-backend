@@ -24,10 +24,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../constants/collections");
 const cartOrderProductSchema = new mongoose_1.Schema({
     cartId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'CartOrders',
+        ref: `${collections_1.collections.cartOrder.cartOrders}`,
+    },
+    variantId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+        required: false
+    },
+    productId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: `${collections_1.collections.ecommerce.products.products}`,
+        required: false
     },
     slug: {
         type: String,
@@ -78,16 +89,6 @@ const cartOrderProductSchema = new mongoose_1.Schema({
     giftWrapAmount: {
         type: Number,
         default: 0
-    },
-    variantId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
-        required: false
-    },
-    productId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
-        required: false
     },
     orderProductStatus: {
         type: String,
@@ -166,5 +167,5 @@ const cartOrderProductSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const CartOrderProductsModel = mongoose_1.default.model('CartOrderProducts', cartOrderProductSchema);
+const CartOrderProductsModel = mongoose_1.default.model(`${collections_1.collections.cartOrder.cartOrderProducts}`, cartOrderProductSchema);
 exports.default = CartOrderProductsModel;

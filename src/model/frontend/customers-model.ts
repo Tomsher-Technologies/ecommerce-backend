@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../constants/collections';
 
 export interface CustomrProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -31,7 +32,7 @@ export interface CustomrProps extends Document {
 const customerSchema: Schema<CustomrProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
         required: true,
     },
     guestUserId: {
@@ -53,7 +54,7 @@ const customerSchema: Schema<CustomrProps> = new Schema({
             {
                 validator: async function (this: CustomrProps, value: string): Promise<boolean> {
                     if (this.isGuest) return true;
-                    const count = await this.model('Customer').countDocuments({ email: value });
+                    const count = await this.model(`${collections.customer.customers}`).countDocuments({ email: value });
                     return count === 0;
                 },
                 message: 'Email already exists'
@@ -80,7 +81,7 @@ const customerSchema: Schema<CustomrProps> = new Schema({
             {
                 validator: async function (this: CustomrProps, value: string): Promise<boolean> {
                     if (this.isGuest) return true;
-                    const count = await this.model('Customer').countDocuments({ phone: value });
+                    const count = await this.model(`${collections.customer.customers}`).countDocuments({ phone: value });
                     return count === 0;
                 },
                 message: 'Phone number already exists'
@@ -112,7 +113,7 @@ const customerSchema: Schema<CustomrProps> = new Schema({
         // validate: {
         //     validator: async function (this: CustomrProps, value: string): Promise<boolean> {
         //         if (this.isGuest || !value) return true;
-        //         const count = await this.model('Customer').countDocuments({ referralCode: value });
+        //         const count = await this.model(`${collections.customer.customers}`).countDocuments({ referralCode: value });
         //         return count === 0;
         //     },
         //     message: 'Referral code already exists'
@@ -193,6 +194,6 @@ customerSchema.pre('save', async function (next) {
     next();
 });
 
-const CustomerModel = mongoose.model<CustomrProps>('Customer', customerSchema);
+const CustomerModel = mongoose.model<CustomrProps>(`${collections.customer.customers}`, customerSchema);
 
 export default CustomerModel;

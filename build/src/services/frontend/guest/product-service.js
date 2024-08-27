@@ -359,7 +359,7 @@ class ProductService {
             return products;
         }
     }
-    async insertOrUpdateSearchQuery(keyword, customerId, guestUserId) {
+    async insertOrUpdateSearchQuery(keyword, countryId, customerId, guestUserId) {
         const query = {
             $or: [
                 { customerId, searchQuery: keyword },
@@ -368,6 +368,7 @@ class ProductService {
         };
         const update = {
             $set: {
+                countryId,
                 searchQuery: keyword,
                 lastSearchedAt: new Date(),
                 ...(customerId ? { customerId } : {}),

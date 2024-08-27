@@ -50,7 +50,7 @@ class OrderService {
             { $sort: finalSort },
             ...(getCartProducts === '1' ? [cart_order_config_1.cartDeatilProject] : [cart_order_config_1.cartProject]),
         ];
-        if (getReturnProduct) {
+        if (getReturnProduct === '1') {
             pipeline.push({
                 $addFields: {
                     products: {

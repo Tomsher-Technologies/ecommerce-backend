@@ -564,21 +564,6 @@ class ProductsController extends BaseController {
         }
     }
 
-    async sapUpdateProductPriceAndQuantity(req: Request, res: Response): Promise<void> {
-        // const productVariantPriceQuantityUpdationErrorMessage: any = []
-        // var excelRowIndex = 2
-        // let isProductVariantUpdate = false
-
-        // const productPriceExcelJsonData = await xlsx.utils.sheet_to_json(productPriceWorksheet);
-
-        // if (productPriceExcelJsonData && productPriceExcelJsonData?.length > 0) {
-        //     let countryDataCache: any = {};
-
-        // } else {
-        //     return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
-        // }
-    }
-
     async importProductExcel(req: Request, res: Response): Promise<void> {
         const validation: any = []
         var index = 2

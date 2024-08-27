@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const collectionCategorySchema = new mongoose_1.Schema({
     collectionTitle: {
         type: String,
@@ -46,7 +47,7 @@ const collectionCategorySchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('CollectionsCategories').countDocuments({ slug: value });
+                const count = await this.model(`${collections_1.collections.website.collectionsCategories}`).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -67,7 +68,7 @@ const collectionCategorySchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: `${collections_1.collections.setup.countries}`,
     },
     page: {
         type: String,
@@ -93,5 +94,5 @@ const collectionCategorySchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const CollectionsCategoriesModel = mongoose_1.default.model('CollectionsCategories', collectionCategorySchema);
+const CollectionsCategoriesModel = mongoose_1.default.model(`${collections_1.collections.website.collectionsCategories}`, collectionCategorySchema);
 exports.default = CollectionsCategoriesModel;

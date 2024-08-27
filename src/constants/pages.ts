@@ -1,3 +1,8 @@
+export const pagesJson = {
+    search: 'search'
+}
+
+
 export const page = [
     { value: 'home', label: "Home" },
     { value: 'header', label: "Header" },

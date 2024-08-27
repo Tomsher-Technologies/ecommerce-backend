@@ -96,7 +96,6 @@ class OrderController extends base_controller_1.default {
                 getCartProducts: '1',
                 getReturnProduct,
             });
-            console.log('getReturnProductQ', order);
             if (order && order.length > 0) {
                 let message = 'Your Order is ready!';
                 if (order[0].cartStatus === cart_1.cartStatus.active) {

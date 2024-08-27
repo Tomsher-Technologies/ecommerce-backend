@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface CollectionsCategoriesProps extends Document {
     collectionTitle?: string;
@@ -38,7 +39,7 @@ const collectionCategorySchema: Schema<CollectionsCategoriesProps> = new Schema(
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('CollectionsCategories').countDocuments({ slug: value });
+                const count = await this.model(`${collections.website.collectionsCategories}`).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -59,7 +60,7 @@ const collectionCategorySchema: Schema<CollectionsCategoriesProps> = new Schema(
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: `${collections.setup.countries}`,
     },
     page: {
         type: String,
@@ -86,6 +87,6 @@ const collectionCategorySchema: Schema<CollectionsCategoriesProps> = new Schema(
     }
 });
 
-const CollectionsCategoriesModel = mongoose.model<CollectionsCategoriesProps>('CollectionsCategories', collectionCategorySchema);
+const CollectionsCategoriesModel = mongoose.model<CollectionsCategoriesProps>(`${collections.website.collectionsCategories}`, collectionCategorySchema);
 
 export default CollectionsCategoriesModel;

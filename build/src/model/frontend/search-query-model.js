@@ -26,6 +26,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const collections_1 = require("../../constants/collections");
 const searchQuerySchema = new mongoose_1.Schema({
+    countryId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: `${collections_1.collections.setup.countries}`,
+        required: true,
+    },
     customerId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: `${collections_1.collections.customer.customers}`,

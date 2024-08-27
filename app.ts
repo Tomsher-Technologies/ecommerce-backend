@@ -9,12 +9,13 @@ require('dotenv').config();
 
 import adminRouter from './routes/admin-routers'; 
 import frontendRouter from './routes/frontend-router'; 
+import sapRoutes from './routes/sap/sap-routes';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 const corsOptions = {
-  origin: '*', // Replace '*' with your domain for security, e.g., 'https://yourdomain.com'
+  origin: '*', 
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   preflightContinue: false,
   optionsSuccessStatus: 204,
@@ -23,12 +24,6 @@ const corsOptions = {
 
 
 app.use(cors(corsOptions));
-app.use(helmet());
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
@@ -41,6 +36,11 @@ app.use(
     }
   })
 );
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+
 
 mongoose.Promise = global.Promise;
 mongoose
@@ -56,6 +56,7 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: "Ecommerce" });
 });
 
+app.use('/api/v1', sapRoutes);
 app.use('/admin', adminRouter);
 app.use('/api', frontendRouter);
 

@@ -16,6 +16,10 @@ import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import { frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
+import Fuse from 'fuse.js';
+import { normalizeWord, truncateWord } from '../../../utils/helpers';
+import { searchSuggestionBrandsLookup, searchSuggestionCategoryLookup, searchSuggestionProductsLookup, topSearchesLookup } from '../../../utils/config/search-suggestion-config';
+import { pagesJson } from '../../../constants/pages';
 
 const controller = new BaseController();
 class ProductController extends BaseController {
@@ -36,8 +40,10 @@ class ProductController extends BaseController {
                 }
                 if (keyword) {
                     const keywordRegex = new RegExp(keyword, 'i');
+                    // const keywordRegex = new RegExp(keyword.split('').join('.*'), 'i');
                     query = {
                         $or: [
+                            // { productTitle:  { $regex: regexQuery } },
                             { productTitle: keywordRegex },
                             { slug: keywordRegex },
                             { sku: keywordRegex },
@@ -65,7 +71,7 @@ class ProductController extends BaseController {
                     const customer = null;
                     const guestUser = res.locals.uuid || null;
 
-                    await ProductService.insertOrUpdateSearchQuery(keyword, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
+                    await ProductService.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose.Types.ObjectId(customer) : null, guestUser);
                 }
 
                 if (category) {
@@ -767,8 +773,8 @@ class ProductController extends BaseController {
                     limit: parseInt(limit as string),
                     hostName: req.get('origin'),
                 });
-                console.log('randomProducts',randomProducts);
-                
+                console.log('randomProducts', randomProducts);
+
                 return controller.sendSuccessResponse(res, {
                     requestedData: randomProducts,
                     message: 'No search queries or frequent queries found. Here are some random products!'
@@ -879,5 +885,186 @@ class ProductController extends BaseController {
             message: 'Success!'
         }, 200);
     }
+
+    async getSearchSuggestions(req: Request, res: Response): Promise<any> {
+        try {
+            const { query = '' } = req.query;
+            let results: any = null;
+
+            if (query) {
+                const searchQuery = query as string;
+                const productsPromise = ProductsModel.aggregate(searchSuggestionProductsLookup).exec();
+                const brandsPromise = BrandsModel.aggregate(searchSuggestionBrandsLookup).exec();
+                const categoriesPromise = CategoryModel.aggregate(searchSuggestionCategoryLookup).exec();
+
+                const [products, brands, categories] = await Promise.all([
+                    productsPromise,
+                    brandsPromise,
+                    categoriesPromise,
+                ]);
+
+                const fuseProducts = new Fuse(products, {
+                    keys: ['productTitle'],
+                    includeScore: true,
+                    threshold: 0.3
+                });
+
+                const fuseBrands = new Fuse(brands, {
+                    keys: ['brandTitle'],
+                    includeScore: true,
+                    threshold: 0.4
+                });
+
+                const fuseCategories = new Fuse(categories, {
+                    keys: ['categoryTitle'],
+                    includeScore: true,
+                    threshold: 0.4
+                });
+
+                const productResults = fuseProducts.search(searchQuery).map(result => result.item);
+                const brandResults = fuseBrands.search(searchQuery).map(result => result.item);
+                const categoryResults = fuseCategories.search(searchQuery).map(result => result.item);
+
+                const uniqueTitles = new Set<string>();
+
+                const deduplicate = (results: any[]) => {
+                    return results.filter(item => {
+                        const title = item.productTitle || item.brandTitle || item.categoryTitle;
+                        if (uniqueTitles.has(title)) {
+                            return false;
+                        }
+                        uniqueTitles.add(title);
+                        return true;
+                    });
+                };
+
+                results = {
+                    products: deduplicate(productResults),
+                    brands: deduplicate(brandResults),
+                    categories: deduplicate(categoryResults),
+                };
+            }
+            if (query === '') {
+                const origin = req.get('origin');
+                const countryId = await CommonService.findOneCountrySubDomainWithId(origin);
+
+                const dataFetchers = [
+                    {
+                        key: 'topSearches',
+                        promise: SearchQueriesModel.aggregate(topSearchesLookup).exec(),
+                    },
+                    {
+                        key: 'collectionProducts',
+                        promise: CommonService.findCollectionProducts({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pagesJson.search, countryId },
+                            getspecification: '0',
+                            getattribute: '0',
+                        }),
+                    },
+                    {
+                        key: 'collectionCategories',
+                        promise: CommonService.findCollectionCategories({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pagesJson.search, countryId },
+                        }),
+                    },
+                    {
+                        key: 'collectionBrands',
+                        promise: CommonService.findCollectionBrands({
+                            hostName: origin,
+                            query: { _id: { $exists: true }, page: pagesJson.search, countryId },
+                        }),
+                    },
+                ];
+
+                for (const { key, promise } of dataFetchers) {
+                    const data = await promise;
+                    if (data.length > 0) {
+                        results = { ...results, [key]: data };
+                    }
+                }
+            }
+            return controller.sendSuccessResponse(res, {
+                requestedData: results,
+                message: 'Success!'
+            }, 200);
+        } catch (error) {
+            console.error('Search Error:', error);
+            return controller.sendErrorResponse(res, 500, {
+                message: 'An error occurred while performing the search.',
+                validation: 'Search query failed'
+            }, req);
+        }
+    }
+
+
+
+    // async getSearchSuggestions(req: Request, res: Response): Promise<any> {
+    //     try {
+    //         const { query } = req.query;
+    //         let results: any = null;
+
+    //         if (query) {
+    //             const searchQuery = query as string;
+
+    //             const productsPromise = ProductsModel.aggregate([
+    //                 {
+    //                     $match: {
+    //                         $text: { $search: searchQuery },
+    //                         status: '1'
+    //                     }
+    //                 },
+    //                 { $limit: 10 },
+    //                 { $project: { productTitle: 1 } }
+    //             ]).exec();
+
+    //             const brandsPromise = BrandsModel.aggregate([
+    //                 {
+    //                     $match: {
+    //                         $text: { $search: searchQuery }
+    //                     }
+    //                 },
+    //                 { $limit: 10 },
+    //                 { $project: { brandTitle: 1 } }
+    //             ]).exec();
+
+    //             const categoriesPromise = CategoryModel.aggregate([
+    //                 {
+    //                     $match: {
+    //                         $text: { $search: searchQuery }
+    //                     }
+    //                 },
+    //                 { $limit: 10 },
+    //                 { $project: { categoryTitle: 1 } }
+    //             ]).exec();
+
+    //             // Wait for all queries to complete
+    //             const [products, brands, categories] = await Promise.all([
+    //                 productsPromise,
+    //                 brandsPromise,
+    //                 categoriesPromise
+    //             ]);
+
+    //             results = {
+    //                 products,
+    //                 brands,
+    //                 categories
+    //             };
+    //         }
+
+    //         return controller.sendSuccessResponse(res, {
+    //             requestedData: results,
+    //             message: 'Success!'
+    //         }, 200);
+    //     } catch (error) {
+    //         console.error('Search Error:', error);
+    //         return controller.sendErrorResponse(res, 500, {
+    //             message: 'An error occurred while performing the search.',
+    //             validation: 'Search query failed'
+    //         }, req);
+    //     }
+    // }
+
 }
 export default new ProductController();

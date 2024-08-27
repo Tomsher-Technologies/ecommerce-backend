@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../../constants/collections");
 const productGallaryImagesSchema = new mongoose_1.Schema({
     galleryImageUrl: {
         type: String,
@@ -31,11 +32,11 @@ const productGallaryImagesSchema = new mongoose_1.Schema({
     },
     productID: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Products',
+        ref: `${collections_1.collections.ecommerce.products.products}`,
     },
     variantId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'ProductVariants',
+        ref: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
     },
     status: {
         type: String,
@@ -50,5 +51,5 @@ const productGallaryImagesSchema = new mongoose_1.Schema({
         default: Date.now
     },
 });
-const ProductGalleryImagesModel = mongoose_1.default.model('ProductGallaryImages', productGallaryImagesSchema);
+const ProductGalleryImagesModel = mongoose_1.default.model(`${collections_1.collections.ecommerce.products.productgallaryimages}`, productGallaryImagesSchema);
 exports.default = ProductGalleryImagesModel;
