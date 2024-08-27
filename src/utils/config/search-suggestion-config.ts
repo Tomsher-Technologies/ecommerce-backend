@@ -86,7 +86,7 @@ export const searchSuggestionCategoryLookup = [
     {
         $project: {
             _id: 0,
-            categoryTitle: 1
+            categoryTitle: { $toLower: "$categoryTitle" } 
         }
     }
 ]
