@@ -1,10 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatusMessages = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductCancelStatusMessages = exports.orderProductCancelStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.cartStatus = void 0;
+exports.tamaraPaymentGatwayStatus = exports.networkPaymentGatwayStatus = exports.tabbyPaymentGatwaySuccessStatus = exports.tabbyPaymentGatwayStatus = exports.tapPaymentGatwayStatus = exports.orderTypes = exports.orderPaymentStatusMessages = exports.orderPaymentStatus = exports.couponDiscountType = exports.paymentMethods = exports.couponDeviceType = exports.couponTypes = exports.orderProductStatusMap = exports.orderStatusMap = exports.orderProductReturnQuantityStatusArray = exports.orderProductReturnQuantityStatusJson = exports.orderProductReturnStatusArray = exports.orderReturnStatusMessages = exports.orderProductReturnStatusJson = exports.orderProductCancelStatusMessages = exports.orderProductCancelStatusJson = exports.orderProductStatussMessages = exports.orderProductStatusArray = exports.orderProductStatusJson = exports.orderStatusMessages = exports.orderStatusArray = exports.orderStatusArrayJson = exports.deliveryTypesJson = exports.cartStatus = void 0;
 exports.cartStatus = {
     active: "1",
     order: "2",
     delivered: "3"
+};
+exports.deliveryTypesJson = {
+    shipping: 'shipping',
+    pickupFromSrore: 'pickup-from-store',
 };
 exports.orderStatusArrayJson = {
     pending: "1",

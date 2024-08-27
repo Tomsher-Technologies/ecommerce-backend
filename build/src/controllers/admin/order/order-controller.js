@@ -33,7 +33,7 @@ const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, orderStatus = '' } = req.query;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isInvoice, orderStatus = '', deliveryType } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -83,6 +83,16 @@ class OrdersController extends base_controller_1.default {
                     ...query, pickupStoreId: new mongoose_1.default.Types.ObjectId(pickupStoreId)
                 };
             }
+            if (deliveryType === cart_1.deliveryTypesJson.shipping) {
+                query = {
+                    ...query, pickupStoreId: null
+                };
+            }
+            if (deliveryType === cart_1.deliveryTypesJson.pickupFromSrore) {
+                query = {
+                    ...query, pickupStoreId: { $ne: null }
+                };
+            }
             if (stateId) {
                 query = {
                     ...query, stateId: new mongoose_1.default.Types.ObjectId(stateId)
@@ -109,22 +119,104 @@ class OrdersController extends base_controller_1.default {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
             if (isExcel !== '1') {
-                const order = await order_service_1.default.OrderList({
+                const orders = await order_service_1.default.OrderList({
                     page: parseInt(page_size),
                     limit: parseInt(limit),
                     query,
-                    sort
+                    sort,
+                    getCartProducts: '1',
+                    getAddress: '1',
+                    hostName: req.get('origin'),
                 });
                 const totalCount = await order_service_1.default.OrderList({
                     page: parseInt(page_size),
                     query,
                     getTotalCount: true
                 });
-                return controller.sendSuccessResponse(res, {
-                    requestedData: order,
-                    totalCount: totalCount.length,
-                    message: 'Success!'
-                }, 200);
+                if (isInvoice == '1') {
+                    let websiteSettingsQuery = { _id: { $exists: true } };
+                    websiteSettingsQuery = {
+                        ...websiteSettingsQuery,
+                        countryId: orders[0].country._id,
+                        block: website_setup_1.websiteSetup.basicSettings,
+                        blockReference: { $in: [website_setup_1.blockReferences.defualtSettings, website_setup_1.blockReferences.basicDetailsSettings, website_setup_1.blockReferences.socialMedia] },
+                        status: '1',
+                    };
+                    const settingsDetails = await website_setup_model_1.default.find(websiteSettingsQuery);
+                    if (!settingsDetails) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Settings details not found'
+                        });
+                    }
+                    const defualtSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.defualtSettings);
+                    const basicDetailsSettings = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+                    if (!basicDetailsSettings) {
+                        return controller.sendErrorResponse(res, 200, {
+                            message: 'Basic details settings not found'
+                        });
+                    }
+                    let commonDeliveryDays = '6';
+                    if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
+                        commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
+                    }
+                    const htmlArray = [];
+                    for (const order of orders) {
+                        const tax = await tax_model_1.default.findOne({ countryId: order.country._id, status: "1" });
+                        const currencyCode = await country_model_1.default.findOne({ _id: order.country._id }, 'currencyCode');
+                        const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(order.orderStatusAt, Number(commonDeliveryDays));
+                        const invoice = await ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
+                            orderDetails: order,
+                            expectedDeliveryDate,
+                            TRNNo: basicDetailsSettings?.TRNNo,
+                            tollFreeNo: basicDetailsSettings?.tollFreeNo,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            storeAppartment: basicDetailsSettings?.storeAppartment,
+                            storeStreet: basicDetailsSettings?.storeStreet,
+                            storeCity: basicDetailsSettings?.storeCity,
+                            storeState: basicDetailsSettings?.storeState,
+                            storePostalCode: basicDetailsSettings?.storePostalCode,
+                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shop: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`,
+                            apiAppUrl: `${process.env.APP_API_URL}`,
+                            tax: tax,
+                            currencyCode: currencyCode?.currencyCode
+                        });
+                        htmlArray.push(invoice);
+                        const purchase = await ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'purchase-order-invoice.ejs'), {
+                            orderDetails: order,
+                            expectedDeliveryDate,
+                            storeEmail: basicDetailsSettings?.storeEmail,
+                            storePhone: basicDetailsSettings?.storePhone,
+                            storeAppartment: basicDetailsSettings?.storeAppartment,
+                            storeStreet: basicDetailsSettings?.storeStreet,
+                            storeCity: basicDetailsSettings?.storeCity,
+                            storeState: basicDetailsSettings?.storeState,
+                            storePostalCode: basicDetailsSettings?.storePostalCode,
+                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+                            shopLogo: `${process.env.SHOPLOGO}`,
+                            shop: `${process.env.SHOPNAME}`,
+                            appUrl: `${process.env.APPURL}`,
+                            tax: tax,
+                            currencyCode: currencyCode?.currencyCode
+                        });
+                        htmlArray.push(purchase);
+                    }
+                    await (0, pdf_generator_1.bulkPdfGenerator)({
+                        htmlArray: htmlArray,
+                        res,
+                        preview: req.query.preview || '0', // Ensure preview is passed, provide a default value if undefined
+                    });
+                }
+                else {
+                    return controller.sendSuccessResponse(res, {
+                        requestedData: orders,
+                        totalCount: totalCount.length,
+                        message: 'Success!'
+                    }, 200);
+                }
             }
             else {
                 const orderData = await order_service_1.default.orderListExcelExport({

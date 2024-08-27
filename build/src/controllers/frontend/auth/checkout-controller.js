@@ -104,6 +104,7 @@ class CheckoutController extends base_controller_1.default {
                     paymentMethodId: paymentMethod._id,
                     couponId: null,
                     pickupStoreId: pickupStoreId || null,
+                    pickupStatusAt: pickupStoreId ? new Date() : null,
                     stateId: stateId || null,
                     cityId: cityId || null,
                     cartStatus: cart_1.cartStatus.active,
