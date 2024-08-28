@@ -713,7 +713,7 @@ class ProductsController extends base_controller_1.default {
                                                                     var finalData = {
                                                                         productTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
                                                                         slug: (0, helpers_1.slugify)(data.Product_Title),
-                                                                        showOrder: Number(data.Show_Order),
+                                                                        showOrder: data.Show_Order,
                                                                         productImageUrl: data.Image,
                                                                         isVariant: (data.Item_Type == 'config-item') ? 1 : 0,
                                                                         description: data.Description,
@@ -745,7 +745,7 @@ class ProductsController extends base_controller_1.default {
                                                                     var productVariants = {
                                                                         countryId: data.Country ? countryId : await (0, helpers_1.getCountryIdWithSuperAdmin)(userData),
                                                                         extraProductTitle: (0, helpers_1.capitalizeWords)(data.Product_Title),
-                                                                        showOrder: Number(data.Show_Order),
+                                                                        showOrder: data.Show_Order,
                                                                         // slug: slugify(slugData),
                                                                         variantSku: data.SKU,
                                                                         variantImageUrl: data.Image,
