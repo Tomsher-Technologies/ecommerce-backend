@@ -364,39 +364,37 @@ class CommonController extends BaseController {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
-                if (page && pageReference) {
-                    query = {
-                        ...query,
-                        countryId,
-                        ...(collectioncategory ? { _id: new mongoose.Types.ObjectId(collectioncategory) } : {
-                            page: page,
-                            pageReference: pageReference
-                        }),
-                        status: '1',
-                    } as any;
-
-                    const categories = await CommonService.findCollectionCategories({
-                        hostName: req.get('origin'),
-                        query,
-                    });
-
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: categories,
-                        message: 'Success!'
-                    }, 200);
-                } else {
+                if ((page === '' && pageReference === '') && (collectioncategory === '')) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
-                        validation: 'page and pageReference is missing! please check'
+                        validation: 'Either page and pageReference or collectioncategory must be provided! Please check your input.'
                     }, req);
                 }
+                query = {
+                    ...query,
+                    countryId,
+                    ...(collectioncategory ? { _id: new mongoose.Types.ObjectId(collectioncategory) } : {
+                        page: page,
+                        pageReference: pageReference
+                    }),
+                    status: '1',
+                } as any;
+
+                const categories = await CommonService.findCollectionCategories({
+                    hostName: req.get('origin'),
+                    query,
+                });
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: categories,
+                    message: 'Success!'
+                }, 200);
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',
                     validation: 'page and pageReference is missing! please check'
                 }, req);
             }
-
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories' });
         }
@@ -410,32 +408,31 @@ class CommonController extends BaseController {
             const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
 
             if (countryId) {
-                if (page && pageReference) {
-                    query = {
-                        ...query,
-                        countryId,
-                        ...(collectionbrand ? { _id: new mongoose.Types.ObjectId(collectionbrand) } : {
-                            page: page,
-                            pageReference: pageReference
-                        }),
-                        status: '1',
-                    } as any;
-
-                    const brands = await CommonService.findCollectionBrands({
-                        hostName: req.get('origin'),
-                        query,
-                    });
-
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: brands,
-                        message: 'Success!'
-                    }, 200);
-                } else {
+                if ((page === '' && pageReference === '') && (collectionbrand === '')) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
-                        validation: 'page and pageReference is missing! please check'
+                        validation: 'Either page and pageReference or collectionbrand must be provided! Please check your input.'
                     }, req);
                 }
+                query = {
+                    ...query,
+                    countryId,
+                    ...(collectionbrand ? { _id: new mongoose.Types.ObjectId(collectionbrand) } : {
+                        page: page,
+                        pageReference: pageReference
+                    }),
+                    status: '1',
+                } as any;
+
+                const brands = await CommonService.findCollectionBrands({
+                    hostName: req.get('origin'),
+                    query,
+                });
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: brands,
+                    message: 'Success!'
+                }, 200);
             } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Error',

@@ -339,31 +339,29 @@ class CommonController extends base_controller_1.default {
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                if (page && pageReference) {
-                    query = {
-                        ...query,
-                        countryId,
-                        ...(collectioncategory ? { _id: new mongoose_1.default.Types.ObjectId(collectioncategory) } : {
-                            page: page,
-                            pageReference: pageReference
-                        }),
-                        status: '1',
-                    };
-                    const categories = await common_service_1.default.findCollectionCategories({
-                        hostName: req.get('origin'),
-                        query,
-                    });
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: categories,
-                        message: 'Success!'
-                    }, 200);
-                }
-                else {
+                if ((page === '' && pageReference === '') && (collectioncategory === '')) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
-                        validation: 'page and pageReference is missing! please check'
+                        validation: 'Either page and pageReference or collectioncategory must be provided! Please check your input.'
                     }, req);
                 }
+                query = {
+                    ...query,
+                    countryId,
+                    ...(collectioncategory ? { _id: new mongoose_1.default.Types.ObjectId(collectioncategory) } : {
+                        page: page,
+                        pageReference: pageReference
+                    }),
+                    status: '1',
+                };
+                const categories = await common_service_1.default.findCollectionCategories({
+                    hostName: req.get('origin'),
+                    query,
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: categories,
+                    message: 'Success!'
+                }, 200);
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
@@ -382,31 +380,29 @@ class CommonController extends base_controller_1.default {
             let query = { _id: { $exists: true } };
             const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (countryId) {
-                if (page && pageReference) {
-                    query = {
-                        ...query,
-                        countryId,
-                        ...(collectionbrand ? { _id: new mongoose_1.default.Types.ObjectId(collectionbrand) } : {
-                            page: page,
-                            pageReference: pageReference
-                        }),
-                        status: '1',
-                    };
-                    const brands = await common_service_1.default.findCollectionBrands({
-                        hostName: req.get('origin'),
-                        query,
-                    });
-                    return controller.sendSuccessResponse(res, {
-                        requestedData: brands,
-                        message: 'Success!'
-                    }, 200);
-                }
-                else {
+                if ((page === '' && pageReference === '') && (collectionbrand === '')) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Error',
-                        validation: 'page and pageReference is missing! please check'
+                        validation: 'Either page and pageReference or collectionbrand must be provided! Please check your input.'
                     }, req);
                 }
+                query = {
+                    ...query,
+                    countryId,
+                    ...(collectionbrand ? { _id: new mongoose_1.default.Types.ObjectId(collectionbrand) } : {
+                        page: page,
+                        pageReference: pageReference
+                    }),
+                    status: '1',
+                };
+                const brands = await common_service_1.default.findCollectionBrands({
+                    hostName: req.get('origin'),
+                    query,
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: brands,
+                    message: 'Success!'
+                }, 200);
             }
             else {
                 return controller.sendErrorResponse(res, 200, {
