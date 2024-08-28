@@ -870,7 +870,7 @@ class ProductController extends base_controller_1.default {
                 const fuseProducts = new fuse_js_1.default(products, {
                     keys: ['productTitle'],
                     includeScore: true,
-                    threshold: 0.4
+                    threshold: 0.3
                 });
                 const fuseBrands = new fuse_js_1.default(brands, {
                     keys: ['brandTitle'],
@@ -902,7 +902,7 @@ class ProductController extends base_controller_1.default {
                 results = {
                     brands: limitResults(deduplicate(brandResults), 10),
                     categories: limitResults(deduplicate(categoryResults), brandResults?.length > 10 ? 10 : 15),
-                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 20),
+                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 15),
                 };
             }
             if (query === '') {

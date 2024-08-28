@@ -33,11 +33,12 @@ const authMiddleware = async (req, res, next) => {
         const token = req.header('Authorization')?.split(' ')[1];
         if (token) {
             let user = null;
+            let checkToken = null;
             if (token === process.env.APP_AUTH_KEY) {
-                user = await user_model_1.default.findOne({ userTitle: "Sap" });
+                user = await user_model_1.default.findOne({ userTitle: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug']);
             }
             else {
-                const checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+                checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
                 if (!checkToken) {
                     return res.status(201).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
                 }
@@ -48,7 +49,7 @@ const authMiddleware = async (req, res, next) => {
             }
             const userData = {
                 _id: user?._id,
-                userTypeID: user.userTypeID,
+                userTypeID: checkToken?.userTypeID?.slug ? checkToken.userTypeID : user.userTypeID,
                 countryId: user?.countryId,
                 firstName: user?.firstName,
                 phone: user?.phone,
