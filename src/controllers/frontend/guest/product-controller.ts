@@ -910,7 +910,7 @@ class ProductController extends BaseController {
                 const fuseProducts = new Fuse(products, {
                     keys: ['productTitle'],
                     includeScore: true,
-                    threshold: 0.4
+                    threshold: 0.3
                 });
 
                 const fuseBrands = new Fuse(brands, {
@@ -949,7 +949,7 @@ class ProductController extends BaseController {
                 results = {
                     brands: limitResults(deduplicate(brandResults), 10),
                     categories: limitResults(deduplicate(categoryResults), brandResults?.length > 10 ? 10 : 15),
-                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 20),
+                    products: limitResults(deduplicate(productResults), brandResults?.length > 10 ? (categoryResults?.length > 10 ? 10 : 15) : 15),
                 };
             }
             if (query === '') {
