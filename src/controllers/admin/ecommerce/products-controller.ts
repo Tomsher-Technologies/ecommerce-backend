@@ -897,7 +897,7 @@ class ProductsController extends BaseController {
                                                                                     }
                                                                                 }
 
-                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index)
+                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + data.SKU
 
                                                                                 const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
 
@@ -1096,7 +1096,7 @@ class ProductsController extends BaseController {
                                                                                 // else {
                                                                                 //     slugData = product?.slug + "-" + data.Product_Title
                                                                                 // }
-                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + (index) // generate slug
+                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU // generate slug
                                                                                 // if (data.Product_Title === productVariants.extraProductTitle) {
                                                                                 //     productVariants.extraProductTitle = ""
                                                                                 // }
