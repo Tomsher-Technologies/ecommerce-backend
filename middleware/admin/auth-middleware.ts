@@ -15,10 +15,11 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
 
     if (token) {
       let user: any = null
+      let checkToken: any = null
       if (token === process.env.APP_AUTH_KEY) {
-        user = await UserModel.findOne({ userTitle: "Sap" });
+        user = await UserModel.findOne({ userTitle: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug'])
       } else {
-        const checkToken: any = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
+        checkToken = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 
         if (!checkToken) {
           return res.status(201).json({ message: 'Unauthorized - Invalid token', status: false, reLogin: true });
@@ -30,7 +31,7 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
       }
       const userData = {
         _id: user?._id,
-        userTypeID: user.userTypeID,
+        userTypeID: checkToken?.userTypeID?.slug ? checkToken.userTypeID : user.userTypeID,
         countryId: user?.countryId,
         firstName: user?.firstName,
         phone: user?.phone,
