@@ -120,6 +120,7 @@ class ProductVariantService {
             hsn: productVariants.hsn,
             mpn: productVariants.mpn,
             barcode: productVariants.barcode,
+            isExcel: productVariants?.isExcel
         };
         const createdProductVariant = await product_variants_model_1.default.create(productVariantData);
         if (createdProductVariant) {

@@ -820,7 +820,7 @@ class ProductsController extends base_controller_1.default {
                                                                                         const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
                                                                                     }
                                                                                 }
-                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + (index);
+                                                                                slugData = createProduct.productTitle + "-" + countryForSlug + '-' + data.SKU;
                                                                                 const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
                                                                                     productVariants = {
@@ -1007,7 +1007,7 @@ class ProductsController extends base_controller_1.default {
                                                                                 // else {
                                                                                 //     slugData = product?.slug + "-" + data.Product_Title
                                                                                 // }
-                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + (index); // generate slug
+                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU; // generate slug
                                                                                 // if (data.Product_Title === productVariants.extraProductTitle) {
                                                                                 //     productVariants.extraProductTitle = ""
                                                                                 // }
