@@ -24,6 +24,7 @@ const smtpEmailGateway = async (emailDefaultValues, template) => {
         const mailOptions = {
             from: `"${process.env.SHOPNAME}" <${process.env.SMTP_USER}>`, // Sender address
             to: emailDefaultValues.email,
+            cc: emailDefaultValues.ccmail,
             subject: emailDefaultValues.subject,
             html: template,
         };
