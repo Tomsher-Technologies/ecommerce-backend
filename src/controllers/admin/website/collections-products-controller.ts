@@ -195,6 +195,7 @@ class CollectionsProductsController extends BaseController {
                             collectionSubTitle: collection.collectionSubTitle,
                             collectionImageUrl: collection.collectionImageUrl,
                             collectionsProducts: collectionProducts,
+                            actualCollectionsProducts: collection.collectionsProducts,
                             languageValues: collection.languageValues,
                             // unCollectionedProducts: unCollectionedProducts,
                         },
@@ -221,14 +222,13 @@ class CollectionsProductsController extends BaseController {
             if (validatedData.success) {
                 const collectionId = req.params.id;
                 if (collectionId) {
-                    let { collectionsProducts } = validatedData.data;
+                    const { collectionsProducts } = validatedData.data;
                     const collectionImage = (req as any).files.find((file: any) => file.fieldname === 'collectionImage');
 
                     let updatedCollectionData = req.body;
-                    collectionsProducts = collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [];
                     updatedCollectionData = {
                         ...updatedCollectionData,
-                        collectionsProducts: collectionsProducts,
+                        collectionsProducts: collectionsProducts ? collectionsProducts.split(',').map((id: string) => id.trim()) : [],
                         collectionImageUrl: handleFileUpload(req, await CollectionsProductsService.findOne(collectionId), (req.file || collectionImage), 'collectionImageUrl', 'collection'),
                         updatedAt: new Date()
                     };

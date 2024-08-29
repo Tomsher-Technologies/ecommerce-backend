@@ -9,6 +9,8 @@ import { orderProductCancelStatusMessages, orderProductStatussMessages, orderRet
 import { mailChimpEmailGateway } from "../../lib/emails/mail-chimp-sms-gateway";
 import { smtpEmailGateway } from "../../lib/emails/smtp-nodemailer-gateway";
 import { pdfGenerator } from "../../lib/pdf/pdf-generator";
+import { bulkSmsGateway } from "../../lib/sms/bulk-sms-gateway";
+import { deliveredOrder, shippingOrder } from "../../constants/messages";
 
 export const findOrderStatusDateCheck = (orderStatus: any) => {
     let statusAt
@@ -250,6 +252,7 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
                 subject: orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
             }, template)
+            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: orderStatusMessages[orderStatus] === '4' ? shippingOrder(orderDetails.orderId, expectedDeliveryDate) : deliveredOrder(orderDetails.orderId) })
         }
     });
 }
@@ -301,6 +304,7 @@ export const orderProductStatusChangeEmail = async (settingsDetails: any, orderD
                 subject: orderReturnStatusMessages[newStatus],
                 email: customerEmail,
             }, template)
+            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderProductStatussMessages[newStatus]}.` })
         }
     });
 }
@@ -351,6 +355,7 @@ export const orderProductCancelStatusChangeEmail = async (settingsDetails: any, 
                 subject: orderProductCancelStatusMessages[newStatus],
                 email: customerEmail,
             }, template)
+            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderProductCancelStatusMessages[newStatus]}.` })
         }
     });
 }
@@ -402,6 +407,7 @@ export const orderProductReturnStatusChangeEmail = async (settingsDetails: any, 
                 subject: orderReturnStatusMessages[newStatus],
                 email: customerEmail,
             }, template)
+            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderReturnStatusMessages[newStatus]}.` })
         }
     });
 }
@@ -453,6 +459,7 @@ export const orderProductReturnQuantityChangeEmail = async (settingsDetails: any
                 subject: orderReturnStatusMessages[newStatus],
                 email: customerEmail,
             }, template)
+            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.` })
         }
     });
 }
