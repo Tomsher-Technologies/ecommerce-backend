@@ -25,6 +25,6 @@ export interface OrderQueryParams {
     paymentTransactionId?: string;
     paymentFromDate?: string;
     paymentEndDate?: string;
-    isInvoice?: string;
+    isInvoicePDF?: string;
     deliveryType?: string;
 }

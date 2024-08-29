@@ -22,6 +22,7 @@ const common_service_1 = __importDefault(require("../../../services/frontend/gue
 const product_variant_attribute_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 const search_query_model_1 = __importDefault(require("../../../model/frontend/search-query-model"));
+const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 class ProductService {
     async findProductList(productOption) {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
@@ -147,7 +148,22 @@ class ProductService {
             collectionPipeline = await this.collection(collectionProductsData, hostName, pipeline);
         }
         if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
-            pipeline.push({ $match: { 'productCategory.category._id': { $in: collectionPipeline.categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+            let categoryIds = [];
+            for (let i = 0; i < collectionPipeline.categoryIds.length; i++) {
+                categoryIds.push(collectionPipeline.categoryIds[i]);
+                async function fetchCategoryAndChildren(categoryId) {
+                    let categoryArray = [categoryId];
+                    while (categoryArray.length > 0) {
+                        const currentCategoryId = categoryArray.shift();
+                        const categoriesData = await category_model_1.default.find({ parentCategory: currentCategoryId }, '_id');
+                        const childCategoryIds = categoriesData.map(category => category._id);
+                        categoryArray.push(...childCategoryIds);
+                        categoryIds.push(...childCategoryIds);
+                    }
+                }
+                await fetchCategoryAndChildren(collectionPipeline.categoryIds[i]);
+            }
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
             pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
