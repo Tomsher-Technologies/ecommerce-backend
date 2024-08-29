@@ -32,7 +32,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isInvoicePDF, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isPdfExport, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -143,7 +143,7 @@ class OrdersController extends BaseController {
                     getTotalCount: true
                 })
 
-                if (orders.length > 0 && isInvoicePDF == '1') {
+                if (orders.length > 0 && isPdfExport == '1') {
                     let websiteSettingsQuery: any = { _id: { $exists: true } };
                     websiteSettingsQuery = {
                         ...websiteSettingsQuery,
@@ -408,6 +408,11 @@ class OrdersController extends BaseController {
                     updateOrderStatus.partiallyShippedStatusAt = new Date();
                 }
             } else if (updatedProduct.orderProductStatus === orderProductStatusJson.canceled) {
+                await ProductVariantsModel.findByIdAndUpdate(
+                    orderProduct.variantId,
+                    { $inc: { quantity: orderProduct.quantity } },
+                    { new: true, useFindAndModify: false }
+                );
                 const otherProductsCanceled = allProductsInOrder.filter((product: any) => product._id.toString() !== orderProductId).every((product: any) => product.orderProductStatus === orderProductStatusJson.canceled);
                 if (otherProductsCanceled) {
                     updateOrderStatus.orderStatus = orderStatusArrayJson.canceled;

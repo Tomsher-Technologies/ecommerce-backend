@@ -11,6 +11,7 @@ import CartOrdersModel from "../../../model/frontend/cart-order-model";
 import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import PaymentMethodModel from "../../../model/admin/setup/payment-methods-model";
+import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 
 const controller = new BaseController();
 class OrderController extends BaseController {
@@ -305,6 +306,19 @@ class OrderController extends BaseController {
 
             if (Number(orderDetails.orderStatus) > 1) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
+            }
+            const cartOrderProducts = await CartOrderProductsModel.find({ cartId: orderObjectId });
+
+            if (!cartOrderProducts || cartOrderProducts.length === 0) {
+                return controller.sendErrorResponse(res, 200, { message: 'No products found in the order!' });
+            }
+            for (const product of cartOrderProducts) {
+                const { variantId, quantity } = product;
+                await ProductVariantsModel.findByIdAndUpdate(
+                    variantId,
+                    { $inc: { quantity: quantity } },
+                    { new: true, useFindAndModify: false }
+                );
             }
 
             await CartOrdersModel.findByIdAndUpdate(orderObjectId, { orderStatus: orderStatusArrayJson.canceled, canceledStatusAt: new Date(), cancelReason });

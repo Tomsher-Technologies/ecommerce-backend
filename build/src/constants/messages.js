@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetPasswordOtp = exports.resendOtp = exports.guestRegisterOtp = exports.registerOtp = exports.subjects = void 0;
+exports.shippingOrder = exports.createOrder = exports.resetPasswordOtp = exports.resendOtp = exports.guestRegisterOtp = exports.registerOtp = exports.subjects = void 0;
 exports.subjects = {
     passwordResetConfirmation: 'Password Reset Confirmation',
     verificationOTP: 'Verification OTP',
@@ -22,3 +22,11 @@ const resetPasswordOtp = (otp) => {
     return `Your OTP for password reset is: ${otp}. Please use this code to proceed with resetting your password.`;
 };
 exports.resetPasswordOtp = resetPasswordOtp;
+const createOrder = (orderId) => {
+    return `Your order has been confirmed. For your reference, your order number is ${orderId}. We shall update you when your order is ready to be shipped.`;
+};
+exports.createOrder = createOrder;
+const shippingOrder = (orderId, expectedDeliveryDate) => {
+    return `Your order #${orderId} has just been dispatched! You can expect it to be delivered by (${expectedDeliveryDate}).`;
+};
+exports.shippingOrder = shippingOrder;
