@@ -1,9 +1,6 @@
 import 'module-alias/register';
 import { Request, Response } from 'express';
-import path from 'path';
 import mongoose from 'mongoose';
-const ejs = require('ejs');
-const { convert } = require('html-to-text');
 
 import { calculateExpectedDeliveryDate, dateConvertPm, getCountryId } from '../../../utils/helpers';
 
@@ -13,23 +10,21 @@ import OrderService from '../../../services/admin/order/order-service'
 import { productDetailsWithVariant } from '../../../utils/config/product-config';
 import { OrderQueryParams } from '../../../utils/types/order';
 import { exportOrderReport } from '../../../utils/admin/excel/reports';
-import { findOrderStatusDateCheck } from '../../../utils/admin/order';
+import { bulkInvoicePDFExport, findOrderStatusDateCheck, invoicePdfGenerator, orderProductCancelStatusChangeEmail, orderProductReturnQuantityChangeEmail, orderProductReturnStatusChangeEmail, orderProductStatusChangeEmail, orderStatusChangeEmail } from '../../../utils/admin/order';
 import { cartStatus as cartStatusJson, deliveryTypesJson, orderProductCancelStatusJson, orderProductCancelStatusMessages, orderProductReturnQuantityStatusJson, orderProductReturnStatusJson, orderProductStatusJson, orderProductStatussMessages, orderReturnStatusMessages, orderStatusArray, orderStatusArrayJson, orderStatusMap, orderStatusMessages } from '../../../constants/cart';
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
+import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { pdfGenerator } from '../../../lib/pdf/pdf-generator';
 
 import CustomerService from '../../../services/frontend/customer-service';
-import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import CartOrdersModel, { CartOrderProps } from '../../../model/frontend/cart-order-model';
 import CartOrderProductsModel from '../../../model/frontend/cart-order-product-model';
-import { bulkPdfGenerator, pdfGenerator } from '../../../lib/pdf/pdf-generator';
 import TaxsModel from '../../../model/admin/setup/tax-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
-import { smtpEmailGateway } from '../../../lib/emails/smtp-nodemailer-gateway';
 import CountryModel from '../../../model/admin/setup/country-model';
 import CustomerModel from '../../../model/frontend/customers-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
-import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 const controller = new BaseController();
 
@@ -37,7 +32,7 @@ class OrdersController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isInvoice, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isPdfExport, orderStatus = '', deliveryType } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
@@ -148,8 +143,7 @@ class OrdersController extends BaseController {
                     getTotalCount: true
                 })
 
-
-                if (isInvoice == '1') {
+                if (orders.length > 0 && isPdfExport == '1') {
                     let websiteSettingsQuery: any = { _id: { $exists: true } };
                     websiteSettingsQuery = {
                         ...websiteSettingsQuery,
@@ -179,66 +173,18 @@ class OrdersController extends BaseController {
                     if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                     }
-
-                    const htmlArray = [];
+                    const htmlArray: any[] = [];
                     for (const order of orders) {
                         const tax = await TaxsModel.findOne({ countryId: order.country._id, status: "1" });
                         const currencyCode = await CountryModel.findOne({ _id: order.country._id }, 'currencyCode');
-
-                        const expectedDeliveryDate = calculateExpectedDeliveryDate(order.orderStatusAt, Number(commonDeliveryDays));
-
-                        const invoice = await ejs.renderFile(
-                            path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
-                            {
-                                orderDetails: order,
-                                expectedDeliveryDate,
-                                TRNNo: basicDetailsSettings?.TRNNo,
-                                tollFreeNo: basicDetailsSettings?.tollFreeNo,
-                                storeEmail: basicDetailsSettings?.storeEmail,
-                                storePhone: basicDetailsSettings?.storePhone,
-                                storeAppartment: basicDetailsSettings?.storeAppartment,
-                                storeStreet: basicDetailsSettings?.storeStreet,
-                                storeCity: basicDetailsSettings?.storeCity,
-                                storeState: basicDetailsSettings?.storeState,
-                                storePostalCode: basicDetailsSettings?.storePostalCode,
-                                shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                                shopLogo: `${process.env.SHOPLOGO}`,
-                                shop: `${process.env.SHOPNAME}`,
-                                appUrl: `${process.env.APPURL}`,
-                                apiAppUrl: `${process.env.APP_API_URL}`,
-                                tax: tax,
-                                currencyCode: currencyCode?.currencyCode
-                            }
-                        );
-                        htmlArray.push(invoice);
-
-                        const purchase = await ejs.renderFile(path.join(__dirname, '../../../views/order', 'purchase-order-invoice.ejs'),
-                            {
-                                orderDetails: order,
-                                expectedDeliveryDate,
-                                storeEmail: basicDetailsSettings?.storeEmail,
-                                storePhone: basicDetailsSettings?.storePhone,
-                                storeAppartment: basicDetailsSettings?.storeAppartment,
-                                storeStreet: basicDetailsSettings?.storeStreet,
-                                storeCity: basicDetailsSettings?.storeCity,
-                                storeState: basicDetailsSettings?.storeState,
-                                storePostalCode: basicDetailsSettings?.storePostalCode,
-                                shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                                shopLogo: `${process.env.SHOPLOGO}`,
-                                shop: `${process.env.SHOPNAME}`,
-                                appUrl: `${process.env.APPURL}`,
-                                tax: tax,
-                                currencyCode: currencyCode?.currencyCode
-                            });
-                        htmlArray.push(purchase);
+                        await bulkInvoicePDFExport(htmlArray, order, basicDetailsSettings, tax, currencyCode?.currencyCode, commonDeliveryDays)
                     }
-
-                    await bulkPdfGenerator({
-                        htmlArray: htmlArray,
+                    await pdfGenerator({
+                        html: htmlArray,
                         res,
-                        preview: req.query.preview || '0',  // Ensure preview is passed, provide a default value if undefined
+                        preview: req.query.preview || '0',
+                        bulkExport: true
                     });
-
                 } else {
                     return controller.sendSuccessResponse(res, {
                         requestedData: orders,
@@ -246,8 +192,7 @@ class OrdersController extends BaseController {
                         message: 'Success!'
                     }, 200);
                 }
-            }
-            else {
+            } else {
                 const orderData: any = await OrderService.orderListExcelExport({
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
@@ -463,6 +408,11 @@ class OrdersController extends BaseController {
                     updateOrderStatus.partiallyShippedStatusAt = new Date();
                 }
             } else if (updatedProduct.orderProductStatus === orderProductStatusJson.canceled) {
+                await ProductVariantsModel.findByIdAndUpdate(
+                    orderProduct.variantId,
+                    { $inc: { quantity: orderProduct.quantity } },
+                    { new: true, useFindAndModify: false }
+                );
                 const otherProductsCanceled = allProductsInOrder.filter((product: any) => product._id.toString() !== orderProductId).every((product: any) => product.orderProductStatus === orderProductStatusJson.canceled);
                 if (otherProductsCanceled) {
                     updateOrderStatus.orderStatus = orderStatusArrayJson.canceled;
@@ -512,56 +462,8 @@ class OrdersController extends BaseController {
                     } as any;
 
                     const settingsDetails = await WebsiteSetupModel.find(query);
-                    const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                    ejs.renderFile(path.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                        firstName: customerDetails?.firstName,
-                        orderId: orderDetails.orderId,
-                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderProductStatussMessages[newStatus]}.`,
-                        subject: orderReturnStatusMessages[newStatus],
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                        appUrl: `${process.env.APPURL}`,
-                        socialMedia,
-                        appUrls,
-                    }, async (err: any, template: any) => {
-                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            await mailChimpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail
-                            }, template)
-
-                        } else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-                        }
-                    });
+                    await orderProductStatusChangeEmail(settingsDetails, orderDetails, newStatus, customerDetails, productDetails)
                 }
-
             }
         }
 
@@ -641,54 +543,7 @@ class OrdersController extends BaseController {
                     } as any;
 
                     const settingsDetails = await WebsiteSetupModel.find(query);
-                    const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                    ejs.renderFile(path.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                        firstName: customerDetails?.firstName,
-                        orderId: orderDetails.orderId,
-                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderProductCancelStatusMessages[newStatus]}.`,
-                        subject: orderProductCancelStatusMessages[newStatus],
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                        appUrl: `${process.env.APPURL}`,
-                        socialMedia,
-                        appUrls,
-                    }, async (err: any, template: any) => {
-                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            await mailChimpEmailGateway({
-                                subject: orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail
-                            }, template)
-
-                        } else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-                        }
-                    });
+                    await orderProductCancelStatusChangeEmail(settingsDetails, orderDetails, newStatus, customerDetails, productDetails)
                 }
             }
             const updatedOrderDetails: any = await OrderService.OrderList({
@@ -822,53 +677,7 @@ class OrdersController extends BaseController {
                         } as any;
 
                         const settingsDetails = await WebsiteSetupModel.find(query);
-                        const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
-                        const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
-                        const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                        ejs.renderFile(path.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                            firstName: customerDetails?.firstName,
-                            orderId: orderDetails.orderId,
-                            content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderReturnStatusMessages[newStatus]}.`,
-                            subject: orderReturnStatusMessages[newStatus],
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                            appUrl: `${process.env.APPURL}`,
-                            socialMedia,
-                            appUrls,
-                        }, async (err: any, template: any) => {
-                            const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
-                            if (process.env.SHOPNAME === 'Timehouse') {
-                                await mailChimpEmailGateway({
-                                    subject: orderReturnStatusMessages[newStatus],
-                                    email: customerEmail
-                                }, template)
-
-                            } else if (process.env.SHOPNAME === 'Homestyle') {
-                                const sendEmail = await smtpEmailGateway({
-                                    subject: orderReturnStatusMessages[newStatus],
-                                    email: customerEmail,
-                                }, template)
-                            }
-                            else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                const sendEmail = await smtpEmailGateway({
-                                    subject: orderReturnStatusMessages[newStatus],
-                                    email: customerEmail,
-                                }, template)
-                            }
-                            else if (process.env.SHOPNAME === 'Smartbaby') {
-                                const sendEmail = await smtpEmailGateway({
-                                    subject: orderReturnStatusMessages[newStatus],
-                                    email: customerEmail,
-                                }, template)
-                            }
-                        });
+                        await orderProductReturnStatusChangeEmail(settingsDetails, orderDetails, newStatus, customerDetails, productDetails)
                     }
                 }
             }
@@ -965,54 +774,7 @@ class OrdersController extends BaseController {
                     } as any;
 
                     const settingsDetails = await WebsiteSetupModel.find(query);
-                    const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                    ejs.renderFile(path.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                        firstName: customerDetails?.firstName,
-                        orderId: orderDetails.orderId,
-                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.`,
-                        subject: orderReturnStatusMessages[newStatus],
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                        appUrl: `${process.env.APPURL}`,
-                        socialMedia,
-                        appUrls,
-                    }, async (err: any, template: any) => {
-                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            await mailChimpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail
-                            }, template)
-
-                        } else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template)
-                        }
-                    });
+                    await orderProductReturnQuantityChangeEmail(settingsDetails, orderDetails, newStatus, changedQuantity, customerDetails, productDetails)
                 }
             }
 
@@ -1384,65 +1146,8 @@ class OrdersController extends BaseController {
                 } as any;
 
                 const settingsDetails = await WebsiteSetupModel.find(query);
-                const defualtSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.defualtSettings);
-                const basicDetailsSettings = settingsDetails?.find((setting: any) => setting.blockReference === blockReferences.basicDetailsSettings)?.blockValues;
-                const socialMedia = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.socialMedia)?.blockValues;
-                const appUrls = settingsDetails?.find((setting: any) => setting?.blockReference === blockReferences.appUrls)?.blockValues;
-
-                let commonDeliveryDays = '8';
-                if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
-                    commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
-                }
                 const tax = await TaxsModel.findOne({ countryId: orderDetails.countryId, status: "1" })
-
-                const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails.orderStatusAt, Number(commonDeliveryDays))
-                ejs.renderFile(path.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
-                    firstName: customerDetails?.firstName,
-                    orderId: orderDetails.orderId,
-                    totalAmount: orderDetails.totalAmount,
-                    totalShippingAmount: orderDetails.totalShippingAmount,
-                    totalProductAmount: orderDetails.totalProductAmount,
-                    expectedDeliveryDate: expectedDeliveryDate,
-                    storeEmail: basicDetailsSettings?.storeEmail,
-                    products: updatedOrderDetails.products,
-                    shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                    shopLogo: `${process.env.SHOPLOGO}`,
-                    shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                    appUrl: `${process.env.APPURL}`,
-                    socialMedia,
-                    appUrls,
-                    tax: tax
-                }, async (err: any, template: any) => {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
-                    if (process.env.SHOPNAME === 'Timehouse') {
-                        await mailChimpEmailGateway({
-                            subject: orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template)
-
-                    } else if (process.env.SHOPNAME === 'Homestyle') {
-                        const sendEmail = await smtpEmailGateway({
-                            subject: orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template)
-
-                    }
-                    else if (process.env.SHOPNAME === 'Beyondfresh') {
-                        const sendEmail = await smtpEmailGateway({
-                            subject: orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template)
-                    }
-                    else if (process.env.SHOPNAME === 'Smartbaby') {
-                        const sendEmail = await smtpEmailGateway({
-                            subject: orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template)
-                    }
-                });
+                await orderStatusChangeEmail(settingsDetails, orderDetails, orderStatus, updatedOrderDetails, tax, customerDetails)
             }
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
@@ -1509,120 +1214,11 @@ class OrdersController extends BaseController {
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 
-                if (req.query.deliverySlip === '1') {
-                    ejs.renderFile(path.join(__dirname, '../../../views/order', 'delivery-slip-invoice.ejs'),
-                        {
-                            orderDetails: orderDetails[0],
-                            expectedDeliveryDate,
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            storePhone: basicDetailsSettings?.storePhone,
-                            storeAppartment: basicDetailsSettings?.storeAppartment,
-                            storeStreet: basicDetailsSettings?.storeStreet,
-                            storeCity: basicDetailsSettings?.storeCity,
-                            storeState: basicDetailsSettings?.storeState,
-                            storePostalCode: basicDetailsSettings?.storePostalCode,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shop: `${process.env.SHOPNAME}`,
-                            appUrl: `${process.env.APPURL}`,
-                            apiAppUrl: `${process.env.APP_API_URL}`,
-                            tax: tax,
-                            currencyCode: currencyCode?.currencyCode
-                        },
-                        async (err: any, html: any) => {
-                            if (err) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Error generating invoice'
-                                });
-                            }
-                            await pdfGenerator({ html, res, preview: req.query.preview })
-                        });
-                } else if (req.query.customer === '1') {
-                    ejs.renderFile(path.join(__dirname, '../../../views/order', 'customer-invoice.ejs'),
-                        {
-                            orderDetails: orderDetails[0],
-                            expectedDeliveryDate,
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            storePhone: basicDetailsSettings?.storePhone,
-                            storeAppartment: basicDetailsSettings?.storeAppartment,
-                            storeStreet: basicDetailsSettings?.storeStreet,
-                            storeCity: basicDetailsSettings?.storeCity,
-                            storeState: basicDetailsSettings?.storeState,
-                            storePostalCode: basicDetailsSettings?.storePostalCode,
-                            TRNNo: basicDetailsSettings?.TRNNo,
-                            tollFreeNo: basicDetailsSettings?.tollFreeNo,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shop: `${process.env.SHOPNAME}`,
-                            appUrl: `${process.env.APPURL}`,
-                            apiAppUrl: `${process.env.APP_API_URL}`,
-                            tax: tax,
-                            currencyCode: currencyCode?.currencyCode
-                        },
-                        async (err: any, html: any) => {
-                            if (err) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Error generating invoice'
-                                });
-                            }
-                            await pdfGenerator({ html, res, preview: req.query.preview })
-                        });
-                } else if (req.query.purchaseOrder === '1') {
-                    ejs.renderFile(path.join(__dirname, '../../../views/order', 'purchase-order-invoice.ejs'),
-                        {
-                            orderDetails: orderDetails[0],
-                            expectedDeliveryDate,
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            storePhone: basicDetailsSettings?.storePhone,
-                            storeAppartment: basicDetailsSettings?.storeAppartment,
-                            storeStreet: basicDetailsSettings?.storeStreet,
-                            storeCity: basicDetailsSettings?.storeCity,
-                            storeState: basicDetailsSettings?.storeState,
-                            storePostalCode: basicDetailsSettings?.storePostalCode,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shop: `${process.env.SHOPNAME}`,
-                            appUrl: `${process.env.APPURL}`,
-                            tax: tax,
-                            currencyCode: currencyCode?.currencyCode
-                        },
-                        async (err: any, html: any) => {
-                            if (err) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Error generating invoice'
-                                });
-                            }
-                            await pdfGenerator({ html, res, preview: req.query.preview })
-                        });
-                } else {
-                    ejs.renderFile(path.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'),
-                        {
-                            orderDetails: orderDetails[0],
-                            expectedDeliveryDate,
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            storePhone: basicDetailsSettings?.storePhone,
-                            storeAppartment: basicDetailsSettings?.storeAppartment,
-                            storeStreet: basicDetailsSettings?.storeStreet,
-                            storeCity: basicDetailsSettings?.storeCity,
-                            storeState: basicDetailsSettings?.storeState,
-                            TRNNo: basicDetailsSettings?.TRNNo,
-                            tollFreeNo: basicDetailsSettings?.tollFreeNo,
-                            storePostalCode: basicDetailsSettings?.storePostalCode,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shop: `${process.env.SHOPNAME}`,
-                            appUrl: `${process.env.APPURL}`,
-                            tax: tax,
-                            currencyCode: currencyCode?.currencyCode
-                        },
-                        async (err: any, html: any) => {
-                            if (err) {
-                                return controller.sendErrorResponse(res, 200, {
-                                    message: 'Error generating invoice'
-                                });
-                            }
-                            await pdfGenerator({ html, res, preview: req.query.preview })
-                        });
+                const invoicePdfGeneratorResponse = await invoicePdfGenerator(res, req, orderDetails, basicDetailsSettings, tax, expectedDeliveryDate, currencyCode?.currencyCode);
+                if (!invoicePdfGeneratorResponse) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error generating invoice'
+                    });
                 }
             } else {
                 return controller.sendErrorResponse(res, 200, {

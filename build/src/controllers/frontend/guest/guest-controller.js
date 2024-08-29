@@ -151,6 +151,7 @@ class GuestController extends base_controller_1.default {
                             }
                             else if (process.env.SHOPNAME === 'Smartbaby') {
                                 const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...existCustomer.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...existCustomer.toObject(), message: (0, messages_1.registerOtp)(process.env.SHOPNAME, Number(existCustomer.otp)) });
                             }
                         });
                     }
@@ -321,6 +322,7 @@ class GuestController extends base_controller_1.default {
                                 }
                                 else if (process.env.SHOPNAME === 'Smartbaby') {
                                     const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...newCustomer, subject: messages_1.subjects.verificationOTP }, template);
+                                    const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...newCustomer, message: (0, messages_1.guestRegisterOtp)(process.env.SHOPNAME, newCustomer.otp) });
                                 }
                             });
                         }
@@ -462,6 +464,7 @@ class GuestController extends base_controller_1.default {
                                         }
                                         else if (process.env.SHOPNAME === 'Smartbaby') {
                                             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ ...user.toObject(), subject: messages_1.subjects.verificationOTP }, template);
+                                            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...user.toObject(), message: (0, messages_1.resendOtp)(Number(user.otp)) });
                                         }
                                     });
                                 }
@@ -575,6 +578,7 @@ class GuestController extends base_controller_1.default {
                                     }
                                     else if (process.env.SHOPNAME === 'Smartbaby') {
                                         const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: updatedCustomer.email, subject: messages_1.subjects.passwordResetConfirmation }, template);
+                                        const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...updatedCustomer.toObject(), message: (0, messages_1.resetPasswordOtp)(Number(updatedCustomer.otp)) });
                                     }
                                 });
                             }
@@ -745,6 +749,7 @@ class GuestController extends base_controller_1.default {
                                     }
                                     else if (process.env.SHOPNAME === 'Smartbaby') {
                                         const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({ email: optUpdatedCustomer.email, subject: messages_1.subjects.resentVerificationOTP }, template);
+                                        const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...optUpdatedCustomer.toObject(), message: (0, messages_1.resendOtp)(Number(optUpdatedCustomer.otp)) });
                                     }
                                 });
                             }

@@ -24,6 +24,8 @@ const product_variants_model_1 = __importDefault(require("../../model/admin/ecom
 const smtp_nodemailer_gateway_1 = require("../../lib/emails/smtp-nodemailer-gateway");
 const cart_order_product_model_1 = __importDefault(require("../../model/frontend/cart-order-product-model"));
 const country_model_1 = __importDefault(require("../../model/admin/setup/country-model"));
+const bulk_sms_gateway_1 = require("../../lib/sms/bulk-sms-gateway");
+const messages_1 = require("../../constants/messages");
 class CheckoutService {
     async paymentResponse(options) {
         const { paymentDetails, allPaymentResponseData, paymentStatus } = options;
@@ -345,6 +347,7 @@ class CheckoutService {
                                 email: customerDetails.email,
                                 ccmail: [basicDetailsSettings?.storeEmail]
                             }, template);
+                            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: (0, messages_1.createOrder)(orderId) });
                         }
                     });
                 }

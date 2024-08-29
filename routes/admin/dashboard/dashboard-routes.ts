@@ -13,5 +13,6 @@ router.use(authMiddleware);
 router.get('/', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.orders, readOnly: 1 }), DashboardController.dashboardOrder);
 router.get('/dashboard-analytics', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.analytics, readOnly: 1 }), DashboardController.dashboardAnalytics);
 router.get('/dashboard-customers', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.analytics, readOnly: 1 }), DashboardController.dashboardCustomers);
+router.get('/top-selling-products', userPermissionMiddleware({ permissionBlock: permissionBlocks.dashboards.analytics, readOnly: 1 }), DashboardController.dashboardTopSellingProducts);
 
 export default router;

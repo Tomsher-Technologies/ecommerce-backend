@@ -159,6 +159,7 @@ class GuestController extends BaseController {
                                     const sendEmail = await smtpEmailGateway({ ...existCustomer.toObject(), subject: subjects.verificationOTP }, template)
                                 } else if (process.env.SHOPNAME === 'Smartbaby') {
                                     const sendEmail = await smtpEmailGateway({ ...existCustomer.toObject(), subject: subjects.verificationOTP }, template)
+                                    const sendsms = await bulkSmsGateway({ ...existCustomer.toObject(), message: registerOtp(process.env.SHOPNAME, Number(existCustomer.otp)) })
                                 }
                             })
                     }
@@ -328,6 +329,7 @@ class GuestController extends BaseController {
                                         const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
                                     } else if (process.env.SHOPNAME === 'Smartbaby') {
                                         const sendEmail = await smtpEmailGateway({ ...newCustomer, subject: subjects.verificationOTP }, template)
+                                        const sendsms = await bulkSmsGateway({ ...newCustomer, message: guestRegisterOtp(process.env.SHOPNAME, newCustomer.otp) })
                                     }
                                 })
                         }
@@ -473,6 +475,7 @@ class GuestController extends BaseController {
                                                 const sendEmail = await smtpEmailGateway({ ...user.toObject(), subject: subjects.verificationOTP }, template)
                                             } else if (process.env.SHOPNAME === 'Smartbaby') {
                                                 const sendEmail = await smtpEmailGateway({ ...user.toObject(), subject: subjects.verificationOTP }, template)
+                                                const sendsms = await bulkSmsGateway({ ...user.toObject(), message: resendOtp(Number(user.otp)) })
                                             }
                                         })
                                 }
@@ -589,6 +592,7 @@ class GuestController extends BaseController {
                                         }
                                         else if (process.env.SHOPNAME === 'Smartbaby') {
                                             const sendEmail = await smtpEmailGateway({ email: updatedCustomer.email, subject: subjects.passwordResetConfirmation }, template)
+                                            const sendsms = await bulkSmsGateway({ ...updatedCustomer.toObject(), message: resetPasswordOtp(Number(updatedCustomer.otp)) })
                                         }
                                     })
                             }
@@ -758,6 +762,7 @@ class GuestController extends BaseController {
                                         }
                                         else if (process.env.SHOPNAME === 'Smartbaby') {
                                             const sendEmail = await smtpEmailGateway({ email: optUpdatedCustomer.email, subject: subjects.resentVerificationOTP }, template)
+                                            const sendsms = await bulkSmsGateway({ ...optUpdatedCustomer.toObject(), message: resendOtp(Number(optUpdatedCustomer.otp)) })
                                         }
                                     });
                             }

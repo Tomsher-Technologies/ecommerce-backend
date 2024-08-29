@@ -20,6 +20,7 @@ import CommonService from '../../../services/frontend/guest/common-service';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
+import CategoryModel from '../../../model/admin/ecommerce/category-model';
 
 
 class ProductService {
@@ -157,7 +158,22 @@ class ProductService {
             collectionPipeline = await this.collection(collectionProductsData, hostName, pipeline)
         }
         if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
-            pipeline.push({ $match: { 'productCategory.category._id': { $in: collectionPipeline.categoryIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
+            let categoryIds: any[] = [];
+            for (let i = 0; i < collectionPipeline.categoryIds.length; i++) {
+                categoryIds.push(collectionPipeline.categoryIds[i]);
+                async function fetchCategoryAndChildren(categoryId: any) {
+                    let categoryArray = [categoryId];
+                    while (categoryArray.length > 0) {
+                        const currentCategoryId = categoryArray.shift();
+                        const categoriesData = await CategoryModel.find({ parentCategory: currentCategoryId }, '_id');
+                        const childCategoryIds = categoriesData.map(category => category._id);
+                        categoryArray.push(...childCategoryIds);
+                        categoryIds.push(...childCategoryIds);
+                    }
+                }
+                await fetchCategoryAndChildren(collectionPipeline.categoryIds[i]);
+            }
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: categoryIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
             pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });

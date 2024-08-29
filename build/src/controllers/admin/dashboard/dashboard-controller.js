@@ -10,6 +10,7 @@ const base_controller_1 = __importDefault(require("../../../controllers/admin/ba
 const customer_service_1 = __importDefault(require("../../../services/admin/customer/customer-service"));
 const dashboard_service_1 = __importDefault(require("../../../services/admin/dashboard/dashboard-service"));
 const order_service_1 = __importDefault(require("../../../services/admin/order/order-service"));
+const product_report_service_1 = __importDefault(require("../../../services/admin/report/product/product-report-service"));
 const controller = new base_controller_1.default();
 class DashboardController {
     async dashboardOrder(req, res) {
@@ -66,12 +67,15 @@ class DashboardController {
     }
     async dashboardAnalytics(req, res) {
         try {
-            const { fromDate, endDate } = req.query;
+            const { fromDate, endDate, countryId } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             query = { cartStatus: { $ne: "1" } };
             const today = new Date();
@@ -116,12 +120,15 @@ class DashboardController {
     }
     async dashboardCustomers(req, res) {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '' } = req.query;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            if (countryId) {
-                query.countryId = countryId;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
             }
             const sort = {};
             if (sortby && sortorder) {
@@ -136,6 +143,38 @@ class DashboardController {
             });
             controller.sendSuccessResponse(res, {
                 requestedData: customers[0].customerData,
+                message: 'Success!'
+            }, 200);
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
+    async dashboardTopSellingProducts(req, res) {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId } = req.query;
+            let query = { cartStatus: { $ne: "1" } };
+            const userData = await res.locals.user;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            const sort = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const orders = await product_report_service_1.default.topSelling({
+                page: parseInt(page_size),
+                limit: parseInt(limit),
+                query,
+                sort,
+            });
+            console.log(orders);
+            controller.sendSuccessResponse(res, {
+                requestedData: orders,
                 message: 'Success!'
             }, 200);
         }

@@ -13,6 +13,7 @@ const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const payment_transaction_model_1 = __importDefault(require("../../../model/frontend/payment-transaction-model"));
 const payment_methods_model_1 = __importDefault(require("../../../model/admin/setup/payment-methods-model"));
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const controller = new base_controller_1.default();
 class OrderController extends base_controller_1.default {
     async orderList(req, res) {
@@ -286,6 +287,14 @@ class OrderController extends base_controller_1.default {
             }
             if (Number(orderDetails.orderStatus) > 1) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order has been processed. You cannot cancel this order now!' });
+            }
+            const cartOrderProducts = await cart_order_product_model_1.default.find({ cartId: orderObjectId });
+            if (!cartOrderProducts || cartOrderProducts.length === 0) {
+                return controller.sendErrorResponse(res, 200, { message: 'No products found in the order!' });
+            }
+            for (const product of cartOrderProducts) {
+                const { variantId, quantity } = product;
+                await product_variants_model_1.default.findByIdAndUpdate(variantId, { $inc: { quantity: quantity } }, { new: true, useFindAndModify: false });
             }
             await cart_order_model_1.default.findByIdAndUpdate(orderObjectId, { orderStatus: cart_1.orderStatusArrayJson.canceled, canceledStatusAt: new Date(), cancelReason });
             await cart_order_product_model_1.default.updateMany({ cartId: orderObjectId }, {

@@ -1,6 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findOrderStatusDateCheck = void 0;
+exports.orderProductReturnQuantityChangeEmail = exports.orderProductReturnStatusChangeEmail = exports.orderProductCancelStatusChangeEmail = exports.orderProductStatusChangeEmail = exports.orderStatusChangeEmail = exports.bulkInvoicePDFExport = exports.invoicePdfGenerator = exports.findOrderStatusDateCheck = void 0;
+const path_1 = __importDefault(require("path"));
+const ejs = require('ejs');
+const { convert } = require('html-to-text');
+const helpers_1 = require("../helpers");
+const website_setup_1 = require("../../constants/website-setup");
+const cart_1 = require("../../constants/cart");
+const mail_chimp_sms_gateway_1 = require("../../lib/emails/mail-chimp-sms-gateway");
+const smtp_nodemailer_gateway_1 = require("../../lib/emails/smtp-nodemailer-gateway");
+const pdf_generator_1 = require("../../lib/pdf/pdf-generator");
 const findOrderStatusDateCheck = (orderStatus) => {
     let statusAt;
     switch (orderStatus) {
@@ -62,3 +74,359 @@ const findOrderStatusDateCheck = (orderStatus) => {
     return statusAt;
 };
 exports.findOrderStatusDateCheck = findOrderStatusDateCheck;
+const invoicePdfGenerator = async (res, req, orderDetails, basicDetailsSettings, tax, expectedDeliveryDate, currencyCode) => {
+    const pdfGenerateData = {
+        orderDetails: orderDetails[0],
+        expectedDeliveryDate,
+        storeEmail: basicDetailsSettings?.storeEmail,
+        storePhone: basicDetailsSettings?.storePhone,
+        storeAppartment: basicDetailsSettings?.storeAppartment,
+        storeStreet: basicDetailsSettings?.storeStreet,
+        storeCity: basicDetailsSettings?.storeCity,
+        storeState: basicDetailsSettings?.storeState,
+        storePostalCode: basicDetailsSettings?.storePostalCode,
+        TRNNo: basicDetailsSettings?.TRNNo,
+        tollFreeNo: basicDetailsSettings?.tollFreeNo,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shop: `${process.env.SHOPNAME}`,
+        appUrl: `${process.env.APPURL}`,
+        apiAppUrl: `${process.env.APP_API_URL}`,
+        tax: tax,
+        currencyCode: currencyCode
+    };
+    if (req.query.deliverySlip === '1') {
+        ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'delivery-slip-invoice.ejs'), pdfGenerateData, async (err, html) => {
+            if (err) {
+                return false;
+            }
+            await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+        });
+    }
+    else if (req.query.customer === '1') {
+        ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'customer-invoice.ejs'), pdfGenerateData, async (err, html) => {
+            if (err) {
+                return false;
+            }
+            await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+        });
+    }
+    else if (req.query.purchaseOrder === '1') {
+        ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'purchase-order-invoice.ejs'), pdfGenerateData, async (err, html) => {
+            if (err) {
+                return false;
+            }
+            await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+        });
+    }
+    else {
+        ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'invoice-pdf.ejs'), pdfGenerateData, async (err, html) => {
+            if (err) {
+                return false;
+            }
+            await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+        });
+    }
+    return true;
+};
+exports.invoicePdfGenerator = invoicePdfGenerator;
+const bulkInvoicePDFExport = async (htmlArray, order, basicDetailsSettings, tax, currencyCode, commonDeliveryDays) => {
+    const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(order.orderStatusAt, Number(commonDeliveryDays));
+    const invoiceExport = await ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'invoice-pdf.ejs'), {
+        orderDetails: order,
+        expectedDeliveryDate,
+        TRNNo: basicDetailsSettings?.TRNNo,
+        tollFreeNo: basicDetailsSettings?.tollFreeNo,
+        storeEmail: basicDetailsSettings?.storeEmail,
+        storePhone: basicDetailsSettings?.storePhone,
+        storeAppartment: basicDetailsSettings?.storeAppartment,
+        storeStreet: basicDetailsSettings?.storeStreet,
+        storeCity: basicDetailsSettings?.storeCity,
+        storeState: basicDetailsSettings?.storeState,
+        storePostalCode: basicDetailsSettings?.storePostalCode,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shop: `${process.env.SHOPNAME}`,
+        appUrl: `${process.env.APPURL}`,
+        apiAppUrl: `${process.env.APP_API_URL}`,
+        tax: tax,
+        currencyCode: currencyCode
+    });
+    htmlArray.push(invoiceExport);
+    if (process.env.SHOPNAME === 'Beyondfresh' || process.env.SHOPNAME === 'Smartbaby') {
+        const purchaseExport = await ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'purchase-order-invoice.ejs'), {
+            orderDetails: order,
+            expectedDeliveryDate,
+            storeEmail: basicDetailsSettings?.storeEmail,
+            storePhone: basicDetailsSettings?.storePhone,
+            storeAppartment: basicDetailsSettings?.storeAppartment,
+            storeStreet: basicDetailsSettings?.storeStreet,
+            storeCity: basicDetailsSettings?.storeCity,
+            storeState: basicDetailsSettings?.storeState,
+            storePostalCode: basicDetailsSettings?.storePostalCode,
+            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+            shopLogo: `${process.env.SHOPLOGO}`,
+            shop: `${process.env.SHOPNAME}`,
+            appUrl: `${process.env.APPURL}`,
+            tax: tax,
+            currencyCode: currencyCode
+        });
+        htmlArray.push(purchaseExport);
+        return htmlArray;
+    }
+};
+exports.bulkInvoicePDFExport = bulkInvoicePDFExport;
+const orderStatusChangeEmail = async (settingsDetails, orderDetails, orderStatus, updatedOrderDetails, tax, customerDetails) => {
+    const defualtSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.defualtSettings);
+    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+    let commonDeliveryDays = '8';
+    if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
+        commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
+    }
+    const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails.orderStatusAt, Number(commonDeliveryDays));
+    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
+        firstName: customerDetails?.firstName,
+        orderId: orderDetails.orderId,
+        totalAmount: orderDetails.totalAmount,
+        totalShippingAmount: orderDetails.totalShippingAmount,
+        totalProductAmount: orderDetails.totalProductAmount,
+        expectedDeliveryDate: expectedDeliveryDate,
+        storeEmail: basicDetailsSettings?.storeEmail,
+        products: updatedOrderDetails.products,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+        appUrl: `${process.env.APPURL}`,
+        socialMedia,
+        appUrls,
+        tax: tax
+    }, async (err, template) => {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        if (process.env.SHOPNAME === 'Timehouse') {
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                subject: cart_1.orderStatusMessages[orderStatus],
+                email: customerDetails?.email,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Homestyle') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderStatusMessages[orderStatus],
+                email: customerDetails?.email,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderStatusMessages[orderStatus],
+                email: customerDetails?.email,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderStatusMessages[orderStatus],
+                email: customerDetails?.email,
+            }, template);
+        }
+    });
+};
+exports.orderStatusChangeEmail = orderStatusChangeEmail;
+const orderProductStatusChangeEmail = async (settingsDetails, orderDetails, newStatus, customerDetails, productDetails) => {
+    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order/order-product-status-change.ejs'), {
+        firstName: customerDetails?.firstName,
+        orderId: orderDetails.orderId,
+        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductStatussMessages[newStatus]}.`,
+        subject: cart_1.orderReturnStatusMessages[newStatus],
+        storeEmail: basicDetailsSettings?.storeEmail,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+        appUrl: `${process.env.APPURL}`,
+        socialMedia,
+        appUrls,
+    }, async (err, template) => {
+        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+        if (err) {
+            console.log(err);
+            return;
+        }
+        if (process.env.SHOPNAME === 'Timehouse') {
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Homestyle') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+    });
+};
+exports.orderProductStatusChangeEmail = orderProductStatusChangeEmail;
+const orderProductCancelStatusChangeEmail = async (settingsDetails, orderDetails, newStatus, customerDetails, productDetails) => {
+    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order/order-product-status-change.ejs'), {
+        firstName: customerDetails?.firstName,
+        orderId: orderDetails.orderId,
+        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductCancelStatusMessages[newStatus]}.`,
+        subject: cart_1.orderProductCancelStatusMessages[newStatus],
+        storeEmail: basicDetailsSettings?.storeEmail,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+        appUrl: `${process.env.APPURL}`,
+        socialMedia,
+        appUrls,
+    }, async (err, template) => {
+        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+        if (err) {
+            console.log(err);
+            return;
+        }
+        if (process.env.SHOPNAME === 'Timehouse') {
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                email: customerEmail
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Homestyle') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderProductCancelStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+    });
+};
+exports.orderProductCancelStatusChangeEmail = orderProductCancelStatusChangeEmail;
+const orderProductReturnStatusChangeEmail = async (settingsDetails, orderDetails, newStatus, customerDetails, productDetails) => {
+    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order/order-product-status-change.ejs'), {
+        firstName: customerDetails?.firstName,
+        orderId: orderDetails.orderId,
+        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderReturnStatusMessages[newStatus]}.`,
+        subject: cart_1.orderReturnStatusMessages[newStatus],
+        storeEmail: basicDetailsSettings?.storeEmail,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+        appUrl: `${process.env.APPURL}`,
+        socialMedia,
+        appUrls,
+    }, async (err, template) => {
+        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+        if (err) {
+            console.log(err);
+            return;
+        }
+        if (process.env.SHOPNAME === 'Timehouse') {
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Homestyle') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+    });
+};
+exports.orderProductReturnStatusChangeEmail = orderProductReturnStatusChangeEmail;
+const orderProductReturnQuantityChangeEmail = async (settingsDetails, orderDetails, newStatus, changedQuantity, customerDetails, productDetails) => {
+    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
+    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
+    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
+    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order/order-product-status-change.ejs'), {
+        firstName: customerDetails?.firstName,
+        orderId: orderDetails.orderId,
+        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.`,
+        subject: cart_1.orderReturnStatusMessages[newStatus],
+        storeEmail: basicDetailsSettings?.storeEmail,
+        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
+        shopLogo: `${process.env.SHOPLOGO}`,
+        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
+        appUrl: `${process.env.APPURL}`,
+        socialMedia,
+        appUrls,
+    }, async (err, template) => {
+        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
+        if (err) {
+            console.log(err);
+            return;
+        }
+        if (process.env.SHOPNAME === 'Timehouse') {
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Homestyle') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+        else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                subject: cart_1.orderReturnStatusMessages[newStatus],
+                email: customerEmail,
+            }, template);
+        }
+    });
+};
+exports.orderProductReturnQuantityChangeEmail = orderProductReturnQuantityChangeEmail;

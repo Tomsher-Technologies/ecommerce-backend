@@ -4,10 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("module-alias/register");
-const path_1 = __importDefault(require("path"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const ejs = require('ejs');
-const { convert } = require('html-to-text');
 const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const order_service_1 = __importDefault(require("../../../services/admin/order/order-service"));
@@ -16,24 +13,22 @@ const reports_1 = require("../../../utils/admin/excel/reports");
 const order_1 = require("../../../utils/admin/order");
 const cart_1 = require("../../../constants/cart");
 const website_setup_1 = require("../../../constants/website-setup");
+const task_log_1 = require("../../../constants/admin/task-log");
+const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
 const customer_service_1 = __importDefault(require("../../../services/frontend/customer-service"));
-const mail_chimp_sms_gateway_1 = require("../../../lib/emails/mail-chimp-sms-gateway");
 const website_setup_model_1 = __importDefault(require("../../../model/admin/setup/website-setup-model"));
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
-const pdf_generator_1 = require("../../../lib/pdf/pdf-generator");
 const tax_model_1 = __importDefault(require("../../../model/admin/setup/tax-model"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
-const smtp_nodemailer_gateway_1 = require("../../../lib/emails/smtp-nodemailer-gateway");
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
-const task_log_1 = require("../../../constants/admin/task-log");
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isInvoice, orderStatus = '', deliveryType } = req.query;
+            const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isPdfExport, orderStatus = '', deliveryType } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -133,7 +128,7 @@ class OrdersController extends base_controller_1.default {
                     query,
                     getTotalCount: true
                 });
-                if (isInvoice == '1') {
+                if (orders.length > 0 && isPdfExport == '1') {
                     let websiteSettingsQuery = { _id: { $exists: true } };
                     websiteSettingsQuery = {
                         ...websiteSettingsQuery,
@@ -163,51 +158,13 @@ class OrdersController extends base_controller_1.default {
                     for (const order of orders) {
                         const tax = await tax_model_1.default.findOne({ countryId: order.country._id, status: "1" });
                         const currencyCode = await country_model_1.default.findOne({ _id: order.country._id }, 'currencyCode');
-                        const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(order.orderStatusAt, Number(commonDeliveryDays));
-                        const invoice = await ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
-                            orderDetails: order,
-                            expectedDeliveryDate,
-                            TRNNo: basicDetailsSettings?.TRNNo,
-                            tollFreeNo: basicDetailsSettings?.tollFreeNo,
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            storePhone: basicDetailsSettings?.storePhone,
-                            storeAppartment: basicDetailsSettings?.storeAppartment,
-                            storeStreet: basicDetailsSettings?.storeStreet,
-                            storeCity: basicDetailsSettings?.storeCity,
-                            storeState: basicDetailsSettings?.storeState,
-                            storePostalCode: basicDetailsSettings?.storePostalCode,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shop: `${process.env.SHOPNAME}`,
-                            appUrl: `${process.env.APPURL}`,
-                            apiAppUrl: `${process.env.APP_API_URL}`,
-                            tax: tax,
-                            currencyCode: currencyCode?.currencyCode
-                        });
-                        htmlArray.push(invoice);
-                        const purchase = await ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'purchase-order-invoice.ejs'), {
-                            orderDetails: order,
-                            expectedDeliveryDate,
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            storePhone: basicDetailsSettings?.storePhone,
-                            storeAppartment: basicDetailsSettings?.storeAppartment,
-                            storeStreet: basicDetailsSettings?.storeStreet,
-                            storeCity: basicDetailsSettings?.storeCity,
-                            storeState: basicDetailsSettings?.storeState,
-                            storePostalCode: basicDetailsSettings?.storePostalCode,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shop: `${process.env.SHOPNAME}`,
-                            appUrl: `${process.env.APPURL}`,
-                            tax: tax,
-                            currencyCode: currencyCode?.currencyCode
-                        });
-                        htmlArray.push(purchase);
+                        await (0, order_1.bulkInvoicePDFExport)(htmlArray, order, basicDetailsSettings, tax, currencyCode?.currencyCode, commonDeliveryDays);
                     }
-                    await (0, pdf_generator_1.bulkPdfGenerator)({
-                        htmlArray: htmlArray,
+                    await (0, pdf_generator_1.pdfGenerator)({
+                        html: htmlArray,
                         res,
-                        preview: req.query.preview || '0', // Ensure preview is passed, provide a default value if undefined
+                        preview: req.query.preview || '0',
+                        bulkExport: true
                     });
                 }
                 else {
@@ -423,6 +380,7 @@ class OrdersController extends base_controller_1.default {
                 }
             }
             else if (updatedProduct.orderProductStatus === cart_1.orderProductStatusJson.canceled) {
+                await product_variants_model_1.default.findByIdAndUpdate(orderProduct.variantId, { $inc: { quantity: orderProduct.quantity } }, { new: true, useFindAndModify: false });
                 const otherProductsCanceled = allProductsInOrder.filter((product) => product._id.toString() !== orderProductId).every((product) => product.orderProductStatus === cart_1.orderProductStatusJson.canceled);
                 if (otherProductsCanceled) {
                     updateOrderStatus.orderStatus = cart_1.orderStatusArrayJson.canceled;
@@ -473,52 +431,7 @@ class OrdersController extends base_controller_1.default {
                         status: '1',
                     };
                     const settingsDetails = await website_setup_model_1.default.find(query);
-                    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                        firstName: customerDetails?.firstName,
-                        orderId: orderDetails.orderId,
-                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductStatussMessages[newStatus]}.`,
-                        subject: cart_1.orderReturnStatusMessages[newStatus],
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                        appUrl: `${process.env.APPURL}`,
-                        socialMedia,
-                        appUrls,
-                    }, async (err, template) => {
-                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                    });
+                    await (0, order_1.orderProductStatusChangeEmail)(settingsDetails, orderDetails, newStatus, customerDetails, productDetails);
                 }
             }
         }
@@ -593,52 +506,7 @@ class OrdersController extends base_controller_1.default {
                         status: '1',
                     };
                     const settingsDetails = await website_setup_model_1.default.find(query);
-                    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                        firstName: customerDetails?.firstName,
-                        orderId: orderDetails.orderId,
-                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductCancelStatusMessages[newStatus]}.`,
-                        subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                        appUrl: `${process.env.APPURL}`,
-                        socialMedia,
-                        appUrls,
-                    }, async (err, template) => {
-                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                    });
+                    await (0, order_1.orderProductCancelStatusChangeEmail)(settingsDetails, orderDetails, newStatus, customerDetails, productDetails);
                 }
             }
             const updatedOrderDetails = await order_service_1.default.OrderList({
@@ -769,52 +637,7 @@ class OrdersController extends base_controller_1.default {
                             status: '1',
                         };
                         const settingsDetails = await website_setup_model_1.default.find(query);
-                        const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                        const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                        const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                        ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                            firstName: customerDetails?.firstName,
-                            orderId: orderDetails.orderId,
-                            content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderReturnStatusMessages[newStatus]}.`,
-                            subject: cart_1.orderReturnStatusMessages[newStatus],
-                            storeEmail: basicDetailsSettings?.storeEmail,
-                            shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                            shopLogo: `${process.env.SHOPLOGO}`,
-                            shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                            appUrl: `${process.env.APPURL}`,
-                            socialMedia,
-                            appUrls,
-                        }, async (err, template) => {
-                            const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
-                            if (process.env.SHOPNAME === 'Timehouse') {
-                                await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                                    subject: cart_1.orderReturnStatusMessages[newStatus],
-                                    email: customerEmail
-                                }, template);
-                            }
-                            else if (process.env.SHOPNAME === 'Homestyle') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                    subject: cart_1.orderReturnStatusMessages[newStatus],
-                                    email: customerEmail,
-                                }, template);
-                            }
-                            else if (process.env.SHOPNAME === 'Beyondfresh') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                    subject: cart_1.orderReturnStatusMessages[newStatus],
-                                    email: customerEmail,
-                                }, template);
-                            }
-                            else if (process.env.SHOPNAME === 'Smartbaby') {
-                                const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                    subject: cart_1.orderReturnStatusMessages[newStatus],
-                                    email: customerEmail,
-                                }, template);
-                            }
-                        });
+                        await (0, order_1.orderProductReturnStatusChangeEmail)(settingsDetails, orderDetails, newStatus, customerDetails, productDetails);
                     }
                 }
             }
@@ -901,52 +724,7 @@ class OrdersController extends base_controller_1.default {
                         status: '1',
                     };
                     const settingsDetails = await website_setup_model_1.default.find(query);
-                    const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                    const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                    const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order/order-product-status-change.ejs'), {
-                        firstName: customerDetails?.firstName,
-                        orderId: orderDetails.orderId,
-                        content: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.`,
-                        subject: cart_1.orderReturnStatusMessages[newStatus],
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                        appUrl: `${process.env.APPURL}`,
-                        socialMedia,
-                        appUrls,
-                    }, async (err, template) => {
-                        const customerEmail = customerDetails.isGuest ? (customerDetails.guestEmail !== '' ? customerDetails.guestEmail : customerDetails?.email) : customerDetails?.email;
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        if (process.env.SHOPNAME === 'Timehouse') {
-                            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                        else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                                subject: cart_1.orderReturnStatusMessages[newStatus],
-                                email: customerEmail,
-                            }, template);
-                        }
-                    });
+                    await (0, order_1.orderProductReturnQuantityChangeEmail)(settingsDetails, orderDetails, newStatus, changedQuantity, customerDetails, productDetails);
                 }
             }
             const updatedOrderDetails = await order_service_1.default.OrderList({
@@ -1316,62 +1094,8 @@ class OrdersController extends base_controller_1.default {
                     status: '1',
                 };
                 const settingsDetails = await website_setup_model_1.default.find(query);
-                const defualtSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.defualtSettings);
-                const basicDetailsSettings = settingsDetails?.find((setting) => setting.blockReference === website_setup_1.blockReferences.basicDetailsSettings)?.blockValues;
-                const socialMedia = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.socialMedia)?.blockValues;
-                const appUrls = settingsDetails?.find((setting) => setting?.blockReference === website_setup_1.blockReferences.appUrls)?.blockValues;
-                let commonDeliveryDays = '8';
-                if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
-                    commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
-                }
                 const tax = await tax_model_1.default.findOne({ countryId: orderDetails.countryId, status: "1" });
-                const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails.orderStatusAt, Number(commonDeliveryDays));
-                ejs.renderFile(path_1.default.join(__dirname, '../../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
-                    firstName: customerDetails?.firstName,
-                    orderId: orderDetails.orderId,
-                    totalAmount: orderDetails.totalAmount,
-                    totalShippingAmount: orderDetails.totalShippingAmount,
-                    totalProductAmount: orderDetails.totalProductAmount,
-                    expectedDeliveryDate: expectedDeliveryDate,
-                    storeEmail: basicDetailsSettings?.storeEmail,
-                    products: updatedOrderDetails.products,
-                    shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                    shopLogo: `${process.env.SHOPLOGO}`,
-                    shopDescription: convert(basicDetailsSettings?.shopDescription, { wordwrap: 130, }),
-                    appUrl: `${process.env.APPURL}`,
-                    socialMedia,
-                    appUrls,
-                    tax: tax
-                }, async (err, template) => {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
-                    if (process.env.SHOPNAME === 'Timehouse') {
-                        await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                            subject: cart_1.orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template);
-                    }
-                    else if (process.env.SHOPNAME === 'Homestyle') {
-                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                            subject: cart_1.orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template);
-                    }
-                    else if (process.env.SHOPNAME === 'Beyondfresh') {
-                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                            subject: cart_1.orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template);
-                    }
-                    else if (process.env.SHOPNAME === 'Smartbaby') {
-                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                            subject: cart_1.orderStatusMessages[orderStatus],
-                            email: customerDetails?.email,
-                        }, template);
-                    }
-                });
+                await (0, order_1.orderStatusChangeEmail)(settingsDetails, orderDetails, orderStatus, updatedOrderDetails, tax, customerDetails);
             }
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
@@ -1431,114 +1155,10 @@ class OrdersController extends base_controller_1.default {
                 const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].country._id, status: "1" });
                 const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].country._id }, 'currencyCode');
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
-                if (req.query.deliverySlip === '1') {
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'delivery-slip-invoice.ejs'), {
-                        orderDetails: orderDetails[0],
-                        expectedDeliveryDate,
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        storePhone: basicDetailsSettings?.storePhone,
-                        storeAppartment: basicDetailsSettings?.storeAppartment,
-                        storeStreet: basicDetailsSettings?.storeStreet,
-                        storeCity: basicDetailsSettings?.storeCity,
-                        storeState: basicDetailsSettings?.storeState,
-                        storePostalCode: basicDetailsSettings?.storePostalCode,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shop: `${process.env.SHOPNAME}`,
-                        appUrl: `${process.env.APPURL}`,
-                        apiAppUrl: `${process.env.APP_API_URL}`,
-                        tax: tax,
-                        currencyCode: currencyCode?.currencyCode
-                    }, async (err, html) => {
-                        if (err) {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Error generating invoice'
-                            });
-                        }
-                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
-                    });
-                }
-                else if (req.query.customer === '1') {
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'customer-invoice.ejs'), {
-                        orderDetails: orderDetails[0],
-                        expectedDeliveryDate,
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        storePhone: basicDetailsSettings?.storePhone,
-                        storeAppartment: basicDetailsSettings?.storeAppartment,
-                        storeStreet: basicDetailsSettings?.storeStreet,
-                        storeCity: basicDetailsSettings?.storeCity,
-                        storeState: basicDetailsSettings?.storeState,
-                        storePostalCode: basicDetailsSettings?.storePostalCode,
-                        TRNNo: basicDetailsSettings?.TRNNo,
-                        tollFreeNo: basicDetailsSettings?.tollFreeNo,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shop: `${process.env.SHOPNAME}`,
-                        appUrl: `${process.env.APPURL}`,
-                        apiAppUrl: `${process.env.APP_API_URL}`,
-                        tax: tax,
-                        currencyCode: currencyCode?.currencyCode
-                    }, async (err, html) => {
-                        if (err) {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Error generating invoice'
-                            });
-                        }
-                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
-                    });
-                }
-                else if (req.query.purchaseOrder === '1') {
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'purchase-order-invoice.ejs'), {
-                        orderDetails: orderDetails[0],
-                        expectedDeliveryDate,
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        storePhone: basicDetailsSettings?.storePhone,
-                        storeAppartment: basicDetailsSettings?.storeAppartment,
-                        storeStreet: basicDetailsSettings?.storeStreet,
-                        storeCity: basicDetailsSettings?.storeCity,
-                        storeState: basicDetailsSettings?.storeState,
-                        storePostalCode: basicDetailsSettings?.storePostalCode,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shop: `${process.env.SHOPNAME}`,
-                        appUrl: `${process.env.APPURL}`,
-                        tax: tax,
-                        currencyCode: currencyCode?.currencyCode
-                    }, async (err, html) => {
-                        if (err) {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Error generating invoice'
-                            });
-                        }
-                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
-                    });
-                }
-                else {
-                    ejs.renderFile(path_1.default.join(__dirname, '../../../views/order', 'invoice-pdf.ejs'), {
-                        orderDetails: orderDetails[0],
-                        expectedDeliveryDate,
-                        storeEmail: basicDetailsSettings?.storeEmail,
-                        storePhone: basicDetailsSettings?.storePhone,
-                        storeAppartment: basicDetailsSettings?.storeAppartment,
-                        storeStreet: basicDetailsSettings?.storeStreet,
-                        storeCity: basicDetailsSettings?.storeCity,
-                        storeState: basicDetailsSettings?.storeState,
-                        TRNNo: basicDetailsSettings?.TRNNo,
-                        tollFreeNo: basicDetailsSettings?.tollFreeNo,
-                        storePostalCode: basicDetailsSettings?.storePostalCode,
-                        shopName: basicDetailsSettings?.shopName || `${process.env.SHOPNAME}`,
-                        shopLogo: `${process.env.SHOPLOGO}`,
-                        shop: `${process.env.SHOPNAME}`,
-                        appUrl: `${process.env.APPURL}`,
-                        tax: tax,
-                        currencyCode: currencyCode?.currencyCode
-                    }, async (err, html) => {
-                        if (err) {
-                            return controller.sendErrorResponse(res, 200, {
-                                message: 'Error generating invoice'
-                            });
-                        }
-                        await (0, pdf_generator_1.pdfGenerator)({ html, res, preview: req.query.preview });
+                const invoicePdfGeneratorResponse = await (0, order_1.invoicePdfGenerator)(res, req, orderDetails, basicDetailsSettings, tax, expectedDeliveryDate, currencyCode?.currencyCode);
+                if (!invoicePdfGeneratorResponse) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Error generating invoice'
                     });
                 }
             }
