@@ -48,14 +48,40 @@ class ReviewService {
                     },
                     ratingCounts: {
                         $map: {
-                            input: "$ratingCounts",
-                            as: "ratingCount",
+                            input: [1, 2, 3, 4, 5], // Include all ratings from 1 to 5
+                            as: "rating",
                             in: {
-                                rating: "$$ratingCount.rating",
-                                count: "$$ratingCount.count",
+                                rating: "$$rating",
+                                count: {
+                                    $reduce: {
+                                        input: {
+                                            $filter: {
+                                                input: "$ratingCounts",
+                                                as: "rc",
+                                                cond: { $eq: ["$$rc.rating", "$$rating"] },
+                                            },
+                                        },
+                                        initialValue: 0,
+                                        in: { $add: ["$$value", "$$this.count"] },
+                                    },
+                                },
                                 percentage: {
                                     $multiply: [
-                                        { $divide: ["$$ratingCount.count", "$totalReviews"] },
+                                        {
+                                            $divide: [{
+                                                $reduce: {
+                                                    input: {
+                                                        $filter: {
+                                                            input: "$ratingCounts",
+                                                            as: "rc",
+                                                            cond: { $eq: ["$$rc.rating", "$$rating"] },
+                                                        },
+                                                    },
+                                                    initialValue: 0,
+                                                    in: { $add: ["$$value", "$$this.count"] },
+                                                }
+                                            }, "$totalReviews"]
+                                        },
                                         100,
                                     ],
                                 },
@@ -85,10 +111,17 @@ class ReviewService {
             statistics: reviewStatistics[0] || {
                 averageRating: 0,
                 totalReviews: 0,
-                ratingCounts: [],
+                ratingCounts: [
+                    { rating: 1, count: 0, percentage: 0 },
+                    { rating: 2, count: 0, percentage: 0 },
+                    { rating: 3, count: 0, percentage: 0 },
+                    { rating: 4, count: 0, percentage: 0 },
+                    { rating: 5, count: 0, percentage: 0 },
+                ],
             },
         };
     }
+
 
 
 }

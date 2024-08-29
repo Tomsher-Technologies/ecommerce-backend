@@ -20,8 +20,8 @@ class ReviewController extends base_controller_1.default {
             if (validatedData.success) {
                 const { customerName, productId, reviewTitle, reviewContent, rating } = validatedData.data;
                 const user = res.locals.user;
-                const reviewImageUrl1 = req.files.find((file) => file.fieldname === 'reviewImage1');
-                const reviewImageUrl2 = req.files.find((file) => file.fieldname === 'reviewImage2');
+                const reviewImageUrl1 = req.files.find((file) => file.fieldname === 'reviewImageUrl1');
+                const reviewImageUrl2 = req.files.find((file) => file.fieldname === 'reviewImageUrl2');
                 let query = {
                     $and: [
                         { customerId: user._id },
@@ -55,7 +55,6 @@ class ReviewController extends base_controller_1.default {
                         reviewImageUrl2: (0, helpers_1.handleFileUpload)(req, null, (req.file || reviewImageUrl2), 'reviewImageUrl2', 'review'),
                         updatedAt: new Date()
                     };
-                    console.log(reviewData);
                     const existingReview = await review_service_1.default.findOne({
                         customerId: user._id,
                         productId
@@ -123,17 +122,20 @@ class ReviewController extends base_controller_1.default {
             }
             const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
             var hasBought;
+            var message;
             if (targetProduct) {
-                hasBought = true;
+                hasBought = true,
+                    message = "Customer has purchased this product.";
             }
             else {
-                hasBought = false;
+                hasBought = false,
+                    message = "Customer has not purchased this product.";
             }
             return controller.sendSuccessResponse(res, {
                 requestedData: {
                     hasBought: {
                         hasBoughtProduct: hasBought,
-                        message: "Customer has purchased this product."
+                        message: message
                     },
                     reviews: reviews.reviews,
                     startRating: reviews.statistics

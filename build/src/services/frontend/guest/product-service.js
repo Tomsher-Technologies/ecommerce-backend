@@ -28,27 +28,29 @@ class ProductService {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         let finalSort = [];
-        finalSort = [
-            {
-                $addFields: {
-                    sortOrder: {
-                        $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+        if (!collectionProductsData) {
+            finalSort = [
+                {
+                    $addFields: {
+                        sortOrder: {
+                            $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+                        }
                     }
-                }
-            },
-            {
-                $sort: {
-                    sortOrder: 1,
-                    showOrder: 1,
-                    createdAt: -1
-                }
-            },
-            {
-                $project: {
-                    sortOrder: 0
-                }
-            },
-        ];
+                },
+                {
+                    $sort: {
+                        sortOrder: 1,
+                        showOrder: 1,
+                        createdAt: -1
+                    }
+                },
+                {
+                    $project: {
+                        sortOrder: 0
+                    }
+                },
+            ];
+        }
         const variantLookupMatch = {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
@@ -163,7 +165,10 @@ class ProductService {
                 }
                 await fetchCategoryAndChildren(collectionPipeline.categoryIds[i]);
             }
-            pipeline.push({ $match: { 'productCategory.category._id': { $in: categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+            const uniqueCategoryIds = [
+                ...new Set(categoryIds.map(id => id.toString()))
+            ].map(id => new mongoose_1.default.Types.ObjectId(id));
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: uniqueCategoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
             pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });

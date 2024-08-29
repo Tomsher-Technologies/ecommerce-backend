@@ -41,7 +41,8 @@ class CollectionsProductsService {
         try {
             const query = { _id: { $in: productIds } };
             const products = await product_model_1.default.find(query).select('_id productTitle slug description productImageUrl status');
-            return products;
+            const sortedProducts = productIds.map(id => products.find(product => product._id.toString() === id.toString()));
+            return sortedProducts.filter(product => product !== undefined);
         }
         catch (error) {
             console.error('Error in findCollectionProducts:', error);

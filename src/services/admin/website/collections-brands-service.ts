@@ -49,7 +49,9 @@ class CollectionsBrandsService {
 
             const brands = await BrandsModel.find(query).select('_id brandTitle slug description brandImageUrl status');
 
-            return brands;
+            const sortedBrands = brandIds.map(id => brands.find(brand => brand._id.toString() === id.toString()));
+
+            return sortedBrands.filter(brand => brand !== undefined);
         } catch (error) {
             console.error('Error in findCollectionBrands:', error);
             throw error;
