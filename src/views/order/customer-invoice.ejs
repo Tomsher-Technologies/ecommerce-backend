@@ -165,7 +165,7 @@
             </div>
             <div class="invoice-details">
                 <p><strong>Invoice No:</strong> #<%= orderDetails.orderId %></p>
-                <p><strong>Invoice Date:</strong> <%= new Date(orderDetails.orderStatusAt).toLocaleDateString() %></p>
+                <p><strong>Invoice Date:</strong> <%= new Date(orderDetails.orderStatusAt).toLocaleString() %></p>
                 <p><strong>Payment Method:</strong> <%= orderDetails.paymentMethod.paymentMethodTitle %></p>
             </div>
         </div>
