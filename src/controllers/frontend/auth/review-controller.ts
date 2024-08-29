@@ -22,8 +22,8 @@ class ReviewController extends BaseController {
             if (validatedData.success) {
                 const { customerName, productId, reviewTitle, reviewContent, rating } = validatedData.data;
                 const user = res.locals.user;
-                const reviewImageUrl1 = (req as any).files.find((file: any) => file.fieldname === 'reviewImage1');
-                const reviewImageUrl2 = (req as any).files.find((file: any) => file.fieldname === 'reviewImage2');
+                const reviewImageUrl1 = (req as any).files.find((file: any) => file.fieldname === 'reviewImageUrl1');
+                const reviewImageUrl2 = (req as any).files.find((file: any) => file.fieldname === 'reviewImageUrl2');
 
                 let query = {
                     $and: [
@@ -63,7 +63,6 @@ class ReviewController extends BaseController {
                         reviewImageUrl2: handleFileUpload(req, null, (req.file || reviewImageUrl2), 'reviewImageUrl2', 'review'),
                         updatedAt: new Date()
                     };
-                    console.log(reviewData);
 
                     const existingReview = await ReviewService.findOne({
                         customerId: user._id,
@@ -142,16 +141,19 @@ class ReviewController extends BaseController {
             const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
 
             var hasBought
+            var message
             if (targetProduct) {
-                hasBought = true
+                hasBought = true,
+                    message = "Customer has purchased this product."
             } else {
-                hasBought = false
+                hasBought = false,
+                    message = "Customer has not purchased this product."
             }
             return controller.sendSuccessResponse(res, {
                 requestedData: {
                     hasBought: {
                         hasBoughtProduct: hasBought,
-                        message: "Customer has purchased this product."
+                        message: message
                     },
                     reviews: reviews.reviews,
                     startRating: reviews.statistics
