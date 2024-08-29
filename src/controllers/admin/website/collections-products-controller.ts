@@ -195,7 +195,7 @@ class CollectionsProductsController extends BaseController {
                             collectionSubTitle: collection.collectionSubTitle,
                             collectionImageUrl: collection.collectionImageUrl,
                             collectionsProducts: collectionProducts,
-                            actualCollectionsProducts: collection.collectionsProducts,
+                            // actualCollectionsProducts: collection.collectionsProducts,
                             languageValues: collection.languageValues,
                             // unCollectionedProducts: unCollectionedProducts,
                         },

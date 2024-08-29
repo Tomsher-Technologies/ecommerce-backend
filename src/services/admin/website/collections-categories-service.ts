@@ -49,7 +49,9 @@ class CollectionsCategoriesService {
 
             const categories = await CategoryModel.find(query).select('_id categoryTitle slug description categoryImageUrl categorySecondImageUrl status');
 
-            return categories;
+            const sortedCategories = categoryIds.map(id => categories.find(category => category._id.toString() === id.toString()));
+    
+            return sortedCategories.filter(category => category !== undefined);
         } catch (error) {
             console.error('Error in findCollectionCategories:', error);
             throw error;
