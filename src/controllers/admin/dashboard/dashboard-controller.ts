@@ -10,7 +10,8 @@ import CustomerService from '../../../services/admin/customer/customer-service'
 import { QueryParams } from '../../../utils/types/common';
 import DashboardService from '../../../services/admin/dashboard/dashboard-service';
 import { DashboardQueryParams } from '../../../utils/types/dashboard';
-import OrderService from '../../../services/admin/order/order-service'
+import OrderService from '../../../services/admin/order/order-service';
+import ProductReportService from '../../../services/admin/report/product/product-report-service';
 import { OrderQueryParams } from '../../../utils/types/order';
 
 const controller = new BaseController();
@@ -83,14 +84,15 @@ class DashboardController {
 
     async dashboardAnalytics(req: Request, res: Response): Promise<void> {
         try {
-            const { fromDate, endDate } = req.query as DashboardQueryParams;
+            const { fromDate, endDate, countryId } = req.query as DashboardQueryParams;
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-
-            if (countryId) {
-                query.countryId = countryId;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
             query = { cartStatus: { $ne: "1" } }
             const today = new Date();
@@ -142,15 +144,16 @@ class DashboardController {
 
     async dashboardCustomers(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId } = req.query as QueryParams;
 
             let query: any = { _id: { $exists: true } };
 
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-
-            if (countryId) {
-                query.countryId = countryId;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
             }
             const sort: any = {};
             if (sortby && sortorder) {
@@ -161,11 +164,46 @@ class DashboardController {
                 limit: parseInt(limit as string),
                 query,
                 sort,
-                includeLookups:"1"
+                includeLookups: "1"
             });
 
             controller.sendSuccessResponse(res, {
                 requestedData: customers[0].customerData,
+                message: 'Success!'
+            }, 200);
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
+
+    async dashboardTopSellingProducts(req: Request, res: Response): Promise<void> {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId } = req.query as QueryParams;
+
+            let query: any = { cartStatus: { $ne: "1" } };
+
+            const userData = await res.locals.user;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
+            }
+            const sort: any = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const orders: any = await ProductReportService.topSelling({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
+                query,
+                sort,
+            });
+            console.log(orders);
+
+            controller.sendSuccessResponse(res, {
+                requestedData: orders,
                 message: 'Success!'
             }, 200);
 

@@ -22,6 +22,8 @@ import ProductVariantsModel from '../../model/admin/ecommerce/product/product-va
 import { smtpEmailGateway } from '../../lib/emails/smtp-nodemailer-gateway';
 import CartOrderProductsModel, { CartOrderProductProps } from '../../model/frontend/cart-order-product-model';
 import CountryModel from '../../model/admin/setup/country-model';
+import { bulkSmsGateway } from '../../lib/sms/bulk-sms-gateway';
+import { createOrder } from '../../constants/messages';
 
 class CheckoutService {
 
@@ -363,6 +365,7 @@ class CheckoutService {
                                 email: customerDetails.email,
                                 ccmail: [basicDetailsSettings?.storeEmail]
                             }, template)
+                            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: createOrder(orderId) })
                         }
                     });
                 }
