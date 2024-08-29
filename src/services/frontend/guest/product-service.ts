@@ -30,27 +30,29 @@ class ProductService {
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         let finalSort: any = [];
-        finalSort = [
-            {
-                $addFields: {
-                    sortOrder: {
-                        $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+        if (!collectionProductsData) {
+            finalSort = [
+                {
+                    $addFields: {
+                        sortOrder: {
+                            $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+                        }
                     }
-                }
-            },
-            {
-                $sort: {
-                    sortOrder: 1,
-                    showOrder: 1,
-                    createdAt: -1
-                }
-            },
-            {
-                $project: {
-                    sortOrder: 0
-                }
-            },
-        ];
+                },
+                {
+                    $sort: {
+                        sortOrder: 1,
+                        showOrder: 1,
+                        createdAt: -1
+                    }
+                },
+                {
+                    $project: {
+                        sortOrder: 0
+                    }
+                },
+            ];
+        }
 
         const variantLookupMatch: any = {
             $expr: {
@@ -173,7 +175,10 @@ class ProductService {
                 }
                 await fetchCategoryAndChildren(collectionPipeline.categoryIds[i]);
             }
-            pipeline.push({ $match: { 'productCategory.category._id': { $in: categoryIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
+            const uniqueCategoryIds = [
+                ...new Set(categoryIds.map(id => id.toString()))
+            ].map(id => new mongoose.Types.ObjectId(id));
+            pipeline.push({ $match: { 'productCategory.category._id': { $in: uniqueCategoryIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
             pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
