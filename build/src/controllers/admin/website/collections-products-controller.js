@@ -178,7 +178,7 @@ class CollectionsProductsController extends base_controller_1.default {
                             collectionSubTitle: collection.collectionSubTitle,
                             collectionImageUrl: collection.collectionImageUrl,
                             collectionsProducts: collectionProducts,
-                            actualCollectionsProducts: collection.collectionsProducts,
+                            // actualCollectionsProducts: collection.collectionsProducts,
                             languageValues: collection.languageValues,
                             // unCollectionedProducts: unCollectionedProducts,
                         },
