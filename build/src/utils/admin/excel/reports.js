@@ -6,10 +6,12 @@ const cart_1 = require("../../../constants/cart");
 const exportCustomerReport = async (res, customerData) => {
     const customersData = customerData.map((customer) => {
         const addressBook = {};
-        customer?.address.forEach((addr, index) => {
-            addressBook[`addressBook[${index + 1}]State`] = addr.state || '';
-            addressBook[`addressBook[${index + 1}]City`] = addr.city || '';
-        });
+        if (customer && customer?.address && customer?.address.length > 0) {
+            customer?.address.forEach((addr, index) => {
+                addressBook[`addressBook[${index + 1}]State`] = addr.state || '';
+                addressBook[`addressBook[${index + 1}]City`] = addr.city || '';
+            });
+        }
         return {
             // id: customer._id.toString(),
             name: customer.firstName,
@@ -28,9 +30,11 @@ const exportCustomerReport = async (res, customerData) => {
         };
     });
     const addressColumns = customerData.reduce((acc, customer) => {
-        customer.address.forEach((_, index) => {
-            acc.push(`addressBook[${index + 1}]State`, `addressBook[${index + 1}]City`);
-        });
+        if (customer && customer?.address && customer?.address.length > 0) {
+            customer.address.forEach((_, index) => {
+                acc.push(`addressBook[${index + 1}]State`, `addressBook[${index + 1}]City`);
+            });
+        }
         return Array.from(new Set(acc));
     }, []);
     await (0, excel_generator_1.generateExcelFile)(res, customersData, ['name', 'phone', 'email', 'guestEmail', 'isVerified', 'lastOrderDate', ...addressColumns, 'created_date', 'fromGuest', 'addressBook', 'credits', 'orderTotalAmount', 'totalOrderCount'], 'Customers');

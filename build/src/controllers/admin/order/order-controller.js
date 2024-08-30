@@ -58,9 +58,9 @@ class OrdersController extends base_controller_1.default {
                     ...query, customerId: new mongoose_1.default.Types.ObjectId(customerId)
                 };
             }
-            if (cartStatus) {
+            if (orderStatus) {
                 query = {
-                    ...query, cartStatus: cartStatus
+                    ...query, orderStatus: orderStatus
                 };
             }
             if (couponId) {
