@@ -44,10 +44,17 @@ class ProductsController extends base_controller_1.default {
     // }
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10 } = req.query;
+            const { page_size = 1, limit = 10, countryId } = req.query;
             const userData = await res.locals.user;
-            const countryId = (0, helpers_1.getCountryId)(userData);
-            const filterProducts = await (0, products_1.filterProduct)(req.query, countryId);
+            var country;
+            if (countryId) {
+                country = countryId;
+            }
+            else {
+                country = (0, helpers_1.getCountryId)(userData);
+            }
+            console.log(userData);
+            const filterProducts = await (0, products_1.filterProduct)(req.query, country);
             console.log(filterProducts.query);
             const products = await product_service_1.default.findAll({
                 page: parseInt(page_size),

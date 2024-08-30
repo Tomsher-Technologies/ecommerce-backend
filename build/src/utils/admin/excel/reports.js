@@ -183,7 +183,9 @@ const exportProductExcel = async (res, products) => {
                     specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
                     specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
                 });
-                itemType = product.productVariants[0]._id === variant._id ? 'config-item' : 'variant';
+                itemType = (product.sku === variant.variantSku) ? 'config-item' : 'variant';
+                // Parent_SKU: variant.isDefault === '1' ? null : product.sku,
+                // Item_Type: variant.isDefault === '1' ? 'config-item' : 'variant',
                 productData.push({
                     Product_Title: product.isVariant === 1 ? variant.extraProductTitle : product.productTitle,
                     Description: variant.variantDescription,

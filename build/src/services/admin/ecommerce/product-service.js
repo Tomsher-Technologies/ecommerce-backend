@@ -11,6 +11,7 @@ const product_config_1 = require("../../../utils/config/product-config");
 const common_config_1 = require("../../../utils/config/common-config");
 const multi_languages_1 = require("../../../constants/multi-languages");
 const collections_1 = require("../../../constants/collections");
+const customer_config_1 = require("../../../utils/config/customer-config");
 class ProductsService {
     constructor() {
         this.multilanguageFieldsLookup = {
@@ -41,6 +42,12 @@ class ProductsService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
+        const variantLookupMatch = {
+            $expr: {
+                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(query['productVariants.countryId'])]
+            },
+            status: "1"
+        };
         let pipeline = [
             product_config_1.productCategoryLookup,
             {
@@ -49,7 +56,10 @@ class ProductsService {
                     localField: '_id',
                     foreignField: 'productId',
                     as: 'productVariants',
-                },
+                    pipeline: [
+                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : [])
+                    ]
+                }
             },
             product_config_1.brandLookup,
             product_config_1.brandObject,
@@ -174,9 +184,33 @@ class ProductsService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
+        const variantLookupMatch = {
+            $expr: {
+                $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(query['productVariants.countryId'])]
+            },
+            status: "1"
+        };
         const pipeline = [
             product_config_1.productCategoryLookup,
-            product_config_1.variantLookup,
+            {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'productVariants',
+                    pipeline: [
+                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : []),
+                        ...product_config_1.productVariantAttributesAdminLookup,
+                        product_config_1.addFieldsProductVariantAttributes,
+                        ...product_config_1.productSpecificationAdminLookup,
+                        product_config_1.addFieldsProductSpecification,
+                        product_config_1.productSeoLookup,
+                        product_config_1.addFieldsProductSeo,
+                        product_config_1.variantImageGalleryLookup,
+                        customer_config_1.countriesLookup
+                    ]
+                },
+            },
             product_config_1.imageLookup,
             product_config_1.brandLookup,
             product_config_1.brandObject,
