@@ -178,7 +178,79 @@ class ProductService {
             const uniqueCategoryIds = [
                 ...new Set(categoryIds.map(id => id.toString()))
             ].map(id => new mongoose.Types.ObjectId(id));
-            pipeline.push({ $match: { 'productCategory.category._id': { $in: uniqueCategoryIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
+
+            const categoryOrderMapping = uniqueCategoryIds.map((id, index) => ({
+                _id: id,
+                order: index
+            }));
+
+            pipeline.push(
+                {
+                    $match: {
+                        'productCategory.category._id': { $in: categoryOrderMapping.map(cat => cat._id) }
+                    }
+                },
+                {
+                    $unwind: '$productCategory'
+                },
+                {
+                    $addFields: {
+                        categoryOrder: {
+                            $let: {
+                                vars: {
+                                    categoryId: '$productCategory.category._id'
+                                },
+                                in: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: categoryOrderMapping,
+                                                as: 'item',
+                                                cond: { $eq: ['$$item._id', '$$categoryId'] }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+
+                {
+                    $group: {
+                        _id: '$_id',
+                        productTitle: { $first: '$productTitle' },
+                        slug: { $first: '$slug' },
+                        showOrder: { $first: '$showOrder' },
+                        starRating: { $first: '$starRating' },
+                        productImageUrl: { $first: '$productImageUrl' },
+                        description: { $first: '$description' },
+                        brand: { $first: '$brand' },
+                        unit: { $first: '$unit' },
+                        warehouse: { $first: '$warehouse' },
+                        measurements: { $first: '$measurements' },
+                        tags: { $first: '$tags' },
+                        sku: { $first: '$sku' },
+                        status: { $first: '$status' },
+                        createdAt: { $first: '$createdAt' },
+                        offer: { $first: '$offer' },
+                        productCategory: { $first: '$productCategory' },
+                        productVariants: { $first: '$productVariants' },
+                        languageValues: { $first: '$languageValues' },
+                        productSpecification: { $first: '$productSpecification' },
+                        imageGallery: { $first: '$imageGallery' },
+                        categoryOrder: { $min: '$categoryOrder.order' }
+                    }
+                },
+                {
+                    $sort: {
+                        categoryOrder: 1
+                    }
+                },
+
+
+            );
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
             pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id: any) => new mongoose.Types.ObjectId(id)) } } });
@@ -266,7 +338,8 @@ class ProductService {
                         imageGallery: 1,
                         selectedVariant: {
                             $arrayElemAt: ["$productVariants", 0]
-                        }
+                        },
+                        categoryOrder: 1
                     }
                 },
                 {
