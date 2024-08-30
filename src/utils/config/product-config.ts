@@ -1,6 +1,7 @@
 import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
 import ProductsModel from "../../model/admin/ecommerce/product-model";
+import { countriesLookup } from "./customer-config";
 
 
 export const productLookup = {
@@ -330,7 +331,8 @@ export const variantLookup = {
             addFieldsProductSpecification,
             productSeoLookup,
             addFieldsProductSeo,
-            variantImageGalleryLookup
+            variantImageGalleryLookup,
+            countriesLookup
         ]
     }
 };
