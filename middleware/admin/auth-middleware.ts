@@ -14,8 +14,8 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
     const token = req.header('Authorization')?.split(' ')[1];
 
     if (token) {
-      let user: any = null
-      let checkToken: any = null
+      let user: any = null;
+      let checkToken: any = null;
       if (token === process.env.APP_AUTH_KEY) {
         user = await UserModel.findOne({ userTitle: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug'])
       } else {
