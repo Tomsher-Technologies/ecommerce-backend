@@ -47,10 +47,17 @@ class ProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10 } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, countryId } = req.query as ProductsQueryParams;
             const userData = await res.locals.user;
-            const countryId = getCountryId(userData);
-            const filterProducts = await filterProduct(req.query, countryId)
+            var country: any
+            if (countryId) {
+                country = countryId
+            } else {
+                country = getCountryId(userData);
+            }
+            console.log(userData);
+            
+            const filterProducts = await filterProduct(req.query, country)
             console.log(filterProducts.query);
 
             const products = await ProductsService.findAll({

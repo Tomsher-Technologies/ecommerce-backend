@@ -21,7 +21,7 @@ const filterProduct = async (data, countryId) => {
     if (countryId) {
         queryFilterIds = {
             ...queryFilterIds,
-            'productVariants.countryId': countryId
+            'productVariants.countryId': new mongoose_1.default.Types.ObjectId(countryId)
         };
     }
     if (data.status && data.status !== '') {

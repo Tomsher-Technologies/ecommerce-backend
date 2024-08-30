@@ -5,10 +5,11 @@ import { ProductsProps } from '../../../utils/types/products';
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
-import { brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoObject, productSpecificationsLookup, specificationsLookup, variantLookup } from '../../../utils/config/product-config';
+import { addFieldsProductSeo, addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoLookup, productSeoObject, productSpecificationAdminLookup, productSpecificationsLookup, productVariantAttributesAdminLookup, specificationsLookup, variantImageGalleryLookup, variantLookup } from '../../../utils/config/product-config';
 import { seoLookup } from '../../../utils/config/common-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { collections } from '../../../constants/collections';
+import { countriesLookup } from '../../../utils/config/customer-config';
 
 class ProductsService {
     private multilanguageFieldsLookup: any;
@@ -44,6 +45,12 @@ class ProductsService {
             finalSort = defaultSort;
         }
 
+        const variantLookupMatch: any = {
+            $expr: {
+                $eq: ['$countryId', new mongoose.Types.ObjectId(query['productVariants.countryId'])]
+            },
+            status: "1"
+        };
         let pipeline: any[] = [
             productCategoryLookup,
             {
@@ -52,7 +59,10 @@ class ProductsService {
                     localField: '_id',
                     foreignField: 'productId',
                     as: 'productVariants',
-                },
+                    pipeline: [
+                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : [])
+                    ]
+                }
             },
             brandLookup,
             brandObject,
@@ -194,10 +204,33 @@ class ProductsService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-
+        const variantLookupMatch: any = {
+            $expr: {
+                $eq: ['$countryId', new mongoose.Types.ObjectId(query['productVariants.countryId'])]
+            },
+            status: "1"
+        };
         const pipeline = [
             productCategoryLookup,
-            variantLookup,
+            {
+                $lookup: {
+                    from: `${collections.ecommerce.products.productvariants.productvariants}`,
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'productVariants',
+                    pipeline: [
+                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : []),
+                        ...productVariantAttributesAdminLookup,
+                        addFieldsProductVariantAttributes,
+                        ...productSpecificationAdminLookup,
+                        addFieldsProductSpecification,
+                        productSeoLookup,
+                        addFieldsProductSeo,
+                        variantImageGalleryLookup,
+                        countriesLookup
+                    ]
+                },
+            },
             imageLookup,
             brandLookup,
             brandObject,
