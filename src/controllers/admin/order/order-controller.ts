@@ -65,9 +65,9 @@ class OrdersController extends BaseController {
                 } as any;
             }
 
-            if (cartStatus) {
+            if (orderStatus) {
                 query = {
-                    ...query, cartStatus: cartStatus
+                    ...query, orderStatus: orderStatus
                 } as any;
             }
 

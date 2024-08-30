@@ -5,11 +5,12 @@ import { orderProductStatusMap } from "../../../constants/cart";
 export const exportCustomerReport = async (res: Response, customerData: any) => {
     const customersData = customerData.map((customer: any) => {
         const addressBook: any = {};
-        customer?.address.forEach((addr: any, index: number) => {
-            addressBook[`addressBook[${index + 1}]State`] = addr.state || '';
-            addressBook[`addressBook[${index + 1}]City`] = addr.city || '';
-        });
-
+        if (customer && customer?.address && customer?.address.length > 0) {
+            customer?.address.forEach((addr: any, index: number) => {
+                addressBook[`addressBook[${index + 1}]State`] = addr.state || '';
+                addressBook[`addressBook[${index + 1}]City`] = addr.city || '';
+            });
+        }
         return {
             // id: customer._id.toString(),
             name: customer.firstName,
@@ -28,9 +29,11 @@ export const exportCustomerReport = async (res: Response, customerData: any) => 
         };
     });
     const addressColumns = customerData.reduce((acc: any, customer: any) => {
-        customer.address.forEach((_: any, index: number) => {
-            acc.push(`addressBook[${index + 1}]State`, `addressBook[${index + 1}]City`);
-        });
+        if (customer && customer?.address && customer?.address.length > 0) {
+            customer.address.forEach((_: any, index: number) => {
+                acc.push(`addressBook[${index + 1}]State`, `addressBook[${index + 1}]City`);
+            });
+        }
         return Array.from(new Set(acc));
     }, []);
     await generateExcelFile(res, customersData, ['name', 'phone', 'email', 'guestEmail', 'isVerified', 'lastOrderDate', ...addressColumns, 'created_date', 'fromGuest', 'addressBook', 'credits', 'orderTotalAmount', 'totalOrderCount'], 'Customers')
