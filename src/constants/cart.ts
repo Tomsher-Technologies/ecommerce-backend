@@ -223,7 +223,8 @@ export const tapPaymentGatwayStatus = {
     authorized: 'AUTHORIZED', // The amount is successfully authorized.
     captured: 'CAPTURED', //The authorized amount is successfully captured.
     void: 'VOID',// The authorized amount is successfully voided.
-    cancelled: 'CANCELLED'
+    cancelled: 'CANCELLED',
+    restricted: 'RESTRICTED'
 }
 
 export const tabbyPaymentGatwayStatus = {

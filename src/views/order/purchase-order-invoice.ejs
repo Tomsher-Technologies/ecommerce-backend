@@ -373,11 +373,11 @@
                         </td>
                         <td>
                             <%=currencyCode %>
-                                <%= product.productAmount.toFixed(2) / product.quantity %>
+                                <%= product.productOriginalPrice.toFixed(2) / product.quantity %>
                         </td>
                         <td>
                             <%=currencyCode %>
-                                <%= product.productAmount.toFixed(2) %>
+                                <%= product.productAmount.toFixed(2)/ product.quantity %>
                         </td>
                         <td>
                             <div class="summary-column">

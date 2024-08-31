@@ -679,15 +679,26 @@ export const getOrderProductsWithCartLookup = (query: any, notCallLookups: boole
                     as: 'shippingAddress'
                 }
             },
-            { $unwind: '$shippingAddress' }, {
-            $lookup: {
-                from: `${collections.customer.customeraddresses}`,
-                localField: 'cartDetails.billingId',
-                foreignField: '_id',
-                as: 'billingAddress'
-            }
-        },
-            { $unwind: '$billingAddress' },
+            {
+                $unwind: {
+                    path: '$shippingAddress',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: `${collections.customer.customeraddresses}`,
+                    localField: 'cartDetails.billingId',
+                    foreignField: '_id',
+                    as: 'billingAddress'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$billingAddress',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
             {
                 $lookup: {
                     from: `${collections.setup.countries}`,

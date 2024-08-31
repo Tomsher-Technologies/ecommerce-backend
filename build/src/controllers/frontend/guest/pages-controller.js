@@ -142,7 +142,7 @@ class PageController extends base_controller_1.default {
                         return;
                     }
                     const emailValues = {
-                        subject,
+                        subject: "Contact Us",
                         email: basicDetailsSettings?.storeEmail,
                         // ccmail: 
                     };

@@ -104,7 +104,6 @@ class CheckoutController extends base_controller_1.default {
                     paymentMethodId: paymentMethod._id,
                     couponId: null,
                     pickupStoreId: pickupStoreId || null,
-                    pickupStatusAt: pickupStoreId ? new Date() : null,
                     stateId: stateId || null,
                     cityId: cityId || null,
                     cartStatus: cart_1.cartStatus.active,
@@ -464,7 +463,7 @@ class CheckoutController extends base_controller_1.default {
         if (tapResponse.status) {
             const retValResponse = await checkout_service_1.default.paymentResponse({
                 paymentDetails,
-                allPaymentResponseData: data,
+                allPaymentResponseData: tapResponse,
                 paymentStatus: (tapResponse.status === cart_1.tapPaymentGatwayStatus.authorized || tapResponse.status === cart_1.tapPaymentGatwayStatus.captured) ?
                     cart_1.orderPaymentStatus.success : ((tapResponse.status === cart_1.tapPaymentGatwayStatus.cancelled) ? tapResponse.cancelled : cart_1.orderPaymentStatus.failure)
             });

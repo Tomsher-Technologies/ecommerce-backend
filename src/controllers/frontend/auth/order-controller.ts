@@ -240,9 +240,15 @@ class OrderController extends BaseController {
             if (updateOperations.length > 0) {
                 await CartOrderProductsModel.bulkWrite(updateOperations);
                 if (returnReason !== '') {
-                    await CartOrdersModel.findOneAndUpdate(orderDetails._id, {
-                        returnReason
-                    })
+                    const newReturnReason = `[${new Date().toISOString()}] ${returnReason}`;
+                    await CartOrdersModel.findOneAndUpdate(
+                        { _id: orderDetails._id },
+                        {
+                            returnReason: orderDetails.returnReason 
+                                ? `${orderDetails.returnReason}\n${newReturnReason}` 
+                                : newReturnReason
+                        }
+                    );
                 }
                 const orderList = await OrderService.orderList({
                     query: {

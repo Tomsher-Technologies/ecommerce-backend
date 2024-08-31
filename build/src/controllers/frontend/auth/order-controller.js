@@ -226,8 +226,11 @@ class OrderController extends base_controller_1.default {
             if (updateOperations.length > 0) {
                 await cart_order_product_model_1.default.bulkWrite(updateOperations);
                 if (returnReason !== '') {
-                    await cart_order_model_1.default.findOneAndUpdate(orderDetails._id, {
-                        returnReason
+                    const newReturnReason = `[${new Date().toISOString()}] ${returnReason}`;
+                    await cart_order_model_1.default.findOneAndUpdate({ _id: orderDetails._id }, {
+                        returnReason: orderDetails.returnReason
+                            ? `${orderDetails.returnReason}\n${newReturnReason}`
+                            : newReturnReason
                     });
                 }
                 const orderList = await order_service_1.default.orderList({

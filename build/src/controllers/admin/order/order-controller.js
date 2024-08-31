@@ -550,8 +550,8 @@ class OrdersController extends base_controller_1.default {
             if (!orderProductDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Your order product not found!' });
             }
-            if (orderProductDetails.orderProductStatus !== cart_1.orderProductStatusJson.delivered) {
-                return controller.sendErrorResponse(res, 200, { message: `You cant change to this status without delivered product` });
+            if (orderProductDetails.orderProductStatus !== cart_1.orderProductStatusJson.delivered && orderProductDetails.orderProductStatus !== cart_1.orderProductStatusJson.returned) {
+                return controller.sendErrorResponse(res, 200, { message: `You cant change to this status without delivered or returned product` });
             }
             if (orderProductDetails.quantity < orderProductDetails.orderRequestedProductQuantity) {
                 return controller.sendErrorResponse(res, 200, { message: `You cant change quantity out of ${orderProductDetails.quantity}` });
@@ -583,41 +583,46 @@ class OrdersController extends base_controller_1.default {
             }
             let updateVariantProductQuantity = null;
             let orderUpdateFields = {};
+            const currentDate = new Date();
             const orderProductUpdateFields = {
                 [quantityChange ? 'orderRequestedProductQuantityStatus' : 'orderProductReturnStatus']: newStatus,
-                [quantityChange ? 'orderRequestedProductQuantityStatusAt' : 'orderProductReturnStatusAt']: new Date(),
+                [quantityChange ? 'orderRequestedProductQuantityStatusAt' : 'orderProductReturnStatusAt']: currentDate,
             };
             if (newStatus === statusJson.approved) {
-                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityApprovedStatusAt' : 'orderProductReturnApprovedStatusAt'] = new Date();
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityApprovedStatusAt' : 'orderProductReturnApprovedStatusAt'] = currentDate;
             }
             else if (newStatus === statusJson.refunded) {
-                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRefundStatusAt' : 'orderProductReturnRefundStatusAt'] = new Date();
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRefundStatusAt' : 'orderProductReturnRefundStatusAt'] = currentDate;
                 const newQuantity = orderProductDetails.orderRequestedProductQuantity;
                 const perUnitPrice = orderProductDetails.productAmount / orderProductDetails.quantity;
                 orderProductUpdateFields['returnedProductAmount'] = quantityChange ? ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : orderProductDetails.productAmount;
-                orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
                 orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.refunded;
-                orderProductUpdateFields['orderProductStatusAt'] = new Date();
+                orderProductUpdateFields['orderProductStatusAt'] = currentDate;
+                orderUpdateFields['orderStatus'] = orderDetails.length > 1 ? cart_1.orderStatusArrayJson.partiallyRefunded : cart_1.orderStatusArrayJson.refunded;
+                orderUpdateFields[orderDetails.length > 1 ? 'partiallyRefundedStatusAt' : 'refundedStatusAt'] = currentDate;
+                orderUpdateFields['totalReturnedProductAmount'] = quantityChange ? (orderDetails?.totalReturnedProductAmount || 0) + ((orderProductDetails.quantity - newQuantity) * perUnitPrice) : (orderDetails?.totalReturnedProductAmount || 0) + orderProductDetails.productAmount;
             }
             else if (newStatus === statusJson.received) {
-                orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.refunded;
-                orderProductUpdateFields['orderProductStatusAt'] = new Date();
-                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityReceivedStatusAt' : 'orderProductReturnReceivedStatusAt'] = new Date();
+                orderProductUpdateFields['orderProductStatus'] = cart_1.orderProductStatusJson.returned;
+                orderProductUpdateFields['orderProductStatusAt'] = currentDate;
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityReceivedStatusAt' : 'orderProductReturnReceivedStatusAt'] = currentDate;
                 if (!quantityChange) {
                     updateVariantProductQuantity = orderProductDetails.quantity;
                 }
                 else {
                     updateVariantProductQuantity = orderProductDetails.orderRequestedProductQuantity;
                 }
+                orderUpdateFields['orderStatus'] = orderDetails.length > 1 ? cart_1.orderStatusArrayJson.partiallyReturned : cart_1.orderStatusArrayJson.returned;
+                orderUpdateFields[orderDetails.length > 1 ? 'partiallyReturnedStatusAt' : 'returnedStatusAt'] = currentDate;
             }
             else if (newStatus === statusJson.rejected) {
-                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRejectedStatusAt' : 'orderProductReturnRejectedStatusAt'] = new Date();
+                orderProductUpdateFields[quantityChange ? 'orderProductReturnQuantityRejectedStatusAt' : 'orderProductReturnRejectedStatusAt'] = currentDate;
             }
             const updatedOrderProductDetails = await cart_order_product_model_1.default.findByIdAndUpdate(orderProductDetails._id, orderProductUpdateFields);
             if (!updatedOrderProductDetails) {
                 return controller.sendErrorResponse(res, 200, { message: 'Something went wrong please try again.' });
             }
-            if (orderUpdateFields && orderUpdateFields?.totalReturnedProductAmount) {
+            if (orderUpdateFields && (orderUpdateFields?.totalReturnedProductAmount || newStatus === statusJson.received)) {
                 await cart_order_model_1.default.findOneAndUpdate(orderDetails._id, orderUpdateFields);
             }
             if (newStatus === statusJson.approved || newStatus === statusJson.rejected || newStatus === statusJson.refunded || newStatus === statusJson.received) {

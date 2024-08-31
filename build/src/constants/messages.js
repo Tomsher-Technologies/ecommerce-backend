@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deliveredOrder = exports.shippingOrder = exports.createOrder = exports.resetPasswordOtp = exports.resendOtp = exports.guestRegisterOtp = exports.registerOtp = exports.subjects = void 0;
+exports.cancelOrder = exports.deliveredOrder = exports.shippingOrder = exports.createOrder = exports.resetPasswordOtp = exports.resendOtp = exports.guestRegisterOtp = exports.registerOtp = exports.subjects = void 0;
 exports.subjects = {
     passwordResetConfirmation: 'Password Reset Confirmation',
     verificationOTP: 'Verification OTP',
@@ -34,3 +34,7 @@ const deliveredOrder = (orderId) => {
     return `Your order ${orderId} has just been delivered.`;
 };
 exports.deliveredOrder = deliveredOrder;
+const cancelOrder = (orderId) => {
+    return `Your order ${orderId} has just been cancelled.`;
+};
+exports.cancelOrder = cancelOrder;
