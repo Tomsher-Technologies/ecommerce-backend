@@ -5,12 +5,12 @@ const { convert } = require('html-to-text');
 
 import { calculateExpectedDeliveryDate } from "../helpers";
 import { blockReferences } from "../../constants/website-setup";
-import { orderProductCancelStatusMessages, orderProductStatussMessages, orderReturnStatusMessages, orderStatusMessages } from "../../constants/cart";
+import { orderProductCancelStatusMessages, orderProductStatussMessages, orderReturnStatusMessages, orderStatusArrayJson, orderStatusMessages } from "../../constants/cart";
 import { mailChimpEmailGateway } from "../../lib/emails/mail-chimp-sms-gateway";
 import { smtpEmailGateway } from "../../lib/emails/smtp-nodemailer-gateway";
 import { pdfGenerator } from "../../lib/pdf/pdf-generator";
 import { bulkSmsGateway } from "../../lib/sms/bulk-sms-gateway";
-import { deliveredOrder, shippingOrder } from "../../constants/messages";
+import { cancelOrder, deliveredOrder, shippingOrder } from "../../constants/messages";
 
 export const findOrderStatusDateCheck = (orderStatus: any) => {
     let statusAt
@@ -207,7 +207,7 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
     }
 
     const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails.orderStatusAt, Number(commonDeliveryDays))
-    ejs.renderFile(path.join(__dirname, '../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
+    ejs.renderFile(path.join(__dirname, '../../views/email/order', orderStatus === orderStatusArrayJson.shipped ? 'order-shipping-email.ejs' : (orderStatus === orderStatusArrayJson.delivered ? 'order-delivered-email.ejs' : 'order-product-status-change.ejs')), {
         firstName: customerDetails?.firstName,
         orderId: orderDetails.orderId,
         totalAmount: orderDetails.totalAmount,
@@ -222,7 +222,10 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
         appUrl: `${process.env.APPURL}`,
         socialMedia,
         appUrls,
-        tax: tax
+        tax: tax,
+        subject: orderStatusMessages[orderStatus],
+        content: `Your order ${orderDetails.orderId} has just been cancelled.`,
+
     }, async (err: any, template: any) => {
         if (err) {
             console.log(err);
@@ -252,7 +255,7 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
                 subject: orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
             }, template)
-            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: orderStatusMessages[orderStatus] === '4' ? shippingOrder(orderDetails.orderId, expectedDeliveryDate) : deliveredOrder(orderDetails.orderId) })
+            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: orderStatusMessages[orderStatus] === '4' ? shippingOrder(orderDetails.orderId, expectedDeliveryDate) : (orderStatusMessages[orderStatus] === '5' ? deliveredOrder(orderDetails.orderId) : cancelOrder(orderDetails.orderId)) })
         }
     });
 }
