@@ -34,3 +34,7 @@ export const shippingOrder = (orderId: string, expectedDeliveryDate: string) => 
 export const deliveredOrder = (orderId: string) => {
     return `Your order ${orderId} has just been delivered.`
 }
+
+export const cancelOrder = (orderId: string) => {
+    return `Your order ${orderId} has just been cancelled.`
+}
