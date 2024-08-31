@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tabbyPaymentRetrieve = exports.tabbyCheckoutRetrieve = exports.tabbyPaymentCreate = void 0;
+exports.tabbyPaymentCaptures = exports.tabbyPaymentRetrieve = exports.tabbyCheckoutRetrieve = exports.tabbyPaymentCreate = void 0;
 const cart_1 = require("../../constants/cart");
 const tabbyPaymentCreate = async (tabbyDefaultValues, paymentMethodValues) => {
     try {
@@ -87,3 +87,31 @@ const tabbyPaymentRetrieve = async (tabbyId, paymentMethodValues) => {
     }
 };
 exports.tabbyPaymentRetrieve = tabbyPaymentRetrieve;
+const tabbyPaymentCaptures = async (tabbyPaymentId, tabbyDefaultValues, paymentMethodValues) => {
+    try {
+        const response = await fetch(`${process.env.TABBY_API_URL_PAYMENT}/${tabbyPaymentId}/captures`, {
+            method: "POST",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
+            },
+            redirect: "follow",
+            referrerPolicy: "no-referrer",
+            body: JSON.stringify(tabbyDefaultValues),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const responseData = await response.json();
+        return responseData;
+    }
+    catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+};
+exports.tabbyPaymentCaptures = tabbyPaymentCaptures;

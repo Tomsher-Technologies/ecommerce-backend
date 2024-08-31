@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.truncateWord = exports.normalizeWord = exports.calculateExpectedDeliveryDate = exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugifyManually = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.formatAmount = exports.truncateWord = exports.normalizeWord = exports.calculateExpectedDeliveryDate = exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugifyManually = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -342,3 +342,9 @@ const truncateWord = (word, maxWords) => {
     return word;
 };
 exports.truncateWord = truncateWord;
+const formatAmount = (amount) => {
+    return amount !== undefined && amount !== null
+        ? parseFloat(amount).toFixed(2)
+        : "0.00";
+};
+exports.formatAmount = formatAmount;

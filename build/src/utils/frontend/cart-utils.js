@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayDefaultValues = exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
+exports.tamaraPaymentGatwayDefaultValues = exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentCaptureGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
+const helpers_1 = require("../helpers");
 const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, paymentMethodValues) => {
     return {
         "amount": cartData.totalAmount,
@@ -147,6 +148,33 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
     };
 };
 exports.tabbyPaymentGatwayDefaultValues = tabbyPaymentGatwayDefaultValues;
+const tabbyPaymentCaptureGatwayDefaultValues = (orderDetails) => {
+    return {
+        "amount": orderDetails.amount,
+        "reference_id": orderDetails.reference_id,
+        tax_amount: (0, helpers_1.formatAmount)(orderDetails?.tax_amount),
+        shipping_amount: (0, helpers_1.formatAmount)(orderDetails?.shipping_amount),
+        discount_amount: (0, helpers_1.formatAmount)(orderDetails?.discount_amount),
+        items: orderDetails.items.map((item) => ({
+            reference_id: item.reference_id,
+            title: item.title,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            image_url: item.image_url,
+            product_url: item.product_url || "",
+            gender: item.gender || "",
+            category: item.category || "",
+            color: item.color || "",
+            product_material: item.product_material || "",
+            size_type: item.size_type || "",
+            size: item.size || "",
+            brand: item.brand || "",
+            is_refundable: item.is_refundable ?? true
+        }))
+    };
+};
+exports.tabbyPaymentCaptureGatwayDefaultValues = tabbyPaymentCaptureGatwayDefaultValues;
 const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetails) => {
     return {
         "action": "PURCHASE",
