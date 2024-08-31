@@ -383,3 +383,9 @@ export const truncateWord = (word: string, maxWords: number): string => {
     }
     return word;
 };
+
+export const formatAmount = (amount: any) => {
+    return amount !== undefined && amount !== null 
+        ? parseFloat(amount).toFixed(2)
+        : "0.00";
+}
