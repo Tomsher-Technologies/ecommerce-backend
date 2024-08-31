@@ -243,21 +243,43 @@
 
                 </div>
                 <% } %>
+                <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length> 0) { %>
+                    <div>
+                        <strong>Pickup store address:</strong><br>
+
+                        <%= orderDetails.pickupFromStore.storeTitle %><br>
+                            <%= orderDetails.pickupFromStore.storeAddress %>,<br>
+                                <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,-->
+                                Email -<%= orderDetails.pickupFromStore.storeEmail %><br>
+                                    Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
+                    </div>
+                    <% } %>
                     <div style="text-align: right;">
-                        <p><strong>Payment Method:</strong>
-                            <%= orderDetails.paymentMethod.paymentMethodTitle %>
+                        <p><strong>Company address:</strong>
+                            <% if(shopName || storeAppartment || storeCity ||storeState||storeStreet) { %>
+                                <p>
+                                  <%= shopName %><br>
+                                    <%= storeAppartment %><br>
+                                      <%= storeCity %>, <%= storeState %>, <%= storeStreet %><br>
+                                            <%= storePostalCode %><br>
+                                            Phone : <%= storePhone %>
+                                </p>
+                                <% } %>
+                                <% if (tollFreeNo) { %>
+                                  <p> Toll free number: <%= tollFreeNo %></p>
+                              <% } %>
                         </p>
-                        <p><strong>Pre-Paid Amount Due:</strong><%=currencyCode %> <%= orderDetails.totalAmount.toFixed(2)-orderDetails.totalReturnedProductAmount.toFixed(2) %></p>
+                        <!-- <p><strong>Pre-Paid Amount Due:</strong><%=currencyCode %> <%= orderDetails.totalAmount.toFixed(2)-orderDetails.totalReturnedProductAmount.toFixed(2) %></p>
                         <p><strong>Order Comments:</strong>
                             <%= orderDetails.orderComments %>
-                        </p>
+                        </p> -->
                     </div>
         </div>
 
         <div class="separator"></div>
 
         <p><strong>Order ID:</strong>
-            <%= orderDetails.orderId %><br>Thank you for buying from <%= shopName %>.
+            <strong><%= orderDetails.orderId %></strong><br>Thank you for buying from <%= shopName %>.
         </p>
 
         <div class="order-summary">
@@ -272,7 +294,8 @@
                                 <%= orderDetails.billingAddress.name %><br>
                                     <%= orderDetails.billingAddress.address1 %>,<br>
                                         <%= orderDetails.billingAddress.city %>, <%= orderDetails.billingAddress.state
-                                                %>, <%= orderDetails.billingAddress.country %>
+                                                %>, <%= orderDetails.billingAddress.country %><br>
+                                                Phone: <%= orderDetails.billingAddress.phoneNumber %>
                             </td>
                         </tr>
                         <% } else { %>
@@ -320,7 +343,7 @@
                     <th>Product Details</th>
                     <th>Quantity</th>
                     <th>Unit Price</th>
-                    <th>Total Unit Price</th>
+                    <th>Sale Price</th>
                     <th>Order Totals</th>
                 </tr>
             </thead>
@@ -340,7 +363,9 @@
                           <% } else { %>
                             <%= product.productDetails.productTitle %>
                               <% } %><br>SKU: <%= product.productDetails.variantDetails.variantSku %><br></td>
-                    <td><%= product.quantity %><% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %><% } %></td>
+                    <td><%= product.quantity %>
+                        <!-- <% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %><% } %> -->
+                    </td>
                     <td><%=currencyCode %> <%= product.productAmount.toFixed(2) / product.quantity %></td>
                     <td><%=currencyCode %> <%= product.productAmount.toFixed(2) %></td>
                     <td>
