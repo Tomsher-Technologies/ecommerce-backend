@@ -49,7 +49,7 @@ class CheckoutService {
         if (paymentStatus === orderPaymentStatus.success) {
             const updateTransaction = await PaymentTransactionModel.findByIdAndUpdate(
                 paymentDetails?._id, {
-                data: JSON.stringify(allPaymentResponseData),
+                data: allPaymentResponseData,
                 status: paymentStatus,
                 createdAt: new Date(),
             }, { new: true, useFindAndModify: false });

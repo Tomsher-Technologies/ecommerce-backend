@@ -188,7 +188,7 @@ const orderStatusChangeEmail = async (settingsDetails, orderDetails, orderStatus
         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
     }
     const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails.orderStatusAt, Number(commonDeliveryDays));
-    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', orderStatus === '4' ? 'order-shipping-email.ejs' : 'order-delivered-email.ejs'), {
+    ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', orderStatus === cart_1.orderStatusArrayJson.shipped ? 'order-shipping-email.ejs' : (orderStatus === cart_1.orderStatusArrayJson.delivered ? 'order-delivered-email.ejs' : 'order-product-status-change.ejs')), {
         firstName: customerDetails?.firstName,
         orderId: orderDetails.orderId,
         totalAmount: orderDetails.totalAmount,
@@ -203,7 +203,9 @@ const orderStatusChangeEmail = async (settingsDetails, orderDetails, orderStatus
         appUrl: `${process.env.APPURL}`,
         socialMedia,
         appUrls,
-        tax: tax
+        tax: tax,
+        subject: cart_1.orderStatusMessages[orderStatus],
+        content: `Your order ${orderDetails.orderId} has just been cancelled.`,
     }, async (err, template) => {
         if (err) {
             console.log(err);
@@ -232,7 +234,7 @@ const orderStatusChangeEmail = async (settingsDetails, orderDetails, orderStatus
                 subject: cart_1.orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
             }, template);
-            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: cart_1.orderStatusMessages[orderStatus] === '4' ? (0, messages_1.shippingOrder)(orderDetails.orderId, expectedDeliveryDate) : (0, messages_1.deliveredOrder)(orderDetails.orderId) });
+            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: cart_1.orderStatusMessages[orderStatus] === '4' ? (0, messages_1.shippingOrder)(orderDetails.orderId, expectedDeliveryDate) : (cart_1.orderStatusMessages[orderStatus] === '5' ? (0, messages_1.deliveredOrder)(orderDetails.orderId) : (0, messages_1.cancelOrder)(orderDetails.orderId)) });
         }
     });
 };
