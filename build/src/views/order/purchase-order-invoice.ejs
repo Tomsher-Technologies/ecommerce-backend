@@ -237,23 +237,25 @@
                 </div>
                 <% } %>
 
-                <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length > 0) { %>
-                    <div>
-                    <strong>Pickup store address:</strong>
-                      
-                        <%= orderDetails.pickupFromStore.storeTitle %><br>
-                          <%= orderDetails.pickupFromStore.storeAddress %>,<br>
-                            <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,--> Email -<%= 
-                                  orderDetails.pickupFromStore.storeEmail %><br>
-                                  Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
-                    </div>
-                      <% } %>
+                    <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length> 0) { %>
+                        <div>
+                            <strong>Pickup store address:</strong>
+
+                            <%= orderDetails.pickupFromStore.storeTitle %><br>
+                                <%= orderDetails.pickupFromStore.storeAddress %>,<br>
+                                    <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,-->
+                                    Email -<%= orderDetails.pickupFromStore.storeEmail %><br>
+                                        Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
+                        </div>
+                        <% } %>
         </div>
 
         <div class="separator"></div>
 
         <p><strong>Order ID:</strong>
-            <%= orderDetails.orderId %><br>Thank you for buying from <%= shopName %>.
+            <b>
+                <%= orderDetails.orderId %>
+            </b><br>Thank you for buying from <%= shopName %>.
         </p>
 
         <div class="order-summary">
@@ -268,7 +270,8 @@
                                 <%= orderDetails.billingAddress.name %><br>
                                     <%= orderDetails.billingAddress.address1 %>,<br>
                                         <%= orderDetails.billingAddress.city %>, <%= orderDetails.billingAddress.state
-                                                %>, <%= orderDetails.billingAddress.country %>
+                                                %>, <%= orderDetails.billingAddress.country %><br>
+                                                    Phone: <%= orderDetails.billingAddress.phoneNumber %>
                             </td>
                         </tr>
                         <% } else { %>
@@ -279,8 +282,9 @@
                                             <%= orderDetails.shippingAddress.address1 %>,<br>
                                                 <%= orderDetails.shippingAddress.city %>, <%=
                                                         orderDetails.shippingAddress.state %>, <%=
-                                                            orderDetails.shippingAddress.country %>
-                                                            <% } %>
+                                                            orderDetails.shippingAddress.country %><br>
+                                                            Phone: <%= orderDetails.billingAddress.phoneNumber %>
+                                                                <% } %>
                                 </td>
                             </tr>
                             <% } %>
@@ -317,9 +321,11 @@
                 <tr>
                     <th>SL NO</th>
                     <th>Product Details</th>
+                    <th>Image</th>
+                    <th>Attributes</th>
                     <th>Quantity</th>
                     <th>Unit Price</th>
-                    <th>Total Unit Price</th>
+                    <th>Sale Price</th>
                     <th>Order Totals</th>
                 </tr>
             </thead>
@@ -339,9 +345,31 @@
                                             <% } %><br>SKU: <%= product.productDetails.variantDetails.variantSku %><br>
                         </td>
                         <td>
-                            <%= product.quantity %>
-                                <% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %>
+                            <img src="<% if (product.productDetails.variantDetails.variantImageUrl && product.productDetails.variantDetails.variantImageUrl !=='' ) { %>
+                                         <%= apiAppUrl%><%= product.productDetails.variantDetails.variantImageUrl %>
+                                       <% } else { %>
+                                         <%= apiAppUrl%><%= product.productDetails.productImageUrl %>
+                                       <% } %>"
+                                 class="product-img" alt="Product Image" crossorigin="anonymous"
+                                 style="width: 75px; height: 75px;">
+                          </td>
+                        <td>
+                            <% if (product.productDetails.variantDetails.productVariantAttributes.length> 0) { %>
+                                <% product.productDetails.variantDetails.productVariantAttributes.forEach(function(attribute)
+                                    { %>
+                                    <p><strong>
+                                            <%= attribute.attributeTitle %>:
+                                        </strong>
+                                        <%= attribute.attributeDetail.itemName %>
+                                    </p>
+                                    <% }) %>
                                         <% } %>
+
+                        </td>
+                        <td>
+                            <%= product.quantity %>
+                                <!-- <% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %>
+                                        <% } %> -->
                         </td>
                         <td>
                             <%=currencyCode %>
