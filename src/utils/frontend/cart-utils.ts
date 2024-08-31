@@ -2,6 +2,7 @@ import { ObjectId } from "mongoose"
 import { CustomrProps } from "../../model/frontend/customers-model"
 import { PaymentMethodProps } from "../../model/admin/setup/payment-methods-model"
 import { CustomerAddressProps } from "../../model/frontend/customer-address-model"
+import { formatAmount } from "../helpers"
 
 export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
 
@@ -167,6 +168,34 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
             "cancel": `${process.env.APP_API_URL}/api/common/tabby-success-response`,
             "failure": `${process.env.APP_API_URL}/api/common/tabby-success-response`
         }
+    }
+}
+
+export const tabbyPaymentCaptureGatwayDefaultValues = (orderDetails: any) => {
+
+    return {
+        "amount": orderDetails.amount,
+        "reference_id": orderDetails.reference_id,
+        tax_amount: formatAmount(orderDetails?.tax_amount),
+        shipping_amount: formatAmount(orderDetails?.shipping_amount),
+        discount_amount: formatAmount(orderDetails?.discount_amount),
+        items: orderDetails.items.map((item: any) => ({
+            reference_id: item.reference_id,
+            title: item.title,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            image_url: item.image_url,
+            product_url: item.product_url || "",
+            gender: item.gender || "",
+            category: item.category || "",
+            color: item.color || "",
+            product_material: item.product_material || "",
+            size_type: item.size_type || "",
+            size: item.size || "",
+            brand: item.brand || "",
+            is_refundable: item.is_refundable ?? true
+        }))
     }
 }
 

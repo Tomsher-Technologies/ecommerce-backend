@@ -90,3 +90,32 @@ export const tabbyPaymentRetrieve = async (tabbyId: any, paymentMethodValues: an
         throw error;
     }
 }
+
+export const tabbyPaymentCaptures = async (tabbyPaymentId: string, tabbyDefaultValues: any, paymentMethodValues: { secretKey: string; publicKey: string; testSecretKey: string; testPublicKey: string }) => {
+    try {
+        const response = await fetch(`${process.env.TABBY_API_URL_PAYMENT}/${tabbyPaymentId}/captures`, {
+            method: "POST",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": `Bearer ${paymentMethodValues.secretKey}`
+            },
+            redirect: "follow",
+            referrerPolicy: "no-referrer",
+            body: JSON.stringify(tabbyDefaultValues),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const responseData = await response.json();
+
+        return responseData
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}
