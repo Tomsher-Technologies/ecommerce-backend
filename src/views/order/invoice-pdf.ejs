@@ -264,7 +264,8 @@
       <div class="column text-right">
         <strong>Order Date:</strong>
         <p>
-          <%= new Date(orderDetails.orderStatusAt).toLocaleString() %>
+          <%= new Date(orderDetails.orderStatusAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %> 
+                            <%= new Date(orderDetails.orderStatusAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) %>
         </p>
       </div>
     </div>
