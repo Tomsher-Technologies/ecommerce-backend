@@ -111,7 +111,7 @@ class ReviewController extends BaseController {
     async getReviews(req: Request, res: Response): Promise<void> {
         try {
             const productId = req.params.id;
-            const user = res.locals.user;
+            const user = res.locals.user ? res.locals.user : res.locals.uuid;
             const reviews = await ReviewService.listReviews(reviewArrayJson.approved, productId);
             let query = {
                 $and: [
@@ -158,7 +158,7 @@ class ReviewController extends BaseController {
                     reviews: reviews.reviews,
                     startRating: reviews.statistics
                 },
-                message: "Customer has purchased this product."
+                message: "Success"
 
             }, 200);
         } catch (error: any) {
