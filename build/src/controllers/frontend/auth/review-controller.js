@@ -99,7 +99,7 @@ class ReviewController extends base_controller_1.default {
     async getReviews(req, res) {
         try {
             const productId = req.params.id;
-            const user = res.locals.user;
+            const user = res.locals.user ? res.locals.user : res.locals.uuid;
             const reviews = await review_service_1.default.listReviews(review_1.reviewArrayJson.approved, productId);
             let query = {
                 $and: [
@@ -140,7 +140,7 @@ class ReviewController extends base_controller_1.default {
                     reviews: reviews.reviews,
                     startRating: reviews.statistics
                 },
-                message: "Customer has purchased this product."
+                message: "Success"
             }, 200);
         }
         catch (error) {
