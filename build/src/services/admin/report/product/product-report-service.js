@@ -34,29 +34,29 @@ class ProductReportService {
             },
             {
                 $group: {
-                    _id: "$products.variantId",
+                    _id: "$products.productId",
                     totalQuantity: { $sum: "$products.quantity" }
                 }
             },
             {
                 $lookup: {
-                    from: 'productvariants',
-                    localField: "_id",
-                    foreignField: "variantId",
-                    as: "productDetails"
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'productDetails'
                 }
             },
-            { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
+            {
+                $unwind: {
+                    path: "$productDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
             {
                 $project: {
                     _id: 0,
-                    variantId: "$_id",
                     totalQuantity: 1,
-                    productName: "$productDetails.extraProductTitle",
-                    productPrice: "$productDetails.price",
-                    discountPrice: "$productDetails.discountPrice",
-                    variantSku: "$productDetails.variantSku",
-                    variantDescription: "$productDetails.variantDescription",
+                    productDetails: 1
                 }
             },
             { $sort: finalSort },

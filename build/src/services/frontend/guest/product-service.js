@@ -29,27 +29,33 @@ class ProductService {
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         let finalSort = [];
         if (!collectionProductsData) {
-            finalSort = [
-                {
-                    $addFields: {
-                        sortOrder: {
-                            $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
-                        }
-                    }
-                },
-                {
-                    $sort: {
-                        sortOrder: 1,
-                        showOrder: 1,
-                        createdAt: -1
-                    }
-                },
-                {
-                    $project: {
-                        sortOrder: 0
-                    }
-                },
-            ];
+            // finalSort = [
+            //     {
+            //         $addFields: {
+            //             sortOrder: {
+            //                 $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+            //             }
+            //         }
+            //     },
+            //     {
+            //         $sort: {
+            //             sortOrder: 1,
+            //             showOrder: 1,
+            //             createdAt: -1
+            //         }
+            //     },
+            //     {
+            //         $project: {
+            //             sortOrder: 0
+            //         }
+            //     },
+            // ];
+            const defaultSort = { createdAt: -1 };
+            let finalSort = sort || defaultSort;
+            const sortKeys = Object.keys(finalSort);
+            if (sortKeys.length === 0) {
+                finalSort = defaultSort;
+            }
         }
         const variantLookupMatch = {
             $expr: {
