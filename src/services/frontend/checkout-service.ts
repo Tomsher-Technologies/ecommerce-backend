@@ -337,34 +337,23 @@ class CheckoutService {
                         if (err) {
                             console.log("err", err);
                         }
+                        const emailValues = {
+                            subject: orderStatusMessages['1'],
+                            email: customerDetails.email,
+                            ccmail: [basicDetailsSettings?.storeEmail]
+                        }
                         if (process.env.SHOPNAME === 'Timehouse') {
-                            const sendEmail = await mailChimpEmailGateway({
-                                subject: orderStatusMessages['1'],
-                                email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail]
-                            }, template)
+                            const sendEmail = await mailChimpEmailGateway(emailValues, template)
 
                         } else if (process.env.SHOPNAME === 'Homestyle') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderStatusMessages['1'],
-                                email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail]
-                            }, template)
+                            const sendEmail = await smtpEmailGateway(emailValues, template)
 
                         }
                         else if (process.env.SHOPNAME === 'Beyondfresh') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderStatusMessages['1'],
-                                email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail]
-                            }, template)
+                            const sendEmail = await smtpEmailGateway(emailValues, template)
                         }
                         else if (process.env.SHOPNAME === 'Smartbaby') {
-                            const sendEmail = await smtpEmailGateway({
-                                subject: orderStatusMessages['1'],
-                                email: customerDetails.email,
-                                ccmail: [basicDetailsSettings?.storeEmail]
-                            }, template)
+                            const sendEmail = await smtpEmailGateway(emailValues, template)
                             const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: createOrder(orderId) })
                         }
                     });

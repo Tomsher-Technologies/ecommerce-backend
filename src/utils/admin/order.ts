@@ -283,30 +283,23 @@ export const orderProductStatusChangeEmail = async (settingsDetails: any, orderD
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: orderReturnStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        }
         if (process.env.SHOPNAME === 'Timehouse') {
-            await mailChimpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail
-            }, template)
+            await mailChimpEmailGateway(emailValues, template)
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+            const sendEmail = await smtpEmailGateway(emailValues, template)
 
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+            const sendEmail = await smtpEmailGateway(emailValues, template)
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+            const sendEmail = await smtpEmailGateway(emailValues, template)
             const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderProductStatussMessages[newStatus]}.` })
         }
     });
@@ -334,30 +327,21 @@ export const orderProductCancelStatusChangeEmail = async (settingsDetails: any, 
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: orderProductCancelStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        }
         if (process.env.SHOPNAME === 'Timehouse') {
-            await mailChimpEmailGateway({
-                subject: orderProductCancelStatusMessages[newStatus],
-                email: customerEmail
-            }, template)
+            await mailChimpEmailGateway(emailValues, template)
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderProductCancelStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+            const sendEmail = await smtpEmailGateway(emailValues, template)
 
-        }
-        else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderProductCancelStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
-        }
-        else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderProductCancelStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+        } else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await smtpEmailGateway(emailValues, template)
+        } else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await smtpEmailGateway(emailValues, template)
             const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderProductCancelStatusMessages[newStatus]}.` })
         }
     });
@@ -387,29 +371,20 @@ export const orderProductReturnStatusChangeEmail = async (settingsDetails: any, 
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: orderReturnStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        }
         if (process.env.SHOPNAME === 'Timehouse') {
-            await mailChimpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail
-            }, template)
+            await mailChimpEmailGateway(emailValues, template)
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
-        }
-        else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
-        }
-        else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+            const sendEmail = await smtpEmailGateway(emailValues, template)
+        } else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await smtpEmailGateway(emailValues, template)
+        } else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await smtpEmailGateway(emailValues, template)
             const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${orderReturnStatusMessages[newStatus]}.` })
         }
     });
@@ -438,30 +413,21 @@ export const orderProductReturnQuantityChangeEmail = async (settingsDetails: any
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: orderReturnStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        }
         if (process.env.SHOPNAME === 'Timehouse') {
-            await mailChimpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail
-            }, template)
+            await mailChimpEmailGateway(emailValues, template)
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+            const sendEmail = await smtpEmailGateway(emailValues, template)
 
-        }
-        else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
-        }
-        else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template)
+        } else if (process.env.SHOPNAME === 'Beyondfresh') {
+            const sendEmail = await smtpEmailGateway(emailValues, template)
+        } else if (process.env.SHOPNAME === 'Smartbaby') {
+            const sendEmail = await smtpEmailGateway(emailValues, template)
             const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.` })
         }
     });
