@@ -150,8 +150,10 @@ class PageController extends base_controller_1.default {
                         const sendEmail = await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
                     }
                     else if (process.env.SHOPNAME === 'Homestyle') {
-                        console.log(emailValues);
-                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
+                        const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
+                            ...emailValues,
+                            subject: `New Enquiry Recieved - ${process.env.SHOPNAME} UAE`
+                        }, template);
                     }
                     else if (process.env.SHOPNAME === 'Beyondfresh') {
                         const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);

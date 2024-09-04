@@ -149,16 +149,17 @@ class PageController extends BaseController {
                             return;
                         }
                         const emailValues = {
-                            subject:"Contact Us",
-                            email:basicDetailsSettings?.storeEmail,
+                            subject: "Contact Us",
+                            email: basicDetailsSettings?.storeEmail,
                             // ccmail: 
                         }
                         if (process.env.SHOPNAME === 'Timehouse') {
                             const sendEmail = await mailChimpEmailGateway(emailValues, template);
                         } else if (process.env.SHOPNAME === 'Homestyle') {
-                            console.log(emailValues);
-                            
-                            const sendEmail = await smtpEmailGateway(emailValues, template);
+                            const sendEmail = await smtpEmailGateway({
+                                ...emailValues,
+                                subject:`New Enquiry Recieved - ${process.env.SHOPNAME} UAE`
+                            }, template);
                         } else if (process.env.SHOPNAME === 'Beyondfresh') {
                             const sendEmail = await smtpEmailGateway(emailValues, template);
                         } else if (process.env.SHOPNAME === 'Smartbaby') {
