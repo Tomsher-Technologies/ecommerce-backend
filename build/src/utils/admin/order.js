@@ -261,29 +261,22 @@ const orderProductStatusChangeEmail = async (settingsDetails, orderDetails, newS
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: cart_1.orderReturnStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        };
         if (process.env.SHOPNAME === 'Timehouse') {
-            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail
-            }, template);
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
             const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductStatussMessages[newStatus]}.` });
         }
     });
@@ -311,29 +304,22 @@ const orderProductCancelStatusChangeEmail = async (settingsDetails, orderDetails
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: cart_1.orderProductCancelStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        };
         if (process.env.SHOPNAME === 'Timehouse') {
-            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                email: customerEmail
-            }, template);
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderProductCancelStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
             const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderProductCancelStatusMessages[newStatus]}.` });
         }
     });
@@ -361,29 +347,22 @@ const orderProductReturnStatusChangeEmail = async (settingsDetails, orderDetails
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: cart_1.orderReturnStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        };
         if (process.env.SHOPNAME === 'Timehouse') {
-            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail
-            }, template);
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
             const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been updated to the status: ${cart_1.orderReturnStatusMessages[newStatus]}.` });
         }
     });
@@ -411,29 +390,22 @@ const orderProductReturnQuantityChangeEmail = async (settingsDetails, orderDetai
             console.log(err);
             return;
         }
+        const emailValues = {
+            subject: cart_1.orderReturnStatusMessages[newStatus],
+            email: customerEmail,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        };
         if (process.env.SHOPNAME === 'Timehouse') {
-            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail
-            }, template);
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderReturnStatusMessages[newStatus],
-                email: customerEmail,
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
             const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: `Your order for the product "${productDetails[0].productvariants.extraProductTitle !== '' ? productDetails[0].productvariants.extraProductTitle : productDetails[0].productTitle}" has been quantity changed to: ${changedQuantity}.` });
         }
     });
