@@ -290,7 +290,8 @@ class CheckoutService {
                         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                     }
 
-                    const expectedDeliveryDate = calculateExpectedDeliveryDate(cartDetails.orderStatusAt, Number(commonDeliveryDays))
+                    const expectedDeliveryDate = calculateExpectedDeliveryDate(cartUpdate.orderStatusAt, Number(commonDeliveryDays))
+
                     const taxDetails = await TaxsModel.findOne({ countryId: cartDetails.countryId, status: "1" })
                     if (cartUpdate.pickupStoreId) {
 
