@@ -12,7 +12,7 @@ class BannerService {
     private sort: any;
 
     constructor() {
-      
+
         this.sort = {
             $sort: { createdAt: 1 } // Sort by createdAt field in descending order
         }
@@ -137,11 +137,13 @@ class BannerService {
                 if ((index !== -1) && (oldBannerImages)) {
                     oldBannerImages.splice(index, 1);
                 }
+                const filteredOldBannerImages = oldBannerImages.filter((image: any) => image.bannerImageUrl !== '');
+                const filteredBannerImages = bannerImagesUrl.filter((image: any) => image.bannerImageUrl !== '');
 
                 if (oldBannerImages) {
-                    combinedImages = [...bannerImagesUrl, ...oldBannerImages];
+                    combinedImages = [...filteredBannerImages, ...filteredOldBannerImages];
                 } else {
-                    combinedImages = bannerImagesUrl
+                    combinedImages = filteredBannerImages
                 }
                 // console.log(index, 'combinedImages', combinedImages);
 
