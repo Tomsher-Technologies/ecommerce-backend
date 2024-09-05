@@ -235,12 +235,14 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
             await mailChimpEmailGateway({
                 subject: orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template)
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
             const sendEmail = await smtpEmailGateway({
                 subject: orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template)
 
         }
@@ -248,12 +250,14 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
             const sendEmail = await smtpEmailGateway({
                 subject: orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template)
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
             const sendEmail = await smtpEmailGateway({
                 subject: orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template)
             const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: orderStatusMessages[orderStatus] === '4' ? shippingOrder(orderDetails.orderId, expectedDeliveryDate) : (orderStatusMessages[orderStatus] === '5' ? deliveredOrder(orderDetails.orderId) : cancelOrder(orderDetails.orderId)) })
         }
