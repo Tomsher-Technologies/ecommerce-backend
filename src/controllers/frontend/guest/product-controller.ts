@@ -23,6 +23,366 @@ import SearchQueriesModel from '../../../model/frontend/search-query-model';
 
 const controller = new BaseController();
 class ProductController extends BaseController {
+    async findAllProductsNew(req: Request, res: Response): Promise<void> {
+        try {
+            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+            let query: any = { _id: { $exists: true } };
+            let collectionProductsData: any = null;
+            let discountValue: any;
+            let offers: any;
+            query.status = '1';
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+
+            if (countryId) {
+                let sort: any = {};
+                if (sortby && sortorder) {
+                    sort[sortby] = sortorder === 'desc' ? -1 : 1;
+                }
+                if (keyword) {
+                    // const keywordRegex = new RegExp(keyword, 'i');
+                    const keywordRegex = new RegExp(`^${keyword}`, 'i');
+                    query = {
+                        $or: [
+                            // { productTitle:  { $regex: regexQuery } },
+                            { productTitle: { $regex: keywordRegex } },
+                            { slug: { $regex: keywordRegex } },
+                            { sku: { $regex: keywordRegex } },
+                            { 'productCategory.category.categoryTitle': { $regex: keywordRegex } },
+                            { 'brand.brandTitle': { $regex: keywordRegex } },
+                            { 'productCategory.category.slug': { $regex: keywordRegex } },
+                            { 'productVariants.slug': { $regex: keywordRegex } },
+                            { 'productVariants.extraProductTitle': { $regex: keywordRegex } },
+                            { 'productVariants.variantSku': { $regex: keywordRegex } },
+                            // { 'productSpecification.specificationTitle': { $regex: keywordRegex } },
+                            { 'productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
+                            { 'productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
+                            // { 'productVariants.productSpecification.specificationTitle': { $regex: keywordRegex } },
+                            { 'productVariants.productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
+                            { 'productVariants.productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
+                            // { 'productVariants.productVariantAttributes.attributeTitle': { $regex: keywordRegex } },
+                            { 'productVariants.productVariantAttributes.attributeDetail.itemName': { $regex: keywordRegex } },
+                            { 'productVariants.productVariantAttributes.attributeDetail.itemValue': { $regex: keywordRegex } }
+                        ],
+                        ...query
+                    } as any;
+                    if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                        const customer = null;
+                        const guestUser = res.locals.uuid || null;
+
+                        await ProductService.insertOrUpdateSearchQuery(
+                            keyword,
+                            countryId,
+                            customer ? new mongoose.Types.ObjectId(customer) : null,
+                            guestUser
+                        );
+                    }
+                }
+                let productFindableValues: any = {}
+                if (category || categories) {
+                    async function fetchAllCategories(categoryIds: any[]): Promise<any[]> {
+                        let queue = [...categoryIds];
+                        const allCategoryIds = new Set([...categoryIds]);
+                        while (queue.length > 0) {
+                            const categoriesData = await CategoryModel.find(
+                                { parentCategory: { $in: queue } },
+                                '_id'
+                            );
+                            const childCategoryIds = categoriesData.map(category => category._id);
+                            if (childCategoryIds.length === 0) {
+                                break;
+                            }
+                            queue = childCategoryIds;
+                            childCategoryIds.forEach(id => allCategoryIds.add(id));
+                        }
+                        return Array.from(allCategoryIds);
+                    }
+
+                    let categoryIds: any[] = [];
+                    if (category) {
+                        const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                        let findcategory;
+                        if (categoryIsObjectId) {
+                            findcategory = { _id: category };
+                        } else {
+                            findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+                        }
+                        if (findcategory && findcategory._id) {
+                            categoryIds = await fetchAllCategories([findcategory._id]);
+                        }
+                    }
+
+                    if (categories) {
+                        const categoryArray = typeof categories === 'string' ? categories.split(',') : categories;
+                        const categoryBatchIds: any[] = [];
+                        for (const category of categoryArray) {
+                            const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+                            let findcategory;
+                            if (categoryIsObjectId) {
+                                findcategory = { _id: category };
+                            } else {
+                                findcategory = await CategoryModel.findOne({ slug: category }, '_id');
+                            }
+                            if (findcategory && findcategory._id) {
+                                categoryBatchIds.push(findcategory._id);
+                            }
+                        }
+
+                        const batchCategoryIds = await fetchAllCategories(categoryBatchIds);
+                        categoryIds = [...new Set([...categoryIds, ...batchCategoryIds])]; // Merge and remove duplicates
+                    }
+                    query = {
+                        ...query, "productCategory.category._id": { $in: categoryIds }
+                    }
+                    productFindableValues = {
+                        ...productFindableValues,
+                        categoryIds
+                    };
+                }
+
+                if (brands) {
+                    const brandArray = brands.split(',');
+                    let brandIds: any[] = [];
+                    let brandSlugs: any[] = [];
+                    for await (let brand of brandArray) {
+                        const brandIsObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                        if (brandIsObjectId) {
+                            brandIds.push(new mongoose.Types.ObjectId(brand));
+                        } else {
+                            brandSlugs.push(brand);
+                        }
+                    }
+                    if (brandIds.length > 0 || brandSlugs.length > 0) {
+                        productFindableValues = {
+                            ...productFindableValues,
+                            brand: {
+                                ...(productFindableValues.brand || {}),
+                                ...(brandIds.length > 0 && { brandIds }),
+                                ...(brandSlugs.length > 0 && { brandSlugs })
+                            }
+                        };
+                        if (brandIds.length > 0) {
+                            query = {
+                                ...query,
+                                "brand._id": { $in: brandIds }
+                            };
+                        }
+                        if (brandSlugs.length > 0) {
+                            query = {
+                                ...query,
+                                "brand.slug": { $in: brandSlugs }
+                            };
+                        }
+                    }
+                }
+
+                if (brand) {
+                    const brandIsObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
+                    let singleBrandId: any;
+                    let singleBrandSlug: any;
+
+                    if (brandIsObjectId) {
+                        singleBrandId = new mongoose.Types.ObjectId(brand);
+                    } else {
+                        singleBrandSlug = brand;
+                    }
+
+                    productFindableValues = {
+                        ...productFindableValues,
+                        brand: {
+                            ...(productFindableValues.brand || {}),
+                            ...(singleBrandId && { brandIds: [...(productFindableValues.brand?.brandIds || []), singleBrandId] }),
+                            ...(singleBrandSlug && { brandSlugs: [...(productFindableValues.brand?.brandSlugs || []), singleBrandSlug] })
+                        }
+                    };
+                    if (brandIsObjectId) {
+                        query = {
+                            ...query, "brand._id": new mongoose.Types.ObjectId(brand)
+                        }
+                    } else {
+                        query = {
+                            ...query, "brand.slug": brand
+                        }
+                    }
+                }
+
+                if (attribute) {
+                    let attributeDetailIds: any[] = [];
+                    let attributeDetailNames: any[] = [];
+                    const attributeArray = attribute.split(',');
+
+                    for await (let attribute of attributeArray) {
+                        const attributeIsObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
+                        if (attributeIsObjectId) {
+                            attributeDetailIds.push(new mongoose.Types.ObjectId(attribute));
+                        } else {
+                            attributeDetailNames.push(attribute);
+                        }
+                    }
+                    productFindableValues = {
+                        ...productFindableValues,
+                        attribute: {
+                            ...(productFindableValues.attribute || {}),
+                            ...(attributeDetailIds.length > 0 && { attributeDetailIds: [...(productFindableValues.attribute?.attributeDetailIds || []), ...attributeDetailIds] }),
+                            ...(attributeDetailNames.length > 0 && { attributeDetailNames: [...(productFindableValues.attribute?.attributeDetailNames || []), ...attributeDetailNames] })
+                        }
+                    };
+                    if (attributeDetailIds.length > 0) {
+                        query = {
+                            ...query,
+                            "productVariants.productVariantAttributes.attributeDetail._id": { $in: attributeDetailIds }
+                        };
+                    }
+                    if (attributeDetailNames.length > 0) {
+                        query = {
+                            ...query,
+                            "productVariants.productVariantAttributes.attributeDetail.itemName": { $in: attributeDetailNames }
+                        };
+                    }
+                }
+
+                if (specification) {
+                    let specificationDetailIds: any[] = [];
+                    let specificationDetailNames: any[] = [];
+                    const specificationArray = specification.split(',');
+
+                    for await (let specification of specificationArray) {
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(specification);
+                        if (isObjectId) {
+                            specificationDetailIds.push(new mongoose.Types.ObjectId(specification));
+                        } else {
+                            specificationDetailNames.push(specification);
+                        }
+                    }
+                    productFindableValues = {
+                        ...productFindableValues,
+                        specification: {
+                            ...(productFindableValues.specification || {}),
+                            ...(specificationDetailIds.length > 0 && { specificationDetailIds: [...(productFindableValues.specification?.specificationDetailIds || []), ...specificationDetailIds] }),
+                            ...(specificationDetailNames.length > 0 && { specificationDetailNames: [...(productFindableValues.specification?.specificationDetailNames || []), ...specificationDetailNames] })
+                        }
+                    };
+                    if (specificationDetailIds.length > 0) {
+                        query = {
+                            ...query,
+                            "productVariants.productSpecification.specificationDetail._id": { $in: specificationDetailIds },
+                            // "productSpecification.specificationDetail._id": { $in: specificationDetailIds } //  don't remove
+                        };
+                    }
+                    if (specificationDetailNames.length > 0) {
+                        query = {
+                            ...query,
+                            "productVariants.productSpecification.specificationDetail.itemName": { $in: specificationDetailNames },
+                            // "productSpecification.specificationDetail.itemName": { $in: specificationDetailNames } //  don't remove
+                        };
+                    }
+                }
+
+                if (collectionproduct) {
+                    productFindableValues = {
+                        ...productFindableValues,
+                        collectionProductsData: {
+                            collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                        }
+                    };
+                }
+                if (collectionbrand) {
+                    productFindableValues = {
+                        ...productFindableValues,
+                        collectionProductsData: {
+                            ...(productFindableValues.collectionProductsData || {}),
+                            collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                        }
+                    };
+                }
+
+                if (collectioncategory) {
+                    productFindableValues = {
+                        ...productFindableValues,
+                        collectionProductsData: {
+                            ...(productFindableValues.collectionProductsData || {}),
+                            collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                        }
+                    };
+                }
+
+                if (offer) {
+                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(offer);
+                    let offerCondition: any;
+
+                    if (isObjectId) {
+                        offerCondition = { _id: new mongoose.Types.ObjectId(offer) };
+                    } else {
+                        const keywordRegex = new RegExp(offer, 'i');
+                        offerCondition = { slug: keywordRegex };
+                    }
+
+                    productFindableValues = {
+                        ...productFindableValues,
+                        offer: offerCondition
+                    };
+                }
+
+                const productDatas = await ProductService.getProductDetailsFromFilter(productFindableValues, {
+                    countryId,
+                    query,
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    sort,
+                })
+                console.log('productFindableValues', productDatas.length);
+                if (discount) {
+                    discountValue = {
+                        ...discount, discount: discount
+                    }
+                }
+
+                if (sortby == 'createdAt') {
+                    if (sortorder === 'asc') {
+                        sort = { createdAt: -1 };
+                    }
+                    else {
+                        sort = { createdAt: 1 };
+                    }
+                }
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: productDatas,
+                    message: 'Success!'
+                }, 200);
+                const productData: any = await ProductService.findProductList({
+                    countryId,
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query,
+                    sort,
+                    collectionProductsData,
+                    discount,
+                    offers,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                    maxprice,
+                    minprice,
+                    isCount: 1
+                });
+
+                return controller.sendSuccessResponse(res, {
+                    requestedData: productData.products,
+                    totalCount: productData.totalCount || 0,
+                    message: 'Success!'
+                }, 200);
+            } else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Error',
+                    validation: 'Country is missing'
+                }, req);
+            }
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching specifications' });
+        }
+    }
+
     async findAllProducts(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;

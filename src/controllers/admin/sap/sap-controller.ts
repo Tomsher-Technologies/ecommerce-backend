@@ -16,6 +16,8 @@ class SapController extends BaseController {
         var productRowIndex = 2
         let isProductVariantUpdate = false
         const { productData } = req.body;
+        console.log('productData', productData);
+
         if (productData && productData?.length > 0) {
             let countryDataCache: any = {};
             for (let productPriceData of productData) {

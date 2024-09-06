@@ -16,8 +16,9 @@ const authMiddleware = async (req: CustomRequest, res: Response, next: NextFunct
     if (token) {
       let user: any = null;
       let checkToken: any = null;
+
       if (token === process.env.APP_AUTH_KEY) {
-        user = await UserModel.findOne({ userTitle: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug'])
+        user = await UserModel.findOne({ firstName: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug']);
       } else {
         checkToken = jwt.verify(token, `${process.env.TOKEN_SECRET_KEY}`);
 

@@ -144,7 +144,7 @@ class CategoryService {
 
     async findAllChilledCategories(query: any): Promise<CategoryProps[] | null> {
         try {
-            const rootCategories = await CategoryModel.find(query); // Find root categories
+            const rootCategories = await CategoryModel.find(query).select('_id categoryTitle slug parentCategory categoryImageUrl');
             if (!rootCategories || rootCategories.length === 0) {
                 return null;
             }
