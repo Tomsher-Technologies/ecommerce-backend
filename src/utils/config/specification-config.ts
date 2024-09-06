@@ -1,3 +1,4 @@
+import { PipelineStage } from "mongoose";
 import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
 
@@ -96,7 +97,7 @@ export const specificationProject = {
     }
 }
 
-export const frontendSpecificationLookup = (match: any) => {
+export const frontendSpecificationLookup = (match: any): PipelineStage[] => {
     return [
         {
             $match: match
@@ -124,6 +125,9 @@ export const frontendSpecificationLookup = (match: any) => {
             $unwind: "$specificationDetail"
         },
         {
+            $sort: { "specification.createdAt": 1 }  
+        },
+        {
             $project: {
                 _id: 1,
                 variantId: 1,
@@ -132,7 +136,8 @@ export const frontendSpecificationLookup = (match: any) => {
                 specificationDisplayName: '$specification.specificationDisplayName',
                 enableTab: '$specification.enableTab',
                 slug: '$specification.slug',
-                specificationDetail: '$specificationDetail'
+                specificationDetail: '$specificationDetail',
+                createdAt: '$specification.createdAt'
             }
         }
     ]
