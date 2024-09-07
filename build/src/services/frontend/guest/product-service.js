@@ -910,7 +910,7 @@ class ProductService {
         let brands = productData[0]?.brands;
         let productIds = productData[0]?.productIds;
         let variantIds = productData[0]?.variantIds;
-        let paginatedVariantIds = productData[0]?.paginatedVariantIds;
+        let paginatedVariantIds = products.flatMap((product) => product.productVariants.map((variant) => variant._id));
         let productVariantAttributes = [];
         if ((paginatedVariantIds.length > 0 && (getattribute === '1'))) {
             productVariantAttributes = await product_variant_attribute_model_1.default.aggregate((0, attribute_config_1.frontendVariantAttributesLookup)({
