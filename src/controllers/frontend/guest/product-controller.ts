@@ -21,12 +21,14 @@ import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
+import AttributeDetailModel from '../../../model/admin/ecommerce/attribute-detail-model';
+import SpecificationDetailModel from '../../../model/admin/ecommerce/specifications-detail-model';
 
 const controller = new BaseController();
 class ProductController extends BaseController {
-    async findAllProductsNew(req: Request, res: Response): Promise<void> {
+    async findAllProductsV2(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 20, keyword = '', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
+            const { page_size = 1, limit = 20, keyword = '', getbrand = '0', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
             let query: any = { _id: { $exists: true } };
             let collectionProductsData: any = null;
             let discountValue: any;
@@ -37,14 +39,16 @@ class ProductController extends BaseController {
             if (countryId) {
                 let sort: any = {};
                 let keywordRegex: RegExp | undefined = undefined;
+                let keywordRegexSingle: RegExp | undefined = undefined;
+                let productIds: any[] = [];
                 if (sortby && sortorder) {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 if (keyword) {
                     // const keywordRegex = new RegExp(keyword, 'i');
                     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
 
-                    // keywordRegex = new RegExp(`\\b${escapedKeyword}`, 'i');
                     keywordRegex = new RegExp(`^${keyword}`, 'i');
                     query = {
                         $or: [
@@ -58,14 +62,14 @@ class ProductController extends BaseController {
                             { 'productVariants.extraProductTitle': { $regex: keywordRegex } },
                             { 'productVariants.variantSku': { $regex: keywordRegex } },
                             // { 'productSpecification.specificationTitle': { $regex: keywordRegex } },
-                            { 'productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
-                            { 'productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
-                            // { 'productVariants.productSpecification.specificationTitle': { $regex: keywordRegex } },
-                            { 'productVariants.productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
-                            { 'productVariants.productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
-                            // { 'productVariants.productVariantAttributes.attributeTitle': { $regex: keywordRegex } },
-                            { 'productVariants.productVariantAttributes.attributeDetail.itemName': { $regex: keywordRegex } },
-                            { 'productVariants.productVariantAttributes.attributeDetail.itemValue': { $regex: keywordRegex } }
+                            // { 'productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
+                            // { 'productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
+                            // // { 'productVariants.productSpecification.specificationTitle': { $regex: keywordRegex } },
+                            // { 'productVariants.productSpecification.specificationDetail.itemName': { $regex: keywordRegex } },
+                            // { 'productVariants.productSpecification.specificationDetail.itemValue': { $regex: keywordRegex } },
+                            // // { 'productVariants.productVariantAttributes.attributeTitle': { $regex: keywordRegex } },
+                            // { 'productVariants.productVariantAttributes.attributeDetail.itemName': { $regex: keywordRegex } },
+                            // { 'productVariants.productVariantAttributes.attributeDetail.itemValue': { $regex: keywordRegex } }
                         ],
                         ...query
                     } as any;
@@ -98,7 +102,6 @@ class ProductController extends BaseController {
                     }
                     return Array.from(allCategoryIds);
                 }
-
                 let productFindableValues: any = {}
                 if (category || categories || keyword) {
                     let categoryBatchIds: any[] = [];
@@ -116,20 +119,16 @@ class ProductController extends BaseController {
                         categoryBatchIds.push(...categoryIds.filter(Boolean));
                     }
                     if (keyword) {
-                        const categoriesByTitle = await CategoryModel.find({ categoryTitle: { $regex: keywordRegex } }, '_id');
+                        const categoriesByTitle = await CategoryModel.find({ categoryTitle: { $regex: keywordRegexSingle } }, '_id');
                         categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
                     }
                     const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
                     if (categoryIds.length > 0) {
-                        const productIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
-                        if (productIds.length > 0) {
-                            query = {
-                                ...query,
-                                _id: { $in: productIds }
-                            };
-                        }
+                        const categoryProductIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
+                        productIds = [...new Set(categoryProductIds)]
                         productFindableValues = {
                             ...productFindableValues,
+                            categoryProductIds: productIds,
                             categoryIds
                         };
                     }
@@ -154,10 +153,8 @@ class ProductController extends BaseController {
                         await processBrand(brand);
                     }
                     if (keyword) {
-
-                        const brandByTitle = await BrandsModel.find({ brandTitle: { $regex: keywordRegex } }, '_id');
-                        console.log(brandByTitle, keywordRegex);
-                        brandIds.push(...brandByTitle.map(brand => brand._id));
+                        const brandByTitleId = await BrandsModel.find({ brandTitle: { $regex: keywordRegexSingle } }, '_id');
+                        brandIds.push(...brandByTitleId.map(brand => brand._id));
                     }
                     if (brandSlugs.length > 0) {
                         const foundBrands = await BrandsModel.find({ slug: { $in: brandSlugs } }, '_id');
@@ -178,77 +175,154 @@ class ProductController extends BaseController {
                         }
                     };
                 }
-                console.log('query', query);
 
-                if (attribute) {
-                    let attributeDetailIds: any[] = [];
-                    let attributeDetailNames: any[] = [];
-                    const attributeArray = attribute.split(',');
-
-                    for await (let attribute of attributeArray) {
-                        const attributeIsObjectId = /^[0-9a-fA-F]{24}$/.test(attribute);
-                        if (attributeIsObjectId) {
-                            attributeDetailIds.push(new mongoose.Types.ObjectId(attribute));
+                if (attribute || keyword) {
+                    let attributeDetailIds: mongoose.Types.ObjectId[] = [];
+                    let attributeDetailNames: string[] = [];
+                    const attributeArray = attribute ? attribute.split(',') : [];
+                    for (let attr of attributeArray) {
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(attr);
+                        if (isObjectId) {
+                            attributeDetailIds.push(new mongoose.Types.ObjectId(attr));
                         } else {
-                            attributeDetailNames.push(attribute);
+                            attributeDetailNames.push(attr);
                         }
                     }
                     productFindableValues = {
                         ...productFindableValues,
                         attribute: {
                             ...(productFindableValues.attribute || {}),
-                            ...(attributeDetailIds.length > 0 && { attributeDetailIds: [...(productFindableValues.attribute?.attributeDetailIds || []), ...attributeDetailIds] }),
-                            ...(attributeDetailNames.length > 0 && { attributeDetailNames: [...(productFindableValues.attribute?.attributeDetailNames || []), ...attributeDetailNames] })
+                            ...(attributeDetailIds.length > 0 && {
+                                attributeDetailIds: [
+                                    ...(productFindableValues.attribute?.attributeDetailIds || []),
+                                    ...attributeDetailIds
+                                ]
+                            }),
+                            ...(attributeDetailNames.length > 0 && {
+                                attributeDetailNames: [
+                                    ...(productFindableValues.attribute?.attributeDetailNames || []),
+                                    ...attributeDetailNames
+                                ]
+                            })
                         }
                     };
-                    if (attributeDetailIds.length > 0) {
-                        query = {
-                            ...query,
-                            "productVariants.productVariantAttributes.attributeDetail._id": { $in: attributeDetailIds }
-                        };
+
+                    if (keyword) {
+                        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
                     }
-                    if (attributeDetailNames.length > 0) {
-                        query = {
-                            ...query,
-                            "productVariants.productVariantAttributes.attributeDetail.itemName": { $in: attributeDetailNames }
+                    if ((attributeDetailIds.length > 0 || attributeDetailNames.length > 0) || keywordRegexSingle) {
+                        const attributeDetailsQuery: any = {
+                            $or: []
                         };
+                        if (attributeDetailNames.length > 0) {
+                            attributeDetailsQuery.$or.push({ itemName: { $in: attributeDetailNames } });
+                        }
+                        if (keywordRegexSingle) {
+                            attributeDetailsQuery.$or.push({ itemName: { $regex: keywordRegexSingle } });
+                        }
+                        if (attributeDetailsQuery.$or.length > 0) {
+                            const attributeDetails = await AttributeDetailModel.find(attributeDetailsQuery, '_id attributeId itemName itemValue');
+                            if (attributeDetails.length > 0) {
+                                const attributeProductIds = await ProductVariantAttributesModel.aggregate([
+                                    {
+                                        $match: {
+                                            attributeDetailId: { $in: attributeDetails.map((detail: any) => detail._id) },
+                                            productId: { $nin: productIds }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: "$productId"
+                                        }
+                                    },
+                                    {
+                                        $limit: 300
+                                    },
+                                    {
+                                        $project: {
+                                            _id: 0,
+                                            productId: "$_id"
+                                        }
+                                    }
+                                ]);
+                                productIds = [...new Set([...productIds, ...attributeProductIds.map((p: any) => p.productId)])];
+                            }
+                        }
                     }
                 }
 
-                if (specification) {
-                    let specificationDetailIds: any[] = [];
-                    let specificationDetailNames: any[] = [];
-                    const specificationArray = specification.split(',');
-
-                    for await (let specification of specificationArray) {
-                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(specification);
+                if (specification || keyword) {
+                    let specificationDetailIds: mongoose.Types.ObjectId[] = [];
+                    let specificationDetailNames: string[] = [];
+                    const specificationArray = specification ? specification.split(',') : [];
+                    for (let spec of specificationArray) {
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(spec);
                         if (isObjectId) {
-                            specificationDetailIds.push(new mongoose.Types.ObjectId(specification));
+                            specificationDetailIds.push(new mongoose.Types.ObjectId(spec));
                         } else {
-                            specificationDetailNames.push(specification);
+                            specificationDetailNames.push(spec);
                         }
                     }
                     productFindableValues = {
                         ...productFindableValues,
                         specification: {
                             ...(productFindableValues.specification || {}),
-                            ...(specificationDetailIds.length > 0 && { specificationDetailIds: [...(productFindableValues.specification?.specificationDetailIds || []), ...specificationDetailIds] }),
-                            ...(specificationDetailNames.length > 0 && { specificationDetailNames: [...(productFindableValues.specification?.specificationDetailNames || []), ...specificationDetailNames] })
+                            ...(specificationDetailIds.length > 0 && {
+                                specificationDetailIds: [
+                                    ...(productFindableValues.specification?.specificationDetailIds || []),
+                                    ...specificationDetailIds
+                                ]
+                            }),
+                            ...(specificationDetailNames.length > 0 && {
+                                specificationDetailNames: [
+                                    ...(productFindableValues.specification?.specificationDetailNames || []),
+                                    ...specificationDetailNames
+                                ]
+                            })
                         }
                     };
-                    if (specificationDetailIds.length > 0) {
-                        query = {
-                            ...query,
-                            "productVariants.productSpecification.specificationDetail._id": { $in: specificationDetailIds },
-                            // "productSpecification.specificationDetail._id": { $in: specificationDetailIds } //  don't remove
-                        };
+
+                    if (keyword) {
+                        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
                     }
-                    if (specificationDetailNames.length > 0) {
-                        query = {
-                            ...query,
-                            "productVariants.productSpecification.specificationDetail.itemName": { $in: specificationDetailNames },
-                            // "productSpecification.specificationDetail.itemName": { $in: specificationDetailNames } //  don't remove
-                        };
+                    if ((specificationDetailIds.length > 0 || specificationDetailNames.length > 0) || keywordRegexSingle) {
+                        const specificationDetailsQuery: any = { $or: [] };
+                        if (specificationDetailNames.length > 0) {
+                            specificationDetailsQuery.$or.push({ itemName: { $in: specificationDetailNames } });
+                        }
+                        if (keywordRegexSingle) {
+                            specificationDetailsQuery.$or.push({ itemName: { $regex: keywordRegexSingle } });
+                        }
+                        if (specificationDetailsQuery.$or.length > 0) {
+                            const specificationDetails = await SpecificationDetailModel.find(specificationDetailsQuery, '_id specificationId itemName itemValue');
+                            if (specificationDetails.length > 0) {
+                                const specificationProductIds = await ProductSpecificationModel.aggregate([
+                                    {
+                                        $match: {
+                                            specificationDetailId: { $in: specificationDetails.map((detail: any) => detail._id) },
+                                            productId: { $nin: productIds }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: "$productId"
+                                        }
+                                    },
+                                    {
+                                        $limit: 200
+                                    },
+                                    {
+                                        $project: {
+                                            _id: 0,
+                                            productId: "$_id"
+                                        }
+                                    }
+                                ]);
+                                productIds = [...new Set([...productIds, ...specificationProductIds.map((p: any) => p.productId)])];
+                            }
+                        }
                     }
                 }
 
@@ -297,7 +371,13 @@ class ProductController extends BaseController {
                     };
                 }
 
-                const productDatas = await ProductService.getProductDetailsFromFilter(productFindableValues, {
+                if (productIds.length > 0) {
+                    query = {
+                        ...query,
+                        _id: { $in: productIds }
+                    };
+                }
+                const productDatas = await ProductService.getProductDetailsV2(productFindableValues, {
                     countryId,
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
@@ -306,15 +386,15 @@ class ProductController extends BaseController {
                     collectionProductsData,
                     discount,
                     offers,
+                    getbrand,
                     getimagegallery,
                     getattribute,
                     getspecification,
                     hostName: req.get('origin'),
                     maxprice,
                     minprice,
-                    // isCount: 1
+                    isCount: 1
                 })
-                console.log('productFindableValues', productDatas.length);
                 if (discount) {
                     discountValue = {
                         ...discount, discount: discount

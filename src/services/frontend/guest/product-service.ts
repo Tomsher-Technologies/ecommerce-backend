@@ -5,7 +5,7 @@ import AttributesModel from '../../../model/admin/ecommerce/attribute-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
-import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject } from '../../../utils/config/attribute-config';
+import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject, frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
 import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, productVariantAttributesLookup, productSpecificationLookup, variantImageGalleryLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
@@ -21,8 +21,6 @@ import ProductVariantAttributesModel from '../../../model/admin/ecommerce/produc
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
 import CategoryModel from '../../../model/admin/ecommerce/category-model';
-import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
-import OffersModel from '../../../model/admin/marketing/offers-model';
 
 
 class ProductService {
@@ -490,7 +488,7 @@ class ProductService {
 
     }
 
-    async getProductDetailsFromFilter(productFindableValues: any, options: any) {
+    async getProductDetailsV2(productFindableValues: any, options: any) {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
         const { skip, limit } = frontendPagination(options.query || {}, options);
 
@@ -567,9 +565,9 @@ class ProductService {
                             isDefault: 1
                         }
                     },
-                    ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...productVariantAttributesLookup] : []),
-                    ...((getspecification === '1' || query['productVariants.productSpecification.specificationDetail._id'] || query['productVariants.productSpecification.specificationDetail.itemName']) ? [...productSpecificationLookup] : []),
-                    ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
+                    // ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...productVariantAttributesLookup] : []),
+                    // ...((getspecification === '1' || query['productVariants.productSpecification.specificationDetail._id'] || query['productVariants.productSpecification.specificationDetail.itemName']) ? [...productSpecificationLookup] : []),
+                    // ...(getimagegallery === '1' ? [variantImageGalleryLookup] : []),
                 ]
             }
         };
@@ -579,8 +577,8 @@ class ProductService {
             modifiedPipeline,
             // productCategoryLookup,
             // ...(getbrand === '1' ? [brandLookup, brandObject] : []),
-            ...(getimagegallery === '1' ? [imageLookup] : []),
-            ...(getspecification === '1' ? [productSpecificationsLookup] : []),
+            // ...(getimagegallery === '1' ? [imageLookup] : []),
+            // ...(getspecification === '1' ? [productSpecificationsLookup] : []),
             {
                 $match: {
                     $and: [
@@ -632,34 +630,32 @@ class ProductService {
             collectionPipeline = await this.collection(collectionProductsData, hostName, pipeline)
         }
         if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
-            let categoryIds: any[] = [];
-            for (let i = 0; i < collectionPipeline.categoryIds.length; i++) {
-                categoryIds.push(collectionPipeline.categoryIds[i]);
-                async function fetchCategoryAndChildren(categoryId: any) {
-                    let categoryArray = [categoryId];
-                    while (categoryArray.length > 0) {
-                        const currentCategoryId = categoryArray.shift();
-                        const categoriesData = await CategoryModel.find({ parentCategory: currentCategoryId }, '_id');
-                        const childCategoryIds = categoriesData.map(category => category._id);
-                        categoryArray.push(...childCategoryIds);
-                        categoryIds.push(...childCategoryIds);
+            async function fetchAllCategories(categoryIds: any[]): Promise<any[]> {
+                let queue = [...categoryIds];
+                const allCategoryIds = new Set([...categoryIds]);
+                while (queue.length > 0) {
+                    const categoriesData = await CategoryModel.find(
+                        { parentCategory: { $in: queue } },
+                        '_id'
+                    );
+                    const childCategoryIds = categoriesData.map(category => category._id);
+                    if (childCategoryIds.length === 0) {
+                        break;
                     }
+                    queue = childCategoryIds;
+                    childCategoryIds.forEach(id => allCategoryIds.add(id));
                 }
-                await fetchCategoryAndChildren(collectionPipeline.categoryIds[i]);
+                return Array.from(allCategoryIds);
             }
-            const uniqueCategoryIds = [
-                ...new Set(categoryIds.map(id => id.toString()))
-            ].map(id => new mongoose.Types.ObjectId(id));
-
-            const categoryOrderMapping = uniqueCategoryIds.map((id, index) => ({
+            const categoryIds = await fetchAllCategories([...new Set(collectionPipeline.categoryIds)]);
+            const categoryOrderMapping = categoryIds.map((id, index) => ({
                 _id: id,
                 order: index
             }));
-
             pipeline.push(
                 {
                     $match: {
-                        'productCategory.category._id': { $in: categoryOrderMapping.map(cat => cat._id) }
+                        'productCategory.category._id': { $in: categoryIds }
                     }
                 },
                 {
@@ -688,7 +684,6 @@ class ProductService {
                         }
                     }
                 },
-
                 {
                     $group: {
                         _id: '$_id',
@@ -720,8 +715,6 @@ class ProductService {
                         categoryOrder: 1
                     }
                 },
-
-
             );
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
@@ -734,7 +727,6 @@ class ProductService {
             const languageData = await LanguagesModel.find().exec();
             var lastPipelineModification: any
             const languageId = await getLanguageValueFromSubdomain(hostName, languageData);
-
             if (languageId != null) {
                 lastPipelineModification = await this.productLanguage(hostName, pipeline)
                 pipeline = lastPipelineModification
@@ -923,34 +915,139 @@ class ProductService {
             dataPipeline.push({ $limit: limit });
         }
 
-        pipeline.push({
-            $facet: {
-                data: dataPipeline,
-                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
+        pipeline.push(
+            {
+                $match: {
+                    ...(productFindableValues?.categoryProductIds && productFindableValues.categoryProductIds.length > 0 ?
+                        { _id: { $in: productFindableValues.categoryProductIds.map((id: any) => new mongoose.Types.ObjectId(id)) } }
+                        : {}
+                    )
+                }
             },
-        },
-            (isCount === 1 ? {
+            {
+                $facet: {
+                    data: dataPipeline,
+                    productIds: [
+                        {
+                            $group: {
+                                _id: null,
+                                productIds: { $addToSet: "$_id" } // Collect all unique productIds
+                            }
+                        }
+                    ],
+                    variantIds: [
+                        {
+                            $project: {
+                                variantIds: {
+                                    $map: {
+                                        input: "$productVariants",
+                                        as: "variant",
+                                        in: "$$variant._id"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $unwind: "$variantIds"
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                variantIds: { $addToSet: "$variantIds" } // Collect all unique variantIds
+                            }
+                        }
+                    ],
+                    paginatedVariantIds: [
+                        {
+                            $project: {
+                                variantIds: {
+                                    $reduce: {
+                                        input: "$productVariants",
+                                        initialValue: [],
+                                        in: { $concatArrays: ["$$value", [{ $ifNull: ["$$this._id", null] }]] }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $unwind: "$variantIds"
+                        },
+                        {
+                            $sort: { "variantIds": 1 }
+                        },
+                        {
+                            $skip: skip
+                        },
+                        {
+                            $limit: limit
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                paginatedVariantIds: { $addToSet: "$variantIds" }
+                            }
+                        }
+                    ],
+                    ... (getbrand === '1' ? {
+                        brands: [
+                            {
+                                $lookup: {
+                                    from: "brands",
+                                    localField: "brand",
+                                    foreignField: "_id",
+                                    as: "brandData",
+                                }
+                            },
+                            {
+                                $unwind: {
+                                    path: "$brandData",
+                                    preserveNullAndEmptyArrays: true,
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: "$brand",
+                                    brandData: { $first: "$brandData" },
+                                },
+                            }
+                        ]
+                    } : {}),
+                    ...(isCount === 1 && { totalCount: [{ $count: "totalCount" }] })
+                }
+            },
+            {
                 $project: {
                     data: 1,
-                    totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
+                    brands: 1,
+                    productIds: { $arrayElemAt: ["$productIds.productIds", 0] },
+                    variantIds: {
+                        $arrayElemAt: ["$variantIds.variantIds", 0]
+                    },
+                    paginatedVariantIds: { $arrayElemAt: ["$paginatedVariantIds.paginatedVariantIds", 0] },  // Paginated variantIds
+
+                    ...(isCount === 1 && { totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] } })
                 }
-            } :
-                {
-                    $project: {
-                        data: 1,
-                    }
-                })
-        )
+            }
+        );
 
         productData = await ProductsModel.aggregate(pipeline).exec();
-        const products = productData[0].data;
+        let products = productData[0].data;
+        let brands = productData[0]?.brands;
+        let productIds = productData[0]?.productIds;
+        let variantIds = productData[0]?.variantIds;
+        let paginatedVariantIds = productData[0]?.paginatedVariantIds;
+        let productVariantAttributes: any[] = [];
+        if ((paginatedVariantIds.length > 0 && (getattribute === '1'))) {
+            productVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
+                variantId: { $in: paginatedVariantIds }
+            }));
+        }
         if (isCount == 1) {
             const totalCount = productData[0].totalCount;
-            return { products, totalCount }
+            return { productVariantAttributes, paginatedVariantIds, variantIds, productIds, products, totalCount, brands }
         } else {
-            return products
+            return { productVariantAttributes, paginatedVariantIds, variantIds, productIds, products, brands }
         }
-
     }
     // async getProductDetailsFromFilter(productFindableValues: any, options: any) {
     //     let { countryId, skip, limit, sort, offer, hostName }: any = frontendPagination(options.query || {}, options);
