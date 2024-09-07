@@ -55,11 +55,7 @@ class ProductsController extends BaseController {
             } else {
                 country = getCountryId(userData);
             }
-            console.log(userData);
-            
             const filterProducts = await filterProduct(req.query, country)
-            console.log(filterProducts.query);
-
             const products = await ProductsService.findAll({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),

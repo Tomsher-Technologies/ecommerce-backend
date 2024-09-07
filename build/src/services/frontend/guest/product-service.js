@@ -875,7 +875,7 @@ class ProductService {
                                 localField: "brand",
                                 foreignField: "_id",
                                 as: "brandData",
-                            }
+                            },
                         },
                         {
                             $unwind: {
@@ -919,10 +919,10 @@ class ProductService {
         }
         if (isCount == 1) {
             const totalCount = productData[0].totalCount;
-            return { productVariantAttributes, paginatedVariantIds, variantIds, productIds, products, totalCount, brands };
+            return { productVariantAttributes, products, paginatedVariantIds, totalCount, brands };
         }
         else {
-            return { productVariantAttributes, paginatedVariantIds, variantIds, productIds, products, brands };
+            return { productVariantAttributes, products, paginatedVariantIds, brands };
         }
     }
     // async getProductDetailsFromFilter(productFindableValues: any, options: any) {

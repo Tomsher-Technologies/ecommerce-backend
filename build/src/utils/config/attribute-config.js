@@ -120,6 +120,7 @@ const frontendVariantAttributesLookup = (match) => {
         {
             $project: {
                 _id: 1,
+                productId: 1,
                 variantId: 1,
                 attributeId: '$attribute._id',
                 attributeTitle: '$attribute.attributeTitle',
