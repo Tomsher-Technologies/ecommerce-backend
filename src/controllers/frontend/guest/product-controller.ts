@@ -20,6 +20,7 @@ import ProductSpecificationModel from '../../../model/admin/ecommerce/product/pr
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import ProductVariantAttributesModel from '../../../model/admin/ecommerce/product/product-variant-attribute-model';
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
+import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 
 const controller = new BaseController();
 class ProductController extends BaseController {
@@ -35,21 +36,24 @@ class ProductController extends BaseController {
 
             if (countryId) {
                 let sort: any = {};
+                let keywordRegex: RegExp | undefined = undefined;
                 if (sortby && sortorder) {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 if (keyword) {
                     // const keywordRegex = new RegExp(keyword, 'i');
-                    const keywordRegex = new RegExp(`^${keyword}`, 'i');
+                    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+                    // keywordRegex = new RegExp(`\\b${escapedKeyword}`, 'i');
+                    keywordRegex = new RegExp(`^${keyword}`, 'i');
                     query = {
                         $or: [
-                            // { productTitle:  { $regex: regexQuery } },
                             { productTitle: { $regex: keywordRegex } },
                             { slug: { $regex: keywordRegex } },
                             { sku: { $regex: keywordRegex } },
-                            { 'productCategory.category.categoryTitle': { $regex: keywordRegex } },
-                            { 'brand.brandTitle': { $regex: keywordRegex } },
-                            { 'productCategory.category.slug': { $regex: keywordRegex } },
+                            // { 'productCategory.category.categoryTitle': { $regex: keywordRegex } },
+                            // { 'brand.brandTitle': { $regex: keywordRegex } },
+                            // { 'productCategory.category.slug': { $regex: keywordRegex } },
                             { 'productVariants.slug': { $regex: keywordRegex } },
                             { 'productVariants.extraProductTitle': { $regex: keywordRegex } },
                             { 'productVariants.variantSku': { $regex: keywordRegex } },
@@ -77,133 +81,104 @@ class ProductController extends BaseController {
                         );
                     }
                 }
-                let productFindableValues: any = {}
-                if (category || categories) {
-                    async function fetchAllCategories(categoryIds: any[]): Promise<any[]> {
-                        let queue = [...categoryIds];
-                        const allCategoryIds = new Set([...categoryIds]);
-                        while (queue.length > 0) {
-                            const categoriesData = await CategoryModel.find(
-                                { parentCategory: { $in: queue } },
-                                '_id'
-                            );
-                            const childCategoryIds = categoriesData.map(category => category._id);
-                            if (childCategoryIds.length === 0) {
-                                break;
-                            }
-                            queue = childCategoryIds;
-                            childCategoryIds.forEach(id => allCategoryIds.add(id));
+                async function fetchAllCategories(categoryIds: any[]): Promise<any[]> {
+                    let queue = [...categoryIds];
+                    const allCategoryIds = new Set([...categoryIds]);
+                    while (queue.length > 0) {
+                        const categoriesData = await CategoryModel.find(
+                            { parentCategory: { $in: queue } },
+                            '_id'
+                        );
+                        const childCategoryIds = categoriesData.map(category => category._id);
+                        if (childCategoryIds.length === 0) {
+                            break;
                         }
-                        return Array.from(allCategoryIds);
+                        queue = childCategoryIds;
+                        childCategoryIds.forEach(id => allCategoryIds.add(id));
                     }
-
-                    let categoryIds: any[] = [];
-                    if (category) {
-                        const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                        let findcategory;
-                        if (categoryIsObjectId) {
-                            findcategory = { _id: category };
-                        } else {
-                            findcategory = await CategoryModel.findOne({ slug: category }, '_id');
-                        }
-                        if (findcategory && findcategory._id) {
-                            categoryIds = await fetchAllCategories([findcategory._id]);
-                        }
-                    }
-
-                    if (categories) {
-                        const categoryArray = typeof categories === 'string' ? categories.split(',') : categories;
-                        const categoryBatchIds: any[] = [];
-                        for (const category of categoryArray) {
-                            const categoryIsObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-                            let findcategory;
-                            if (categoryIsObjectId) {
-                                findcategory = { _id: category };
-                            } else {
-                                findcategory = await CategoryModel.findOne({ slug: category }, '_id');
-                            }
-                            if (findcategory && findcategory._id) {
-                                categoryBatchIds.push(findcategory._id);
-                            }
-                        }
-
-                        const batchCategoryIds = await fetchAllCategories(categoryBatchIds);
-                        categoryIds = [...new Set([...categoryIds, ...batchCategoryIds])]; // Merge and remove duplicates
-                    }
-                    query = {
-                        ...query, "productCategory.category._id": { $in: categoryIds }
-                    }
-                    productFindableValues = {
-                        ...productFindableValues,
-                        categoryIds
-                    };
+                    return Array.from(allCategoryIds);
                 }
 
-                if (brands) {
-                    const brandArray = brands.split(',');
-                    let brandIds: any[] = [];
-                    let brandSlugs: any[] = [];
-                    for await (let brand of brandArray) {
-                        const brandIsObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                        if (brandIsObjectId) {
-                            brandIds.push(new mongoose.Types.ObjectId(brand));
-                        } else {
-                            brandSlugs.push(brand);
-                        }
+                let productFindableValues: any = {}
+                if (category || categories || keyword) {
+                    let categoryBatchIds: any[] = [];
+                    const fetchCategoryId = async (categoryValue: string) => {
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(categoryValue);
+                        return isObjectId ? categoryValue : (await CategoryModel.findOne({ slug: categoryValue }, '_id'))?._id || null;
+                    };
+                    if (category) {
+                        const categoryId = await fetchCategoryId(category);
+                        if (categoryId) categoryBatchIds.push(categoryId);
                     }
-                    if (brandIds.length > 0 || brandSlugs.length > 0) {
+                    if (categories) {
+                        const categoryArray = Array.isArray(categories) ? categories : categories.split(',');
+                        const categoryIds = await Promise.all(categoryArray.map(fetchCategoryId));
+                        categoryBatchIds.push(...categoryIds.filter(Boolean));
+                    }
+                    if (keyword) {
+                        const categoriesByTitle = await CategoryModel.find({ categoryTitle: { $regex: keywordRegex } }, '_id');
+                        categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
+                    }
+                    const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
+                    if (categoryIds.length > 0) {
+                        const productIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
+                        if (productIds.length > 0) {
+                            query = {
+                                ...query,
+                                _id: { $in: productIds }
+                            };
+                        }
                         productFindableValues = {
                             ...productFindableValues,
-                            brand: {
-                                ...(productFindableValues.brand || {}),
-                                ...(brandIds.length > 0 && { brandIds }),
-                                ...(brandSlugs.length > 0 && { brandSlugs })
-                            }
+                            categoryIds
                         };
-                        if (brandIds.length > 0) {
-                            query = {
-                                ...query,
-                                "brand._id": { $in: brandIds }
-                            };
-                        }
-                        if (brandSlugs.length > 0) {
-                            query = {
-                                ...query,
-                                "brand.slug": { $in: brandSlugs }
-                            };
-                        }
                     }
                 }
 
-                if (brand) {
-                    const brandIsObjectId = /^[0-9a-fA-F]{24}$/.test(brand);
-                    let singleBrandId: any;
-                    let singleBrandSlug: any;
+                if (brands || brand || keyword) {
+                    let brandIds: any[] = [];
+                    let brandSlugs: string[] = [];
+                    const processBrand = async (brandValue: string) => {
+                        const isObjectId = /^[0-9a-fA-F]{24}$/.test(brandValue);
+                        if (isObjectId) {
+                            brandIds.push(new mongoose.Types.ObjectId(brandValue));
+                        } else {
+                            brandSlugs.push(brandValue);
+                        }
+                    };
+                    if (brands) {
+                        const brandArray = Array.isArray(brands) ? brands : brands.split(',');
+                        await Promise.all(brandArray.map(processBrand));
+                    }
+                    if (brand) {
+                        await processBrand(brand);
+                    }
+                    if (keyword) {
 
-                    if (brandIsObjectId) {
-                        singleBrandId = new mongoose.Types.ObjectId(brand);
-                    } else {
-                        singleBrandSlug = brand;
+                        const brandByTitle = await BrandsModel.find({ brandTitle: { $regex: keywordRegex } }, '_id');
+                        console.log(brandByTitle, keywordRegex);
+                        brandIds.push(...brandByTitle.map(brand => brand._id));
+                    }
+                    if (brandSlugs.length > 0) {
+                        const foundBrands = await BrandsModel.find({ slug: { $in: brandSlugs } }, '_id');
+                        brandIds.push(...foundBrands.map(brand => brand._id));
+                    }
+                    if (brandIds.length > 0) {
+                        query = {
+                            ...query, "brand": { $in: brandIds }
+                        };
                     }
 
                     productFindableValues = {
                         ...productFindableValues,
                         brand: {
                             ...(productFindableValues.brand || {}),
-                            ...(singleBrandId && { brandIds: [...(productFindableValues.brand?.brandIds || []), singleBrandId] }),
-                            ...(singleBrandSlug && { brandSlugs: [...(productFindableValues.brand?.brandSlugs || []), singleBrandSlug] })
+                            brandIds: [...(productFindableValues.brand?.brandIds || []), ...brandIds],
+                            brandSlugs: brandSlugs.length > 0 ? [...(productFindableValues.brand?.brandSlugs || []), ...brandSlugs] : undefined
                         }
                     };
-                    if (brandIsObjectId) {
-                        query = {
-                            ...query, "brand._id": new mongoose.Types.ObjectId(brand)
-                        }
-                    } else {
-                        query = {
-                            ...query, "brand.slug": brand
-                        }
-                    }
                 }
+                console.log('query', query);
 
                 if (attribute) {
                     let attributeDetailIds: any[] = [];
@@ -324,10 +299,20 @@ class ProductController extends BaseController {
 
                 const productDatas = await ProductService.getProductDetailsFromFilter(productFindableValues, {
                     countryId,
-                    query,
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
+                    query,
                     sort,
+                    collectionProductsData,
+                    discount,
+                    offers,
+                    getimagegallery,
+                    getattribute,
+                    getspecification,
+                    hostName: req.get('origin'),
+                    maxprice,
+                    minprice,
+                    // isCount: 1
                 })
                 console.log('productFindableValues', productDatas.length);
                 if (discount) {

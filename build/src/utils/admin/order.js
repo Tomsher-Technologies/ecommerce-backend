@@ -215,24 +215,28 @@ const orderStatusChangeEmail = async (settingsDetails, orderDetails, orderStatus
             await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
                 subject: cart_1.orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template);
         }
         else if (process.env.SHOPNAME === 'Homestyle') {
             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
                 subject: cart_1.orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template);
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
                 subject: cart_1.orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template);
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
                 subject: cart_1.orderStatusMessages[orderStatus],
                 email: customerDetails?.email,
+                ccmail: [basicDetailsSettings?.storeEmail]
             }, template);
             const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: cart_1.orderStatusMessages[orderStatus] === '4' ? (0, messages_1.shippingOrder)(orderDetails.orderId, expectedDeliveryDate) : (cart_1.orderStatusMessages[orderStatus] === '5' ? (0, messages_1.deliveredOrder)(orderDetails.orderId) : (0, messages_1.cancelOrder)(orderDetails.orderId)) });
         }

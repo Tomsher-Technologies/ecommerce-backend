@@ -274,7 +274,7 @@ class CheckoutService {
                     if (defualtSettings && defualtSettings.blockValues && defualtSettings.blockValues.commonDeliveryDays) {
                         commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                     }
-                    const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartDetails.orderStatusAt, Number(commonDeliveryDays));
+                    const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(cartUpdate.orderStatusAt, Number(commonDeliveryDays));
                     const taxDetails = await tax_model_1.default.findOne({ countryId: cartDetails.countryId, status: "1" });
                     if (cartUpdate.pickupStoreId) {
                     }
