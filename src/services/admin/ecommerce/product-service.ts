@@ -51,6 +51,7 @@ class ProductsService {
             },
             status: "1"
         };
+        // const hasProductVariantsFilter = Object.keys(query).some(key => key.includes('productVariants'));
         let pipeline: any[] = [
             productCategoryLookup,
             {
