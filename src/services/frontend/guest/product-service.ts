@@ -1035,7 +1035,7 @@ class ProductService {
         let brands = productData[0]?.brands;
         let productIds = productData[0]?.productIds;
         let variantIds = productData[0]?.variantIds;
-        let paginatedVariantIds = productData[0]?.paginatedVariantIds;
+        let paginatedVariantIds = products.flatMap((product: any) => product.productVariants.map((variant: any) => variant._id));
         let productVariantAttributes: any[] = [];
         if ((paginatedVariantIds.length > 0 && (getattribute === '1'))) {
             productVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
@@ -1044,9 +1044,9 @@ class ProductService {
         }
         if (isCount == 1) {
             const totalCount = productData[0].totalCount;
-            return { productVariantAttributes, products,paginatedVariantIds,  totalCount, brands }
+            return { productVariantAttributes, products, paginatedVariantIds, totalCount, brands }
         } else {
-            return { productVariantAttributes, products,paginatedVariantIds,  brands }
+            return { productVariantAttributes, products, paginatedVariantIds, brands }
         }
     }
     // async getProductDetailsFromFilter(productFindableValues: any, options: any) {
