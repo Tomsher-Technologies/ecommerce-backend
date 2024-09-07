@@ -118,6 +118,9 @@ const frontendSpecificationLookup = (match) => {
             $unwind: "$specificationDetail"
         },
         {
+            $sort: { "specification.createdAt": 1 }
+        },
+        {
             $project: {
                 _id: 1,
                 variantId: 1,
@@ -126,7 +129,8 @@ const frontendSpecificationLookup = (match) => {
                 specificationDisplayName: '$specification.specificationDisplayName',
                 enableTab: '$specification.enableTab',
                 slug: '$specification.slug',
-                specificationDetail: '$specificationDetail'
+                specificationDetail: '$specificationDetail',
+                createdAt: '$specification.createdAt'
             }
         }
     ];

@@ -123,11 +123,6 @@ class OrdersController extends base_controller_1.default {
                     getAddress: '1',
                     hostName: req.get('origin'),
                 });
-                const totalCount = await order_service_1.default.OrderList({
-                    page: parseInt(page_size),
-                    query,
-                    getTotalCount: true
-                });
                 if (orders.length > 0 && isPdfExport == '1') {
                     let websiteSettingsQuery = { _id: { $exists: true } };
                     websiteSettingsQuery = {
@@ -168,6 +163,11 @@ class OrdersController extends base_controller_1.default {
                     });
                 }
                 else {
+                    const totalCount = await order_service_1.default.OrderList({
+                        page: parseInt(page_size),
+                        query,
+                        getTotalCount: true
+                    });
                     return controller.sendSuccessResponse(res, {
                         requestedData: orders,
                         totalCount: totalCount.length,

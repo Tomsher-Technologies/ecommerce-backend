@@ -115,11 +115,13 @@ class BannerService {
                 if ((index !== -1) && (oldBannerImages)) {
                     oldBannerImages.splice(index, 1);
                 }
+                const filteredOldBannerImages = oldBannerImages.filter((image) => image.bannerImageUrl !== '');
+                const filteredBannerImages = bannerImagesUrl.filter((image) => image.bannerImageUrl !== '');
                 if (oldBannerImages) {
-                    combinedImages = [...bannerImagesUrl, ...oldBannerImages];
+                    combinedImages = [...filteredBannerImages, ...filteredOldBannerImages];
                 }
                 else {
-                    combinedImages = bannerImagesUrl;
+                    combinedImages = filteredBannerImages;
                 }
                 // console.log(index, 'combinedImages', combinedImages);
                 // console.log('oldBannerImages', oldBannerImages);

@@ -130,7 +130,7 @@ class CategoryService {
     }
     async findAllChilledCategories(query) {
         try {
-            const rootCategories = await category_model_1.default.find(query); // Find root categories
+            const rootCategories = await category_model_1.default.find(query).select('_id categoryTitle slug parentCategory categoryImageUrl');
             if (!rootCategories || rootCategories.length === 0) {
                 return null;
             }

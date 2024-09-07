@@ -35,7 +35,7 @@ const authMiddleware = async (req, res, next) => {
             let user = null;
             let checkToken = null;
             if (token === process.env.APP_AUTH_KEY) {
-                user = await user_model_1.default.findOne({ userTitle: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug']);
+                user = await user_model_1.default.findOne({ firstName: "Sap", status: '1' }).populate('userTypeID', ['userTypeName', 'slug']);
             }
             else {
                 checkToken = jsonwebtoken_1.default.verify(token, `${process.env.TOKEN_SECRET_KEY}`);

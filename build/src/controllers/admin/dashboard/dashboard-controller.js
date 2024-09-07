@@ -172,7 +172,6 @@ class DashboardController {
                 query,
                 sort,
             });
-            console.log(orders);
             controller.sendSuccessResponse(res, {
                 requestedData: orders,
                 message: 'Success!'
