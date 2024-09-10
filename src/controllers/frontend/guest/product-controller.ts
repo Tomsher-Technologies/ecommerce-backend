@@ -327,6 +327,9 @@ class ProductController extends BaseController {
                 }
 
                 if (collectionproduct) {
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionproduct: new mongoose.Types.ObjectId(collectionproduct)
+                    }
                     productFindableValues = {
                         ...productFindableValues,
                         collectionProductsData: {
@@ -335,6 +338,9 @@ class ProductController extends BaseController {
                     };
                 }
                 if (collectionbrand) {
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionbrand: new mongoose.Types.ObjectId(collectionbrand)
+                    }
                     productFindableValues = {
                         ...productFindableValues,
                         collectionProductsData: {
@@ -345,6 +351,9 @@ class ProductController extends BaseController {
                 }
 
                 if (collectioncategory) {
+                    collectionProductsData = {
+                        ...collectionProductsData, collectioncategory: new mongoose.Types.ObjectId(collectioncategory)
+                    }
                     productFindableValues = {
                         ...productFindableValues,
                         collectionProductsData: {
@@ -412,29 +421,6 @@ class ProductController extends BaseController {
 
                 return controller.sendSuccessResponse(res, {
                     requestedData: productDatas,
-                    message: 'Success!'
-                }, 200);
-                const productData: any = await ProductService.findProductList({
-                    countryId,
-                    page: parseInt(page_size as string),
-                    limit: parseInt(limit as string),
-                    query,
-                    sort,
-                    collectionProductsData,
-                    discount,
-                    offers,
-                    getimagegallery,
-                    getattribute,
-                    getspecification,
-                    hostName: req.get('origin'),
-                    maxprice,
-                    minprice,
-                    isCount: 1
-                });
-
-                return controller.sendSuccessResponse(res, {
-                    requestedData: productData.products,
-                    totalCount: productData.totalCount || 0,
                     message: 'Success!'
                 }, 200);
             } else {

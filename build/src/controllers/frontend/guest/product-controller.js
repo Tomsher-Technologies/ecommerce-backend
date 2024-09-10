@@ -313,6 +313,9 @@ class ProductController extends base_controller_1.default {
                     }
                 }
                 if (collectionproduct) {
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                    };
                     productFindableValues = {
                         ...productFindableValues,
                         collectionProductsData: {
@@ -321,6 +324,9 @@ class ProductController extends base_controller_1.default {
                     };
                 }
                 if (collectionbrand) {
+                    collectionProductsData = {
+                        ...collectionProductsData, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                    };
                     productFindableValues = {
                         ...productFindableValues,
                         collectionProductsData: {
@@ -330,6 +336,9 @@ class ProductController extends base_controller_1.default {
                     };
                 }
                 if (collectioncategory) {
+                    collectionProductsData = {
+                        ...collectionProductsData, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                    };
                     productFindableValues = {
                         ...productFindableValues,
                         collectionProductsData: {
@@ -392,28 +401,6 @@ class ProductController extends base_controller_1.default {
                 }
                 return controller.sendSuccessResponse(res, {
                     requestedData: productDatas,
-                    message: 'Success!'
-                }, 200);
-                const productData = await product_service_1.default.findProductList({
-                    countryId,
-                    page: parseInt(page_size),
-                    limit: parseInt(limit),
-                    query,
-                    sort,
-                    collectionProductsData,
-                    discount,
-                    offers,
-                    getimagegallery,
-                    getattribute,
-                    getspecification,
-                    hostName: req.get('origin'),
-                    maxprice,
-                    minprice,
-                    isCount: 1
-                });
-                return controller.sendSuccessResponse(res, {
-                    requestedData: productData.products,
-                    totalCount: productData.totalCount || 0,
                     message: 'Success!'
                 }, 200);
             }
