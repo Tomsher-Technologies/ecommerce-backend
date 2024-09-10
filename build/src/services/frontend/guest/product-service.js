@@ -23,6 +23,7 @@ const product_variant_attribute_model_1 = __importDefault(require("../../../mode
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 const search_query_model_1 = __importDefault(require("../../../model/frontend/search-query-model"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
+const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 class ProductService {
     async findProductList(productOption) {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
@@ -451,36 +452,36 @@ class ProductService {
     async getProductDetailsV2(productFindableValues, options) {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
         const { skip, limit } = (0, pagination_1.frontendPagination)(options.query || {}, options);
-        let finalSort = [];
-        if (!collectionProductsData) {
-            // finalSort = [
-            //     {
-            //         $addFields: {
-            //             sortOrder: {
-            //                 $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
-            //             }
-            //         }
-            //     },
-            //     {
-            //         $sort: {
-            //             sortOrder: 1,
-            //             showOrder: 1,
-            //             createdAt: -1
-            //         }
-            //     },
-            //     {
-            //         $project: {
-            //             sortOrder: 0
-            //         }
-            //     },
-            // ];
-            const defaultSort = { createdAt: -1 };
-            let finalSort = sort || defaultSort;
-            const sortKeys = Object.keys(finalSort);
-            if (sortKeys.length === 0) {
-                finalSort = defaultSort;
-            }
+        // let finalSort: any = [];
+        // if (!collectionProductsData) {
+        // finalSort = [
+        //     {
+        //         $addFields: {
+        //             sortOrder: {
+        //                 $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
+        //             }
+        //         }
+        //     },
+        //     {
+        //         $sort: {
+        //             sortOrder: 1,
+        //             showOrder: 1,
+        //             createdAt: -1
+        //         }
+        //     },
+        //     {
+        //         $project: {
+        //             sortOrder: 0
+        //         }
+        //     },
+        // ];
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
         }
+        // }
         const variantLookupMatch = {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
@@ -526,7 +527,7 @@ class ProductService {
             }
         };
         let pipeline = [
-            ...finalSort,
+            { $sort: finalSort },
             modifiedPipeline,
             // productCategoryLookup,
             // ...(getbrand === '1' ? [brandLookup, brandObject] : []),
@@ -595,71 +596,16 @@ class ProductService {
                 return Array.from(allCategoryIds);
             }
             const categoryIds = await fetchAllCategories([...new Set(collectionPipeline.categoryIds)]);
-            const categoryOrderMapping = categoryIds.map((id, index) => ({
-                _id: id,
-                order: index
-            }));
-            pipeline.push({
-                $match: {
-                    'productCategory.category._id': { $in: categoryIds }
-                }
-            }, {
-                $unwind: '$productCategory'
-            }, {
-                $addFields: {
-                    categoryOrder: {
-                        $let: {
-                            vars: {
-                                categoryId: '$productCategory.category._id'
-                            },
-                            in: {
-                                $arrayElemAt: [
-                                    {
-                                        $filter: {
-                                            input: categoryOrderMapping,
-                                            as: 'item',
-                                            cond: { $eq: ['$$item._id', '$$categoryId'] }
-                                        }
-                                    },
-                                    0
-                                ]
-                            }
-                        }
-                    }
-                }
-            }, {
-                $group: {
-                    _id: '$_id',
-                    productTitle: { $first: '$productTitle' },
-                    slug: { $first: '$slug' },
-                    showOrder: { $first: '$showOrder' },
-                    starRating: { $first: '$starRating' },
-                    productImageUrl: { $first: '$productImageUrl' },
-                    description: { $first: '$description' },
-                    brand: { $first: '$brand' },
-                    unit: { $first: '$unit' },
-                    warehouse: { $first: '$warehouse' },
-                    measurements: { $first: '$measurements' },
-                    tags: { $first: '$tags' },
-                    sku: { $first: '$sku' },
-                    status: { $first: '$status' },
-                    createdAt: { $first: '$createdAt' },
-                    offer: { $first: '$offer' },
-                    productCategory: { $first: '$productCategory' },
-                    productVariants: { $first: '$productVariants' },
-                    languageValues: { $first: '$languageValues' },
-                    productSpecification: { $first: '$productSpecification' },
-                    imageGallery: { $first: '$imageGallery' },
-                    categoryOrder: { $min: '$categoryOrder.order' }
-                }
-            }, {
-                $sort: {
-                    categoryOrder: 1
-                }
-            });
+            const categoryProductIds = await product_category_link_model_1.default.distinct('productId', { categoryId: { $in: categoryIds } });
+            pipeline.push({ $match: { '_id': { $in: [...new Set(categoryProductIds)] } } });
+            // const categoryOrderMapping = categoryIds.map((id, index) => ({
+            //     _id: id,
+            //     order: index
+            // }));
+            // console.log('categoryIds', collectionPipeline.categoryIds);
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
-            pipeline.push({ $match: { 'brand._id': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
+            pipeline.push({ $match: { 'brand': { $in: collectionPipeline.brandIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
         }
         if (collectionProductsData && collectionProductsData.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
             pipeline.push({ $match: { '_id': { $in: collectionPipeline.productIds.map((id) => new mongoose_1.default.Types.ObjectId(id)) } } });
@@ -743,6 +689,52 @@ class ProductService {
                     },
                     categoryOrder: 1
                 }
+            }, {
+                $addFields: {
+                    discountedPrice: {
+                        $let: {
+                            vars: {
+                                price: { $toDouble: { $ifNull: ["$selectedVariant.price", 0] } },
+                                discountPrice: { $toDouble: { $ifNull: ["$selectedVariant.discountPrice", 0] } },
+                                offerIN: { $toDouble: { $ifNull: ["$offer.offerIN", 0] } },
+                                offerType: "$offer.offerType"
+                            },
+                            in: {
+                                $cond: {
+                                    if: { $gt: ["$$discountPrice", 0] },
+                                    then: {
+                                        $cond: {
+                                            if: { $eq: ["$$offerType", "percent"] },
+                                            then: {
+                                                $subtract: [
+                                                    "$$discountPrice",
+                                                    { $multiply: ["$$discountPrice", { $divide: ["$$offerIN", 100] }] }
+                                                ]
+                                            },
+                                            else: {
+                                                $subtract: ["$$discountPrice", "$$offerIN"]
+                                            }
+                                        }
+                                    },
+                                    else: {
+                                        $cond: {
+                                            if: { $eq: ["$$offerType", "percent"] },
+                                            then: {
+                                                $subtract: [
+                                                    "$$price",
+                                                    { $multiply: ["$$price", { $divide: ["$$offerIN", 100] }] }
+                                                ]
+                                            },
+                                            else: {
+                                                $subtract: ["$$price", "$$offerIN"]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             });
             if (sort.price == 1) {
                 pipeline.push({ $sort: { discountedPrice: 1, _id: 1 } });
@@ -806,36 +798,36 @@ class ProductService {
         }, {
             $facet: {
                 data: dataPipeline,
-                productIds: [
-                    {
-                        $group: {
-                            _id: null,
-                            productIds: { $addToSet: "$_id" } // Collect all unique productIds
-                        }
-                    }
-                ],
-                variantIds: [
-                    {
-                        $project: {
-                            variantIds: {
-                                $map: {
-                                    input: "$productVariants",
-                                    as: "variant",
-                                    in: "$$variant._id"
-                                }
-                            }
-                        }
-                    },
-                    {
-                        $unwind: "$variantIds"
-                    },
-                    {
-                        $group: {
-                            _id: null,
-                            variantIds: { $addToSet: "$variantIds" } // Collect all unique variantIds
-                        }
-                    }
-                ],
+                // productIds: [
+                //     {
+                //         $group: {
+                //             _id: null,
+                //             productIds: { $addToSet: "$_id" } // Collect all unique productIds
+                //         }
+                //     }
+                // ],
+                // variantIds: [
+                //     {
+                //         $project: {
+                //             variantIds: {
+                //                 $map: {
+                //                     input: "$productVariants",
+                //                     as: "variant",
+                //                     in: "$$variant._id"
+                //                 }
+                //             }
+                //         }
+                //     },
+                //     {
+                //         $unwind: "$variantIds"
+                //     },
+                //     {
+                //         $group: {
+                //             _id: null,
+                //             variantIds: { $addToSet: "$variantIds" } // Collect all unique variantIds
+                //         }
+                //     }
+                // ],
                 paginatedVariantIds: [
                     {
                         $project: {
@@ -896,11 +888,13 @@ class ProductService {
         }, {
             $project: {
                 data: 1,
-                brands: 1,
-                productIds: { $arrayElemAt: ["$productIds.productIds", 0] },
-                variantIds: {
-                    $arrayElemAt: ["$variantIds.variantIds", 0]
-                },
+                ...(getbrand === '1' ? {
+                    brands: 1
+                } : {}),
+                // productIds: { $arrayElemAt: ["$productIds.productIds", 0] },
+                // variantIds: {
+                //     $arrayElemAt: ["$variantIds.variantIds", 0]
+                // },
                 paginatedVariantIds: { $arrayElemAt: ["$paginatedVariantIds.paginatedVariantIds", 0] }, // Paginated variantIds
                 ...(isCount === 1 && { totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] } })
             }
