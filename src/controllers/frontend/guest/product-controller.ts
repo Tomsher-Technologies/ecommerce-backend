@@ -779,9 +779,9 @@ class ProductController extends BaseController {
 
                 let imageGallery = await ProductGalleryImagesModel.find({
                     variantId: variantDetails._id
-                }).select('-createdAt -statusAt -status');
+                }).select('-createdAt -statusAt -status').sort({ _id: 1 });
                 if (!imageGallery?.length) { // Check if imageGallery is empty
-                    imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status');
+                    imageGallery = await ProductGalleryImagesModel.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status').sort({ _id: 1 });
                 }
                 let productSpecification: any[] = [];
                 if (getspecification === '1') {
