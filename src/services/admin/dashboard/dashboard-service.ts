@@ -200,6 +200,31 @@ class DashboardService {
         return dates;
     }
 
+    async outOfStock(options: FilterOptionsProps = {}): Promise<any | null> {
+        const { query, skip, limit, sort } = pagination(options.query || {}, options);
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+
+        const outOfStockSKUs = await ProductVariantsModel.aggregate([
+            {
+                $match: {
+                    quantity: 0,
+                    ...query
+                },
+            },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+        ]);
+
+        return outOfStockSKUs
+    }
+
 
 }
 
