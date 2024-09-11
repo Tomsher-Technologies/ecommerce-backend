@@ -210,41 +210,6 @@ class DashboardController {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
         }
     }
-
-    async outOfStockProducts(req: Request, res: Response): Promise<void> {
-        try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId } = req.query as QueryParams;
-
-            let query: any = { cartStatus: { $ne: "1" } };
-
-            const userData = await res.locals.user;
-            const country = getCountryId(userData);
-            if (country) {
-                query.countryId = country;
-            } else if (countryId) {
-                query.countryId = new mongoose.Types.ObjectId(countryId)
-            }
-            const sort: any = {};
-            if (sortby && sortorder) {
-                sort[sortby] = sortorder === 'desc' ? -1 : 1;
-            }
-            const orders: any = await DashboardService.outOfStock({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                sort,
-            });
-
-            controller.sendSuccessResponse(res, {
-                requestedData: orders,
-                message: 'Success!'
-            }, 200);
-
-        } catch (error: any) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
-        }
-    }
-
 }
 
 export default new DashboardController();

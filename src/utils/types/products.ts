@@ -53,6 +53,8 @@ export interface ProductsQueryParams {
     corporateGiftsPriority?: any;
     unCollectionedProducts?: any;
     countryId?: string;
+    getCategory?: string;
+    getBrand?: string;
 }
 
 export interface ProductVariantsProps {

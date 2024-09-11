@@ -5,11 +5,12 @@ import { ProductsProps } from '../../../utils/types/products';
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
-import { addFieldsProductSeo, addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandObject, imageLookup, productCategoryLookup, productSeoLookup, productSeoObject, productSpecificationAdminLookup, productSpecificationsLookup, productVariantAttributesAdminLookup, specificationsLookup, variantImageGalleryLookup, variantLookup } from '../../../utils/config/product-config';
+import { addFieldsProductSeo, addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandLookupVariant, brandObject, imageLookup, productCategoryLookup, productCategoryLookupVariantWise, productLookup, productSeoLookup, productSeoObject, productSpecificationAdminLookup, productSpecificationsLookup, productVariantAttributesAdminLookup, specificationsLookup, variantImageGalleryLookup, variantLookup } from '../../../utils/config/product-config';
 import { seoLookup } from '../../../utils/config/common-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { collections } from '../../../constants/collections';
 import { countriesLookup } from '../../../utils/config/customer-config';
+import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 
 class ProductsService {
     private multilanguageFieldsLookup: any;
@@ -247,6 +248,74 @@ class ProductsService {
         const productDataWithValues = await ProductsModel.aggregate(pipeline);
 
         return productDataWithValues;
+    }
+
+    async outOfStock(options: any = {}): Promise<any | null> {
+        const { query, skip, limit, sort } = pagination(options.query || {}, options);
+        const getCategory = options.getCategory
+        const getBrand = options.getBrand
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+
+        let pipeline: any[] = [
+            {
+                $match: query,
+            },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+            productLookup,
+            { $unwind: "$productDetails" },
+            countriesLookup,
+            // ...productVariantAttributesAdminLookup,
+            // addFieldsProductVariantAttributes,
+            // ...productSpecificationAdminLookup,
+            // addFieldsProductSpecification
+        ]
+        if (getCategory === '1') {
+            pipeline.push(...productCategoryLookupVariantWise);
+        }
+        if (getBrand === '1') {
+            pipeline.push(...brandLookupVariant);
+        }
+        // pipeline.push({
+        //     $addFields: {
+        //         productSpecification: { $arrayElemAt: ['$productSpecification', 0] }
+        //     }
+        // })
+        pipeline.push(
+            {
+                $project: {
+                    _id: 1,
+                    productId: 1,
+                    countryId: 1,
+                    variantSku: 1,
+                    extraProductTitle: 1,
+                    price: 1,
+                    discountPrice: 1,
+                    quantity: 1,
+                    cartMinQuantity: 1,
+                    cartMaxQuantity: 1,
+                    hsn: 1,
+                    mpn: 1,
+                    barcode: 1,
+                    isExcel: 1,
+                    isDefault: 1,
+                    status: 1,
+                    productDetails: 1,
+                    country: 1,
+                    productSpecification: 1
+                }
+            })
+        // pipeline.push(productLookup)
+        const outOfStockSKUs = await ProductVariantsModel.aggregate(pipeline);
+
+        return outOfStockSKUs
     }
 
 }
