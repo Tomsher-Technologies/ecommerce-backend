@@ -750,9 +750,9 @@ class ProductController extends base_controller_1.default {
                 }
                 let imageGallery = await product_gallery_images_model_1.default.find({
                     variantId: variantDetails._id
-                }).select('-createdAt -statusAt -status');
+                }).select('-createdAt -statusAt -status').sort({ _id: 1 });
                 if (!imageGallery?.length) { // Check if imageGallery is empty
-                    imageGallery = await product_gallery_images_model_1.default.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status');
+                    imageGallery = await product_gallery_images_model_1.default.find({ productID: variantDetails.productId, variantId: null }).select('-createdAt -statusAt -status').sort({ _id: 1 });
                 }
                 let productSpecification = [];
                 if (getspecification === '1') {

@@ -202,7 +202,7 @@ class SpecificationService {
         } else {
             const specificationData = {
                 specificationTitle: capitalizeWords(trimSpecificationTitle),
-                specificationDisplayName: slug,
+                specificationDisplayName: data.specificationDisplayName,
                 isExcel: true,
                 slug: slugify(data.specificationTitle)
             }

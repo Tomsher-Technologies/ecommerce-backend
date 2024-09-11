@@ -181,5 +181,36 @@ class DashboardController {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
         }
     }
+    async outOfStockProducts(req, res) {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId } = req.query;
+            let query = { cartStatus: { $ne: "1" } };
+            const userData = await res.locals.user;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            const sort = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const orders = await dashboard_service_1.default.outOfStock({
+                page: parseInt(page_size),
+                limit: parseInt(limit),
+                query,
+                sort,
+            });
+            controller.sendSuccessResponse(res, {
+                requestedData: orders,
+                message: 'Success!'
+            }, 200);
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
 }
 exports.default = new DashboardController();
