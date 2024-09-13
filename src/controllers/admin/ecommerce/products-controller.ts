@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 const xlsx = require('xlsx');
-import { capitalizeWords, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { capitalizeWords, dateConvertPm, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
 import { productStatusSchema, productSchema, updateWebsitePrioritySchema, productExcelSchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -1638,9 +1638,9 @@ class ProductsController extends BaseController {
         }
     }
 
-    async outOfStockProducts(req: Request, res: Response): Promise<void> {
+    async variantProductList(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '' } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '' } = req.query as ProductsQueryParams;
 
             let query: any = { cartStatus: { $ne: "1" } };
 
@@ -1655,14 +1655,67 @@ class ProductsController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            query.quantity = 0
-            const products: any = await ProductsService.outOfStock({
+
+            if (quantity === '0') {
+                query.quantity = Number(quantity)
+            } else if (quantity === '1') {
+                query.quantity = { $ne: 0 }
+            }
+
+            if (variantId) {
+                query._id = new mongoose.Types.ObjectId(variantId)
+            }
+
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { extraProductTitle: keywordRegex },
+                        { slug: keywordRegex },
+                        { variantSku: keywordRegex },
+                        { 'productDetails.productTitle': keywordRegex },
+                        { 'productDetails.sku': keywordRegex },
+                        { 'productDetails.slug': keywordRegex },
+                        { 'productDetails.brand.slug': keywordRegex },
+                        { 'productDetails.brand.brandTitle': keywordRegex },
+                        { 'productDetails.productCategory.category.slug': keywordRegex },
+                        { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
+                    ],
+                    ...query
+                } as any;
+            }
+
+            if (fromDate || endDate) {
+                if (fromDate) {
+                    query = {
+                        ...query,
+                        createdAt: {
+                            $gte: new Date(fromDate)
+                        }
+                    }
+                }
+                if (endDate) {
+                    query = {
+                        ...query,
+                        createdAt: {
+                            $lte: dateConvertPm(endDate)
+                        }
+                    }
+                }
+
+            }
+
+
+            const products: any = await ProductsService.variantProductList({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
                 sort,
                 getCategory,
-                getBrand
+                getBrand,
+                getAttribute,
+                getSpecification,
+                getCountry
             });
 
             controller.sendSuccessResponse(res, {

@@ -250,10 +250,13 @@ class ProductsService {
         return productDataWithValues;
     }
 
-    async outOfStock(options: any = {}): Promise<any | null> {
+    async variantProductList(options: any = {}): Promise<any | null> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         const getCategory = options.getCategory
         const getBrand = options.getBrand
+        const getAttribute = options.getAttribute
+        const getSpecification = options.getSpecification
+        const getCountry = options.getCountry
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -271,23 +274,22 @@ class ProductsService {
             { $sort: finalSort },
             productLookup,
             { $unwind: "$productDetails" },
-            countriesLookup,
-            // ...productVariantAttributesAdminLookup,
-            // addFieldsProductVariantAttributes,
-            // ...productSpecificationAdminLookup,
-            // addFieldsProductSpecification
         ]
+        if (getCountry === '1') {
+            pipeline.push(countriesLookup, { $unwind: '$country' });
+        }
         if (getCategory === '1') {
             pipeline.push(...productCategoryLookupVariantWise);
         }
         if (getBrand === '1') {
             pipeline.push(...brandLookupVariant);
         }
-        // pipeline.push({
-        //     $addFields: {
-        //         productSpecification: { $arrayElemAt: ['$productSpecification', 0] }
-        //     }
-        // })
+        if (getAttribute === '1') {
+            pipeline.push(...productVariantAttributesAdminLookup, addFieldsProductVariantAttributes);
+        }
+        if (getSpecification === '1') {
+            pipeline.push(...productSpecificationAdminLookup, addFieldsProductSpecification);
+        }
         pipeline.push(
             {
                 $project: {
@@ -309,6 +311,7 @@ class ProductsService {
                     status: 1,
                     productDetails: 1,
                     country: 1,
+                    productVariantAttributes: 1,
                     productSpecification: 1
                 }
             })
