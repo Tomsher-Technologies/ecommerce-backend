@@ -55,6 +55,11 @@ export interface ProductsQueryParams {
     countryId?: string;
     getCategory?: string;
     getBrand?: string;
+    getSpecification?: string;
+    getAttribute?: string;
+    getCountry?: string;
+    quantity?: string;
+    variantId?: string;
 }
 
 export interface ProductVariantsProps {
