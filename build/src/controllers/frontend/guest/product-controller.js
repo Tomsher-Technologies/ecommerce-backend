@@ -44,13 +44,13 @@ class ProductController extends base_controller_1.default {
                     sort[sortby] = sortorder === 'desc' ? -1 : 1;
                 }
                 if (keyword) {
-                    // const keywordRegex = new RegExp(keyword, 'i');
+                    const keywordRegex = new RegExp(`${keyword}`, 'i');
                     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
-                    keywordRegex = new RegExp(`^${keyword}`, 'i');
+                    // keywordRegex = new RegExp(`^${keyword}`, 'i');
                     query = {
                         $or: [
-                            { productTitle: { $regex: keywordRegex } },
+                            { productTitle: { $regex: keywordRegexSingle } },
                             { slug: { $regex: keywordRegex } },
                             { sku: { $regex: keywordRegex } },
                             // { 'productCategory.category.categoryTitle': { $regex: keywordRegex } },
@@ -71,6 +71,40 @@ class ProductController extends base_controller_1.default {
                         ],
                         ...query
                     };
+                    const keywordProductIds = await product_model_1.default.aggregate([
+                        {
+                            $match: {
+                                $or: [
+                                    { productTitle: { $regex: keywordRegexSingle } },
+                                    { slug: { $regex: keywordRegexSingle } },
+                                    { sku: { $regex: keywordRegexSingle } }
+                                ]
+                            }
+                        },
+                        {
+                            $project: { _id: 1 }
+                        }
+                    ]);
+                    if (keywordProductIds.length > 0) {
+                        productIds = [...new Set(keywordProductIds.map((id) => id._id))];
+                    }
+                    const keywordVariantProductIds = await product_variants_model_1.default.aggregate([
+                        {
+                            $match: {
+                                $or: [
+                                    { extraProductTitle: { $regex: keywordRegexSingle } },
+                                    { slug: { $regex: keywordRegexSingle } },
+                                    { variantSku: { $regex: keywordRegexSingle } }
+                                ]
+                            }
+                        },
+                        {
+                            $project: { productId: 1 }
+                        }
+                    ]);
+                    if (keywordVariantProductIds.length > 0) {
+                        productIds = [...new Set(keywordVariantProductIds.map((id) => id.productId))];
+                    }
                     if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                         const customer = null;
                         const guestUser = res.locals.uuid || null;
@@ -98,7 +132,7 @@ class ProductController extends base_controller_1.default {
                         const isObjectId = /^[0-9a-fA-F]{24}$/.test(categoryValue);
                         return isObjectId ? categoryValue : (await category_model_1.default.findOne({ slug: categoryValue }, '_id'))?._id || null;
                     };
-                    if (category) {
+                    if (!categories && category) {
                         const categoryId = await fetchCategoryId(category);
                         if (categoryId)
                             categoryBatchIds.push(categoryId);
@@ -135,12 +169,12 @@ class ProductController extends base_controller_1.default {
                             brandSlugs.push(brandValue);
                         }
                     };
+                    if (!brands && brand) {
+                        await processBrand(brand);
+                    }
                     if (brands) {
                         const brandArray = Array.isArray(brands) ? brands : brands.split(',');
                         await Promise.all(brandArray.map(processBrand));
-                    }
-                    if (brand) {
-                        await processBrand(brand);
                     }
                     if (keyword) {
                         const brandByTitleId = await brands_model_1.default.find({ brandTitle: { $regex: keywordRegexSingle } }, '_id');

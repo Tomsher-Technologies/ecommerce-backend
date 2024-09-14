@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.brandLookupVariant = exports.productCategoryLookupVariantWise = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 const customer_config_1 = require("./customer-config");
@@ -325,6 +325,75 @@ exports.variantLookup = {
         ]
     }
 };
+exports.productCategoryLookupVariantWise = [{
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
+            localField: 'productDetails._id', // Match the product's ID
+            foreignField: 'productId',
+            as: 'productCategory',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.categories}`,
+                        localField: 'categoryId',
+                        foreignField: '_id',
+                        as: 'category',
+                    },
+                },
+                {
+                    $unwind: '$category'
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        productId: 1,
+                        category: {
+                            _id: 1,
+                            categoryTitle: 1,
+                            slug: 1,
+                            parentCategory: 1,
+                            level: 1,
+                            categoryImageUrl: 1,
+                            categorySecondImageUrl: 1,
+                            status: 1,
+                        }
+                    }
+                }
+            ]
+        },
+    },
+    {
+        $addFields: {
+            'productDetails.productCategory': '$productCategory'
+        }
+    }
+];
+exports.brandLookupVariant = [{
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.brands}`,
+            localField: 'productDetails.brand',
+            foreignField: '_id',
+            as: 'brand',
+            pipeline: [
+                {
+                    $project: {
+                        _id: 1,
+                        brandTitle: 1,
+                        description: 1,
+                        brandBannerImageUrl: 1,
+                        slug: 1,
+                        brandImageUrl: 1,
+                        status: 1,
+                    }
+                },
+            ],
+        },
+    },
+    {
+        $addFields: {
+            'productDetails.brand': { $arrayElemAt: ['$brand', 0] }
+        }
+    }];
 exports.productCategoryLookup = {
     $lookup: {
         from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,

@@ -12,6 +12,7 @@ const common_config_1 = require("../../../utils/config/common-config");
 const multi_languages_1 = require("../../../constants/multi-languages");
 const collections_1 = require("../../../constants/collections");
 const customer_config_1 = require("../../../utils/config/customer-config");
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 class ProductsService {
     constructor() {
         this.multilanguageFieldsLookup = {
@@ -226,6 +227,72 @@ class ProductsService {
         ];
         const productDataWithValues = await product_model_1.default.aggregate(pipeline);
         return productDataWithValues;
+    }
+    async variantProductList(options = {}) {
+        const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        const getCategory = options.getCategory;
+        const getBrand = options.getBrand;
+        const getAttribute = options.getAttribute;
+        const getSpecification = options.getSpecification;
+        const getCountry = options.getCountry;
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+        let pipeline = [
+            {
+                $match: query,
+            },
+            { $skip: skip },
+            { $limit: limit },
+            { $sort: finalSort },
+            product_config_1.productLookup,
+            { $unwind: "$productDetails" },
+        ];
+        if (getCountry === '1') {
+            pipeline.push(customer_config_1.countriesLookup, { $unwind: '$country' });
+        }
+        if (getCategory === '1') {
+            pipeline.push(...product_config_1.productCategoryLookupVariantWise);
+        }
+        if (getBrand === '1') {
+            pipeline.push(...product_config_1.brandLookupVariant);
+        }
+        if (getAttribute === '1') {
+            pipeline.push(...product_config_1.productVariantAttributesAdminLookup, product_config_1.addFieldsProductVariantAttributes);
+        }
+        if (getSpecification === '1') {
+            pipeline.push(...product_config_1.productSpecificationAdminLookup, product_config_1.addFieldsProductSpecification);
+        }
+        pipeline.push({
+            $project: {
+                _id: 1,
+                productId: 1,
+                countryId: 1,
+                variantSku: 1,
+                extraProductTitle: 1,
+                price: 1,
+                discountPrice: 1,
+                quantity: 1,
+                cartMinQuantity: 1,
+                cartMaxQuantity: 1,
+                hsn: 1,
+                mpn: 1,
+                barcode: 1,
+                isExcel: 1,
+                isDefault: 1,
+                status: 1,
+                productDetails: 1,
+                country: 1,
+                productVariantAttributes: 1,
+                productSpecification: 1
+            }
+        });
+        // pipeline.push(productLookup)
+        const outOfStockSKUs = await product_variants_model_1.default.aggregate(pipeline);
+        return outOfStockSKUs;
     }
 }
 exports.default = new ProductsService();

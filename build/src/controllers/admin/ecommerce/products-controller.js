@@ -36,6 +36,10 @@ const product_category_link_model_1 = __importDefault(require("../../../model/ad
 const product_specification_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-specification-model"));
 const reports_1 = require("../../../utils/admin/excel/reports");
 const seo_page_model_1 = __importDefault(require("../../../model/admin/seo-page-model"));
+const multi_language_fieleds_model_1 = __importDefault(require("../../../model/admin/multi-language-fieleds-model"));
+const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
+const excel_upload_1 = require("../../../utils/admin/excel/excel-upload");
+const mongoose_1 = __importDefault(require("mongoose"));
 const controller = new base_controller_1.default();
 class ProductsController extends base_controller_1.default {
     // constructor() {
@@ -1516,6 +1520,209 @@ class ProductsController extends base_controller_1.default {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating Product'
             }, req);
+        }
+    }
+    async variantProductList(req, res) {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '' } = req.query;
+            let query = { cartStatus: { $ne: "1" } };
+            const userData = await res.locals.user;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            const sort = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            if (quantity === '0') {
+                query.quantity = Number(quantity);
+            }
+            else if (quantity === '1') {
+                query.quantity = { $ne: 0 };
+            }
+            if (variantId) {
+                query._id = new mongoose_1.default.Types.ObjectId(variantId);
+            }
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { extraProductTitle: keywordRegex },
+                        { slug: keywordRegex },
+                        { variantSku: keywordRegex },
+                        { 'productDetails.productTitle': keywordRegex },
+                        { 'productDetails.sku': keywordRegex },
+                        { 'productDetails.slug': keywordRegex },
+                        { 'productDetails.brand.slug': keywordRegex },
+                        { 'productDetails.brand.brandTitle': keywordRegex },
+                        { 'productDetails.productCategory.category.slug': keywordRegex },
+                        { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
+                    ],
+                    ...query
+                };
+            }
+            if (fromDate || endDate) {
+                if (fromDate) {
+                    query = {
+                        ...query,
+                        createdAt: {
+                            $gte: new Date(fromDate)
+                        }
+                    };
+                }
+                if (endDate) {
+                    query = {
+                        ...query,
+                        createdAt: {
+                            $lte: (0, helpers_1.dateConvertPm)(endDate)
+                        }
+                    };
+                }
+            }
+            const products = await product_service_1.default.variantProductList({
+                page: parseInt(page_size),
+                limit: parseInt(limit),
+                query,
+                sort,
+                getCategory,
+                getBrand,
+                getAttribute,
+                getSpecification,
+                getCountry
+            });
+            controller.sendSuccessResponse(res, {
+                requestedData: products,
+                message: 'Success!'
+            }, 200);
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
+    async importLanguageExcel(req, res) {
+        const validation = [];
+        var excelRowIndex = 2;
+        if (req && req.file && req.file?.filename) {
+            const productLanguageExcelJsonData = await (0, excel_upload_1.excelUpload)(req);
+            if (productLanguageExcelJsonData && productLanguageExcelJsonData?.length > 0) {
+                let countryData;
+                let countryId;
+                let languageId;
+                let isExistVariant;
+                for (let productLanguageData of productLanguageExcelJsonData) {
+                    const variantData = {
+                        variantSku: productLanguageData.SKU,
+                        extraProductTitle: productLanguageData.Product_Title,
+                        discription: productLanguageData.Description,
+                        longDescription: productLanguageData.Long_Description,
+                        metaTitle: productLanguageData.Meta_Title,
+                        metaKeywords: productLanguageData.Meta_Keywords,
+                        metaDescription: productLanguageData.Meta_Description,
+                        ogTitle: productLanguageData.OG_Title,
+                        ogDescription: productLanguageData.OG_Description,
+                        twitterTitle: productLanguageData.Twitter_Title,
+                        twitterDescription: productLanguageData.Twitter_Description,
+                    };
+                    if (productLanguageData.Country) {
+                        countryData = await country_service_1.default.findCountryId({ $or: [{ countryTitle: productLanguageData.Country }, { countryShortTitle: productLanguageData.Country }] });
+                        if (countryData) {
+                            countryId = countryData._id;
+                        }
+                    }
+                    if (productLanguageData.Language) {
+                        const LanguageData = await language_model_1.default.findOne({ $or: [{ languageTitle: productLanguageData.Language }, { languageCode: productLanguageData.Language }] });
+                        if (LanguageData) {
+                            languageId = LanguageData?._id;
+                        }
+                    }
+                    const product = await product_model_1.default.findOne({ $and: [{ sku: productLanguageData.SKU }] }).select('_id');
+                    const variant = await product_variants_model_1.default.findOne({ $and: [{ variantSku: productLanguageData.SKU }, { countryId: countryId }] }).select('productId');
+                    if (variant && variant.productId) {
+                        const isExist = await multi_language_fieleds_model_1.default.findOne({ $and: [{ sourceId: variant.productId }, { languageId: languageId }] });
+                        if (isExist) {
+                            isExistVariant = await multi_language_fieleds_model_1.default.findOne({
+                                'languageValues.variants.productVariants.variantSku': productLanguageData.SKU
+                            }, { 'languageValues.variants.productVariants': 1, _id: 0 });
+                            const dynamicVariantSku = productLanguageData.SKU;
+                            if (isExistVariant && isExistVariant.languageValues?.variants) {
+                                const variantIndex = isExistVariant.languageValues.variants.findIndex((variant) => variant.productVariants.some((pv) => pv.variantSku === dynamicVariantSku));
+                                if (variantIndex !== -1) {
+                                    const productVariantIndex = isExistVariant.languageValues.variants[variantIndex].productVariants
+                                        .findIndex((variant) => variant.variantSku === dynamicVariantSku);
+                                    if (productVariantIndex !== -1) {
+                                        isExistVariant.languageValues.variants[variantIndex].productVariants[productVariantIndex] = variantData;
+                                    }
+                                    else {
+                                        validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "Product variant not found with the given SKU., row :" + excelRowIndex });
+                                    }
+                                }
+                                else {
+                                    validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "Variant not found., row :" + excelRowIndex });
+                                }
+                            }
+                            else {
+                                validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "isExistVariant or variants are undefined., row :" + excelRowIndex });
+                                // console.log('isExistVariant or variants are undefined.');
+                            }
+                            const update = await multi_language_fieleds_model_1.default.findOneAndUpdate({ _id: isExist._id }, { $set: { 'languageValues.variants.0': isExistVariant.languageValues.variants[0] } }, { new: true });
+                        }
+                        else {
+                            const languageValueData = {
+                                isExcel: true,
+                                languageId: languageId,
+                                source: multi_languages_1.multiLanguageSources.ecommerce.products,
+                                sourceId: variant?.productId,
+                                createdAt: new Date(),
+                                languageValues: {
+                                    productTitle: productLanguageData.Product_Title,
+                                    discription: productLanguageData.Description,
+                                    longDescription: productLanguageData.Long_Description,
+                                    metaTitle: productLanguageData.Meta_Title,
+                                    metaKeywords: productLanguageData.Meta_Keywords,
+                                    metaDescription: productLanguageData.Meta_Description,
+                                    ogTitle: productLanguageData.OG_Title,
+                                    ogDescription: productLanguageData.OG_Description,
+                                    twitterTitle: productLanguageData.Twitter_Title,
+                                    twitterDescription: productLanguageData.Twitter_Description,
+                                    variants: [{
+                                            productVariants: [{
+                                                    variantSku: productLanguageData.SKU,
+                                                    extraProductTitle: productLanguageData.Product_Title,
+                                                    discription: productLanguageData.Description,
+                                                    longDescription: productLanguageData.Long_Description,
+                                                    metaTitle: productLanguageData.Meta_Title,
+                                                    metaKeywords: productLanguageData.Meta_Keywords,
+                                                    metaDescription: productLanguageData.Meta_Description,
+                                                    ogTitle: productLanguageData.OG_Title,
+                                                    ogDescription: productLanguageData.OG_Description,
+                                                    twitterTitle: productLanguageData.Twitter_Title,
+                                                    twitterDescription: productLanguageData.Twitter_Description,
+                                                }]
+                                        }]
+                                }
+                            };
+                            const create = await multi_language_fieleds_model_1.default.create(languageValueData);
+                        }
+                    }
+                    else {
+                        validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "Product not Found, row :" + excelRowIndex });
+                    }
+                }
+                return controller.sendSuccessResponse(res, {
+                    validation: validation,
+                    message: `Product excel upload successfully completed. ${validation.length > 0 ? 'Some Product updation are not completed' : ''}`
+                }, 200);
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+            }
+        }
+        else {
+            return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
         }
     }
 }
