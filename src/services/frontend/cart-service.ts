@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
 import { FilterOptionsProps, frontendPagination, pagination } from '../../components/pagination';
 import CartOrderModel, { CartOrderProps } from '../../model/frontend/cart-order-model';
 import CartOrderProductsModel, { CartOrderProductProps } from '../../model/frontend/cart-order-product-model';
@@ -7,6 +7,8 @@ import { addFieldsProductVariantAttributes, brandLookup, brandObject, productCat
 import { getLanguageValueFromSubdomain } from '../../utils/frontend/sub-domain';
 import LanguagesModel from '../../model/admin/setup/language-model';
 import commonService from './guest/common-service';
+import TaxsModel from '../../model/admin/setup/tax-model';
+import CartOrdersModel from '../../model/frontend/cart-order-model';
 
 class CartService {
 
@@ -31,6 +33,7 @@ class CartService {
     async findCartPopulate(options: any): Promise<CartOrderProps[]> {
 
         const { query, skip, limit, sort, hostName } = frontendPagination(options.query || {}, options);
+        const { simple = '0' } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -41,7 +44,6 @@ class CartService {
         const languageData = await LanguagesModel.find().exec();
         const languageId = await getLanguageValueFromSubdomain(hostName, languageData)
 
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await commonService.findOffers(0, hostName);
 
         // productVariantAttributesLookup
         const modifiedPipeline = {
@@ -53,12 +55,20 @@ class CartService {
                     productVariantsLookupValues("1"),
                     // attributePipeline,
                     { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
-                    wishlistProductCategoryLookup,
-                    multilanguageFieldsLookup(languageId),
-                    { $unwind: { path: "$productDetails.languageValues", preserveNullAndEmptyArrays: true } },
-                    replaceProductLookupValues,
-                    { $unset: "productDetails.languageValues" },
-
+                    ...(simple === '0' ? [
+                        wishlistProductCategoryLookup,
+                        multilanguageFieldsLookup(languageId),
+                        {
+                            $unwind: {
+                                path: "$productDetails.languageValues",
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        replaceProductLookupValues,
+                        {
+                            $unset: "productDetails.languageValues"
+                        }
+                    ] : [])
                 ]
             }
         };
@@ -68,6 +78,7 @@ class CartService {
             { $match: query },
             { $sort: finalSort },
         ];
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await commonService.findOffers(0, hostName);
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = wishlistOfferCategory(getOfferList, offerApplied.category)
             modifiedPipeline.$lookup.pipeline.push(offerCategory);
@@ -117,6 +128,36 @@ class CartService {
     async createCart(data: any): Promise<CartOrderProps | null> {
         const cartData = await CartOrderModel.create(data);
         return cartData;
+    }
+
+    async updateCartPrice(options: { cartDetails: any; countryId: ObjectId; cartOrderProductUpdateOperations: any }): Promise<any> {
+        const { cartDetails, countryId, cartOrderProductUpdateOperations } = options;
+        if (cartOrderProductUpdateOperations.length > 0) {
+            await CartOrderProductsModel.bulkWrite(cartOrderProductUpdateOperations);
+            const [aggregationResult] = await CartOrderProductsModel.aggregate([
+                { $match: { cartId: cartDetails._id } },
+                {
+                    $group: {
+                        _id: "$cartId",
+                        totalProductAmount: { $sum: "$productAmount" },
+                        totalProductOriginalPrice: { $sum: "$productOriginalPrice" },
+                        totalDiscountAmount: { $sum: "$productDiscountAmount" },
+                    }
+                }
+            ]);
+            const taxDetails: any = await TaxsModel.findOne({ countryId: countryId })
+
+            if (aggregationResult) {
+                const { _id, ...restValues } = aggregationResult;
+                if (restValues) {
+                    const updatedCartOrderValues = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, {
+                        ...restValues,
+                        totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount,
+                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * restValues.totalProductAmount).toFixed(2) : 0
+                    });
+                }
+            }
+        }
     }
 
     async findCartProduct(data: any): Promise<CartOrderProductProps | null> {

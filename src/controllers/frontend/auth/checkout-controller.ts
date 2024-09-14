@@ -14,7 +14,7 @@ import { tabbyCheckoutRetrieve, tabbyPaymentCaptures, tabbyPaymentCreate, tabbyP
 
 import { tapPaymentRetrieve, tapPaymentCreate } from "../../../lib/payment-gateway/tap-payment";
 import CustomerModel from "../../../model/frontend/customers-model";
-import { networkPaymentGatwayDefaultValues, tabbyPaymentCaptureGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tamaraPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
+import { cartPriceUpdateValueSet, networkPaymentGatwayDefaultValues, tabbyPaymentCaptureGatwayDefaultValues, tabbyPaymentGatwayDefaultValues, tamaraPaymentGatwayDefaultValues, tapPaymentGatwayDefaultValues } from "../../../utils/frontend/cart-utils";
 import PaymentTransactionModel from "../../../model/frontend/payment-transaction-model";
 import CheckoutService from "../../../services/frontend/checkout-service";
 import CustomerAddress from "../../../model/frontend/customer-address-model";
@@ -22,6 +22,8 @@ import { networkAccessToken, networkCreateOrder, networkCreateOrderStatus } from
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
 import CartOrdersModel from "../../../model/frontend/cart-order-model";
+import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
+import TaxsModel from "../../../model/admin/setup/tax-model";
 
 const controller = new BaseController();
 
@@ -67,7 +69,6 @@ class CheckoutController extends BaseController {
                 }
                 const uuid = req.header('User-Token');
                 const variantIds = cartDetails.products.map((product: any) => product.variantId);
-                // go to product variant model check 
                 const variantQuantities = cartDetails.products.reduce((calculateQuantity: any, product: any) => {
                     calculateQuantity[product.variantId.toString()] = product.quantity;
                     return calculateQuantity;
@@ -77,20 +78,44 @@ class CheckoutController extends BaseController {
                     _id: { $in: variantIds }
                 });
                 const errorArray: any = []
+                const cartOrderProductUpdateOperations: any[] = [];
+
                 for (const variant of productVariants) {
                     const requiredQuantity = variantQuantities[variant._id.toString()];
-                    var productTitle
+                    let productTitle;
+
                     if (variant.extraProductTitle) {
-                        productTitle = variant.extraProductTitle
+                        productTitle = variant.extraProductTitle;
                     } else {
-                        productTitle = cartDetails.products.find((product: any) => product.variantId === variant._id)?.productDetails?.productTitle
+                        const matchingProduct = cartDetails.products.find((product: any) => product.variantId === variant._id);
+                        productTitle = matchingProduct?.productDetails?.productTitle;
                     }
+
                     if (variant.quantity == 0) {
-                        errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' })
+                        errorArray.push({
+                            productTitle: productTitle,
+                            message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.'
+                        });
                     } else if (variant.quantity < requiredQuantity) {
-                        errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' })
+                        errorArray.push({
+                            productTitle: productTitle,
+                            message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.'
+                        });
                     }
+
+                    await cartPriceUpdateValueSet({ // price check 
+                        cartDetails,
+                        variant,
+                        cartOrderProductUpdateOperations,
+                        errorArray,
+                        productTitle,
+                    })
                 }
+                await CartService.updateCartPrice({ // price updation
+                    cartDetails,
+                    countryId: countryData._id,
+                    cartOrderProductUpdateOperations
+                })
 
                 if (errorArray.length > 0) {
                     return controller.sendErrorResponse(res, 200, {
@@ -102,7 +127,6 @@ class CheckoutController extends BaseController {
                 if (!cartDetails) {
                     return controller.sendErrorResponse(res, 200, { message: 'Cart not found!' });
                 }
-
                 let cartUpdate: any = {
                     orderUuid: uuid,
                     shippingId: shippingId || null,
