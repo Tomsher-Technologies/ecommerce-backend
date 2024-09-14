@@ -594,7 +594,14 @@ export const imageLookup = {
     }
 };
 
-
+export const imageLookupVariantWise = {
+    $lookup: {
+        from: collections.ecommerce.products.productgallaryimages,
+        localField: 'productDetails._id',
+        foreignField: 'productID',
+        as: 'productDetails.imageGallery',
+    }
+};
 
 export const productMultilanguageFieldsLookup = {
     $lookup: {

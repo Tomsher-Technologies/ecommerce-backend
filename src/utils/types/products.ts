@@ -60,6 +60,8 @@ export interface ProductsQueryParams {
     getCountry?: string;
     quantity?: string;
     variantId?: string;
+    getGalleryImage?: string;
+    getProductGalleryImage?: string;
 }
 
 export interface ProductVariantsProps {
