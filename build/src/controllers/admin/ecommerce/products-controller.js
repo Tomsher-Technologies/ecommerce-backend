@@ -1524,7 +1524,7 @@ class ProductsController extends base_controller_1.default {
     }
     async variantProductList(req, res) {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '' } = req.query;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '' } = req.query;
             let query = { cartStatus: { $ne: "1" } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -1558,11 +1558,23 @@ class ProductsController extends base_controller_1.default {
                         { 'productDetails.sku': keywordRegex },
                         { 'productDetails.slug': keywordRegex },
                         { 'productDetails.brand.slug': keywordRegex },
-                        { 'productDetails.brand.brandTitle': keywordRegex },
+                        { '.brandTitle': keywordRegex },
                         { 'productDetails.productCategory.category.slug': keywordRegex },
                         { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
                     ],
                     ...query
+                };
+            }
+            if (categoryId) {
+                query = {
+                    query,
+                    'productDetails.productCategory.category._id': new mongoose_1.default.Types.ObjectId(categoryId)
+                };
+            }
+            if (brandId) {
+                query = {
+                    ...query,
+                    'productDetails.brand._id': new mongoose_1.default.Types.ObjectId(brandId)
                 };
             }
             if (fromDate || endDate) {

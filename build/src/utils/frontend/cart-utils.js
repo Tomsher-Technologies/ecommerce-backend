@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tamaraPaymentGatwayDefaultValues = exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentCaptureGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
+exports.cartPriceUpdateValueSet = exports.tamaraPaymentGatwayDefaultValues = exports.networkPaymentGatwayDefaultValues = exports.tabbyPaymentCaptureGatwayDefaultValues = exports.tabbyPaymentGatwayDefaultValues = exports.tapPaymentGatwayDefaultValues = void 0;
 const helpers_1 = require("../helpers");
 const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, paymentMethodValues) => {
     return {
@@ -281,3 +281,43 @@ const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails
     };
 };
 exports.tamaraPaymentGatwayDefaultValues = tamaraPaymentGatwayDefaultValues;
+const cartPriceUpdateValueSet = async (options) => {
+    const { cartDetails, variant, cartOrderProductUpdateOperations, errorArray, productTitle } = options;
+    const cartProduct = cartDetails.products.find((product) => product.variantId.toString() === variant._id.toString());
+    if (variant._id.toString() === cartProduct?.variantId.toString()) {
+        let currentProductPrice = variant.discountPrice > 0 ? variant.discountPrice : variant.price;
+        if (cartProduct.productDetails.offer) {
+            if (cartProduct.productDetails.offer.offerType === 'amount-off') {
+                currentProductPrice = currentProductPrice - cartProduct.productDetails.offer.offerIN;
+            }
+            else {
+                currentProductPrice = currentProductPrice - (currentProductPrice * (cartProduct.productDetails.offer.offerIN / 100));
+            }
+        }
+        const previousProductPrice = cartProduct.productAmount / cartProduct.quantity;
+        if (previousProductPrice !== currentProductPrice) {
+            const productOriginalPrice = variant.price * cartProduct.quantity;
+            const productAmount = currentProductPrice * cartProduct.quantity;
+            cartOrderProductUpdateOperations.push({
+                updateOne: {
+                    filter: { cartId: cartDetails._id, variantId: variant._id },
+                    update: {
+                        $set: {
+                            productOriginalPrice,
+                            productAmount,
+                            productDiscountAmount: (productOriginalPrice - productAmount)
+                        }
+                    }
+                }
+            });
+            if (Array.isArray(errorArray) && productTitle) {
+                errorArray.push({
+                    isRefresh: true,
+                    productTitle: productTitle,
+                    message: `The price of ${productTitle} in your cart has changed.Please review your cart to see the update pricing.`
+                });
+            }
+        }
+    }
+};
+exports.cartPriceUpdateValueSet = cartPriceUpdateValueSet;

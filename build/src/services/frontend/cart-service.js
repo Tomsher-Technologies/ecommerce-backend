@@ -11,6 +11,8 @@ const product_config_1 = require("../../utils/config/product-config");
 const sub_domain_1 = require("../../utils/frontend/sub-domain");
 const language_model_1 = __importDefault(require("../../model/admin/setup/language-model"));
 const common_service_1 = __importDefault(require("./guest/common-service"));
+const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
+const cart_order_model_2 = __importDefault(require("../../model/frontend/cart-order-model"));
 class CartService {
     constructor() {
         this.cartLookup = {
@@ -28,6 +30,7 @@ class CartService {
     }
     async findCartPopulate(options) {
         const { query, skip, limit, sort, hostName } = (0, pagination_1.frontendPagination)(options.query || {}, options);
+        const { simple = '0' } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -36,7 +39,6 @@ class CartService {
         }
         const languageData = await language_model_1.default.find().exec();
         const languageId = await (0, sub_domain_1.getLanguageValueFromSubdomain)(hostName, languageData);
-        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         // productVariantAttributesLookup
         const modifiedPipeline = {
             $lookup: {
@@ -47,11 +49,20 @@ class CartService {
                     (0, wishlist_config_1.productVariantsLookupValues)("1"),
                     // attributePipeline,
                     { $unwind: { path: "$productDetails.variantDetails", preserveNullAndEmptyArrays: true } },
-                    wishlist_config_1.wishlistProductCategoryLookup,
-                    (0, wishlist_config_1.multilanguageFieldsLookup)(languageId),
-                    { $unwind: { path: "$productDetails.languageValues", preserveNullAndEmptyArrays: true } },
-                    wishlist_config_1.replaceProductLookupValues,
-                    { $unset: "productDetails.languageValues" },
+                    ...(simple === '0' ? [
+                        wishlist_config_1.wishlistProductCategoryLookup,
+                        (0, wishlist_config_1.multilanguageFieldsLookup)(languageId),
+                        {
+                            $unwind: {
+                                path: "$productDetails.languageValues",
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        wishlist_config_1.replaceProductLookupValues,
+                        {
+                            $unset: "productDetails.languageValues"
+                        }
+                    ] : [])
                 ]
             }
         };
@@ -60,6 +71,7 @@ class CartService {
             { $match: query },
             { $sort: finalSort },
         ];
+        const { pipeline: offerPipeline, getOfferList, offerApplied } = await common_service_1.default.findOffers(0, hostName);
         if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
             const offerCategory = (0, wishlist_config_1.wishlistOfferCategory)(getOfferList, offerApplied.category);
             modifiedPipeline.$lookup.pipeline.push(offerCategory);
@@ -104,6 +116,34 @@ class CartService {
     async createCart(data) {
         const cartData = await cart_order_model_1.default.create(data);
         return cartData;
+    }
+    async updateCartPrice(options) {
+        const { cartDetails, countryId, cartOrderProductUpdateOperations } = options;
+        if (cartOrderProductUpdateOperations.length > 0) {
+            await cart_order_product_model_1.default.bulkWrite(cartOrderProductUpdateOperations);
+            const [aggregationResult] = await cart_order_product_model_1.default.aggregate([
+                { $match: { cartId: cartDetails._id } },
+                {
+                    $group: {
+                        _id: "$cartId",
+                        totalProductAmount: { $sum: "$productAmount" },
+                        totalProductOriginalPrice: { $sum: "$productOriginalPrice" },
+                        totalDiscountAmount: { $sum: "$productDiscountAmount" },
+                    }
+                }
+            ]);
+            const taxDetails = await tax_model_1.default.findOne({ countryId: countryId });
+            if (aggregationResult) {
+                const { _id, ...restValues } = aggregationResult;
+                if (restValues) {
+                    const updatedCartOrderValues = await cart_order_model_2.default.findByIdAndUpdate(cartDetails._id, {
+                        ...restValues,
+                        totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount,
+                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * restValues.totalProductAmount).toFixed(2) : 0
+                    });
+                }
+            }
+        }
     }
     async findCartProduct(data) {
         const createdAttributeWithValues = await cart_order_product_model_1.default.findOne(data);
