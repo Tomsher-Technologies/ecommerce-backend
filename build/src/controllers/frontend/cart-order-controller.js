@@ -21,6 +21,7 @@ const cart_order_product_model_1 = __importDefault(require("../../model/frontend
 const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
 const cart_order_model_1 = __importDefault(require("../../model/frontend/cart-order-model"));
+const cart_utils_1 = require("../../utils/frontend/cart-utils");
 const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
     async findUserCart(req, res) {
@@ -124,9 +125,34 @@ class CartController extends base_controller_1.default {
             else {
                 query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] };
             }
+            await cart_order_product_model_1.default.find();
             const sort = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const cartDetails = await cart_service_1.default.findCartPopulate({
+                query,
+                hostName: req.get('origin'),
+                simple: '1'
+            });
+            if (Object.keys(cartDetails).length > 0) {
+                const variantIds = cartDetails.products.map((product) => product.variantId);
+                const productVariants = await product_variants_model_1.default.find({
+                    _id: { $in: variantIds }
+                });
+                const cartOrderProductUpdateOperations = [];
+                for (const variant of productVariants) {
+                    await (0, cart_utils_1.cartPriceUpdateValueSet)({
+                        cartDetails,
+                        variant,
+                        cartOrderProductUpdateOperations,
+                    });
+                }
+                await cart_service_1.default.updateCartPrice({
+                    cartDetails,
+                    countryId: country,
+                    cartOrderProductUpdateOperations
+                });
             }
             const cart = await cart_service_1.default.findCartPopulate({
                 page: parseInt(page_size),

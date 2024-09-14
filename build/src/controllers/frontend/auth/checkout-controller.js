@@ -63,7 +63,6 @@ class CheckoutController extends base_controller_1.default {
                 }
                 const uuid = req.header('User-Token');
                 const variantIds = cartDetails.products.map((product) => product.variantId);
-                // go to product variant model check 
                 const variantQuantities = cartDetails.products.reduce((calculateQuantity, product) => {
                     calculateQuantity[product.variantId.toString()] = product.quantity;
                     return calculateQuantity;
@@ -72,22 +71,42 @@ class CheckoutController extends base_controller_1.default {
                     _id: { $in: variantIds }
                 });
                 const errorArray = [];
+                const cartOrderProductUpdateOperations = [];
                 for (const variant of productVariants) {
                     const requiredQuantity = variantQuantities[variant._id.toString()];
-                    var productTitle;
+                    let productTitle;
                     if (variant.extraProductTitle) {
                         productTitle = variant.extraProductTitle;
                     }
                     else {
-                        productTitle = cartDetails.products.find((product) => product.variantId === variant._id)?.productDetails?.productTitle;
+                        const matchingProduct = cartDetails.products.find((product) => product.variantId === variant._id);
+                        productTitle = matchingProduct?.productDetails?.productTitle;
                     }
                     if (variant.quantity == 0) {
-                        errorArray.push({ productTitle: productTitle, message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.' });
+                        errorArray.push({
+                            productTitle: productTitle,
+                            message: 'The product in your cart is now out of stock. Please remove it to proceed with your purchase or choose a different item.'
+                        });
                     }
                     else if (variant.quantity < requiredQuantity) {
-                        errorArray.push({ productTitle: productTitle, message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.' });
+                        errorArray.push({
+                            productTitle: productTitle,
+                            message: 'The quantity of the product in your cart exceeds the available stock. Please update the quantity.'
+                        });
                     }
+                    await (0, cart_utils_1.cartPriceUpdateValueSet)({
+                        cartDetails,
+                        variant,
+                        cartOrderProductUpdateOperations,
+                        errorArray,
+                        productTitle,
+                    });
                 }
+                await cart_service_1.default.updateCartPrice({
+                    cartDetails,
+                    countryId: countryData._id,
+                    cartOrderProductUpdateOperations
+                });
                 if (errorArray.length > 0) {
                     return controller.sendErrorResponse(res, 200, {
                         validation: errorArray,

@@ -21,6 +21,7 @@ import CartOrderProductsModel from '../../model/frontend/cart-order-product-mode
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import TaxsModel from '../../model/admin/setup/tax-model';
 import CartOrdersModel from '../../model/frontend/cart-order-model';
+import { cartPriceUpdateValueSet } from '../../utils/frontend/cart-utils';
 
 const controller = new BaseController();
 
@@ -132,10 +133,35 @@ class CartController extends BaseController {
             } else {
                 query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] }
             }
-
+            await CartOrderProductsModel.find()
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const cartDetails: any = await CartService.findCartPopulate({
+                query,
+                hostName: req.get('origin'),
+                simple: '1'
+            });
+
+            if (Object.keys(cartDetails).length > 0) {
+                const variantIds = cartDetails.products.map((product: any) => product.variantId);
+                const productVariants = await ProductVariantsModel.find({
+                    _id: { $in: variantIds }
+                });
+                const cartOrderProductUpdateOperations: any[] = [];
+                for (const variant of productVariants) {
+                    await cartPriceUpdateValueSet({ // price check 
+                        cartDetails,
+                        variant,
+                        cartOrderProductUpdateOperations,
+                    });
+                }
+                await CartService.updateCartPrice({ // price updation
+                    cartDetails,
+                    countryId: country,
+                    cartOrderProductUpdateOperations
+                });
             }
             const cart: any = await CartService.findCartPopulate({
                 page: parseInt(page_size as string),
