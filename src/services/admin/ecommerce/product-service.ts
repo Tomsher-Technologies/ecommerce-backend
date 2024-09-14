@@ -5,7 +5,7 @@ import { ProductsProps } from '../../../utils/types/products';
 
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductGalleryImagesModel, { ProductGalleryImagesProps } from '../../../model/admin/ecommerce/product/product-gallery-images-model';
-import { addFieldsProductSeo, addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandLookupVariant, brandObject, imageLookup, productCategoryLookup, productCategoryLookupVariantWise, productLookup, productSeoLookup, productSeoObject, productSpecificationAdminLookup, productSpecificationsLookup, productVariantAttributesAdminLookup, specificationsLookup, variantImageGalleryLookup, variantLookup } from '../../../utils/config/product-config';
+import { addFieldsProductSeo, addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandLookupVariant, brandObject, imageLookup, imageLookupVariantWise, productCategoryLookup, productCategoryLookupVariantWise, productLookup, productSeoLookup, productSeoObject, productSpecificationAdminLookup, productSpecificationsLookup, productVariantAttributesAdminLookup, specificationsLookup, variantImageGalleryLookup, variantLookup } from '../../../utils/config/product-config';
 import { seoLookup } from '../../../utils/config/common-config';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { collections } from '../../../constants/collections';
@@ -257,6 +257,8 @@ class ProductsService {
         const getAttribute = options.getAttribute
         const getSpecification = options.getSpecification
         const getCountry = options.getCountry
+        const getProductGalleryImage = options.getProductGalleryImage
+        const getGalleryImage = options.getGalleryImage
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -290,6 +292,15 @@ class ProductsService {
         if (getSpecification === '1') {
             pipeline.push(...productSpecificationAdminLookup, addFieldsProductSpecification);
         }
+
+        if (getProductGalleryImage === '1') {
+            pipeline.push(imageLookupVariantWise);
+        }
+
+        if (getGalleryImage === '1') {
+            pipeline.push(variantImageGalleryLookup);
+        }
+
         pipeline.push(
             {
                 $project: {
@@ -312,7 +323,8 @@ class ProductsService {
                     productDetails: 1,
                     country: 1,
                     productVariantAttributes: 1,
-                    productSpecification: 1
+                    productSpecification: 1,
+                    variantImageGallery: 1,
                 }
             })
         // pipeline.push(productLookup)

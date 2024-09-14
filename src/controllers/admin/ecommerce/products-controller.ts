@@ -1640,7 +1640,7 @@ class ProductsController extends BaseController {
 
     async variantProductList(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '' } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '', getProductGalleryImage = '', getGalleryImage = '' } = req.query as ProductsQueryParams;
 
             let query: any = { cartStatus: { $ne: "1" } };
 
@@ -1729,7 +1729,9 @@ class ProductsController extends BaseController {
                 getBrand,
                 getAttribute,
                 getSpecification,
-                getCountry
+                getCountry,
+                getGalleryImage,
+                getProductGalleryImage
             });
 
             controller.sendSuccessResponse(res, {
