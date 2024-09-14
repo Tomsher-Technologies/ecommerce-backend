@@ -14,5 +14,4 @@ router.get('/', (0, admin_user_permission_roll_middleware_1.default)({ permissio
 router.get('/dashboard-analytics', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.analytics, readOnly: 1 }), dashboard_controller_1.default.dashboardAnalytics);
 router.get('/dashboard-customers', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.analytics, readOnly: 1 }), dashboard_controller_1.default.dashboardCustomers);
 router.get('/top-selling-products', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.analytics, readOnly: 1 }), dashboard_controller_1.default.dashboardTopSellingProducts);
-router.get('/out-of-stock-products', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.dashboards.analytics, readOnly: 1 }), dashboard_controller_1.default.outOfStockProducts);
 exports.default = router;

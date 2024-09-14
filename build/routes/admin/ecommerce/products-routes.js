@@ -14,6 +14,7 @@ const products_controller_1 = __importDefault(require("../../../src/controllers/
 const router = express_1.default.Router();
 const { upload } = (0, file_uploads_1.configureMulter)('product', ['productImage',]);
 const { uploadExcel } = (0, file_uploads_1.configureMulterExcel)('product/excel', ['productExcel',]);
+router.post('/import-language-excel', uploadExcel.single('productExcel'), products_controller_1.default.importLanguageExcel);
 router.use(auth_middleware_1.default);
 router.get('/', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, readOnly: 1 }), products_controller_1.default.findAll);
 router.get('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, readOnly: 1 }), products_controller_1.default.findOne);
@@ -24,6 +25,7 @@ router.post('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permi
 router.post('/website/update-website-priority', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, writeOnly: 1 }), response_status_1.logResponseStatus, products_controller_1.default.updateWebsitePriority);
 router.delete('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products }), products_controller_1.default.destroy);
 router.post('/status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, writeOnly: 1 }), products_controller_1.default.statusChange);
+router.get('/variants/product-list', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, readOnly: 1 }), products_controller_1.default.variantProductList);
 router.use((err, req, res, next) => {
     // Check if the error is from multer
     // console.log('req', req);

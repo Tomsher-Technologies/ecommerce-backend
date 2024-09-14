@@ -34,14 +34,28 @@ class ProductReportService {
             },
             {
                 $group: {
-                    _id: "$products.productId",
+                    _id: "$products.variantId",
                     totalQuantity: { $sum: "$products.quantity" }
                 }
             },
             {
                 $lookup: {
-                    from: 'products',
+                    from: 'productvariants',
                     localField: '_id',
+                    foreignField: '_id',
+                    as: 'variantDetails'
+                }
+            },
+            {
+                $unwind: {
+                    path: "$variantDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'variantDetails.productId',
                     foreignField: '_id',
                     as: 'productDetails'
                 }
@@ -53,10 +67,26 @@ class ProductReportService {
                 }
             },
             {
+                $lookup: {
+                    from: 'countries',
+                    localField: 'variantDetails.countryId',
+                    foreignField: '_id',
+                    as: 'variantDetails.countryDetails'
+                }
+            },
+            {
+                $unwind: {
+                    path: "$variantDetails.countryDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
                 $project: {
                     _id: 0,
+                    // variantId: "$_id",
                     totalQuantity: 1,
-                    productDetails: 1
+                    variantDetails: "$variantDetails",
+                    productDetails: "$productDetails",
                 }
             },
             { $sort: finalSort },

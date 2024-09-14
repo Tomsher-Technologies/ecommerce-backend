@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 const xlsx = require('xlsx');
-import { capitalizeWords, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { capitalizeWords, dateConvertPm, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
 import { productStatusSchema, productSchema, updateWebsitePrioritySchema, productExcelSchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -36,6 +36,10 @@ import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/pro
 import ProductSpecificationModel from '../../../model/admin/ecommerce/product/product-specification-model';
 import { exportProductExcel } from '../../../utils/admin/excel/reports';
 import SeoPageModel from '../../../model/admin/seo-page-model';
+import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fieleds-model';
+import LanguagesModel from '../../../model/admin/setup/language-model';
+import { excelUpload } from '../../../utils/admin/excel/excel-upload';
+import mongoose from 'mongoose';
 
 const controller = new BaseController();
 
@@ -1631,6 +1635,236 @@ class ProductsController extends BaseController {
             return controller.sendErrorResponse(res, 500, {
                 message: error.message || 'Some error occurred while updating Product'
             }, req);
+        }
+    }
+
+    async variantProductList(req: Request, res: Response): Promise<void> {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '' } = req.query as ProductsQueryParams;
+
+            let query: any = { cartStatus: { $ne: "1" } };
+
+            const userData = await res.locals.user;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
+            }
+            const sort: any = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+
+            if (quantity === '0') {
+                query.quantity = Number(quantity)
+            } else if (quantity === '1') {
+                query.quantity = { $ne: 0 }
+            }
+
+            if (variantId) {
+                query._id = new mongoose.Types.ObjectId(variantId)
+            }
+
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { extraProductTitle: keywordRegex },
+                        { slug: keywordRegex },
+                        { variantSku: keywordRegex },
+                        { 'productDetails.productTitle': keywordRegex },
+                        { 'productDetails.sku': keywordRegex },
+                        { 'productDetails.slug': keywordRegex },
+                        { 'productDetails.brand.slug': keywordRegex },
+                        { 'productDetails.brand.brandTitle': keywordRegex },
+                        { 'productDetails.productCategory.category.slug': keywordRegex },
+                        { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
+                    ],
+                    ...query
+                } as any;
+            }
+
+            if (fromDate || endDate) {
+                if (fromDate) {
+                    query = {
+                        ...query,
+                        createdAt: {
+                            $gte: new Date(fromDate)
+                        }
+                    }
+                }
+                if (endDate) {
+                    query = {
+                        ...query,
+                        createdAt: {
+                            $lte: dateConvertPm(endDate)
+                        }
+                    }
+                }
+
+            }
+
+
+            const products: any = await ProductsService.variantProductList({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
+                query,
+                sort,
+                getCategory,
+                getBrand,
+                getAttribute,
+                getSpecification,
+                getCountry
+            });
+
+            controller.sendSuccessResponse(res, {
+                requestedData: products,
+                message: 'Success!'
+            }, 200);
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
+
+    async importLanguageExcel(req: Request, res: Response): Promise<void> {
+        const validation: any = []
+        var excelRowIndex = 2
+
+        if (req && req.file && req.file?.filename) {
+
+            const productLanguageExcelJsonData: any = await excelUpload(req)
+
+            if (productLanguageExcelJsonData && productLanguageExcelJsonData?.length > 0) {
+                let countryData: any
+                let countryId
+                let languageId
+                let isExistVariant: any
+                for (let productLanguageData of productLanguageExcelJsonData) {
+
+                    const variantData = {
+                        variantSku: productLanguageData.SKU,
+                        extraProductTitle: productLanguageData.Product_Title,
+                        discription: productLanguageData.Description,
+                        longDescription: productLanguageData.Long_Description,
+                        metaTitle: productLanguageData.Meta_Title,
+                        metaKeywords: productLanguageData.Meta_Keywords,
+                        metaDescription: productLanguageData.Meta_Description,
+                        ogTitle: productLanguageData.OG_Title,
+                        ogDescription: productLanguageData.OG_Description,
+                        twitterTitle: productLanguageData.Twitter_Title,
+                        twitterDescription: productLanguageData.Twitter_Description,
+                    }
+                    if (productLanguageData.Country) {
+                        countryData = await CountryService.findCountryId({ $or: [{ countryTitle: productLanguageData.Country }, { countryShortTitle: productLanguageData.Country }] })
+                        if (countryData) {
+                            countryId = countryData._id
+                        }
+                    }
+
+                    if (productLanguageData.Language) {
+                        const LanguageData: any = await LanguagesModel.findOne({ $or: [{ languageTitle: productLanguageData.Language }, { languageCode: productLanguageData.Language }] })
+                        if (LanguageData) {
+                            languageId = LanguageData?._id
+                        }
+                    }
+                    const product = await ProductsModel.findOne({ $and: [{ sku: productLanguageData.SKU }] }).select('_id');
+
+                    const variant = await ProductVariantsModel.findOne({ $and: [{ variantSku: productLanguageData.SKU }, { countryId: countryId }] }).select('productId');
+
+                    if (variant && variant.productId) {
+                        const isExist = await MultiLanguageFieledsModel.findOne({ $and: [{ sourceId: variant.productId }, { languageId: languageId }] })
+                        if (isExist) {
+                            isExistVariant = await MultiLanguageFieledsModel.findOne({
+                                'languageValues.variants.productVariants.variantSku': productLanguageData.SKU
+                            }, { 'languageValues.variants.productVariants': 1, _id: 0 });
+
+                            const dynamicVariantSku = productLanguageData.SKU;
+                            if (isExistVariant && isExistVariant.languageValues?.variants) {
+                                const variantIndex = isExistVariant.languageValues.variants.findIndex((variant: any) =>
+                                    variant.productVariants.some((pv: any) => pv.variantSku === dynamicVariantSku)
+                                );
+
+                                if (variantIndex !== -1) {
+                                    const productVariantIndex = isExistVariant.languageValues.variants[variantIndex].productVariants
+                                        .findIndex((variant: any) => variant.variantSku === dynamicVariantSku);
+
+                                    if (productVariantIndex !== -1) {
+                                        isExistVariant.languageValues.variants[variantIndex].productVariants[productVariantIndex] = variantData;
+
+                                    } else {
+                                        validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "Product variant not found with the given SKU., row :" + excelRowIndex })
+                                    }
+                                } else {
+                                    validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "Variant not found., row :" + excelRowIndex })
+                                }
+                            } else {
+                                validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "isExistVariant or variants are undefined., row :" + excelRowIndex })
+                                // console.log('isExistVariant or variants are undefined.');
+                            }
+
+                            const update = await MultiLanguageFieledsModel.findOneAndUpdate(
+                                { _id: isExist._id },
+                                { $set: { 'languageValues.variants.0': isExistVariant.languageValues.variants[0] } },
+                                { new: true }
+                            );
+                        }
+
+                        else {
+                            const languageValueData = {
+                                isExcel: true,
+                                languageId: languageId,
+                                source: multiLanguageSources.ecommerce.products,
+                                sourceId: variant?.productId,
+                                createdAt: new Date(),
+                                languageValues: {
+                                    productTitle: productLanguageData.Product_Title,
+                                    discription: productLanguageData.Description,
+                                    longDescription: productLanguageData.Long_Description,
+                                    metaTitle: productLanguageData.Meta_Title,
+                                    metaKeywords: productLanguageData.Meta_Keywords,
+                                    metaDescription: productLanguageData.Meta_Description,
+                                    ogTitle: productLanguageData.OG_Title,
+                                    ogDescription: productLanguageData.OG_Description,
+                                    twitterTitle: productLanguageData.Twitter_Title,
+                                    twitterDescription: productLanguageData.Twitter_Description,
+                                    variants: [{
+                                        productVariants: [{
+                                            variantSku: productLanguageData.SKU,
+                                            extraProductTitle: productLanguageData.Product_Title,
+                                            discription: productLanguageData.Description,
+                                            longDescription: productLanguageData.Long_Description,
+                                            metaTitle: productLanguageData.Meta_Title,
+                                            metaKeywords: productLanguageData.Meta_Keywords,
+                                            metaDescription: productLanguageData.Meta_Description,
+                                            ogTitle: productLanguageData.OG_Title,
+                                            ogDescription: productLanguageData.OG_Description,
+                                            twitterTitle: productLanguageData.Twitter_Title,
+                                            twitterDescription: productLanguageData.Twitter_Description,
+                                        }]
+                                    }]
+
+                                }
+                            }
+                            const create = await MultiLanguageFieledsModel.create(languageValueData)
+
+                        }
+                    } else {
+                        validation.push({ productTitle: productLanguageData.Product_Title, SKU: productLanguageData.SKU, message: "Product not Found, row :" + excelRowIndex })
+                    }
+                }
+
+                return controller.sendSuccessResponse(res, {
+                    validation: validation,
+                    message: `Product excel upload successfully completed. ${validation.length > 0 ? 'Some Product updation are not completed' : ''}`
+                }, 200);
+
+            } else {
+                return controller.sendErrorResponse(res, 200, { message: "Product row is empty! Please add atleast one row." });
+            }
+        } else {
+            return controller.sendErrorResponse(res, 200, { message: "Please upload file!" });
         }
     }
     // async statusChangeProductVariant(req: Request, res: Response): Promise<void> {

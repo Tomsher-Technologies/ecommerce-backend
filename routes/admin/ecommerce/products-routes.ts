@@ -14,6 +14,7 @@ const router: Router = express.Router();
 const { upload } = configureMulter('product', ['productImage',]);
 const { uploadExcel } = configureMulterExcel('product/excel', ['productExcel',]);
 
+router.post('/import-language-excel', uploadExcel.single('productExcel'), ProductsController.importLanguageExcel);
 router.use(authMiddleware);
 
 router.get('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.findAll);
@@ -25,6 +26,7 @@ router.post('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks
 router.post('/website/update-website-priority', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), logResponseStatus, ProductsController.updateWebsitePriority);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products }), ProductsController.destroy);
 router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), ProductsController.statusChange);
+router.get('/variants/product-list', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, readOnly: 1 }), ProductsController.variantProductList);
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     // Check if the error is from multer
