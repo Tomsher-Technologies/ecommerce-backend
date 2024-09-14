@@ -1640,7 +1640,7 @@ class ProductsController extends BaseController {
 
     async variantProductList(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '' } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '' } = req.query as ProductsQueryParams;
 
             let query: any = { cartStatus: { $ne: "1" } };
 
@@ -1677,7 +1677,7 @@ class ProductsController extends BaseController {
                         { 'productDetails.sku': keywordRegex },
                         { 'productDetails.slug': keywordRegex },
                         { 'productDetails.brand.slug': keywordRegex },
-                        { 'productDetails.brand.brandTitle': keywordRegex },
+                        { '.brandTitle': keywordRegex },
                         { 'productDetails.productCategory.category.slug': keywordRegex },
                         { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
                     ],
@@ -1685,6 +1685,20 @@ class ProductsController extends BaseController {
                 } as any;
             }
 
+
+            if (categoryId) {
+                query = {
+                    query,
+                    'productDetails.productCategory.category._id': new mongoose.Types.ObjectId(categoryId)
+                }
+            }
+
+            if (brandId) {
+                query = {
+                    ...query,
+                    'productDetails.brand._id': new mongoose.Types.ObjectId(brandId)
+                }
+            }
             if (fromDate || endDate) {
                 if (fromDate) {
                     query = {
