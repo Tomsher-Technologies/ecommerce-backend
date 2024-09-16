@@ -16,6 +16,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import CouponModel from '../../../model/admin/marketing/coupon-model';
+import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 
 const controller = new BaseController();
 
@@ -282,7 +283,7 @@ class CouponsController extends BaseController {
         let excelRowIndex = 2;
 
         if (req && req.file && req.file?.filename) {
-            const couponExcelJsonData: any = await excelUpload(req);
+            const couponExcelJsonData: any = await excelUpload(req, '../../../../public/uploads/coupon/excel/');
             const couponOperations: any = [];
 
             if (couponExcelJsonData && couponExcelJsonData.length > 0) {
@@ -298,22 +299,32 @@ class CouponsController extends BaseController {
                     }
 
                     function formatDateToISO(date: Date, time: string = "00:00:00.000"): string {
+                        if (isNaN(date.getTime())) { // Check if the date is invalid
+                            throw new Error('Invalid date value');
+                        }
                         return date.toISOString().split('T')[0] + 'T' + time + '+00:00';
                     }
 
-                    const startDateFromExcel = excelSerialToDate(couponData.Start_Date);
-                    const endDateFromExcel = excelSerialToDate(couponData.End_Date);
+                    let startDateFromExcel: Date;
+                    let endDateFromExcel: Date;
+
+                    try {
+                        startDateFromExcel = excelSerialToDate(couponData.Start_Date);
+                        endDateFromExcel = excelSerialToDate(couponData.End_Date);
+                    } catch (error) {
+                        validation.push(`Invalid date value (row: ${excelRowIndex})`);
+                        continue;
+                    }
 
                     const isoStartDateString = formatDateToISO(startDateFromExcel, "20:00:00.000");
                     const isoEndDateString = formatDateToISO(endDateFromExcel, "20:00:00.000");
 
-                    let Coupon_Code = couponData.Coupon_Code ? couponData.Coupon_Code.trim() : 'Unknown SKU';
+                    let Coupon_Code = couponData.Coupon_Code ? couponData.Coupon_Code.trim() : 'Unknown Coupon_Code';
 
                     if (!couponData.Country) validation.push(`Country is required (row: ${excelRowIndex})`);
                     if (!Coupon_Code) validation.push(`Coupon_Code is required (Country: ${couponData.Country})`);
 
                     if (couponData.Start_Date !== undefined && couponData.End_Date !== undefined) {
-
                         if (isoStartDateString > isoEndDateString) {
                             validation.push(`End_Date should not be earlier than Start_Date (row: ${excelRowIndex})`);
                         }
@@ -331,22 +342,34 @@ class CouponsController extends BaseController {
 
                     if (couponData.Coupon_Type === couponTypes.forProduct) {
                         for (let field of fieldArray) {
-                            let productData = await ProductsModel.findOne({ sku: field }).select('_id');
-                            if (productData) couponAppliedValue.push(productData._id);
+                            let productData = await ProductsModel.findOne({ sku: field }).select('_id') || await ProductVariantsModel.findOne({ variantSku: field }).select('_id')
+                            if (productData) {
+                                couponAppliedValue.push(productData._id);
+                            } else {
+                                validation.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                            }
                         }
                     }
 
                     if (couponData.Coupon_Type === couponTypes.forBrand) {
                         for (let field of fieldArray) {
                             let brandData = await BrandsModel.findOne({ brandTitle: field }).select('_id');
-                            if (brandData) couponAppliedValue.push(brandData._id);
+                            if (brandData) {
+                                couponAppliedValue.push(brandData._id);
+                            } else {
+                                validation.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                            }
                         }
                     }
 
                     if (couponData.Coupon_Type === couponTypes.forCategory) {
                         for (let field of fieldArray) {
                             let categoryData = await CategoryModel.findOne({ categoryTitle: field }).select('_id');
-                            if (categoryData) couponAppliedValue.push(categoryData._id);
+                            if (categoryData) {
+                                couponAppliedValue.push(categoryData._id);
+                            } else {
+                                validation.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                            }
                         }
                     }
 
@@ -429,7 +452,6 @@ class CouponsController extends BaseController {
             return controller.sendErrorResponse(res, 200, { message: "Please upload a file!" });
         }
     }
-
 
 }
 
