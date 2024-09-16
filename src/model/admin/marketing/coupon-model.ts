@@ -13,7 +13,8 @@ export interface CouponProps extends Document {
     discountMaxRedeemAmount?: string;
     couponUsage?: any;
     enableFreeShipping?: boolean;
-    discountDateRange?:  [Date, Date];
+    discountDateRange?: [Date, Date];
+    isExcel: Boolean;
     status: string;
     createdBy?: string;
     createdAt?: Date;
@@ -24,7 +25,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',  
+        ref: 'Countries',
     },
     couponCode: {
         type: String,
@@ -102,7 +103,11 @@ const couponSchema: Schema<CouponProps> = new Schema({
     },
     createdBy: {
         type: String,
-        required: true
+        // required: true
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,

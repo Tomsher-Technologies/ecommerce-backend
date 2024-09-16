@@ -7,9 +7,11 @@ import userPermissionMiddleware from '../../../middleware/admin/admin-user-permi
 import { permissionBlocks } from '../../../src/constants/permission-blocks';
 
 import CouponsController from '../../../src/controllers/admin/marketing/coupons-controller';
+import { configureMulterExcel } from '../../../src/utils/file-uploads';
 
 const router: Router = express.Router();
 
+const { uploadExcel } = configureMulterExcel('coupon/excel', ['couponExcel',]);
 
 router.use(authMiddleware);
 
@@ -19,6 +21,7 @@ router.post('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 
 router.post('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.update);
 router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons }), CouponsController.destroy);
+router.post('/import-excel/coupon', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('couponExcel'), CouponsController.CouponExcelUpload);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
