@@ -1378,7 +1378,7 @@ class ProductsController extends BaseController {
                         if (updatedProductData.variants) {
                             const newVariant = await ProductVariantService.variantService(updatedProduct, updatedProductData.variants, userData);
                         }
-                        
+
                         if (updatedProductData.metaDescription || updatedProductData.metaKeywords || updatedProductData.metaTitle || updatedProductData.ogDescription || updatedProductData.ogTitle || updatedProductData.twitterDescription || updatedProductData.twitterTitle) {
                             const seoData = {
                                 metaDescription: updatedProductData.metaDescription,
@@ -1763,7 +1763,7 @@ class ProductsController extends BaseController {
 
         if (req && req.file && req.file?.filename) {
 
-            const productLanguageExcelJsonData: any = await excelUpload(req)
+            const productLanguageExcelJsonData: any = await excelUpload(req, '../../../../public/uploads/product/excel/')
 
             if (productLanguageExcelJsonData && productLanguageExcelJsonData?.length > 0) {
                 let countryData: any
