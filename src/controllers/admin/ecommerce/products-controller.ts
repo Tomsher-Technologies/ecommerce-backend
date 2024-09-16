@@ -40,6 +40,7 @@ import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fiele
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { excelUpload } from '../../../utils/admin/excel/excel-upload';
 import mongoose from 'mongoose';
+import seoPageService from '../../../services/admin/seo-page-service';
 
 const controller = new BaseController();
 
@@ -1377,6 +1378,19 @@ class ProductsController extends BaseController {
                         if (updatedProductData.variants) {
                             const newVariant = await ProductVariantService.variantService(updatedProduct, updatedProductData.variants, userData);
                         }
+                        
+                        if (updatedProductData.metaDescription || updatedProductData.metaKeywords || updatedProductData.metaTitle || updatedProductData.ogDescription || updatedProductData.ogTitle || updatedProductData.twitterDescription || updatedProductData.twitterTitle) {
+                            const seoData = {
+                                metaDescription: updatedProductData.metaDescription,
+                                metaKeywords: updatedProductData.metaKeywords,
+                                metaTitle: updatedProductData.metaTitle,
+                                ogDescription: updatedProductData.ogDescription,
+                                ogTitle: updatedProductData.ogTitle,
+                                twitterDescription: updatedProductData.twitterDescription,
+                                twitterTitle: updatedProductData.twitterTitle
+                            };
+                            const seo = await seoPageService.update(updatedProductData.productSeoId, seoData);
+                        }
                         let newLanguageValues: any = []
 
                         // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
@@ -1716,7 +1730,6 @@ class ProductsController extends BaseController {
                         }
                     }
                 }
-
             }
 
 
