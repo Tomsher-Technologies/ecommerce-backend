@@ -8,6 +8,7 @@ const router: Router = express.Router();
 
 router.use(authMiddleware);
 
+router.get('/orders-list', SapController.getOrderDetails);
 router.post('/product-inventory-update', SapController.productPriceUpdate);
 
 export default router;

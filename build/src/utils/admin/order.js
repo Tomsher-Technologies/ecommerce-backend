@@ -70,7 +70,7 @@ const findOrderStatusDateCheck = (orderStatus) => {
             statusAt = 'partiallyRefundedStatusAt';
             break;
         default:
-            statusAt = '';
+            statusAt = 'orderStatusAt';
             break;
     }
     return statusAt;

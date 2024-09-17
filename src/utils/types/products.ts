@@ -1,6 +1,7 @@
 import { Document, Schema } from "mongoose";
 
 export interface ProductsProps extends Document {
+    prodcutCode: number;
     productTitle: string;
     slug: string;
     showOrder: Number;

@@ -1,8 +1,14 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, CallbackError } from 'mongoose';
 
 import { ProductsProps } from '../../../utils/types/products';
+import SequenceModel from '../../sequence-model';
 
 const productsSchema: Schema<ProductsProps> = new Schema({
+    prodcutCode: {
+        type: Number,
+        unique: true,
+        required: false, 
+    },
     productTitle: {
         type: String,
         required: true,
@@ -151,6 +157,30 @@ const productsSchema: Schema<ProductsProps> = new Schema({
         default: Date.now
     }
 });
+
+productsSchema.pre<ProductsProps>('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await SequenceModel.findOneAndUpdate(
+                { _id: 'productSequence' },
+                { $inc: { sequenceValue: 1 } },
+                { new: true, upsert: true }
+            );
+
+            if (sequenceDoc) {
+                this.prodcutCode = sequenceDoc.sequenceValue;
+                next();
+            } else {
+                throw new Error('Failed to generate product code.');
+            }
+        } catch (err) {
+            next(err as CallbackError);
+        }
+    } else {
+        next();
+    }
+});
+
 
 const ProductsModel = mongoose.model<ProductsProps>('Products', productsSchema);
 

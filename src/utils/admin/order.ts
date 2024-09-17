@@ -68,7 +68,7 @@ export const findOrderStatusDateCheck = (orderStatus: any) => {
             break;
 
         default:
-            statusAt = '';
+            statusAt = 'orderStatusAt';
             break;
     }
     return statusAt

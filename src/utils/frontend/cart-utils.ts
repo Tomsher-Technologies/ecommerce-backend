@@ -4,7 +4,7 @@ import { PaymentMethodProps } from "../../model/admin/setup/payment-methods-mode
 import { CustomerAddressProps } from "../../model/frontend/customer-address-model"
 import { formatAmount } from "../helpers"
 
-export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
+export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { orderCode: number; totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
 
     return {
         "amount": cartData.totalAmount,
@@ -18,7 +18,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { tota
         },
         "reference": {
             "transaction": cartData._id,
-            "order": cartData._id
+            "order": cartData?.orderCode || 0
         },
         "receipt": {
             "email": true,
@@ -49,6 +49,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { tota
 
 export const tabbyPaymentGatwayDefaultValues = (countryData: any,
     cartData: {
+        orderCode: number,
         totalAmount: number,
         totalTaxAmount: number,
         totalDiscountAmount: number,
@@ -221,6 +222,7 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
 export const tamaraPaymentGatwayDefaultValues = (
     countryData: any,
     cartData: {
+        orderCode: number,
         totalAmount: number,
         totalTaxAmount: number,
         totalDiscountAmount: number,
@@ -248,7 +250,7 @@ export const tamaraPaymentGatwayDefaultValues = (
             "currency": countryData.currencyCode
         },
         "order_reference_id": cartData._id,
-        "order_number": "",
+        "order_number": cartData?.orderCode || 0,
         "discount": {
             "amount": {
                 "amount": cartData.totalDiscountAmount,

@@ -10,7 +10,9 @@ const auth_middleware_1 = __importDefault(require("../../../middleware/admin/aut
 const admin_user_permission_roll_middleware_1 = __importDefault(require("../../../middleware/admin/admin-user-permission-roll-middleware"));
 const permission_blocks_1 = require("../../../src/constants/permission-blocks");
 const coupons_controller_1 = __importDefault(require("../../../src/controllers/admin/marketing/coupons-controller"));
+const file_uploads_1 = require("../../../src/utils/file-uploads");
 const router = express_1.default.Router();
+const { uploadExcel } = (0, file_uploads_1.configureMulterExcel)('coupon/excel', ['couponExcel',]);
 router.use(auth_middleware_1.default);
 router.get('/', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, readOnly: 1 }), coupons_controller_1.default.findAll);
 router.get('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, readOnly: 1 }), coupons_controller_1.default.findOne);
@@ -18,6 +20,7 @@ router.post('/', response_status_1.logResponseStatus, (0, admin_user_permission_
 router.post('/:id', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, writeOnly: 1 }), coupons_controller_1.default.update);
 router.post('/status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, writeOnly: 1 }), coupons_controller_1.default.statusChange);
 router.delete('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons }), coupons_controller_1.default.destroy);
+router.post('/import-excel/coupon', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('couponExcel'), coupons_controller_1.default.CouponExcelUpload);
 router.use((err, req, res, next) => {
     // Check if the error is from multer
     if (err instanceof multer_1.default.MulterError) {

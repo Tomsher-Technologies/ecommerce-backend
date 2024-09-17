@@ -128,6 +128,7 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 200, { message: 'Cart not found!' });
                 }
                 let cartUpdate: any = {
+                    orderCode: cartDetails?.orderCode || 0,
                     orderUuid: uuid,
                     shippingId: shippingId || null,
                     billingId: billingId || null,

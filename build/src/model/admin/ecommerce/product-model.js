@@ -22,9 +22,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const sequence_model_1 = __importDefault(require("../../sequence-model"));
 const productsSchema = new mongoose_1.Schema({
+    prodcutCode: {
+        type: Number,
+        unique: true,
+        required: false,
+    },
     productTitle: {
         type: String,
         required: true,
@@ -171,6 +180,26 @@ const productsSchema = new mongoose_1.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
+    }
+});
+productsSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await sequence_model_1.default.findOneAndUpdate({ _id: 'productSequence' }, { $inc: { sequenceValue: 1 } }, { new: true, upsert: true });
+            if (sequenceDoc) {
+                this.prodcutCode = sequenceDoc.sequenceValue;
+                next();
+            }
+            else {
+                throw new Error('Failed to generate product code.');
+            }
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    else {
+        next();
     }
 });
 const ProductsModel = mongoose_1.default.model('Products', productsSchema);

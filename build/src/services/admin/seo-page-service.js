@@ -156,8 +156,8 @@ class SeoPageService {
         if (updatedSeoPage) {
             const pipeline = [
                 { $match: { _id: updatedSeoPage._id } },
-                this.lookup,
-                this.project
+                // this.lookup,
+                // this.project
             ];
             const updatedSeoPageWithValues = await seo_page_model_1.default.aggregate(pipeline);
             return updatedSeoPageWithValues[0];

@@ -22,9 +22,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const collections_1 = require("../../constants/collections");
+const sequence_model_1 = __importDefault(require("../sequence-model"));
 const cartOrderSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -48,6 +52,11 @@ const cartOrderSchema = new mongoose_1.Schema({
             },
             message: 'orderId must be unique'
         }
+    },
+    orderCode: {
+        type: Number,
+        unique: true,
+        required: false,
     },
     couponId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -258,6 +267,26 @@ const cartOrderSchema = new mongoose_1.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
+    }
+});
+cartOrderSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await sequence_model_1.default.findOneAndUpdate({ _id: 'orderSequence' }, { $inc: { sequenceValue: 1 } }, { new: true, upsert: true });
+            if (sequenceDoc) {
+                this.orderCode = sequenceDoc.sequenceValue;
+                next();
+            }
+            else {
+                throw new Error('Failed to generate order code.');
+            }
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    else {
+        next();
     }
 });
 const CartOrdersModel = mongoose_1.default.model(`${collections_1.collections.cart.cartorders}`, cartOrderSchema);

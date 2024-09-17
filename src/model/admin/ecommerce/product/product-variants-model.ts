@@ -1,8 +1,9 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { deleteFunction } from '../../../../utils/admin/products';
+import mongoose, { Schema, Document, CallbackError } from 'mongoose';
 import { collections } from '../../../../constants/collections';
+import SequenceModel from '../../../sequence-model';
 
 export interface ProductVariantsProps extends Document {
+    itemCode: Number;
     productId: Schema.Types.ObjectId;
     countryId: Schema.Types.ObjectId;
     slug: string;
@@ -29,6 +30,11 @@ export interface ProductVariantsProps extends Document {
 }
 
 const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
+    itemCode: {
+        type: Number,
+        unique: true,
+        required: false, 
+    },
     productId: {
         type: Schema.Types.ObjectId,
         ref: `${collections.ecommerce.products.products}`,
@@ -137,6 +143,30 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         default: Date.now
     }
 });
+
+productVariantsSchema.pre<ProductVariantsProps>('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await SequenceModel.findOneAndUpdate(
+                { _id: 'variantSequence' },
+                { $inc: { sequenceValue: 1 } },
+                { new: true, upsert: true }
+            );
+
+            if (sequenceDoc) {
+                this.itemCode = sequenceDoc.sequenceValue;
+                next();
+            } else {
+                throw new Error('Failed to generate item code.');
+            }
+        } catch (err) {
+            next(err as CallbackError);
+        }
+    } else {
+        next();
+    }
+});
+
 
 const ProductVariantsModel = mongoose.model<ProductVariantsProps>(`${collections.ecommerce.products.productvariants.productvariants}`, productVariantsSchema);
 

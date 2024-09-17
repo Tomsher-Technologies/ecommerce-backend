@@ -1,15 +1,114 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from "../../../constants/admin/task-log";
+
+import { findOrderStatusDateCheck } from "../../../utils/admin/order";
+import { cartStatus as cartStatusJson, orderStatusMap } from "../../../constants/cart";
+import { dateConvertPm } from "../../../utils/helpers";
+import { OrderQueryParams } from "../../../utils/types/order";
 
 import BaseController from "../base-controller";
 import countryService from "../../../services/admin/setup/country-service";
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import GeneralService from "../../../services/admin/general-service";
+import SapOrderService from "../../../services/sap/sap-order-service";
 
 
 const controller = new BaseController();
 class SapController extends BaseController {
+
+    async getOrderDetails(req: Request, res: Response): Promise<any> {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', country = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0' } = req.query as OrderQueryParams;
+            let query: any = { _id: { $exists: true } };
+
+            query = { cartStatus: { $ne: cartStatusJson.active } }
+            if (country) {
+                query = {
+                    $and: [
+                        { 'country.countryShortTitle': country },
+                        // { 'country.countryTitle': country },
+                    ],
+                    ...query
+                } as any;
+            }
+            if (paymentMethod) {
+                query = {
+                    $or: [
+                        { 'paymentMethod.paymentMethodTitle': paymentMethod },
+                        { 'paymentMethod.slug': paymentMethod },
+                    ],
+                    ...query
+                } as any;
+            }
+            if (customer) {
+                query = {
+                    $or: [
+                        { 'customer.firstName': customer },
+                        { 'customer.phone': customer },
+                        { 'customer.guestPhone': customer },
+                        { 'customer.guestEmail': customer },
+                        { 'customer.email': customer },
+                    ],
+                    ...query
+                } as any;
+            }
+
+            if (orderStatus) {
+                query = {
+                    ...query, orderStatus: orderStatus
+                } as any;
+            }
+
+            if (fromDate || endDate) {
+                const dateFilter: { $gte?: Date; $lte?: Date } = {};
+
+                if (fromDate) dateFilter.$gte = new Date(fromDate);
+                if (endDate) dateFilter.$lte = dateConvertPm(endDate);
+
+                if (orderStatus) {
+                    const statusField = findOrderStatusDateCheck(orderStatusMap[orderStatus].value);
+                    query[statusField] = { ...dateFilter };
+                } else {
+                    query['orderStatusAt'] = { ...dateFilter };
+                }
+            }
+
+            const sort: any = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const orders: any = await SapOrderService.SapOrderList({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
+                query,
+                sort,
+                getCartProducts: '1',
+                getcustomer,
+                getpaymentmethod,
+                getaddress,
+                hostName: req.get('origin'),
+            });
+
+
+            const totalCount = await SapOrderService.SapOrderList({
+                page: parseInt(page_size as string),
+                query,
+                getTotalCount: true
+            })
+            return controller.sendSuccessResponse(res, {
+                requestedData: orders,
+                totalCount: totalCount.length,
+                message: 'Success!'
+            }, 200);
+
+
+
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
 
     async productPriceUpdate(req: Request, res: Response): Promise<void> {
         const productVariantPriceQuantityUpdationErrorMessage: any = []

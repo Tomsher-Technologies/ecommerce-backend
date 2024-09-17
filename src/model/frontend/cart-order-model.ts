@@ -1,5 +1,6 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, CallbackError } from 'mongoose';
 import { collections } from '../../constants/collections';
+import SequenceModel from '../sequence-model';
 
 export interface CartOrderProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -7,6 +8,7 @@ export interface CartOrderProps extends Document {
     guestUserId: string;
     orderUuid: string; // customer guest uuid
     orderId: string;
+    orderCode: number;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
     stateId: mongoose.Schema.Types.ObjectId;
@@ -80,6 +82,11 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
             },
             message: 'orderId must be unique'
         }
+    },
+    orderCode: {
+        type: Number,
+        unique: true,
+        required: false, 
     },
     couponId: {
         type: Schema.Types.ObjectId,
@@ -290,6 +297,29 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
     updatedAt: {
         type: Date,
         default: Date.now
+    }
+});
+
+cartOrderSchema.pre<CartOrderProps>('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await SequenceModel.findOneAndUpdate(
+                { _id: 'orderSequence' },
+                { $inc: { sequenceValue: 1 } },
+                { new: true, upsert: true }
+            );
+
+            if (sequenceDoc) {
+                this.orderCode = sequenceDoc.sequenceValue;
+                next();
+            } else {
+                throw new Error('Failed to generate order code.');
+            }
+        } catch (err) {
+            next(err as CallbackError);
+        }
+    } else {
+        next();
     }
 });
 
