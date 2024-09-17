@@ -40,6 +40,7 @@ const multi_language_fieleds_model_1 = __importDefault(require("../../../model/a
 const language_model_1 = __importDefault(require("../../../model/admin/setup/language-model"));
 const excel_upload_1 = require("../../../utils/admin/excel/excel-upload");
 const mongoose_1 = __importDefault(require("mongoose"));
+const seo_page_service_2 = __importDefault(require("../../../services/admin/seo-page-service"));
 const controller = new base_controller_1.default();
 class ProductsController extends base_controller_1.default {
     // constructor() {
@@ -1268,6 +1269,18 @@ class ProductsController extends base_controller_1.default {
                         if (updatedProductData.variants) {
                             const newVariant = await product_variant_service_1.default.variantService(updatedProduct, updatedProductData.variants, userData);
                         }
+                        if (updatedProductData.metaDescription || updatedProductData.metaKeywords || updatedProductData.metaTitle || updatedProductData.ogDescription || updatedProductData.ogTitle || updatedProductData.twitterDescription || updatedProductData.twitterTitle) {
+                            const seoData = {
+                                metaDescription: updatedProductData.metaDescription,
+                                metaKeywords: updatedProductData.metaKeywords,
+                                metaTitle: updatedProductData.metaTitle,
+                                ogDescription: updatedProductData.ogDescription,
+                                ogTitle: updatedProductData.ogTitle,
+                                twitterDescription: updatedProductData.twitterDescription,
+                                twitterTitle: updatedProductData.twitterTitle
+                            };
+                            const seo = await seo_page_service_2.default.update(updatedProductData.productSeoId, seoData);
+                        }
                         let newLanguageValues = [];
                         // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
                         //     file.fieldname &&
@@ -1524,7 +1537,7 @@ class ProductsController extends base_controller_1.default {
     }
     async variantProductList(req, res) {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '' } = req.query;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '', getProductGalleryImage = '', getGalleryImage = '' } = req.query;
             let query = { cartStatus: { $ne: "1" } };
             const userData = await res.locals.user;
             const country = (0, helpers_1.getCountryId)(userData);
@@ -1604,7 +1617,9 @@ class ProductsController extends base_controller_1.default {
                 getBrand,
                 getAttribute,
                 getSpecification,
-                getCountry
+                getCountry,
+                getGalleryImage,
+                getProductGalleryImage
             });
             controller.sendSuccessResponse(res, {
                 requestedData: products,
@@ -1619,7 +1634,7 @@ class ProductsController extends base_controller_1.default {
         const validation = [];
         var excelRowIndex = 2;
         if (req && req.file && req.file?.filename) {
-            const productLanguageExcelJsonData = await (0, excel_upload_1.excelUpload)(req);
+            const productLanguageExcelJsonData = await (0, excel_upload_1.excelUpload)(req, '../../../../public/uploads/product/excel/');
             if (productLanguageExcelJsonData && productLanguageExcelJsonData?.length > 0) {
                 let countryData;
                 let countryId;

@@ -27,4 +27,10 @@ export interface OrderQueryParams {
     paymentEndDate?: string;
     isPdfExport?: string;
     deliveryType?: string;
+    customer?: string;
+    country?: string;
+    paymentMethod?: string;
+    getpaymentmethod?: string;
+    getcustomer?: string;
+    getaddress?: string;
 }

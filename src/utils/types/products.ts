@@ -1,6 +1,7 @@
 import { Document, Schema } from "mongoose";
 
 export interface ProductsProps extends Document {
+    prodcutCode: number;
     productTitle: string;
     slug: string;
     showOrder: Number;
@@ -60,6 +61,8 @@ export interface ProductsQueryParams {
     getCountry?: string;
     quantity?: string;
     variantId?: string;
+    getGalleryImage?: string;
+    getProductGalleryImage?: string;
 }
 
 export interface ProductVariantsProps {

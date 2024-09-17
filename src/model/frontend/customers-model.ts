@@ -1,9 +1,11 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, CallbackError } from 'mongoose';
 import { collections } from '../../constants/collections';
+import SequenceModel from '../sequence-model';
 
 export interface CustomrProps extends Document {
     countryId: Schema.Types.ObjectId;
     guestUserId?: string
+    customerCode: number;
     email: string;
     firstName: string;
     countryCode: string;
@@ -38,6 +40,11 @@ const customerSchema: Schema<CustomrProps> = new Schema({
     guestUserId: {
         type: String,
         default: '',
+    },
+    customerCode: {
+        type: Number,
+        unique: true,
+        required: false, 
     },
     email: {
         type: String,
@@ -181,7 +188,8 @@ const customerSchema: Schema<CustomrProps> = new Schema({
     }
 });
 
-customerSchema.pre('save', async function (next) {
+
+customerSchema.pre<CustomrProps>('save', async function (next) {
     if (this.isGuest) {
         this.schema.path('phone').options.unique = false;
         this.schema.path('email').options.unique = false;
@@ -191,7 +199,26 @@ customerSchema.pre('save', async function (next) {
         this.schema.path('email').options.unique = true;
         this.schema.path('referralCode').options.unique = true;
     }
-    next();
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await SequenceModel.findOneAndUpdate(
+                { _id: 'customerSequence' },
+                { $inc: { sequenceValue: 1 } },
+                { new: true, upsert: true }
+            );
+
+            if (sequenceDoc) {
+                this.customerCode = sequenceDoc.sequenceValue;
+                next();
+            } else {
+                throw new Error('Failed to generate customer code.');
+            }
+        } catch (err) {
+            next(err as CallbackError);
+        }
+    } else {
+        next();
+    }
 });
 
 const CustomerModel = mongoose.model<CustomrProps>(`${collections.customer.customers}`, customerSchema);

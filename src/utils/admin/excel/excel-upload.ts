@@ -5,8 +5,8 @@ import { excelProductVariantPriceAndQuantityRequiredColumn } from "../../../cons
 const xlsx = require('xlsx');
 
 
-export const excelUpload = async (req: any) => {
-    const excelDatas = await xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
+export const excelUpload = async (req: any, filePath: string) => {
+    const excelDatas = await xlsx.readFile(path.resolve(__dirname, `${filePath}${req.file?.filename}`));
     if (excelDatas && excelDatas.SheetNames[0]) {
         const productPriceSheetName = excelDatas.SheetNames[0];
         const productPriceWorksheet = excelDatas.Sheets[productPriceSheetName];

@@ -8,5 +8,6 @@ const auth_middleware_1 = __importDefault(require("../../middleware/admin/auth-m
 const sap_controller_1 = __importDefault(require("../../src/controllers/admin/sap/sap-controller"));
 const router = express_1.default.Router();
 router.use(auth_middleware_1.default);
+router.get('/orders-list', sap_controller_1.default.getOrderDetails);
 router.post('/product-inventory-update', sap_controller_1.default.productPriceUpdate);
 exports.default = router;

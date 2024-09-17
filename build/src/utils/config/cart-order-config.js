@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.orderPaymentTransactionProject = exports.cartOrderLookup = exports.getOrderProductsDetailsLookup = exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
+exports.orderPaymentTransactionProject = exports.cartOrderLookup = exports.getOrderProductsDetailsLookup = exports.getOrderProductsWithCartLookup = exports.cartOrderProductsGroupSumAggregate = exports.cartOrderGroupSumAggregate = exports.buildOrderPipeline = exports.productBrandLookupValues = exports.cartDeatilSimpleProject = exports.cartDeatilProject = exports.cartProject = exports.orderListObjectLookup = exports.paymentMethodLookup = exports.pickupStoreLookupPipeline = exports.billingLookup = exports.shippingAndBillingLookup = exports.objectLookup = exports.couponLookup = exports.customerLookup = exports.cartProductsLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const product_config_1 = require("./product-config");
 const wishlist_config_1 = require("./wishlist-config");
@@ -269,7 +269,37 @@ exports.cartDeatilProject = {
         products: 1,
         totalProductCount: { $size: '$products' },
         paymentMethod: {
-            $ifNull: ['$paymentMethod', null]
+            $ifNull: [{
+                    _id: '$paymentMethod._id',
+                    paymentMethodTitle: '$paymentMethod.paymentMethodTitle',
+                    slug: '$paymentMethod.slug'
+                }, null]
+        },
+        customer: {
+            $ifNull: [{
+                    _id: '$customer._id',
+                    firstName: '$customer.firstName',
+                    slug: '$customer.slug',
+                    email: '$customer.email',
+                    phone: '$customer.phone',
+                    guestPhone: '$customer.guestPhone',
+                    guestEmail: '$customer.guestEmail',
+                    isVerified: '$customer.isVerified',
+                    totalWalletAmount: '$customer.totalWalletAmount',
+                    totalRewardPoint: '$customer.totalRewardPoint',
+                    guestRegisterCount: '$customer.guestRegisterCount',
+                    referralCode: '$customer.referralCode',
+                }, null]
+        },
+        country: {
+            $ifNull: [{
+                    _id: '$country._id',
+                    countryTitle: '$country.countryTitle',
+                    slug: '$country.slug',
+                    countryCode: '$country.countryCode',
+                    currencyCode: '$country.currencyCode',
+                    countryShortTitle: '$country.countryShortTitle',
+                }, null]
         },
         shippingAddress: {
             $ifNull: ['$shippingAddress', null]
@@ -277,18 +307,125 @@ exports.cartDeatilProject = {
         couponDetails: {
             $ifNull: ['$couponDetails', null]
         },
-        customer: {
-            $ifNull: ['$customer', null]
-        },
-        country: {
-            $ifNull: ['$country', null]
-        },
         billingAddress: {
             $ifNull: ['$billingAddress', null]
         },
         pickupFromStore: {
             $ifNull: ['$pickupFromStore', null]
         }
+    }
+};
+exports.cartDeatilSimpleProject = {
+    $project: {
+        _id: 1,
+        orderId: 1,
+        orderCode: 1,
+        customerId: 1,
+        couponId: 1,
+        paymentMethodCharge: 1,
+        rewardPoints: 1,
+        rewardAmount: 1,
+        totalProductOriginalPrice: 1,
+        totalReturnedProductAmount: 1,
+        totalDiscountAmount: 1,
+        totalShippingAmount: 1,
+        totalCouponAmount: 1,
+        totalWalletAmount: 1,
+        totalTaxAmount: 1,
+        totalProductAmount: 1,
+        couponAmount: 1,
+        totalGiftWrapAmount: 1,
+        totalAmount: 1,
+        orderComments: 1,
+        returnReason: 1,
+        cancelReason: 1,
+        orderStatus: 1,
+        orderStatusAt: 1,
+        processingStatusAt: 1,
+        packedStatusAt: 1,
+        shippedStatusAt: 1,
+        deliveredStatusAt: 1,
+        canceledStatusAt: 1,
+        returnedStatusAt: 1,
+        refundedStatusAt: 1,
+        partiallyShippedStatusAt: 1,
+        partiallyDeliveredStatusAt: 1,
+        onHoldStatusAt: 1,
+        failedStatusAt: 1,
+        completedStatusAt: 1,
+        pickupStatusAt: 1,
+        deliveryStatusAt: 1,
+        createdAt: 1,
+        products: {
+            _id: 1,
+            cartId: 1,
+            productCode: 1,
+            variantId: 1,
+            productId: 1,
+            quantity: 1,
+            productOriginalPrice: 1,
+            productAmount: 1,
+            productDiscountAmount: 1,
+            returnedProductAmount: 1,
+            productCouponAmount: 1,
+            orderProductStatus: 1,
+            orderProductStatusAt: 1,
+            productDetails: {
+                _id: 1,
+                productCode: 1,
+                productTitle: 1,
+                slug: 1,
+                productImageUrl: 1,
+                unit: 1,
+                variantDetails: {
+                    _id: 1,
+                    productId: 1,
+                    countryId: 1,
+                    variantSku: 1,
+                    slug: 1,
+                    extraProductTitle: 1,
+                    price: 1,
+                    quantity: 1,
+                    discountPrice: 1,
+                }
+            }
+        },
+        totalProductCount: { $size: '$products' },
+        paymentMethod: {
+            $ifNull: [{
+                    _id: '$paymentMethod._id',
+                    paymentMethodTitle: '$paymentMethod.paymentMethodTitle',
+                    slug: '$paymentMethod.slug'
+                }, null]
+        },
+        customer: {
+            $ifNull: [{
+                    _id: '$customer._id',
+                    firstName: '$customer.firstName',
+                    slug: '$customer.slug',
+                    email: '$customer.email',
+                    phone: '$customer.phone',
+                    guestPhone: '$customer.guestPhone',
+                    guestEmail: '$customer.guestEmail',
+                    isVerified: '$customer.isVerified',
+                    totalWalletAmount: '$customer.totalWalletAmount',
+                    totalRewardPoint: '$customer.totalRewardPoint',
+                    referralCode: '$customer.referralCode',
+                }, null]
+        },
+        country: {
+            $ifNull: [{
+                    _id: '$country._id',
+                    countryTitle: '$country.countryTitle',
+                    slug: '$country.slug',
+                    countryCode: '$country.countryCode',
+                    currencyCode: '$country.currencyCode',
+                    countryShortTitle: '$country.countryShortTitle',
+                }, null]
+        },
+        shippingAddress: {
+            $ifNull: ['$shippingAddress', null]
+        },
     }
 };
 exports.productBrandLookupValues = {

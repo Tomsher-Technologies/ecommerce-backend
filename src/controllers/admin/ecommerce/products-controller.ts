@@ -40,6 +40,7 @@ import MultiLanguageFieledsModel from '../../../model/admin/multi-language-fiele
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { excelUpload } from '../../../utils/admin/excel/excel-upload';
 import mongoose from 'mongoose';
+import seoPageService from '../../../services/admin/seo-page-service';
 
 const controller = new BaseController();
 
@@ -1377,6 +1378,19 @@ class ProductsController extends BaseController {
                         if (updatedProductData.variants) {
                             const newVariant = await ProductVariantService.variantService(updatedProduct, updatedProductData.variants, userData);
                         }
+
+                        if (updatedProductData.metaDescription || updatedProductData.metaKeywords || updatedProductData.metaTitle || updatedProductData.ogDescription || updatedProductData.ogTitle || updatedProductData.twitterDescription || updatedProductData.twitterTitle) {
+                            const seoData = {
+                                metaDescription: updatedProductData.metaDescription,
+                                metaKeywords: updatedProductData.metaKeywords,
+                                metaTitle: updatedProductData.metaTitle,
+                                ogDescription: updatedProductData.ogDescription,
+                                ogTitle: updatedProductData.ogTitle,
+                                twitterDescription: updatedProductData.twitterDescription,
+                                twitterTitle: updatedProductData.twitterTitle
+                            };
+                            const seo = await seoPageService.update(updatedProductData.productSeoId, seoData);
+                        }
                         let newLanguageValues: any = []
 
                         // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
@@ -1640,7 +1654,7 @@ class ProductsController extends BaseController {
 
     async variantProductList(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '' } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', countryId, getBrand = '', getCategory = '', getAttribute = '', getSpecification = '', getCountry = '', quantity = '', variantId = '', keyword = '', fromDate = '', endDate = '', categoryId = '', brandId = '', getProductGalleryImage = '', getGalleryImage = '' } = req.query as ProductsQueryParams;
 
             let query: any = { cartStatus: { $ne: "1" } };
 
@@ -1716,7 +1730,6 @@ class ProductsController extends BaseController {
                         }
                     }
                 }
-
             }
 
 
@@ -1729,7 +1742,9 @@ class ProductsController extends BaseController {
                 getBrand,
                 getAttribute,
                 getSpecification,
-                getCountry
+                getCountry,
+                getGalleryImage,
+                getProductGalleryImage
             });
 
             controller.sendSuccessResponse(res, {
@@ -1748,7 +1763,7 @@ class ProductsController extends BaseController {
 
         if (req && req.file && req.file?.filename) {
 
-            const productLanguageExcelJsonData: any = await excelUpload(req)
+            const productLanguageExcelJsonData: any = await excelUpload(req, '../../../../public/uploads/product/excel/')
 
             if (productLanguageExcelJsonData && productLanguageExcelJsonData?.length > 0) {
                 let countryData: any

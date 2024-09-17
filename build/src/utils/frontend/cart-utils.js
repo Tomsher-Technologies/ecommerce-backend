@@ -15,7 +15,7 @@ const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, p
         },
         "reference": {
             "transaction": cartData._id,
-            "order": cartData._id
+            "order": cartData?.orderCode || 0
         },
         "receipt": {
             "email": true,
@@ -208,7 +208,7 @@ const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails
             "currency": countryData.currencyCode
         },
         "order_reference_id": cartData._id,
-        "order_number": "",
+        "order_number": cartData?.orderCode || 0,
         "discount": {
             "amount": {
                 "amount": cartData.totalDiscountAmount,

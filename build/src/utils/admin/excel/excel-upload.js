@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.excelUpload = void 0;
 const path_1 = __importDefault(require("path"));
 const xlsx = require('xlsx');
-const excelUpload = async (req) => {
-    const excelDatas = await xlsx.readFile(path_1.default.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
+const excelUpload = async (req, filePath) => {
+    const excelDatas = await xlsx.readFile(path_1.default.resolve(__dirname, `${filePath}${req.file?.filename}`));
     if (excelDatas && excelDatas.SheetNames[0]) {
         const productPriceSheetName = excelDatas.SheetNames[0];
         const productPriceWorksheet = excelDatas.Sheets[productPriceSheetName];

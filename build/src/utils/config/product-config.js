@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.brandLookupVariant = exports.productCategoryLookupVariantWise = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookupVariantWise = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.brandLookupVariant = exports.productCategoryLookupVariantWise = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 const customer_config_1 = require("./customer-config");
@@ -564,6 +564,14 @@ exports.imageLookup = {
         localField: '_id',
         foreignField: 'productID',
         as: 'imageGallery',
+    }
+};
+exports.imageLookupVariantWise = {
+    $lookup: {
+        from: collections_1.collections.ecommerce.products.productgallaryimages,
+        localField: 'productDetails._id',
+        foreignField: 'productID',
+        as: 'productDetails.imageGallery',
     }
 };
 exports.productMultilanguageFieldsLookup = {

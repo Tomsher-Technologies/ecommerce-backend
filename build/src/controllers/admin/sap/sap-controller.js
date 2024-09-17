@@ -4,12 +4,100 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const task_log_1 = require("../../../constants/admin/task-log");
+const order_1 = require("../../../utils/admin/order");
+const cart_1 = require("../../../constants/cart");
+const helpers_1 = require("../../../utils/helpers");
 const base_controller_1 = __importDefault(require("../base-controller"));
 const country_service_1 = __importDefault(require("../../../services/admin/setup/country-service"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
+const sap_order_service_1 = __importDefault(require("../../../services/sap/sap-order-service"));
 const controller = new base_controller_1.default();
 class SapController extends base_controller_1.default {
+    async getOrderDetails(req, res) {
+        try {
+            const { page_size = 1, limit = 10, sortby = '', sortorder = '', country = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0' } = req.query;
+            let query = { _id: { $exists: true } };
+            query = { cartStatus: { $ne: cart_1.cartStatus.active } };
+            if (country) {
+                query = {
+                    $and: [
+                        { 'country.countryShortTitle': country },
+                        // { 'country.countryTitle': country },
+                    ],
+                    ...query
+                };
+            }
+            if (paymentMethod) {
+                query = {
+                    $or: [
+                        { 'paymentMethod.paymentMethodTitle': paymentMethod },
+                        { 'paymentMethod.slug': paymentMethod },
+                    ],
+                    ...query
+                };
+            }
+            if (customer) {
+                query = {
+                    $or: [
+                        { 'customer.firstName': customer },
+                        { 'customer.phone': customer },
+                        { 'customer.guestPhone': customer },
+                        { 'customer.guestEmail': customer },
+                        { 'customer.email': customer },
+                    ],
+                    ...query
+                };
+            }
+            if (orderStatus) {
+                query = {
+                    ...query, orderStatus: orderStatus
+                };
+            }
+            if (fromDate || endDate) {
+                const dateFilter = {};
+                if (fromDate)
+                    dateFilter.$gte = new Date(fromDate);
+                if (endDate)
+                    dateFilter.$lte = (0, helpers_1.dateConvertPm)(endDate);
+                if (orderStatus) {
+                    const statusField = (0, order_1.findOrderStatusDateCheck)(cart_1.orderStatusMap[orderStatus].value);
+                    query[statusField] = { ...dateFilter };
+                }
+                else {
+                    query['orderStatusAt'] = { ...dateFilter };
+                }
+            }
+            const sort = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const orders = await sap_order_service_1.default.SapOrderList({
+                page: parseInt(page_size),
+                limit: parseInt(limit),
+                query,
+                sort,
+                getCartProducts: '1',
+                getcustomer,
+                getpaymentmethod,
+                getaddress,
+                hostName: req.get('origin'),
+            });
+            const totalCount = await sap_order_service_1.default.SapOrderList({
+                page: parseInt(page_size),
+                query,
+                getTotalCount: true
+            });
+            return controller.sendSuccessResponse(res, {
+                requestedData: orders,
+                totalCount: totalCount.length,
+                message: 'Success!'
+            }, 200);
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
     async productPriceUpdate(req, res) {
         const productVariantPriceQuantityUpdationErrorMessage = [];
         var productRowIndex = 2;

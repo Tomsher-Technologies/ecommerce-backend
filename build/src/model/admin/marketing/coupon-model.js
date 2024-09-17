@@ -105,7 +105,11 @@ const couponSchema = new mongoose_1.Schema({
     },
     createdBy: {
         type: String,
-        required: true
+        // required: true
+    },
+    isExcel: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,
