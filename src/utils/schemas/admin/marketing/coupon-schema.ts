@@ -118,6 +118,8 @@ const validateAndTransformDate = (fieldName: string) => {
             return date.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
         });
 };
+type StatusEnum = '1' | '2' | '3';
+
 export const couponExcelUploadSchema = zod.object({
     _id: zod.string().optional(),
     Country: zod.string({ required_error: 'Country is required' }).min(2, { message: 'Country is should be 2 chars minimum' }),
@@ -125,16 +127,20 @@ export const couponExcelUploadSchema = zod.object({
     Description: zod.string().optional(),
     Coupon_Type: zod.enum(['for-product', 'for-category', 'for-brand', 'entire-orders'], { required_error: 'Coupon type is required' }),
     Coupon_Applied_Fields: zod.string({ required_error: 'Coupon applied values is required' }).min(2, { message: 'Coupon applied values is should be 2 chars minimum' }),
-    Minimum_Purchase_value: zod.union([zod.string(), zod.number()])
-        .transform(val => String(val).trim())
-        .refine(val => val.length > 0, {
-            message: 'Minimum Purchase value is required',
+    Minimum_Purchase_value: zod.number({ required_error: 'Coupon applied value is required' })
+        .transform(val => Number(val))
+        .refine(val => ((!isNaN(val) && val > 0) || val === 0), {
+            message: 'Minimum Purchase value must be a valid positive number',
         }),// Convert number to string
     Discount_Type: zod.string({ required_error: 'Discount type is required' })
         .refine((val) => DiscountTypeEnum.options.includes(val as any), {
             message: 'Discount type must be either "percentage" or "amount"',
         }),
-    Status: zod.union([zod.string(), zod.number()]).transform(val => String(val).trim()),
+    Status: zod.union([zod.string(), zod.number()])
+        .transform(val => String(val).trim())
+        .refine((val): val is StatusEnum => ['1', '2', '3'].includes(val), {
+            message: 'Status must be one of "1", "2", or "3"',
+        }),
 
     Discount: zod.union([zod.string(), zod.number()])
         .transform(val => String(val).trim())
@@ -156,12 +162,21 @@ export const couponExcelUploadSchema = zod.object({
         .optional()
         .superRefine(booleanStringSuperRefine('Enable Limit Per User'))
         .transform(booleanStringTransform).optional(),
-    Limit_Per_User: zod.string().optional(),
+
     Enable_Usage_Limit: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('Enable Usage Limit'))
         .transform(booleanStringTransform).optional(),
-    Usage_Limit: zod.string().optional(),
+    Limit_Per_User: zod.number().optional()
+        .transform(val => Number(val))
+        .refine(val => !isNaN(val) && val > 0, {
+            message: 'Limit Per User must be a valid non-negative number',
+        }).optional(),
+    Usage_Limit: zod.union([zod.string(), zod.number()])
+        .transform(val => Number(val))
+        .refine(val => !isNaN(val) && val > 0, {
+            message: 'Usage Limit must must be a valid positive number',
+        }).optional(),
     Display_Coupon: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('Display Coupon'))
