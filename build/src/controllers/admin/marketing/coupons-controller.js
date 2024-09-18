@@ -447,7 +447,7 @@ class CouponsController extends base_controller_1.default {
                 if (validationErrors.length > 0) {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Some coupons failed validation',
-                        errors: validationErrors,
+                        validation: validationErrors,
                     }, req);
                 }
                 return controller.sendSuccessResponse(res, {
