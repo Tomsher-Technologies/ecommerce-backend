@@ -99,6 +99,25 @@ const booleanStringSuperRefine = (fieldName: string) => (val: any, ctx: any) => 
 
 const DiscountTypeEnum = zod.enum(['percentage', 'amount']);
 
+const validateAndTransformDate = (fieldName: string) => {
+    return zod.union([zod.string(), zod.number()])
+        .refine(val =>
+            (typeof val === 'string' && parseDate(val) !== null) ||
+            (typeof val === 'number' && excelSerialToDate(val) !== null), {
+            message: `${fieldName} must be in the format M/D/YYYY or a valid Excel serial number`,
+        })
+        .transform(val => {
+            let date: Date | null = null;
+            if (typeof val === 'number') {
+                date = excelSerialToDate(val);
+                if (date === null) throw new Error('Invalid Excel serial date');
+            } else {
+                date = parseDate(val);
+                if (date === null) throw new Error('Invalid date format');
+            }
+            return date.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
+        });
+};
 export const couponExcelUploadSchema = zod.object({
     _id: zod.string().optional(),
     Country: zod.string({ required_error: 'Country is required' }).min(2, { message: 'Country is should be 2 chars minimum' }),
@@ -106,7 +125,11 @@ export const couponExcelUploadSchema = zod.object({
     Description: zod.string().optional(),
     Coupon_Type: zod.enum(['for-product', 'for-category', 'for-brand', 'entire-orders'], { required_error: 'Coupon type is required' }),
     Coupon_Applied_Fields: zod.string({ required_error: 'Coupon applied values is required' }).min(2, { message: 'Coupon applied values is should be 2 chars minimum' }),
-    Minimum_Purchase_value: zod.union([zod.string(), zod.number()]).transform(val => String(val).trim()), // Convert number to string
+    Minimum_Purchase_value: zod.union([zod.string(), zod.number()])
+        .transform(val => String(val).trim())
+        .refine(val => val.length > 0, {
+            message: 'Minimum Purchase value is required',
+        }),// Convert number to string
     Discount_Type: zod.string({ required_error: 'Discount type is required' })
         .refine((val) => DiscountTypeEnum.options.includes(val as any), {
             message: 'Discount type must be either "percentage" or "amount"',
@@ -128,57 +151,28 @@ export const couponExcelUploadSchema = zod.object({
     New_User: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('New User'))
-        .transform(booleanStringTransform),
+        .transform(booleanStringTransform).optional(),
     Enable_Limit_Per_User: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('Enable Limit Per User'))
-        .transform(booleanStringTransform),
+        .transform(booleanStringTransform).optional(),
     Limit_Per_User: zod.string().optional(),
     Enable_Usage_Limit: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('Enable Usage Limit'))
-        .transform(booleanStringTransform),
+        .transform(booleanStringTransform).optional(),
     Usage_Limit: zod.string().optional(),
     Display_Coupon: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('Display Coupon'))
-        .transform(booleanStringTransform),
+        .transform(booleanStringTransform).optional(),
     // END
     Free_Shipping: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
         .superRefine(booleanStringSuperRefine('Free Shipping'))
-        .transform(booleanStringTransform),
-    Start_Date: zod.union([zod.string(), zod.number()])
-        .refine((val) => (typeof val === 'string' && parseDate(val) !== null) || (typeof val === 'number' && excelSerialToDate(val) !== null), {
-            message: 'Start date must be in the format M/D/YYYY or a valid Excel serial number',
-        })
-        .transform((val) => {
-            if (typeof val === 'number') {
-                const excelDate = excelSerialToDate(val);
-                if (excelDate === null) throw new Error('Invalid Excel serial date');
-                return excelDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-            } else {
-                const parsedDate = parseDate(val);
-                if (parsedDate === null) throw new Error('Invalid date format');
-                return parsedDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-            }
-        }),
-
-    End_Date: zod.union([zod.string(), zod.number()])
-        .refine((val) => (typeof val === 'string' && parseDate(val) !== null) || (typeof val === 'number' && excelSerialToDate(val) !== null), {
-            message: 'End date must be in the format M/D/YYYY or a valid Excel serial number',
-        })
-        .transform((val) => {
-            if (typeof val === 'number') {
-                const excelDate = excelSerialToDate(val);
-                if (excelDate === null) throw new Error('Invalid Excel serial date');
-                return excelDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-            } else {
-                const parsedDate = parseDate(val);
-                if (parsedDate === null) throw new Error('Invalid date format');
-                return parsedDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-            }
-        }),
+        .transform(booleanStringTransform).optional(),
+    Start_Date: validateAndTransformDate('Start date'),
+    End_Date: validateAndTransformDate('End date'),
 }).superRefine(({ Coupon_Type, Coupon_Applied_Fields }, ctx) => {
     if (['for-product', 'for-category', 'for-brand', 'entire-orders'].includes(Coupon_Type)) {
         if (!Coupon_Applied_Fields || Coupon_Applied_Fields.length === 0) {
