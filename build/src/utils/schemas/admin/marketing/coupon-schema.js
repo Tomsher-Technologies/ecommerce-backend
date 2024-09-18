@@ -77,7 +77,7 @@ exports.couponExcelUploadSchema = zod_1.z.object({
     Country: zod_1.z.string().optional(),
     Coupon_Code: zod_1.z.string({ required_error: 'Coupon code is required' }).min(2, { message: 'Coupon code is should be 2 chars minimum' }),
     Description: zod_1.z.string().optional(),
-    Coupon_Type: zod_1.z.enum(['for-product', 'for-category', 'for-brand'], { required_error: 'Coupon type is required' }),
+    Coupon_Type: zod_1.z.enum(['for-product', 'for-category', 'for-brand', 'entire-orders'], { required_error: 'Coupon type is required' }),
     Coupon_Applied_Fields: zod_1.z.string({ required_error: 'Coupon applied values is required' }).min(2, { message: 'Coupon applied values is should be 2 chars minimum' }),
     Minimum_Purchase_value: zod_1.z.union([zod_1.z.string(), zod_1.z.number()]).transform(val => String(val).trim()), // Convert number to string
     Discount_Type: zod_1.z.string({ required_error: 'Discount type is required' })
@@ -137,7 +137,7 @@ exports.couponExcelUploadSchema = zod_1.z.object({
         }
     }),
 }).superRefine(({ Coupon_Type, Coupon_Applied_Fields }, ctx) => {
-    if (['for-product', 'for-category', 'for-brand'].includes(Coupon_Type)) {
+    if (['for-product', 'for-category', 'for-brand', 'entire-orders'].includes(Coupon_Type)) {
         if (!Coupon_Applied_Fields || Coupon_Applied_Fields.length === 0) {
             ctx.addIssue({
                 code: "custom",
