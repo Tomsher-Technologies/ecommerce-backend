@@ -200,7 +200,7 @@ export const tabbyPaymentCaptureGatwayDefaultValues = (orderDetails: any) => {
     }
 }
 
-export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
+export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { orderCode: number; totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
     return {
         "action": "PURCHASE",
         "amount": {
@@ -211,6 +211,7 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
         "billingAddress": {
             "firstName": customerDetails.firstName
         },
+        "merchantOrderReference": cartData?.orderCode || 0,
         "merchantAttributes": {
             "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`,
             "skipConfirmationPage": true
