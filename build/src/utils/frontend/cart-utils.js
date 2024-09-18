@@ -186,6 +186,7 @@ const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetail
         "billingAddress": {
             "firstName": customerDetails.firstName
         },
+        "merchantOrderReference": cartData?.orderCode || 0,
         "merchantAttributes": {
             "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`,
             "skipConfirmationPage": true

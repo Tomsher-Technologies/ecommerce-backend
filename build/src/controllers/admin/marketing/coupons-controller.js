@@ -317,18 +317,29 @@ class CouponsController extends base_controller_1.default {
                     const isoStartDateString = formatDateToISO(Start_Date, "20:00:00.000");
                     const isoEndDateString = formatDateToISO(End_Date, "20:00:00.000");
                     Coupon_Code = Coupon_Code ? Coupon_Code.trim() : 'Unknown Coupon_Code';
-                    if (!Country)
+                    if (!Country) {
                         validationErrors.push(`Country is required (row: ${excelRowIndex})`);
-                    if (!Coupon_Code)
+                        continue;
+                    }
+                    ;
+                    if (!Coupon_Code) {
                         validationErrors.push(`Coupon_Code is required (Country: ${Country})`);
+                        continue;
+                    }
+                    ;
                     if (Start_Date !== undefined && End_Date !== undefined) {
                         if (isoStartDateString > isoEndDateString) {
                             validationErrors.push(`End_Date should not be earlier than Start_Date (row: ${excelRowIndex})`);
+                            continue;
                         }
                     }
                     if (Country) {
                         const countryKey = Country.toLowerCase();
                         countryId = countryMap[countryKey] || null;
+                    }
+                    if (!countryId) {
+                        validationErrors.push(`Country not found (row: ${excelRowIndex})`);
+                        continue;
                     }
                     let couponAppliedValue = [];
                     const fieldArray = Coupon_Applied_Fields.split(',');
@@ -343,7 +354,7 @@ class CouponsController extends base_controller_1.default {
                             }
                         }
                     }
-                    if (Coupon_Type === cart_1.couponTypes.forBrand) {
+                    else if (Coupon_Type === cart_1.couponTypes.forBrand) {
                         for (let field of fieldArray) {
                             let brandData = await brands_model_1.default.findOne({ brandTitle: field }).select('_id');
                             if (brandData) {
@@ -354,16 +365,20 @@ class CouponsController extends base_controller_1.default {
                             }
                         }
                     }
-                    if (Coupon_Type === cart_1.couponTypes.forCategory) {
+                    else if (Coupon_Type === cart_1.couponTypes.forCategory) {
                         for (let field of fieldArray) {
                             let categoryData = await category_model_1.default.findOne({ categoryTitle: field }).select('_id');
                             if (categoryData) {
                                 couponAppliedValue.push(categoryData._id);
                             }
                             else {
-                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push(`Coupon_Type value is not found (row: ${excelRowIndex})`);
                             }
                         }
+                    }
+                    if (couponAppliedValue?.length === 0) {
+                        validationErrors.push(`Country not found (row: ${excelRowIndex})`);
+                        continue;
                     }
                     const couponInsertData = {
                         countryId,

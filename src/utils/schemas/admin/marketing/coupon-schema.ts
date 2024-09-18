@@ -81,7 +81,7 @@ const DiscountTypeEnum = zod.enum(['percentage', 'amount']);
 
 export const couponExcelUploadSchema = zod.object({
     _id: zod.string().optional(),
-    Country: zod.string().optional(),
+    Country: zod.string({ required_error: 'Country is required' }).min(2, { message: 'Country is should be 2 chars minimum' }),
     Coupon_Code: zod.string({ required_error: 'Coupon code is required' }).min(2, { message: 'Coupon code is should be 2 chars minimum' }),
     Description: zod.string().optional(),
     Coupon_Type: zod.enum(['for-product', 'for-category', 'for-brand', 'entire-orders'], { required_error: 'Coupon type is required' }),
@@ -99,16 +99,25 @@ export const couponExcelUploadSchema = zod.object({
             message: 'Discount must be a valid price format (e.g., 10.99)'
         }),
 
-    Maximum_Redeem_Amount: zod.string().optional(),
+    Maximum_Redeem_Amount: zod.union([zod.string(), zod.number()])
+        .transform(val => Number(val))
+        .refine(val => !isNaN(val) && val > 0, {
+            message: 'Maximum redeem amount must be a valid positive number',
+        }),
     // couponUsage
-    New_User: zod.boolean().optional(),
-    Enable_Limit_Per_User: zod.boolean().optional(),
+    New_User: zod.union([zod.boolean(), zod.number()])
+        .optional()
+        .refine((val) => typeof val === 'boolean' || typeof val === 'number', {
+            message: 'New User must be a boolean (true/false) or a number (1/0)',
+        })
+        .transform(val => Boolean(val)),
+    Enable_Limit_Per_User: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
     Limit_Per_User: zod.string().optional(),
-    Enable_Usage_Limit: zod.boolean().optional(),
+    Enable_Usage_Limit: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
     Usage_Limit: zod.string().optional(),
-    Display_Coupon: zod.union([zod.boolean(), zod.number()]).transform(val => Boolean(val)),
+    Display_Coupon: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
     // END
-    Free_Shipping: zod.boolean().optional(),
+    Free_Shipping: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
     Start_Date: zod.union([zod.string(), zod.number()])
         .refine((val) => (typeof val === 'string' && parseDate(val) !== null) || (typeof val === 'number' && excelSerialToDate(val) !== null), {
             message: 'Start date must be in the format M/D/YYYY or a valid Excel serial number',

@@ -330,12 +330,19 @@ class CouponsController extends BaseController {
 
                     Coupon_Code = Coupon_Code ? Coupon_Code.trim() : 'Unknown Coupon_Code';
 
-                    if (!Country) validationErrors.push(`Country is required (row: ${excelRowIndex})`);
-                    if (!Coupon_Code) validationErrors.push(`Coupon_Code is required (Country: ${Country})`);
+                    if (!Country) {
+                        validationErrors.push(`Country is required (row: ${excelRowIndex})`);
+                        continue;
+                    };
+                    if (!Coupon_Code) {
+                        validationErrors.push(`Coupon_Code is required (Country: ${Country})`);
+                        continue;
+                    };
 
                     if (Start_Date !== undefined && End_Date !== undefined) {
                         if (isoStartDateString > isoEndDateString) {
                             validationErrors.push(`End_Date should not be earlier than Start_Date (row: ${excelRowIndex})`);
+                            continue;
                         }
                     }
 
@@ -343,7 +350,10 @@ class CouponsController extends BaseController {
                         const countryKey = Country.toLowerCase();
                         countryId = countryMap[countryKey] || null;
                     }
-
+                    if (!countryId) {
+                        validationErrors.push(`Country not found (row: ${excelRowIndex})`);
+                        continue;
+                    }
                     let couponAppliedValue: any = [];
                     const fieldArray: any[] = Coupon_Applied_Fields.split(',');
 
@@ -354,11 +364,10 @@ class CouponsController extends BaseController {
                                 couponAppliedValue.push(productData._id);
                             } else {
                                 validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+
                             }
                         }
-                    }
-
-                    if (Coupon_Type === couponTypes.forBrand) {
+                    } else if (Coupon_Type === couponTypes.forBrand) {
                         for (let field of fieldArray) {
                             let brandData = await BrandsModel.findOne({ brandTitle: field }).select('_id');
                             if (brandData) {
@@ -367,17 +376,19 @@ class CouponsController extends BaseController {
                                 validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
                             }
                         }
-                    }
-
-                    if (Coupon_Type === couponTypes.forCategory) {
+                    } else if (Coupon_Type === couponTypes.forCategory) {
                         for (let field of fieldArray) {
                             let categoryData = await CategoryModel.findOne({ categoryTitle: field }).select('_id');
                             if (categoryData) {
                                 couponAppliedValue.push(categoryData._id);
                             } else {
-                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push(`Coupon_Type value is not found (row: ${excelRowIndex})`);
                             }
                         }
+                    }
+                    if (couponAppliedValue?.length === 0) {
+                        validationErrors.push(`Country not found (row: ${excelRowIndex})`);
+                        continue;
                     }
                     const couponInsertData = {
                         countryId,

@@ -389,6 +389,10 @@ class CheckoutController extends base_controller_1.default {
                         countryData
                     }, true);
                 }
+                console.log('networkResponse', {
+                    orderType: paymentMethod.slug,
+                    paymentData
+                });
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: updateCart._id,
