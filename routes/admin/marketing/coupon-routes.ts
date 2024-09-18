@@ -21,7 +21,7 @@ router.post('/', logResponseStatus, userPermissionMiddleware({ permissionBlock: 
 router.post('/:id', logResponseStatus, userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.update);
 router.post('/status-change/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), CouponsController.statusChange);
 router.delete('/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons }), CouponsController.destroy);
-router.post('/import-excel/coupon', userPermissionMiddleware({ permissionBlock: permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('couponExcel'), CouponsController.CouponExcelUpload);
+router.post('/import-excel/coupon', userPermissionMiddleware({ permissionBlock: permissionBlocks.marketing.coupons, writeOnly: 1 }), uploadExcel.single('couponExcel'), CouponsController.couponExcelUpload);
 
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
