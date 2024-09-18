@@ -306,6 +306,7 @@ class CouponsController extends BaseController {
 
                 for (let couponData of couponExcelJsonData) {
                     const validationResult = couponExcelUploadSchema.safeParse(couponData);
+
                     if (!validationResult.success) {
                         validationErrors.push({
                             row: excelRowIndex,
@@ -331,17 +332,26 @@ class CouponsController extends BaseController {
                     Coupon_Code = Coupon_Code ? Coupon_Code.trim() : 'Unknown Coupon_Code';
 
                     if (!Country) {
-                        validationErrors.push(`Country is required (row: ${excelRowIndex})`);
+                        validationErrors.push({
+                            row: excelRowIndex,
+                            errors: { Country: `Country is required (row: ${excelRowIndex})` },
+                        });
                         continue;
                     };
                     if (!Coupon_Code) {
-                        validationErrors.push(`Coupon_Code is required (Country: ${Country})`);
+                        validationErrors.push({
+                            row: excelRowIndex,
+                            errors: { Coupon_Code: `Coupon Code is required (Country: ${Country})` },
+                        });
                         continue;
                     };
 
                     if (Start_Date !== undefined && End_Date !== undefined) {
                         if (isoStartDateString > isoEndDateString) {
-                            validationErrors.push(`End_Date should not be earlier than Start_Date (row: ${excelRowIndex})`);
+                            validationErrors.push({
+                                row: excelRowIndex,
+                                errors: { End_Date: `End Date should be greater than Start Date (row: ${excelRowIndex})` },
+                            });
                             continue;
                         }
                     }
@@ -359,76 +369,86 @@ class CouponsController extends BaseController {
 
                     if (Coupon_Type === couponTypes.forProduct) {
                         for (let field of fieldArray) {
-                            let productData = await ProductsModel.findOne({ sku: field }).select('_id') || await ProductVariantsModel.findOne({ variantSku: field }).select('_id')
+                            const keywordRegex = new RegExp(field, 'i');
+                            let productData = await ProductsModel.findOne({ sku: { $regex: keywordRegex } }).select('_id') || await ProductVariantsModel.findOne({ variantSku: { $regex: keywordRegex } }).select('_id')
                             if (productData) {
-                                couponAppliedValue.push(productData._id);
+                                couponAppliedValue.push(productData._id.toString());
                             } else {
-                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push({
+                                    row: excelRowIndex,
+                                    errors: { Coupon_Type: `${field} Product is not available (row: ${excelRowIndex})` },
+                                });
 
                             }
                         }
                     } else if (Coupon_Type === couponTypes.forBrand) {
                         for (let field of fieldArray) {
-                            let brandData = await BrandsModel.findOne({ brandTitle: field }).select('_id');
+                            const keywordRegex = new RegExp(field, 'i');
+                            let brandData = await BrandsModel.findOne({ brandTitle: { $regex: keywordRegex } }).select('_id');
                             if (brandData) {
-                                couponAppliedValue.push(brandData._id);
+                                couponAppliedValue.push(brandData._id.toString());
                             } else {
-                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push({
+                                    row: excelRowIndex,
+                                    errors: { Coupon_Type: `${field} Brand is not available (row: ${excelRowIndex})` },
+                                });
                             }
                         }
                     } else if (Coupon_Type === couponTypes.forCategory) {
                         for (let field of fieldArray) {
-                            let categoryData = await CategoryModel.findOne({ categoryTitle: field }).select('_id');
+                            const keywordRegex = new RegExp(field, 'i');
+                            let categoryData = await CategoryModel.findOne({ categoryTitle: { $regex: keywordRegex } }).select('_id');
                             if (categoryData) {
-                                couponAppliedValue.push(categoryData._id);
+                                couponAppliedValue.push(categoryData._id.toString());
                             } else {
-                                validationErrors.push(`Coupon_Type value is not found (row: ${excelRowIndex})`);
+                                validationErrors.push({
+                                    row: excelRowIndex,
+                                    errors: { Coupon_Type: `${field} Category is not available (row: ${excelRowIndex})` },
+                                });
                             }
                         }
                     }
-                    if (couponAppliedValue?.length === 0) {
-                        validationErrors.push(`Country not found (row: ${excelRowIndex})`);
-                        continue;
-                    }
-                    const couponInsertData = {
-                        countryId,
-                        couponCode: Coupon_Code,
-                        couponDescription: Description,
-                        couponType: Coupon_Type,
-                        couponApplyValues: couponAppliedValue,
-                        minPurchaseValue: Minimum_Purchase_value,
-                        discountType: Discount_Type,
-                        discountAmount: Discount,
-                        discountMaxRedeemAmount: Maximum_Redeem_Amount,
-                        couponUsage: {
-                            onlyForNewUser: New_User,
-                            enableLimitPerUser: Enable_Limit_Per_User,
-                            limitPerUser: Limit_Per_User,
-                            enableCouponUsageLimit: Enable_Usage_Limit,
-                            couponUsageLimit: Usage_Limit,
-                            displayCoupon: Display_Coupon,
-                        },
-                        enableFreeShipping: Free_Shipping,
-                        discountDateRange: [isoStartDateString, isoEndDateString],
-                        status: Status,
-                        isExcel: true
-                    };
+                    if (couponAppliedValue?.length > 0) {
+                        const couponInsertData = {
+                            countryId,
+                            couponCode: Coupon_Code,
+                            couponDescription: Description,
+                            couponType: Coupon_Type,
+                            couponApplyValues: couponAppliedValue,
+                            minPurchaseValue: String(Minimum_Purchase_value),
+                            discountType: Discount_Type,
+                            discountAmount: Discount,
+                            discountMaxRedeemAmount: Maximum_Redeem_Amount,
+                            couponUsage: {
+                                onlyForNewUser: New_User,
+                                enableLimitPerUser: Enable_Limit_Per_User,
+                                limitPerUser: String(Limit_Per_User),
+                                enableCouponUsageLimit: Enable_Usage_Limit,
+                                couponUsageLimit: String(Usage_Limit),
+                                displayCoupon: Display_Coupon,
+                            },
+                            enableFreeShipping: Free_Shipping,
+                            discountDateRange: [isoStartDateString, isoEndDateString],
+                            status: Status,
+                            isExcel: true
+                        };
 
-                    const existingCoupon = await CouponModel.findOne({ couponCode: Coupon_Code, countryId }).select('_id');
+                        const existingCoupon = await CouponModel.findOne({ couponCode: Coupon_Code, countryId }).select('_id');
 
-                    if (existingCoupon) {
-                        couponOperations.push({
-                            updateOne: {
-                                filter: { _id: existingCoupon._id },
-                                update: { $set: couponInsertData }
-                            }
-                        });
-                    } else {
-                        couponOperations.push({
-                            insertOne: {
-                                document: { ...couponInsertData, createdBy: userData._id }
-                            }
-                        });
+                        if (existingCoupon) {
+                            couponOperations.push({
+                                updateOne: {
+                                    filter: { _id: existingCoupon._id },
+                                    update: { $set: couponInsertData }
+                                }
+                            });
+                        } else {
+                            couponOperations.push({
+                                insertOne: {
+                                    document: { ...couponInsertData, createdBy: userData._id }
+                                }
+                            });
+                        }
                     }
                 }
 

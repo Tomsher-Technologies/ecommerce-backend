@@ -71,7 +71,48 @@ function parseDate(dateString) {
     const date = new Date(Date.UTC(year, month - 1, day));
     return isNaN(date.getTime()) ? null : date;
 }
+const booleanStringTransform = (val) => {
+    if (typeof val === 'string') {
+        return ['true', '1'].includes(val.toLowerCase());
+    }
+    return Boolean(val);
+};
+const booleanStringSuperRefine = (fieldName) => (val, ctx) => {
+    if (typeof val === 'string') {
+        if (['true', 'false', '0', '1'].includes(val.toLowerCase())) {
+            return;
+        }
+    }
+    else if (typeof val === 'boolean' || typeof val === 'number') {
+        return;
+    }
+    ctx.addIssue({
+        code: zod_1.z.ZodIssueCode.custom,
+        message: `${fieldName} must be either "true", "false", "1", "0", or their equivalent boolean values`,
+    });
+};
 const DiscountTypeEnum = zod_1.z.enum(['percentage', 'amount']);
+const validateAndTransformDate = (fieldName) => {
+    return zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
+        .refine(val => (typeof val === 'string' && parseDate(val) !== null) ||
+        (typeof val === 'number' && excelSerialToDate(val) !== null), {
+        message: `${fieldName} must be in the format M/D/YYYY or a valid Excel serial number`,
+    })
+        .transform(val => {
+        let date = null;
+        if (typeof val === 'number') {
+            date = excelSerialToDate(val);
+            if (date === null)
+                throw new Error('Invalid Excel serial date');
+        }
+        else {
+            date = parseDate(val);
+            if (date === null)
+                throw new Error('Invalid date format');
+        }
+        return date.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
+    });
+};
 exports.couponExcelUploadSchema = zod_1.z.object({
     _id: zod_1.z.string().optional(),
     Country: zod_1.z.string({ required_error: 'Country is required' }).min(2, { message: 'Country is should be 2 chars minimum' }),
@@ -79,12 +120,20 @@ exports.couponExcelUploadSchema = zod_1.z.object({
     Description: zod_1.z.string().optional(),
     Coupon_Type: zod_1.z.enum(['for-product', 'for-category', 'for-brand', 'entire-orders'], { required_error: 'Coupon type is required' }),
     Coupon_Applied_Fields: zod_1.z.string({ required_error: 'Coupon applied values is required' }).min(2, { message: 'Coupon applied values is should be 2 chars minimum' }),
-    Minimum_Purchase_value: zod_1.z.union([zod_1.z.string(), zod_1.z.number()]).transform(val => String(val).trim()), // Convert number to string
+    Minimum_Purchase_value: zod_1.z.number({ required_error: 'Coupon applied value is required' })
+        .transform(val => Number(val))
+        .refine(val => ((!isNaN(val) && val > 0) || val === 0), {
+        message: 'Minimum Purchase value must be a valid positive number',
+    }), // Convert number to string
     Discount_Type: zod_1.z.string({ required_error: 'Discount type is required' })
         .refine((val) => DiscountTypeEnum.options.includes(val), {
         message: 'Discount type must be either "percentage" or "amount"',
     }),
-    Status: zod_1.z.union([zod_1.z.string(), zod_1.z.number()]).transform(val => String(val).trim()),
+    Status: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
+        .transform(val => String(val).trim())
+        .refine((val) => ['1', '2', '3'].includes(val), {
+        message: 'Status must be one of "1", "2", or "3"',
+    }),
     Discount: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
         .transform(val => String(val).trim())
         .refine(val => val.length > 0 && (0, helpers_1.isValidPriceFormat)(val), {
@@ -96,55 +145,39 @@ exports.couponExcelUploadSchema = zod_1.z.object({
         message: 'Maximum redeem amount must be a valid positive number',
     }),
     // couponUsage
-    New_User: zod_1.z.union([zod_1.z.boolean(), zod_1.z.number()])
+    New_User: zod_1.z.union([zod_1.z.string(), zod_1.z.boolean(), zod_1.z.number()])
         .optional()
-        .refine((val) => typeof val === 'boolean' || typeof val === 'number', {
-        message: 'New User must be a boolean (true/false) or a number (1/0)',
-    })
-        .transform(val => Boolean(val)),
-    Enable_Limit_Per_User: zod_1.z.union([zod_1.z.boolean(), zod_1.z.number()]).optional().transform(val => Boolean(val)),
-    Limit_Per_User: zod_1.z.string().optional(),
-    Enable_Usage_Limit: zod_1.z.union([zod_1.z.boolean(), zod_1.z.number()]).optional().transform(val => Boolean(val)),
-    Usage_Limit: zod_1.z.string().optional(),
-    Display_Coupon: zod_1.z.union([zod_1.z.boolean(), zod_1.z.number()]).optional().transform(val => Boolean(val)),
+        .superRefine(booleanStringSuperRefine('New User'))
+        .transform(booleanStringTransform).optional(),
+    Enable_Limit_Per_User: zod_1.z.union([zod_1.z.string(), zod_1.z.boolean(), zod_1.z.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Enable Limit Per User'))
+        .transform(booleanStringTransform).optional(),
+    Enable_Usage_Limit: zod_1.z.union([zod_1.z.string(), zod_1.z.boolean(), zod_1.z.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Enable Usage Limit'))
+        .transform(booleanStringTransform).optional(),
+    Limit_Per_User: zod_1.z.number().optional()
+        .transform(val => Number(val))
+        .refine(val => !isNaN(val) && val > 0, {
+        message: 'Limit Per User must be a valid non-negative number',
+    }).optional(),
+    Usage_Limit: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
+        .transform(val => Number(val))
+        .refine(val => !isNaN(val) && val > 0, {
+        message: 'Usage Limit must must be a valid positive number',
+    }).optional(),
+    Display_Coupon: zod_1.z.union([zod_1.z.string(), zod_1.z.boolean(), zod_1.z.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Display Coupon'))
+        .transform(booleanStringTransform).optional(),
     // END
-    Free_Shipping: zod_1.z.union([zod_1.z.boolean(), zod_1.z.number()]).optional().transform(val => Boolean(val)),
-    Start_Date: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
-        .refine((val) => (typeof val === 'string' && parseDate(val) !== null) || (typeof val === 'number' && excelSerialToDate(val) !== null), {
-        message: 'Start date must be in the format M/D/YYYY or a valid Excel serial number',
-    })
-        .transform((val) => {
-        if (typeof val === 'number') {
-            const excelDate = excelSerialToDate(val);
-            if (excelDate === null)
-                throw new Error('Invalid Excel serial date');
-            return excelDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-        }
-        else {
-            const parsedDate = parseDate(val);
-            if (parsedDate === null)
-                throw new Error('Invalid date format');
-            return parsedDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-        }
-    }),
-    End_Date: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
-        .refine((val) => (typeof val === 'string' && parseDate(val) !== null) || (typeof val === 'number' && excelSerialToDate(val) !== null), {
-        message: 'End date must be in the format M/D/YYYY or a valid Excel serial number',
-    })
-        .transform((val) => {
-        if (typeof val === 'number') {
-            const excelDate = excelSerialToDate(val);
-            if (excelDate === null)
-                throw new Error('Invalid Excel serial date');
-            return excelDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-        }
-        else {
-            const parsedDate = parseDate(val);
-            if (parsedDate === null)
-                throw new Error('Invalid date format');
-            return parsedDate.toISOString().split('T')[0]; // Transform to ISO date string (YYYY-MM-DD)
-        }
-    }),
+    Free_Shipping: zod_1.z.union([zod_1.z.string(), zod_1.z.boolean(), zod_1.z.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Free Shipping'))
+        .transform(booleanStringTransform).optional(),
+    Start_Date: validateAndTransformDate('Start date'),
+    End_Date: validateAndTransformDate('End date'),
 }).superRefine(({ Coupon_Type, Coupon_Applied_Fields }, ctx) => {
     if (['for-product', 'for-category', 'for-brand', 'entire-orders'].includes(Coupon_Type)) {
         if (!Coupon_Applied_Fields || Coupon_Applied_Fields.length === 0) {
