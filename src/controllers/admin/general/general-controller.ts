@@ -43,18 +43,20 @@ class GeneralController extends BaseController {
             let query: any = { _id: { $exists: true } };
             if (pageId) {
                 query.pageId = new mongoose.Types.ObjectId(pageId);
+                if (pageReferenceId) {
+                    query.pageReferenceId = new mongoose.Types.ObjectId(pageReferenceId);
+                }
+                if (page) {
+                    query.page = page;
+                }
+                const seoDetails = await SeoPageModel.find(query);
+                return controller.sendSuccessResponse(res, {
+                    requestedData: seoDetails,
+                    message: 'Success!'
+                }, 200);
+            } else {
+                controller.sendErrorResponse(res, 200, { message: 'Page id is required' });
             }
-            if (pageReferenceId) {
-                query.pageReferenceId = new mongoose.Types.ObjectId(pageReferenceId);
-            }
-            if (page) {
-                query.page = page;
-            }
-            const seoDetails = await SeoPageModel.find(query);
-            return controller.sendSuccessResponse(res, {
-                requestedData: seoDetails,
-                message: 'Success!'
-            }, 200);
         } catch (error: any) {
             controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching categories seo' });
         }

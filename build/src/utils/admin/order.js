@@ -205,40 +205,32 @@ const orderStatusChangeEmail = async (settingsDetails, orderDetails, orderStatus
         appUrls,
         tax: tax,
         subject: cart_1.orderStatusMessages[orderStatus],
-        content: `Your order ${orderDetails.orderId} has just been cancelled.`,
+        content: `Your order ${orderDetails.orderId} ${cart_1.orderStatusMessages[orderStatus]}`,
     }, async (err, template) => {
         if (err) {
             console.log(err);
             return;
         }
+        const mailContent = {
+            subject: cart_1.orderStatusMessages[orderStatus],
+            email: customerDetails?.email,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        };
         if (process.env.SHOPNAME === 'Timehouse') {
-            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)({
-                subject: cart_1.orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template);
+            await (0, mail_chimp_sms_gateway_1.mailChimpEmailGateway)(mailContent, template);
         }
         else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(mailContent, template);
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template);
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(mailContent, template);
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)({
-                subject: cart_1.orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template);
-            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: cart_1.orderStatusMessages[orderStatus] === '4' ? (0, messages_1.shippingOrder)(orderDetails.orderId, expectedDeliveryDate) : (cart_1.orderStatusMessages[orderStatus] === '5' ? (0, messages_1.deliveredOrder)(orderDetails.orderId) : (0, messages_1.cancelOrder)(orderDetails.orderId)) });
+            const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(mailContent, template);
+            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({
+                ...customerDetails.toObject(),
+                message: orderStatus === cart_1.orderStatusArrayJson.shipped ? (0, messages_1.shippingOrder)(orderDetails.orderId, expectedDeliveryDate) : (orderStatus === cart_1.orderStatusArrayJson.delivered ? (0, messages_1.deliveredOrder)(orderDetails.orderId) : (0, messages_1.cancelOrder)(orderDetails.orderId))
+            });
         }
     });
 };

@@ -224,42 +224,34 @@ export const orderStatusChangeEmail = async (settingsDetails: any, orderDetails:
         appUrls,
         tax: tax,
         subject: orderStatusMessages[orderStatus],
-        content: `Your order ${orderDetails.orderId} has just been cancelled.`,
+        content: `Your order ${orderDetails.orderId} ${orderStatusMessages[orderStatus]}`,
 
     }, async (err: any, template: any) => {
         if (err) {
             console.log(err);
             return;
         }
+        const mailContent = {
+            subject: orderStatusMessages[orderStatus],
+            email: customerDetails?.email,
+            ccmail: [basicDetailsSettings?.storeEmail]
+        }
         if (process.env.SHOPNAME === 'Timehouse') {
-            await mailChimpEmailGateway({
-                subject: orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template)
+            await mailChimpEmailGateway(mailContent, template)
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template)
+            const sendEmail = await smtpEmailGateway(mailContent, template)
 
         }
         else if (process.env.SHOPNAME === 'Beyondfresh') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template)
+            const sendEmail = await smtpEmailGateway(mailContent, template)
         }
         else if (process.env.SHOPNAME === 'Smartbaby') {
-            const sendEmail = await smtpEmailGateway({
-                subject: orderStatusMessages[orderStatus],
-                email: customerDetails?.email,
-                ccmail: [basicDetailsSettings?.storeEmail]
-            }, template)
-            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: orderStatusMessages[orderStatus] === '4' ? shippingOrder(orderDetails.orderId, expectedDeliveryDate) : (orderStatusMessages[orderStatus] === '5' ? deliveredOrder(orderDetails.orderId) : cancelOrder(orderDetails.orderId)) })
+            const sendEmail = await smtpEmailGateway(mailContent, template)
+            const sendsms = await bulkSmsGateway({
+                ...customerDetails.toObject(),
+                message: orderStatus === orderStatusArrayJson.shipped ? shippingOrder(orderDetails.orderId, expectedDeliveryDate) : (orderStatus === orderStatusArrayJson.delivered ? deliveredOrder(orderDetails.orderId) : cancelOrder(orderDetails.orderId))
+            })
         }
     });
 }
@@ -427,7 +419,6 @@ export const orderProductReturnQuantityChangeEmail = async (settingsDetails: any
 
         } else if (process.env.SHOPNAME === 'Homestyle') {
             const sendEmail = await smtpEmailGateway(emailValues, template)
-
         } else if (process.env.SHOPNAME === 'Beyondfresh') {
             const sendEmail = await smtpEmailGateway(emailValues, template)
         } else if (process.env.SHOPNAME === 'Smartbaby') {

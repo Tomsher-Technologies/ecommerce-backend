@@ -20,7 +20,7 @@ router.post('/', response_status_1.logResponseStatus, (0, admin_user_permission_
 router.post('/:id', response_status_1.logResponseStatus, (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, writeOnly: 1 }), coupons_controller_1.default.update);
 router.post('/status-change/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, writeOnly: 1 }), coupons_controller_1.default.statusChange);
 router.delete('/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons }), coupons_controller_1.default.destroy);
-router.post('/import-excel/coupon', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.ecommerce.products, writeOnly: 1 }), uploadExcel.single('couponExcel'), coupons_controller_1.default.CouponExcelUpload);
+router.post('/import-excel/coupon', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.marketing.coupons, writeOnly: 1 }), uploadExcel.single('couponExcel'), coupons_controller_1.default.couponExcelUpload);
 router.use((err, req, res, next) => {
     // Check if the error is from multer
     if (err instanceof multer_1.default.MulterError) {
