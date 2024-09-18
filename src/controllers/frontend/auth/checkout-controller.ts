@@ -390,7 +390,6 @@ class CheckoutController extends BaseController {
                         orderStatusAt: new Date(),
                     }
                 }
-                
                 const updateCart = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false })
                 if (!updateCart) {
                     return controller.sendErrorResponse(res, 200, { message: 'Something went wrong, Cart updation is failed. Please try again' });
@@ -406,10 +405,6 @@ class CheckoutController extends BaseController {
                         countryData
                     }, true)
                 }
-                console.log('networkResponse', {
-                    orderType: paymentMethod.slug,
-                    paymentData
-                });
                 return controller.sendSuccessResponse(res, {
                     requestedData: {
                         orderId: updateCart._id,

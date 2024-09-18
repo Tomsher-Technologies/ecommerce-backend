@@ -141,13 +141,11 @@ export const couponExcelUploadSchema = zod.object({
         .refine((val): val is StatusEnum => ['1', '2', '3'].includes(val), {
             message: 'Status must be one of "1", "2", or "3"',
         }),
-
     Discount: zod.union([zod.string(), zod.number()])
-        .transform(val => String(val).trim())
-        .refine(val => val.length > 0 && isValidPriceFormat(val), {
-            message: 'Discount must be a valid price format (e.g., 10.99)'
+        .transform(val => Number(val))
+        .refine(val => ((!isNaN(val) && val > 0) || val === 0), {
+            message: 'Discount must be a valid price format (e.g., 10.99)',
         }),
-
     Maximum_Redeem_Amount: zod.union([zod.string(), zod.number()])
         .transform(val => Number(val))
         .refine(val => !isNaN(val) && val > 0, {
@@ -188,7 +186,7 @@ export const couponExcelUploadSchema = zod.object({
         .transform(booleanStringTransform).optional(),
     Start_Date: validateAndTransformDate('Start date'),
     End_Date: validateAndTransformDate('End date'),
-}).superRefine(({ Coupon_Type, Coupon_Applied_Fields }, ctx) => {
+}).superRefine(({ Coupon_Type, Coupon_Applied_Fields, Discount }, ctx) => {
     if (['for-product', 'for-category', 'for-brand', 'entire-orders'].includes(Coupon_Type)) {
         if (!Coupon_Applied_Fields || Coupon_Applied_Fields.length === 0) {
             ctx.addIssue({

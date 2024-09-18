@@ -417,7 +417,7 @@ class CouponsController extends BaseController {
                             couponApplyValues: couponAppliedValue,
                             minPurchaseValue: String(Minimum_Purchase_value),
                             discountType: Discount_Type,
-                            discountAmount: Discount,
+                            discountAmount: String(Discount),
                             discountMaxRedeemAmount: Maximum_Redeem_Amount,
                             couponUsage: {
                                 onlyForNewUser: New_User,
