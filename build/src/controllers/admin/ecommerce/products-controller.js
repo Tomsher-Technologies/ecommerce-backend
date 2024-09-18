@@ -1608,7 +1608,7 @@ class ProductsController extends base_controller_1.default {
                     };
                 }
             }
-            const products = await product_service_1.default.variantProductList({
+            const productData = await product_service_1.default.variantProductList({
                 page: parseInt(page_size),
                 limit: parseInt(limit),
                 query,
@@ -1619,10 +1619,12 @@ class ProductsController extends base_controller_1.default {
                 getSpecification,
                 getCountry,
                 getGalleryImage,
-                getProductGalleryImage
+                getProductGalleryImage,
+                isCount: 1
             });
             controller.sendSuccessResponse(res, {
-                requestedData: products,
+                requestedData: productData.products,
+                totalCount: productData.totalCount || 0,
                 message: 'Success!'
             }, 200);
         }

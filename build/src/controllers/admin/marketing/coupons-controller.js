@@ -9,7 +9,6 @@ const coupon_schema_1 = require("../../../utils/schemas/admin/marketing/coupon-s
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const coupon_service_1 = __importDefault(require("../../../services/admin/marketing/coupon-service"));
-const country_service_1 = __importDefault(require("../../../services/admin/setup/country-service"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const excel_upload_1 = require("../../../utils/admin/excel/excel-upload");
 const cart_1 = require("../../../constants/cart");
@@ -18,6 +17,8 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
 const coupon_model_1 = __importDefault(require("../../../model/admin/marketing/coupon-model"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
+const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
+const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const controller = new base_controller_1.default();
 class CouponsController extends base_controller_1.default {
     async findAll(req, res) {
@@ -109,6 +110,7 @@ class CouponsController extends base_controller_1.default {
                     sourceFromId: newCoupon._id,
                     sourceFrom: task_log_1.adminTaskLog.marketing.coupons,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'Coupon code created successfull',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -173,6 +175,7 @@ class CouponsController extends base_controller_1.default {
                             sourceFromId: updatedCoupon._id,
                             sourceFrom: task_log_1.adminTaskLog.marketing.coupons,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Coupon code updated successfull',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -218,6 +221,7 @@ class CouponsController extends base_controller_1.default {
                             sourceFromId: updatedCoupon._id,
                             sourceFrom: task_log_1.adminTaskLog.marketing.coupons,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Coupon code status change successfull',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -270,163 +274,185 @@ class CouponsController extends base_controller_1.default {
                 });
             }
         }
-        catch (error) { // Explicitly specify the type of 'error' as 'any'
+        catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while deleting coupon' });
         }
     }
-    async CouponExcelUpload(req, res) {
-        const validation = [];
+    async couponExcelUpload(req, res) {
+        const validationErrors = [];
+        const couponOperations = [];
         let excelRowIndex = 2;
         if (req && req.file && req.file?.filename) {
             const couponExcelJsonData = await (0, excel_upload_1.excelUpload)(req, '../../../../public/uploads/coupon/excel/');
-            const couponOperations = [];
             if (couponExcelJsonData && couponExcelJsonData.length > 0) {
-                let countryData;
-                let countryId;
-                for (let couponData of couponExcelJsonData) {
-                    function excelSerialToDate(serial) {
-                        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-                        const days = serial - 1;
-                        return new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+                const userData = res.locals.user;
+                const countryData = await country_model_1.default.find();
+                const countryMap = {};
+                countryData.forEach(country => {
+                    if (country.countryTitle) {
+                        countryMap[country.countryTitle.toLowerCase()] = country._id;
                     }
-                    function formatDateToISO(date, time = "00:00:00.000") {
-                        if (isNaN(date.getTime())) { // Check if the date is invalid
+                    if (country.countryShortTitle) {
+                        countryMap[country.countryShortTitle.toLowerCase()] = country._id;
+                    }
+                });
+                for (let couponData of couponExcelJsonData) {
+                    const validationResult = coupon_schema_1.couponExcelUploadSchema.safeParse(couponData);
+                    if (!validationResult.success) {
+                        validationErrors.push({
+                            row: excelRowIndex,
+                            errors: (0, helpers_1.formatZodError)(validationResult.error.errors),
+                        });
+                        continue;
+                    }
+                    let countryId;
+                    let { Country, Start_Date, End_Date, Coupon_Code, Coupon_Applied_Fields, Coupon_Type, Minimum_Purchase_value, Discount_Type, Discount, Maximum_Redeem_Amount, New_User, Enable_Limit_Per_User, Limit_Per_User, Enable_Usage_Limit, Usage_Limit, Display_Coupon, Free_Shipping, Status, Description } = validationResult.data;
+                    function formatDateToISO(dateString, time = "00:00:00.000") {
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) {
                             throw new Error('Invalid date value');
                         }
                         return date.toISOString().split('T')[0] + 'T' + time + '+00:00';
                     }
-                    let startDateFromExcel;
-                    let endDateFromExcel;
-                    try {
-                        startDateFromExcel = excelSerialToDate(couponData.Start_Date);
-                        endDateFromExcel = excelSerialToDate(couponData.End_Date);
-                    }
-                    catch (error) {
-                        validation.push(`Invalid date value (row: ${excelRowIndex})`);
-                        continue;
-                    }
-                    const isoStartDateString = formatDateToISO(startDateFromExcel, "20:00:00.000");
-                    const isoEndDateString = formatDateToISO(endDateFromExcel, "20:00:00.000");
-                    let Coupon_Code = couponData.Coupon_Code ? couponData.Coupon_Code.trim() : 'Unknown Coupon_Code';
-                    if (!couponData.Country)
-                        validation.push(`Country is required (row: ${excelRowIndex})`);
+                    const isoStartDateString = formatDateToISO(Start_Date, "20:00:00.000");
+                    const isoEndDateString = formatDateToISO(End_Date, "20:00:00.000");
+                    Coupon_Code = Coupon_Code ? Coupon_Code.trim() : 'Unknown Coupon_Code';
+                    if (!Country)
+                        validationErrors.push(`Country is required (row: ${excelRowIndex})`);
                     if (!Coupon_Code)
-                        validation.push(`Coupon_Code is required (Country: ${couponData.Country})`);
-                    if (couponData.Start_Date !== undefined && couponData.End_Date !== undefined) {
+                        validationErrors.push(`Coupon_Code is required (Country: ${Country})`);
+                    if (Start_Date !== undefined && End_Date !== undefined) {
                         if (isoStartDateString > isoEndDateString) {
-                            validation.push(`End_Date should not be earlier than Start_Date (row: ${excelRowIndex})`);
+                            validationErrors.push(`End_Date should not be earlier than Start_Date (row: ${excelRowIndex})`);
                         }
                     }
-                    if (couponData.Country) {
-                        countryData = await country_service_1.default.findCountryId({
-                            $or: [{ countryTitle: couponData.Country }, { countryShortTitle: couponData.Country }]
-                        });
-                        countryId = countryData?._id || null;
+                    if (Country) {
+                        const countryKey = Country.toLowerCase();
+                        countryId = countryMap[countryKey] || null;
                     }
                     let couponAppliedValue = [];
-                    const fieldArray = couponData.Coupon_Applied_Fields.split(',');
-                    if (couponData.Coupon_Type === cart_1.couponTypes.forProduct) {
+                    const fieldArray = Coupon_Applied_Fields.split(',');
+                    if (Coupon_Type === cart_1.couponTypes.forProduct) {
                         for (let field of fieldArray) {
                             let productData = await product_model_1.default.findOne({ sku: field }).select('_id') || await product_variants_model_1.default.findOne({ variantSku: field }).select('_id');
                             if (productData) {
                                 couponAppliedValue.push(productData._id);
                             }
                             else {
-                                validation.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
                             }
                         }
                     }
-                    if (couponData.Coupon_Type === cart_1.couponTypes.forBrand) {
+                    if (Coupon_Type === cart_1.couponTypes.forBrand) {
                         for (let field of fieldArray) {
                             let brandData = await brands_model_1.default.findOne({ brandTitle: field }).select('_id');
                             if (brandData) {
                                 couponAppliedValue.push(brandData._id);
                             }
                             else {
-                                validation.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
                             }
                         }
                     }
-                    if (couponData.Coupon_Type === cart_1.couponTypes.forCategory) {
+                    if (Coupon_Type === cart_1.couponTypes.forCategory) {
                         for (let field of fieldArray) {
                             let categoryData = await category_model_1.default.findOne({ categoryTitle: field }).select('_id');
                             if (categoryData) {
                                 couponAppliedValue.push(categoryData._id);
                             }
                             else {
-                                validation.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
+                                validationErrors.push(`Coupon_Type is not available (row: ${excelRowIndex})`);
                             }
                         }
                     }
-                    const existingCoupon = await coupon_model_1.default.findOne({ $and: [{ couponCode: couponData.Coupon_Code }, { countryId: countryId }] }).select('_id');
+                    const couponInsertData = {
+                        countryId,
+                        couponCode: Coupon_Code,
+                        couponDescription: Description,
+                        couponType: Coupon_Type,
+                        couponApplyValues: couponAppliedValue,
+                        minPurchaseValue: Minimum_Purchase_value,
+                        discountType: Discount_Type,
+                        discountAmount: Discount,
+                        discountMaxRedeemAmount: Maximum_Redeem_Amount,
+                        couponUsage: {
+                            onlyForNewUser: New_User,
+                            enableLimitPerUser: Enable_Limit_Per_User,
+                            limitPerUser: Limit_Per_User,
+                            enableCouponUsageLimit: Enable_Usage_Limit,
+                            couponUsageLimit: Usage_Limit,
+                            displayCoupon: Display_Coupon,
+                        },
+                        enableFreeShipping: Free_Shipping,
+                        discountDateRange: [isoStartDateString, isoEndDateString],
+                        status: Status,
+                        isExcel: true
+                    };
+                    const existingCoupon = await coupon_model_1.default.findOne({ couponCode: Coupon_Code, countryId }).select('_id');
                     if (existingCoupon) {
                         couponOperations.push({
                             updateOne: {
                                 filter: { _id: existingCoupon._id },
-                                update: {
-                                    $set: {
-                                        countryId,
-                                        couponCode: couponData.Coupon_Code,
-                                        couponDescription: couponData.Description,
-                                        couponType: couponData.Coupon_Type,
-                                        couponApplyValues: couponAppliedValue,
-                                        minPurchaseValue: couponData.Minimum_Purchase_value,
-                                        discountType: couponData.Discount_Type,
-                                        discountAmount: couponData.Discount,
-                                        discountMaxRedeemAmount: couponData.Maximum_Redeem_Amount,
-                                        couponUsage: {
-                                            onlyForNewUser: couponData.New_User,
-                                            enableLimitPerUser: couponData.Enable_Limit_Per_User,
-                                            limitPerUser: couponData.Limit_Per_User,
-                                            enableCouponUsageLimit: couponData.Enable_Usage_Limit,
-                                            couponUsageLimit: couponData.Usage_Limit,
-                                            displayCoupon: couponData.Display_Coupon,
-                                        },
-                                        enableFreeShipping: couponData.Free_Shipping,
-                                        discountDateRange: [isoStartDateString, isoEndDateString],
-                                        status: couponData.Status,
-                                        isExcel: true
-                                    }
-                                }
+                                update: { $set: couponInsertData }
                             }
                         });
                     }
                     else {
                         couponOperations.push({
                             insertOne: {
-                                document: {
-                                    countryId,
-                                    couponCode: couponData.Coupon_Code,
-                                    couponDescription: couponData.Description,
-                                    couponType: couponData.Coupon_Type,
-                                    couponApplyValues: couponAppliedValue,
-                                    minPurchaseValue: couponData.Minimum_Purchase_value,
-                                    discountType: couponData.Discount_Type,
-                                    discountAmount: couponData.Discount,
-                                    discountMaxRedeemAmount: couponData.Maximum_Redeem_Amount,
-                                    couponUsage: {
-                                        onlyForNewUser: couponData.New_User,
-                                        enableLimitPerUser: couponData.Enable_Limit_Per_User,
-                                        limitPerUser: couponData.Limit_Per_User,
-                                        enableCouponUsageLimit: couponData.Enable_Usage_Limit,
-                                        couponUsageLimit: couponData.Usage_Limit,
-                                        displayCoupon: couponData.Display_Coupon,
-                                    },
-                                    enableFreeShipping: couponData.Free_Shipping,
-                                    discountDateRange: [isoStartDateString, isoEndDateString],
-                                    status: couponData.Status,
-                                    isExcel: true
-                                }
+                                document: { ...couponInsertData, createdBy: userData._id }
                             }
                         });
                     }
                 }
+                const insertedIds = [];
+                const updatedIds = [];
                 if (couponOperations.length > 0) {
-                    await coupon_model_1.default.bulkWrite(couponOperations);
+                    const retVal = await coupon_model_1.default.bulkWrite(couponOperations);
+                    insertedIds.push(...Object.values(retVal.insertedIds));
+                    const updatePromises = [];
+                    for (const operation of couponOperations) {
+                        if (operation.updateOne) {
+                            const { _id } = operation.updateOne.filter;
+                            const couponCode = operation.updateOne.update.$set.couponCode;
+                            updatedIds.push(_id);
+                            const updateTaskLogs = {
+                                userId: userData._id,
+                                sourceFromId: _id.toString(),
+                                sourceFrom: task_log_1.adminTaskLog.marketing.coupons,
+                                activityComment: `Coupon code updated via Excel import: ${couponCode}`,
+                                activity: task_log_1.adminTaskLogActivity.update,
+                                activityStatus: task_log_1.adminTaskLogStatus.success
+                            };
+                            updatePromises.push(general_service_1.default.taskLog(updateTaskLogs).then(() => undefined).catch(() => undefined));
+                        }
+                    }
+                    await Promise.all(updatePromises);
+                    if (insertedIds.length > 0) {
+                        const insertPromises = insertedIds.map(async (id) => {
+                            const { couponCode } = await coupon_model_1.default.findById(id).select('couponCode').exec() || { couponCode: 'Unknown' };
+                            const insertTaskLogs = {
+                                userId: userData._id,
+                                sourceFromId: id.toString(),
+                                sourceFrom: task_log_1.adminTaskLog.marketing.coupons,
+                                activityComment: `Coupon code inserted via Excel import: ${couponCode}`,
+                                activity: task_log_1.adminTaskLogActivity.create,
+                                activityStatus: task_log_1.adminTaskLogStatus.success
+                            };
+                            return general_service_1.default.taskLog(insertTaskLogs).then(() => undefined).catch(() => undefined);
+                        });
+                        await Promise.all(insertPromises);
+                    }
+                }
+                if (validationErrors.length > 0) {
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'Some coupons failed validation',
+                        errors: validationErrors,
+                    }, req);
                 }
                 return controller.sendSuccessResponse(res, {
-                    validation: validation,
-                    message: `Coupon excel upload successfully completed. ${validation.length > 0 ? 'Some Coupon updates were not completed' : ''}`
+                    validation: validationErrors,
+                    message: `Coupon excel upload successfully completed. ${validationErrors.length > 0 ? 'Some Coupon updates were not completed' : ''}`
                 }, 200);
             }
             else {

@@ -252,13 +252,7 @@ class ProductsService {
 
     async variantProductList(options: any = {}): Promise<any | null> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
-        const getCategory = options.getCategory
-        const getBrand = options.getBrand
-        const getAttribute = options.getAttribute
-        const getSpecification = options.getSpecification
-        const getCountry = options.getCountry
-        const getProductGalleryImage = options.getProductGalleryImage
-        const getGalleryImage = options.getGalleryImage
+        const { getCategory, getBrand, getAttribute, getSpecification, getCountry, getProductGalleryImage, getGalleryImage, isCount = 0 } = options
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -271,8 +265,6 @@ class ProductsService {
             {
                 $match: query,
             },
-            { $skip: skip },
-            { $limit: limit },
             { $sort: finalSort },
             productLookup,
             { $unwind: "$productDetails" },
@@ -301,38 +293,73 @@ class ProductsService {
             pipeline.push(variantImageGalleryLookup);
         }
 
-        pipeline.push(
-            {
+        // pipeline.push(
+        //     {
+        //         $project: {
+        //             _id: 1,
+        //             productId: 1,
+        //             countryId: 1,
+        //             variantSku: 1,
+        //             extraProductTitle: 1,
+        //             price: 1,
+        //             discountPrice: 1,
+        //             quantity: 1,
+        //             cartMinQuantity: 1,
+        //             cartMaxQuantity: 1,
+        //             hsn: 1,
+        //             mpn: 1,
+        //             barcode: 1,
+        //             isExcel: 1,
+        //             isDefault: 1,
+        //             status: 1,
+        //             productDetails: 1,
+        //             country: 1,
+        //             productVariantAttributes: 1,
+        //             productSpecification: 1,
+        //             variantImageGallery: 1,
+        //         }
+        //     });
+
+        const dataPipeline: any[] = [{ $match: {} }];
+
+        if (skip) {
+            dataPipeline.push({ $skip: skip });
+        }
+
+        if (limit) {
+            dataPipeline.push({ $limit: limit });
+        }
+
+
+        pipeline.push({
+            $facet: {
+                data: dataPipeline,
+                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
+            },
+        },
+            (isCount === 1 ? {
                 $project: {
-                    _id: 1,
-                    productId: 1,
-                    countryId: 1,
-                    variantSku: 1,
-                    extraProductTitle: 1,
-                    price: 1,
-                    discountPrice: 1,
-                    quantity: 1,
-                    cartMinQuantity: 1,
-                    cartMaxQuantity: 1,
-                    hsn: 1,
-                    mpn: 1,
-                    barcode: 1,
-                    isExcel: 1,
-                    isDefault: 1,
-                    status: 1,
-                    productDetails: 1,
-                    country: 1,
-                    productVariantAttributes: 1,
-                    productSpecification: 1,
-                    variantImageGallery: 1,
+                    data: 1,
+                    totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
                 }
-            })
+            } :
+                {
+                    $project: {
+                        data: 1,
+                    }
+                })
+        )
         // pipeline.push(productLookup)
         const outOfStockSKUs = await ProductVariantsModel.aggregate(pipeline);
 
-        return outOfStockSKUs
+        const products = outOfStockSKUs[0].data;
+        if (isCount == 1) {
+            const totalCount = outOfStockSKUs[0].totalCount;
+            return { products, totalCount }
+        } else {
+            return products
+        }
     }
-
 }
 
 export default new ProductsService();

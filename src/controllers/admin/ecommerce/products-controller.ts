@@ -1733,7 +1733,7 @@ class ProductsController extends BaseController {
             }
 
 
-            const products: any = await ProductsService.variantProductList({
+            const productData: any = await ProductsService.variantProductList({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
                 query,
@@ -1744,11 +1744,13 @@ class ProductsController extends BaseController {
                 getSpecification,
                 getCountry,
                 getGalleryImage,
-                getProductGalleryImage
+                getProductGalleryImage,
+                isCount: 1
             });
 
             controller.sendSuccessResponse(res, {
-                requestedData: products,
+                requestedData: productData.products,
+                totalCount: productData.totalCount || 0,
                 message: 'Success!'
             }, 200);
 
