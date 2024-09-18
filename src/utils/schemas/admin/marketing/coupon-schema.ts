@@ -1,4 +1,4 @@
-import { z as zod } from 'zod';
+import { ZodAny, z as zod } from 'zod';
 import { isValidPriceFormat } from '../../../helpers';
 
 export const couponSchema = zod.object({
@@ -76,6 +76,26 @@ function parseDate(dateString: string): Date | null {
     const date = new Date(Date.UTC(year, month - 1, day));
     return isNaN(date.getTime()) ? null : date;
 }
+const booleanStringTransform = (val: any) => {
+    if (typeof val === 'string') {
+        return ['true', '1'].includes(val.toLowerCase());
+    }
+    return Boolean(val);
+};
+
+const booleanStringSuperRefine = (fieldName: string) => (val: any, ctx: any) => {
+    if (typeof val === 'string') {
+        if (['true', 'false', '0', '1'].includes(val.toLowerCase())) {
+            return;
+        }
+    } else if (typeof val === 'boolean' || typeof val === 'number') {
+        return;
+    }
+    ctx.addIssue({
+        code: zod.ZodIssueCode.custom,
+        message: `${fieldName} must be either "true", "false", "1", "0", or their equivalent boolean values`,
+    });
+};
 
 const DiscountTypeEnum = zod.enum(['percentage', 'amount']);
 
@@ -105,19 +125,29 @@ export const couponExcelUploadSchema = zod.object({
             message: 'Maximum redeem amount must be a valid positive number',
         }),
     // couponUsage
-    New_User: zod.union([zod.boolean(), zod.number()])
+    New_User: zod.union([zod.string(), zod.boolean(), zod.number()])
         .optional()
-        .refine((val) => typeof val === 'boolean' || typeof val === 'number', {
-            message: 'New User must be a boolean (true/false) or a number (1/0)',
-        })
-        .transform(val => Boolean(val)),
-    Enable_Limit_Per_User: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
+        .superRefine(booleanStringSuperRefine('New User'))
+        .transform(booleanStringTransform),
+    Enable_Limit_Per_User: zod.union([zod.string(), zod.boolean(), zod.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Enable Limit Per User'))
+        .transform(booleanStringTransform),
     Limit_Per_User: zod.string().optional(),
-    Enable_Usage_Limit: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
+    Enable_Usage_Limit: zod.union([zod.string(), zod.boolean(), zod.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Enable Usage Limit'))
+        .transform(booleanStringTransform),
     Usage_Limit: zod.string().optional(),
-    Display_Coupon: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
+    Display_Coupon: zod.union([zod.string(), zod.boolean(), zod.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Display Coupon'))
+        .transform(booleanStringTransform),
     // END
-    Free_Shipping: zod.union([zod.boolean(), zod.number()]).optional().transform(val => Boolean(val)),
+    Free_Shipping: zod.union([zod.string(), zod.boolean(), zod.number()])
+        .optional()
+        .superRefine(booleanStringSuperRefine('Free Shipping'))
+        .transform(booleanStringTransform),
     Start_Date: zod.union([zod.string(), zod.number()])
         .refine((val) => (typeof val === 'string' && parseDate(val) !== null) || (typeof val === 'number' && excelSerialToDate(val) !== null), {
             message: 'Start date must be in the format M/D/YYYY or a valid Excel serial number',

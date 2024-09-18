@@ -298,6 +298,7 @@ class CouponsController extends base_controller_1.default {
                 });
                 for (let couponData of couponExcelJsonData) {
                     const validationResult = coupon_schema_1.couponExcelUploadSchema.safeParse(couponData);
+                    console.log('validationResult', validationResult);
                     if (!validationResult.success) {
                         validationErrors.push({
                             row: excelRowIndex,

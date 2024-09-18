@@ -306,6 +306,8 @@ class CouponsController extends BaseController {
 
                 for (let couponData of couponExcelJsonData) {
                     const validationResult = couponExcelUploadSchema.safeParse(couponData);
+                    console.log('validationResult', validationResult);
+
                     if (!validationResult.success) {
                         validationErrors.push({
                             row: excelRowIndex,
