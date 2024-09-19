@@ -133,7 +133,6 @@ class CartController extends BaseController {
             } else {
                 query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] }
             }
-            await CartOrderProductsModel.find()
             const sort: any = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
@@ -144,7 +143,7 @@ class CartController extends BaseController {
                 simple: '1'
             });
 
-            if (Object.keys(cartDetails).length > 0) {
+            if (cartDetails && Object.keys(cartDetails).length > 0) {
                 const variantIds = cartDetails.products.map((product: any) => product.variantId);
                 const productVariants = await ProductVariantsModel.find({
                     _id: { $in: variantIds }
