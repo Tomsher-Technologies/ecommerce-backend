@@ -438,6 +438,7 @@ class CouponsController extends base_controller_1.default {
                             });
                         }
                     }
+                    excelRowIndex++;
                 }
                 const insertedIds = [];
                 const updatedIds = [];
