@@ -125,7 +125,6 @@ class CartController extends base_controller_1.default {
             else {
                 query = { $and: [{ customerId: customer }, { countryId: country }, { cartStatus: '1' }] };
             }
-            await cart_order_product_model_1.default.find();
             const sort = {};
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
@@ -135,7 +134,7 @@ class CartController extends base_controller_1.default {
                 hostName: req.get('origin'),
                 simple: '1'
             });
-            if (Object.keys(cartDetails).length > 0) {
+            if (cartDetails && Object.keys(cartDetails).length > 0) {
                 const variantIds = cartDetails.products.map((product) => product.variantId);
                 const productVariants = await product_variants_model_1.default.find({
                     _id: { $in: variantIds }
@@ -152,6 +151,11 @@ class CartController extends base_controller_1.default {
                     cartDetails,
                     countryId: country,
                     cartOrderProductUpdateOperations
+                });
+            }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Active cart not fount1'
                 });
             }
             const cart = await cart_service_1.default.findCartPopulate({
