@@ -45,7 +45,7 @@ const networkCreateOrder = async (networkDefaultValues, accessToken, paymentMeth
             body: JSON.stringify(networkDefaultValues),
         });
         const responseData = await response.json();
-        console.log('networkResponse', networkDefaultValues);
+        console.log('networkResponse', responseData);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

@@ -135,9 +135,9 @@ exports.couponExcelUploadSchema = zod_1.z.object({
         message: 'Status must be one of "1", "2", or "3"',
     }),
     Discount: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
-        .transform(val => String(val).trim())
-        .refine(val => val.length > 0 && (0, helpers_1.isValidPriceFormat)(val), {
-        message: 'Discount must be a valid price format (e.g., 10.99)'
+        .transform(val => Number(val))
+        .refine(val => ((!isNaN(val) && val > 0) || val === 0), {
+        message: 'Discount must be a valid price format (e.g., 10.99)',
     }),
     Maximum_Redeem_Amount: zod_1.z.union([zod_1.z.string(), zod_1.z.number()])
         .transform(val => Number(val))
@@ -178,7 +178,7 @@ exports.couponExcelUploadSchema = zod_1.z.object({
         .transform(booleanStringTransform).optional(),
     Start_Date: validateAndTransformDate('Start date'),
     End_Date: validateAndTransformDate('End date'),
-}).superRefine(({ Coupon_Type, Coupon_Applied_Fields }, ctx) => {
+}).superRefine(({ Coupon_Type, Coupon_Applied_Fields, Discount }, ctx) => {
     if (['for-product', 'for-category', 'for-brand', 'entire-orders'].includes(Coupon_Type)) {
         if (!Coupon_Applied_Fields || Coupon_Applied_Fields.length === 0) {
             ctx.addIssue({
