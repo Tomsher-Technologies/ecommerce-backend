@@ -364,7 +364,7 @@ class CategoryController extends BaseController {
                     const categorySecondImage = (req?.file) || (req as any).files.find((file: any) => file.fieldname === 'categorySecondImage');
                     let { seoData, ...updatedCategoryData } = req.body;
                     const categoryDetails: any = await CategoryService.findOne(categoryId);
-                    const parentCategoryDetail: any = await CategoryModel.findOne({ _id: updatedCategoryData.parentCategory })
+                    const parentCategoryDetail: any = updatedCategoryData.parentCategory != '' ? await CategoryModel.findOne({ _id: new mongoose.Types.ObjectId(updatedCategoryData.parentCategory) }) : null
 
                     updatedCategoryData = {
                         ...updatedCategoryData,
