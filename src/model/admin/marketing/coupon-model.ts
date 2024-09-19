@@ -92,6 +92,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
     enableFreeShipping: {
         type: Boolean,
         required: true,
+        defulat: false
     },
     discountDateRange: {
         type: [Date],

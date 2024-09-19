@@ -94,6 +94,7 @@ const couponSchema = new mongoose_1.Schema({
     enableFreeShipping: {
         type: Boolean,
         required: true,
+        defulat: false
     },
     discountDateRange: {
         type: [Date],
