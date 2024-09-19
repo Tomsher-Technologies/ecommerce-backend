@@ -60,6 +60,7 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
             blockReferences.warrantyAndRepairs,
             blockReferences.watchCare,
             blockReferences.termsOfSale,
+            blockReferences.brandLists,
             blockReferences.contactUs,
             blockReferences.aboutUs
         ],

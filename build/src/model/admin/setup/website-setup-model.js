@@ -71,6 +71,7 @@ const websiteSetupSchema = new mongoose_1.Schema({
             website_setup_1.blockReferences.warrantyAndRepairs,
             website_setup_1.blockReferences.watchCare,
             website_setup_1.blockReferences.termsOfSale,
+            website_setup_1.blockReferences.brandLists,
             website_setup_1.blockReferences.contactUs,
             website_setup_1.blockReferences.aboutUs
         ],
