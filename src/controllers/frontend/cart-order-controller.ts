@@ -162,6 +162,11 @@ class CartController extends BaseController {
                     cartOrderProductUpdateOperations
                 });
             }
+            else {
+                return controller.sendErrorResponse(res, 200, {
+                    message: 'Active cart not fount1'
+                });
+            }
             const cart: any = await CartService.findCartPopulate({
                 page: parseInt(page_size as string),
                 limit: parseInt(limit as string),
