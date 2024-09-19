@@ -432,6 +432,7 @@ class CouponsController extends BaseController {
                             }
                         });
                     }
+                    excelRowIndex++
                 }
 
                 const insertedIds: ObjectId[] = [];
