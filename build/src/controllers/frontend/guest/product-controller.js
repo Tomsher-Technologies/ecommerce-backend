@@ -134,17 +134,23 @@ class ProductController extends base_controller_1.default {
                     };
                     if (!categories && category) {
                         const categoryId = await fetchCategoryId(category);
-                        if (categoryId)
+                        if (categoryId) {
                             categoryBatchIds.push(categoryId);
+                        }
+                    }
+                    else if (keyword) {
+                        const categoriesByTitle = await category_model_1.default.find({ categoryTitle: { $regex: keywordRegexSingle } }, '_id');
+                        categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
                     }
                     if (categories) {
                         const categoryArray = Array.isArray(categories) ? categories : categories.split(',');
                         const categoryIds = await Promise.all(categoryArray.map(fetchCategoryId));
-                        categoryBatchIds.push(...categoryIds.filter(Boolean));
-                    }
-                    if (keyword) {
-                        const categoriesByTitle = await category_model_1.default.find({ categoryTitle: { $regex: keywordRegexSingle } }, '_id');
-                        categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
+                        if (!keyword) {
+                            categoryBatchIds = categoryIds.filter(Boolean);
+                        }
+                        else {
+                            categoryBatchIds.push(...categoryIds.filter(Boolean));
+                        }
                     }
                     const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
                     if (categoryIds.length > 0) {
@@ -184,10 +190,20 @@ class ProductController extends base_controller_1.default {
                         const foundBrands = await brands_model_1.default.find({ slug: { $in: brandSlugs } }, '_id');
                         brandIds.push(...foundBrands.map(brand => brand._id));
                     }
-                    if (brandIds.length > 0) {
+                    if (brand) {
                         query = {
                             ...query, "brand": { $in: brandIds }
                         };
+                    }
+                    else {
+                        if (brandIds.length > 0) {
+                            if (query.$or) {
+                                query.$or.push({ brand: { $in: brandIds } });
+                            }
+                            else {
+                                query.$or = [{ brand: { $in: brandIds } }];
+                            }
+                        }
                     }
                     productFindableValues = {
                         ...productFindableValues,
@@ -397,10 +413,16 @@ class ProductController extends base_controller_1.default {
                     };
                 }
                 if (productIds.length > 0) {
-                    query = {
-                        ...query,
-                        _id: { $in: productIds }
-                    };
+                    if (query.$or) {
+                        query.$or.push({ _id: { $in: productIds } });
+                    }
+                    else {
+                        query.$or = [{ _id: { $in: productIds } }];
+                    }
+                    // query = {
+                    //     ...query,
+                    //     _id: { $in: productIds }
+                    // };
                 }
                 const productDatas = await product_service_1.default.getProductDetailsV2(productFindableValues, {
                     countryId,
