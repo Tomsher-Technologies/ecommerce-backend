@@ -27,7 +27,8 @@ const createOrder = (orderId) => {
 };
 exports.createOrder = createOrder;
 const shippingOrder = (orderId, expectedDeliveryDate) => {
-    return `Your order ${orderId} has just been dispatched! You can expect it to be delivered by (${expectedDeliveryDate}).`;
+    return `Your order ${orderId} has just been dispatched.`;
+    // return `Your order ${orderId} has just been dispatched! You can expect it to be delivered by (${expectedDeliveryDate}).`
 };
 exports.shippingOrder = shippingOrder;
 const deliveredOrder = (orderId) => {
