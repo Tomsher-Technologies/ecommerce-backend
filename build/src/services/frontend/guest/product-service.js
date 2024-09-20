@@ -486,6 +486,7 @@ class ProductService {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
             },
+            quantity: { $gt: 0 },
             status: "1"
         };
         if (query['productVariants._id']) {

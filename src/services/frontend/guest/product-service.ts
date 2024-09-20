@@ -530,6 +530,7 @@ class ProductService {
             $expr: {
                 $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
             },
+            quantity: { $gt: 0 },
             status: "1"
         };
 
