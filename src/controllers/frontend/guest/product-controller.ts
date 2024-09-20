@@ -148,17 +148,23 @@ class ProductController extends BaseController {
                     };
                     if (!categories && category) {
                         const categoryId = await fetchCategoryId(category);
-                        if (categoryId) categoryBatchIds.push(categoryId);
+                        if (categoryId) {
+                            categoryBatchIds.push(categoryId)
+                        }
+                    } else if (keyword) {
+                        const categoriesByTitle = await CategoryModel.find({ categoryTitle: { $regex: keywordRegexSingle } }, '_id');
+                        categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
                     }
                     if (categories) {
                         const categoryArray = Array.isArray(categories) ? categories : categories.split(',');
                         const categoryIds = await Promise.all(categoryArray.map(fetchCategoryId));
-                        categoryBatchIds.push(...categoryIds.filter(Boolean));
+                        if (!keyword) {
+                            categoryBatchIds = categoryIds.filter(Boolean)
+                        } else {
+                            categoryBatchIds.push(...categoryIds.filter(Boolean));
+                        }
                     }
-                    if (keyword) {
-                        const categoriesByTitle = await CategoryModel.find({ categoryTitle: { $regex: keywordRegexSingle } }, '_id');
-                        categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
-                    }
+
                     const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
                     if (categoryIds.length > 0) {
                         const categoryProductIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
@@ -191,16 +197,25 @@ class ProductController extends BaseController {
                     }
                     if (keyword) {
                         const brandByTitleId = await BrandsModel.find({ brandTitle: { $regex: keywordRegexSingle } }, '_id');
+
                         brandIds.push(...brandByTitleId.map(brand => brand._id));
                     }
                     if (brandSlugs.length > 0) {
                         const foundBrands = await BrandsModel.find({ slug: { $in: brandSlugs } }, '_id');
                         brandIds.push(...foundBrands.map(brand => brand._id));
                     }
-                    if (brandIds.length > 0) {
+                    if (brand) {
                         query = {
                             ...query, "brand": { $in: brandIds }
                         };
+                    } else {
+                        if (brandIds.length > 0) {
+                            if (query.$or) {
+                                query.$or.push({ brand: { $in: brandIds } });
+                            } else {
+                                query.$or = [{ brand: { $in: brandIds } }];
+                            }
+                        }
                     }
 
                     productFindableValues = {
@@ -418,10 +433,15 @@ class ProductController extends BaseController {
                 }
 
                 if (productIds.length > 0) {
-                    query = {
-                        ...query,
-                        _id: { $in: productIds }
-                    };
+                    if (query.$or) {
+                        query.$or.push({ _id: { $in: productIds } });
+                    } else {
+                        query.$or = [{ _id: { $in: productIds } }];
+                    }
+                    // query = {
+                    //     ...query,
+                    //     _id: { $in: productIds }
+                    // };
                 }
                 const productDatas = await ProductService.getProductDetailsV2(productFindableValues, {
                     countryId,
