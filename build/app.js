@@ -32,8 +32,8 @@ app.use((0, helmet_1.default)({
         }
     }
 }));
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: false }));
+app.use(express_1.default.json({ limit: '50mb' }));
+app.use(express_1.default.urlencoded({ extended: false, limit: '50mb' }));
 app.use('/public', express_1.default.static(path_1.default.join(__dirname, 'public')));
 mongoose_1.default.Promise = global.Promise;
 mongoose_1.default
