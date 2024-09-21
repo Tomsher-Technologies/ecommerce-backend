@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.offerTypes = exports.offers = void 0;
-exports.offers = {
+exports.offerTypes = exports.offersByTypes = void 0;
+exports.offersByTypes = {
     brand: 'brand',
     category: 'category',
     product: 'product'

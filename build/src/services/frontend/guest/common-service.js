@@ -583,7 +583,7 @@ class CommonService {
         if (getOfferList && getOfferList.length > 0) {
             for await (const offerDetail of getOfferList) {
                 if (offerDetail.offerApplyValues && offerDetail.offerApplyValues.length > 0) {
-                    if (offerDetail.offersBy === offers_1.offers.brand) {
+                    if (offerDetail.offersBy === offers_1.offersByTypes.brand) {
                         if (offer) {
                             pipeline.push({ $match: { brand: { $in: offerDetail.offerApplyValues } } });
                         }
@@ -592,7 +592,7 @@ class CommonService {
                             offerDetail.offerApplyValues.forEach((value) => offerApplied.brand.brands.add(new mongoose_1.default.Types.ObjectId(value)));
                         }
                     }
-                    else if (offerDetail.offersBy === offers_1.offers.category) {
+                    else if (offerDetail.offersBy === offers_1.offersByTypes.category) {
                         if (offer) {
                             pipeline.push({ $match: { 'productCategory.category._id': { $in: offerDetail.offerApplyValues } } });
                         }
@@ -601,7 +601,7 @@ class CommonService {
                             offerDetail.offerApplyValues.forEach((value) => offerApplied.category.categories.add(new mongoose_1.default.Types.ObjectId(value)));
                         }
                     }
-                    else if (offerDetail.offersBy === offers_1.offers.product) {
+                    else if (offerDetail.offersBy === offers_1.offersByTypes.product) {
                         if (offer) {
                             pipeline.push({ $match: { _id: { $in: offerDetail.offerApplyValues } } });
                         }

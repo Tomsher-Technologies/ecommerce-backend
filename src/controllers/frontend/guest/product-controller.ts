@@ -26,6 +26,11 @@ import SpecificationDetailModel from '../../../model/admin/ecommerce/specificati
 
 const controller = new BaseController();
 class ProductController extends BaseController {
+
+    async findAllVariantProductsV1(req: any, res: Response): Promise<void> {
+
+    }
+    
     async findAllProductsV2(req: Request, res: Response): Promise<void> {
         try {
             const { page_size = 1, limit = 20, keyword = '', getbrand = '0', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;

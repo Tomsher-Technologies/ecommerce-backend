@@ -1,4 +1,4 @@
-export const offers = {
+export const offersByTypes = {
     brand: 'brand',
     category: 'category',
     product: 'product'

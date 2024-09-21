@@ -122,6 +122,7 @@ class OffersController extends base_controller_1.default {
             const offerId = req.params.id;
             if (offerId) {
                 const offer = await offer_service_1.default.findOne(offerId);
+                await offer_service_1.default.setOfferApplicableProducts(offer);
                 return controller.sendSuccessResponse(res, {
                     requestedData: offer,
                     message: 'Success'

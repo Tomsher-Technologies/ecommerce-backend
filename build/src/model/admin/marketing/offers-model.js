@@ -73,6 +73,11 @@ const offersSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.Mixed,
         required: true,
     },
+    applicableProducts: {
+        type: mongoose_1.Schema.Types.Mixed,
+        default: [],
+        required: true,
+    },
     offerType: {
         type: String,
         required: true,
