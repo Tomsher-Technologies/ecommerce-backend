@@ -24,7 +24,7 @@ exports.offersSchema = zod_1.z.object({
     offerImage: zod_1.z.any({ required_error: 'Offer image is required' }).nullable(),
     status: zod_1.z.string().optional(),
 }).superRefine(({ offersBy, offerApplyValues, offerType, buyQuantity, getQuantity, offerIN }, ctx) => {
-    if (((offersBy === offers_1.offers.product) || (offersBy === offers_1.offers.category) || (offersBy === offers_1.offers.brand))) {
+    if (((offersBy === offers_1.offersByTypes.product) || (offersBy === offers_1.offersByTypes.category) || (offersBy === offers_1.offersByTypes.brand))) {
         if (offerApplyValues?.length === 0) {
             ctx.addIssue({
                 code: "custom",

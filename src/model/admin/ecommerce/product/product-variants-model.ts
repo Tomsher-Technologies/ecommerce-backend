@@ -6,6 +6,7 @@ export interface ProductVariantsProps extends Document {
     itemCode: Number;
     productId: Schema.Types.ObjectId;
     countryId: Schema.Types.ObjectId;
+    offerId: Schema.Types.ObjectId;
     slug: string;
     showOrder: Number;
     extraProductTitle: string;
@@ -14,6 +15,8 @@ export interface ProductVariantsProps extends Document {
     price: number;
     quantity: number;
     discountPrice: number;
+    offerPrice: number;
+    offerData: Schema.Types.Mixed,
     isDefault: Number,
     hsn: string;
     mpn: string;
@@ -33,7 +36,7 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
     itemCode: {
         type: Number,
         unique: true,
-        required: false, 
+        required: false,
     },
     productId: {
         type: Schema.Types.ObjectId,
@@ -44,6 +47,12 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: Schema.Types.ObjectId,
         ref: `${collections.setup.countries}`,
         required: true,
+    },
+    offerId: {
+        type: Schema.Types.ObjectId,
+        ref: `${collections.marketing.offers}`,
+        default: null,
+        required: false,
     },
     variantSku: {
         type: String,
@@ -86,12 +95,20 @@ const productVariantsSchema: Schema<ProductVariantsProps> = new Schema({
         type: Number,
         default: 0
     },
+    offerPrice: {
+        type: Number,
+        default: 0
+    },
     quantity: {
         type: Number,
         required: function () {
             return !this.isExcel;
         },
         default: 0
+    },
+    offerData: {
+        type: Schema.Types.Mixed,
+        default: {}
     },
     cartMinQuantity: {
         type: String,

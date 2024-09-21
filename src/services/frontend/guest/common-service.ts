@@ -10,7 +10,7 @@ import { collectionBrandlanguageFieldsReplace, collectionsBrandFinalProject, col
 import { addFieldsProductSpecification, addFieldsProductVariantAttributes, brandLookup, brandObject, productCategoryLookup, productFinalProject, productMultilanguageFieldsLookup, productSpecificationLookup, productVariantAttributesLookup, productlanguageFieldsReplace, variantLookup } from "../../../utils/config/product-config";
 import { collectionProductlanguageFieldsReplace, collectionsProductFinalProject, collectionsProductLookup } from "../../../utils/config/collections-product-config";
 import { collectionCategorylanguageFieldsReplace, collectionsCategoryFinalProject, collectionsCategoryLookup } from "../../../utils/config/collections-categories-config";
-import { offers } from '../../../constants/offers';
+import { offersByTypes } from '../../../constants/offers';
 import { getCountrySubDomainFromHostname, getLanguageValueFromSubdomain } from "../../../utils/frontend/sub-domain";
 import { blockReferences, websiteSetup } from "../../../constants/website-setup";
 import { offerBrandPopulation, offerCategoryPopulation, offerProductPopulation } from "../../../utils/config/offer-config";
@@ -668,21 +668,21 @@ class CommonService {
         if (getOfferList && getOfferList.length > 0) {
             for await (const offerDetail of getOfferList) {
                 if (offerDetail.offerApplyValues && offerDetail.offerApplyValues.length > 0) {
-                    if (offerDetail.offersBy === offers.brand) {
+                    if (offerDetail.offersBy === offersByTypes.brand) {
                         if (offer) {
                             pipeline.push({ $match: { brand: { $in: offerDetail.offerApplyValues } } });
                         } else {
                             offerApplied.brand.offerId.add(offerDetail._id);
                             offerDetail.offerApplyValues.forEach((value: string) => offerApplied.brand.brands.add(new mongoose.Types.ObjectId(value)));
                         }
-                    } else if (offerDetail.offersBy === offers.category) {
+                    } else if (offerDetail.offersBy === offersByTypes.category) {
                         if (offer) {
                             pipeline.push({ $match: { 'productCategory.category._id': { $in: offerDetail.offerApplyValues } } });
                         } else {
                             offerApplied.category.offerId.add(offerDetail._id);
                             offerDetail.offerApplyValues.forEach((value: string) => offerApplied.category.categories.add(new mongoose.Types.ObjectId(value)));
                         }
-                    } else if (offerDetail.offersBy === offers.product) {
+                    } else if (offerDetail.offersBy === offersByTypes.product) {
                         if (offer) {
                             pipeline.push({ $match: { _id: { $in: offerDetail.offerApplyValues } } });
                         } else {

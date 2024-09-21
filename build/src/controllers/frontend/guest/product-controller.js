@@ -26,6 +26,8 @@ const attribute_detail_model_1 = __importDefault(require("../../../model/admin/e
 const specifications_detail_model_1 = __importDefault(require("../../../model/admin/ecommerce/specifications-detail-model"));
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
+    async findAllVariantProductsV1(req, res) {
+    }
     async findAllProductsV2(req, res) {
         try {
             const { page_size = 1, limit = 20, keyword = '', getbrand = '0', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getspecification = '' } = req.query;

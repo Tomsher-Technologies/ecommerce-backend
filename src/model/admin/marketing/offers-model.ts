@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface OffersProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -8,6 +9,7 @@ export interface OffersProps extends Document {
     offerDescription: string;
     offersBy: string;
     offerApplyValues: any;
+    applicableProducts: Schema.Types.Mixed;
     offerType: string;
     offerIN: string;
     buyQuantity: string;
@@ -23,7 +25,7 @@ const offersSchema: Schema<OffersProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',  
+        ref: `${collections.setup.countries}`,
     },
     offerTitle: {
         type: String,
@@ -31,7 +33,7 @@ const offersSchema: Schema<OffersProps> = new Schema({
         unique: false,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Offers').countDocuments({ offerTitle: value });
+                const count = await this.model(`${collections.marketing.offers}`).countDocuments({ offerTitle: value });
                 return count === 0;
             },
             message: 'Offers code must be unique'
@@ -47,7 +49,7 @@ const offersSchema: Schema<OffersProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Offers').countDocuments({ slug: value });
+                const count = await this.model(`${collections.marketing.offers}`).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -67,6 +69,11 @@ const offersSchema: Schema<OffersProps> = new Schema({
     },
     offerApplyValues: {
         type: Schema.Types.Mixed,
+        required: true,
+    },
+    applicableProducts: {
+        type: Schema.Types.Mixed,
+        default: [],
         required: true,
     },
     offerType: {
@@ -106,6 +113,6 @@ const offersSchema: Schema<OffersProps> = new Schema({
     }
 });
 
-const OffersModel = mongoose.model<OffersProps>('Offers', offersSchema);
+const OffersModel = mongoose.model<OffersProps>(`${collections.marketing.offers}`, offersSchema);
 
 export default OffersModel;
