@@ -79,6 +79,7 @@ class OffersController extends base_controller_1.default {
                 };
                 const newOffer = await offer_service_1.default.create(offerData);
                 if (newOffer) {
+                    await offer_service_1.default.setOfferApplicableProducts(newOffer);
                     return controller.sendSuccessResponse(res, {
                         requestedData: newOffer?.length > 0 ? newOffer[0] : newOffer,
                         message: 'Offer created successfully!'
@@ -122,7 +123,6 @@ class OffersController extends base_controller_1.default {
             const offerId = req.params.id;
             if (offerId) {
                 const offer = await offer_service_1.default.findOne(offerId);
-                await offer_service_1.default.setOfferApplicableProducts(offer);
                 return controller.sendSuccessResponse(res, {
                     requestedData: offer,
                     message: 'Success'
@@ -154,8 +154,9 @@ class OffersController extends base_controller_1.default {
                     };
                     const updatedOffer = await offer_service_1.default.update(offerId, updatedofferData);
                     if (updatedOffer) {
+                        await offer_service_1.default.setOfferApplicableProducts(updatedOffer);
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
+                            requestedData: updatedOffer,
                             message: 'Offer updated successfully!'
                         }, 200, {
                             sourceFromId: updatedOffer._id,

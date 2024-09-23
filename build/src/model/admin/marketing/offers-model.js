@@ -24,11 +24,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const offersSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: `${collections_1.collections.setup.countries}`,
     },
     offerTitle: {
         type: String,
@@ -36,7 +37,7 @@ const offersSchema = new mongoose_1.Schema({
         unique: false,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Offers').countDocuments({ offerTitle: value });
+                const count = await this.model(`${collections_1.collections.marketing.offers}`).countDocuments({ offerTitle: value });
                 return count === 0;
             },
             message: 'Offers code must be unique'
@@ -51,7 +52,7 @@ const offersSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Offers').countDocuments({ slug: value });
+                const count = await this.model(`${collections_1.collections.marketing.offers}`).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'Slug must be unique'
@@ -114,5 +115,5 @@ const offersSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const OffersModel = mongoose_1.default.model('Offers', offersSchema);
+const OffersModel = mongoose_1.default.model(`${collections_1.collections.marketing.offers}`, offersSchema);
 exports.default = OffersModel;
