@@ -88,7 +88,7 @@ class OffersController extends BaseController {
 
                 const newOffer: any = await OfferService.create(offerData);
                 if (newOffer) {
-                   
+                    await OfferService.setOfferApplicableProducts(newOffer)
                     return controller.sendSuccessResponse(res, {
                         requestedData: newOffer?.length > 0 ? newOffer[0] : newOffer,
                         message: 'Offer created successfully!'
@@ -131,7 +131,6 @@ class OffersController extends BaseController {
             const offerId = req.params.id;
             if (offerId) {
                 const offer = await OfferService.findOne(offerId);
-                await OfferService.setOfferApplicableProducts(offer)
                 return controller.sendSuccessResponse(res, {
                     requestedData: offer,
                     message: 'Success'
@@ -163,8 +162,9 @@ class OffersController extends BaseController {
 
                     const updatedOffer: any = await OfferService.update(offerId, updatedofferData);
                     if (updatedOffer) {
+                        await OfferService.setOfferApplicableProducts(updatedOffer)
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
+                            requestedData: updatedOffer,
                             message: 'Offer updated successfully!'
                         }, 200, { // task log
                             sourceFromId: updatedOffer._id,

@@ -43,7 +43,8 @@ exports.collections = {
         paymentmethods: 'paymentmethods',
     },
     marketing: {
-        coupons: 'coupons'
+        coupons: 'coupons',
+        offers: 'offers',
     },
     website: {
         collectionsProducts: 'collectionsproducts',

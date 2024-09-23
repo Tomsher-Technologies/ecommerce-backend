@@ -45,6 +45,12 @@ const productVariantsSchema = new mongoose_1.Schema({
         ref: `${collections_1.collections.setup.countries}`,
         required: true,
     },
+    offerId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: `${collections_1.collections.marketing.offers}`,
+        default: null,
+        required: false,
+    },
     variantSku: {
         type: String,
         required: true,
@@ -86,12 +92,20 @@ const productVariantsSchema = new mongoose_1.Schema({
         type: Number,
         default: 0
     },
+    offerPrice: {
+        type: Number,
+        default: 0
+    },
     quantity: {
         type: Number,
         required: function () {
             return !this.isExcel;
         },
         default: 0
+    },
+    offerData: {
+        type: mongoose_1.Schema.Types.Mixed,
+        default: {}
     },
     cartMinQuantity: {
         type: String,

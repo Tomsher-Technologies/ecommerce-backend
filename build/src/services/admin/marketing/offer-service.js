@@ -11,6 +11,8 @@ const offers_model_1 = __importDefault(require("../../../model/admin/marketing/o
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const category_model_1 = __importDefault(require("../../../model/admin/ecommerce/category-model"));
+const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
+const offer_1 = require("../../../utils/admin/offer");
 class OfferService {
     constructor() {
         this.offerAddFields = {
@@ -128,52 +130,83 @@ class OfferService {
         return offers_model_1.default.create(offerData);
     }
     async setOfferApplicableProducts(offer) {
-        let { countryId, offerIN, offerType, offersBy, offerApplyValues, applicableProducts, offerDateRange } = offer;
-        let productIds = [];
-        const offerStartDate = new Date(offerDateRange[0]);
+        const { _id, countryId, offerIN, offerType, offersBy, offerApplyValues, offerDateRange } = offer;
         const offerEndDate = new Date(offerDateRange[1]);
         const currentDate = new Date();
-        if (currentDate < offerEndDate) {
-            if (offers_1.offersByTypes.product === offersBy) {
-                productIds = offerApplyValues;
-                applicableProducts = offerApplyValues;
-            }
-            else if (offers_1.offersByTypes.brand === offersBy) {
-                productIds = await product_model_1.default.distinct("_id", { brand: offerApplyValues.map((value) => new mongoose_1.default.Types.ObjectId(value)) });
-            }
-            else if (offers_1.offersByTypes.category === offersBy) {
-                async function fetchAllCategories(categoryIds) {
-                    let queue = [...categoryIds];
-                    const allCategoryIds = new Set([...categoryIds]);
-                    while (queue.length > 0) {
-                        const categoriesData = await category_model_1.default.find({ parentCategory: { $in: queue } }, '_id');
-                        const childCategoryIds = categoriesData.map(category => category._id);
-                        if (childCategoryIds.length === 0) {
-                            break;
-                        }
-                        queue = childCategoryIds;
-                        childCategoryIds.forEach(id => allCategoryIds.add(id));
-                    }
-                    return Array.from(allCategoryIds);
-                }
-                const fetchCategoryId = async (categoryValue) => {
-                    const isObjectId = /^[0-9a-fA-F]{24}$/.test(categoryValue);
-                    return isObjectId ? categoryValue : (await category_model_1.default.findOne({ slug: categoryValue }, '_id'))?._id || null;
-                };
-                let categoryBatchIds = [];
-                const allCategoryIds = await Promise.all(offerApplyValues.map(fetchCategoryId));
-                categoryBatchIds.push(...allCategoryIds.filter(Boolean));
-                const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
-                productIds = await product_category_link_model_1.default.distinct('productId', { categoryId: { $in: categoryIds } });
-            }
-            if (productIds.length > 0) {
-                // awai ProductVariantsModel
-            }
+        if (currentDate >= offerEndDate) {
+            console.log('Offer has expired');
             return;
         }
-        else {
-            console.log("The offer is still valid.");
+        let productIds = [];
+        if (offersBy === offers_1.offersByTypes.product) {
+            productIds = offerApplyValues;
         }
+        else if (offersBy === offers_1.offersByTypes.brand) {
+            productIds = await product_model_1.default.distinct("_id", {
+                brand: offerApplyValues.map((value) => new mongoose_1.default.Types.ObjectId(value)),
+            });
+        }
+        else if (offersBy === offers_1.offersByTypes.category) {
+            productIds = await this.fetchCategoryProducts(offerApplyValues);
+        }
+        if (productIds.length === 0) {
+            console.log('No products found for the offer');
+            return;
+        }
+        const productVariants = await product_variants_model_1.default.find({ productId: { $in: productIds }, countryId });
+        if (!productVariants || productVariants.length === 0) {
+            console.log('No product variants found for the products');
+            return;
+        }
+        const bulkOps = productVariants.map(productVariant => {
+            const { productId, price, discountPrice, offerData } = productVariant;
+            const basePrice = discountPrice > 0 ? discountPrice : price;
+            const newOfferPrice = (0, offer_1.calculateOfferPrice)(offerType, offerIN, basePrice);
+            if ((0, offer_1.shouldUpdateOffer)(offersBy, offerData?.offersBy)) {
+                return {
+                    updateOne: {
+                        filter: { productId, countryId },
+                        update: {
+                            $set: {
+                                offerId: _id,
+                                offerPrice: newOfferPrice,
+                                offerData: { offerIN, offerType, offersBy },
+                            },
+                        },
+                    },
+                };
+            }
+            else {
+                console.log(`Skipping update for productId: ${productId}`);
+                return null;
+            }
+        }).filter(Boolean);
+        if (bulkOps.length > 0) {
+            const bulkWriteResult = await product_variants_model_1.default.bulkWrite(bulkOps);
+            console.log(`Bulk write completed. Matched: ${bulkWriteResult.matchedCount}, Modified: ${bulkWriteResult.modifiedCount}`);
+        }
+        else {
+            console.log('No updates required.');
+        }
+    }
+    async fetchCategoryProducts(categoryIds) {
+        const fetchAllCategories = async (categoryIds) => {
+            let queue = [...categoryIds];
+            const allCategoryIds = new Set(categoryIds);
+            while (queue.length > 0) {
+                const categoriesData = await category_model_1.default.find({ parentCategory: { $in: queue } }, '_id');
+                const childCategoryIds = categoriesData.map(category => category._id);
+                if (childCategoryIds.length === 0)
+                    break;
+                queue = childCategoryIds;
+                childCategoryIds.forEach(id => allCategoryIds.add(id));
+            }
+            return Array.from(allCategoryIds);
+        };
+        const normalizedCategoryIds = categoryIds.map((id) => new mongoose_1.default.Types.ObjectId(id));
+        const allCategoryIds = await fetchAllCategories(normalizedCategoryIds);
+        const productIds = product_category_link_model_1.default.distinct('productId', { categoryId: { $in: allCategoryIds } });
+        return productIds;
     }
     async findOne(offerId) {
         const pipeline = [
@@ -197,9 +230,99 @@ class OfferService {
             this.productsLookup,
             { $replaceRoot: this.offerReplacedNewRoot }
         ];
-        const result = await offers_model_1.default.aggregate(pipeline).exec();
+        const [result] = await offers_model_1.default.aggregate(pipeline).exec();
         return result;
     }
+    // async setOfferApplicableProducts(offer: any): Promise<any> {
+    //     let { _id, countryId, offerIN, offerType, offersBy, offerApplyValues, applicableProducts, offerDateRange } = offer;
+    //     let productIds = [];
+    //     const offerEndDate = new Date(offerDateRange[1]);
+    //     const currentDate = new Date();
+    //     if (offerEndDate && currentDate < offerEndDate) {
+    //         if (offersByTypes.product === offersBy) {
+    //             productIds = offerApplyValues;
+    //             applicableProducts = offerApplyValues
+    //         } else if (offersByTypes.brand === offersBy) {
+    //             productIds = await ProductsModel.distinct("_id", { brand: offerApplyValues.map((value: any) => new mongoose.Types.ObjectId(value)) });
+    //         } else if (offersByTypes.category === offersBy) {
+    //             async function fetchAllCategories(categoryIds: any[]): Promise<any[]> {
+    //                 let queue = [...categoryIds];
+    //                 const allCategoryIds = new Set([...categoryIds]);
+    //                 while (queue.length > 0) {
+    //                     const categoriesData = await CategoryModel.find(
+    //                         { parentCategory: { $in: queue } },
+    //                         '_id'
+    //                     );
+    //                     const childCategoryIds = categoriesData.map(category => category._id);
+    //                     if (childCategoryIds.length === 0) {
+    //                         break;
+    //                     }
+    //                     queue = childCategoryIds;
+    //                     childCategoryIds.forEach(id => allCategoryIds.add(id));
+    //                 }
+    //                 return Array.from(allCategoryIds);
+    //             }
+    //             const fetchCategoryId = async (categoryValue: string) => {
+    //                 const isObjectId = /^[0-9a-fA-F]{24}$/.test(categoryValue);
+    //                 return isObjectId ? categoryValue : (await CategoryModel.findOne({ slug: categoryValue }, '_id'))?._id || null;
+    //             };
+    //             let categoryBatchIds = [];
+    //             const allCategoryIds = await Promise.all(offerApplyValues.map(fetchCategoryId));
+    //             categoryBatchIds.push(...allCategoryIds.filter(Boolean));
+    //             const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
+    //             productIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
+    //         }
+    //         if (productIds.length > 0) {
+    //             await Promise.all(
+    //                 productIds.map(async (productId: string) => {
+    //                     const productVariant = await ProductVariantsModel.findOne({ productId });
+    //                     if (!productVariant) return;
+    //                     const { price, discountPrice, offerData }: any = productVariant;
+    //                     let basePrice = discountPrice > 0 ? discountPrice : price;
+    //                     let newOfferPrice = 0;
+    //                     if (offerType === offerTypes.percent) {
+    //                         const discountPercentage = Number(offerIN);
+    //                         newOfferPrice = basePrice - (basePrice * (discountPercentage / 100));
+    //                     } else if (offerType === offerTypes.amountOff) {
+    //                         const discountAmount = Number(offerIN);
+    //                         newOfferPrice = basePrice - discountAmount;
+    //                     }
+    //                     if (offerData && offerData?.offerType) {
+    //                         const existingOffersBy = offerData.offersBy;
+    //                         console.log('existingOffersBy', existingOffersBy);
+    //                         if (offersBy === offersByTypes.brand) {
+    //                             if (existingOffersBy === offersByTypes.category) {
+    //                                 console.log(`Skipping update for productId ${productId}: existing offer is 'category'`);
+    //                                 return;
+    //                             }
+    //                             console.log(`Updating 'brand' offer for productId ${productId}`);
+    //                         } else if (offersBy === offersByTypes.product) {
+    //                             if (existingOffersBy === offersByTypes.category || existingOffersBy === offersByTypes.brand) {
+    //                                 console.log(`Skipping update for productId ${productId}: existing offer is 'category' or 'brand'`);
+    //                                 return;
+    //                             }
+    //                             console.log(`Updating 'product' offer for productId ${productId}`);
+    //                         }
+    //                     }
+    //                     await ProductVariantsModel.updateOne(
+    //                         { productId, countryId }, {
+    //                         $set: {
+    //                             offerId: _id,
+    //                             offerPrice: newOfferPrice,
+    //                             offerData: {
+    //                                 offerIN,
+    //                                 offerType,
+    //                                 offersBy
+    //                             }
+    //                         }
+    //                     });
+    //                 })
+    //             );
+    //         }
+    //         return;
+    //     }
+    //     return;
+    // }
     async destroy(offerId) {
         return offers_model_1.default.findOneAndDelete({ _id: offerId });
     }

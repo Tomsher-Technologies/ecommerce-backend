@@ -557,15 +557,18 @@ class ProductService {
                             productId: 1,
                             slug: 1,
                             variantSku: 1,
+                            price: 1,
+                            discountPrice: 1,
+                            offerPrice: 1,
+                            quantity: 1,
+                            isDefault: 1,
                             showOrder: 1,
                             extraProductTitle: 1,
                             variantDescription: 1,
                             cartMaxQuantity: 1,
                             cartMinQuantity: 1,
-                            discountPrice: 1,
-                            price: 1,
-                            quantity: 1,
-                            isDefault: 1
+                            offerId: 1,
+                            offerData: 1,
                         }
                     },
                     // ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...productVariantAttributesLookup] : []),
@@ -591,41 +594,7 @@ class ProductService {
                 }
             },
         ];
-        // const { pipeline: offerPipeline, getOfferList, offerApplied } = await CommonService.findOffers(offers, hostName, "", countryId)
 
-        // if (offerApplied.category.categories && offerApplied.category.categories.length > 0) {
-        //     const offerCategory = offerCategoryPopulation(getOfferList, offerApplied.category)
-        //     pipeline.push(offerCategory);
-        // }
-        // if (offerApplied.brand.brands && offerApplied.brand.brands.length > 0) {
-        //     const offerBrand = offerBrandPopulation(getOfferList, offerApplied.brand)
-        //     pipeline.push(offerBrand);
-        // }
-        // if (offerApplied.product.products && offerApplied.product.products.length > 0) {
-        //     const offerProduct = offerProductPopulation(getOfferList, offerApplied.product)
-        //     pipeline.push(offerProduct)
-        // }
-        // pipeline.push({
-        //     $addFields: {
-        //         offer: {
-        //             $cond: {
-        //                 if: { $gt: [{ $size: { $ifNull: ["$categoryOffers", []] } }, 0] },
-        //                 then: { $arrayElemAt: ["$categoryOffers", 0] },
-        //                 else: {
-        //                     $cond: {
-        //                         if: { $gt: [{ $size: { $ifNull: ["$brandOffers", []] } }, 0] },
-        //                         then: { $arrayElemAt: ["$brandOffers", 0] },
-        //                         else: { $arrayElemAt: [{ $ifNull: ["$productOffers", []] }, 0] }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     },
-        // });
-
-        // if (offerPipeline && offerPipeline.length > 0) {
-        //     pipeline.push(offerPipeline[0])
-        // }
 
         let productData: any = [];
         let collectionPipeline: any = false;
@@ -653,11 +622,6 @@ class ProductService {
             const categoryIds = await fetchAllCategories([...new Set(collectionPipeline.categoryIds)]);
             const categoryProductIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
             pipeline.push({ $match: { '_id': { $in: [...new Set(categoryProductIds)] } } });
-            // const categoryOrderMapping = categoryIds.map((id, index) => ({
-            //     _id: id,
-            //     order: index
-            // }));
-            // console.log('categoryIds', collectionPipeline.categoryIds);
 
         }
         if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
@@ -744,7 +708,24 @@ class ProductService {
                         productSpecification: 1,
                         imageGallery: 1,
                         selectedVariant: {
-                            $arrayElemAt: ["$productVariants", 0]
+                            _id: { $arrayElemAt: ["$productVariants._id", 0] },
+                            productId: { $arrayElemAt: ["$productVariants.productId", 0] },
+                            countryId: { $arrayElemAt: ["$productVariants.countryId", 0] },
+                            slug: { $arrayElemAt: ["$productVariants.slug", 0] },
+                            variantSku: { $arrayElemAt: ["$productVariants.variantSku", 0] },
+                            extraProductTitle: { $arrayElemAt: ["$productVariants.extraProductTitle", 0] },
+                            variantDescription: { $arrayElemAt: ["$productVariants.variantDescription", 0] },
+                            price: { $toDouble: { $ifNull: [{ $arrayElemAt: ["$productVariants.price", 0] }, 0] } },
+                            discountPrice: { $toDouble: { $ifNull: [{ $arrayElemAt: ["$productVariants.discountPrice", 0] }, 0] } },
+                            offerPrice: { $toDouble: { $ifNull: [{ $arrayElemAt: ["$productVariants.offerPrice", 0] }, 0] } },
+                            quantity: { $toInt: { $ifNull: [{ $arrayElemAt: ["$productVariants.quantity", 0] }, 0] } },
+                            cartMinQuantity: { $arrayElemAt: ["$productVariants.cartMinQuantity", 0] },
+                            cartMaxQuantity: { $arrayElemAt: ["$productVariants.cartMaxQuantity", 0] },
+                            isDefault: { $arrayElemAt: ["$productVariants.isDefault", 0] },
+                            status: { $arrayElemAt: ["$productVariants.status", 0] },
+                            offerData: { $arrayElemAt: ["$productVariants.offerData", 0] },
+                            offerId: { $arrayElemAt: ["$productVariants.offerId", 0] },
+                            showOrder: { $arrayElemAt: ["$productVariants.offerId", 0] },
                         },
                         categoryOrder: 1
                     }
@@ -756,38 +737,17 @@ class ProductService {
                                 vars: {
                                     price: { $toDouble: { $ifNull: ["$selectedVariant.price", 0] } },
                                     discountPrice: { $toDouble: { $ifNull: ["$selectedVariant.discountPrice", 0] } },
-                                    offerIN: { $toDouble: { $ifNull: ["$offer.offerIN", 0] } },
-                                    offerType: "$offer.offerType"
+                                    offerPrice: { $toDouble: { $ifNull: ["$selectedVariant.offerPrice", 0] } }
                                 },
                                 in: {
                                     $cond: {
-                                        if: { $gt: ["$$discountPrice", 0] },
-                                        then: {
-                                            $cond: {
-                                                if: { $eq: ["$$offerType", "percent"] },
-                                                then: {
-                                                    $subtract: [
-                                                        "$$discountPrice",
-                                                        { $multiply: ["$$discountPrice", { $divide: ["$$offerIN", 100] }] }
-                                                    ]
-                                                },
-                                                else: {
-                                                    $subtract: ["$$discountPrice", "$$offerIN"]
-                                                }
-                                            }
-                                        },
+                                        if: { $gt: ["$$offerPrice", 0] },
+                                        then: "$$offerPrice",
                                         else: {
                                             $cond: {
-                                                if: { $eq: ["$$offerType", "percent"] },
-                                                then: {
-                                                    $subtract: [
-                                                        "$$price",
-                                                        { $multiply: ["$$price", { $divide: ["$$offerIN", 100] }] }
-                                                    ]
-                                                },
-                                                else: {
-                                                    $subtract: ["$$price", "$$offerIN"]
-                                                }
+                                                if: { $gt: ["$$discountPrice", 0] },
+                                                then: "$$discountPrice",
+                                                else: "$$price"
                                             }
                                         }
                                     }
