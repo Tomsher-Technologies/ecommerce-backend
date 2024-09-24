@@ -19,6 +19,7 @@ router.get('/product-detail-specification/:slug', logResponseStatus, ProductCont
 router.get('/product-detail-seo/:slug/:sku?', logResponseStatus, ProductController.findProductDetailSeo);
 router.get('/product-list', frontendAuthAndUnAuthMiddleware, logResponseStatus, ProductController.findAllProducts);
 router.get('/product-list/v2', frontendAuthAndUnAuthMiddleware, logResponseStatus, ProductController.findAllProductsV2);
+router.get('/product-variant-list/v1', frontendAuthAndUnAuthMiddleware, logResponseStatus, ProductController.findAllVariantProductsV1);
 router.get('/you-may-like-also', frontendAuthAndUnAuthMiddleware, logResponseStatus, ProductController.youMayLikeAlso);
 router.get('/related-products', logResponseStatus, ProductController.relatedProducts);
 router.get('/all-product-variants-list-with-basic-details', logResponseStatus, ProductController.findAllProductVariantsListWithBasicDetails);
