@@ -22,8 +22,6 @@ import CustomerModel, { CustomrProps } from '../../../model/frontend/customers-m
 import CommonService from '../../../services/frontend/guest/common-service';
 import CustomerWalletTransactionsModel from '../../../model/frontend/customer-wallet-transaction-model'
 import SettingsService from '../../../services/admin/setup/settings-service';
-import { etisalatSmsGateway } from '../../../lib/sms/ethisalat-sms-gateway';
-import { smsGatwayDefaultValues } from '../../../utils/frontend/sms-utils';
 import { mailChimpEmailGateway } from '../../../lib/emails/mail-chimp-sms-gateway';
 import WebsiteSetupModel from '../../../model/admin/setup/website-setup-model';
 import CartOrdersModel from '../../../model/frontend/cart-order-model';

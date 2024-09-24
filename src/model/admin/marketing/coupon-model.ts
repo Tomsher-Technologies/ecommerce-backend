@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface CouponProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -25,7 +26,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: collections.setup.countries,
     },
     couponCode: {
         type: String,
@@ -33,7 +34,7 @@ const couponSchema: Schema<CouponProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Coupon').countDocuments({ couponCode: value });
+                const count = await this.model(collections.marketing.coupons).countDocuments({ couponCode: value });
                 return count === 0;
             },
             message: 'Coupon code must be unique'
@@ -119,6 +120,6 @@ const couponSchema: Schema<CouponProps> = new Schema({
     }
 });
 
-const CouponModel = mongoose.model<CouponProps>('Coupon', couponSchema);
+const CouponModel = mongoose.model<CouponProps>(collections.marketing.coupons, couponSchema);
 
 export default CouponModel;

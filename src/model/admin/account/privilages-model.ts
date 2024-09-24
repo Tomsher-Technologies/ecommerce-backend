@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface PrivilagesProps extends Document {
     userTypeId: Schema.Types.ObjectId;
@@ -14,11 +15,11 @@ const privilageSchema: Schema<PrivilagesProps> = new Schema({
     userTypeId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'UserType', // Reference to the UserType model
+        ref: collections.account.userTypes, // Reference to the UserType model
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('UserType').countDocuments({ userTypeId: value });
+                const count = await this.model(collections.account.userTypes).countDocuments({ userTypeId: value });
                 return count === 0;
             },
             message: 'user type  must be unique'
@@ -50,6 +51,6 @@ const privilageSchema: Schema<PrivilagesProps> = new Schema({
     },
 });
 
-const PrivilagesModel = mongoose.model<PrivilagesProps>('Privilages', privilageSchema);
+const PrivilagesModel = mongoose.model<PrivilagesProps>(collections.account.privilages, privilageSchema);
 
 export default PrivilagesModel;

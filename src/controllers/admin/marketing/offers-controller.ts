@@ -8,6 +8,7 @@ import { QueryParams } from '../../../utils/types/common';
 import BaseController from '../../../controllers/admin/base-controller';
 import OfferService from '../../../services/admin/marketing/offer-service'
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -93,9 +94,14 @@ class OffersController extends BaseController {
                         requestedData: newOffer?.length > 0 ? newOffer[0] : newOffer,
                         message: 'Offer created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.marketing.offers,
+                        referenceData: JSON.stringify(newOffer),
                         sourceFromId: newOffer._id,
                         sourceFrom: adminTaskLog.marketing.offers,
                         activity: adminTaskLogActivity.create,
+                        activityComment: 'Offer created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -151,6 +157,7 @@ class OffersController extends BaseController {
             if (validatedData.success) {
                 const offerId = req.params.id;
                 if (offerId) {
+                    const user = res.locals.user;
                     let updatedofferData = req.body;
                     updatedofferData = {
                         ...updatedofferData,
@@ -167,9 +174,14 @@ class OffersController extends BaseController {
                             requestedData: updatedOffer,
                             message: 'Offer updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.marketing.offers,
+                            referenceData: JSON.stringify(updatedOffer),
                             sourceFromId: updatedOffer._id,
                             sourceFrom: adminTaskLog.marketing.offers,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Offer updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -203,6 +215,7 @@ class OffersController extends BaseController {
                 if (offerId) {
                     let { status } = req.body;
                     const updatedOfferData = { status };
+                    const user = res.locals.user;
 
                     const updatedOffer: any = await OfferService.update(offerId, updatedOfferData);
                     if (updatedOffer) {
@@ -210,9 +223,14 @@ class OffersController extends BaseController {
                             requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
                             message: 'Offers status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.marketing.offers,
+                            referenceData: JSON.stringify(updatedOffer),
                             sourceFromId: updatedOffer._id,
                             sourceFrom: adminTaskLog.marketing.offers,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Offers status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

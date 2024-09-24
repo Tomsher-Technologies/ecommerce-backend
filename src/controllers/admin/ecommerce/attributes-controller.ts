@@ -11,6 +11,7 @@ import BaseController from '../../../controllers/admin/base-controller';
 import AttributesService from '../../../services/admin/ecommerce/attributes-service'
 import GeneralService from '../../../services/admin/general-service';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -160,7 +161,7 @@ class AttributesController extends BaseController {
                         })
                     }
 
-
+                    const user = res.locals.user;
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newAttribute._id,
@@ -171,9 +172,13 @@ class AttributesController extends BaseController {
                         },
                         message: 'Attribute successfully created'
                     }, 200, {  // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.attributes,
                         sourceFromId: newAttribute._id,
                         sourceFrom: adminTaskLog.ecommerce.attributes,
                         activity: adminTaskLogActivity.create,
+                        activityComment: 'Attribute successfully created',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -308,7 +313,7 @@ class AttributesController extends BaseController {
                                     }
                                 })
                             }
-
+                            const user = res.locals.user;
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     ...updatedAttribute,
@@ -317,9 +322,13 @@ class AttributesController extends BaseController {
                                 },
                                 message: 'Attribute successfully updated'
                             }, 200, { // task log
+                                userId: user._id,
+                                countryId: user.countryId,
+                                sourceCollection: collections.ecommerce.attributes,
                                 sourceFromId: updatedAttribute._id,
                                 sourceFrom: adminTaskLog.ecommerce.attributes,
                                 activity: adminTaskLogActivity.update,
+                                activityComment: 'Attribute successfully updated',
                                 activityStatus: adminTaskLogStatus.success
                             });
                         } else {
@@ -359,16 +368,21 @@ class AttributesController extends BaseController {
                 if (attributeId) {
                     let { status } = req.body;
                     const updatedAttributeData = { status };
-
+                    const user = res.locals.user;
+                    
                     const updatedAttribute = await AttributesService.update(attributeId, updatedAttributeData);
                     if (updatedAttribute) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedAttribute,
                             message: 'Attribute status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.attributes,
                             sourceFromId: updatedAttribute._id,
                             sourceFrom: adminTaskLog.ecommerce.attributes,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Attribute status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

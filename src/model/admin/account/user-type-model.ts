@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface UserTypeProps extends Document {
     userTypeName: string;
@@ -16,7 +17,7 @@ const userSchema: Schema<UserTypeProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('UserType').countDocuments({ userTypeName: value });
+                const count = await this.model(collections.account.userTypes).countDocuments({ userTypeName: value });
                 return count === 0;
             },
             message: 'User Type Name be unique'
@@ -28,7 +29,7 @@ const userSchema: Schema<UserTypeProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('UserType').countDocuments({ slug: value });
+                const count = await this.model(collections.account.userTypes).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'slug be unique'
@@ -52,6 +53,6 @@ const userSchema: Schema<UserTypeProps> = new Schema({
     }
 });
 
-const UserTypeModel = mongoose.model<UserTypeProps>('UserType', userSchema);
+const UserTypeModel = mongoose.model<UserTypeProps>(collections.account.userTypes, userSchema);
 
 export default UserTypeModel;

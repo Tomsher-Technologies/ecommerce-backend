@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface UserProps extends Document {
     userTypeID?: Schema.Types.ObjectId;
@@ -19,12 +20,12 @@ const userSchema: Schema<UserProps> = new Schema({
     userTypeID: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'UserType', // Reference to the UserType model
+        ref: collections.account.userTypes, // Reference to the UserType model
     },
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries', // Reference to the Countries model
+        ref: collections.setup.countries, // Reference to the Countries model
     },
     email: {
         type: String,
@@ -32,7 +33,7 @@ const userSchema: Schema<UserProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('User').countDocuments({ email: value });
+                const count = await this.model(collections.account.users).countDocuments({ email: value });
                 return count === 0;
             },
             message: 'Email must be unique'
@@ -53,7 +54,7 @@ const userSchema: Schema<UserProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('User').countDocuments({ phone: value });
+                const count = await this.model(collections.account.users).countDocuments({ phone: value });
                 return count === 0;
             },
             message: 'Phone must be unique'
@@ -86,6 +87,6 @@ const userSchema: Schema<UserProps> = new Schema({
     }
 });
 
-const UserModel = mongoose.model<UserProps>('User', userSchema);
+const UserModel = mongoose.model<UserProps>(collections.account.users, userSchema);
 
 export default UserModel;

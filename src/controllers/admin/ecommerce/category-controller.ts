@@ -15,6 +15,7 @@ import CategoryModel, { CategoryProps } from '../../../model/admin/ecommerce/cat
 import CollectionsCategoriesService from '../../../services/admin/website/collections-categories-service';
 import { seoPage } from '../../../constants/admin/seo-page';
 import SeoPageService from '../../../services/admin/seo-page-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -300,9 +301,13 @@ class CategoryController extends BaseController {
                         requestedData: newCategory,
                         message: 'Category created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.categories,
                         sourceFromId: newCategory._id,
                         sourceFrom: adminTaskLog.ecommerce.categories,
                         activity: adminTaskLogActivity.create,
+                        activityComment: 'Category created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -440,9 +445,13 @@ class CategoryController extends BaseController {
                                 message: 'Category updated successfully!'
                             }
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.categories,
                             sourceFromId: categoryDetails._id,
                             sourceFrom: adminTaskLog.ecommerce.categories,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Category updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -556,12 +565,22 @@ class CategoryController extends BaseController {
                 if (categoryId) {
                     let { status } = req.body;
                     const updatedCategoryData = { status };
+                    const user = res.locals.user;
 
                     const updatedCategory = await CategoryService.update(categoryId, updatedCategoryData);
                     if (updatedCategory) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCategory,
                             message: 'Category status updated successfully!'
+                        }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.categories,
+                            sourceFromId: updatedCategory._id,
+                            sourceFrom: adminTaskLog.ecommerce.categories,
+                            activity: adminTaskLogActivity.create,
+                            activityComment: 'Category status updated successfully!',
+                            activityStatus: adminTaskLogStatus.success
                         });
                     } else {
                         return controller.sendErrorResponse(res, 200, {
