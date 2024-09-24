@@ -20,6 +20,7 @@ router.get('/product-detail-specification/:slug', response_status_1.logResponseS
 router.get('/product-detail-seo/:slug/:sku?', response_status_1.logResponseStatus, product_controller_1.default.findProductDetailSeo);
 router.get('/product-list', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.findAllProducts);
 router.get('/product-list/v2', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.findAllProductsV2);
+router.get('/product-variant-list/v1', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.findAllVariantProductsV1);
 router.get('/you-may-like-also', frontend_auth_middleware_1.frontendAuthAndUnAuthMiddleware, response_status_1.logResponseStatus, product_controller_1.default.youMayLikeAlso);
 router.get('/related-products', response_status_1.logResponseStatus, product_controller_1.default.relatedProducts);
 router.get('/all-product-variants-list-with-basic-details', response_status_1.logResponseStatus, product_controller_1.default.findAllProductVariantsListWithBasicDetails);

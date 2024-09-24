@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject, frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, productVariantAttributesLookup, productSpecificationLookup, variantImageGalleryLookup, productSpecificationsLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, productVariantAttributesLookup, productSpecificationLookup, variantImageGalleryLookup, productSpecificationsLookup, productLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import { collections } from '../../../constants/collections';
@@ -22,6 +22,8 @@ import ProductSpecificationModel from '../../../model/admin/ecommerce/product/pr
 import SearchQueriesModel from '../../../model/frontend/search-query-model';
 import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
+import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
+import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 
 
 class ProductService {
@@ -488,34 +490,9 @@ class ProductService {
         }
 
     }
-
-    async getProductDetailsV2(productFindableValues: any, options: any) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
+    async getProductVariantDetailsV1(productFindableValues: any, options: any) {
+        var { query, queryValues, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getfilterattributes = '1', getattribute, getdiscount, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
         const { skip, limit } = frontendPagination(options.query || {}, options);
-
-        // let finalSort: any = [];
-        // if (!collectionProductsData) {
-        // finalSort = [
-        //     {
-        //         $addFields: {
-        //             sortOrder: {
-        //                 $cond: { if: { $ifNull: ["$showOrder", false] }, then: 0, else: 1 }
-        //             }
-        //         }
-        //     },
-        //     {
-        //         $sort: {
-        //             sortOrder: 1,
-        //             showOrder: 1,
-        //             createdAt: -1
-        //         }
-        //     },
-        //     {
-        //         $project: {
-        //             sortOrder: 0
-        //         }
-        //     },
-        // ];
 
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -523,9 +500,358 @@ class ProductService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        // }
 
+        console.log('productFindableValues', JSON.stringify(query, null, 2));
 
+        let collectionPipeline: any = false;
+        let matchProductIds: any[] = productFindableValues?.matchProductIds?.length > 0 ? productFindableValues?.matchProductIds : [];
+        if (collectionProductsData) {
+            collectionPipeline = await this.collection(collectionProductsData, hostName)
+        }
+        if (collectionPipeline && collectionPipeline.categoryIds && collectionPipeline.categoryIds.length > 0) {
+            async function fetchAllCategories(categoryIds: any[]): Promise<any[]> {
+                let queue = [...categoryIds];
+                const allCategoryIds = new Set([...categoryIds]);
+                while (queue.length > 0) {
+                    const categoriesData = await CategoryModel.find(
+                        { parentCategory: { $in: queue } },
+                        '_id'
+                    );
+                    const childCategoryIds = categoriesData.map(category => category._id);
+                    if (childCategoryIds.length === 0) {
+                        break;
+                    }
+                    queue = childCategoryIds;
+                    childCategoryIds.forEach(id => allCategoryIds.add(id));
+                }
+                return Array.from(allCategoryIds);
+            }
+            const categoryIds = await fetchAllCategories([...new Set(collectionPipeline.categoryIds)]);
+            const categoryProductIds = await ProductCategoryLinkModel.distinct('productId', { categoryId: { $in: categoryIds } });
+            matchProductIds = [...new Set(categoryProductIds)]
+
+        }
+        if (collectionPipeline && collectionPipeline.brandIds && collectionPipeline.brandIds.length > 0) {
+            matchProductIds = await ProductsModel.find({ brand: { $in: collectionPipeline.brandIds.map((id: any) => new mongoose.Types.ObjectId(id)) } })
+        }
+        if (collectionProductsData && collectionProductsData.collectionproduct && collectionPipeline && collectionPipeline.productIds) {
+            matchProductIds = collectionPipeline.productIds.map((id: any) => new mongoose.Types.ObjectId(id))
+        }
+
+        const variantLookupMatch: any = {
+            countryId: new mongoose.Types.ObjectId(countryId),
+            ...(matchProductIds.length > 0 ? { productId: { $in: matchProductIds } } : {}),
+            quantity: { $gt: 0 },
+            status: "1"
+        };
+        if (query['_id']) {
+            variantLookupMatch._id = query['_id'];
+        }
+
+        if (query['slug']) {
+            variantLookupMatch.slug = query['slug'];
+        }
+        let pipeline: any[] = [
+            {
+                $match: {
+                    $and: [
+                        variantLookupMatch
+                    ]
+                }
+            },
+            { $sort: finalSort },
+            {
+                $lookup: {
+                    from: "products",
+                    let: { productId: "$productId" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ["$_id", "$$productId"] },
+                                status: '1'
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                productTitle: 1,
+                                starRating: 1,
+                                productImageUrl: 1,
+                                description: 1,
+                                longDescription: 1,
+                                brand: 1,
+                                tags: 1,
+                                productCode: 1,
+                                status: 1,
+                            }
+                        }
+                    ],
+                    as: "productDetails"
+                }
+            },
+            {
+                $match: {
+                    productDetails: { $ne: [] }
+                }
+            },
+            // {
+            //     $lookup: {
+            //         from: "brands",
+            //         let: { brandId: { $arrayElemAt: ["$productDetails.brand", 0] } },
+            //         pipeline: [
+            //             {
+            //                 $match: {
+            //                     $expr: { $eq: ["$_id", "$$brandId"] },
+            //                     // status: '2'
+            //                 }
+            //             },
+            //             {
+            //                 $project: {
+            //                     _id: 1,
+            //                     brandTitle: 1,
+            //                     slug: 1,
+            //                     brandBannerImageUrl: 1,
+            //                     brandImageUrl: 1,
+            //                     description: 1,
+            //                     status: 1,
+            //                 }
+            //             }
+            //         ],
+            //         as: "brandDetails"
+            //     }
+            // },
+            // {
+            //     $match: {
+            //         brandDetails: { $ne: [] } 
+            //     }
+            // },
+            {
+                $match: query
+            },
+            {
+                $project: {
+                    _id: 1,
+                    itemCode: 1,
+                    productId: 1,
+                    countryId: 1,
+                    variantSku: 1,
+                    slug: 1,
+                    showOrder: 1,
+                    extraProductTitle: 1,
+                    variantDescription: 1,
+                    variantImageUrl: 1,
+                    price: 1,
+                    offerPrice: 1,
+                    discountPrice: 1,
+                    quantity: 1,
+                    cartMinQuantity: 1,
+                    cartMaxQuantity: 1,
+                    isDefault: 1,
+                    status: 1,
+                    offerData: 1,
+                    offerId: 1,
+                    productDetails: { $arrayElemAt: ["$productDetails", 0] },
+                }
+            }
+        ];
+        pipeline.push(
+            {
+                $addFields: {
+                    discountedPrice: {
+                        $let: {
+                            vars: {
+                                price: { $toDouble: { $ifNull: ["$price", 0] } },
+                                discountPrice: { $toDouble: { $ifNull: ["$discountPrice", 0] } },
+                                offerPrice: { $toDouble: { $ifNull: ["$offerPrice", 0] } }
+                            },
+                            in: {
+                                $cond: {
+                                    if: { $gt: ["$$offerPrice", 0] },
+                                    then: "$$offerPrice",
+                                    else: {
+                                        $cond: {
+                                            if: { $gt: ["$$discountPrice", 0] },
+                                            then: "$$discountPrice",
+                                            else: "$$price"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+        );
+        pipeline.push({
+            $addFields: {
+                discountPercentage: {
+                    $cond: {
+                        if: { $gt: ["$discountedPrice", 0] },
+                        then: {
+                            $multiply: [
+                                { $divide: [{ $subtract: ["$price", "$discountedPrice"] }, "$price"] },
+                                100
+                            ]
+                        },
+                        else: 0
+                    }
+                },
+            }
+        });
+        if ((sort && sort.price) || (minprice || maxprice) || discount) {
+            if (sort.price == 1) {
+                pipeline.push(
+                    { $sort: { discountedPrice: 1, _id: 1 } }
+                );
+            } else {
+                pipeline.push(
+                    { $sort: { discountedPrice: -1 } }
+                );
+            }
+            if (minprice || maxprice) {
+                const priceFilter: any = {};
+                if (minprice) {
+                    priceFilter.$gte = Number(minprice);
+                }
+                if (maxprice) {
+                    priceFilter.$lte = Number(maxprice);
+                }
+
+                pipeline.push({
+                    $match: {
+                        discountedPrice: priceFilter
+                    }
+                });
+            }
+
+            if (discount) {
+                const discountArray = discount.split(',').map(Number);
+                const lowestDiscount = Math.min(...discountArray);
+                if (lowestDiscount > 0) {
+                    pipeline.push({
+                        $match: {
+                            discountPercentage: { $gt: lowestDiscount }
+                        }
+                    });
+                }
+            }
+        }
+
+        pipeline.push({
+            $facet: {
+                data: [
+                    {
+                        $match: {}
+                    },
+                    ...(skip ? [{ $skip: skip }] : []),
+                    ...(limit ? [{ $limit: limit }] : []),
+                ],
+                productIds: [
+                    {
+                        $group: {
+                            _id: null,
+                            productIds: { $addToSet: "$productId" }
+                        }
+                    }
+                ],
+                ... ((getbrand === '1') ? {
+                    brandIds: [
+                        {
+                            $group: {
+                                _id: null,
+                                brandIds: { $addToSet: "$productDetails.brand" }
+                            }
+                        }
+                    ]
+                } : {}),
+                variantIds: [
+                    {
+                        $group: {
+                            _id: null,
+                            variantIds: { $addToSet: "$_id" }
+                        }
+                    },
+                ],
+                ...(getdiscount === '1' ? {
+                    discountRanges: [
+                        {
+                            $group: {
+                                _id: null,
+                                maxDiscount: { $max: "$discountPercentage" }
+                            }
+                        },
+                        {
+                            $project: {
+                                discountRanges: {
+                                    $map: {
+                                        input: { $range: [10, { $ceil: "$maxDiscount" }, 10] },
+                                        as: "range",
+                                        in: "$$range"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                } : {}),
+                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
+            },
+        });
+
+        pipeline.push({
+            $project: {
+                data: 1,
+                productIds: {
+                    $arrayElemAt: ["$productIds.productIds", 0]
+                },
+                variantIds: { $arrayElemAt: ["$variantIds.variantIds", 0] },
+                ...(getbrand === '1' ? { brandIds: { $arrayElemAt: ["$brandIds.brandIds", 0] } } : {}),
+                ...(getdiscount === '1' ? { discountRanges: { $arrayElemAt: ["$discountRanges.discountRanges", 0] } } : {}),
+                ...(isCount === 1 ? { totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] } } : {})
+            }
+        });
+
+        let productData = await ProductVariantsModel.aggregate(pipeline).exec();
+        let products = productData[0].data;
+        let productIds = productData[0].productIds;
+        let variantIds = productData[0].variantIds;
+        let brandIds = productData[0].brandIds;
+        let discountRanges = productData[0].discountRanges;
+        let paginatedVariantIds = products.flatMap((variant: any) => variant._id);
+        let productVariantAttributes: any[] = [];
+        let brands: any[] = [];
+        let filterAttributes: any[] = [];
+        if ((paginatedVariantIds.length > 0 && (getattribute === '1'))) {
+            productVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
+                variantId: { $in: paginatedVariantIds }
+            }));
+        }
+        if (brandIds && getbrand === '1') {
+            brands = await BrandsModel.find({ _id: { $in: brandIds }, status: '1' }).select('_id brandTitle slug brandBannerImageUrl brandImageUrl description status')
+        }
+
+        if (getfilterattributes === '1') {
+            filterAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
+                variantId: { $in: variantIds }
+            }));
+        }
+
+        if (isCount == 1) {
+            const totalCount = productData[0].totalCount;
+            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands, productIds, variantIds, }
+        } else {
+            return { productVariantAttributes, filterAttributes, products, brands, productIds, variantIds, }
+        }
+    }
+    async getProductDetailsV2(productFindableValues: any, options: any) {
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
+        const { skip, limit } = frontendPagination(options.query || {}, options);
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
         const variantLookupMatch: any = {
             $expr: {
                 $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
@@ -1406,7 +1732,7 @@ class ProductService {
                     const categoryIds = collections.collectionsCategories.map((categoryId: any) => new mongoose.Types.ObjectId(categoryId));
                     return returnData = {
                         ...returnData,
-                        pipeline,
+                        ... (pipeline ? { pipeline } : {}),
                         categoryIds
                     }
                 }
@@ -1426,15 +1752,17 @@ class ProductService {
             if (collections && collections.collectionsProducts) {
                 if (collections.collectionsProducts.length > 0) {
                     const productIds = collections.collectionsProducts.map((productId: any) => new mongoose.Types.ObjectId(productId));
-                    pipeline.push({
-                        $match: {
-                            _id: { $in: productIds },
-                            status: "1"
-                        }
-                    });
+                    if (pipeline) {
+                        pipeline.push({
+                            $match: {
+                                _id: { $in: productIds },
+                                status: "1"
+                            }
+                        });
+                    }
                     return returnData = {
                         ...returnData,
-                        pipeline,
+                        ... (pipeline ? { pipeline } : {}),
                         productIds
                     }
                 }

@@ -27,6 +27,376 @@ const specifications_detail_model_1 = __importDefault(require("../../../model/ad
 const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllVariantProductsV1(req, res) {
+        const { page_size = 1, limit = 20, keyword = '', getbrand = '0', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getdiscount = '', getfilterattributes = '', getspecification = '' } = req.query;
+        let query = { _id: { $exists: true } };
+        let collectionProductsData = null;
+        let discountValue;
+        let offers;
+        query.status = '1';
+        const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+        if (!countryId) {
+            return controller.sendErrorResponse(res, 200, {
+                message: 'Error',
+                validation: 'Country is missing'
+            }, req);
+        }
+        let sort = {};
+        let keywordRegex = undefined;
+        let keywordRegexSingle = undefined;
+        let productIds = [];
+        let productFindableValues = {
+            matchProductIds: []
+        };
+        if (sortby && sortorder) {
+            sort[sortby] = sortorder === 'desc' ? -1 : 1;
+        }
+        if (!brand && !category && keyword) {
+            const keywordRegex = new RegExp(`${keyword}`, 'i');
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
+            // keywordRegex = new RegExp(`^${keyword}`, 'i');
+            console.log('keyword', keyword);
+            query = {
+                $or: [
+                    { 'productDetails.productTitle': { $regex: keywordRegexSingle } },
+                    { 'extraProductTitle': { $regex: keywordRegex } },
+                    { slug: { $regex: keywordRegex } },
+                    { 'variantSku': { $regex: keywordRegex } },
+                ],
+                ...query
+            };
+            if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                const customer = null;
+                const guestUser = res.locals.uuid || null;
+                await product_service_1.default.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
+            }
+        }
+        async function fetchAllCategories(categoryIds) {
+            let queue = [...categoryIds];
+            const allCategoryIds = new Set([...categoryIds]);
+            while (queue.length > 0) {
+                const categoriesData = await category_model_1.default.find({ parentCategory: { $in: queue } }, '_id');
+                const childCategoryIds = categoriesData.map(category => category._id);
+                if (childCategoryIds.length === 0) {
+                    break;
+                }
+                queue = childCategoryIds;
+                childCategoryIds.forEach(id => allCategoryIds.add(id));
+            }
+            return Array.from(allCategoryIds);
+        }
+        if (category || categories || keyword) {
+            let categoryBatchIds = [];
+            const fetchCategoryId = async (categoryValue) => {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(categoryValue);
+                return isObjectId ? categoryValue : (await category_model_1.default.findOne({ slug: categoryValue }, '_id'))?._id || null;
+            };
+            if (!categories && category) {
+                const categoryId = await fetchCategoryId(category);
+                if (categoryId) {
+                    categoryBatchIds.push(categoryId);
+                }
+            }
+            else if (keyword) {
+                const categoriesByTitle = await category_model_1.default.find({ categoryTitle: { $regex: keywordRegexSingle } }, '_id');
+                categoryBatchIds.push(...categoriesByTitle.map(category => category._id));
+            }
+            if (categories) {
+                const categoryArray = Array.isArray(categories) ? categories : categories.split(',');
+                const categoryIds = await Promise.all(categoryArray.map(fetchCategoryId));
+                if (!keyword) {
+                    categoryBatchIds = categoryIds.filter(Boolean);
+                }
+                else {
+                    categoryBatchIds.push(...categoryIds.filter(Boolean));
+                }
+            }
+            const categoryIds = await fetchAllCategories([...new Set(categoryBatchIds)]);
+            if (categoryIds.length > 0) {
+                const categoryProductIds = await product_category_link_model_1.default.distinct('productId', { categoryId: { $in: categoryIds } });
+                productIds = [...new Set(categoryProductIds)];
+                productFindableValues = {
+                    ...productFindableValues,
+                    categoryProductIds: productIds,
+                    matchProductIds: [...new Set(categoryProductIds)],
+                    categoryIds
+                };
+            }
+        }
+        if (brands || brand || keyword) {
+            let brandIds = [];
+            let brandSlugs = [];
+            const processBrand = async (brandValue) => {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(brandValue);
+                if (isObjectId) {
+                    brandIds.push(new mongoose_1.default.Types.ObjectId(brandValue));
+                }
+                else {
+                    brandSlugs.push(brandValue);
+                }
+            };
+            if (!brands && brand) {
+                await processBrand(brand);
+            }
+            if (brands) {
+                const brandArray = Array.isArray(brands) ? brands : brands.split(',');
+                await Promise.all(brandArray.map(processBrand));
+            }
+            if (keyword) {
+                const brandByTitleId = await brands_model_1.default.find({ brandTitle: { $regex: keywordRegexSingle } }, '_id');
+                brandIds.push(...brandByTitleId.map(brand => brand._id));
+            }
+            if (brandSlugs.length > 0) {
+                const foundBrands = await brands_model_1.default.find({ slug: { $in: brandSlugs } }, '_id');
+                brandIds.push(...foundBrands.map(brand => brand._id));
+            }
+            let matchProductIds = [];
+            if (brand && brandIds.length > 0) {
+                matchProductIds = await product_model_1.default.distinct('_id', { brand: { $in: brandIds } });
+            }
+            else {
+                if (brandIds.length > 0) {
+                    const brandProductIds = await product_model_1.default.distinct('_id', { brand: { $in: brandIds } });
+                    productIds = [...new Set([...productIds, ...brandProductIds])];
+                }
+            }
+            productFindableValues = {
+                ...productFindableValues,
+                matchProductIds: [...new Set([...productFindableValues.matchProductIds, ...matchProductIds])],
+                brand: {
+                    ...(productFindableValues.brand || {}),
+                    brandIds: [...(productFindableValues.brand?.brandIds || []), ...brandIds],
+                    brandSlugs: brandSlugs.length > 0 ? [...(productFindableValues.brand?.brandSlugs || []), ...brandSlugs] : undefined
+                }
+            };
+        }
+        if (attribute || keyword) {
+            let attributeDetailIds = [];
+            let attributeDetailNames = [];
+            const attributeArray = attribute ? attribute.split(',') : [];
+            for (let attr of attributeArray) {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(attr);
+                if (isObjectId) {
+                    attributeDetailIds.push(new mongoose_1.default.Types.ObjectId(attr));
+                }
+                else {
+                    attributeDetailNames.push(attr);
+                }
+            }
+            productFindableValues = {
+                ...productFindableValues,
+                attribute: {
+                    ...(productFindableValues.attribute || {}),
+                    ...(attributeDetailIds.length > 0 && {
+                        attributeDetailIds: [
+                            ...(productFindableValues.attribute?.attributeDetailIds || []),
+                            ...attributeDetailIds
+                        ]
+                    }),
+                    ...(attributeDetailNames.length > 0 && {
+                        attributeDetailNames: [
+                            ...(productFindableValues.attribute?.attributeDetailNames || []),
+                            ...attributeDetailNames
+                        ]
+                    })
+                }
+            };
+            if (keyword) {
+                const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
+            }
+            if ((attributeDetailIds.length > 0 || attributeDetailNames.length > 0) || keywordRegexSingle) {
+                const attributeDetailsQuery = {
+                    $or: []
+                };
+                if (attributeDetailNames.length > 0) {
+                    attributeDetailsQuery.$or.push({ itemName: { $in: attributeDetailNames } });
+                }
+                if (keywordRegexSingle) {
+                    attributeDetailsQuery.$or.push({ itemName: { $regex: keywordRegexSingle } });
+                }
+                if (attributeDetailsQuery.$or.length > 0) {
+                    const attributeDetails = await attribute_detail_model_1.default.find(attributeDetailsQuery, '_id attributeId itemName itemValue');
+                    if (attributeDetails.length > 0) {
+                        const attributeProductIds = await product_variant_attribute_model_1.default.aggregate([
+                            {
+                                $match: {
+                                    attributeDetailId: { $in: attributeDetails.map((detail) => detail._id) },
+                                    productId: { $nin: productIds }
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: "$productId"
+                                }
+                            },
+                            {
+                                $limit: 300
+                            },
+                            {
+                                $project: {
+                                    _id: 0,
+                                    productId: "$_id"
+                                }
+                            }
+                        ]);
+                        productIds = [...new Set([...productIds, ...attributeProductIds.map((p) => p.productId)])];
+                    }
+                }
+            }
+        }
+        if (specification || keyword) {
+            let specificationDetailIds = [];
+            let specificationDetailNames = [];
+            const specificationArray = specification ? specification.split(',') : [];
+            for (let spec of specificationArray) {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(spec);
+                if (isObjectId) {
+                    specificationDetailIds.push(new mongoose_1.default.Types.ObjectId(spec));
+                }
+                else {
+                    specificationDetailNames.push(spec);
+                }
+            }
+            productFindableValues = {
+                ...productFindableValues,
+                specification: {
+                    ...(productFindableValues.specification || {}),
+                    ...(specificationDetailIds.length > 0 && {
+                        specificationDetailIds: [
+                            ...(productFindableValues.specification?.specificationDetailIds || []),
+                            ...specificationDetailIds
+                        ]
+                    }),
+                    ...(specificationDetailNames.length > 0 && {
+                        specificationDetailNames: [
+                            ...(productFindableValues.specification?.specificationDetailNames || []),
+                            ...specificationDetailNames
+                        ]
+                    })
+                }
+            };
+            if (keyword) {
+                const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
+            }
+            if ((specificationDetailIds.length > 0 || specificationDetailNames.length > 0) || keywordRegexSingle) {
+                const specificationDetailsQuery = { $or: [] };
+                if (specificationDetailNames.length > 0) {
+                    specificationDetailsQuery.$or.push({ itemName: { $in: specificationDetailNames } });
+                }
+                if (keywordRegexSingle) {
+                    specificationDetailsQuery.$or.push({ itemName: { $regex: keywordRegexSingle } });
+                }
+                if (specificationDetailsQuery.$or.length > 0) {
+                    const specificationDetails = await specifications_detail_model_1.default.find(specificationDetailsQuery, '_id specificationId itemName itemValue');
+                    if (specificationDetails.length > 0) {
+                        const specificationProductIds = await product_specification_model_1.default.aggregate([
+                            {
+                                $match: {
+                                    specificationDetailId: { $in: specificationDetails.map((detail) => detail._id) },
+                                    productId: { $nin: productIds }
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: "$productId"
+                                }
+                            },
+                            {
+                                $limit: 200
+                            },
+                            {
+                                $project: {
+                                    _id: 0,
+                                    productId: "$_id"
+                                }
+                            }
+                        ]);
+                        productIds = [...new Set([...productIds, ...specificationProductIds.map((p) => p.productId)])];
+                    }
+                }
+            }
+        }
+        if (collectionproduct) {
+            collectionProductsData = {
+                ...collectionProductsData, collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+            };
+            productFindableValues = {
+                ...productFindableValues,
+                collectionProductsData: {
+                    collectionproduct: new mongoose_1.default.Types.ObjectId(collectionproduct)
+                }
+            };
+        }
+        if (collectionbrand) {
+            collectionProductsData = {
+                ...collectionProductsData, collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+            };
+            productFindableValues = {
+                ...productFindableValues,
+                collectionProductsData: {
+                    ...(productFindableValues.collectionProductsData || {}),
+                    collectionbrand: new mongoose_1.default.Types.ObjectId(collectionbrand)
+                }
+            };
+        }
+        if (collectioncategory) {
+            collectionProductsData = {
+                ...collectionProductsData, collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+            };
+            productFindableValues = {
+                ...productFindableValues,
+                collectionProductsData: {
+                    ...(productFindableValues.collectionProductsData || {}),
+                    collectioncategory: new mongoose_1.default.Types.ObjectId(collectioncategory)
+                }
+            };
+        }
+        // if (productIds.length > 0) {
+        //     if (query.$or) {
+        //         query.$or.push({ productId: { $in: productIds } });
+        //     } else {
+        //         query.$or = [{ productId: { $in: productIds } }];
+        //     }
+        // }
+        const productDatas = await product_service_1.default.getProductVariantDetailsV1(productFindableValues, {
+            countryId,
+            page: parseInt(page_size),
+            limit: parseInt(limit),
+            query,
+            queryValues: {
+                page_size,
+                keyword,
+                brand,
+                brands,
+                category,
+                categories,
+                collectionproduct,
+                collectioncategory,
+                collectionbrand,
+                specification,
+                attribute
+            },
+            sort,
+            collectionProductsData,
+            discount,
+            offers,
+            getbrand,
+            getfilterattributes,
+            getimagegallery,
+            getattribute,
+            getspecification,
+            getdiscount,
+            hostName: req.get('origin'),
+            maxprice,
+            minprice,
+            isCount: 1
+        });
+        return controller.sendSuccessResponse(res, {
+            requestedData: productDatas,
+            message: 'Success!'
+        }, 200);
     }
     async findAllProductsV2(req, res) {
         try {
