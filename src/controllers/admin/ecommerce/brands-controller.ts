@@ -15,6 +15,7 @@ import BrandsModel, { BrandProps } from '../../../model/admin/ecommerce/brands-m
 import GeneralService from '../../../services/admin/general-service';
 import CollectionsBrandsService from '../../../services/admin/website/collections-brands-service';
 import SeoPageService from '../../../services/admin/seo-page-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -208,9 +209,13 @@ class BrandsController extends BaseController {
                         },
                         message: 'Brand created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.brands,
                         sourceFromId: newBrand._id,
                         sourceFrom: adminTaskLog.ecommerce.brands,
                         activity: adminTaskLogActivity.create,
+                        activityComment: 'Brand created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -272,6 +277,7 @@ class BrandsController extends BaseController {
             const validatedData = brandSchema.safeParse(req.body);
             if (validatedData.success) {
                 const brandId = req.params.id;
+                const user = res.locals.user;
                 if (brandId) {
                     const brandImage = (req as any).files.find((file: any) => file.fieldname === 'brandImage');
                     const brandBannerImage = (req as any).files.find((file: any) => file.fieldname === 'brandBannerImage');
@@ -348,9 +354,13 @@ class BrandsController extends BaseController {
                             },
                             message: 'Brand updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.brands,
                             sourceFromId: updatedBrandMapped._id,
                             sourceFrom: adminTaskLog.ecommerce.brands,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Brand updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -384,6 +394,7 @@ class BrandsController extends BaseController {
                 if (brandId) {
                     let { status } = req.body;
                     const updatedBrandData = { status };
+                    const user = res.locals.user;
 
                     const updatedBrand = await BrandsService.update(brandId, updatedBrandData);
                     if (updatedBrand) {
@@ -391,9 +402,13 @@ class BrandsController extends BaseController {
                             requestedData: updatedBrand,
                             message: 'Brand status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.brands,
                             sourceFromId: brandId,
                             sourceFrom: adminTaskLog.ecommerce.brands,
                             activity: adminTaskLogActivity.delete,
+                            activityComment: 'Brand status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -452,6 +467,7 @@ class BrandsController extends BaseController {
             if (validatedData.success) {
                 const { keyColumn, root, container1 } = validatedData.data;
                 const validKeys: (keyof BrandProps)[] = ['corporateGiftsPriority', 'brandListPriority'];
+                const user = res.locals.user;
 
                 if (validKeys.includes(keyColumn as keyof BrandProps)) {
                     let updatedBrandData = req.body;
@@ -465,9 +481,13 @@ class BrandsController extends BaseController {
                         requestedData: await BrandsModel.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' }),
                         message: 'Brand website priority updated successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.brands,
                         sourceFromId: updatedBrandData._id,
                         sourceFrom: adminTaskLog.ecommerce.brands,
                         activity: adminTaskLogActivity.priorityUpdation,
+                        activityComment: 'Brand website priority updated successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

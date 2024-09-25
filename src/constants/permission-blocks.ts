@@ -89,4 +89,7 @@ export const permissionBlocks = {
         coupons: 'coupons',
         offers: 'offers',
     },
+    other: {
+        taskLog: 'task-log'
+    }
 }

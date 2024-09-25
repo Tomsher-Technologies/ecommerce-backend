@@ -7,6 +7,7 @@ import { QueryParams } from "../../../utils/types/common";
 import mongoose from "mongoose";
 import { reviewStatusSchema } from "../../../utils/schemas/frontend/auth/review-schema";
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from "../../../constants/admin/task-log";
+import { collections } from "../../../constants/collections";
 
 const controller = new BaseController();
 
@@ -34,7 +35,7 @@ class ReviewController extends BaseController {
                     ...query
                 } as any;
             }
-            if(reviewStatus){
+            if (reviewStatus) {
                 query = {
                     ...query, reviewStatus: reviewStatus
                 } as any;
@@ -71,7 +72,7 @@ class ReviewController extends BaseController {
                 if (reviewId) {
                     let { reviewStatus } = req.body;
                     const updatedReviewData = { reviewStatus };
-
+                    const user = await res.locals.user;
                     const updatedReview = await ReviewService.update(reviewId, updatedReviewData);
                     if (updatedReview) {
                         return controller.sendSuccessResponse(res, {
@@ -79,9 +80,14 @@ class ReviewController extends BaseController {
                             message: 'Review status updated successfully!'
                         }, 200,
                             { // task log
+                                userId: user._id,
+                                countryId: user.countryId,
+                                sourceCollection: collections.ecommerce.reviews,
+                                referenceData: JSON.stringify(updatedReview),
                                 sourceFromId: reviewId,
                                 sourceFrom: adminTaskLog.customers.review,
                                 activity: adminTaskLogActivity.update,
+                                activityComment: 'Review status updated successfully!',
                                 activityStatus: adminTaskLogStatus.success
                             }
                         );

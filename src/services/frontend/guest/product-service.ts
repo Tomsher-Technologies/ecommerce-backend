@@ -880,6 +880,7 @@ class ProductService {
                         $project: {
                             _id: 1,
                             countryId: 1,
+                            itemCode: 1,
                             productId: 1,
                             slug: 1,
                             variantSku: 1,
@@ -893,8 +894,8 @@ class ProductService {
                             variantDescription: 1,
                             cartMaxQuantity: 1,
                             cartMinQuantity: 1,
-                            offerId: 1,
                             offerData: 1,
+                            offerId: 1,
                         }
                     },
                     // ...((getattribute === '1' || query['productVariants.productVariantAttributes.attributeDetail._id'] || query['productVariants.productVariantAttributes.attributeDetail.itemName']) ? [...productVariantAttributesLookup] : []),

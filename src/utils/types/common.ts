@@ -7,9 +7,14 @@ export interface QueryParams {
     sortby?: string;
     sortorder?: string;
     keyword?: string;
+    userId?: string;
     countryId?: string;
     userTypeID?: string;
     subject?: string;
+    sourceFrom?: string;
+    activityStatus?: string;
+    sourceFromReferenceId?: string;
+    activity?: string;
 }
 
 export interface UserDataProps {

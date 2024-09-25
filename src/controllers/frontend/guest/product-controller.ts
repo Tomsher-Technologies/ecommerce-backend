@@ -68,7 +68,7 @@ class ProductController extends BaseController {
                 ...query
             } as any;
 
-            if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+            if (page_size === 1 && typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                 const customer = null;
                 const guestUser = res.locals.uuid || null;
 
@@ -366,14 +366,15 @@ class ProductController extends BaseController {
                 }
             };
         }
+        console.log('productIds', productIds);
 
-        // if (productIds.length > 0) {
-        //     if (query.$or) {
-        //         query.$or.push({ productId: { $in: productIds } });
-        //     } else {
-        //         query.$or = [{ productId: { $in: productIds } }];
-        //     }
-        // }
+        if (productIds.length > 0) {
+            if (query.$or) {
+                query.$or.push({ productId: { $in: productIds } });
+            } else {
+                query.$or = [{ productId: { $in: productIds } }];
+            }
+        }
 
         const productDatas = await ProductService.getProductVariantDetailsV1(productFindableValues, {
             countryId,
@@ -498,7 +499,7 @@ class ProductController extends BaseController {
                         productIds = [...new Set(keywordVariantProductIds.map((id: any) => id.productId))]
                     }
 
-                    if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                    if (page_size === 1 && typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                         const customer = null;
                         const guestUser = res.locals.uuid || null;
 
@@ -921,7 +922,7 @@ class ProductController extends BaseController {
                         ],
                         ...query
                     } as any;
-                    if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                    if (page_size === 1 && typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                         const customer = null;
                         const guestUser = res.locals.uuid || null;
 

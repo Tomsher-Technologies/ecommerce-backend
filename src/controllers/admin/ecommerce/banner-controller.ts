@@ -12,6 +12,7 @@ import BannerService from '../../../services/admin/ecommerce/banner-service'
 import GeneralService from '../../../services/admin/general-service';
 import BannerModel from '../../../model/admin/ecommerce/banner-model';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -150,9 +151,13 @@ class BannerController extends BaseController {
                             requestedData: newBanner,
                             message: 'Banner created successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.banner,
                             sourceFromId: newBanner._id,
                             sourceFrom: adminTaskLog.ecommerce.banner,
                             activity: adminTaskLogActivity.create,
+                            activityComment: 'Banner created successfully',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -307,6 +312,7 @@ class BannerController extends BaseController {
                 if (bannerId) {
                     let { status } = req.body;
                     const updatedBannerData = { status };
+                    const user = res.locals.user;
 
                     const updatedBanner = await BannerService.update(bannerId, updatedBannerData);
                     if (updatedBanner) {
@@ -314,9 +320,13 @@ class BannerController extends BaseController {
                             requestedData: updatedBanner,
                             message: 'Banner status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.banner,
                             sourceFromId: updatedBanner._id,
                             sourceFrom: adminTaskLog.ecommerce.banner,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Banner status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -349,6 +359,7 @@ class BannerController extends BaseController {
                 const bannerId = req.params.id;
                 if (bannerId) {
                     let { position } = req.body;
+                    const user = res.locals.user;
 
                     const updatedBanner = await GeneralService.changePosition(BannerModel, bannerId, position);
                     if (updatedBanner) {
@@ -356,9 +367,13 @@ class BannerController extends BaseController {
                             requestedData: updatedBanner,
                             message: 'Banner status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.banner,
                             sourceFromId: updatedBanner._id,
                             sourceFrom: adminTaskLog.ecommerce.banner,
                             activity: adminTaskLogActivity.positionChange,
+                            activityComment: 'Banner status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -391,6 +406,7 @@ class BannerController extends BaseController {
                 const banner = await BannerService.findOne(bannerId);
                 if (banner) {
                     await BannerService.destroy(bannerId);
+                    const user = res.locals.user;
 
                     const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.banner, bannerId);
                     if (existingLanguageValues) {
@@ -399,9 +415,13 @@ class BannerController extends BaseController {
                     return controller.sendSuccessResponse(res,
                         { message: 'Banner deleted successfully!' },
                         200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.banner,
                         sourceFromId: bannerId,
                         sourceFrom: adminTaskLog.ecommerce.banner,
                         activity: adminTaskLogActivity.delete,
+                        activityComment: 'Banner deleted successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

@@ -2,11 +2,15 @@ import os from 'os';
 
 import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
 import AdminTaskLogModel from "../../model/admin/task-log";
+import { FilterOptionsProps, pagination } from '../../components/pagination';
 export interface AdminTaskLogProps {
-    sourceFromId: string | null;
+    userId?: string;
+    sourceFromId?: string | null;
+    countryId?: string | null;
+    sourceCollection?: string | null;
     sourceFromReferenceId?: string | null;
     sourceFrom: string;
-    userId?: string;
+    referenceData?: any;
     activity: string;
     activityComment?: string;
     activityStatus: string;
@@ -61,12 +65,70 @@ class GeneralService {
         }
     }
 
+    async getAlltaskLogs(options: FilterOptionsProps = {}): Promise<any[]> {
+        const { query, skip, limit, sort } = pagination(options.query || {}, options);
+
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+
+        let pipeline: any[] = [
+            { $match: query },
+            {
+                $facet: {
+                    taskLogs: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        { $sort: finalSort }
+                    ],
+                    sourceFromValues: [
+                        {
+                            $group: {
+                                _id: null,
+                                sourceFromArray: { $addToSet: "$sourceFrom" }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                sourceFromArray: 1
+                            }
+                        }
+                    ],
+                    totalCount: [
+                        { $count: "count" }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    taskLogs: 1,
+                    sourceFromArray: { $arrayElemAt: ["$sourceFromValues.sourceFromArray", 0] },
+                    totalCount: { $arrayElemAt: ["$totalCount.count", 0] }
+                }
+            }
+        ];
+
+        const result: any = await AdminTaskLogModel.aggregate(pipeline).exec();
+        return {
+            taskLogs: result[0].taskLogs,
+            sourceFromArray: result[0].sourceFromArray || [],
+            totalCount: result[0].totalCount || 0
+        } as any;
+    }
+
     async taskLog(taskLogs: AdminTaskLogProps) {
-        if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
+        if (taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
             const taskLogData = {
                 userId: taskLogs.userId,
                 sourceFromId: taskLogs.sourceFromId || null,
                 sourceFromReferenceId: taskLogs.sourceFromReferenceId || null,
+                countryId: taskLogs.countryId || null,
+                sourceCollection: taskLogs.sourceCollection,
+                referenceData: taskLogs.referenceData,
                 sourceFrom: taskLogs.sourceFrom,
                 activity: taskLogs.activity,
                 activityComment: taskLogs.activityComment || '',
@@ -82,6 +144,7 @@ class GeneralService {
             return false;
         }
     }
+
 
     async multiLanguageFieledsManage(sourceId: string, languageValues: any) {
         if (sourceId && languageValues.languageId && languageValues.source) {

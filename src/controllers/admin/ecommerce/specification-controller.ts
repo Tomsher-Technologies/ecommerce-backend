@@ -12,6 +12,7 @@ import GeneralService from '../../../services/admin/general-service';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -106,6 +107,7 @@ class SpecificationController extends BaseController {
                             }
                         })
                     }
+                    const user = res.locals.user;
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newSpecification._id,
@@ -117,9 +119,13 @@ class SpecificationController extends BaseController {
                         },
                         message: 'Specification created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.specifications,
                         sourceFromId: newSpecification._id,
                         sourceFrom: adminTaskLog.ecommerce.specifications,
                         activity: adminTaskLogActivity.update,
+                        activityComment: 'Specification created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -201,8 +207,8 @@ class SpecificationController extends BaseController {
                                     });
                                     newLanguageValues.push(languageValues);
                                 }
-
                             }
+                            const user = res.locals.user;
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     _id: updatedSpecification._id,
@@ -213,9 +219,13 @@ class SpecificationController extends BaseController {
                                 },
                                 message: 'Specification updated successfully!'
                             }, 200, {
+                                userId: user._id,
+                                countryId: user.countryId,
+                                sourceCollection: collections.ecommerce.specifications,
                                 sourceFromId: updatedSpecification._id,
                                 sourceFrom: adminTaskLog.ecommerce.specifications,
                                 activity: adminTaskLogActivity.update,
+                                activityComment: 'Specification updated successfully!',
                                 activityStatus: adminTaskLogStatus.success
                             });
                         } else {
@@ -255,16 +265,21 @@ class SpecificationController extends BaseController {
                 if (specificationId) {
                     let { status } = req.body;
                     const updatedSpecificationData = { status };
-
+                    const user = res.locals.user;
+                    
                     const updatedSpecification = await SpecificationService.update(specificationId, updatedSpecificationData);
                     if (updatedSpecification) {
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedSpecification,
                             message: 'Specification status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.specifications,
                             sourceFromId: updatedSpecification._id,
                             sourceFrom: adminTaskLog.ecommerce.specifications,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Specification status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

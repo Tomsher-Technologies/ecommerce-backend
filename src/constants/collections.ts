@@ -57,5 +57,13 @@ export const collections = {
         countries: 'countries',
         states: 'states',
         cities: 'cities'
+    },
+    account: {
+        users: 'users',
+        userTypes: 'usertypes',
+        privilages: 'privilages',
+    },
+    general: {
+        adminTaskLogs: 'admintasklogs'
     }
 }

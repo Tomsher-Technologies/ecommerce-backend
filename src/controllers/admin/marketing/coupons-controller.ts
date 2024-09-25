@@ -19,6 +19,7 @@ import CouponModel from '../../../model/admin/marketing/coupon-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import CountryModel from '../../../model/admin/setup/country-model';
 import generalService from '../../../services/admin/general-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -119,6 +120,10 @@ class CouponsController extends BaseController {
                     requestedData: newCoupon,
                     message: 'Coupon created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.marketing.coupons,
+                    referenceData: JSON.stringify(newCoupon),
                     sourceFromId: newCoupon._id,
                     sourceFrom: adminTaskLog.marketing.coupons,
                     activity: adminTaskLogActivity.create,
@@ -177,6 +182,7 @@ class CouponsController extends BaseController {
                         ...updatedCouponData,
                         updatedAt: new Date()
                     };
+                    const user = res.locals.user;
 
                     const updatedCoupon = await CouponService.update(couponId, updatedCouponData);
                     if (updatedCoupon) {
@@ -184,6 +190,10 @@ class CouponsController extends BaseController {
                             requestedData: updatedCoupon,
                             message: 'Coupon updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.marketing.coupons,
+                            referenceData: JSON.stringify(updatedCoupon),
                             sourceFromId: updatedCoupon._id,
                             sourceFrom: adminTaskLog.marketing.coupons,
                             activity: adminTaskLogActivity.update,
@@ -221,14 +231,19 @@ class CouponsController extends BaseController {
                 if (couponId) {
                     let { status } = req.body;
                     const updatedCouponData = { status };
-
+                    const user = res.locals.user;
+                    
                     const updatedCoupon = await CouponService.update(couponId, updatedCouponData);
                     if (updatedCoupon) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCoupon,
                             message: 'Coupon status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.marketing.coupons,
                             sourceFromId: updatedCoupon._id,
+                            referenceData: JSON.stringify(updatedCoupon),
                             sourceFrom: adminTaskLog.marketing.coupons,
                             activity: adminTaskLogActivity.statusChange,
                             activityComment: 'Coupon code status change successfull',
@@ -465,6 +480,8 @@ class CouponsController extends BaseController {
                             const couponCode = operation.updateOne.update.$set.couponCode;
                             updatedIds.push(_id);
                             const updateTaskLogs = {
+                                countryId: userData.countryId,
+                                sourceCollection: collections.marketing.coupons,
                                 userId: userData._id,
                                 sourceFromId: _id.toString(),
                                 sourceFrom: adminTaskLog.marketing.coupons,
@@ -482,6 +499,8 @@ class CouponsController extends BaseController {
                         const insertPromises = insertedIds.map(async (id) => {
                             const { couponCode } = await CouponModel.findById(id).select('couponCode').exec() || { couponCode: 'Unknown' };
                             const insertTaskLogs = {
+                                countryId: userData.countryId,
+                                sourceCollection: collections.marketing.coupons,
                                 userId: userData._id,
                                 sourceFromId: id.toString(),
                                 sourceFrom: adminTaskLog.marketing.coupons,

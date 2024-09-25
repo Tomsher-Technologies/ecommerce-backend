@@ -41,6 +41,7 @@ import LanguagesModel from '../../../model/admin/setup/language-model';
 import { excelUpload } from '../../../utils/admin/excel/excel-upload';
 import mongoose from 'mongoose';
 import seoPageService from '../../../services/admin/seo-page-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -352,9 +353,13 @@ class ProductsController extends BaseController {
                             requestedData: newProduct,
                             message: 'Product created successfully!'
                         }, 200, {
+                            userId: userData._id,
+                            countryId: userData.countryId,
                             sourceFromId: newProduct._id,
+                            sourceCollection:collections.ecommerce.products.products,
                             sourceFrom: adminTaskLog.ecommerce.products,
                             activity: adminTaskLogActivity.create,
+                            activityComment: 'Product created successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -529,6 +534,7 @@ class ProductsController extends BaseController {
                                         const userData = res.locals.user;
                                         const updateTaskLogs = {
                                             userId: userData._id,
+                                            countryId: userData.countryId,
                                             sourceFromId: productVariantDetails.productId,
                                             sourceFromReferenceId: productVariantDetails._id,
                                             sourceFrom: adminTaskLog.ecommerce.products,
@@ -1491,9 +1497,13 @@ class ProductsController extends BaseController {
                             requestedData: updatedProduct,
                             message: 'Product updated successfully!'
                         }, 200, {
+                            userId: userData._id,
+                            countryId: userData.countryId,
+                            sourceCollection: collections.ecommerce.products.products,
                             sourceFromId: updatedProduct._id,
                             sourceFrom: adminTaskLog.ecommerce.products,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Product updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -1589,18 +1599,24 @@ class ProductsController extends BaseController {
                 let { status } = req.body;
 
                 const updatedProductData = { status };
+                const userData = await res.locals.user;
 
                 const variantId: any = req.query.variantId;
                 if (variantId) {
-                    const updatedProductVariant = await ProductVariantService.update(variantId, updatedProductData);
+                    const updatedProductVariant: any = await ProductVariantService.update(variantId, updatedProductData);
                     if (updatedProductVariant) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedProductVariant,
                             message: 'Product variant status updated successfully!'
                         }, 200, {
+                            userId: userData._id,
+                            countryId: userData.countryId,
+                            sourceCollection: collections.ecommerce.products.productvariants.productvariants,
                             sourceFromId: updatedProductVariant._id,
+                            sourceFromReferenceId: updatedProductVariant.productId,
                             sourceFrom: adminTaskLog.ecommerce.productVariants,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Product variant status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                         // }
@@ -1621,9 +1637,13 @@ class ProductsController extends BaseController {
                                 requestedData: updatedProduct,
                                 message: 'Product status updated successfully!'
                             }, 200, {
+                                userId: userData._id,
+                                countryId: userData.countryId,
+                                sourceCollection:collections.ecommerce.products.products,
                                 sourceFromId: updatedProduct._id,
                                 sourceFrom: adminTaskLog.ecommerce.products,
                                 activity: adminTaskLogActivity.statusChange,
+                                activityComment: 'Product status updated successfully!',
                                 activityStatus: adminTaskLogStatus.success
                             });
                             // }

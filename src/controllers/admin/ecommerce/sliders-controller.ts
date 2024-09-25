@@ -13,6 +13,7 @@ import GeneralService from '../../../services/admin/general-service';
 import SliderModel from '../../../model/admin/ecommerce/slider-model';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -238,7 +239,7 @@ class SlidersController extends BaseController {
                             return mapped;
                         }, {});
 
-
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedSliderMapped,
@@ -246,9 +247,13 @@ class SlidersController extends BaseController {
                             },
                             message: 'Slider updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.sliders,
                             sourceFromId: updatedSliderMapped._id,
                             sourceFrom: adminTaskLog.ecommerce.sliders,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Slider updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -282,6 +287,7 @@ class SlidersController extends BaseController {
                 if (sliderId) {
                     let { status } = req.body;
                     const updatedSliderData = { status };
+                    const user = res.locals.user;
 
                     const updatedSlider = await SliderService.update(sliderId, updatedSliderData);
                     if (updatedSlider) {
@@ -289,9 +295,13 @@ class SlidersController extends BaseController {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.sliders,
                             sourceFromId: sliderId,
                             sourceFrom: adminTaskLog.ecommerce.sliders,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Slider status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -324,6 +334,7 @@ class SlidersController extends BaseController {
                 const sliderId = req.params.id;
                 if (sliderId) {
                     let { position } = req.body;
+                    const user = res.locals.user;
 
                     const updatedSlider = await GeneralService.changePosition(SliderModel, sliderId, position);
                     if (updatedSlider) {
@@ -331,9 +342,13 @@ class SlidersController extends BaseController {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.ecommerce.sliders,
                             sourceFromId: sliderId,
                             sourceFrom: adminTaskLog.ecommerce.sliders,
                             activity: adminTaskLogActivity.positionChange,
+                            activityComment: 'Slider status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -365,6 +380,7 @@ class SlidersController extends BaseController {
             if (sliderId) {
                 const slider = await SliderService.findOne(sliderId);
                 if (slider) {
+                    const user = res.locals.user;
                     const SliderServices = await SliderService.destroy(sliderId);
                     const existingLanguageValues = await GeneralService.findOneLanguageValues(multiLanguageSources.ecommerce.sliders, sliderId);
                     if (existingLanguageValues) {
@@ -374,9 +390,13 @@ class SlidersController extends BaseController {
                     return controller.sendSuccessResponse(res,
                         { message: 'Slider deleted successfully!' },
                         200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.ecommerce.sliders,
                         sourceFromId: sliderId,
                         sourceFrom: adminTaskLog.ecommerce.sliders,
                         activity: adminTaskLogActivity.delete,
+                        activityComment: 'Slider deleted successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

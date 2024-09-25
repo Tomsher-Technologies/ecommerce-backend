@@ -15,6 +15,7 @@ import SpecificationRoutes from './admin/ecommerce/specification-route';
 // admin general
 import PageRoute from './admin/general/page-routes';
 import CommonRoute from './admin/general/common-routes';
+import TaskLogRoute from './admin/general/task-log-routes';
 
 // admin account
 import UserRoute from './admin/account/user-routes';
@@ -72,6 +73,7 @@ adminRouter.use('/auth', AuthRoute);
 // admin general
 adminRouter.use('/general/pages', PageRoute);
 adminRouter.use('/general/common', CommonRoute);
+adminRouter.use('/general/task-log', TaskLogRoute);
 
 //admin ecommerce 
 adminRouter.use('/account/user', UserRoute);
