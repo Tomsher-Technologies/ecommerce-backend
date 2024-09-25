@@ -366,14 +366,15 @@ class ProductController extends BaseController {
                 }
             };
         }
+        console.log('productIds', productIds);
 
-        // if (productIds.length > 0) {
-        //     if (query.$or) {
-        //         query.$or.push({ productId: { $in: productIds } });
-        //     } else {
-        //         query.$or = [{ productId: { $in: productIds } }];
-        //     }
-        // }
+        if (productIds.length > 0) {
+            if (query.$or) {
+                query.$or.push({ productId: { $in: productIds } });
+            } else {
+                query.$or = [{ productId: { $in: productIds } }];
+            }
+        }
 
         const productDatas = await ProductService.getProductVariantDetailsV1(productFindableValues, {
             countryId,
