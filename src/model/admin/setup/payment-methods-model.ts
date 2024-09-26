@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface PaymentMethodProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -20,7 +21,7 @@ const paymentMethodSchema: Schema<PaymentMethodProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: collections.setup.countries,
     },
     paymentMethodTitle: {
         type: String,
@@ -83,6 +84,6 @@ const paymentMethodSchema: Schema<PaymentMethodProps> = new Schema({
     }
 });
 
-const PaymentMethodModel = mongoose.model<PaymentMethodProps>('PaymentMethods', paymentMethodSchema);
+const PaymentMethodModel = mongoose.model<PaymentMethodProps>(collections.setup.paymentMethods, paymentMethodSchema);
 
 export default PaymentMethodModel;

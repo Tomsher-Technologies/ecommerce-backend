@@ -9,6 +9,7 @@ const base_controller_1 = __importDefault(require("../../../../src/controllers/a
 const privilages_service_1 = __importDefault(require("../../../../src/services/admin/account/privilages-service"));
 const privilage_shema_1 = require("../../../../src/utils/schemas/admin/account/privilage-shema");
 const task_log_1 = require("../../../../src/constants/admin/task-log");
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class PrivilagesController extends base_controller_1.default {
     async findAll(req, res) {
@@ -65,9 +66,17 @@ class PrivilagesController extends base_controller_1.default {
                         };
                     }
                     return controller.sendSuccessResponse(res, privilageData, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.account.privilages,
+                        referenceData: JSON.stringify({
+                            menuItems: privilageData.updatedPrivilageData,
+                            allValues: privilageData.updatedPrivilageData
+                        }, null, 2),
                         sourceFromId: privilageData?.requestedData?._id || null,
                         sourceFrom: task_log_1.adminTaskLog.account.privilages,
                         activity: task_log_1.adminTaskLogActivity.managePrivilages,
+                        activityComment: privilages ? 'Privilage updated successfully!' : 'Privilage created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }

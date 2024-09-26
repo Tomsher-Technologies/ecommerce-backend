@@ -16,6 +16,7 @@ const category_model_1 = __importDefault(require("../../../model/admin/ecommerce
 const collections_categories_service_1 = __importDefault(require("../../../services/admin/website/collections-categories-service"));
 const seo_page_1 = require("../../../constants/admin/seo-page");
 const seo_page_service_1 = __importDefault(require("../../../services/admin/seo-page-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class CategoryController extends base_controller_1.default {
     async findAll(req, res) {
@@ -275,9 +276,17 @@ class CategoryController extends base_controller_1.default {
                         requestedData: newCategory,
                         message: 'Category created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.categories,
                         sourceFromId: newCategory._id,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.categories,
+                        referenceData: JSON.stringify({
+                            categoryTitle: newCategory.categoryTitle,
+                            slug: newCategory.slug,
+                        }, null, 2),
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'Category created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -410,9 +419,17 @@ class CategoryController extends base_controller_1.default {
                                 message: 'Category updated successfully!'
                             }
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.categories,
                             sourceFromId: categoryDetails._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.categories,
+                            referenceData: JSON.stringify({
+                                categoryTitle: updatedCategoryMapped.categoryTitle,
+                                slug: updatedCategoryMapped.slug,
+                            }, null, 2),
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Category updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -529,11 +546,25 @@ class CategoryController extends base_controller_1.default {
                 if (categoryId) {
                     let { status } = req.body;
                     const updatedCategoryData = { status };
+                    const user = res.locals.user;
                     const updatedCategory = await category_service_1.default.update(categoryId, updatedCategoryData);
                     if (updatedCategory) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCategory,
                             message: 'Category status updated successfully!'
+                        }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.categories,
+                            sourceFromId: updatedCategory._id,
+                            referenceData: JSON.stringify({
+                                categoryTitle: updatedCategory.categoryTitle,
+                                slug: updatedCategory.slug,
+                            }, null, 2),
+                            sourceFrom: task_log_1.adminTaskLog.ecommerce.categories,
+                            activity: task_log_1.adminTaskLogActivity.create,
+                            activityComment: 'Category status updated successfully!',
+                            activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
                     else {

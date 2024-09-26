@@ -24,11 +24,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const paymentMethodSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: collections_1.collections.setup.countries,
     },
     paymentMethodTitle: {
         type: String,
@@ -90,5 +91,5 @@ const paymentMethodSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const PaymentMethodModel = mongoose_1.default.model('PaymentMethods', paymentMethodSchema);
+const PaymentMethodModel = mongoose_1.default.model(collections_1.collections.setup.paymentMethods, paymentMethodSchema);
 exports.default = PaymentMethodModel;

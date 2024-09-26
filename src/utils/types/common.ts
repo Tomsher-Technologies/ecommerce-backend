@@ -13,7 +13,9 @@ export interface QueryParams {
     subject?: string;
     sourceFrom?: string;
     activityStatus?: string;
+    sourceFromId?: string;
     sourceFromReferenceId?: string;
+    sourceCollection?: string;
     activity?: string;
 }
 

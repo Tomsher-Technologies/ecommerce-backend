@@ -22,18 +22,28 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
+const sequence_model_1 = __importDefault(require("../../sequence-model"));
 const userSchema = new mongoose_1.Schema({
+    userCode: {
+        type: Number,
+        unique: true,
+        required: false,
+    },
     userTypeID: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'UserType', // Reference to the UserType model
+        ref: collections_1.collections.account.userTypes, // Reference to the UserType model
     },
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries', // Reference to the Countries model
+        ref: collections_1.collections.setup.countries, // Reference to the Countries model
     },
     email: {
         type: String,
@@ -41,7 +51,7 @@ const userSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('User').countDocuments({ email: value });
+                const count = await this.model(collections_1.collections.account.users).countDocuments({ email: value });
                 return count === 0;
             },
             message: 'Email must be unique'
@@ -62,7 +72,7 @@ const userSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('User').countDocuments({ phone: value });
+                const count = await this.model(collections_1.collections.account.users).countDocuments({ phone: value });
                 return count === 0;
             },
             message: 'Phone must be unique'
@@ -94,5 +104,25 @@ const userSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const UserModel = mongoose_1.default.model('User', userSchema);
+userSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await sequence_model_1.default.findOneAndUpdate({ _id: 'userSequence' }, { $inc: { sequenceValue: 1 } }, { new: true, upsert: true });
+            if (sequenceDoc) {
+                this.userCode = sequenceDoc.sequenceValue;
+                next();
+            }
+            else {
+                throw new Error('Failed to generate user code.');
+            }
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    else {
+        next();
+    }
+});
+const UserModel = mongoose_1.default.model(collections_1.collections.account.users, userSchema);
 exports.default = UserModel;

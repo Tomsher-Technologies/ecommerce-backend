@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const website_setup_1 = require("../../../constants/website-setup");
+const collections_1 = require("../../../constants/collections");
 const websiteSetupSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -100,5 +101,5 @@ const websiteSetupSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const WebsiteSetupModel = mongoose_1.default.model('WebsiteSetup', websiteSetupSchema);
+const WebsiteSetupModel = mongoose_1.default.model(collections_1.collections.setup.websiteSetups, websiteSetupSchema);
 exports.default = WebsiteSetupModel;

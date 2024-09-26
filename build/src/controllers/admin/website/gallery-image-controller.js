@@ -9,6 +9,7 @@ const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../base-controller"));
 const gallery_image_schema_1 = require("../../../utils/schemas/admin/ecommerce/gallery-image-schema");
 const gallery_image_service_1 = __importDefault(require("../../../services/admin/website/gallery-image-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class GalleryImageController extends base_controller_1.default {
     async findAll(req, res) {
@@ -79,7 +80,16 @@ class GalleryImageController extends base_controller_1.default {
                     return controller.sendSuccessResponse(res, {
                         requestedData: resultArray,
                         message: 'Gallery Image added successfully!'
-                    }, 200);
+                    }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.website.gallaryImages,
+                        referenceData: JSON.stringify(resultArray, null, 2),
+                        sourceFrom: task_log_1.adminTaskLog.website.galleryimages,
+                        activity: task_log_1.adminTaskLogActivity.delete,
+                        activityComment: 'Gallery Image added successfully!',
+                        activityStatus: task_log_1.adminTaskLogStatus.success
+                    });
                 }
                 else {
                     return controller.sendErrorResponse(res, 200, {
@@ -192,13 +202,19 @@ class GalleryImageController extends base_controller_1.default {
                     const updatedgalleryImagesData = { status };
                     const updatedgalleryImages = await gallery_image_service_1.default.update(galleryImageId, updatedgalleryImagesData);
                     if (updatedgalleryImages) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedgalleryImages,
                             message: 'Gallery images status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.website.gallaryImages,
+                            referenceData: JSON.stringify(updatedgalleryImages, null, 2),
                             sourceFromId: updatedgalleryImages._id,
                             sourceFrom: task_log_1.adminTaskLog.website.galleryimages,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Gallery images status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -234,10 +250,16 @@ class GalleryImageController extends base_controller_1.default {
                 const galleryImage = await gallery_image_service_1.default.findOne(galleryImageId);
                 if (galleryImage) {
                     await gallery_image_service_1.default.destroy(galleryImageId);
+                    const user = res.locals.user;
                     return controller.sendSuccessResponse(res, { message: 'Gallery Image deleted successfully!' }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.website.gallaryImages,
+                        referenceData: JSON.stringify(galleryImage, null, 2),
                         sourceFromId: galleryImageId,
                         sourceFrom: task_log_1.adminTaskLog.website.galleryimages,
                         activity: task_log_1.adminTaskLogActivity.delete,
+                        activityComment: 'Gallery Image deleted successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }

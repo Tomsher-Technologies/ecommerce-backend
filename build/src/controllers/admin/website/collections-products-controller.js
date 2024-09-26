@@ -12,6 +12,7 @@ const task_log_1 = require("../../../constants/admin/task-log");
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const multi_languages_1 = require("../../../constants/multi-languages");
 const mongoose_1 = __importDefault(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class CollectionsProductsController extends base_controller_1.default {
     async findAll(req, res) {
@@ -116,9 +117,14 @@ class CollectionsProductsController extends base_controller_1.default {
                         requestedData: newCollection,
                         message: 'Collection created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.website.collectionsProducts,
+                        referenceData: JSON.stringify(newCollection, null, 2),
                         sourceFromId: newCollection._id,
                         sourceFrom: task_log_1.adminTaskLog.website.collectionsProducts,
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'Collection created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -244,10 +250,15 @@ class CollectionsProductsController extends base_controller_1.default {
                                 newLanguageValues.push(languageValues);
                             }
                         }
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.website.collectionsProducts,
+                            referenceData: JSON.stringify(updatedCollection, null, 2),
                             sourceFromId: updatedCollection._id,
                             sourceFrom: task_log_1.adminTaskLog.website.collectionsProducts,
                             activity: task_log_1.adminTaskLogActivity.update,
@@ -290,6 +301,7 @@ class CollectionsProductsController extends base_controller_1.default {
                     if (existingLanguageValues) {
                         await general_service_1.default.destroyLanguageValues(existingLanguageValues._id);
                     }
+                    const user = res.locals.user;
                     // console.log('collectionData', path.join(__dirname, `../../../${collection.collectionImageUrl}`));
                     // deleteFile(path.join(__dirname, `../../../${collection.collectionImageUrl}`))
                     return controller.sendSuccessResponse(res, {
@@ -298,6 +310,10 @@ class CollectionsProductsController extends base_controller_1.default {
                             collectionId: collectionId
                         }
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.website.collectionsProducts,
+                        referenceData: JSON.stringify(collection, null, 2),
                         sourceFromId: collectionId,
                         sourceFrom: task_log_1.adminTaskLog.website.collectionsProducts,
                         activity: task_log_1.adminTaskLogActivity.delete,

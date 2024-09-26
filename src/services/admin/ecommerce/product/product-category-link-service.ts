@@ -163,37 +163,21 @@ class ProductCategoryLinkService {
                 const productCategory = productCategoryDetails.split(',')
                 const existingEntries = await ProductCategoryLinkModel.find({ productId: productId });
                 if (existingEntries) {
-
                     const productCategoryIDsToRemove = existingEntries
                         .filter(entry => !productCategory?.some((data: any) => data?._id?.toString() === entry._id.toString()))
                         .map(entry => entry._id);
                     await ProductCategoryLinkModel.deleteMany({ productId: productId, _id: { $in: productCategoryIDsToRemove } });
                 }
-                // console.log("existingEntry", productCategoryDetails);
                 if (productCategoryDetails) {
-
                     const categoryLinkPromises = await Promise.all(productCategory.map(async (data: any) => {
-
-                        const existingEntry = await ProductCategoryLinkModel.findOne({ _id: data._id });
-
-                        if (existingEntry) {
-                            // Update existing document
-                            await ProductCategoryLinkModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
-                        } else {
-                            // Create new document
-                            await ProductCategoryLinkModel.create({ categoryId: new mongoose.Types.ObjectId(data), productId: productId });
-                        }
+                        await ProductCategoryLinkModel.create({ categoryId: new mongoose.Types.ObjectId(data), productId: productId });
                     }));
-
-
                     await Promise.all(categoryLinkPromises);
                 }
-
                 return await ProductCategoryLinkModel.find({ productId: productId });
             } else {
                 throw 'Could not find product Id';
             }
-
         } catch (error) {
             throw error;
         }

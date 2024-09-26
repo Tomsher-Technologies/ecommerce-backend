@@ -12,6 +12,7 @@ const country_service_1 = __importDefault(require("../../../services/admin/setup
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const sap_order_service_1 = __importDefault(require("../../../services/sap/sap-order-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class SapController extends base_controller_1.default {
     async getOrderDetails(req, res) {
@@ -103,7 +104,6 @@ class SapController extends base_controller_1.default {
         var productRowIndex = 2;
         let isProductVariantUpdate = false;
         const { productData } = req.body;
-        console.log('productData', productData);
         if (productData && productData?.length > 0) {
             let countryDataCache = {};
             for (let productPriceData of productData) {
@@ -196,6 +196,9 @@ class SapController extends base_controller_1.default {
                         const userData = res.locals.user;
                         const updateTaskLogs = {
                             userId: userData._id,
+                            countryId: userData.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.products.productvariants.productvariants,
+                            referenceData: JSON.stringify(productPriceData, null, 2),
                             sourceFromId: productVariantDetails.productId,
                             sourceFromReferenceId: productVariantDetails._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.products,

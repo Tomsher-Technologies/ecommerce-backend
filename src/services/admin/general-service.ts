@@ -3,6 +3,7 @@ import os from 'os';
 import MultiLanguageFieledsModel, { MultiLanguageFieledsProps } from "../../model/admin/multi-language-fieleds-model";
 import AdminTaskLogModel from "../../model/admin/task-log";
 import { FilterOptionsProps, pagination } from '../../components/pagination';
+import { collections } from '../../constants/collections';
 export interface AdminTaskLogProps {
     userId?: string;
     sourceFromId?: string | null;
@@ -76,12 +77,21 @@ class GeneralService {
         }
 
         let pipeline: any[] = [
-            { $match: query },
             {
                 $facet: {
                     taskLogs: [
+                        { $match: query },
                         { $skip: skip },
                         { $limit: limit },
+                        {
+                            $lookup: {
+                                from: `${collections.account.users}`,
+                                localField: 'userId',
+                                foreignField: '_id',
+                                as: 'user'
+                            }
+                        },
+                        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
                         { $sort: finalSort }
                     ],
                     sourceFromValues: [
@@ -99,13 +109,37 @@ class GeneralService {
                         }
                     ],
                     totalCount: [
+                        { $match: query },
                         { $count: "count" }
                     ]
                 }
             },
             {
                 $project: {
-                    taskLogs: 1,
+                    taskLogs: {
+                        _id: 1,
+                        countryId: 1,
+                        userId: 1,
+                        taskCode: 1,
+                        sourceCollection: 1,
+                        sourceFrom: 1,
+                        sourceFromId: 1,
+                        sourceFromReferenceId: 1,
+                        referenceData: 1,
+                        activity: 1,
+                        activityComment: 1,
+                        activityStatus: 1,
+                        ipAddress: 1,
+                        createdAt: 1,
+                        user: {
+                            _id: 1,
+                            countryId: 1,
+                            email: 1,
+                            firstName: 1,
+                            lastName: 1,
+                            phone: 1,
+                        }
+                    },
                     sourceFromArray: { $arrayElemAt: ["$sourceFromValues.sourceFromArray", 0] },
                     totalCount: { $arrayElemAt: ["$totalCount.count", 0] }
                 }

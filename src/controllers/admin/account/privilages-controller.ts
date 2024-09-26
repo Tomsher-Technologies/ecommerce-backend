@@ -8,6 +8,7 @@ import BaseController from '../../../../src/controllers/admin/base-controller';
 import PrivilagesService from '../../../../src/services/admin/account/privilages-service';
 import { privilageSchema } from '../../../../src/utils/schemas/admin/account/privilage-shema';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../../src/constants/admin/task-log';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -72,9 +73,17 @@ class PrivilagesController extends BaseController {
                     }
 
                     return controller.sendSuccessResponse(res, privilageData, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.account.privilages,
+                        referenceData: JSON.stringify({
+                            menuItems: privilageData.updatedPrivilageData,
+                            allValues: privilageData.updatedPrivilageData
+                        }, null, 2),
                         sourceFromId: privilageData?.requestedData?._id || null,
                         sourceFrom: adminTaskLog.account.privilages,
                         activity: adminTaskLogActivity.managePrivilages,
+                        activityComment: privilages ? 'Privilage updated successfully!' : 'Privilage created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

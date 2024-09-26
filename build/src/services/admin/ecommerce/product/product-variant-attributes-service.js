@@ -164,11 +164,9 @@ class ProductVariantAttributeService {
                         if (data.attributeId != '' && data.attributeDetailId != '' && data?._id != '' && data?._id != 'undefined') {
                             const existingEntry = await product_variant_attribute_model_1.default.findOne({ _id: data._id });
                             if (existingEntry) {
-                                // Update existing document
                                 await product_variant_attribute_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
                             }
                             else {
-                                // Create new document
                                 await product_variant_attribute_model_1.default.create({ attributeId: data.attributeId, attributeDetailId: data.attributeDetailId, productId: productId, variantId: variantId });
                             }
                         }

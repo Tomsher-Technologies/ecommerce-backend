@@ -131,18 +131,9 @@ class ProductCategoryLinkService {
                         .map(entry => entry._id);
                     await product_category_link_model_1.default.deleteMany({ productId: productId, _id: { $in: productCategoryIDsToRemove } });
                 }
-                // console.log("existingEntry", productCategoryDetails);
                 if (productCategoryDetails) {
                     const categoryLinkPromises = await Promise.all(productCategory.map(async (data) => {
-                        const existingEntry = await product_category_link_model_1.default.findOne({ _id: data._id });
-                        if (existingEntry) {
-                            // Update existing document
-                            await product_category_link_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, productId: productId });
-                        }
-                        else {
-                            // Create new document
-                            await product_category_link_model_1.default.create({ categoryId: new mongoose_1.default.Types.ObjectId(data), productId: productId });
-                        }
+                        await product_category_link_model_1.default.create({ categoryId: new mongoose_1.default.Types.ObjectId(data), productId: productId });
                     }));
                     await Promise.all(categoryLinkPromises);
                 }

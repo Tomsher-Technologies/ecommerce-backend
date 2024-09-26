@@ -22,13 +22,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../constants/collections");
+const sequence_model_1 = __importDefault(require("../sequence-model"));
 const adminTaskLogsSchema = new mongoose_1.Schema({
+    countryId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        default: null,
+        required: false,
+        ref: collections_1.collections.setup.countries,
+    },
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Users',
+        ref: collections_1.collections.account.users,
+    },
+    taskCode: {
+        type: Number,
+        unique: true,
+        required: false,
+    },
+    sourceCollection: {
+        type: String,
+        default: '',
+        required: false,
     },
     sourceFrom: {
         type: String,
@@ -36,10 +57,15 @@ const adminTaskLogsSchema = new mongoose_1.Schema({
     },
     sourceFromId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        required: true,
+        default: null,
+        required: false,
     },
     sourceFromReferenceId: {
         type: mongoose_1.Schema.Types.ObjectId,
+        default: null,
+    },
+    referenceData: {
+        type: mongoose_1.Schema.Types.Mixed,
         default: null,
     },
     activity: {
@@ -63,5 +89,25 @@ const adminTaskLogsSchema = new mongoose_1.Schema({
         required: true,
     },
 });
-const AdminTaskLogModel = mongoose_1.default.model('AdminTaskLogs', adminTaskLogsSchema);
+adminTaskLogsSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await sequence_model_1.default.findOneAndUpdate({ _id: 'taskSequence' }, { $inc: { sequenceValue: 1 } }, { new: true, upsert: true });
+            if (sequenceDoc) {
+                this.taskCode = sequenceDoc.sequenceValue;
+                next();
+            }
+            else {
+                throw new Error('Failed to generate task code.');
+            }
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    else {
+        next();
+    }
+});
+const AdminTaskLogModel = mongoose_1.default.model(collections_1.collections.general.adminTaskLogs, adminTaskLogsSchema);
 exports.default = AdminTaskLogModel;

@@ -49,14 +49,20 @@ export const collections = {
         collectionsProducts: 'collectionsproducts',
         collectionsBrands: 'collectionsnrands',
         collectionsCategories: 'collectionscategories',
+        gallaryImages: 'gallaryimages',
     },
     stores: {
-        stores: 'stores'
+        stores: 'stores',
+        warehouses: 'warehouses',
     },
     setup: {
+        websiteSetups: 'websitesetups',
+        paymentMethods: 'paymentmethods',
+        taxs: 'taxs',
+        languages: 'languages',
         countries: 'countries',
         states: 'states',
-        cities: 'cities'
+        cities: 'cities',
     },
     account: {
         users: 'users',

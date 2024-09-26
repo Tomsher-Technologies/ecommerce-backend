@@ -10,6 +10,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 import BaseController from '../base-controller';
 import CityService from '../../../services/admin/setup/city-service'
 import { CityProps } from '../../../model/admin/setup/city-model';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -89,9 +90,14 @@ class CityController extends BaseController {
                         requestedData: newCity,
                         message: 'City created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.setup.cities,
+                        referenceData: JSON.stringify(newCity, null, 2),
                         sourceFromId: newCity._id,
                         sourceFrom: adminTaskLog.setup.city,
                         activity: adminTaskLogActivity.create,
+                        activityComment: 'City created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -178,13 +184,19 @@ class CityController extends BaseController {
 
                     const updatedCity = await CityService.updateCity(cityId, updatedCityData);
                     if (updatedCity) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCity,
                             message: 'City updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.cities,
+                            referenceData: JSON.stringify(updatedCity, null, 2),
                             sourceFromId: updatedCity._id,
                             sourceFrom: adminTaskLog.setup.city,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'City updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -234,13 +246,19 @@ class CityController extends BaseController {
 
                     const updatedCity = await CityService.updateCity(cityId, updatedCityData);
                     if (updatedCity) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCity,
                             message: 'City status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.cities,
+                            referenceData: JSON.stringify(updatedCity, null, 2),
                             sourceFromId: updatedCity._id,
                             sourceFrom: adminTaskLog.setup.city,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'City status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

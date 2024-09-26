@@ -24,11 +24,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const couponSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: collections_1.collections.setup.countries,
     },
     couponCode: {
         type: String,
@@ -36,7 +37,7 @@ const couponSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Coupon').countDocuments({ couponCode: value });
+                const count = await this.model(collections_1.collections.marketing.coupons).countDocuments({ couponCode: value });
                 return count === 0;
             },
             message: 'Coupon code must be unique'
@@ -120,5 +121,5 @@ const couponSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const CouponModel = mongoose_1.default.model('Coupon', couponSchema);
+const CouponModel = mongoose_1.default.model(collections_1.collections.marketing.coupons, couponSchema);
 exports.default = CouponModel;

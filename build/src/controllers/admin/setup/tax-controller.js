@@ -9,6 +9,7 @@ const tax_shema_1 = require("../../../utils/schemas/admin/setup/tax-shema");
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../base-controller"));
 const tax_service_1 = __importDefault(require("../../../services/admin/setup/tax-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class TaxsController extends base_controller_1.default {
     async findAll(req, res) {
@@ -73,9 +74,14 @@ class TaxsController extends base_controller_1.default {
                     requestedData: newTax,
                     message: 'Tax created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.setup.taxs,
+                    referenceData: JSON.stringify(taxData, null, 2),
                     sourceFromId: newTax._id,
                     sourceFrom: task_log_1.adminTaskLog.setup.taxs,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'Tax created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -127,6 +133,7 @@ class TaxsController extends base_controller_1.default {
                 const taxId = req.params.id;
                 if (taxId) {
                     let updatedTaxData = req.body;
+                    const user = res.locals.user;
                     updatedTaxData = {
                         ...updatedTaxData,
                         updatedAt: new Date()
@@ -137,9 +144,14 @@ class TaxsController extends base_controller_1.default {
                             requestedData: updatedTax,
                             message: 'Tax updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.taxs,
+                            referenceData: JSON.stringify(updatedTax, null, 2),
                             sourceFromId: updatedTax._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.taxs,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'ax updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -178,13 +190,19 @@ class TaxsController extends base_controller_1.default {
                     const updatedTaxData = { status };
                     const updatedTax = await tax_service_1.default.update(tax, updatedTaxData);
                     if (updatedTax) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedTax,
                             message: 'Tax status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.taxs,
+                            referenceData: JSON.stringify(updatedTax, null, 2),
                             sourceFromId: updatedTax._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.taxs,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Tax status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

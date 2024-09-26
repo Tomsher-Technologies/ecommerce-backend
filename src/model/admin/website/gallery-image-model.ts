@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface GalleryImagesProps extends Document {
     imageTitle: string;
@@ -62,6 +63,6 @@ const gallaryImagesSchema: Schema<GalleryImagesProps> = new Schema({
     }
 });
 
-const GalleryImagesModel = mongoose.model<GalleryImagesProps>('GallaryImages', gallaryImagesSchema);
+const GalleryImagesModel = mongoose.model<GalleryImagesProps>(collections.website.gallaryImages, gallaryImagesSchema);
 
 export default GalleryImagesModel;

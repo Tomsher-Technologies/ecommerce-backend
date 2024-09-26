@@ -123,7 +123,11 @@ class CouponsController extends BaseController {
                     userId: user._id,
                     countryId: user.countryId,
                     sourceCollection: collections.marketing.coupons,
-                    referenceData: JSON.stringify(newCoupon),
+                    referenceData: JSON.stringify({
+                        couponCode: newCoupon.couponCode,
+                        couponType: newCoupon.couponType,
+                        allValues: newCoupon
+                    }, null, 2),
                     sourceFromId: newCoupon._id,
                     sourceFrom: adminTaskLog.marketing.coupons,
                     activity: adminTaskLogActivity.create,
@@ -193,7 +197,11 @@ class CouponsController extends BaseController {
                             userId: user._id,
                             countryId: user.countryId,
                             sourceCollection: collections.marketing.coupons,
-                            referenceData: JSON.stringify(updatedCoupon),
+                            referenceData: JSON.stringify({
+                                couponCode: updatedCoupon.couponCode,
+                                couponType: updatedCoupon.couponType,
+                                allValues: updatedCoupon
+                            }, null, 2),
                             sourceFromId: updatedCoupon._id,
                             sourceFrom: adminTaskLog.marketing.coupons,
                             activity: adminTaskLogActivity.update,
@@ -232,7 +240,7 @@ class CouponsController extends BaseController {
                     let { status } = req.body;
                     const updatedCouponData = { status };
                     const user = res.locals.user;
-                    
+
                     const updatedCoupon = await CouponService.update(couponId, updatedCouponData);
                     if (updatedCoupon) {
                         return controller.sendSuccessResponse(res, {
@@ -243,7 +251,11 @@ class CouponsController extends BaseController {
                             countryId: user.countryId,
                             sourceCollection: collections.marketing.coupons,
                             sourceFromId: updatedCoupon._id,
-                            referenceData: JSON.stringify(updatedCoupon),
+                            referenceData: JSON.stringify({
+                                couponCode: updatedCoupon.couponCode,
+                                couponType: updatedCoupon.couponType,
+                                allValues: updatedCoupon
+                            }, null, 2),
                             sourceFrom: adminTaskLog.marketing.coupons,
                             activity: adminTaskLogActivity.statusChange,
                             activityComment: 'Coupon code status change successfull',

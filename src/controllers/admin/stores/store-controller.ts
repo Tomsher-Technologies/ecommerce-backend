@@ -10,6 +10,7 @@ import { storeSchema, storeStatusSchema } from '../../../utils/schemas/admin/sto
 import BaseController from '../../../controllers/admin/base-controller';
 import StoreService from '../../../services/admin/stores/store-service';
 import { StoreProps } from '../../../model/admin/stores/store-model';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -111,9 +112,14 @@ class StoreController extends BaseController {
                     requestedData: newStore,
                     message: 'Store created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.stores.stores,
+                    referenceData: JSON.stringify(newStore, null, 2),
                     sourceFromId: newStore._id,
                     sourceFrom: adminTaskLog.store.store,
                     activity: adminTaskLogActivity.create,
+                    activityComment: 'Store created successfully!',
                     activityStatus: adminTaskLogStatus.success
                 });
             } else {
@@ -185,13 +191,19 @@ class StoreController extends BaseController {
 
                     const updatedStore = await StoreService.update(storeId, updatedStoreData);
                     if (updatedStore) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedStore,
                             message: 'Store updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.stores.stores,
+                            referenceData: JSON.stringify(updatedStore, null, 2),
                             sourceFromId: updatedStore._id,
                             sourceFrom: adminTaskLog.store.store,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Store updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -228,13 +240,19 @@ class StoreController extends BaseController {
 
                     const updatedStore = await StoreService.update(store, updatedStoreData);
                     if (updatedStore) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedStore,
                             message: 'Store status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.stores.stores,
+                            referenceData: JSON.stringify(updatedStore, null, 2),
                             sourceFromId: updatedStore._id,
                             sourceFrom: adminTaskLog.store.store,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Store status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

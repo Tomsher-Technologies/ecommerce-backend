@@ -176,17 +176,6 @@ class OrdersController extends BaseController {
                         const currencyCode = await CountryModel.findOne({ _id: order.country._id }, 'currencyCode');
                         await bulkInvoicePDFExport(htmlArray, order, basicDetailsSettings, tax, currencyCode?.currencyCode, commonDeliveryDays)
                     }
-                    const insertTaskLogs = {
-                        countryId: userData.countryId,
-                        sourceCollection: collections.cart.cartorders,
-                        userId: userData._id,
-                        referenceData: JSON.stringify(orders),
-                        sourceFrom: adminTaskLog.orders.order,
-                        activityComment: `Generate Order PDF: Bulk`,
-                        activity: adminTaskLogActivity.create,
-                        activityStatus: adminTaskLogStatus.success
-                    };
-                    await GeneralService.taskLog(insertTaskLogs).then(() => undefined).catch(() => undefined);
                     await pdfGenerator({
                         html: htmlArray,
                         res,
@@ -498,7 +487,11 @@ class OrdersController extends BaseController {
                 userId: user._id,
                 countryId: user.countryId,
                 sourceCollection: collections.cart.cartorders,
-                referenceData: JSON.stringify(updatedOrderDetails),
+                referenceData: JSON.stringify({
+                    orderId: orderDetails.orderId,
+                    orderCode: orderDetails.orderCode,
+                    allValues: updatedOrderDetails[0]
+                }, null, 2),
                 sourceFromId: orderID,
                 sourceFromReferenceId: orderProductId,
                 sourceFrom: adminTaskLog.orders.order,
@@ -581,7 +574,11 @@ class OrdersController extends BaseController {
                     userId: user._id,
                     countryId: user.countryId,
                     sourceCollection: collections.cart.cartorders,
-                    referenceData: JSON.stringify(updatedOrderDetails[0]),
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        allValues: updatedOrderDetails[0]
+                    }, null, 2),
                     sourceFromId: orderProductDetails.cartId as any,
                     sourceFromReferenceId: orderProductId,
                     sourceFrom: adminTaskLog.orders.order,
@@ -729,7 +726,11 @@ class OrdersController extends BaseController {
                     userId: user._id,
                     countryId: user.countryId,
                     sourceCollection: collections.cart.cartorders,
-                    referenceData: JSON.stringify(updatedOrderDetails[0]),
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        allValues: updatedOrderDetails[0]
+                    }, null, 2),
                     sourceFromId: orderProductDetails.cartId as any,
                     sourceFromReferenceId: orderProductId,
                     sourceFrom: adminTaskLog.orders.order,
@@ -830,7 +831,11 @@ class OrdersController extends BaseController {
                     userId: user._id,
                     countryId: user.countryId,
                     sourceCollection: collections.cart.cartorders,
-                    referenceData: JSON.stringify(updatedOrderDetails[0]),
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        allValues: updatedOrderDetails[0]
+                    }, null, 2),
                     sourceFromId: orderProductDetails.cartId as any,
                     sourceFromReferenceId: orderProductId,
                     sourceFrom: adminTaskLog.orders.order,
@@ -1197,7 +1202,11 @@ class OrdersController extends BaseController {
                 userId: user._id,
                 countryId: user.countryId,
                 sourceCollection: collections.cart.cartorders,
-                referenceData: JSON.stringify(updatedOrderDetails[0]),
+                referenceData: JSON.stringify({
+                    orderId: orderDetails.orderId,
+                    orderCode: orderDetails.orderCode,
+                    allValues: updatedOrderDetails[0]
+                }, null, 2),
                 sourceFromId: orderId,
                 sourceFrom: adminTaskLog.orders.order,
                 activityComment: `Order product status changed to: ${orderStatusMessages[orderStatus]}`,
@@ -1255,7 +1264,7 @@ class OrdersController extends BaseController {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays
                 }
                 const tax = await TaxsModel.findOne({ countryId: orderDetails[0].country._id, status: "1" })
-                const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].country._id }, 'currencyCode')
+                const currencyCode = await CountryModel.findOne({ _id: orderDetails[0].country._id }, 'countryTitle currencyCode')
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 
@@ -1264,7 +1273,12 @@ class OrdersController extends BaseController {
                     countryId: user.countryId,
                     sourceCollection: collections.cart.cartorders,
                     userId: user._id,
-                    referenceData: JSON.stringify(orderDetails),
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        countryTitle: currencyCode?.countryTitle,
+                        allValues: orderDetails
+                    }, null, 2),
                     sourceFromId: orderDetails._id.toString(),
                     sourceFrom: adminTaskLog.orders.order,
                     activityComment: `Generate Order PDF: ${orderDetails.orderId}`,

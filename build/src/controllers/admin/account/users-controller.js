@@ -11,6 +11,7 @@ const helpers_1 = require("../../../../src/utils/helpers");
 const task_log_1 = require("../../../../src/constants/admin/task-log");
 const user_service_1 = __importDefault(require("../../../services/admin/account/user-service"));
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 // $2b$10$bRcggpnGJHBCLOc.TG/PG.1vVkFEqDME53bHg5z/OvTepBp3J.FzG
 class UserController extends base_controller_1.default {
@@ -93,9 +94,20 @@ class UserController extends base_controller_1.default {
                     requestedData: newUser,
                     message: 'User created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.account.users,
+                    referenceData: JSON.stringify({
+                        userCode: newUser.userCode,
+                        email: newUser.email,
+                        firstName: newUser.firstName,
+                        phone: newUser.phone,
+                        allValues: newUser
+                    }, null, 2),
                     sourceFromId: newUser._id,
                     sourceFrom: task_log_1.adminTaskLog.account.users,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'User created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -167,9 +179,20 @@ class UserController extends base_controller_1.default {
                             requestedData: updatedUser,
                             message: 'User updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.account.users,
+                            referenceData: JSON.stringify({
+                                userCode: updatedUser.userCode,
+                                email: updatedUser.email,
+                                firstName: updatedUser.firstName,
+                                phone: updatedUser.phone,
+                                allValues: updatedUser
+                            }, null, 2),
                             sourceFromId: updatedUser._id,
                             sourceFrom: task_log_1.adminTaskLog.account.users,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'User updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

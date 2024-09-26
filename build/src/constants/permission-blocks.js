@@ -87,4 +87,7 @@ exports.permissionBlocks = {
         coupons: 'coupons',
         offers: 'offers',
     },
+    other: {
+        taskLog: 'task-log'
+    }
 };

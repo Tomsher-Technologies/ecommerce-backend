@@ -9,6 +9,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 import BaseController from '../../../controllers/admin/base-controller';
 import CountryService from '../../../services/admin/setup/country-service'
 import { CountryProps } from '../../../model/admin/setup/country-model';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -91,9 +92,19 @@ class CountryController extends BaseController {
                     requestedData: newCountry,
                     message: 'Country created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.setup.countries,
+                    referenceData: JSON.stringify({
+                        countryTitle: newCountry.countryTitle,
+                        slug: newCountry.slug,
+                        countryCode: newCountry.countryCode,
+                        currencyCode: newCountry.currencyCode,
+                    }, null, 2),
                     sourceFromId: newCountry._id,
                     sourceFrom: adminTaskLog.setup.country,
                     activity: adminTaskLogActivity.create,
+                    activityComment: 'Country created successfully!',
                     activityStatus: adminTaskLogStatus.success
                 });
             } else {
@@ -186,13 +197,19 @@ class CountryController extends BaseController {
 
                     const updatedCountry = await CountryService.update(countryId, updatedCountryData);
                     if (updatedCountry) {
+                        const user = res.locals.user;
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedCountry,
                             message: 'Country updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.countries,
+                            referenceData: JSON.stringify(updatedCountry, null, 2),
                             sourceFromId: updatedCountry._id,
                             sourceFrom: adminTaskLog.setup.country,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Country updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -270,12 +287,23 @@ class CountryController extends BaseController {
 
                     const updatedCountry = await CountryService.update(countryId, updatedCountryData);
                     if (updatedCountry) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCountry,
                             message: 'Country status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.countries,
+                            referenceData: JSON.stringify({
+                                countryTitle: updatedCountry.countryTitle,
+                                slug: updatedCountry.slug,
+                                countryCode: updatedCountry.countryCode,
+                                currencyCode: updatedCountry.currencyCode,
+                            }, null, 2),
                             sourceFromId: updatedCountry._id,
                             sourceFrom: adminTaskLog.setup.country,
+                            activityComment: 'Country status updated successfully!',
                             activity: adminTaskLogActivity.statusChange,
                             activityStatus: adminTaskLogStatus.success
                         });

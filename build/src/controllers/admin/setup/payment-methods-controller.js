@@ -11,6 +11,7 @@ const payment_method_schema_1 = require("../../../utils/schemas/admin/setup/paym
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const payment_method_service_1 = __importDefault(require("../../../services/admin/setup/payment-method-service"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class PaymentMethodController extends base_controller_1.default {
     async findAll(req, res) {
@@ -106,9 +107,14 @@ class PaymentMethodController extends base_controller_1.default {
                         requestedData: newPaymentMethod,
                         message: 'PaymentMethod created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.setup.paymentMethods,
+                        referenceData: JSON.stringify(newPaymentMethod, null, 2),
                         sourceFromId: newPaymentMethod._id,
                         sourceFrom: task_log_1.adminTaskLog.setup.paymentMethod,
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: `PaymentMethod created successfully!`,
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -183,6 +189,7 @@ class PaymentMethodController extends base_controller_1.default {
                 const paymentMethodId = req.params.id;
                 if (paymentMethodId) {
                     let updatedPaymentMethodData = req.body;
+                    const user = res.locals.user;
                     updatedPaymentMethodData = {
                         ...updatedPaymentMethodData,
                         paymentMethodImageUrl: (0, helpers_1.handleFileUpload)(req, await payment_method_service_1.default.findOne(paymentMethodId), req.file, 'paymentMethodImageUrl', 'paymentMethod'),
@@ -202,8 +209,13 @@ class PaymentMethodController extends base_controller_1.default {
                             requestedData: updatedPaymentMethod,
                             message: 'PaymentMethod updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.paymentMethods,
+                            referenceData: JSON.stringify(updatedPaymentMethod, null, 2),
                             sourceFromId: updatedPaymentMethod._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.paymentMethod,
+                            activityComment: 'PaymentMethod updated successfully!',
                             activity: task_log_1.adminTaskLogActivity.update,
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
@@ -271,14 +283,20 @@ class PaymentMethodController extends base_controller_1.default {
                 if (paymentMethodId) {
                     let { status } = req.body;
                     const updatedPaymentMethodData = { status };
+                    const user = res.locals.user;
                     const updatedPaymentMethod = await payment_method_service_1.default.update(paymentMethodId, updatedPaymentMethodData);
                     if (updatedPaymentMethod) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedPaymentMethod,
                             message: 'PaymentMethod status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.paymentMethods,
+                            referenceData: JSON.stringify(updatedPaymentMethod, null, 2),
                             sourceFromId: updatedPaymentMethod._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.paymentMethod,
+                            activityComment: 'PaymentMethod status updated successfully!',
                             activity: task_log_1.adminTaskLogActivity.statusChange,
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });

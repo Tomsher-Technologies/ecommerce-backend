@@ -306,6 +306,10 @@ class CategoryController extends BaseController {
                         sourceCollection: collections.ecommerce.categories,
                         sourceFromId: newCategory._id,
                         sourceFrom: adminTaskLog.ecommerce.categories,
+                        referenceData: JSON.stringify({
+                            categoryTitle: newCategory.categoryTitle,
+                            slug: newCategory.slug,
+                        }, null, 2),
                         activity: adminTaskLogActivity.create,
                         activityComment: 'Category created successfully!',
                         activityStatus: adminTaskLogStatus.success
@@ -450,6 +454,10 @@ class CategoryController extends BaseController {
                             sourceCollection: collections.ecommerce.categories,
                             sourceFromId: categoryDetails._id,
                             sourceFrom: adminTaskLog.ecommerce.categories,
+                            referenceData: JSON.stringify({
+                                categoryTitle: updatedCategoryMapped.categoryTitle,
+                                slug: updatedCategoryMapped.slug,
+                            }, null, 2),
                             activity: adminTaskLogActivity.update,
                             activityComment: 'Category updated successfully!',
                             activityStatus: adminTaskLogStatus.success
@@ -577,6 +585,10 @@ class CategoryController extends BaseController {
                             countryId: user.countryId,
                             sourceCollection: collections.ecommerce.categories,
                             sourceFromId: updatedCategory._id,
+                            referenceData: JSON.stringify({
+                                categoryTitle: updatedCategory.categoryTitle,
+                                slug: updatedCategory.slug,
+                            }, null, 2),
                             sourceFrom: adminTaskLog.ecommerce.categories,
                             activity: adminTaskLogActivity.create,
                             activityComment: 'Category status updated successfully!',

@@ -9,6 +9,7 @@ const task_log_1 = require("../../../constants/admin/task-log");
 const warehouse_schema_1 = require("../../../utils/schemas/admin/store/warehouse-schema");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const warehouse_service_1 = __importDefault(require("../../../services/admin/stores/warehouse-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class WarehouseController extends base_controller_1.default {
     async findAll(req, res) {
@@ -75,9 +76,14 @@ class WarehouseController extends base_controller_1.default {
                     requestedData: newWarehouse,
                     message: 'Warehouse created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.stores.warehouses,
+                    referenceData: JSON.stringify(newWarehouse, null, 2),
                     sourceFromId: newWarehouse._id,
                     sourceFrom: task_log_1.adminTaskLog.store.warehouse,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'Warehouse created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -135,13 +141,19 @@ class WarehouseController extends base_controller_1.default {
                     };
                     const updatedWarehouse = await warehouse_service_1.default.update(warehouseId, updatedWarehouseData);
                     if (updatedWarehouse) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedWarehouse,
                             message: 'Warehouse updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.stores.warehouses,
+                            referenceData: JSON.stringify(updatedWarehouse, null, 2),
                             sourceFromId: updatedWarehouse._id,
                             sourceFrom: task_log_1.adminTaskLog.store.warehouse,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Warehouse updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -180,12 +192,18 @@ class WarehouseController extends base_controller_1.default {
                     const updatedWarehouseData = { status };
                     const updatedWarehouse = await warehouse_service_1.default.update(warehouse, updatedWarehouseData);
                     if (updatedWarehouse) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedWarehouse,
                             message: 'warehouse status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.stores.warehouses,
+                            referenceData: JSON.stringify(updatedWarehouse, null, 2),
                             sourceFromId: updatedWarehouse._id,
                             sourceFrom: task_log_1.adminTaskLog.store.warehouse,
+                            activityComment: 'warehouse status updated successfully!',
                             activity: task_log_1.adminTaskLogActivity.statusChange,
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });

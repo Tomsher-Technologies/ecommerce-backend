@@ -11,6 +11,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 
 import UserService from '../../../services/admin/account/user-service';
 import BaseController from '../../../controllers/admin/base-controller';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 // $2b$10$bRcggpnGJHBCLOc.TG/PG.1vVkFEqDME53bHg5z/OvTepBp3J.FzG
@@ -100,9 +101,20 @@ class UserController extends BaseController {
                     requestedData: newUser,
                     message: 'User created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.account.users,
+                    referenceData: JSON.stringify({
+                        userCode: newUser.userCode,
+                        email: newUser.email,
+                        firstName: newUser.firstName,
+                        phone: newUser.phone,
+                        allValues: newUser
+                    }, null, 2),
                     sourceFromId: newUser._id,
                     sourceFrom: adminTaskLog.account.users,
                     activity: adminTaskLogActivity.create,
+                    activityComment: 'User created successfully!',
                     activityStatus: adminTaskLogStatus.success
                 });
             } else {
@@ -172,9 +184,20 @@ class UserController extends BaseController {
                             requestedData: updatedUser,
                             message: 'User updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.account.users,
+                            referenceData: JSON.stringify({
+                                userCode: updatedUser.userCode,
+                                email: updatedUser.email,
+                                firstName: updatedUser.firstName,
+                                phone: updatedUser.phone,
+                                allValues: updatedUser
+                            }, null, 2),
                             sourceFromId: updatedUser._id,
                             sourceFrom: adminTaskLog.account.users,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'User updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const warehouseSchema = new mongoose_1.Schema({
     warehouseTitle: {
         type: String,
@@ -31,7 +32,7 @@ const warehouseSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Warehouse').countDocuments({ warehouseTitle: value });
+                const count = await this.model(collections_1.collections.stores.warehouses).countDocuments({ warehouseTitle: value });
                 return count === 0;
             },
             message: 'Warehouse title must be unique'
@@ -49,7 +50,7 @@ const warehouseSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Warehouse').countDocuments({ warehouseLocation: value });
+                const count = await this.model(collections_1.collections.stores.warehouses).countDocuments({ warehouseLocation: value });
                 return count === 0;
             },
             message: 'Warehouse location must be unique'
@@ -86,5 +87,5 @@ const warehouseSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const WarehouseModel = mongoose_1.default.model('Warehouse', warehouseSchema);
+const WarehouseModel = mongoose_1.default.model(collections_1.collections.stores.warehouses, warehouseSchema);
 exports.default = WarehouseModel;

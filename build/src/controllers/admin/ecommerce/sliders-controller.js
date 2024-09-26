@@ -13,6 +13,7 @@ const general_service_1 = __importDefault(require("../../../services/admin/gener
 const slider_model_1 = __importDefault(require("../../../model/admin/ecommerce/slider-model"));
 const multi_languages_1 = require("../../../constants/multi-languages");
 const mongoose_1 = __importDefault(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class SlidersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -212,6 +213,7 @@ class SlidersController extends base_controller_1.default {
                             mapped[key] = updatedSlider[key];
                             return mapped;
                         }, {});
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: {
                                 ...updatedSliderMapped,
@@ -219,9 +221,13 @@ class SlidersController extends base_controller_1.default {
                             },
                             message: 'Slider updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.sliders,
                             sourceFromId: updatedSliderMapped._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.sliders,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Slider updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -258,15 +264,20 @@ class SlidersController extends base_controller_1.default {
                 if (sliderId) {
                     let { status } = req.body;
                     const updatedSliderData = { status };
+                    const user = res.locals.user;
                     const updatedSlider = await slider_service_1.default.update(sliderId, updatedSliderData);
                     if (updatedSlider) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.sliders,
                             sourceFromId: sliderId,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.sliders,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Slider status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -302,15 +313,20 @@ class SlidersController extends base_controller_1.default {
                 const sliderId = req.params.id;
                 if (sliderId) {
                     let { position } = req.body;
+                    const user = res.locals.user;
                     const updatedSlider = await general_service_1.default.changePosition(slider_model_1.default, sliderId, position);
                     if (updatedSlider) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedSlider,
                             message: 'Slider status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.sliders,
                             sourceFromId: sliderId,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.sliders,
                             activity: task_log_1.adminTaskLogActivity.positionChange,
+                            activityComment: 'Slider status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -345,15 +361,20 @@ class SlidersController extends base_controller_1.default {
             if (sliderId) {
                 const slider = await slider_service_1.default.findOne(sliderId);
                 if (slider) {
+                    const user = res.locals.user;
                     const SliderServices = await slider_service_1.default.destroy(sliderId);
                     const existingLanguageValues = await general_service_1.default.findOneLanguageValues(multi_languages_1.multiLanguageSources.ecommerce.sliders, sliderId);
                     if (existingLanguageValues) {
                         await general_service_1.default.destroyLanguageValues(existingLanguageValues._id);
                     }
                     return controller.sendSuccessResponse(res, { message: 'Slider deleted successfully!' }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.sliders,
                         sourceFromId: sliderId,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.sliders,
                         activity: task_log_1.adminTaskLogActivity.delete,
+                        activityComment: 'Slider deleted successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }

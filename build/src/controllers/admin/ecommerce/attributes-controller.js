@@ -11,6 +11,7 @@ const base_controller_1 = __importDefault(require("../../../controllers/admin/ba
 const attributes_service_1 = __importDefault(require("../../../services/admin/ecommerce/attributes-service"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class AttributesController extends base_controller_1.default {
     async findAll(req, res) {
@@ -142,6 +143,7 @@ class AttributesController extends base_controller_1.default {
                             }
                         });
                     }
+                    const user = res.locals.user;
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newAttribute._id,
@@ -152,9 +154,13 @@ class AttributesController extends base_controller_1.default {
                         },
                         message: 'Attribute successfully created'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.attributes,
                         sourceFromId: newAttribute._id,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.attributes,
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'Attribute successfully created',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -287,6 +293,7 @@ class AttributesController extends base_controller_1.default {
                                     }
                                 });
                             }
+                            const user = res.locals.user;
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     ...updatedAttribute,
@@ -295,9 +302,13 @@ class AttributesController extends base_controller_1.default {
                                 },
                                 message: 'Attribute successfully updated'
                             }, 200, {
+                                userId: user._id,
+                                countryId: user.countryId,
+                                sourceCollection: collections_1.collections.ecommerce.attributes,
                                 sourceFromId: updatedAttribute._id,
                                 sourceFrom: task_log_1.adminTaskLog.ecommerce.attributes,
                                 activity: task_log_1.adminTaskLogActivity.update,
+                                activityComment: 'Attribute successfully updated',
                                 activityStatus: task_log_1.adminTaskLogStatus.success
                             });
                         }
@@ -340,15 +351,20 @@ class AttributesController extends base_controller_1.default {
                 if (attributeId) {
                     let { status } = req.body;
                     const updatedAttributeData = { status };
+                    const user = res.locals.user;
                     const updatedAttribute = await attributes_service_1.default.update(attributeId, updatedAttributeData);
                     if (updatedAttribute) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedAttribute,
                             message: 'Attribute status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.attributes,
                             sourceFromId: updatedAttribute._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.attributes,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Attribute status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

@@ -41,6 +41,7 @@ const language_model_1 = __importDefault(require("../../../model/admin/setup/lan
 const excel_upload_1 = require("../../../utils/admin/excel/excel-upload");
 const mongoose_1 = __importDefault(require("mongoose"));
 const seo_page_service_2 = __importDefault(require("../../../services/admin/seo-page-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class ProductsController extends base_controller_1.default {
     // constructor() {
@@ -124,6 +125,7 @@ class ProductsController extends base_controller_1.default {
                         createdBy: user._id,
                     };
                     newProduct = await product_service_1.default.create(productData);
+                    let updatedSeo = null;
                     if (newProduct) {
                         const productSeo = {
                             metaTitle: metaTitle,
@@ -135,7 +137,7 @@ class ProductsController extends base_controller_1.default {
                             twitterDescription: twitterDescription
                         };
                         if (metaTitle || metaDescription || metaKeywords || ogTitle || ogDescription || twitterTitle || twitterDescription) {
-                            const newSeo = await seo_page_service_1.default.create({
+                            updatedSeo = await seo_page_service_1.default.create({
                                 pageId: newProduct._id,
                                 page: seo_page_1.seoPage.ecommerce.products,
                                 ...productSeo
@@ -162,6 +164,7 @@ class ProductsController extends base_controller_1.default {
                         if (galleryImages && galleryImages?.length > 0) {
                             (0, helpers_1.uploadGallaryImages)(req, newProduct._id, galleryImages);
                         }
+                        var updatedProductVariantData = [];
                         if (variants && variants.length > 0) {
                             var productVariantData;
                             for (let variantsIndex = 0; variantsIndex < variants.length; variantsIndex++) {
@@ -169,12 +172,6 @@ class ProductsController extends base_controller_1.default {
                                     for (let productVariantsIndex = 0; productVariantsIndex < variants[variantsIndex].productVariants.length; productVariantsIndex++) {
                                         if (variants[variantsIndex].countryId) {
                                             const countryData = allCountryData.find((country) => String(country._id) === variants[variantsIndex].countryId);
-                                            // if (variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle) {
-                                            //     slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].extraProductTitle + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
-                                            // }
-                                            // else {
-                                            //     slugData = newProduct?.slug + "-" + variants[variantsIndex].productVariants[productVariantsIndex].variantSku
-                                            // }
                                             if (countryData) {
                                                 const slugData = newProduct?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1); // generate slug
                                                 if (slugData !== '') {
@@ -193,6 +190,7 @@ class ProductsController extends base_controller_1.default {
                                                                 countryId: variants[variantsIndex].countryId,
                                                                 ...variants[variantsIndex].productVariants[productVariantsIndex],
                                                             }, userData);
+                                                            updatedProductVariantData.push(productVariantData);
                                                             const galleryImages = req.files.filter((file) => file.fieldname &&
                                                                 file.fieldname.startsWith('variants[' + variantsIndex + '][productVariants][' + productVariantsIndex + '][galleryImage]['));
                                                             if (galleryImages?.length > 0) {
@@ -305,15 +303,58 @@ class ProductsController extends base_controller_1.default {
                                 }
                             });
                         }
-                        return controller.sendSuccessResponse(res, {
-                            requestedData: newProduct,
-                            message: 'Product created successfully!'
-                        }, 200, {
-                            sourceFromId: newProduct._id,
-                            sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
-                            activity: task_log_1.adminTaskLogActivity.create,
-                            activityStatus: task_log_1.adminTaskLogStatus.success
-                        });
+                        const product = await product_service_1.default.findOne(newProduct._id);
+                        if (product) {
+                            return controller.sendSuccessResponse(res, {
+                                requestedData: product,
+                                message: 'Product created successfully!'
+                            }, 200, {
+                                userId: userData._id,
+                                countryId: userData.countryId,
+                                sourceFromId: newProduct._id,
+                                sourceCollection: collections_1.collections.ecommerce.products.products,
+                                referenceData: JSON.stringify({
+                                    prodcutCode: product.prodcutCode,
+                                    productTitle: product.productTitle,
+                                    slug: product.slug,
+                                    productImageUrl: product.productImageUrl,
+                                    description: product.description,
+                                    longDescription: product.longDescription,
+                                    brandTitle: product.brand?.brandTitle,
+                                    categoryTitle: product.productCategory.map((category) => category?.category?.categoryTitle),
+                                    productVariants: product.productVariants.map((variant) => ({
+                                        itemCode: variant.itemCode,
+                                        variantSku: variant.variantSku,
+                                        extraProductTitle: variant.extraProductTitle,
+                                        price: variant.price,
+                                        discountPrice: variant.discountPrice,
+                                        quantity: variant.quantity,
+                                        ...(variant.productVariantAttributes.length > 0 ? {
+                                            productVariantAttributes: variant.productVariantAttributes.map((attr) => ({
+                                                attributeTitle: attr.attributeTitle,
+                                                itemName: attr.attributeDetail.itemName
+                                            }))
+                                        } : {}),
+                                        ...(variant.productSpecification.length > 0 ? {
+                                            productSpecification: variant.productSpecification.map((spec) => ({
+                                                specificationTitle: spec.specificationTitle,
+                                                itemName: spec.specificationDetail.itemName
+                                            }))
+                                        } : {}),
+                                    })),
+                                    allValues: product
+                                }, null, 2),
+                                sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
+                                activity: task_log_1.adminTaskLogActivity.create,
+                                activityComment: 'Product created successfully!',
+                                activityStatus: task_log_1.adminTaskLogStatus.success
+                            });
+                        }
+                        else {
+                            return controller.sendErrorResponse(res, 200, {
+                                message: 'spmething went wrong',
+                            }, req);
+                        }
                     }
                     else {
                         return controller.sendErrorResponse(res, 200, {
@@ -337,7 +378,6 @@ class ProductsController extends base_controller_1.default {
             }
         }
         catch (error) {
-            console.log("error.errors", error);
             if (error && error.errors && error.errors.productTitle && error.errors.productTitle.properties) {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Validation error',
@@ -477,7 +517,9 @@ class ProductsController extends base_controller_1.default {
                                         const userData = res.locals.user;
                                         const updateTaskLogs = {
                                             userId: userData._id,
+                                            countryId: userData.countryId,
                                             sourceFromId: productVariantDetails.productId,
+                                            referenceData: JSON.stringify(productPriceData, null, 2),
                                             sourceFromReferenceId: productVariantDetails._id,
                                             sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
                                             activityComment: `Updated via Excel import: ${updateComment.join('; ')}`,
@@ -1249,25 +1291,24 @@ class ProductsController extends base_controller_1.default {
                     updatedProductData = {
                         ...updatedProductData,
                         productTitle: (0, helpers_1.capitalizeWords)(updatedProductData.productTitle),
-                        productImageUrl: (0, helpers_1.handleFileUpload)(req, await product_service_1.default.findOne(productId), (req.file || productImage), 'productImageUrl', 'product'),
+                        productImageUrl: (0, helpers_1.handleFileUpload)(req, await product_service_1.default.findOne(productId), (productImage || req.file), 'productImageUrl', 'product'),
                         updatedAt: new Date()
                     };
                     var updatedCategory;
                     const updatedProduct = await product_service_1.default.update(productId, updatedProductData);
+                    let newCategory = [];
+                    let updatedVariant = [];
+                    let updatedSpecification = [];
+                    let updatedSeo = null;
                     if (updatedProduct) {
                         if (updatedProductData.productCategory) {
-                            const newCategory = await product_category_link_service_1.default.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
+                            newCategory = await product_category_link_service_1.default.categoryLinkService(updatedProduct._id, updatedProductData.productCategory);
                         }
                         if (updatedProductData.productSpecification && updatedProductData.productSpecification.length > 0) {
-                            // await updatedProductData.productSpecification.map(async (    specification: any) => {
-                            //     const specificationData = {
-                            //         ...specification
-                            //     }
-                            await product_specification_service_1.default.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification);
-                            // })
+                            updatedSpecification = await product_specification_service_1.default.productSpecificationService(updatedProduct._id, updatedProductData.productSpecification);
                         }
                         if (updatedProductData.variants) {
-                            const newVariant = await product_variant_service_1.default.variantService(updatedProduct, updatedProductData.variants, userData);
+                            updatedVariant = await product_variant_service_1.default.variantService(updatedProduct, updatedProductData.variants, userData);
                         }
                         if (updatedProductData.metaDescription || updatedProductData.metaKeywords || updatedProductData.metaTitle || updatedProductData.ogDescription || updatedProductData.ogTitle || updatedProductData.twitterDescription || updatedProductData.twitterTitle) {
                             const seoData = {
@@ -1279,52 +1320,14 @@ class ProductsController extends base_controller_1.default {
                                 twitterDescription: updatedProductData.twitterDescription,
                                 twitterTitle: updatedProductData.twitterTitle
                             };
-                            const seo = await seo_page_service_2.default.update(updatedProductData.productSeoId, seoData);
+                            updatedSeo = await seo_page_service_2.default.update(updatedProductData.productSeoId, seoData);
                         }
                         let newLanguageValues = [];
-                        // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        //     file.fieldname &&
-                        //     file.fieldname.startsWith('languageValues[') &&
-                        //     file.fieldname.includes('[productImage]')
-                        // );
-                        // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        //     file.fieldname &&
-                        //     file.fieldname.startsWith('languageValues[') &&
-                        //     file.fieldname.includes('[galleryImage]')
-                        // );
                         if (updatedProductData.languageValues && Array.isArray((updatedProductData.languageValues)) && updatedProductData.languageValues.length > 0) {
                             for (let i = 0; i < updatedProductData.languageValues.length; i++) {
                                 const languageValue = updatedProductData.languageValues[i];
                                 let productImageUrl = '';
-                                // if (languageValuesImages?.length > 0) {
-                                //     productImageUrl = handleFileUpload(req
-                                //         , null, languageValuesImages[i], `productImageUrl`, 'product');
-                                // }
-                                var variantGalleryImages = [];
-                                var productGalleryImages = [];
                                 if (((languageValue) && (languageValue.languageValues) && (languageValue.languageValues.variants) && (languageValue.languageValues.variants.length > 0))) {
-                                    // await languageValue.languageValues.variants.map(async (variant: any, index: number) => {
-                                    // let variantImageUrl = ''
-                                    // const languageValuesVariantImages = (req as any).files && (req as any).files.filter((file: any) =>
-                                    //     file.fieldname &&
-                                    //     file.fieldname.startsWith('languageValues[') &&
-                                    //     file.fieldname.includes('[variants][' + index + '][productVariants][galleryImage]')
-                                    // );
-                                    // if (languageValuesVariantImages?.length > 0) {
-                                    //     await languageValuesVariantImages.map((variantImage: any, index: number) => {
-                                    //         variantImageUrl = handleFileUpload(req
-                                    //             , null, languageValuesVariantImages[index], `variantImageUrl`, 'product');
-                                    //         variantGalleryImages.push({ variantImageUrl: variantImageUrl })
-                                    //     })
-                                    //     languageValue.languageValues.variants[index].galleryImages = variantGalleryImages
-                                    // }
-                                    // if (languageValuesGalleryImages?.length > 0) {
-                                    //     productImageUrl = handleFileUpload(req
-                                    //         , null, languageValuesGalleryImages[index], `productImageUrl`, 'product');
-                                    //     productGalleryImages.push({ productImageUrl: productImageUrl })
-                                    // }
-                                    // languageValue.languageValues.galleryImages = productGalleryImages
-                                    // })
                                     const languageValues = await general_service_1.default.multiLanguageFieledsManage(updatedProduct._id, {
                                         ...languageValue,
                                         source: multi_languages_1.multiLanguageSources.ecommerce.products,
@@ -1364,15 +1367,58 @@ class ProductsController extends base_controller_1.default {
                         if (galleryImages?.length > 0) {
                             (0, helpers_1.uploadGallaryImages)(req, updatedProduct._id, galleryImages);
                         }
-                        controller.sendSuccessResponse(res, {
-                            requestedData: updatedProduct,
-                            message: 'Product updated successfully!'
-                        }, 200, {
-                            sourceFromId: updatedProduct._id,
-                            sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
-                            activity: task_log_1.adminTaskLogActivity.update,
-                            activityStatus: task_log_1.adminTaskLogStatus.success
-                        });
+                        const product = await product_service_1.default.findOne(productId);
+                        if (product) {
+                            controller.sendSuccessResponse(res, {
+                                requestedData: product,
+                                message: 'Product updated successfully!'
+                            }, 200, {
+                                userId: userData._id,
+                                countryId: userData.countryId,
+                                sourceCollection: collections_1.collections.ecommerce.products.products,
+                                sourceFromId: updatedProduct._id,
+                                sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
+                                activity: task_log_1.adminTaskLogActivity.update,
+                                referenceData: JSON.stringify({
+                                    prodcutCode: product.prodcutCode,
+                                    productTitle: product.productTitle,
+                                    slug: product.slug,
+                                    productImageUrl: product.productImageUrl,
+                                    description: product.description,
+                                    longDescription: product.longDescription,
+                                    brandTitle: product.brand?.brandTitle,
+                                    categoryTitle: product.productCategory.map((category) => category?.category?.categoryTitle),
+                                    productVariants: product.productVariants.map((variant) => ({
+                                        itemCode: variant.itemCode,
+                                        variantSku: variant.variantSku,
+                                        extraProductTitle: variant.extraProductTitle,
+                                        price: variant.price,
+                                        discountPrice: variant.discountPrice,
+                                        quantity: variant.quantity,
+                                        ...(variant.productVariantAttributes.length > 0 ? {
+                                            productVariantAttributes: variant.productVariantAttributes.map((attr) => ({
+                                                attributeTitle: attr.attributeTitle,
+                                                itemName: attr.attributeDetail.itemName
+                                            }))
+                                        } : {}),
+                                        ...(variant.productSpecification.length > 0 ? {
+                                            productSpecification: variant.productSpecification.map((spec) => ({
+                                                specificationTitle: spec.specificationTitle,
+                                                itemName: spec.specificationDetail.itemName
+                                            }))
+                                        } : {}),
+                                    })),
+                                    allValues: product
+                                }, null, 2),
+                                activityComment: 'Product updated successfully!',
+                                activityStatus: task_log_1.adminTaskLogStatus.success
+                            });
+                        }
+                        else {
+                            controller.sendErrorResponse(res, 200, {
+                                message: 'something went wrong!',
+                            }, req);
+                        }
                     }
                     else {
                         controller.sendErrorResponse(res, 200, {
@@ -1470,6 +1516,7 @@ class ProductsController extends base_controller_1.default {
             if (validatedData.success) {
                 let { status } = req.body;
                 const updatedProductData = { status };
+                const userData = await res.locals.user;
                 const variantId = req.query.variantId;
                 if (variantId) {
                     const updatedProductVariant = await product_variant_service_1.default.update(variantId, updatedProductData);
@@ -1478,9 +1525,23 @@ class ProductsController extends base_controller_1.default {
                             requestedData: updatedProductVariant,
                             message: 'Product variant status updated successfully!'
                         }, 200, {
+                            userId: userData._id,
+                            countryId: userData.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.products.productvariants.productvariants,
                             sourceFromId: updatedProductVariant._id,
+                            sourceFromReferenceId: updatedProductVariant.productId,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.productVariants,
+                            referenceData: JSON.stringify({
+                                itemCode: updatedProductVariant.itemCode,
+                                variantSku: updatedProductVariant.variantSku,
+                                extraProductTitle: updatedProductVariant.extraProductTitle,
+                                price: updatedProductVariant.price,
+                                discountPrice: updatedProductVariant.discountPrice,
+                                quantity: updatedProductVariant.quantity,
+                                allValues: updatedProductVariant
+                            }, null, 2),
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Product variant status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                         // }
@@ -1502,9 +1563,19 @@ class ProductsController extends base_controller_1.default {
                                 requestedData: updatedProduct,
                                 message: 'Product status updated successfully!'
                             }, 200, {
+                                userId: userData._id,
+                                countryId: userData.countryId,
+                                sourceCollection: collections_1.collections.ecommerce.products.products,
                                 sourceFromId: updatedProduct._id,
                                 sourceFrom: task_log_1.adminTaskLog.ecommerce.products,
+                                referenceData: JSON.stringify({
+                                    prodcutCode: updatedProduct.prodcutCode,
+                                    productTitle: updatedProduct.productTitle,
+                                    slug: updatedProduct.slug,
+                                    productImageUrl: updatedProduct.productImageUrl,
+                                }),
                                 activity: task_log_1.adminTaskLogActivity.statusChange,
+                                activityComment: 'Product status updated successfully!',
                                 activityStatus: task_log_1.adminTaskLogStatus.success
                             });
                             // }

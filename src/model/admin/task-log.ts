@@ -1,9 +1,11 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, CallbackError } from 'mongoose';
 import { collections } from '../../constants/collections';
+import SequenceModel from '../sequence-model';
 
 export interface AdminTaskLogProps extends Document {
     countryId: Schema.Types.ObjectId;
     userId: Schema.Types.ObjectId;
+    taskCode: number;
     sourceCollection: string;
     sourceFrom: string;
     sourceFromId: Schema.Types.ObjectId;
@@ -27,6 +29,11 @@ const adminTaskLogsSchema: Schema = new Schema({
         type: Schema.Types.ObjectId,
         required: true,
         ref: collections.account.users,
+    },
+    taskCode: {
+        type: Number,
+        unique: true,
+        required: false,
     },
     sourceCollection: {
         type: String,
@@ -70,6 +77,28 @@ const adminTaskLogsSchema: Schema = new Schema({
         type: Date,
         required: true,
     },
+});
+adminTaskLogsSchema.pre<AdminTaskLogProps>('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await SequenceModel.findOneAndUpdate(
+                { _id: 'taskSequence' },
+                { $inc: { sequenceValue: 1 } },
+                { new: true, upsert: true }
+            );
+
+            if (sequenceDoc) {
+                this.taskCode = sequenceDoc.sequenceValue;
+                next();
+            } else {
+                throw new Error('Failed to generate task code.');
+            }
+        } catch (err) {
+            next(err as CallbackError);
+        }
+    } else {
+        next();
+    }
 });
 
 

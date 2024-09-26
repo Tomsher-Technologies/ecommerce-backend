@@ -11,6 +11,7 @@ import BaseController from '../base-controller';
 import SettingsService from '../../../services/admin/setup/settings-service';
 import GeneralService from '../../../services/admin/general-service';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -96,11 +97,16 @@ class SettingsController extends BaseController {
 
                     return controller.sendSuccessResponse(res, {
                         requestedData: newBasicSettings,
-                        message: 'Setting created successfully!'
+                        message: 'Setting changed successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.setup.websiteSetups,
+                        referenceData: JSON.stringify(newBasicSettings, null, 2),
                         sourceFromId: newBasicSettings._id,
                         sourceFrom: (adminTaskLog as any).setup.settings[blockReference],
                         activity: websiteSetupId ? adminTaskLogActivity.update : adminTaskLogActivity.create,
+                        activityComment: `${block} => ${blockReference} => Setting changed successfully!`,
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

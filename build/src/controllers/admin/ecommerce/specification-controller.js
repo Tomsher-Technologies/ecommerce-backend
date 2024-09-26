@@ -12,6 +12,7 @@ const general_service_1 = __importDefault(require("../../../services/admin/gener
 const multi_languages_1 = require("../../../constants/multi-languages");
 const task_log_1 = require("../../../constants/admin/task-log");
 const mongoose_1 = __importDefault(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class SpecificationController extends base_controller_1.default {
     async findAll(req, res) {
@@ -92,6 +93,7 @@ class SpecificationController extends base_controller_1.default {
                             }
                         });
                     }
+                    const user = res.locals.user;
                     return controller.sendSuccessResponse(res, {
                         requestedData: {
                             _id: newSpecification._id,
@@ -103,9 +105,13 @@ class SpecificationController extends base_controller_1.default {
                         },
                         message: 'Specification created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.specifications,
                         sourceFromId: newSpecification._id,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.specifications,
                         activity: task_log_1.adminTaskLogActivity.update,
+                        activityComment: 'Specification created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -185,6 +191,7 @@ class SpecificationController extends base_controller_1.default {
                                     newLanguageValues.push(languageValues);
                                 }
                             }
+                            const user = res.locals.user;
                             return controller.sendSuccessResponse(res, {
                                 requestedData: {
                                     _id: updatedSpecification._id,
@@ -195,9 +202,13 @@ class SpecificationController extends base_controller_1.default {
                                 },
                                 message: 'Specification updated successfully!'
                             }, 200, {
+                                userId: user._id,
+                                countryId: user.countryId,
+                                sourceCollection: collections_1.collections.ecommerce.specifications,
                                 sourceFromId: updatedSpecification._id,
                                 sourceFrom: task_log_1.adminTaskLog.ecommerce.specifications,
                                 activity: task_log_1.adminTaskLogActivity.update,
+                                activityComment: 'Specification updated successfully!',
                                 activityStatus: task_log_1.adminTaskLogStatus.success
                             });
                         }
@@ -240,15 +251,20 @@ class SpecificationController extends base_controller_1.default {
                 if (specificationId) {
                     let { status } = req.body;
                     const updatedSpecificationData = { status };
+                    const user = res.locals.user;
                     const updatedSpecification = await specification_service_1.default.update(specificationId, updatedSpecificationData);
                     if (updatedSpecification) {
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedSpecification,
                             message: 'Specification status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.specifications,
                             sourceFromId: updatedSpecification._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.specifications,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Specification status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

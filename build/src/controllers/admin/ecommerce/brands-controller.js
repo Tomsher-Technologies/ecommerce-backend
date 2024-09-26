@@ -16,6 +16,7 @@ const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/b
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const collections_brands_service_1 = __importDefault(require("../../../services/admin/website/collections-brands-service"));
 const seo_page_service_1 = __importDefault(require("../../../services/admin/seo-page-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class BrandsController extends base_controller_1.default {
     async findAll(req, res) {
@@ -187,9 +188,14 @@ class BrandsController extends base_controller_1.default {
                         },
                         message: 'Brand created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.brands,
                         sourceFromId: newBrand._id,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.brands,
+                        referenceData: JSON.stringify(newBrand, null, 2),
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'Brand created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -254,6 +260,7 @@ class BrandsController extends base_controller_1.default {
             const validatedData = brand_schema_1.brandSchema.safeParse(req.body);
             if (validatedData.success) {
                 const brandId = req.params.id;
+                const user = res.locals.user;
                 if (brandId) {
                     const brandImage = req.files.find((file) => file.fieldname === 'brandImage');
                     const brandBannerImage = req.files.find((file) => file.fieldname === 'brandBannerImage');
@@ -320,9 +327,14 @@ class BrandsController extends base_controller_1.default {
                             },
                             message: 'Brand updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.brands,
                             sourceFromId: updatedBrandMapped._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.brands,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            referenceData: JSON.stringify(updatedBrandMapped, null, 2),
+                            activityComment: 'Brand updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -359,15 +371,21 @@ class BrandsController extends base_controller_1.default {
                 if (brandId) {
                     let { status } = req.body;
                     const updatedBrandData = { status };
+                    const user = res.locals.user;
                     const updatedBrand = await brands_service_1.default.update(brandId, updatedBrandData);
                     if (updatedBrand) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedBrand,
                             message: 'Brand status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.brands,
                             sourceFromId: brandId,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.brands,
+                            referenceData: JSON.stringify(updatedBrand, null, 2),
                             activity: task_log_1.adminTaskLogActivity.delete,
+                            activityComment: 'Brand status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -430,6 +448,7 @@ class BrandsController extends base_controller_1.default {
             if (validatedData.success) {
                 const { keyColumn, root, container1 } = validatedData.data;
                 const validKeys = ['corporateGiftsPriority', 'brandListPriority'];
+                const user = res.locals.user;
                 if (validKeys.includes(keyColumn)) {
                     let updatedBrandData = req.body;
                     updatedBrandData = {
@@ -437,13 +456,19 @@ class BrandsController extends base_controller_1.default {
                         updatedAt: new Date()
                     };
                     await brands_service_1.default.updateWebsitePriority(container1, keyColumn);
+                    const retVal = await brands_model_1.default.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' });
                     return controller.sendSuccessResponse(res, {
-                        requestedData: await brands_model_1.default.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' }),
+                        requestedData: retVal,
                         message: 'Brand website priority updated successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.brands,
                         sourceFromId: updatedBrandData._id,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.brands,
+                        referenceData: JSON.stringify(retVal, null, 2),
                         activity: task_log_1.adminTaskLogActivity.priorityUpdation,
+                        activityComment: 'Brand website priority updated successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
