@@ -24,11 +24,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const taxSchema = new mongoose_1.Schema({
     countryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: collections_1.collections.setup.countries,
         unique: true
     },
     taxTitle: {
@@ -64,5 +65,5 @@ const taxSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const TaxsModel = mongoose_1.default.model('Taxs', taxSchema);
+const TaxsModel = mongoose_1.default.model(collections_1.collections.setup.taxs, taxSchema);
 exports.default = TaxsModel;

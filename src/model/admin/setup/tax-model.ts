@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface TaxProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -16,7 +17,7 @@ const taxSchema: Schema<TaxProps> = new Schema({
     countryId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: 'Countries',
+        ref: collections.setup.countries,
         unique: true
     },
     taxTitle: {
@@ -53,6 +54,6 @@ const taxSchema: Schema<TaxProps> = new Schema({
     }
 });
 
-const TaxsModel = mongoose.model<TaxProps>('Taxs', taxSchema);
+const TaxsModel = mongoose.model<TaxProps>(collections.setup.taxs, taxSchema);
 
 export default TaxsModel;

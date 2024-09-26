@@ -17,6 +17,7 @@ const specification_route_1 = __importDefault(require("./admin/ecommerce/specifi
 // admin general
 const page_routes_1 = __importDefault(require("./admin/general/page-routes"));
 const common_routes_1 = __importDefault(require("./admin/general/common-routes"));
+const task_log_routes_1 = __importDefault(require("./admin/general/task-log-routes"));
 // admin account
 const user_routes_1 = __importDefault(require("./admin/account/user-routes"));
 const user_type_routes_1 = __importDefault(require("./admin/account/user-type-routes"));
@@ -58,6 +59,7 @@ adminRouter.use('/auth', auth_routes_1.default);
 // admin general
 adminRouter.use('/general/pages', page_routes_1.default);
 adminRouter.use('/general/common', common_routes_1.default);
+adminRouter.use('/general/task-log', task_log_routes_1.default);
 //admin ecommerce 
 adminRouter.use('/account/user', user_routes_1.default);
 adminRouter.use('/account/user-types', user_type_routes_1.default);

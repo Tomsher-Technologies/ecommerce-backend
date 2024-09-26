@@ -12,6 +12,7 @@ const multi_languages_1 = require("../../../constants/multi-languages");
 const base_controller_1 = __importDefault(require("../base-controller"));
 const navigation_menu_service_1 = __importDefault(require("../../../services/admin/website/navigation-menu-service"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class NavigationMenuController extends base_controller_1.default {
     async findAll(req, res) {
@@ -82,8 +83,9 @@ class NavigationMenuController extends base_controller_1.default {
                         updatedAt: new Date()
                     };
                     let newNavigationMenu = [];
+                    let navigationMenu = [];
                     if (!languageId) {
-                        const navigationMenu = await navigation_menu_service_1.default.findOne({ countryId: countryId, block: website_setup_1.websiteSetup.menu, blockReference: deviceType });
+                        navigationMenu = await navigation_menu_service_1.default.findOne({ countryId: countryId, block: website_setup_1.websiteSetup.menu, blockReference: deviceType });
                         if (navigationMenu) {
                             newNavigationMenu = await navigation_menu_service_1.default.update(navigationMenu._id, menuData);
                         }
@@ -120,7 +122,7 @@ class NavigationMenuController extends base_controller_1.default {
                         // }
                     }
                     else {
-                        const navigationMenu = await navigation_menu_service_1.default.findOne({ countryId: countryId, block: website_setup_1.websiteSetup.menu, blockReference: deviceType });
+                        navigationMenu = await navigation_menu_service_1.default.findOne({ countryId: countryId, block: website_setup_1.websiteSetup.menu, blockReference: deviceType });
                         if (navigationMenu) {
                             const languageValues = await general_service_1.default.multiLanguageFieledsManage(navigationMenu._id, {
                                 languageId,
@@ -147,9 +149,17 @@ class NavigationMenuController extends base_controller_1.default {
                         requestedData: newNavigationMenu,
                         message: 'Navigation menu created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.setup.websiteSetups,
+                        referenceData: JSON.stringify({
+                            oldNavigationMenu: navigationMenu,
+                            newNavigationMenu
+                        }, null, 2),
                         sourceFromId: newNavigationMenu._id,
                         sourceFrom: task_log_1.adminTaskLog.website.navigationMenu,
                         activity: websiteSetupId ? task_log_1.adminTaskLogActivity.update : task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'Navigation menu created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }

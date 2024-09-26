@@ -6,6 +6,7 @@ import GeneralService from '../../../services/admin/general-service';
 import mongoose from 'mongoose';
 import { QueryParams } from '../../../utils/types/common';
 import { getCountryId } from '../../../utils/helpers';
+import { adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
 
 const controller = new BaseController();
 
@@ -13,7 +14,7 @@ class TaskLogController extends BaseController {
 
     async findAllTaskLogs(req: Request, res: Response): Promise<void> {
         try {
-            const { countryId = '', userId = '', sourceFromReferenceId = '', sourceFrom = '', activityStatus = '', activity = '', page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '', _id = '' } = req.query as QueryParams;
+            const { countryId = '', userId = '', sourceFromId = '', sourceFromReferenceId = '', sourceFrom = '', activityStatus = '', sourceCollection = '', activity = '', page_size = 1, limit = 10, sortby = '', sortorder = '', keyword = '', _id = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
             const country = getCountryId(userData);
@@ -26,6 +27,11 @@ class TaskLogController extends BaseController {
             if (_id) {
                 query = {
                     ...query, _id: new mongoose.Types.ObjectId(_id)
+                } as any;
+            }
+            if (sourceFromId) {
+                query = {
+                    ...query, sourceFromId: new mongoose.Types.ObjectId(sourceFromId)
                 } as any;
             }
             if (userId) {
@@ -53,6 +59,11 @@ class TaskLogController extends BaseController {
                     ...query, activity: activity.toString()
                 } as any;
             }
+            if (sourceCollection) {
+                query = {
+                    ...query, sourceCollection: sourceCollection.toString()
+                } as any;
+            }
 
             const sort: any = {};
             if (sortby && sortorder) {
@@ -67,7 +78,11 @@ class TaskLogController extends BaseController {
             });
             const { totalCount, ...restData } = taskLog;
             return controller.sendSuccessResponse(res, {
-                requestedData: restData,
+                requestedData: {
+                    ...restData,
+                    adminTaskLogActivity,
+                    adminTaskLogStatus
+                },
                 totalCount
             }, 200);
         } catch (error: any) {

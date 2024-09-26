@@ -33,6 +33,7 @@ const city_schema_1 = require("../../../utils/schemas/admin/setup/city-schema");
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../base-controller"));
 const city_service_1 = __importDefault(require("../../../services/admin/setup/city-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class CityController extends base_controller_1.default {
     async findAllCity(req, res) {
@@ -103,9 +104,14 @@ class CityController extends base_controller_1.default {
                         requestedData: newCity,
                         message: 'City created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.setup.cities,
+                        referenceData: JSON.stringify(newCity, null, 2),
                         sourceFromId: newCity._id,
                         sourceFrom: task_log_1.adminTaskLog.setup.city,
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'City created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -195,13 +201,19 @@ class CityController extends base_controller_1.default {
                     };
                     const updatedCity = await city_service_1.default.updateCity(cityId, updatedCityData);
                     if (updatedCity) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCity,
                             message: 'City updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.cities,
+                            referenceData: JSON.stringify(updatedCity, null, 2),
                             sourceFromId: updatedCity._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.city,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'City updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -254,13 +266,19 @@ class CityController extends base_controller_1.default {
                     const updatedCityData = { status };
                     const updatedCity = await city_service_1.default.updateCity(cityId, updatedCityData);
                     if (updatedCity) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCity,
                             message: 'City status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.cities,
+                            referenceData: JSON.stringify(updatedCity, null, 2),
                             sourceFromId: updatedCity._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.city,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'City status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

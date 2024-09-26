@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const languageSchema = new mongoose_1.Schema({
     languageTitle: {
         type: String,
@@ -31,7 +32,7 @@ const languageSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Languages').countDocuments({ languageTitle: value });
+                const count = await this.model(collections_1.collections.setup.languages).countDocuments({ languageTitle: value });
                 return count === 0;
             },
             message: 'Language title must be unique'
@@ -49,7 +50,7 @@ const languageSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('Languages').countDocuments({ languageCode: value });
+                const count = await this.model(collections_1.collections.setup.languages).countDocuments({ languageCode: value });
                 return count === 0;
             },
             message: 'Language title must be unique'
@@ -76,5 +77,5 @@ const languageSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const LanguagesModel = mongoose_1.default.model('Languages', languageSchema);
+const LanguagesModel = mongoose_1.default.model(collections_1.collections.setup.languages, languageSchema);
 exports.default = LanguagesModel;

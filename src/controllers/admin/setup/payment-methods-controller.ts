@@ -12,6 +12,7 @@ import PaymentMethodService from '../../../services/admin/setup/payment-method-s
 import { PaymentMethodProps } from '../../../model/admin/setup/payment-methods-model';
 import GeneralService from '../../../services/admin/general-service';
 import { multiLanguageSources } from '../../../constants/multi-languages';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -117,9 +118,14 @@ class PaymentMethodController extends BaseController {
                         requestedData: newPaymentMethod,
                         message: 'PaymentMethod created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.setup.paymentMethods,
+                        referenceData: JSON.stringify(newPaymentMethod, null, 2),
                         sourceFromId: newPaymentMethod._id,
                         sourceFrom: adminTaskLog.setup.paymentMethod,
                         activity: adminTaskLogActivity.create,
+                        activityComment: `PaymentMethod created successfully!`,
                         activityStatus: adminTaskLogStatus.success
                     });
                 }
@@ -191,6 +197,7 @@ class PaymentMethodController extends BaseController {
                 const paymentMethodId = req.params.id;
                 if (paymentMethodId) {
                     let updatedPaymentMethodData = req.body;
+                    const user = res.locals.user;
                     updatedPaymentMethodData = {
                         ...updatedPaymentMethodData,
                         paymentMethodImageUrl: handleFileUpload(req, await PaymentMethodService.findOne(paymentMethodId), req.file, 'paymentMethodImageUrl', 'paymentMethod'),
@@ -212,8 +219,13 @@ class PaymentMethodController extends BaseController {
                             requestedData: updatedPaymentMethod,
                             message: 'PaymentMethod updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.paymentMethods,
+                            referenceData: JSON.stringify(updatedPaymentMethod, null, 2),
                             sourceFromId: updatedPaymentMethod._id,
                             sourceFrom: adminTaskLog.setup.paymentMethod,
+                            activityComment: 'PaymentMethod updated successfully!',
                             activity: adminTaskLogActivity.update,
                             activityStatus: adminTaskLogStatus.success
                         });
@@ -275,6 +287,7 @@ class PaymentMethodController extends BaseController {
                 if (paymentMethodId) {
                     let { status } = req.body;
                     const updatedPaymentMethodData = { status };
+                    const user = res.locals.user;
 
                     const updatedPaymentMethod = await PaymentMethodService.update(paymentMethodId, updatedPaymentMethodData);
                     if (updatedPaymentMethod) {
@@ -282,8 +295,13 @@ class PaymentMethodController extends BaseController {
                             requestedData: updatedPaymentMethod,
                             message: 'PaymentMethod status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.paymentMethods,
+                            referenceData: JSON.stringify(updatedPaymentMethod, null, 2),
                             sourceFromId: updatedPaymentMethod._id,
                             sourceFrom: adminTaskLog.setup.paymentMethod,
+                            activityComment: 'PaymentMethod status updated successfully!',
                             activity: adminTaskLogActivity.statusChange,
                             activityStatus: adminTaskLogStatus.success
                         });

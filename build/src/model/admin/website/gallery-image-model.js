@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const gallaryImagesSchema = new mongoose_1.Schema({
     imageTitle: {
         type: String,
@@ -70,5 +71,5 @@ const gallaryImagesSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const GalleryImagesModel = mongoose_1.default.model('GallaryImages', gallaryImagesSchema);
+const GalleryImagesModel = mongoose_1.default.model(collections_1.collections.website.gallaryImages, gallaryImagesSchema);
 exports.default = GalleryImagesModel;

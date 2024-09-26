@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface WarehouseProps extends Document {
     warehouseTitle: string;
@@ -20,7 +21,7 @@ const warehouseSchema: Schema<WarehouseProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Warehouse').countDocuments({ warehouseTitle: value });
+                const count = await this.model(collections.stores.warehouses).countDocuments({ warehouseTitle: value });
                 return count === 0;
             },
             message: 'Warehouse title must be unique'
@@ -38,7 +39,7 @@ const warehouseSchema: Schema<WarehouseProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Warehouse').countDocuments({ warehouseLocation: value });
+                const count = await this.model(collections.stores.warehouses).countDocuments({ warehouseLocation: value });
                 return count === 0;
             },
             message: 'Warehouse location must be unique'
@@ -76,6 +77,6 @@ const warehouseSchema: Schema<WarehouseProps> = new Schema({
     }
 });
 
-const WarehouseModel = mongoose.model<WarehouseProps>('Warehouse', warehouseSchema);
+const WarehouseModel = mongoose.model<WarehouseProps>(collections.stores.warehouses, warehouseSchema);
 
 export default WarehouseModel;

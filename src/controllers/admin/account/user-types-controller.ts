@@ -8,6 +8,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 
 import BaseController from '../../../../src/controllers/admin/base-controller';
 import UserTypeService from '../../../../src/services/admin/account/user-type-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -74,9 +75,14 @@ class UserTypeController extends BaseController {
                     requestedData: newUserType,
                     message: 'User type created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.account.userTypes,
+                    referenceData: JSON.stringify(newUserType, null, 2),
                     sourceFromId: newUserType._id,
                     sourceFrom: adminTaskLog.account.userTypes,
                     activity: adminTaskLogActivity.create,
+                    activityComment: 'User type created successfully!',
                     activityStatus: adminTaskLogStatus.success
                 });
             } else {
@@ -125,6 +131,7 @@ class UserTypeController extends BaseController {
             const validatedData = usertypeSchema.safeParse(req.body);
             if (validatedData.success) {
                 const userTypeId = req.params.id;
+                const user = res.locals.user;
                 if (userTypeId) {
                     const updatedUserTypeData = req.body;
                     const updatedUserType = await UserTypeService.update(userTypeId, { ...updatedUserTypeData, updatedAt: new Date() });
@@ -133,9 +140,14 @@ class UserTypeController extends BaseController {
                             requestedData: updatedUserType,
                             message: 'User type updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.account.userTypes,
+                            referenceData: JSON.stringify(updatedUserType, null, 2),
                             sourceFromId: updatedUserType._id,
                             sourceFrom: adminTaskLog.account.userTypes,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'User type updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -169,7 +181,7 @@ class UserTypeController extends BaseController {
                 if (userType) {
                     // await UserTypeService.destroy(userTypeId);
                     // return controller.sendSuccessResponse(res, { message: 'User type deleted successfully!' });
-                      return controller.sendErrorResponse(res, 200, {
+                    return controller.sendErrorResponse(res, 200, {
                         message: 'You cant delete this user type',
                     });
                 } else {

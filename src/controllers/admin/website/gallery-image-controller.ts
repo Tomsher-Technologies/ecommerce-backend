@@ -8,6 +8,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 import BaseController from '../base-controller';
 import { galleryImageSchema } from '../../../utils/schemas/admin/ecommerce/gallery-image-schema';
 import GalleryImageService from '../../../services/admin/website/gallery-image-service'
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -91,7 +92,16 @@ class GalleryImageController extends BaseController {
                     return controller.sendSuccessResponse(res, {
                         requestedData: resultArray,
                         message: 'Gallery Image added successfully!'
-                    }, 200);
+                    }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.website.gallaryImages,
+                        referenceData: JSON.stringify(resultArray, null, 2),
+                        sourceFrom: adminTaskLog.website.galleryimages,
+                        activity: adminTaskLogActivity.delete,
+                        activityComment: 'Gallery Image added successfully!',
+                        activityStatus: adminTaskLogStatus.success
+                    });
                 } else {
                     return controller.sendErrorResponse(res, 200, {
                         message: 'Validation error',
@@ -204,13 +214,19 @@ class GalleryImageController extends BaseController {
 
                     const updatedgalleryImages = await GalleryImageService.update(galleryImageId, updatedgalleryImagesData);
                     if (updatedgalleryImages) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedgalleryImages,
                             message: 'Gallery images status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.website.gallaryImages,
+                            referenceData: JSON.stringify(updatedgalleryImages, null, 2),
                             sourceFromId: updatedgalleryImages._id,
                             sourceFrom: adminTaskLog.website.galleryimages,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Gallery images status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -243,13 +259,18 @@ class GalleryImageController extends BaseController {
                 const galleryImage = await GalleryImageService.findOne(galleryImageId);
                 if (galleryImage) {
                     await GalleryImageService.destroy(galleryImageId);
-
+                    const user = res.locals.user;
                     return controller.sendSuccessResponse(res,
                         { message: 'Gallery Image deleted successfully!' },
                         200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.website.gallaryImages,
+                        referenceData: JSON.stringify(galleryImage, null, 2),
                         sourceFromId: galleryImageId,
                         sourceFrom: adminTaskLog.website.galleryimages,
                         activity: adminTaskLogActivity.delete,
+                        activityComment: 'Gallery Image deleted successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

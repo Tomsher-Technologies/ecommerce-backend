@@ -9,6 +9,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 
 import BaseController from '../../../controllers/admin/base-controller';
 import StateService from '../../../services/admin/setup/state-service'
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -83,9 +84,14 @@ class StateController extends BaseController {
                         requestedData: newState,
                         message: 'State created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.setup.states,
+                        referenceData: JSON.stringify(newState, null, 2),
                         sourceFromId: newState._id,
                         sourceFrom: adminTaskLog.setup.state,
                         activity: adminTaskLogActivity.create,
+                        activityComment: 'State created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {
@@ -147,6 +153,7 @@ class StateController extends BaseController {
             if (validatedData.success) {
                 const stateId = req.params.id;
                 if (stateId) {
+                    const user = res.locals.user;
                     let updatedStateData = req.body;
                     updatedStateData = {
                         ...updatedStateData,
@@ -159,9 +166,14 @@ class StateController extends BaseController {
                             requestedData: updatedState,
                             message: 'State updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.states,
+                            referenceData: JSON.stringify(updatedState, null, 2),
                             sourceFromId: updatedState._id,
                             sourceFrom: adminTaskLog.setup.state,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'State updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -208,6 +220,7 @@ class StateController extends BaseController {
                 if (stateId) {
                     let { status } = req.body;
                     const updatedStateData = { status };
+                    const user = res.locals.user;
 
                     const updatedState = await StateService.updateState(stateId, updatedStateData);
                     if (updatedState) {
@@ -215,9 +228,14 @@ class StateController extends BaseController {
                             requestedData: updatedState,
                             message: 'State status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.states,
+                            referenceData: JSON.stringify(updatedState, null, 2),
                             sourceFromId: updatedState._id,
                             sourceFrom: adminTaskLog.setup.state,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'State status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

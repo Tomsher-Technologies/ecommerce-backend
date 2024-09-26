@@ -17,7 +17,7 @@ exports.adminTaskLog = {
     },
     orders: {
         order: 'order',
-        orderReturn: 'order return'
+        orderReturn: 'orderreturn'
     },
     website: {
         collectionsProducts: 'collectionsproducts',

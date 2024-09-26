@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 import { blockReferences, websiteSetup } from '../../../constants/website-setup';
+import { collections } from '../../../constants/collections';
 
 export interface WebsiteSetupProps extends Document {
     countryId: Schema.Types.ObjectId;
@@ -90,6 +91,6 @@ const websiteSetupSchema: Schema<WebsiteSetupProps> = new Schema({
     }
 });
 
-const WebsiteSetupModel = mongoose.model<WebsiteSetupProps>('WebsiteSetup', websiteSetupSchema);
+const WebsiteSetupModel = mongoose.model<WebsiteSetupProps>(collections.setup.websiteSetups, websiteSetupSchema);
 
 export default WebsiteSetupModel;

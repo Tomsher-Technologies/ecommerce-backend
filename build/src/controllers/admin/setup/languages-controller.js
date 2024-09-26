@@ -9,6 +9,7 @@ const language_shema_1 = require("../../../utils/schemas/admin/setup/language-sh
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const languages_service_1 = __importDefault(require("../../../services/admin/setup/languages-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class LanguagesController extends base_controller_1.default {
     async findAll(req, res) {
@@ -73,9 +74,14 @@ class LanguagesController extends base_controller_1.default {
                     requestedData: newLanguage,
                     message: 'Language created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.setup.languages,
+                    referenceData: JSON.stringify(newLanguage, null, 2),
                     sourceFromId: newLanguage._id,
                     sourceFrom: task_log_1.adminTaskLog.setup.languages,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'Language created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -133,13 +139,19 @@ class LanguagesController extends base_controller_1.default {
                     };
                     const updatedLanguage = await languages_service_1.default.update(languageId, updatedLanguageData);
                     if (updatedLanguage) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedLanguage,
                             message: 'Language updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.languages,
+                            referenceData: JSON.stringify(updatedLanguage, null, 2),
                             sourceFromId: updatedLanguage._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.languages,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Language updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -178,13 +190,19 @@ class LanguagesController extends base_controller_1.default {
                     const updatedLanguageData = { status };
                     const updatedLanguage = await languages_service_1.default.update(language, updatedLanguageData);
                     if (updatedLanguage) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedLanguage,
                             message: 'Language status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.languages,
+                            referenceData: JSON.stringify(updatedLanguage, null, 2),
                             sourceFromId: updatedLanguage._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.languages,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Language status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

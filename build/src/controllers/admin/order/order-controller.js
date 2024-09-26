@@ -24,6 +24,8 @@ const product_variants_model_1 = __importDefault(require("../../../model/admin/e
 const country_model_1 = __importDefault(require("../../../model/admin/setup/country-model"));
 const customers_model_1 = __importDefault(require("../../../model/frontend/customers-model"));
 const product_model_1 = __importDefault(require("../../../model/admin/ecommerce/product-model"));
+const collections_1 = require("../../../constants/collections");
+const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const controller = new base_controller_1.default();
 class OrdersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -191,7 +193,7 @@ class OrdersController extends base_controller_1.default {
             }
         }
         catch (error) {
-            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching order' });
         }
     }
     async getOrderDetails(req, res) {
@@ -444,10 +446,19 @@ class OrdersController extends base_controller_1.default {
             hostName: req.get('origin'),
         });
         if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+            const user = res.locals.user;
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails[0],
                 message: cart_1.orderProductStatussMessages[newStatus]
             }, 200, {
+                userId: user._id,
+                countryId: user.countryId,
+                sourceCollection: collections_1.collections.cart.cartorders,
+                referenceData: JSON.stringify({
+                    orderId: orderDetails.orderId,
+                    orderCode: orderDetails.orderCode,
+                    allValues: updatedOrderDetails[0]
+                }, null, 2),
                 sourceFromId: orderID,
                 sourceFromReferenceId: orderProductId,
                 sourceFrom: task_log_1.adminTaskLog.orders.order,
@@ -518,10 +529,19 @@ class OrdersController extends base_controller_1.default {
                 hostName: req.get('origin'),
             });
             if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                const user = res.locals.user;
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.cart.cartorders,
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        allValues: updatedOrderDetails[0]
+                    }, null, 2),
                     sourceFromId: orderProductDetails.cartId,
                     sourceFromReferenceId: orderProductId,
                     sourceFrom: task_log_1.adminTaskLog.orders.order,
@@ -655,10 +675,19 @@ class OrdersController extends base_controller_1.default {
                 hostName: req.get('origin'),
             });
             if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                const user = res.locals.user;
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.cart.cartorders,
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        allValues: updatedOrderDetails[0]
+                    }, null, 2),
                     sourceFromId: orderProductDetails.cartId,
                     sourceFromReferenceId: orderProductId,
                     sourceFrom: task_log_1.adminTaskLog.orders.order,
@@ -741,10 +770,19 @@ class OrdersController extends base_controller_1.default {
                 hostName: req.get('origin'),
             });
             if (updatedOrderDetails && updatedOrderDetails?.length > 0) {
+                const user = res.locals.user;
                 return controller.sendSuccessResponse(res, {
                     requestedData: updatedOrderDetails[0],
                     message: 'Your Order is ready!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.cart.cartorders,
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        allValues: updatedOrderDetails[0]
+                    }, null, 2),
                     sourceFromId: orderProductDetails.cartId,
                     sourceFromReferenceId: orderProductId,
                     sourceFrom: task_log_1.adminTaskLog.orders.order,
@@ -1102,10 +1140,19 @@ class OrdersController extends base_controller_1.default {
                 const tax = await tax_model_1.default.findOne({ countryId: orderDetails.countryId, status: "1" });
                 await (0, order_1.orderStatusChangeEmail)(settingsDetails, orderDetails, orderStatus, updatedOrderDetails, tax, customerDetails);
             }
+            const user = res.locals.user;
             return controller.sendSuccessResponse(res, {
                 requestedData: updatedOrderDetails,
                 message: cart_1.orderStatusMessages[orderStatus] || 'Order status updated successfully!'
             }, 200, {
+                userId: user._id,
+                countryId: user.countryId,
+                sourceCollection: collections_1.collections.cart.cartorders,
+                referenceData: JSON.stringify({
+                    orderId: orderDetails.orderId,
+                    orderCode: orderDetails.orderCode,
+                    allValues: updatedOrderDetails[0]
+                }, null, 2),
                 sourceFromId: orderId,
                 sourceFrom: task_log_1.adminTaskLog.orders.order,
                 activityComment: `Order product status changed to: ${cart_1.orderStatusMessages[orderStatus]}`,
@@ -1158,8 +1205,26 @@ class OrdersController extends base_controller_1.default {
                     commonDeliveryDays = defualtSettings.blockValues.commonDeliveryDays;
                 }
                 const tax = await tax_model_1.default.findOne({ countryId: orderDetails[0].country._id, status: "1" });
-                const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].country._id }, 'currencyCode');
+                const currencyCode = await country_model_1.default.findOne({ _id: orderDetails[0].country._id }, 'countryTitle currencyCode');
                 const expectedDeliveryDate = (0, helpers_1.calculateExpectedDeliveryDate)(orderDetails[0].orderStatusAt, Number(commonDeliveryDays));
+                const user = res.locals.user;
+                const insertTaskLogs = {
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.cart.cartorders,
+                    userId: user._id,
+                    referenceData: JSON.stringify({
+                        orderId: orderDetails.orderId,
+                        orderCode: orderDetails.orderCode,
+                        countryTitle: currencyCode?.countryTitle,
+                        allValues: orderDetails
+                    }, null, 2),
+                    sourceFromId: orderDetails._id.toString(),
+                    sourceFrom: task_log_1.adminTaskLog.orders.order,
+                    activityComment: `Generate Order PDF: ${orderDetails.orderId}`,
+                    activity: task_log_1.adminTaskLogActivity.create,
+                    activityStatus: task_log_1.adminTaskLogStatus.success
+                };
+                await general_service_1.default.taskLog(insertTaskLogs).then(() => undefined).catch(() => undefined);
                 const invoicePdfGeneratorResponse = await (0, order_1.invoicePdfGenerator)(res, req, orderDetails, basicDetailsSettings, tax, expectedDeliveryDate, currencyCode?.currencyCode);
                 if (!invoicePdfGeneratorResponse) {
                     return controller.sendErrorResponse(res, 200, {

@@ -65,7 +65,7 @@ class ProductController extends base_controller_1.default {
                 ],
                 ...query
             };
-            if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+            if (page_size === 1 && typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                 const customer = null;
                 const guestUser = res.locals.uuid || null;
                 await product_service_1.default.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
@@ -353,13 +353,15 @@ class ProductController extends base_controller_1.default {
                 }
             };
         }
-        // if (productIds.length > 0) {
-        //     if (query.$or) {
-        //         query.$or.push({ productId: { $in: productIds } });
-        //     } else {
-        //         query.$or = [{ productId: { $in: productIds } }];
-        //     }
-        // }
+        console.log('productIds', productIds);
+        if (productIds.length > 0) {
+            if (query.$or) {
+                query.$or.push({ productId: { $in: productIds } });
+            }
+            else {
+                query.$or = [{ productId: { $in: productIds } }];
+            }
+        }
         const productDatas = await product_service_1.default.getProductVariantDetailsV1(productFindableValues, {
             countryId,
             page: parseInt(page_size),
@@ -477,7 +479,7 @@ class ProductController extends base_controller_1.default {
                     if (keywordVariantProductIds.length > 0) {
                         productIds = [...new Set(keywordVariantProductIds.map((id) => id.productId))];
                     }
-                    if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                    if (page_size === 1 && typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                         const customer = null;
                         const guestUser = res.locals.uuid || null;
                         await product_service_1.default.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);
@@ -884,7 +886,7 @@ class ProductController extends base_controller_1.default {
                         ],
                         ...query
                     };
-                    if (typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
+                    if (page_size === 1 && typeof keyword === 'string' && keyword.trim() !== '' && keyword.trim().length > 2 && keyword !== 'undefined' && keyword !== 'null' && keyword !== null && !Number.isNaN(Number(keyword)) && keyword !== false.toString()) {
                         const customer = null;
                         const guestUser = res.locals.uuid || null;
                         await product_service_1.default.insertOrUpdateSearchQuery(keyword, countryId, customer ? new mongoose_1.default.Types.ObjectId(customer) : null, guestUser);

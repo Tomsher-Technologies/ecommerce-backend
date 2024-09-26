@@ -8,6 +8,7 @@ import { QueryParams } from '../../../utils/types/common';
 
 import BaseController from '../base-controller';
 import TaxsService from '../../../services/admin/setup/tax-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -82,9 +83,14 @@ class TaxsController extends BaseController {
                     requestedData: newTax,
                     message: 'Tax created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.setup.taxs,
+                    referenceData: JSON.stringify(taxData, null, 2),
                     sourceFromId: newTax._id,
                     sourceFrom: adminTaskLog.setup.taxs,
                     activity: adminTaskLogActivity.create,
+                    activityComment: 'Tax created successfully!',
                     activityStatus: adminTaskLogStatus.success
                 });
             } else {
@@ -135,6 +141,7 @@ class TaxsController extends BaseController {
                 const taxId = req.params.id;
                 if (taxId) {
                     let updatedTaxData = req.body;
+                    const user = res.locals.user;
                     updatedTaxData = {
                         ...updatedTaxData,
                         updatedAt: new Date()
@@ -146,9 +153,14 @@ class TaxsController extends BaseController {
                             requestedData: updatedTax,
                             message: 'Tax updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.taxs,
+                            referenceData: JSON.stringify(updatedTax, null, 2),
                             sourceFromId: updatedTax._id,
                             sourceFrom: adminTaskLog.setup.taxs,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'ax updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -185,13 +197,19 @@ class TaxsController extends BaseController {
 
                     const updatedTax = await TaxsService.update(tax, updatedTaxData);
                     if (updatedTax) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedTax,
                             message: 'Tax status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.setup.taxs,
+                            referenceData: JSON.stringify(updatedTax, null, 2),
                             sourceFromId: updatedTax._id,
                             sourceFrom: adminTaskLog.setup.taxs,
                             activity: adminTaskLogActivity.statusChange,
+                            activityComment: 'Tax status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {

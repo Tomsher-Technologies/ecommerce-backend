@@ -10,6 +10,7 @@ const task_log_1 = require("../../../constants/admin/task-log");
 const store_schema_1 = require("../../../utils/schemas/admin/store/store-schema");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const store_service_1 = __importDefault(require("../../../services/admin/stores/store-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class StoreController extends base_controller_1.default {
     async findAll(req, res) {
@@ -101,9 +102,14 @@ class StoreController extends base_controller_1.default {
                     requestedData: newStore,
                     message: 'Store created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.stores.stores,
+                    referenceData: JSON.stringify(newStore, null, 2),
                     sourceFromId: newStore._id,
                     sourceFrom: task_log_1.adminTaskLog.store.store,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'Store created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -177,13 +183,19 @@ class StoreController extends base_controller_1.default {
                     };
                     const updatedStore = await store_service_1.default.update(storeId, updatedStoreData);
                     if (updatedStore) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedStore,
                             message: 'Store updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.stores.stores,
+                            referenceData: JSON.stringify(updatedStore, null, 2),
                             sourceFromId: updatedStore._id,
                             sourceFrom: task_log_1.adminTaskLog.store.store,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Store updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -222,13 +234,19 @@ class StoreController extends base_controller_1.default {
                     const updatedStoreData = { status };
                     const updatedStore = await store_service_1.default.update(store, updatedStoreData);
                     if (updatedStore) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedStore,
                             message: 'Store status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.stores.stores,
+                            referenceData: JSON.stringify(updatedStore, null, 2),
                             sourceFromId: updatedStore._id,
                             sourceFrom: task_log_1.adminTaskLog.store.store,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Store status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

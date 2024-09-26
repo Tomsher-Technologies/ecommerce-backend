@@ -83,7 +83,7 @@ class ReviewController extends BaseController {
                                 userId: user._id,
                                 countryId: user.countryId,
                                 sourceCollection: collections.ecommerce.reviews,
-                                referenceData: JSON.stringify(updatedReview),
+                                referenceData: JSON.stringify(updatedReview, null, 2),
                                 sourceFromId: reviewId,
                                 sourceFrom: adminTaskLog.customers.review,
                                 activity: adminTaskLogActivity.update,

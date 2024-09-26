@@ -11,6 +11,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 import BaseController from "../base-controller";
 import NavigationMenuService from "../../../services/admin/website/navigation-menu-service";
 import GeneralService from '../../../services/admin/general-service';
+import { collections } from '../../../constants/collections';
 
 
 const controller = new BaseController();
@@ -92,8 +93,9 @@ class NavigationMenuController extends BaseController {
                     }
 
                     let newNavigationMenu: any = [];
+                    let navigationMenu: any = [];
                     if (!languageId) {
-                        const navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
                         if (navigationMenu) {
                             newNavigationMenu = await NavigationMenuService.update(navigationMenu._id, menuData);
                         } else {
@@ -126,7 +128,7 @@ class NavigationMenuController extends BaseController {
                         //     }
                         // }
                     } else {
-                        const navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
+                        navigationMenu = await NavigationMenuService.findOne({ countryId: countryId, block: websiteSetup.menu, blockReference: deviceType });
                         if (navigationMenu) {
                             const languageValues = await GeneralService.multiLanguageFieledsManage(navigationMenu._id, {
                                 languageId,
@@ -152,9 +154,17 @@ class NavigationMenuController extends BaseController {
                         requestedData: newNavigationMenu,
                         message: 'Navigation menu created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.setup.websiteSetups,
+                        referenceData: JSON.stringify({
+                            oldNavigationMenu: navigationMenu,
+                            newNavigationMenu
+                        }, null, 2),
                         sourceFromId: newNavigationMenu._id,
                         sourceFrom: adminTaskLog.website.navigationMenu,
                         activity: websiteSetupId ? adminTaskLogActivity.update : adminTaskLogActivity.create,
+                        activityComment: 'Navigation menu created successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 export interface LanguageProps extends Document {
     languageTitle: string;
@@ -18,7 +19,7 @@ const languageSchema: Schema<LanguageProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Languages').countDocuments({ languageTitle: value });
+                const count = await this.model(collections.setup.languages).countDocuments({ languageTitle: value });
                 return count === 0;
             },
             message: 'Language title must be unique'
@@ -36,7 +37,7 @@ const languageSchema: Schema<LanguageProps> = new Schema({
         unique: true,
         validate: {
             validator: async function (this: any, value: string): Promise<boolean> {
-                const count = await this.model('Languages').countDocuments({ languageCode: value });
+                const count = await this.model(collections.setup.languages).countDocuments({ languageCode: value });
                 return count === 0;
             },
             message: 'Language title must be unique'
@@ -64,6 +65,6 @@ const languageSchema: Schema<LanguageProps> = new Schema({
     }
 });
 
-const LanguagesModel = mongoose.model<LanguageProps>('Languages', languageSchema);
+const LanguagesModel = mongoose.model<LanguageProps>(collections.setup.languages, languageSchema);
 
 export default LanguagesModel;

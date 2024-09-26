@@ -24,15 +24,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const privilageSchema = new mongoose_1.Schema({
     userTypeId: {
         type: mongoose_1.Schema.Types.ObjectId,
         required: true,
-        ref: 'UserType', // Reference to the UserType model
+        ref: collections_1.collections.account.userTypes, // Reference to the UserType model
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('UserType').countDocuments({ userTypeId: value });
+                const count = await this.model(collections_1.collections.account.userTypes).countDocuments({ userTypeId: value });
                 return count === 0;
             },
             message: 'user type  must be unique'
@@ -63,5 +64,5 @@ const privilageSchema = new mongoose_1.Schema({
         default: ''
     },
 });
-const PrivilagesModel = mongoose_1.default.model('Privilages', privilageSchema);
+const PrivilagesModel = mongoose_1.default.model(collections_1.collections.account.privilages, privilageSchema);
 exports.default = PrivilagesModel;

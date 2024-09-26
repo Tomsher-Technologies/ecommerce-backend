@@ -13,6 +13,7 @@ const banner_service_1 = __importDefault(require("../../../services/admin/ecomme
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const banner_model_1 = __importDefault(require("../../../model/admin/ecommerce/banner-model"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class BannerController extends base_controller_1.default {
     async findAll(req, res) {
@@ -130,9 +131,13 @@ class BannerController extends base_controller_1.default {
                             requestedData: newBanner,
                             message: 'Banner created successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.banner,
                             sourceFromId: newBanner._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.banner,
                             activity: task_log_1.adminTaskLogActivity.create,
+                            activityComment: 'Banner created successfully',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -278,15 +283,20 @@ class BannerController extends base_controller_1.default {
                 if (bannerId) {
                     let { status } = req.body;
                     const updatedBannerData = { status };
+                    const user = res.locals.user;
                     const updatedBanner = await banner_service_1.default.update(bannerId, updatedBannerData);
                     if (updatedBanner) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedBanner,
                             message: 'Banner status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.banner,
                             sourceFromId: updatedBanner._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.banner,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Banner status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -322,15 +332,20 @@ class BannerController extends base_controller_1.default {
                 const bannerId = req.params.id;
                 if (bannerId) {
                     let { position } = req.body;
+                    const user = res.locals.user;
                     const updatedBanner = await general_service_1.default.changePosition(banner_model_1.default, bannerId, position);
                     if (updatedBanner) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedBanner,
                             message: 'Banner status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.ecommerce.banner,
                             sourceFromId: updatedBanner._id,
                             sourceFrom: task_log_1.adminTaskLog.ecommerce.banner,
                             activity: task_log_1.adminTaskLogActivity.positionChange,
+                            activityComment: 'Banner status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -366,14 +381,19 @@ class BannerController extends base_controller_1.default {
                 const banner = await banner_service_1.default.findOne(bannerId);
                 if (banner) {
                     await banner_service_1.default.destroy(bannerId);
+                    const user = res.locals.user;
                     const existingLanguageValues = await general_service_1.default.findOneLanguageValues(multi_languages_1.multiLanguageSources.ecommerce.banner, bannerId);
                     if (existingLanguageValues) {
                         await general_service_1.default.destroyLanguageValues(existingLanguageValues._id);
                     }
                     return controller.sendSuccessResponse(res, { message: 'Banner deleted successfully!' }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.ecommerce.banner,
                         sourceFromId: bannerId,
                         sourceFrom: task_log_1.adminTaskLog.ecommerce.banner,
                         activity: task_log_1.adminTaskLogActivity.delete,
+                        activityComment: 'Banner deleted successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }

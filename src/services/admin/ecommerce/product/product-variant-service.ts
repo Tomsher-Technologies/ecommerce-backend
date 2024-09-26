@@ -16,6 +16,8 @@ import SeoPageService from '../../seo-page-service';
 import ProductVariantAttributeService from '../../../../services/admin/ecommerce/product/product-variant-attributes-service';
 import { seoPage } from '../../../../constants/admin/seo-page';
 import CountryModel from '../../../../model/admin/setup/country-model';
+import SeoPageModel from '../../../../model/admin/seo-page-model';
+import { Types } from 'mongoose';
 
 class ProductVariantService {
 
@@ -178,19 +180,8 @@ class ProductVariantService {
             { new: true, useFindAndModify: false }
         );
 
-        if (updatedProductVariant) {
-            const pipeline = [
-                { $match: { _id: updatedProductVariant._id } },
-                // this.lookup,
-                this.project
-            ];
+        return updatedProductVariant;
 
-            const updatedProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
-
-            return updatedProductVariantWithValues[0];
-        } else {
-            return null;
-        }
     }
 
     async updateVariant(productId: string, productData: any): Promise<ProductVariantsProps | null> {
@@ -218,120 +209,132 @@ class ProductVariantService {
 
     async variantService(productdata: ProductsProps, variantDetails: any, userData: UserDataProps): Promise<ProductVariantsProps[]> {
         try {
-            if (productdata._id) {
-                const existingEntries = await ProductVariantModel.find({ productId: productdata._id });
-                await variantDetails.map(async (variantDetail: any) => {
-                    if (existingEntries) {
-                        const variantIDsToRemove = existingEntries
-                            .filter(entry => !variantDetail.productVariants?.some((data: any) => data?._id?.toString() === entry._id.toString()))
-                            .map(entry => entry._id);
+            if (!productdata._id) throw new Error('Product ID is required.');
 
-                        const deleteVariant = await ProductVariantModel.deleteMany({ productId: productdata._id, _id: { $in: variantIDsToRemove } });
-                        if (deleteVariant) {
-                            await GeneralService.deleteParentModel([
-                                {
-                                    variantId: variantIDsToRemove,
-                                    model: ProductVariantAttributesModel
-                                },
-                                {
-                                    variantId: variantIDsToRemove,
-                                    model: SeoPagesModel
-                                },
-                                {
-                                    variantId: variantIDsToRemove,
-                                    model: ProductSpecificationModel
-                                },
-                            ]);
+            const existingVariants = await ProductVariantModel.find({ productId: productdata._id });
 
+            const variantPromises = variantDetails.map(async (variantDetail: any) => {
+                if (existingVariants) {
+                    const variantIDsToRemove = existingVariants
+                        .filter(entry => !variantDetail.productVariants?.some((data: any) => data?._id?.toString() === entry._id.toString()))
+                        .map(entry => entry._id);
+
+                    await GeneralService.deleteParentModel([
+                        { variantId: variantIDsToRemove, model: ProductVariantAttributesModel },
+                        { variantId: variantIDsToRemove, model: SeoPagesModel },
+                        { variantId: variantIDsToRemove, model: ProductSpecificationModel }
+                    ]);
+                }
+
+                if (variantDetail.productVariants) {
+                    const productVariantPromises = variantDetail.productVariants.map(async (data: any, index: number) => {
+                        const existingVariant = existingVariants.find((variant: any) => variant._id.toString() === data._id.toString());
+                        let productVariantData: any;
+
+                        if (existingVariant) {
+                            productVariantData = await ProductVariantModel.findByIdAndUpdate(existingVariant._id, { ...data, productId: productdata._id }, { new: true });
+                        } else {
+                            const countryData = await CountryModel.findById(variantDetail.countryId);
+                            const slug = slugify(`${productdata.productTitle}-${countryData?.countryShortTitle}-${index + 1}`);
+                            productVariantData = await this.create(productdata._id, { ...data, slug, countryId: variantDetail.countryId }, userData);
                         }
-                        // })
 
-                    }
-                    if (variantDetail.productVariants) {
-                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data: any, index: number) => {
-                            // if (data._id != '') {
-                            const existingEntry = await ProductVariantModel.findOne({ _id: data._id });
+                        if (productVariantData) {
+                            await this.handleVariantAttributes(data, productdata, variantDetail, index);
+                            await this.handleProductSpecifications(data, productdata, variantDetail, index);
+                            await this.handleSeoData(data, productdata, productVariantData);
+                        }
+                    });
 
-                            if (existingEntry) {
-                                // Update existing document
-                                const productVariantData = await ProductVariantModel.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
-                                if (productVariantData && productdata.isVariant === 1) {
+                    await Promise.all(productVariantPromises);
+                }
+            });
 
-                                    // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                    await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id)
-                                    // }
-                                    // if (data.productSeo && data.productSeo.length > 0) {
-                                    await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
-                                    // }
-                                    // if (data.productSpecification && data.productSpecification.length > 0) {
-                                    await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantDetail.productVariants[index]._id)
-                                    // }
-                                } else {
+            await Promise.all(variantPromises);
 
-                                    await GeneralService.deleteParentModel([
-                                        {
-                                            variantId: variantDetail.productVariants[index]._id,
-                                            model: ProductVariantAttributesModel
-                                        },
-                                        {
-                                            variantId: variantDetail.productVariants[index]._id,
-                                            model: SeoPagesModel
-                                        },
-                                        {
-                                            variantId: variantDetail.productVariants[index]._id,
-                                            model: ProductSpecificationModel
-                                        },
-                                    ]);
-                                }
-                            }
-                            else {
-
-                                var slugData
-                                // if (data.extraProductTitle) {
-                                //     slugData = productdata.slug + "-" + data.extraProductTitle
-                                // }
-                                // else {
-                                //     slugData = productdata.slug
-                                // }
-                                const countryData: any = await CountryModel.findOne({ _id: variantDetail.countryId })
-
-                                slugData = productdata?.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1) // generate slug
-
-                                // Create new document
-                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: slugify(slugData) }, userData);
-                                // console.log("variantData", variantData);
-
-                                if (variantData) {
-                                    if (variantData) {
-                                        // console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
-
-                                        // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                        await ProductVariantAttributeService.variantAttributeService(productdata._id, data.productVariantAttributes, variantData._id)
-                                        // }
-                                        // if (data.productSeo && data.productSeo.length > 0) {
-                                        await SeoPageService.seoPageService(productdata._id, data.productSeo, seoPage.ecommerce.products, variantDetail.productVariants[index]._id)
-                                        // }
-                                        // if (data.productSpecification && data.productSpecification.length > 0) {
-                                        await ProductSpecificationService.productSpecificationService(productdata._id, data.productSpecification, variantData._id)
-                                        // }
-                                    }
-                                }
-                            }
-                        }));
-
-                        await Promise.all(variantPromises);
-                    }
-                })
-                return await ProductVariantModel.find({ productId: productdata._id });
-            } else {
-                throw 'Could not find product Id';
-            }
+            return await ProductVariantModel.find({ productId: productdata._id });
 
         } catch (error) {
-            console.error('Error in Product Variant service:', error);
-            throw error;
+            console.error('Error in Product Variant Service:', error);
+            throw new Error('Failed to update product variants.');
         }
     }
+
+    private async handleVariantAttributes(data: any, productdata: ProductsProps, variantDetail: any, index: number) {
+        if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+            const bulkOps = data.productVariantAttributes
+                .filter((attr: any) => attr.attributeId && attr.attributeDetailId)
+                .map((attr: any) => ({
+                    updateOne: {
+                        filter: { _id: new Types.ObjectId(attr._id) },
+                        update: {
+                            $set: {
+                                variantId: variantDetail.productVariants[index]._id,
+                                productId: productdata._id,
+                                attributeId: attr.attributeId,
+                                attributeDetailId: attr.attributeDetailId
+                            }
+                        },
+                        upsert: true
+                    }
+                }));
+
+            if (bulkOps.length > 0) {
+                await ProductVariantAttributesModel.bulkWrite(bulkOps);
+            }
+        }
+    }
+
+    private async handleProductSpecifications(data: any, productdata: ProductsProps, variantDetail: any, index: number) {
+        if (data.productSpecification && data.productSpecification.length > 0) {
+            const bulkOps = data.productSpecification
+                .filter((spec: any) => spec.specificationId && spec.specificationDetailId)
+                .map((spec: any) => ({
+                    updateOne: {
+                        filter: { _id: new Types.ObjectId(spec._id) },
+                        update: {
+                            $set: {
+                                variantId: variantDetail.productVariants[index]._id,
+                                productId: productdata._id,
+                                specificationId: spec.specificationId,
+                                specificationDetailId: spec.specificationDetailId
+                            }
+                        },
+                        upsert: true
+                    }
+                }));
+
+            if (bulkOps.length > 0) {
+                await ProductSpecificationModel.bulkWrite(bulkOps);
+            }
+        }
+    }
+
+    private async handleSeoData(data: any, productdata: ProductsProps, productVariantData: any) {
+        const seoData = data.productSeo;
+
+        if (seoData && (seoData.metaTitle || seoData.metaKeywords || seoData.metaDescription || seoData.ogTitle || seoData.ogDescription || seoData.twitterTitle || seoData.twitterDescription)) {
+            await SeoPageModel.updateOne(
+                { _id: seoData._id ? new Types.ObjectId(seoData._id) : new Types.ObjectId() },
+                {
+                    $set: {
+                        pageId: productdata._id,
+                        pageReferenceId: productVariantData._id || null,
+                        page: seoPage.ecommerce.products,
+                        metaTitle: seoData.metaTitle,
+                        metaKeywords: seoData.metaKeywords,
+                        metaDescription: seoData.metaDescription,
+                        ogTitle: seoData.ogTitle,
+                        ogDescription: seoData.ogDescription,
+                        twitterTitle: seoData.twitterTitle,
+                        twitterDescription: seoData.twitterDescription
+                    }
+                },
+                { upsert: true }
+            );
+        }
+    }
+
 }
 
 export default new ProductVariantService();

@@ -9,6 +9,7 @@ const user_type_schema_1 = require("../../../../src/utils/schemas/admin/account/
 const task_log_1 = require("../../../../src/constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../../../../src/controllers/admin/base-controller"));
 const user_type_service_1 = __importDefault(require("../../../../src/services/admin/account/user-type-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class UserTypeController extends base_controller_1.default {
     async findAll(req, res) {
@@ -68,9 +69,14 @@ class UserTypeController extends base_controller_1.default {
                     requestedData: newUserType,
                     message: 'User type created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.account.userTypes,
+                    referenceData: JSON.stringify(newUserType, null, 2),
                     sourceFromId: newUserType._id,
                     sourceFrom: task_log_1.adminTaskLog.account.userTypes,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'User type created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -120,6 +126,7 @@ class UserTypeController extends base_controller_1.default {
             const validatedData = user_type_schema_1.usertypeSchema.safeParse(req.body);
             if (validatedData.success) {
                 const userTypeId = req.params.id;
+                const user = res.locals.user;
                 if (userTypeId) {
                     const updatedUserTypeData = req.body;
                     const updatedUserType = await user_type_service_1.default.update(userTypeId, { ...updatedUserTypeData, updatedAt: new Date() });
@@ -128,9 +135,14 @@ class UserTypeController extends base_controller_1.default {
                             requestedData: updatedUserType,
                             message: 'User type updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.account.userTypes,
+                            referenceData: JSON.stringify(updatedUserType, null, 2),
                             sourceFromId: updatedUserType._id,
                             sourceFrom: task_log_1.adminTaskLog.account.userTypes,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'User type updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

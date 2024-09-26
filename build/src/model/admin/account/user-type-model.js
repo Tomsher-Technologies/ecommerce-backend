@@ -24,6 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const userSchema = new mongoose_1.Schema({
     userTypeName: {
         type: String,
@@ -31,7 +32,7 @@ const userSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('UserType').countDocuments({ userTypeName: value });
+                const count = await this.model(collections_1.collections.account.userTypes).countDocuments({ userTypeName: value });
                 return count === 0;
             },
             message: 'User Type Name be unique'
@@ -43,7 +44,7 @@ const userSchema = new mongoose_1.Schema({
         unique: true,
         validate: {
             validator: async function (value) {
-                const count = await this.model('UserType').countDocuments({ slug: value });
+                const count = await this.model(collections_1.collections.account.userTypes).countDocuments({ slug: value });
                 return count === 0;
             },
             message: 'slug be unique'
@@ -66,5 +67,5 @@ const userSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-const UserTypeModel = mongoose_1.default.model('UserType', userSchema);
+const UserTypeModel = mongoose_1.default.model(collections_1.collections.account.userTypes, userSchema);
 exports.default = UserTypeModel;

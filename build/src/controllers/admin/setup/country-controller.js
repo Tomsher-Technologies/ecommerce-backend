@@ -9,6 +9,7 @@ const country_schema_1 = require("../../../utils/schemas/admin/setup/country-sch
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const country_service_1 = __importDefault(require("../../../services/admin/setup/country-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class CountryController extends base_controller_1.default {
     async findAll(req, res) {
@@ -81,9 +82,19 @@ class CountryController extends base_controller_1.default {
                     requestedData: newCountry,
                     message: 'Country created successfully!'
                 }, 200, {
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections_1.collections.setup.countries,
+                    referenceData: JSON.stringify({
+                        countryTitle: newCountry.countryTitle,
+                        slug: newCountry.slug,
+                        countryCode: newCountry.countryCode,
+                        currencyCode: newCountry.currencyCode,
+                    }, null, 2),
                     sourceFromId: newCountry._id,
                     sourceFrom: task_log_1.adminTaskLog.setup.country,
                     activity: task_log_1.adminTaskLogActivity.create,
+                    activityComment: 'Country created successfully!',
                     activityStatus: task_log_1.adminTaskLogStatus.success
                 });
             }
@@ -180,13 +191,19 @@ class CountryController extends base_controller_1.default {
                     };
                     const updatedCountry = await country_service_1.default.update(countryId, updatedCountryData);
                     if (updatedCountry) {
+                        const user = res.locals.user;
                         controller.sendSuccessResponse(res, {
                             requestedData: updatedCountry,
                             message: 'Country updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.countries,
+                            referenceData: JSON.stringify(updatedCountry, null, 2),
                             sourceFromId: updatedCountry._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.country,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Country updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -271,12 +288,23 @@ class CountryController extends base_controller_1.default {
                     const updatedCountryData = { status };
                     const updatedCountry = await country_service_1.default.update(countryId, updatedCountryData);
                     if (updatedCountry) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCountry,
                             message: 'Country status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.countries,
+                            referenceData: JSON.stringify({
+                                countryTitle: updatedCountry.countryTitle,
+                                slug: updatedCountry.slug,
+                                countryCode: updatedCountry.countryCode,
+                                currencyCode: updatedCountry.currencyCode,
+                            }, null, 2),
                             sourceFromId: updatedCountry._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.country,
+                            activityComment: 'Country status updated successfully!',
                             activity: task_log_1.adminTaskLogActivity.statusChange,
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });

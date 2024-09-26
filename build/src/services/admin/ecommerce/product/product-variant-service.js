@@ -7,14 +7,13 @@ const pagination_1 = require("../../../../components/pagination");
 const helpers_1 = require("../../../../utils/helpers");
 const product_variants_model_1 = __importDefault(require("../../../../model/admin/ecommerce/product/product-variants-model"));
 const product_specification_model_1 = __importDefault(require("../../../../model/admin/ecommerce/product/product-specification-model"));
-const product_specification_service_1 = __importDefault(require("../../../../services/admin/ecommerce/product/product-specification-service"));
 const seo_page_model_1 = __importDefault(require("../../../../model/admin/seo-page-model"));
 const product_variant_attribute_model_1 = __importDefault(require("../../../../model/admin/ecommerce/product/product-variant-attribute-model"));
 const general_service_1 = __importDefault(require("../../general-service"));
-const seo_page_service_1 = __importDefault(require("../../seo-page-service"));
-const product_variant_attributes_service_1 = __importDefault(require("../../../../services/admin/ecommerce/product/product-variant-attributes-service"));
 const seo_page_1 = require("../../../../constants/admin/seo-page");
 const country_model_1 = __importDefault(require("../../../../model/admin/setup/country-model"));
+const seo_page_model_2 = __importDefault(require("../../../../model/admin/seo-page-model"));
+const mongoose_1 = require("mongoose");
 class ProductVariantService {
     constructor() {
         this.project = {
@@ -152,18 +151,7 @@ class ProductVariantService {
     }
     async update(productVariantId, productVariantData) {
         const updatedProductVariant = await product_variants_model_1.default.findByIdAndUpdate(productVariantId, productVariantData, { new: true, useFindAndModify: false });
-        if (updatedProductVariant) {
-            const pipeline = [
-                { $match: { _id: updatedProductVariant._id } },
-                // this.lookup,
-                this.project
-            ];
-            const updatedProductVariantWithValues = await product_variants_model_1.default.aggregate(pipeline);
-            return updatedProductVariantWithValues[0];
-        }
-        else {
-            return null;
-        }
+        return updatedProductVariant;
     }
     async updateVariant(productId, productData) {
         const updatedVariant = await product_variants_model_1.default.updateMany({ productId: productId }, productData, { new: true, useFindAndModify: false });
@@ -184,108 +172,112 @@ class ProductVariantService {
     }
     async variantService(productdata, variantDetails, userData) {
         try {
-            if (productdata._id) {
-                const existingEntries = await product_variants_model_1.default.find({ productId: productdata._id });
-                await variantDetails.map(async (variantDetail) => {
-                    if (existingEntries) {
-                        const variantIDsToRemove = existingEntries
-                            .filter(entry => !variantDetail.productVariants?.some((data) => data?._id?.toString() === entry._id.toString()))
-                            .map(entry => entry._id);
-                        const deleteVariant = await product_variants_model_1.default.deleteMany({ productId: productdata._id, _id: { $in: variantIDsToRemove } });
-                        if (deleteVariant) {
-                            await general_service_1.default.deleteParentModel([
-                                {
-                                    variantId: variantIDsToRemove,
-                                    model: product_variant_attribute_model_1.default
-                                },
-                                {
-                                    variantId: variantIDsToRemove,
-                                    model: seo_page_model_1.default
-                                },
-                                {
-                                    variantId: variantIDsToRemove,
-                                    model: product_specification_model_1.default
-                                },
-                            ]);
+            if (!productdata._id)
+                throw new Error('Product ID is required.');
+            const existingVariants = await product_variants_model_1.default.find({ productId: productdata._id });
+            const variantPromises = variantDetails.map(async (variantDetail) => {
+                if (existingVariants) {
+                    const variantIDsToRemove = existingVariants
+                        .filter(entry => !variantDetail.productVariants?.some((data) => data?._id?.toString() === entry._id.toString()))
+                        .map(entry => entry._id);
+                    await general_service_1.default.deleteParentModel([
+                        { variantId: variantIDsToRemove, model: product_variant_attribute_model_1.default },
+                        { variantId: variantIDsToRemove, model: seo_page_model_1.default },
+                        { variantId: variantIDsToRemove, model: product_specification_model_1.default }
+                    ]);
+                }
+                if (variantDetail.productVariants) {
+                    const productVariantPromises = variantDetail.productVariants.map(async (data, index) => {
+                        const existingVariant = existingVariants.find((variant) => variant._id.toString() === data._id.toString());
+                        let productVariantData;
+                        if (existingVariant) {
+                            productVariantData = await product_variants_model_1.default.findByIdAndUpdate(existingVariant._id, { ...data, productId: productdata._id }, { new: true });
                         }
-                        // })
-                    }
-                    if (variantDetail.productVariants) {
-                        const variantPromises = await Promise.all(variantDetail.productVariants.map(async (data, index) => {
-                            // if (data._id != '') {
-                            const existingEntry = await product_variants_model_1.default.findOne({ _id: data._id });
-                            if (existingEntry) {
-                                // Update existing document
-                                const productVariantData = await product_variants_model_1.default.findByIdAndUpdate(existingEntry._id, { ...data, productId: productdata._id });
-                                if (productVariantData && productdata.isVariant === 1) {
-                                    // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                    await product_variant_attributes_service_1.default.variantAttributeService(productdata._id, data.productVariantAttributes, variantDetail.productVariants[index]._id);
-                                    // }
-                                    // if (data.productSeo && data.productSeo.length > 0) {
-                                    await seo_page_service_1.default.seoPageService(productdata._id, data.productSeo, seo_page_1.seoPage.ecommerce.products, variantDetail.productVariants[index]._id);
-                                    // }
-                                    // if (data.productSpecification && data.productSpecification.length > 0) {
-                                    await product_specification_service_1.default.productSpecificationService(productdata._id, data.productSpecification, variantDetail.productVariants[index]._id);
-                                    // }
-                                }
-                                else {
-                                    await general_service_1.default.deleteParentModel([
-                                        {
-                                            variantId: variantDetail.productVariants[index]._id,
-                                            model: product_variant_attribute_model_1.default
-                                        },
-                                        {
-                                            variantId: variantDetail.productVariants[index]._id,
-                                            model: seo_page_model_1.default
-                                        },
-                                        {
-                                            variantId: variantDetail.productVariants[index]._id,
-                                            model: product_specification_model_1.default
-                                        },
-                                    ]);
-                                }
-                            }
-                            else {
-                                var slugData;
-                                // if (data.extraProductTitle) {
-                                //     slugData = productdata.slug + "-" + data.extraProductTitle
-                                // }
-                                // else {
-                                //     slugData = productdata.slug
-                                // }
-                                const countryData = await country_model_1.default.findOne({ _id: variantDetail.countryId });
-                                slugData = productdata?.productTitle + "-" + countryData.countryShortTitle + '-' + (index + 1); // generate slug
-                                // Create new document
-                                const variantData = await this.create(productdata._id, { countryId: variantDetail.countryId, ...data, slug: (0, helpers_1.slugify)(slugData) }, userData);
-                                // console.log("variantData", variantData);
-                                if (variantData) {
-                                    if (variantData) {
-                                        // console.log("variantDetail.productVariants123", variantDetail.productVariants[index]._id);
-                                        // if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
-                                        await product_variant_attributes_service_1.default.variantAttributeService(productdata._id, data.productVariantAttributes, variantData._id);
-                                        // }
-                                        // if (data.productSeo && data.productSeo.length > 0) {
-                                        await seo_page_service_1.default.seoPageService(productdata._id, data.productSeo, seo_page_1.seoPage.ecommerce.products, variantDetail.productVariants[index]._id);
-                                        // }
-                                        // if (data.productSpecification && data.productSpecification.length > 0) {
-                                        await product_specification_service_1.default.productSpecificationService(productdata._id, data.productSpecification, variantData._id);
-                                        // }
-                                    }
-                                }
-                            }
-                        }));
-                        await Promise.all(variantPromises);
-                    }
-                });
-                return await product_variants_model_1.default.find({ productId: productdata._id });
-            }
-            else {
-                throw 'Could not find product Id';
-            }
+                        else {
+                            const countryData = await country_model_1.default.findById(variantDetail.countryId);
+                            const slug = (0, helpers_1.slugify)(`${productdata.productTitle}-${countryData?.countryShortTitle}-${index + 1}`);
+                            productVariantData = await this.create(productdata._id, { ...data, slug, countryId: variantDetail.countryId }, userData);
+                        }
+                        if (productVariantData) {
+                            await this.handleVariantAttributes(data, productdata, variantDetail, index);
+                            await this.handleProductSpecifications(data, productdata, variantDetail, index);
+                            await this.handleSeoData(data, productdata, productVariantData);
+                        }
+                    });
+                    await Promise.all(productVariantPromises);
+                }
+            });
+            await Promise.all(variantPromises);
+            return await product_variants_model_1.default.find({ productId: productdata._id });
         }
         catch (error) {
-            console.error('Error in Product Variant service:', error);
-            throw error;
+            console.error('Error in Product Variant Service:', error);
+            throw new Error('Failed to update product variants.');
+        }
+    }
+    async handleVariantAttributes(data, productdata, variantDetail, index) {
+        if (data.productVariantAttributes && data.productVariantAttributes.length > 0) {
+            const bulkOps = data.productVariantAttributes
+                .filter((attr) => attr.attributeId && attr.attributeDetailId)
+                .map((attr) => ({
+                updateOne: {
+                    filter: { _id: new mongoose_1.Types.ObjectId(attr._id) },
+                    update: {
+                        $set: {
+                            variantId: variantDetail.productVariants[index]._id,
+                            productId: productdata._id,
+                            attributeId: attr.attributeId,
+                            attributeDetailId: attr.attributeDetailId
+                        }
+                    },
+                    upsert: true
+                }
+            }));
+            if (bulkOps.length > 0) {
+                await product_variant_attribute_model_1.default.bulkWrite(bulkOps);
+            }
+        }
+    }
+    async handleProductSpecifications(data, productdata, variantDetail, index) {
+        if (data.productSpecification && data.productSpecification.length > 0) {
+            const bulkOps = data.productSpecification
+                .filter((spec) => spec.specificationId && spec.specificationDetailId)
+                .map((spec) => ({
+                updateOne: {
+                    filter: { _id: new mongoose_1.Types.ObjectId(spec._id) },
+                    update: {
+                        $set: {
+                            variantId: variantDetail.productVariants[index]._id,
+                            productId: productdata._id,
+                            specificationId: spec.specificationId,
+                            specificationDetailId: spec.specificationDetailId
+                        }
+                    },
+                    upsert: true
+                }
+            }));
+            if (bulkOps.length > 0) {
+                await product_specification_model_1.default.bulkWrite(bulkOps);
+            }
+        }
+    }
+    async handleSeoData(data, productdata, productVariantData) {
+        const seoData = data.productSeo;
+        if (seoData && (seoData.metaTitle || seoData.metaKeywords || seoData.metaDescription || seoData.ogTitle || seoData.ogDescription || seoData.twitterTitle || seoData.twitterDescription)) {
+            await seo_page_model_2.default.updateOne({ _id: seoData._id ? new mongoose_1.Types.ObjectId(seoData._id) : new mongoose_1.Types.ObjectId() }, {
+                $set: {
+                    pageId: productdata._id,
+                    pageReferenceId: productVariantData._id || null,
+                    page: seo_page_1.seoPage.ecommerce.products,
+                    metaTitle: seoData.metaTitle,
+                    metaKeywords: seoData.metaKeywords,
+                    metaDescription: seoData.metaDescription,
+                    ogTitle: seoData.ogTitle,
+                    ogDescription: seoData.ogDescription,
+                    twitterTitle: seoData.twitterTitle,
+                    twitterDescription: seoData.twitterDescription
+                }
+            }, { upsert: true });
         }
     }
 }

@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const os_1 = __importDefault(require("os"));
 const multi_language_fieleds_model_1 = __importDefault(require("../../model/admin/multi-language-fieleds-model"));
 const task_log_1 = __importDefault(require("../../model/admin/task-log"));
+const pagination_1 = require("../../components/pagination");
+const collections_1 = require("../../constants/collections");
 class GeneralService {
     async findOneLanguageValues(source, sourceId, languageId) {
         try {
@@ -51,12 +53,99 @@ class GeneralService {
             return null;
         }
     }
+    async getAlltaskLogs(options = {}) {
+        const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        const defaultSort = { createdAt: -1 };
+        let finalSort = sort || defaultSort;
+        const sortKeys = Object.keys(finalSort);
+        if (sortKeys.length === 0) {
+            finalSort = defaultSort;
+        }
+        let pipeline = [
+            {
+                $facet: {
+                    taskLogs: [
+                        { $match: query },
+                        { $skip: skip },
+                        { $limit: limit },
+                        {
+                            $lookup: {
+                                from: `${collections_1.collections.account.users}`,
+                                localField: 'userId',
+                                foreignField: '_id',
+                                as: 'user'
+                            }
+                        },
+                        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+                        { $sort: finalSort }
+                    ],
+                    sourceFromValues: [
+                        {
+                            $group: {
+                                _id: null,
+                                sourceFromArray: { $addToSet: "$sourceFrom" }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                sourceFromArray: 1
+                            }
+                        }
+                    ],
+                    totalCount: [
+                        { $match: query },
+                        { $count: "count" }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    taskLogs: {
+                        _id: 1,
+                        countryId: 1,
+                        userId: 1,
+                        taskCode: 1,
+                        sourceCollection: 1,
+                        sourceFrom: 1,
+                        sourceFromId: 1,
+                        sourceFromReferenceId: 1,
+                        referenceData: 1,
+                        activity: 1,
+                        activityComment: 1,
+                        activityStatus: 1,
+                        ipAddress: 1,
+                        createdAt: 1,
+                        user: {
+                            _id: 1,
+                            countryId: 1,
+                            email: 1,
+                            firstName: 1,
+                            lastName: 1,
+                            phone: 1,
+                        }
+                    },
+                    sourceFromArray: { $arrayElemAt: ["$sourceFromValues.sourceFromArray", 0] },
+                    totalCount: { $arrayElemAt: ["$totalCount.count", 0] }
+                }
+            }
+        ];
+        const result = await task_log_1.default.aggregate(pipeline).exec();
+        return {
+            taskLogs: result[0].taskLogs,
+            sourceFromArray: result[0].sourceFromArray || [],
+            totalCount: result[0].totalCount || 0
+        };
+    }
     async taskLog(taskLogs) {
-        if (taskLogs.sourceFromId && taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
+        if (taskLogs.userId && taskLogs.sourceFrom && taskLogs.activity && taskLogs.activityStatus) {
             const taskLogData = {
                 userId: taskLogs.userId,
                 sourceFromId: taskLogs.sourceFromId || null,
                 sourceFromReferenceId: taskLogs.sourceFromReferenceId || null,
+                countryId: taskLogs.countryId || null,
+                sourceCollection: taskLogs.sourceCollection,
+                referenceData: taskLogs.referenceData,
                 sourceFrom: taskLogs.sourceFrom,
                 activity: taskLogs.activity,
                 activityComment: taskLogs.activityComment || '',

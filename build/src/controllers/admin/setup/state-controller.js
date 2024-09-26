@@ -10,6 +10,7 @@ const state_schema_1 = require("../../../utils/schemas/admin/setup/state-schema"
 const task_log_1 = require("../../../constants/admin/task-log");
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const state_service_1 = __importDefault(require("../../../services/admin/setup/state-service"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class StateController extends base_controller_1.default {
     async findAllState(req, res) {
@@ -76,9 +77,14 @@ class StateController extends base_controller_1.default {
                         requestedData: newState,
                         message: 'State created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.setup.states,
+                        referenceData: JSON.stringify(newState, null, 2),
                         sourceFromId: newState._id,
                         sourceFrom: task_log_1.adminTaskLog.setup.state,
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'State created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -142,6 +148,7 @@ class StateController extends base_controller_1.default {
             if (validatedData.success) {
                 const stateId = req.params.id;
                 if (stateId) {
+                    const user = res.locals.user;
                     let updatedStateData = req.body;
                     updatedStateData = {
                         ...updatedStateData,
@@ -153,9 +160,14 @@ class StateController extends base_controller_1.default {
                             requestedData: updatedState,
                             message: 'State updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.states,
+                            referenceData: JSON.stringify(updatedState, null, 2),
                             sourceFromId: updatedState._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.state,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'State updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -206,15 +218,21 @@ class StateController extends base_controller_1.default {
                 if (stateId) {
                     let { status } = req.body;
                     const updatedStateData = { status };
+                    const user = res.locals.user;
                     const updatedState = await state_service_1.default.updateState(stateId, updatedStateData);
                     if (updatedState) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedState,
                             message: 'State status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.setup.states,
+                            referenceData: JSON.stringify(updatedState, null, 2),
                             sourceFromId: updatedState._id,
                             sourceFrom: task_log_1.adminTaskLog.setup.state,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'State status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

@@ -214,6 +214,7 @@ class BrandsController extends BaseController {
                         sourceCollection: collections.ecommerce.brands,
                         sourceFromId: newBrand._id,
                         sourceFrom: adminTaskLog.ecommerce.brands,
+                        referenceData: JSON.stringify(newBrand, null, 2),
                         activity: adminTaskLogActivity.create,
                         activityComment: 'Brand created successfully!',
                         activityStatus: adminTaskLogStatus.success
@@ -360,6 +361,7 @@ class BrandsController extends BaseController {
                             sourceFromId: updatedBrandMapped._id,
                             sourceFrom: adminTaskLog.ecommerce.brands,
                             activity: adminTaskLogActivity.update,
+                            referenceData: JSON.stringify(updatedBrandMapped, null, 2),
                             activityComment: 'Brand updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
@@ -407,6 +409,7 @@ class BrandsController extends BaseController {
                             sourceCollection: collections.ecommerce.brands,
                             sourceFromId: brandId,
                             sourceFrom: adminTaskLog.ecommerce.brands,
+                            referenceData: JSON.stringify(updatedBrand, null, 2),
                             activity: adminTaskLogActivity.delete,
                             activityComment: 'Brand status updated successfully!',
                             activityStatus: adminTaskLogStatus.success
@@ -476,9 +479,9 @@ class BrandsController extends BaseController {
                         updatedAt: new Date()
                     };
                     await BrandsService.updateWebsitePriority(container1, keyColumn as keyof BrandProps);
-
+                    const retVal = await BrandsModel.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' });
                     return controller.sendSuccessResponse(res, {
-                        requestedData: await BrandsModel.find({ [keyColumn]: { $gt: '0' } }).sort({ [keyColumn]: 'asc' }),
+                        requestedData: retVal,
                         message: 'Brand website priority updated successfully!'
                     }, 200, { // task log
                         userId: user._id,
@@ -486,6 +489,7 @@ class BrandsController extends BaseController {
                         sourceCollection: collections.ecommerce.brands,
                         sourceFromId: updatedBrandData._id,
                         sourceFrom: adminTaskLog.ecommerce.brands,
+                        referenceData: JSON.stringify(retVal, null, 2),
                         activity: adminTaskLogActivity.priorityUpdation,
                         activityComment: 'Brand website priority updated successfully!',
                         activityStatus: adminTaskLogStatus.success

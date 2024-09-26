@@ -153,18 +153,7 @@ class SeoPageService {
     }
     async update(seoPageId, seoPageData) {
         const updatedSeoPage = await seo_page_model_1.default.findByIdAndUpdate(seoPageId, seoPageData, { new: true, useFindAndModify: false });
-        if (updatedSeoPage) {
-            const pipeline = [
-                { $match: { _id: updatedSeoPage._id } },
-                // this.lookup,
-                // this.project
-            ];
-            const updatedSeoPageWithValues = await seo_page_model_1.default.aggregate(pipeline);
-            return updatedSeoPageWithValues[0];
-        }
-        else {
-            return null;
-        }
+        return updatedSeoPage;
     }
     async destroy(seoPageId) {
         return seo_page_model_1.default.findOneAndDelete({ _id: seoPageId });

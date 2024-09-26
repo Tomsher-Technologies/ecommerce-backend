@@ -1,9 +1,11 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, CallbackError } from 'mongoose';
 import { collections } from '../../../constants/collections';
+import SequenceModel from '../../sequence-model';
 
 export interface UserProps extends Document {
     userTypeID?: Schema.Types.ObjectId;
     countryId?: Schema.Types.ObjectId;
+    userCode: number;
     email: string;
     firstName: string;
     lastName: string;
@@ -17,6 +19,11 @@ export interface UserProps extends Document {
 }
 
 const userSchema: Schema<UserProps> = new Schema({
+    userCode: {
+        type: Number,
+        unique: true,
+        required: false,
+    },
     userTypeID: {
         type: Schema.Types.ObjectId,
         required: true,
@@ -84,6 +91,29 @@ const userSchema: Schema<UserProps> = new Schema({
     updatedAt: {
         type: Date,
         default: Date.now
+    }
+});
+
+userSchema.pre<UserProps>('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await SequenceModel.findOneAndUpdate(
+                { _id: 'userSequence' },
+                { $inc: { sequenceValue: 1 } },
+                { new: true, upsert: true }
+            );
+
+            if (sequenceDoc) {
+                this.userCode = sequenceDoc.sequenceValue;
+                next();
+            } else {
+                throw new Error('Failed to generate user code.');
+            }
+        } catch (err) {
+            next(err as CallbackError);
+        }
+    } else {
+        next();
     }
 });
 

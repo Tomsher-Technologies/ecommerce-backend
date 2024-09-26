@@ -9,6 +9,7 @@ import { warehouseSchema, warehouseStatusSchema } from '../../../utils/schemas/a
 import BaseController from '../../../controllers/admin/base-controller';
 import { WarehouseProps } from '../../../model/admin/stores/warehouse-model';
 import WarehouseService from '../../../services/admin/stores/warehouse-service';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -84,9 +85,14 @@ class WarehouseController extends BaseController {
                     requestedData: newWarehouse,
                     message: 'Warehouse created successfully!'
                 }, 200, { // task log
+                    userId: user._id,
+                    countryId: user.countryId,
+                    sourceCollection: collections.stores.warehouses,
+                    referenceData: JSON.stringify(newWarehouse, null, 2),
                     sourceFromId: newWarehouse._id,
                     sourceFrom: adminTaskLog.store.warehouse,
                     activity: adminTaskLogActivity.create,
+                    activityComment: 'Warehouse created successfully!',
                     activityStatus: adminTaskLogStatus.success
                 });
             } else {
@@ -144,13 +150,19 @@ class WarehouseController extends BaseController {
 
                     const updatedWarehouse = await WarehouseService.update(warehouseId, updatedWarehouseData);
                     if (updatedWarehouse) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedWarehouse,
                             message: 'Warehouse updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.stores.warehouses,
+                            referenceData: JSON.stringify(updatedWarehouse, null, 2),
                             sourceFromId: updatedWarehouse._id,
                             sourceFrom: adminTaskLog.store.warehouse,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Warehouse updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -187,12 +199,18 @@ class WarehouseController extends BaseController {
 
                     const updatedWarehouse = await WarehouseService.update(warehouse, updatedWarehouseData);
                     if (updatedWarehouse) {
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedWarehouse,
                             message: 'warehouse status updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.stores.warehouses,
+                            referenceData: JSON.stringify(updatedWarehouse, null, 2),
                             sourceFromId: updatedWarehouse._id,
                             sourceFrom: adminTaskLog.store.warehouse,
+                            activityComment: 'warehouse status updated successfully!',
                             activity: adminTaskLogActivity.statusChange,
                             activityStatus: adminTaskLogStatus.success
                         });

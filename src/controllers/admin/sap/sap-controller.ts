@@ -13,6 +13,7 @@ import countryService from "../../../services/admin/setup/country-service";
 import ProductVariantsModel from "../../../model/admin/ecommerce/product/product-variants-model";
 import GeneralService from "../../../services/admin/general-service";
 import SapOrderService from "../../../services/sap/sap-order-service";
+import { collections } from "../../../constants/collections";
 
 
 const controller = new BaseController();
@@ -115,8 +116,6 @@ class SapController extends BaseController {
         var productRowIndex = 2
         let isProductVariantUpdate = false
         const { productData } = req.body;
-        console.log('productData', productData);
-
         if (productData && productData?.length > 0) {
             let countryDataCache: any = {};
             for (let productPriceData of productData) {
@@ -216,6 +215,9 @@ class SapController extends BaseController {
                         const userData = res.locals.user;
                         const updateTaskLogs = {
                             userId: userData._id,
+                            countryId: userData.countryId,
+                            sourceCollection: collections.ecommerce.products.productvariants.productvariants,
+                            referenceData: JSON.stringify(productPriceData, null, 2),
                             sourceFromId: productVariantDetails.productId,
                             sourceFromReferenceId: productVariantDetails._id,
                             sourceFrom: adminTaskLog.ecommerce.products,

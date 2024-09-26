@@ -12,6 +12,7 @@ import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../..
 import GeneralService from '../../../services/admin/general-service';
 import { multiLanguageSources } from '../../../constants/multi-languages';
 import mongoose from 'mongoose';
+import { collections } from '../../../constants/collections';
 
 const controller = new BaseController();
 
@@ -122,8 +123,13 @@ class CollectionsCategoriesController extends BaseController {
                         requestedData: newCollection,
                         message: 'Collection created successfully!'
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.website.collectionsCategories,
+                        referenceData: JSON.stringify(newCollection, null, 2),
                         sourceFromId: newCollection._id,
                         sourceFrom: adminTaskLog.website.collectionsCategories,
+                        activityComment: 'Collection created successfully!',
                         activity: adminTaskLogActivity.create,
                         activityStatus: adminTaskLogStatus.success
                     });
@@ -252,14 +258,19 @@ class CollectionsCategoriesController extends BaseController {
                                 newLanguageValues.push(languageValues);
                             }
                         }
-
+                        const user = res.locals.user;
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedCollection,
                             message: 'Collection updated successfully!'
                         }, 200, { // task log
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections.website.collectionsCategories,
+                            referenceData: JSON.stringify(updatedCollection, null, 2),
                             sourceFromId: updatedCollection._id,
                             sourceFrom: adminTaskLog.website.collectionsCategories,
                             activity: adminTaskLogActivity.update,
+                            activityComment: 'Collection updated successfully!',
                             activityStatus: adminTaskLogStatus.success
                         });
                     } else {
@@ -296,7 +307,7 @@ class CollectionsCategoriesController extends BaseController {
                     if (existingLanguageValues) {
                         await GeneralService.destroyLanguageValues(existingLanguageValues._id);
                     }
-
+                    const user = res.locals.user;
                     // console.log('collectionData', path.join(__dirname, `../../../${collection.collectionImageUrl}`));
                     // deleteFile(path.join(__dirname, `../../../${collection.collectionImageUrl}`))
                     return controller.sendSuccessResponse(res, {
@@ -305,9 +316,14 @@ class CollectionsCategoriesController extends BaseController {
                             collectionId: collectionId
                         }
                     }, 200, { // task log
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections.website.collectionsCategories,
+                        referenceData: JSON.stringify(collection, null, 2),
                         sourceFromId: collectionId,
                         sourceFrom: adminTaskLog.website.collectionsCategories,
                         activity: adminTaskLogActivity.delete,
+                        activityComment: 'Collection deleted successfully!',
                         activityStatus: adminTaskLogStatus.success
                     });
                 } else {

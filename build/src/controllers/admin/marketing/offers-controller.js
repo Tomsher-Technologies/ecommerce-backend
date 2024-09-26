@@ -9,6 +9,7 @@ const offers_schema_1 = require("../../../utils/schemas/admin/marketing/offers-s
 const base_controller_1 = __importDefault(require("../../../controllers/admin/base-controller"));
 const offer_service_1 = __importDefault(require("../../../services/admin/marketing/offer-service"));
 const task_log_1 = require("../../../constants/admin/task-log");
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class OffersController extends base_controller_1.default {
     async findAll(req, res) {
@@ -84,9 +85,22 @@ class OffersController extends base_controller_1.default {
                         requestedData: newOffer?.length > 0 ? newOffer[0] : newOffer,
                         message: 'Offer created successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.marketing.offers,
+                        referenceData: JSON.stringify({
+                            offerTitle: newOffer.offerTitle,
+                            offersBy: newOffer.offersBy,
+                            offerType: newOffer.offerType,
+                            offerIN: newOffer.offerIN,
+                            startAt: newOffer.offerDateRange[0],
+                            endAt: newOffer.offerDateRange[0],
+                            allValues: newOffer
+                        }, null, 2),
                         sourceFromId: newOffer._id,
                         sourceFrom: task_log_1.adminTaskLog.marketing.offers,
                         activity: task_log_1.adminTaskLogActivity.create,
+                        activityComment: 'Offer created successfully!',
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
@@ -144,6 +158,7 @@ class OffersController extends base_controller_1.default {
             if (validatedData.success) {
                 const offerId = req.params.id;
                 if (offerId) {
+                    const user = res.locals.user;
                     let updatedofferData = req.body;
                     updatedofferData = {
                         ...updatedofferData,
@@ -159,9 +174,22 @@ class OffersController extends base_controller_1.default {
                             requestedData: updatedOffer,
                             message: 'Offer updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.marketing.offers,
+                            referenceData: JSON.stringify({
+                                offerTitle: updatedOffer.offerTitle,
+                                offersBy: updatedOffer.offersBy,
+                                offerType: updatedOffer.offerType,
+                                offerIN: updatedOffer.offerIN,
+                                startAt: updatedOffer.offerDateRange[0],
+                                endAt: updatedOffer.offerDateRange[0],
+                                allValues: updatedOffer
+                            }, null, 2),
                             sourceFromId: updatedOffer._id,
                             sourceFrom: task_log_1.adminTaskLog.marketing.offers,
                             activity: task_log_1.adminTaskLogActivity.update,
+                            activityComment: 'Offer updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }
@@ -198,15 +226,29 @@ class OffersController extends base_controller_1.default {
                 if (offerId) {
                     let { status } = req.body;
                     const updatedOfferData = { status };
+                    const user = res.locals.user;
                     const updatedOffer = await offer_service_1.default.update(offerId, updatedOfferData);
                     if (updatedOffer) {
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedOffer?.length > 0 ? updatedOffer[0] : updatedOffer,
                             message: 'Offers status updated successfully!'
                         }, 200, {
+                            userId: user._id,
+                            countryId: user.countryId,
+                            sourceCollection: collections_1.collections.marketing.offers,
+                            referenceData: JSON.stringify({
+                                offerTitle: updatedOffer.offerTitle,
+                                offersBy: updatedOffer.offersBy,
+                                offerType: updatedOffer.offerType,
+                                offerIN: updatedOffer.offerIN,
+                                startAt: updatedOffer.offerDateRange[0],
+                                endAt: updatedOffer.offerDateRange[0],
+                                allValues: updatedOffer
+                            }, null, 2),
                             sourceFromId: updatedOffer._id,
                             sourceFrom: task_log_1.adminTaskLog.marketing.offers,
                             activity: task_log_1.adminTaskLogActivity.statusChange,
+                            activityComment: 'Offers status updated successfully!',
                             activityStatus: task_log_1.adminTaskLogStatus.success
                         });
                     }

@@ -12,6 +12,7 @@ const base_controller_1 = __importDefault(require("../base-controller"));
 const settings_service_1 = __importDefault(require("../../../services/admin/setup/settings-service"));
 const general_service_1 = __importDefault(require("../../../services/admin/general-service"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const collections_1 = require("../../../constants/collections");
 const controller = new base_controller_1.default();
 class SettingsController extends base_controller_1.default {
     async manageWithCountryId(req, res) {
@@ -91,11 +92,16 @@ class SettingsController extends base_controller_1.default {
                     }
                     return controller.sendSuccessResponse(res, {
                         requestedData: newBasicSettings,
-                        message: 'Setting created successfully!'
+                        message: 'Setting changed successfully!'
                     }, 200, {
+                        userId: user._id,
+                        countryId: user.countryId,
+                        sourceCollection: collections_1.collections.setup.websiteSetups,
+                        referenceData: JSON.stringify(newBasicSettings, null, 2),
                         sourceFromId: newBasicSettings._id,
                         sourceFrom: task_log_1.adminTaskLog.setup.settings[blockReference],
                         activity: websiteSetupId ? task_log_1.adminTaskLogActivity.update : task_log_1.adminTaskLogActivity.create,
+                        activityComment: `${block} => ${blockReference} => Setting changed successfully!`,
                         activityStatus: task_log_1.adminTaskLogStatus.success
                     });
                 }
