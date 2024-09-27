@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = __importDefault(require("mongoose"));
 const task_log_1 = require("../../../constants/admin/task-log");
 const order_1 = require("../../../utils/admin/order");
 const cart_1 = require("../../../constants/cart");
@@ -17,7 +18,7 @@ const controller = new base_controller_1.default();
 class SapController extends base_controller_1.default {
     async getOrderDetails(req, res) {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', country = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0' } = req.query;
+            const { country = '', orderId = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0', page_size = 1, limit = 10, sortby = '', sortorder = '', } = req.query;
             let query = { _id: { $exists: true } };
             query = { cartStatus: { $ne: cart_1.cartStatus.active } };
             if (country) {
@@ -49,6 +50,19 @@ class SapController extends base_controller_1.default {
                     ],
                     ...query
                 };
+            }
+            if (orderId) {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
+                if (isObjectId) {
+                    query = {
+                        ...query, _id: new mongoose_1.default.Types.ObjectId(orderId)
+                    };
+                }
+                else {
+                    query = {
+                        ...query, orderId
+                    };
+                }
             }
             if (orderStatus) {
                 query = {
