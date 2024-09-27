@@ -29,11 +29,11 @@ class ProductController extends BaseController {
 
     async findAllVariantProductsV1(req: any, res: Response): Promise<void> {
         const { page_size = 1, limit = 20, keyword = '', getbrand = '0', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getdiscount = '', getfilterattributes = '', getspecification = '' } = req.query as ProductsFrontendQueryParams;
-        let query: any = { _id: { $exists: true } };
+        let query: any = {};
         let collectionProductsData: any = null;
         let discountValue: any;
         let offers: any;
-        query.status = '1';
+        // query.status = '1';
         const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
         if (!countryId) {
             return controller.sendErrorResponse(res, 200, {
@@ -159,15 +159,21 @@ class ProductController extends BaseController {
             }
             if (brandSlugs.length > 0) {
                 const foundBrands = await BrandsModel.find({ slug: { $in: brandSlugs } }, '_id');
-                brandIds.push(...foundBrands.map(brand => brand._id));
+                query = {
+                    ...query, "productDetails.brand": { $in: foundBrands.map(brand => brand._id) },
+                }
+                // brandIds.push(...foundBrands.map(brand => brand._id));
             }
             let matchProductIds = []
             if (brand && brandIds.length > 0) {
                 matchProductIds = await ProductsModel.distinct('_id', { brand: { $in: brandIds } });
             } else {
                 if (brandIds.length > 0) {
-                    const brandProductIds = await ProductsModel.distinct('_id', { brand: { $in: brandIds } });
-                    productIds = [...new Set([...productIds, ...brandProductIds])];
+                    query = {
+                        ...query, "productDetails.brand": { $in: brandIds }
+                    }
+                    // const brandProductIds = await ProductsModel.distinct('_id', { brand: { $in: brandIds } });
+                    // productIds = [...new Set([...productIds, ...brandProductIds])];
                 }
             }
             productFindableValues = {

@@ -501,7 +501,6 @@ class ProductService {
             finalSort = defaultSort;
         }
 
-        console.log('productFindableValues', JSON.stringify(query, null, 2));
 
         let collectionPipeline: any = false;
         let matchProductIds: any[] = productFindableValues?.matchProductIds?.length > 0 ? productFindableValues?.matchProductIds : [];
@@ -594,39 +593,10 @@ class ProductService {
                     productDetails: { $ne: [] }
                 }
             },
-            // {
-            //     $lookup: {
-            //         from: "brands",
-            //         let: { brandId: { $arrayElemAt: ["$productDetails.brand", 0] } },
-            //         pipeline: [
-            //             {
-            //                 $match: {
-            //                     $expr: { $eq: ["$_id", "$$brandId"] },
-            //                     // status: '2'
-            //                 }
-            //             },
-            //             {
-            //                 $project: {
-            //                     _id: 1,
-            //                     brandTitle: 1,
-            //                     slug: 1,
-            //                     brandBannerImageUrl: 1,
-            //                     brandImageUrl: 1,
-            //                     description: 1,
-            //                     status: 1,
-            //                 }
-            //             }
-            //         ],
-            //         as: "brandDetails"
-            //     }
-            // },
-            // {
-            //     $match: {
-            //         brandDetails: { $ne: [] } 
-            //     }
-            // },
             {
-                $match: query
+                $match: {
+                    ...query 
+                }
             },
             {
                 $project: {

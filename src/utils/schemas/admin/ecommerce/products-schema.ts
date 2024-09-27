@@ -89,6 +89,7 @@ export const productSchema = zod.object({
                 twitterTitle: zod.string().optional(),
                 twitterDescription: zod.string().optional(),
             }).optional(),
+            status: zod.string().optional(),
         }))
 
     })),

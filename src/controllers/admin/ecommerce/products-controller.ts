@@ -99,7 +99,7 @@ class ProductsController extends BaseController {
             const userData = await res.locals.user;
 
             if (validatedData.success) {
-                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, showOrder,
+                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, showOrder, status,
                     completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
 
@@ -133,7 +133,7 @@ class ProductsController extends BaseController {
                         isVariant: Number(isVariant),
                         pageTitle: pageTitle as string,
                         deliveryDays,
-                        status: '1', // active
+                        status: status || '1', // active
                         statusAt: new Date(),
                         createdBy: user._id,
                     };
@@ -205,6 +205,7 @@ class ProductsController extends BaseController {
                                                             productVariantData = await ProductVariantService.create(newProduct._id, {
                                                                 slug: slugify(slugData),
                                                                 countryId: variants[variantsIndex].countryId,
+                                                                status: status === variants[variantsIndex].productVariants[productVariantsIndex]?.status ? status : variants[variantsIndex].productVariants[productVariantsIndex]?.status || variants[variantsIndex].productVariants[productVariantsIndex]?.status,
                                                                 ...variants[variantsIndex].productVariants[productVariantsIndex],
                                                             } as any, userData);
                                                             updatedProductVariantData.push(productVariantData)

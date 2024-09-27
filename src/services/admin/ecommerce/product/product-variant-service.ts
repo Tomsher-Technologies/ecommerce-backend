@@ -139,18 +139,18 @@ class ProductVariantService {
             isExcel: productVariants?.isExcel
         }
 
-        const createdProductVariant = await ProductVariantModel.create(productVariantData);
-        if (createdProductVariant) {
-            const pipeline = [
-                { $match: { _id: createdProductVariant._id } },
-                // this.lookup,
-                this.project
-            ];
+        return await ProductVariantModel.create(productVariantData);
+        // if (createdProductVariant) {
+        //     const pipeline = [
+        //         { $match: { _id: createdProductVariant._id } },
+        //         // this.lookup,
+        //         this.project
+        //     ];
 
-            const createdProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
+        //     const createdProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
 
-            return createdProductVariantWithValues[0];
-        }
+        //     return createdProductVariantWithValues[0];
+        // }
         // else {
         //     return null;
         // }
@@ -230,9 +230,12 @@ class ProductVariantService {
                     const productVariantPromises = variantDetail.productVariants.map(async (data: any, index: number) => {
                         const existingVariant = existingVariants.find((variant: any) => variant._id.toString() === data._id.toString());
                         let productVariantData: any;
-
                         if (existingVariant) {
-                            productVariantData = await ProductVariantModel.findByIdAndUpdate(existingVariant._id, { ...data, productId: productdata._id }, { new: true });
+                            productVariantData = await ProductVariantModel.findByIdAndUpdate(existingVariant._id, {
+                                ...data,
+                                productId: productdata._id,
+                                status: (productdata.status === data.status ? productdata.status : data.status) || productdata.status
+                            }, { new: true });
                         } else {
                             const countryData = await CountryModel.findById(variantDetail.countryId);
                             const slug = slugify(`${productdata.productTitle}-${countryData?.countryShortTitle}-${index + 1}`);
