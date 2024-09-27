@@ -139,6 +139,7 @@ exports.cartProject = {
     $project: {
         _id: 1,
         orderId: 1,
+        orderCode: 1,
         customerId: 1,
         // countryId: 1,
         couponId: 1,
@@ -219,6 +220,7 @@ exports.cartDeatilProject = {
     $project: {
         _id: 1,
         orderId: 1,
+        orderCode: 1,
         customerId: 1,
         // countryId: 1,
         couponId: 1,
@@ -490,6 +492,7 @@ const buildOrderPipeline = (paymentMethodDetails, customerDetails, cartDetails) 
             $project: {
                 _id: 1,
                 orderId: 1,
+                orderCode: 1,
                 customerId: 1,
                 countryId: 1,
                 couponId: 1,
@@ -883,6 +886,7 @@ const getOrderProductsWithCartLookup = (query, notCallLookups, getCategory, getB
             orderRequestedProductQuantityStatusAt: 1,
             'cartDetails._id': 1,
             'cartDetails.orderId': 1,
+            'cartDetails.orderCode': 1,
             'cartDetails.customerId': 1,
             'cartDetails.countryId': 1,
             'cartDetails.paymentMethodId': 1,
@@ -1028,6 +1032,7 @@ exports.orderPaymentTransactionProject = {
         orders: {
             _id: "$orders._id",
             orderId: "$orders.orderId",
+            orderCode: "$orders.orderCode",
             couponId: "$orders.couponId",
             guestUserId: "$orders.guestUserId",
             paymentMethodId: "$orders.paymentMethodId",
