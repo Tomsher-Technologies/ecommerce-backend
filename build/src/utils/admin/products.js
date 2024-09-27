@@ -24,12 +24,11 @@ const filterProduct = async (data, countryId) => {
             'productVariants.countryId': new mongoose_1.default.Types.ObjectId(countryId)
         };
     }
-    if (data.status && data.status !== '') {
-        query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };
-    }
-    else {
-        query.status = '1';
-    }
+    // if (data.status && data.status !== '') {
+    //     query.status = { $in: Array.isArray(data.status) ? data.status : [data.status] };
+    // } else {
+    //     query.status = '1';
+    // }
     if (data.keyword) {
         const keywordRegex = new RegExp(data.keyword, 'i');
         query = {

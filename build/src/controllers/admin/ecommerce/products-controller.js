@@ -96,7 +96,7 @@ class ProductsController extends base_controller_1.default {
             var newCategory;
             const userData = await res.locals.user;
             if (validatedData.success) {
-                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, showOrder, completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
+                const { productTitle, brand, unit, measurements, sku, isVariant, description, longDescription, showOrder, status, completeTab, warehouse, productSpecification, productSeo, pageTitle, metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, twitterTitle, twitterDescription, deliveryDays, variants, productCategory, languageValues } = validatedData.data;
                 const user = res.locals.user;
                 const productImage = req.files.find((file) => file.fieldname === 'productImage');
                 const galleryImages = req.files.filter((file) => file.fieldname &&
@@ -120,7 +120,7 @@ class ProductsController extends base_controller_1.default {
                         isVariant: Number(isVariant),
                         pageTitle: pageTitle,
                         deliveryDays,
-                        status: '1', // active
+                        status: status || '1', // active
                         statusAt: new Date(),
                         createdBy: user._id,
                     };
@@ -188,6 +188,7 @@ class ProductsController extends base_controller_1.default {
                                                             productVariantData = await product_variant_service_1.default.create(newProduct._id, {
                                                                 slug: (0, helpers_1.slugify)(slugData),
                                                                 countryId: variants[variantsIndex].countryId,
+                                                                status: status === variants[variantsIndex].productVariants[productVariantsIndex]?.status ? status : variants[variantsIndex].productVariants[productVariantsIndex]?.status || variants[variantsIndex].productVariants[productVariantsIndex]?.status,
                                                                 ...variants[variantsIndex].productVariants[productVariantsIndex],
                                                             }, userData);
                                                             updatedProductVariantData.push(productVariantData);

@@ -121,16 +121,16 @@ class ProductVariantService {
             barcode: productVariants.barcode,
             isExcel: productVariants?.isExcel
         };
-        const createdProductVariant = await product_variants_model_1.default.create(productVariantData);
-        if (createdProductVariant) {
-            const pipeline = [
-                { $match: { _id: createdProductVariant._id } },
-                // this.lookup,
-                this.project
-            ];
-            const createdProductVariantWithValues = await product_variants_model_1.default.aggregate(pipeline);
-            return createdProductVariantWithValues[0];
-        }
+        return await product_variants_model_1.default.create(productVariantData);
+        // if (createdProductVariant) {
+        //     const pipeline = [
+        //         { $match: { _id: createdProductVariant._id } },
+        //         // this.lookup,
+        //         this.project
+        //     ];
+        //     const createdProductVariantWithValues = await ProductVariantModel.aggregate(pipeline);
+        //     return createdProductVariantWithValues[0];
+        // }
         // else {
         //     return null;
         // }
@@ -191,7 +191,11 @@ class ProductVariantService {
                         const existingVariant = existingVariants.find((variant) => variant._id.toString() === data._id.toString());
                         let productVariantData;
                         if (existingVariant) {
-                            productVariantData = await product_variants_model_1.default.findByIdAndUpdate(existingVariant._id, { ...data, productId: productdata._id }, { new: true });
+                            productVariantData = await product_variants_model_1.default.findByIdAndUpdate(existingVariant._id, {
+                                ...data,
+                                productId: productdata._id,
+                                status: (productdata.status === data.status ? productdata.status : data.status) || productdata.status
+                            }, { new: true });
                         }
                         else {
                             const countryData = await country_model_1.default.findById(variantDetail.countryId);

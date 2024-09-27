@@ -88,6 +88,7 @@ exports.productSchema = zod_1.z.object({
                 twitterTitle: zod_1.z.string().optional(),
                 twitterDescription: zod_1.z.string().optional(),
             }).optional(),
+            status: zod_1.z.string().optional(),
         }))
     })),
     // .createIndex({ countryId: 1, variantSku: 1, {attributeId: 1,attributeDetailId: 1} }, { unique: true });,
