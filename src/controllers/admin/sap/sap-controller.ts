@@ -21,7 +21,7 @@ class SapController extends BaseController {
 
     async getOrderDetails(req: Request, res: Response): Promise<any> {
         try {
-            const { page_size = 1, limit = 10, sortby = '', sortorder = '', country = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0' } = req.query as OrderQueryParams;
+            const { country = '', orderId = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0', page_size = 1, limit = 10, sortby = '', sortorder = '', } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             query = { cartStatus: { $ne: cartStatusJson.active } }
@@ -54,6 +54,18 @@ class SapController extends BaseController {
                     ],
                     ...query
                 } as any;
+            }
+            if (orderId) {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
+                if (isObjectId) {
+                    query = {
+                        ...query, _id: new mongoose.Types.ObjectId(orderId)
+                    } as any;
+                } else {
+                    query = {
+                        ...query, orderId
+                    } as any;
+                }
             }
 
             if (orderStatus) {
