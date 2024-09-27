@@ -27,6 +27,7 @@ import CustomerModel from '../../../model/frontend/customers-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import { collections } from '../../../constants/collections';
 import GeneralService from '../../../services/admin/general-service';
+import AdminTaskLogModel from '../../../model/admin/task-log';
 
 const controller = new BaseController();
 
@@ -1268,24 +1269,27 @@ class OrdersController extends BaseController {
 
                 const expectedDeliveryDate = calculateExpectedDeliveryDate(orderDetails[0].orderStatusAt, Number(commonDeliveryDays))
 
-                const user = res.locals.user;
-                const insertTaskLogs = {
-                    countryId: user.countryId,
-                    sourceCollection: collections.cart.cartorders,
-                    userId: user._id,
-                    referenceData: JSON.stringify({
-                        orderId: orderDetails.orderId,
-                        orderCode: orderDetails.orderCode,
-                        countryTitle: currencyCode?.countryTitle,
-                        allValues: orderDetails
-                    }, null, 2),
-                    sourceFromId: orderDetails._id.toString(),
-                    sourceFrom: adminTaskLog.orders.order,
-                    activityComment: `Generate Order PDF: ${orderDetails.orderId}`,
-                    activity: adminTaskLogActivity.create,
-                    activityStatus: adminTaskLogStatus.success
-                };
-                await GeneralService.taskLog(insertTaskLogs).then(() => undefined).catch(() => undefined);
+                // const user = res.locals.user;
+                // const insertTaskLogs = {
+                //     countryId: user.countryId,
+                //     sourceCollection: collections.cart.cartorders,
+                //     userId: user._id,
+                //     referenceData: JSON.stringify({
+                //         orderId: orderDetails.orderId,
+                //         orderCode: orderDetails.orderCode,
+                //         countryTitle: currencyCode?.countryTitle,
+                //         allValues: orderDetails
+                //     }, null, 2),
+                //     sourceFromId: orderDetails._id.toString(),
+                //     sourceFrom: adminTaskLog.orders.order,
+                //     activityComment: `Generate Order PDF: ${orderDetails.orderId}`,
+                //     activity: adminTaskLogActivity.create,
+                //     activityStatus: adminTaskLogStatus.success
+                // };
+                // console.log('insertTaskLogs', insertTaskLogs);
+
+                // await AdminTaskLogModel.create(insertTaskLogs);
+
                 const invoicePdfGeneratorResponse = await invoicePdfGenerator(res, req, orderDetails, basicDetailsSettings, tax, expectedDeliveryDate, currencyCode?.currencyCode);
                 if (!invoicePdfGeneratorResponse) {
                     return controller.sendErrorResponse(res, 200, {
