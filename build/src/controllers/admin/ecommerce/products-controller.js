@@ -813,7 +813,6 @@ class ProductsController extends base_controller_1.default {
                                                                         createdBy: userData._id,
                                                                         isDefault: (data.Item_Type == 'config-item') ? 1 : 0
                                                                     };
-                                                                    // console.log("productVariants", productVariants);
                                                                     const shortTitleOfCountry = await country_model_1.default.findOne({ _id: await (0, helpers_1.getCountryIdWithSuperAdmin)(userData) });
                                                                     var countryForSlug;
                                                                     if (countryData && countryData.countryShortTitle) {
@@ -828,12 +827,10 @@ class ProductsController extends base_controller_1.default {
                                                                         let insertWithNonConfigItemVariant = false;
                                                                         let createProduct = null;
                                                                         const productDetails = await product_service_1.default.find({ $and: [{ sku: data.SKU }] });
-                                                                        if (productDetails) {
-                                                                            const existingVariantDetails = await product_variants_model_1.default.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
-                                                                            if (!existingVariantDetails) {
-                                                                                insertWithNonConfigItemVariant = true;
-                                                                                createProduct = productDetails;
-                                                                            }
+                                                                        const existingVariantDetails = await product_variants_model_1.default.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
+                                                                        if (productDetails && !existingVariantDetails) {
+                                                                            insertWithNonConfigItemVariant = true;
+                                                                            createProduct = productDetails;
                                                                         }
                                                                         if (!productDetails || insertWithNonConfigItemVariant) {
                                                                             if (!insertWithNonConfigItemVariant) {
@@ -841,41 +838,35 @@ class ProductsController extends base_controller_1.default {
                                                                             }
                                                                             if (createProduct) {
                                                                                 if (!insertWithNonConfigItemVariant) {
-                                                                                    for await (const item of categoryArray) {
-                                                                                        const newCategory = await product_category_link_service_1.default.create({
-                                                                                            productId: createProduct._id,
-                                                                                            categoryId: item
-                                                                                        });
-                                                                                    }
+                                                                                    const categoryDataToInsert = categoryArray.map(item => ({
+                                                                                        productId: createProduct._id,
+                                                                                        categoryId: item
+                                                                                    }));
+                                                                                    await product_category_link_model_1.default.insertMany(categoryDataToInsert);
                                                                                 }
                                                                                 if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                    const newSeo = await seo_page_service_1.default.create({
+                                                                                    const newSeo = await seo_page_model_1.default.create({
                                                                                         pageId: createProduct._id,
                                                                                         page: seo_page_1.seoPage.ecommerce.products,
                                                                                         ...productSeo
                                                                                     });
                                                                                 }
                                                                                 if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
-                                                                                    for await (const specification of specificationData) {
-                                                                                        const specificationValues = {
-                                                                                            productId: createProduct._id,
-                                                                                            ...specification
-                                                                                        };
-                                                                                        const specifications = await product_specification_service_1.default.create(specificationValues);
-                                                                                    }
+                                                                                    const specificationsToInsert = specificationData.map(specification => ({
+                                                                                        productId: createProduct._id,
+                                                                                        ...specification
+                                                                                    }));
+                                                                                    await product_specification_model_1.default.insertMany(specificationsToInsert);
                                                                                 }
                                                                                 if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
-                                                                                    for await (const galleryImage of galleryImageArray) {
-                                                                                        const galleryImageData = {
-                                                                                            productID: createProduct._id,
-                                                                                            ...galleryImage
-                                                                                        };
-                                                                                        const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                    }
+                                                                                    const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                        productID: createProduct._id,
+                                                                                        ...galleryImage
+                                                                                    }));
+                                                                                    await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
                                                                                 }
                                                                                 slugData = createProduct.productTitle + "-" + countryForSlug + '-' + data.SKU;
-                                                                                const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
-                                                                                if (!variantDetails) {
+                                                                                if (!existingVariantDetails) {
                                                                                     productVariants = {
                                                                                         ...productVariants,
                                                                                         slug: (0, helpers_1.slugify)(slugData)
@@ -883,28 +874,21 @@ class ProductsController extends base_controller_1.default {
                                                                                     const createVariant = await product_variant_service_1.default.create(createProduct._id, productVariants, userData);
                                                                                     if (createVariant) {
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                            for await (const galleryImage of galleryImageArray) {
-                                                                                                const galleryImageData = {
-                                                                                                    // productID: createProduct._id,
-                                                                                                    variantId: createVariant._id,
-                                                                                                    ...galleryImage
-                                                                                                };
-                                                                                                const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                                console.log(galleryImages, "galleryImagesgalleryImages");
-                                                                                            }
+                                                                                            const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                ...galleryImage
+                                                                                            }));
+                                                                                            await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
                                                                                         }
-                                                                                        if (attributeData && attributeData.length > 0) {
-                                                                                            for await (const attribute of attributeData) {
-                                                                                                const attributeValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: createProduct._id,
-                                                                                                    ...attribute
-                                                                                                };
-                                                                                                const attributes = await product_variant_attributes_service_1.default.create(attributeValues);
-                                                                                            }
-                                                                                        }
+                                                                                        const attributesToInsert = attributeData.map(attribute => ({
+                                                                                            variantId: createVariant._id,
+                                                                                            productId: createProduct._id,
+                                                                                            attributeId: attribute.attributeId,
+                                                                                            attributeDetailId: attribute.attributeDetailId
+                                                                                        }));
+                                                                                        await product_variant_attribute_model_1.default.insertMany(attributesToInsert);
                                                                                         if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                            const newSeo = await seo_page_service_1.default.create({
+                                                                                            const newSeo = await seo_page_model_1.default.create({
                                                                                                 pageId: createProduct._id,
                                                                                                 pageReferenceId: createVariant._id,
                                                                                                 page: seo_page_1.seoPage.ecommerce.products,
@@ -912,14 +896,12 @@ class ProductsController extends base_controller_1.default {
                                                                                             });
                                                                                         }
                                                                                         if (specificationData && specificationData.length > 0) {
-                                                                                            for await (const specification of specificationData) {
-                                                                                                const specificationValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: createProduct._id,
-                                                                                                    ...specification
-                                                                                                };
-                                                                                                const specifications = await product_specification_service_1.default.create(specificationValues);
-                                                                                            }
+                                                                                            const specificationsToInsert = specificationData.map(specification => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: createProduct._id,
+                                                                                                ...specification
+                                                                                            }));
+                                                                                            await product_specification_model_1.default.insertMany(specificationsToInsert);
                                                                                         }
                                                                                     }
                                                                                     else {
@@ -927,127 +909,86 @@ class ProductsController extends base_controller_1.default {
                                                                                     }
                                                                                 }
                                                                                 else {
-                                                                                    const updateProduct = await product_variant_service_1.default.update(variantDetails._id, productVariants);
-                                                                                    const existingAttributes = await product_variant_attribute_model_1.default.find({ variantId: variantDetails._id });
-                                                                                    // if (existingAttributes.length !== attributeData.length) {
-                                                                                    await product_variant_attribute_model_1.default.deleteMany({ variantId: variantDetails._id });
-                                                                                    for (const attribute of attributeData) {
-                                                                                        const attributeValues = {
-                                                                                            variantId: variantDetails._id,
-                                                                                            productId: createProduct._id,
-                                                                                            ...attribute
-                                                                                        };
-                                                                                        await product_variant_attributes_service_1.default.create(attributeValues);
-                                                                                    }
-                                                                                    // } else {
-                                                                                    //     for (const attribute of attributeData) {
-                                                                                    //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                    //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                    //             { ...attribute, productId: createProduct._id },
-                                                                                    //             { new: true, useFindAndModify: false }
-                                                                                    //         );
-                                                                                    //     }
-                                                                                    // }
+                                                                                    const updateProduct = await product_variant_service_1.default.update(existingVariantDetails._id, productVariants);
+                                                                                    await product_variant_attribute_model_1.default.deleteMany({ variantId: existingVariantDetails._id });
+                                                                                    const attributesToInsert = attributeData.map(attribute => ({
+                                                                                        variantId: existingVariantDetails._id,
+                                                                                        productId: createProduct._id,
+                                                                                        ...attribute
+                                                                                    }));
+                                                                                    await product_variant_attribute_model_1.default.insertMany(attributesToInsert);
                                                                                 }
                                                                             }
                                                                         }
                                                                         else {
                                                                             await seo_page_model_1.default.deleteMany({ pageId: productDetails._id, pageReferenceId: null });
                                                                             if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                const newSeo = await seo_page_service_1.default.create({
+                                                                                const newSeo = await seo_page_model_1.default.create({
                                                                                     pageId: productDetails._id,
                                                                                     page: seo_page_1.seoPage.ecommerce.products,
                                                                                     ...productSeo
                                                                                 });
                                                                             }
                                                                             await product_specification_model_1.default.deleteMany({ productId: productDetails._id });
-                                                                            if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
-                                                                                for await (const specification of specificationData) {
-                                                                                    const specificationValues = {
-                                                                                        productId: productDetails._id,
-                                                                                        ...specification
-                                                                                    };
-                                                                                    const specifications = await product_specification_service_1.default.create(specificationValues);
-                                                                                }
+                                                                            if (data.Item_Type !== 'config-item' && specificationData && specificationData.length > 0) {
+                                                                                const specificationsToInsert = specificationData.map(specification => ({
+                                                                                    productId: productDetails._id,
+                                                                                    ...specification
+                                                                                }));
+                                                                                await product_specification_model_1.default.insertMany(specificationsToInsert);
                                                                             }
                                                                             const updateProduct = await product_service_1.default.update(productDetails._id, finalData);
                                                                             if (updateProduct) {
                                                                                 await product_category_link_model_1.default.deleteMany({ productId: productDetails._id });
-                                                                                for await (const item of categoryArray) {
-                                                                                    const newCategory = await product_category_link_service_1.default.create({
-                                                                                        productId: updateProduct._id,
-                                                                                        categoryId: item
-                                                                                    });
-                                                                                }
+                                                                                const categoryDataToInsert = categoryArray.map(item => ({
+                                                                                    productId: updateProduct._id,
+                                                                                    categoryId: item
+                                                                                }));
+                                                                                await product_category_link_model_1.default.insertMany(categoryDataToInsert);
                                                                                 await product_gallery_images_model_1.default.deleteMany({ productID: updateProduct._id });
-                                                                                if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
-                                                                                    for await (const galleryImage of galleryImageArray) {
-                                                                                        const galleryImageData = {
-                                                                                            productID: updateProduct._id,
-                                                                                            ...galleryImage
-                                                                                        };
-                                                                                        const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                    }
+                                                                                if (!existingVariantDetails) {
+                                                                                    const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                        productID: updateProduct._id,
+                                                                                        ...galleryImage
+                                                                                    }));
+                                                                                    await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
                                                                                 }
-                                                                                const variantDetails = await product_variants_model_1.default.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
-                                                                                if (variantDetails) {
-                                                                                    await product_gallery_images_model_1.default.deleteMany({ variantId: variantDetails._id });
-                                                                                    if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                        for await (const galleryImage of galleryImageArray) {
-                                                                                            const galleryImageData = {
-                                                                                                // productID: updateProduct._id,
-                                                                                                variantId: variantDetails._id,
-                                                                                                ...galleryImage
-                                                                                            };
-                                                                                            const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                        }
-                                                                                    }
-                                                                                    const existingAttributes = await product_variant_attribute_model_1.default.find({ variantId: variantDetails._id });
-                                                                                    // if (existingAttributes.length !== attributeData.length) {
-                                                                                    await product_variant_attribute_model_1.default.deleteMany({ variantId: variantDetails._id });
-                                                                                    for (const attribute of attributeData) {
-                                                                                        const attributeValues = {
-                                                                                            variantId: variantDetails._id,
+                                                                                if (existingVariantDetails) {
+                                                                                    await product_variant_service_1.default.update(existingVariantDetails._id, productVariants);
+                                                                                    await product_gallery_images_model_1.default.deleteMany({ variantId: existingVariantDetails._id });
+                                                                                    const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                        variantId: existingVariantDetails._id,
+                                                                                        ...galleryImage
+                                                                                    }));
+                                                                                    await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
+                                                                                    await product_variant_attribute_model_1.default.deleteMany({ variantId: existingVariantDetails._id });
+                                                                                    if (attributeData && attributeData.length > 0) {
+                                                                                        const attributesToInsert = attributeData.map(attribute => ({
+                                                                                            variantId: existingVariantDetails._id,
                                                                                             productId: productDetails._id,
                                                                                             ...attribute
-                                                                                        };
-                                                                                        await product_variant_attributes_service_1.default.create(attributeValues);
+                                                                                        }));
+                                                                                        await product_variant_attribute_model_1.default.insertMany(attributesToInsert);
                                                                                     }
-                                                                                    // } else {
-                                                                                    //     for (const attribute of attributeData) {
-                                                                                    //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                    //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                    //             { ...attribute, productId: productDetails._id },
-                                                                                    //             { new: true, useFindAndModify: false }
-                                                                                    //         );
-                                                                                    //     }
-                                                                                    // }
                                                                                     if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                        const newSeo = await seo_page_service_1.default.create({
+                                                                                        const newSeo = await seo_page_model_1.default.create({
                                                                                             pageId: productDetails._id,
-                                                                                            pageReferenceId: variantDetails._id,
+                                                                                            pageReferenceId: existingVariantDetails._id,
                                                                                             page: seo_page_1.seoPage.ecommerce.products,
                                                                                             ...productSeo
                                                                                         });
                                                                                     }
-                                                                                    await product_specification_model_1.default.deleteMany({ variantId: variantDetails._id });
                                                                                     if (specificationData && specificationData.length > 0) {
-                                                                                        for await (const specification of specificationData) {
-                                                                                            const specificationValues = {
-                                                                                                variantId: variantDetails._id,
-                                                                                                productId: productDetails._id,
-                                                                                                ...specification
-                                                                                            };
-                                                                                            const specifications = await product_specification_service_1.default.create(specificationValues);
-                                                                                        }
+                                                                                        const specificationsToInsert = specificationData.map(specification => ({
+                                                                                            variantId: existingVariantDetails._id,
+                                                                                            productId: productDetails._id,
+                                                                                            ...specification
+                                                                                        }));
+                                                                                        await product_specification_model_1.default.insertMany(specificationsToInsert);
                                                                                     }
                                                                                 }
                                                                             }
-                                                                            // validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
                                                                         }
-                                                                        // } else {
-                                                                        //     validation.push({ productTitle: productDuplication.productTitle, SKU: productDuplication.sku, message: productDuplication.productTitle + " is already existing" })
-                                                                        // }
                                                                     }
                                                                     else if (data.Item_Type == 'variant') {
                                                                         if (data.Parent_SKU) {
@@ -1072,19 +1013,16 @@ class ProductsController extends base_controller_1.default {
                                                                                     };
                                                                                     const createVariant = await product_variant_service_1.default.create(productDetails._id, productVariants, userData);
                                                                                     if (createVariant) {
-                                                                                        console.log("productDetails", productDetails);
                                                                                         if (attributeData && attributeData.length > 0) {
-                                                                                            for await (const attribute of attributeData) {
-                                                                                                const attributeValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: productDetails._id,
-                                                                                                    ...attribute
-                                                                                                };
-                                                                                                const attributes = await product_variant_attributes_service_1.default.create(attributeValues);
-                                                                                            }
+                                                                                            const attributesToInsert = attributeData.map(attribute => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...attribute
+                                                                                            }));
+                                                                                            await product_variant_attribute_model_1.default.insertMany(attributesToInsert);
                                                                                         }
                                                                                         if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                            const newSeo = await seo_page_service_1.default.create({
+                                                                                            const newSeo = await seo_page_model_1.default.create({
                                                                                                 pageId: productDetails._id,
                                                                                                 pageReferenceId: createVariant._id,
                                                                                                 page: seo_page_1.seoPage.ecommerce.products,
@@ -1092,23 +1030,19 @@ class ProductsController extends base_controller_1.default {
                                                                                             });
                                                                                         }
                                                                                         if (specificationData && specificationData.length > 0) {
-                                                                                            for await (const specification of specificationData) {
-                                                                                                const specificationValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: productDetails._id,
-                                                                                                    ...specification
-                                                                                                };
-                                                                                                const specifications = await product_specification_service_1.default.create(specificationValues);
-                                                                                            }
+                                                                                            const specificationsToInsert = specificationData.map(specification => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...specification
+                                                                                            }));
+                                                                                            await product_specification_model_1.default.insertMany(specificationsToInsert);
                                                                                         }
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                            for await (const galleryImage of galleryImageArray) {
-                                                                                                const galleryImageData = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    ...galleryImage
-                                                                                                };
-                                                                                                const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                            }
+                                                                                            const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                ...galleryImage
+                                                                                            }));
+                                                                                            await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
                                                                                         }
                                                                                     }
                                                                                 }
@@ -1117,52 +1051,30 @@ class ProductsController extends base_controller_1.default {
                                                                                     if (updateProduct) {
                                                                                         const data = await product_gallery_images_model_1.default.deleteMany({ variantId: variantDetails._id });
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                            for await (const galleryImage of galleryImageArray) {
-                                                                                                const galleryImageData = {
-                                                                                                    variantId: updateProduct._id,
-                                                                                                    ...galleryImage
-                                                                                                };
-                                                                                                const galleryImages = await product_service_1.default.createGalleryImages(galleryImageData);
-                                                                                            }
+                                                                                            const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                                variantId: updateProduct._id,
+                                                                                                ...galleryImage
+                                                                                            }));
+                                                                                            await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
                                                                                         }
-                                                                                        const existingAttributes = await product_variant_attribute_model_1.default.find({ variantId: variantDetails._id });
-                                                                                        // if (existingAttributes.length !== attributeData.length) {
                                                                                         await product_variant_attribute_model_1.default.deleteMany({ variantId: variantDetails._id });
-                                                                                        for (const attribute of attributeData) {
-                                                                                            const attributeValues = {
-                                                                                                variantId: variantDetails._id,
-                                                                                                productId: updateProduct.productId,
-                                                                                                attributeId: attribute.attributeId,
-                                                                                                attributeDetailId: attribute.attributeDetailId
-                                                                                            };
-                                                                                            await product_variant_attributes_service_1.default.create(attributeValues);
-                                                                                        }
-                                                                                        // } else {
-                                                                                        //     for (const attribute of attributeData) {
-                                                                                        //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                        //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                        //             {
-                                                                                        //                 attributeId: attribute.attributeId,
-                                                                                        //                 attributeDetailId: attribute.attributeDetailId,
-                                                                                        //                 productId: updateProduct.productId
-                                                                                        //             },
-                                                                                        //             { new: true, useFindAndModify: false }
-                                                                                        //         );
-                                                                                        //     }
-                                                                                        // }
+                                                                                        const attributesToInsert = attributeData.map(attribute => ({
+                                                                                            variantId: variantDetails._id,
+                                                                                            productId: productDetails._id,
+                                                                                            attributeId: attribute.attributeId,
+                                                                                            attributeDetailId: attribute.attributeDetailId
+                                                                                        }));
+                                                                                        await product_variant_attribute_model_1.default.insertMany(attributesToInsert);
                                                                                         await product_specification_model_1.default.deleteMany({ variantId: variantDetails._id });
                                                                                         if (specificationData && specificationData.length > 0) {
-                                                                                            for await (const specification of specificationData) {
-                                                                                                const specificationValues = {
-                                                                                                    variantId: variantDetails._id,
-                                                                                                    productId: productDetails._id,
-                                                                                                    ...specification
-                                                                                                };
-                                                                                                const specifications = await product_specification_service_1.default.create(specificationValues);
-                                                                                            }
+                                                                                            const specificationsToInsert = specificationData.map(specification => ({
+                                                                                                variantId: variantDetails._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...specification
+                                                                                            }));
+                                                                                            await product_specification_model_1.default.insertMany(specificationsToInsert);
                                                                                         }
                                                                                     }
-                                                                                    // validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Variant " + data.Product_Title + " is already existing" })
                                                                                 }
                                                                             }
                                                                             else {
@@ -1206,7 +1118,6 @@ class ProductsController extends base_controller_1.default {
                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Product_Title is missing, row :" + index });
                                     }
                                     index++;
-                                    console.log(index, "dsfsfsdffsfdfs");
                                 }
                                 controller.sendSuccessResponse(res, {
                                     validation,
@@ -1227,21 +1138,6 @@ class ProductsController extends base_controller_1.default {
         else {
             controller.sendErrorResponse(res, 200, { message: "please upload file" });
         }
-        // } catch (error: any) {
-        console.log("errorerror", index);
-        // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-        // validation.push({ itemName: error.errors.slug.properties  })
-        //     // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
-        //     //     validation.push(error.errors.countryId.properties)
-        //     // }
-        //     // else {
-        //     //     validation.push(error.errors)
-        //     // }
-        //     controller.sendSuccessResponse(res, {
-        //         validation,
-        //         message: 'Product excel upload successfully completed'
-        //     }, 200);
-        // }
     }
     async findOne(req, res) {
         try {

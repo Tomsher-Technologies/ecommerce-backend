@@ -22,13 +22,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const sequence_model_1 = __importDefault(require("../sequence-model"));
 const paymentTransactionSchema = new mongoose_1.Schema({
     orderId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'CartOrders',
         required: true,
+    },
+    transactionNumber: {
+        type: Number,
+        unique: true,
+        required: false,
     },
     paymentMethodId: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -59,6 +68,26 @@ const paymentTransactionSchema = new mongoose_1.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
+    }
+});
+paymentTransactionSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        try {
+            const sequenceDoc = await sequence_model_1.default.findOneAndUpdate({ _id: 'transactionSequence' }, { $inc: { sequenceValue: 1 } }, { new: true, upsert: true });
+            if (sequenceDoc) {
+                this.transactionNumber = sequenceDoc.sequenceValue;
+                next();
+            }
+            else {
+                throw new Error('Failed to generate transaction.');
+            }
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    else {
+        next();
     }
 });
 const PaymentTransactionModel = mongoose_1.default.model('PaymentTransaction', paymentTransactionSchema);

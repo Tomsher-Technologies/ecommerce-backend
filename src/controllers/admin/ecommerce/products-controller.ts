@@ -879,7 +879,6 @@ class ProductsController extends BaseController {
                                                                         createdBy: userData._id,
                                                                         isDefault: (data.Item_Type == 'config-item') ? 1 : 0
                                                                     }
-                                                                    // console.log("productVariants", productVariants);
 
                                                                     const shortTitleOfCountry: any = await CountryModel.findOne({ _id: await getCountryIdWithSuperAdmin(userData) })
 
@@ -893,15 +892,13 @@ class ProductsController extends BaseController {
                                                                         // const productDuplication: any = await ProductsService.find({ productTitle: data.Product_Title })
                                                                         // if (!productDuplication) {
                                                                         let insertWithNonConfigItemVariant = false;
-                                                                        let createProduct = null
+                                                                        let createProduct: any = null
                                                                         const productDetails: any = await ProductsService.find({ $and: [{ sku: data.SKU }] });
 
-                                                                        if (productDetails) {
-                                                                            const existingVariantDetails = await ProductVariantsModel.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
-                                                                            if (!existingVariantDetails) {
-                                                                                insertWithNonConfigItemVariant = true;
-                                                                                createProduct = productDetails
-                                                                            }
+                                                                        const existingVariantDetails = await ProductVariantsModel.findOne({ variantSku: data.SKU, countryId: productVariants.countryId });
+                                                                        if (productDetails && !existingVariantDetails) {
+                                                                            insertWithNonConfigItemVariant = true;
+                                                                            createProduct = productDetails
                                                                         }
                                                                         if (!productDetails || insertWithNonConfigItemVariant) {
                                                                             if (!insertWithNonConfigItemVariant) {
@@ -909,16 +906,15 @@ class ProductsController extends BaseController {
                                                                             }
                                                                             if (createProduct) {
                                                                                 if (!insertWithNonConfigItemVariant) {
-                                                                                    for await (const item of categoryArray) {
-                                                                                        const newCategory = await ProductCategoryLinkService.create({
-                                                                                            productId: createProduct._id,
-                                                                                            categoryId: item
-                                                                                        })
-                                                                                    }
+                                                                                    const categoryDataToInsert = categoryArray.map(item => ({
+                                                                                        productId: createProduct._id,
+                                                                                        categoryId: item
+                                                                                    }));
+                                                                                    await ProductCategoryLinkModel.insertMany(categoryDataToInsert);
                                                                                 }
 
                                                                                 if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                    const newSeo = await SeoPageService.create({
+                                                                                    const newSeo = await SeoPageModel.create({
                                                                                         pageId: createProduct._id,
                                                                                         page: seoPage.ecommerce.products,
                                                                                         ...productSeo
@@ -926,30 +922,25 @@ class ProductsController extends BaseController {
                                                                                 }
 
                                                                                 if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
-                                                                                    for await (const specification of specificationData) {
-                                                                                        const specificationValues = {
-                                                                                            productId: createProduct._id,
-                                                                                            ...specification
-                                                                                        }
-                                                                                        const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                    }
+                                                                                    const specificationsToInsert = specificationData.map(specification => ({
+                                                                                        productId: createProduct._id,
+                                                                                        ...specification
+                                                                                    }));
+
+                                                                                    await ProductSpecificationModel.insertMany(specificationsToInsert);
                                                                                 }
 
                                                                                 if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
-                                                                                    for await (const galleryImage of galleryImageArray) {
-                                                                                        const galleryImageData = {
-                                                                                            productID: createProduct._id,
-                                                                                            ...galleryImage
-                                                                                        }
-                                                                                        const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-                                                                                    }
+                                                                                    const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                        productID: createProduct._id,
+                                                                                        ...galleryImage
+                                                                                    }));
+                                                                                    await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
                                                                                 }
 
                                                                                 slugData = createProduct.productTitle + "-" + countryForSlug + '-' + data.SKU
 
-                                                                                const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] })
-
-                                                                                if (!variantDetails) {
+                                                                                if (!existingVariantDetails) {
                                                                                     productVariants = {
                                                                                         ...productVariants,
                                                                                         slug: slugify(slugData)
@@ -957,29 +948,22 @@ class ProductsController extends BaseController {
                                                                                     const createVariant = await ProductVariantService.create(createProduct._id, productVariants, userData)
                                                                                     if (createVariant) {
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                            for await (const galleryImage of galleryImageArray) {
-                                                                                                const galleryImageData = {
-                                                                                                    // productID: createProduct._id,
-                                                                                                    variantId: createVariant._id,
-                                                                                                    ...galleryImage
-                                                                                                }
-                                                                                                const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-                                                                                                console.log(galleryImages, "galleryImagesgalleryImages");
+                                                                                            const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                ...galleryImage
+                                                                                            }));
+                                                                                            await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
+                                                                                        }
+                                                                                        const attributesToInsert = attributeData.map(attribute => ({
+                                                                                            variantId: createVariant._id,
+                                                                                            productId: createProduct._id,
+                                                                                            attributeId: attribute.attributeId,
+                                                                                            attributeDetailId: attribute.attributeDetailId
+                                                                                        }));
+                                                                                        await ProductVariantAttributesModel.insertMany(attributesToInsert);
 
-                                                                                            }
-                                                                                        }
-                                                                                        if (attributeData && attributeData.length > 0) {
-                                                                                            for await (const attribute of attributeData) {
-                                                                                                const attributeValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: createProduct._id,
-                                                                                                    ...attribute
-                                                                                                }
-                                                                                                const attributes = await ProductVariantAttributeService.create(attributeValues)
-                                                                                            }
-                                                                                        }
                                                                                         if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                            const newSeo = await SeoPageService.create({
+                                                                                            const newSeo = await SeoPageModel.create({
                                                                                                 pageId: createProduct._id,
                                                                                                 pageReferenceId: createVariant._id,
                                                                                                 page: seoPage.ecommerce.products,
@@ -988,149 +972,102 @@ class ProductsController extends BaseController {
                                                                                         }
 
                                                                                         if (specificationData && specificationData.length > 0) {
-                                                                                            for await (const specification of specificationData) {
-                                                                                                const specificationValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: createProduct._id,
-                                                                                                    ...specification
-                                                                                                }
-                                                                                                const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                            }
+                                                                                            const specificationsToInsert = specificationData.map(specification => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: createProduct._id,
+                                                                                                ...specification
+                                                                                            }));
+                                                                                            await ProductSpecificationModel.insertMany(specificationsToInsert);
                                                                                         }
                                                                                     } else {
                                                                                         await deleteFunction(createProduct._id)
                                                                                     }
                                                                                 } else {
-                                                                                    const updateProduct = await ProductVariantService.update(variantDetails._id, productVariants);
-                                                                                    const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
-                                                                                    // if (existingAttributes.length !== attributeData.length) {
-                                                                                    await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                    for (const attribute of attributeData) {
-                                                                                        const attributeValues = {
-                                                                                            variantId: variantDetails._id,
-                                                                                            productId: createProduct._id,
-                                                                                            ...attribute
-                                                                                        };
-                                                                                        await ProductVariantAttributeService.create(attributeValues);
-                                                                                    }
-                                                                                    // } else {
-                                                                                    //     for (const attribute of attributeData) {
-                                                                                    //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                    //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                    //             { ...attribute, productId: createProduct._id },
-                                                                                    //             { new: true, useFindAndModify: false }
-                                                                                    //         );
-                                                                                    //     }
-                                                                                    // }
+                                                                                    const updateProduct = await ProductVariantService.update(existingVariantDetails._id, productVariants);
+                                                                                    await ProductVariantAttributesModel.deleteMany({ variantId: existingVariantDetails._id });
+                                                                                    const attributesToInsert = attributeData.map(attribute => ({
+                                                                                        variantId: existingVariantDetails._id,
+                                                                                        productId: createProduct._id,
+                                                                                        ...attribute
+                                                                                    }));
+                                                                                    await ProductVariantAttributesModel.insertMany(attributesToInsert);
                                                                                 }
 
                                                                             }
                                                                         } else {
                                                                             await SeoPageModel.deleteMany({ pageId: productDetails._id, pageReferenceId: null });
                                                                             if (data.Item_Type != 'config-item' && data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                const newSeo = await SeoPageService.create({
+                                                                                const newSeo = await SeoPageModel.create({
                                                                                     pageId: productDetails._id,
                                                                                     page: seoPage.ecommerce.products,
                                                                                     ...productSeo
                                                                                 })
                                                                             }
                                                                             await ProductSpecificationModel.deleteMany({ productId: productDetails._id });
+                                                                            if (data.Item_Type !== 'config-item' && specificationData && specificationData.length > 0) {
+                                                                                const specificationsToInsert = specificationData.map(specification => ({
+                                                                                    productId: productDetails._id,
+                                                                                    ...specification
+                                                                                }));
 
-                                                                            if (data.Item_Type != 'config-item' && specificationData && specificationData.length > 0) {
-                                                                                for await (const specification of specificationData) {
-                                                                                    const specificationValues = {
-                                                                                        productId: productDetails._id,
-                                                                                        ...specification
-                                                                                    }
-                                                                                    const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                }
+                                                                                await ProductSpecificationModel.insertMany(specificationsToInsert);
                                                                             }
                                                                             const updateProduct = await ProductsService.update(productDetails._id, finalData)
                                                                             if (updateProduct) {
                                                                                 await ProductCategoryLinkModel.deleteMany({ productId: productDetails._id });
-                                                                                for await (const item of categoryArray) {
-                                                                                    const newCategory = await ProductCategoryLinkService.create({
-                                                                                        productId: updateProduct._id,
-                                                                                        categoryId: item
-                                                                                    })
-                                                                                }
+                                                                                const categoryDataToInsert = categoryArray.map(item => ({
+                                                                                    productId: updateProduct._id,
+                                                                                    categoryId: item
+                                                                                }));
+                                                                                await ProductCategoryLinkModel.insertMany(categoryDataToInsert);
 
                                                                                 await ProductGalleryImagesModel.deleteMany({ productID: updateProduct._id });
-                                                                                if (data.Item_Type != 'config-item' && galleryImageArray && galleryImageArray.length > 0) {
-                                                                                    for await (const galleryImage of galleryImageArray) {
-                                                                                        const galleryImageData = {
-                                                                                            productID: updateProduct._id,
-                                                                                            ...galleryImage
-                                                                                        }
-                                                                                        const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-
-                                                                                    }
+                                                                                if (!existingVariantDetails) {
+                                                                                    const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                        productID: updateProduct._id,
+                                                                                        ...galleryImage
+                                                                                    }));
+                                                                                    await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
                                                                                 }
-                                                                                const variantDetails = await ProductVariantsModel.findOne({ variantSku: (data as any).SKU, countryId: productVariants.countryId });
-                                                                                if (variantDetails) {
-                                                                                    await ProductGalleryImagesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                    if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                        for await (const galleryImage of galleryImageArray) {
-                                                                                            const galleryImageData = {
-                                                                                                // productID: updateProduct._id,
-                                                                                                variantId: variantDetails._id,
-                                                                                                ...galleryImage
-                                                                                            }
-                                                                                            const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
+                                                                                if (existingVariantDetails) {
+                                                                                    await ProductVariantService.update(existingVariantDetails._id, productVariants)
+                                                                                    await ProductGalleryImagesModel.deleteMany({ variantId: existingVariantDetails._id});
+                                                                                    const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                        variantId: existingVariantDetails._id,
+                                                                                        ...galleryImage
+                                                                                    }));
+                                                                                    await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
 
-                                                                                        }
-                                                                                    }
-                                                                                    const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
-                                                                                    // if (existingAttributes.length !== attributeData.length) {
-                                                                                    await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                    for (const attribute of attributeData) {
-                                                                                        const attributeValues = {
-                                                                                            variantId: variantDetails._id,
+                                                                                    await ProductVariantAttributesModel.deleteMany({ variantId: existingVariantDetails._id });
+                                                                                    if (attributeData && attributeData.length > 0) {
+                                                                                        const attributesToInsert = attributeData.map(attribute => ({
+                                                                                            variantId: existingVariantDetails._id,
                                                                                             productId: productDetails._id,
                                                                                             ...attribute
-                                                                                        };
-                                                                                        await ProductVariantAttributeService.create(attributeValues);
+                                                                                        }));
+                                                                                        await ProductVariantAttributesModel.insertMany(attributesToInsert);
                                                                                     }
-                                                                                    // } else {
-                                                                                    //     for (const attribute of attributeData) {
-                                                                                    //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                    //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                    //             { ...attribute, productId: productDetails._id },
-                                                                                    //             { new: true, useFindAndModify: false }
-                                                                                    //         );
-                                                                                    //     }
-                                                                                    // }
 
                                                                                     if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                        const newSeo = await SeoPageService.create({
+                                                                                        const newSeo = await SeoPageModel.create({
                                                                                             pageId: productDetails._id,
-                                                                                            pageReferenceId: variantDetails._id,
+                                                                                            pageReferenceId: existingVariantDetails._id,
                                                                                             page: seoPage.ecommerce.products,
                                                                                             ...productSeo
                                                                                         })
                                                                                     }
-                                                                                    await ProductSpecificationModel.deleteMany({ variantId: variantDetails._id });
-
                                                                                     if (specificationData && specificationData.length > 0) {
-                                                                                        for await (const specification of specificationData) {
-                                                                                            const specificationValues = {
-                                                                                                variantId: variantDetails._id,
-                                                                                                productId: productDetails._id,
-                                                                                                ...specification
-                                                                                            }
-                                                                                            const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                        }
+                                                                                        const specificationsToInsert = specificationData.map(specification => ({
+                                                                                            variantId: existingVariantDetails._id,
+                                                                                            productId: productDetails._id,
+                                                                                            ...specification
+                                                                                        }));
+
+                                                                                        await ProductSpecificationModel.insertMany(specificationsToInsert);
                                                                                     }
                                                                                 }
                                                                             }
-                                                                            // validation.push({ productTitle: product.productTitle, SKU: product.sku, message: product.productTitle + " is already existing" })
                                                                         }
-                                                                        // } else {
-
-
-
-                                                                        //     validation.push({ productTitle: productDuplication.productTitle, SKU: productDuplication.sku, message: productDuplication.productTitle + " is already existing" })
-                                                                        // }
                                                                     } else if (data.Item_Type == 'variant') {
 
                                                                         if (data.Parent_SKU) {
@@ -1158,20 +1095,17 @@ class ProductsController extends BaseController {
 
                                                                                     const createVariant = await ProductVariantService.create(productDetails._id, productVariants, userData)
                                                                                     if (createVariant) {
-                                                                                        console.log("productDetails", productDetails);
-
                                                                                         if (attributeData && attributeData.length > 0) {
-                                                                                            for await (const attribute of attributeData) {
-                                                                                                const attributeValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: productDetails._id,
-                                                                                                    ...attribute
-                                                                                                }
-                                                                                                const attributes = await ProductVariantAttributeService.create(attributeValues)
-                                                                                            }
+                                                                                            const attributesToInsert = attributeData.map(attribute => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...attribute
+                                                                                            }));
+                                                                                            await ProductVariantAttributesModel.insertMany(attributesToInsert);
                                                                                         }
+
                                                                                         if (data.Meta_Title || data.Meta_Description || data.Meta_Keywords || data.OG_Title || data.OG_Description || data.Twitter_Title || data.Twitter_Description) {
-                                                                                            const newSeo = await SeoPageService.create({
+                                                                                            const newSeo = await SeoPageModel.create({
                                                                                                 pageId: productDetails._id,
                                                                                                 pageReferenceId: createVariant._id,
                                                                                                 page: seoPage.ecommerce.products,
@@ -1180,24 +1114,20 @@ class ProductsController extends BaseController {
                                                                                         }
 
                                                                                         if (specificationData && specificationData.length > 0) {
-                                                                                            for await (const specification of specificationData) {
-                                                                                                const specificationValues = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    productId: productDetails._id,
-                                                                                                    ...specification
-                                                                                                }
-                                                                                                const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                            }
-                                                                                        }
+                                                                                            const specificationsToInsert = specificationData.map(specification => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...specification
+                                                                                            }));
 
+                                                                                            await ProductSpecificationModel.insertMany(specificationsToInsert);
+                                                                                        }
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                            for await (const galleryImage of galleryImageArray) {
-                                                                                                const galleryImageData = {
-                                                                                                    variantId: createVariant._id,
-                                                                                                    ...galleryImage
-                                                                                                }
-                                                                                                const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-                                                                                            }
+                                                                                            const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                                variantId: createVariant._id,
+                                                                                                ...galleryImage
+                                                                                            }));
+                                                                                            await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
                                                                                         }
                                                                                     }
                                                                                 } else {
@@ -1205,54 +1135,33 @@ class ProductsController extends BaseController {
                                                                                     if (updateProduct) {
                                                                                         const data = await ProductGalleryImagesModel.deleteMany({ variantId: variantDetails._id });
                                                                                         if (galleryImageArray && galleryImageArray.length > 0) {
-                                                                                            for await (const galleryImage of galleryImageArray) {
-                                                                                                const galleryImageData = {
-                                                                                                    variantId: updateProduct._id,
-                                                                                                    ...galleryImage
-                                                                                                }
-                                                                                                const galleryImages = await ProductsService.createGalleryImages(galleryImageData)
-                                                                                            }
-                                                                                        }
-                                                                                        const existingAttributes = await ProductVariantAttributesModel.find({ variantId: variantDetails._id });
+                                                                                            const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
+                                                                                                variantId: updateProduct._id,
+                                                                                                ...galleryImage
+                                                                                            }));
 
-                                                                                        // if (existingAttributes.length !== attributeData.length) {
+                                                                                            await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
+                                                                                        }
                                                                                         await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
-                                                                                        for (const attribute of attributeData) {
-                                                                                            const attributeValues = {
-                                                                                                variantId: variantDetails._id,
-                                                                                                productId: updateProduct.productId,
-                                                                                                attributeId: attribute.attributeId,
-                                                                                                attributeDetailId: attribute.attributeDetailId
-                                                                                            };
-                                                                                            await ProductVariantAttributeService.create(attributeValues);
-                                                                                        }
-                                                                                        // } else {
-                                                                                        //     for (const attribute of attributeData) {
-                                                                                        //         const updatedAttributes = await ProductVariantAttributesModel.findOneAndUpdate(
-                                                                                        //             { variantId: variantDetails._id, attributeId: attribute.attributeId },
-                                                                                        //             {
-                                                                                        //                 attributeId: attribute.attributeId,
-                                                                                        //                 attributeDetailId: attribute.attributeDetailId,
-                                                                                        //                 productId: updateProduct.productId
-                                                                                        //             },
-                                                                                        //             { new: true, useFindAndModify: false }
-                                                                                        //         );
-                                                                                        //     }
-                                                                                        // }
-                                                                                        await ProductSpecificationModel.deleteMany({ variantId: variantDetails._id });
+                                                                                        const attributesToInsert = attributeData.map(attribute => ({
+                                                                                            variantId: variantDetails._id,
+                                                                                            productId: productDetails._id,
+                                                                                            attributeId: attribute.attributeId,
+                                                                                            attributeDetailId: attribute.attributeDetailId
+                                                                                        }));
+                                                                                        await ProductVariantAttributesModel.insertMany(attributesToInsert);
 
+                                                                                        await ProductSpecificationModel.deleteMany({ variantId: variantDetails._id });
                                                                                         if (specificationData && specificationData.length > 0) {
-                                                                                            for await (const specification of specificationData) {
-                                                                                                const specificationValues = {
-                                                                                                    variantId: variantDetails._id,
-                                                                                                    productId: productDetails._id,
-                                                                                                    ...specification
-                                                                                                }
-                                                                                                const specifications = await ProductSpecificationService.create(specificationValues)
-                                                                                            }
+                                                                                            const specificationsToInsert = specificationData.map(specification => ({
+                                                                                                variantId: variantDetails._id,
+                                                                                                productId: productDetails._id,
+                                                                                                ...specification
+                                                                                            }));
+
+                                                                                            await ProductSpecificationModel.insertMany(specificationsToInsert);
                                                                                         }
                                                                                     }
-                                                                                    // validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Variant " + data.Product_Title + " is already existing" })
                                                                                 }
                                                                             } else {
                                                                                 validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: data.Product_Title + " product parent sku not fount" })
@@ -1293,8 +1202,6 @@ class ProductsController extends BaseController {
                                         validation.push({ productTitle: data.Product_Title, SKU: data.SKU, message: "Product_Title is missing, row :" + index })
                                     }
                                     index++
-                                    console.log(index, "dsfsfsdffsfdfs");
-
                                 }
                                 controller.sendSuccessResponse(res, {
                                     validation,
@@ -1313,30 +1220,6 @@ class ProductsController extends BaseController {
         } else {
             controller.sendErrorResponse(res, 200, { message: "please upload file" });
         }
-
-
-        // } catch (error: any) {
-        console.log("errorerror", index);
-
-        // if (error && error.errors && error.errors.slug && error.errors.slug.properties && error.errors.slug.properties.message) {
-        // validation.push({ itemName: error.errors.slug.properties  })
-
-        //     // } if (error && error.errors && error.errors.countryId && error.errors.countryId.properties && error.errors.countryId.properties.message) {
-        //     //     validation.push(error.errors.countryId.properties)
-
-        //     // }
-        //     // else {
-        //     //     validation.push(error.errors)
-
-        //     // }
-        //     controller.sendSuccessResponse(res, {
-        //         validation,
-        //         message: 'Product excel upload successfully completed'
-        //     }, 200);
-
-        // }
-
-
     }
 
 

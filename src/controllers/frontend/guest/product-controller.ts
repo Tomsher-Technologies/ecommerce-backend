@@ -372,7 +372,6 @@ class ProductController extends BaseController {
                 }
             };
         }
-        console.log('productIds', productIds);
 
         if (productIds.length > 0) {
             if (query.$or) {
@@ -599,18 +598,22 @@ class ProductController extends BaseController {
                         const foundBrands = await BrandsModel.find({ slug: { $in: brandSlugs } }, '_id');
                         brandIds.push(...foundBrands.map(brand => brand._id));
                     }
+
                     if (brand) {
                         query = {
                             ...query, "brand": { $in: brandIds }
                         };
                     } else {
-                        if (brandIds.length > 0) {
-                            if (query.$or) {
-                                query.$or.push({ brand: { $in: brandIds } });
-                            } else {
-                                query.$or = [{ brand: { $in: brandIds } }];
-                            }
+                        query = {
+                            ...query, "brand": { $in: brandIds },
                         }
+                        // if (brandIds.length > 0) {
+                        //     if (query.$or) {
+                        //         query.$or.push({ brand: { $in: brandIds } });
+                        //     } else {
+                        //         query.$or = [{ brand: { $in: brandIds } }];
+                        //     }
+                        // }
                     }
 
                     productFindableValues = {

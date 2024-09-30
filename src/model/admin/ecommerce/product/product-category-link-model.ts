@@ -10,12 +10,12 @@ const productCategoryLinkSchema: Schema<ProductCategoryLinkProps> = new Schema({
     productId: {
         type: Schema.Types.ObjectId,
         ref: 'Products',
-        default: ''
+        required:true
     },
     categoryId: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
-        default: ''
+        required:true
     },
     createdAt: {
         type: Date,

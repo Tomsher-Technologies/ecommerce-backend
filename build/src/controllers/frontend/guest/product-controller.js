@@ -359,7 +359,6 @@ class ProductController extends base_controller_1.default {
                 }
             };
         }
-        console.log('productIds', productIds);
         if (productIds.length > 0) {
             if (query.$or) {
                 query.$or.push({ productId: { $in: productIds } });
@@ -576,14 +575,16 @@ class ProductController extends base_controller_1.default {
                         };
                     }
                     else {
-                        if (brandIds.length > 0) {
-                            if (query.$or) {
-                                query.$or.push({ brand: { $in: brandIds } });
-                            }
-                            else {
-                                query.$or = [{ brand: { $in: brandIds } }];
-                            }
-                        }
+                        query = {
+                            ...query, "brand": { $in: brandIds },
+                        };
+                        // if (brandIds.length > 0) {
+                        //     if (query.$or) {
+                        //         query.$or.push({ brand: { $in: brandIds } });
+                        //     } else {
+                        //         query.$or = [{ brand: { $in: brandIds } }];
+                        //     }
+                        // }
                     }
                     productFindableValues = {
                         ...productFindableValues,

@@ -28,12 +28,12 @@ const productCategoryLinkSchema = new mongoose_1.Schema({
     productId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Products',
-        default: ''
+        required: true
     },
     categoryId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Category',
-        default: ''
+        required: true
     },
     createdAt: {
         type: Date,

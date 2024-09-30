@@ -25,6 +25,7 @@ const network_payments_1 = require("../../../lib/payment-gateway/network-payment
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const tamara_payments_1 = require("../../../lib/payment-gateway/tamara-payments");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
+const cart_order_product_model_1 = __importDefault(require("../../../model/frontend/cart-order-product-model"));
 const controller = new base_controller_1.default();
 class CheckoutController extends base_controller_1.default {
     async checkout(req, res) {
@@ -72,6 +73,16 @@ class CheckoutController extends base_controller_1.default {
                 });
                 const errorArray = [];
                 const cartOrderProductUpdateOperations = [];
+                const matchedVariantIds = productVariants.map((variant) => variant._id.toString());
+                const unmatchedVariantIds = variantIds.filter(// check unmatched variant ids from variant table for varaiant ids some replaced
+                (variantId) => !matchedVariantIds.includes(variantId.toString()));
+                if (unmatchedVariantIds.length > 0) {
+                    await cart_order_model_1.default.findOneAndDelete({ _id: cartDetails?._id });
+                    await cart_order_product_model_1.default.deleteMany({ cartId: cartDetails?._id });
+                    return controller.sendErrorResponse(res, 200, {
+                        message: 'The product is mismatched. Please add the cart once more and try again'
+                    });
+                }
                 for (const variant of productVariants) {
                     const requiredQuantity = variantQuantities[variant._id.toString()];
                     let productTitle;
