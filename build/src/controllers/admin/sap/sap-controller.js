@@ -18,7 +18,7 @@ const controller = new base_controller_1.default();
 class SapController extends base_controller_1.default {
     async getOrderDetails(req, res) {
         try {
-            const { country = '', orderId = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0', page_size = 1, limit = 10, sortby = '', sortorder = '', } = req.query;
+            const { country = '', orderId = '', orderIdAfter = '', orderCodeAfter = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0', page_size = 1, limit = 10, sortby = '', sortorder = '', } = req.query;
             let query = { _id: { $exists: true } };
             query = { cartStatus: { $ne: cart_1.cartStatus.active } };
             if (country) {
@@ -63,6 +63,16 @@ class SapController extends base_controller_1.default {
                         ...query, orderId
                     };
                 }
+            }
+            if (orderIdAfter) {
+                query = {
+                    ...query, orderId: { $gt: orderIdAfter }
+                };
+            }
+            if (orderCodeAfter) {
+                query = {
+                    ...query, orderCode: { $gt: Number(orderCodeAfter) }
+                };
             }
             if (orderStatus) {
                 query = {
