@@ -4,7 +4,7 @@ import { PaymentMethodProps } from "../../model/admin/setup/payment-methods-mode
 import { CustomerAddressProps } from "../../model/frontend/customer-address-model"
 import { formatAmount } from "../helpers"
 
-export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { orderCode: number; totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
+export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { orderId: number; totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps, paymentMethodValues: { merchantCode: string; }) => {
 
     return {
         "amount": cartData.totalAmount,
@@ -18,7 +18,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { orde
         },
         "reference": {
             "transaction": cartData._id,
-            "order": cartData?.orderCode || 0
+            "order": cartData?.orderId || 0
         },
         "receipt": {
             "email": true,
@@ -49,7 +49,7 @@ export const tapPaymentGatwayDefaultValues = (countryData: any, cartData: { orde
 
 export const tabbyPaymentGatwayDefaultValues = (countryData: any,
     cartData: {
-        orderCode: number,
+        orderId: number,
         totalAmount: number,
         totalTaxAmount: number,
         totalDiscountAmount: number,
@@ -87,7 +87,7 @@ export const tabbyPaymentGatwayDefaultValues = (countryData: any,
                 "shipping_amount": cartData?.totalShippingAmount,
                 "discount_amount": cartData?.totalDiscountAmount,
                 "updated_at": cartData.cartStatusAt,
-                "reference_id": cartData._id,
+                "reference_id": `${cartData.orderId}`,
                 "items": cartData?.products?.map((product: any) => (
                     {
                         "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
@@ -200,7 +200,7 @@ export const tabbyPaymentCaptureGatwayDefaultValues = (orderDetails: any) => {
     }
 }
 
-export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { orderCode: number; totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
+export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { orderId: number; totalAmount: number, _id: ObjectId }, customerDetails: CustomrProps) => {
     return {
         "action": "PURCHASE",
         "amount": {
@@ -211,7 +211,7 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
         "billingAddress": {
             "firstName": customerDetails.firstName
         },
-        "merchantOrderReference": cartData?.orderCode || 0,
+        "merchantOrderReference": `${cartData.orderId}` || 0,
         "merchantAttributes": {
             "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`,
             "skipConfirmationPage": true
@@ -223,7 +223,7 @@ export const networkPaymentGatwayDefaultValues = (countryData: any, cartData: { 
 export const tamaraPaymentGatwayDefaultValues = (
     countryData: any,
     cartData: {
-        orderCode: number,
+        orderId: number,
         totalAmount: number,
         totalTaxAmount: number,
         totalDiscountAmount: number,
@@ -251,7 +251,7 @@ export const tamaraPaymentGatwayDefaultValues = (
             "currency": countryData.currencyCode
         },
         "order_reference_id": cartData._id,
-        "order_number": cartData?.orderCode || 0,
+        "order_number": `${cartData.orderId}` || 0,
         "discount": {
             "amount": {
                 "amount": cartData.totalDiscountAmount,

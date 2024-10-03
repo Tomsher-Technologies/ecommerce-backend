@@ -141,7 +141,8 @@ class CheckoutController extends BaseController {
                     return controller.sendErrorResponse(res, 200, { message: 'Cart not found!' });
                 }
                 let cartUpdate: any = {
-                    orderCode: cartDetails?.orderCode || 0,
+                    _id: cartDetails._id,
+                    orderId: cartDetails.orderId,
                     orderUuid: uuid,
                     shippingId: shippingId || null,
                     billingId: billingId || null,
@@ -230,7 +231,7 @@ class CheckoutController extends BaseController {
                 }
                 if ((paymentMethod.slug !== paymentMethods.cashOnDelivery && paymentMethod.slug !== paymentMethods.cardOnDelivery)) {
                     if (paymentMethod && paymentMethod.slug == paymentMethods.tap) {
-                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, { ...cartUpdate, _id: cartDetails._id }, customerDetails, paymentMethod.paymentMethodValues);
+                        const tapDefaultValues = tapPaymentGatwayDefaultValues(countryData, cartUpdate, customerDetails, paymentMethod.paymentMethodValues);
                         const tapResponse = await tapPaymentCreate(tapDefaultValues, paymentMethod.paymentMethodValues);
                         if (tapResponse && tapResponse.status === tapPaymentGatwayStatus.initiated && tapResponse.id && tapResponse.transaction) {
                             const paymentTransaction = await PaymentTransactionModel.create({
@@ -254,7 +255,6 @@ class CheckoutController extends BaseController {
                             }
                             let setPaymentDefualtValues = {
                                 ...cartUpdate,
-                                _id: cartDetails._id,
                                 orderComments: cartDetails.orderComments,
                                 cartStatusAt: cartDetails.cartStatusAt,
                                 totalDiscountAmount: cartDetails.totalDiscountAmount,
@@ -349,7 +349,6 @@ class CheckoutController extends BaseController {
                             if (networkResponse && networkResponse.access_token) {
                                 const networkDefaultValues = networkPaymentGatwayDefaultValues(countryData, {
                                     ...cartUpdate,
-                                    _id: cartDetails._id,
                                     orderComments: cartDetails.orderComments,
                                     cartStatusAt: cartDetails.cartStatusAt,
                                     totalDiscountAmount: cartDetails.totalDiscountAmount,

@@ -17,6 +17,7 @@ const tapPaymentCreate = async (tapDefaultValues, paymentMethodValues) => {
             referrerPolicy: "no-referrer",
             body: JSON.stringify(tapDefaultValues),
         });
+        console.log('response', tapDefaultValues);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
