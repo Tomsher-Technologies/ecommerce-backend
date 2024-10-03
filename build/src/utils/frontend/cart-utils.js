@@ -15,7 +15,7 @@ const tapPaymentGatwayDefaultValues = (countryData, cartData, customerDetails, p
         },
         "reference": {
             "transaction": cartData._id,
-            "order": cartData?.orderCode || 0
+            "order": cartData?.orderId || 0
         },
         "receipt": {
             "email": true,
@@ -68,7 +68,7 @@ const tabbyPaymentGatwayDefaultValues = (countryData, cartData, customerDetails,
                 "shipping_amount": cartData?.totalShippingAmount,
                 "discount_amount": cartData?.totalDiscountAmount,
                 "updated_at": cartData.cartStatusAt,
-                "reference_id": cartData._id,
+                "reference_id": `${cartData.orderId}`,
                 "items": cartData?.products?.map((product) => ({
                     "title": product.productDetails?.variantDetails?.extraProductTitle !== '' ? product.productDetails.variantDetails.extraProductTitle : product.productDetails.productTitle,
                     "description": product.productDetails?.variantDetails?.variantDescription !== '' ? product.productDetails.variantDetails.variantDescription : product.productDetails.description,
@@ -186,7 +186,7 @@ const networkPaymentGatwayDefaultValues = (countryData, cartData, customerDetail
         "billingAddress": {
             "firstName": customerDetails.firstName
         },
-        "merchantOrderReference": cartData?.orderCode || 0,
+        "merchantOrderReference": `${cartData.orderId}` || 0,
         "merchantAttributes": {
             "redirectUrl": `${process.env.APP_API_URL}/api/common/network-payment-response`,
             "skipConfirmationPage": true
@@ -209,7 +209,7 @@ const tamaraPaymentGatwayDefaultValues = (countryData, cartData, customerDetails
             "currency": countryData.currencyCode
         },
         "order_reference_id": cartData._id,
-        "order_number": cartData?.orderCode || 0,
+        "order_number": `${cartData.orderId}` || 0,
         "discount": {
             "amount": {
                 "amount": cartData.totalDiscountAmount,

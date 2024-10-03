@@ -7,8 +7,7 @@ export interface CartOrderProps extends Document {
     customerId: Schema.Types.ObjectId;
     guestUserId: string;
     orderUuid: string; // customer guest uuid
-    orderId: string;
-    orderCode: number;
+    orderId: number;
     shippingId: Schema.Types.ObjectId;
     billingId: Schema.Types.ObjectId;
     stateId: mongoose.Schema.Types.ObjectId;
@@ -71,22 +70,9 @@ const cartOrderSchema: Schema<CartOrderProps> = new Schema({
         default: null
     },
     orderId: {
-        type: String,
-        default: null,
-        unique: false,
-        validate: {
-            validator: async function (this: any, value: string): Promise<boolean> {
-                if (value === null) return true;
-                const count = await this.model('CartOrders').countDocuments({ orderId: value });
-                return count === 0;
-            },
-            message: 'orderId must be unique'
-        }
-    },
-    orderCode: {
         type: Number,
         unique: true,
-        required: false, 
+        required: false,
     },
     couponId: {
         type: Schema.Types.ObjectId,
@@ -308,12 +294,11 @@ cartOrderSchema.pre<CartOrderProps>('save', async function (next) {
                 { $inc: { sequenceValue: 1 } },
                 { new: true, upsert: true }
             );
-
             if (sequenceDoc) {
-                this.orderCode = sequenceDoc.sequenceValue;
+                this.orderId = sequenceDoc.sequenceValue;
                 next();
             } else {
-                throw new Error('Failed to generate order code.');
+                throw new Error('Failed to generate order id.');
             }
         } catch (err) {
             next(err as CallbackError);

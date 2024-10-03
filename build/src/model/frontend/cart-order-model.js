@@ -40,20 +40,6 @@ const cartOrderSchema = new mongoose_1.Schema({
         default: null
     },
     orderId: {
-        type: String,
-        default: null,
-        unique: false,
-        validate: {
-            validator: async function (value) {
-                if (value === null)
-                    return true;
-                const count = await this.model('CartOrders').countDocuments({ orderId: value });
-                return count === 0;
-            },
-            message: 'orderId must be unique'
-        }
-    },
-    orderCode: {
         type: Number,
         unique: true,
         required: false,
@@ -274,11 +260,11 @@ cartOrderSchema.pre('save', async function (next) {
         try {
             const sequenceDoc = await sequence_model_1.default.findOneAndUpdate({ _id: 'orderSequence' }, { $inc: { sequenceValue: 1 } }, { new: true, upsert: true });
             if (sequenceDoc) {
-                this.orderCode = sequenceDoc.sequenceValue;
+                this.orderId = sequenceDoc.sequenceValue;
                 next();
             }
             else {
-                throw new Error('Failed to generate order code.');
+                throw new Error('Failed to generate order id.');
             }
         }
         catch (err) {

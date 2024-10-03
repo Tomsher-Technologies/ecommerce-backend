@@ -455,7 +455,6 @@ class OrdersController extends base_controller_1.default {
                 sourceCollection: collections_1.collections.cart.cartorders,
                 referenceData: JSON.stringify({
                     orderId: orderDetails.orderId,
-                    orderCode: orderDetails.orderCode,
                     allValues: updatedOrderDetails[0]
                 }, null, 2),
                 sourceFromId: orderID,
@@ -538,7 +537,6 @@ class OrdersController extends base_controller_1.default {
                     sourceCollection: collections_1.collections.cart.cartorders,
                     referenceData: JSON.stringify({
                         orderId: orderDetails.orderId,
-                        orderCode: orderDetails.orderCode,
                         allValues: updatedOrderDetails[0]
                     }, null, 2),
                     sourceFromId: orderProductDetails.cartId,
@@ -684,7 +682,6 @@ class OrdersController extends base_controller_1.default {
                     sourceCollection: collections_1.collections.cart.cartorders,
                     referenceData: JSON.stringify({
                         orderId: orderDetails.orderId,
-                        orderCode: orderDetails.orderCode,
                         allValues: updatedOrderDetails[0]
                     }, null, 2),
                     sourceFromId: orderProductDetails.cartId,
@@ -779,7 +776,6 @@ class OrdersController extends base_controller_1.default {
                     sourceCollection: collections_1.collections.cart.cartorders,
                     referenceData: JSON.stringify({
                         orderId: orderDetails.orderId,
-                        orderCode: orderDetails.orderCode,
                         allValues: updatedOrderDetails[0]
                     }, null, 2),
                     sourceFromId: orderProductDetails.cartId,
@@ -1149,7 +1145,6 @@ class OrdersController extends base_controller_1.default {
                 sourceCollection: collections_1.collections.cart.cartorders,
                 referenceData: JSON.stringify({
                     orderId: orderDetails.orderId,
-                    orderCode: orderDetails.orderCode,
                     allValues: updatedOrderDetails[0]
                 }, null, 2),
                 sourceFromId: orderId,
@@ -1213,7 +1208,6 @@ class OrdersController extends base_controller_1.default {
                 //     userId: user._id,
                 //     referenceData: JSON.stringify({
                 //         orderId: orderDetails.orderId,
-                //         orderCode: orderDetails.orderCode,
                 //         countryTitle: currencyCode?.countryTitle,
                 //         allValues: orderDetails
                 //     }, null, 2),

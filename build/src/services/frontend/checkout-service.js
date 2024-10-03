@@ -226,10 +226,10 @@ class CheckoutService {
                     }
                 }
             }
-            const orderId = await this.getNextSequenceValue();
+            // const orderId = await this.getNextSequenceValue();
             cartUpdate = {
                 ...cartUpdate,
-                orderId: orderId,
+                // orderId: orderId,
                 cartStatus: cart_1.cartStatus.order,
                 isGuest: customerDetails.isGuest ?? false,
                 orderStatus: cart_1.orderStatusMap['1'].value,
@@ -239,7 +239,7 @@ class CheckoutService {
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
-                    orderId: orderId,
+                    orderId: cartDetails.orderId,
                     status: false,
                     message: 'Cart updation failed'
                 };
@@ -280,7 +280,7 @@ class CheckoutService {
                     }
                     ejs.renderFile(path_1.default.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
-                        orderId: orderId,
+                        orderId: updateCart.orderId,
                         totalAmount: cartUpdate.totalAmount,
                         totalShippingAmount: updateCart.totalShippingAmount,
                         totalProductAmount: updateCart.totalProductAmount,
@@ -336,13 +336,13 @@ class CheckoutService {
                         }
                         else if (process.env.SHOPNAME === 'Smartbaby') {
                             const sendEmail = await (0, smtp_nodemailer_gateway_1.smtpEmailGateway)(emailValues, template);
-                            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: (0, messages_1.createOrder)(orderId) });
+                            const sendsms = await (0, bulk_sms_gateway_1.bulkSmsGateway)({ ...customerDetails.toObject(), message: (0, messages_1.createOrder)(cartDetails?.orderId) });
                         }
                     });
                 }
                 return {
                     _id: cartDetails?._id,
-                    orderId: orderId,
+                    orderId: cartDetails?.orderId,
                     status: true,
                     message: 'Cart updation success'
                 };

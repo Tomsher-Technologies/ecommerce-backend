@@ -234,10 +234,10 @@ class CheckoutService {
                     }
                 }
             }
-            const orderId = await this.getNextSequenceValue();
+            // const orderId = await this.getNextSequenceValue();
             cartUpdate = {
                 ...cartUpdate,
-                orderId: orderId,
+                // orderId: orderId,
                 cartStatus: cartStatus.order,
                 isGuest: customerDetails.isGuest ?? false,
                 orderStatus: orderStatusMap['1'].value,
@@ -249,7 +249,7 @@ class CheckoutService {
             if (!updateCart) {
                 return {
                     _id: cartDetails?._id,
-                    orderId: orderId,
+                    orderId: cartDetails.orderId,
                     status: false,
                     message: 'Cart updation failed'
                 }
@@ -298,7 +298,7 @@ class CheckoutService {
                     }
                     ejs.renderFile(path.join(__dirname, '../../views/email/order', 'order-creation-email.ejs'), {
                         firstName: customerDetails?.firstName,
-                        orderId: orderId,
+                        orderId: updateCart.orderId,
                         totalAmount: cartUpdate.totalAmount,
                         totalShippingAmount: updateCart.totalShippingAmount,
                         totalProductAmount: updateCart.totalProductAmount,
@@ -355,13 +355,13 @@ class CheckoutService {
                         }
                         else if (process.env.SHOPNAME === 'Smartbaby') {
                             const sendEmail = await smtpEmailGateway(emailValues, template)
-                            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: createOrder(orderId) })
+                            const sendsms = await bulkSmsGateway({ ...customerDetails.toObject(), message: createOrder(cartDetails?.orderId) })
                         }
                     });
                 }
                 return {
                     _id: cartDetails?._id,
-                    orderId: orderId,
+                    orderId: cartDetails?.orderId,
                     status: true,
                     message: 'Cart updation success'
                 }
