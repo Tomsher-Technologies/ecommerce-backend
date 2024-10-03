@@ -34,4 +34,6 @@ export interface OrderQueryParams {
     getcustomer?: string;
     getaddress?: string;
     orderId?: string;
+    orderCodeAfter?: string;
+    orderIdAfter?: string;
 }

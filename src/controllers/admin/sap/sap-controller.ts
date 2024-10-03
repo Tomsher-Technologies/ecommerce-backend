@@ -21,7 +21,7 @@ class SapController extends BaseController {
 
     async getOrderDetails(req: Request, res: Response): Promise<any> {
         try {
-            const { country = '', orderId = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0', page_size = 1, limit = 10, sortby = '', sortorder = '', } = req.query as OrderQueryParams;
+            const { country = '', orderId = '', orderIdAfter = '', orderCodeAfter = '', paymentMethod = '', customer = '', fromDate, endDate, orderStatus = '', getaddress = '1', getcustomer = '0', getpaymentmethod = '0', page_size = 1, limit = 10, sortby = '', sortorder = '', } = req.query as OrderQueryParams;
             let query: any = { _id: { $exists: true } };
 
             query = { cartStatus: { $ne: cartStatusJson.active } }
@@ -66,6 +66,16 @@ class SapController extends BaseController {
                         ...query, orderId
                     } as any;
                 }
+            }
+            if (orderIdAfter) {
+                query = {
+                    ...query, orderId: { $gt: orderIdAfter }
+                } as any;
+            }
+            if (orderCodeAfter) {
+                query = {
+                    ...query, orderCode: { $gt: Number(orderCodeAfter) }
+                } as any;
             }
 
             if (orderStatus) {
@@ -115,9 +125,6 @@ class SapController extends BaseController {
                 totalCount: totalCount.length,
                 message: 'Success!'
             }, 200);
-
-
-
         } catch (error: any) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
         }
