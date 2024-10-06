@@ -204,7 +204,7 @@ class CheckoutService {
                             cartUpdate = {
                                 ...cartUpdate,
                                 totalShippingAmount: finalShippingCharge,
-                                totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(cartUpdate.totalShippingAmount)) + parseInt(finalShippingCharge),
+                                totalAmount: (cartDetails.totalAmount - cartUpdate.totalShippingAmount) + finalShippingCharge,
                             }
                         }
                     }
