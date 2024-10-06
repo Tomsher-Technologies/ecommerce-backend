@@ -17,7 +17,6 @@ const tamaraCheckout = async (tamaraDefaultValues, paymentMethodValues) => {
             referrerPolicy: "no-referrer",
             body: JSON.stringify(tamaraDefaultValues),
         });
-        console.log('tamaraDefaultValues', tamaraDefaultValues);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
