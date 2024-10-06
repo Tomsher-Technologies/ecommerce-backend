@@ -194,7 +194,7 @@ class CheckoutService {
                             cartUpdate = {
                                 ...cartUpdate,
                                 totalShippingAmount: finalShippingCharge,
-                                totalAmount: (cartDetails.totalAmount - cartUpdate.totalShippingAmount) + finalShippingCharge,
+                                totalAmount: (parseInt(cartDetails.totalAmount) - parseInt(cartUpdate.totalShippingAmount)) + parseInt(finalShippingCharge),
                             };
                         }
                     }
@@ -359,7 +359,7 @@ class CheckoutService {
                 if (productAmount) {
                     const couponDiscountAmount = (0, helpers_1.calculateTotalDiscountAmountDifference)(productAmount, discountType, discountAmount);
                     const totalCouponAmount = Number((discountType === cart_1.couponDiscountType.percentage) ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount)) : couponDiscountAmount);
-                    const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
+                    const cartTotalAmount = cartDetails?.totalAmount - Number(totalCouponAmount);
                     cartUpdate = {
                         ...cartUpdate,
                         couponId: couponDetails._id,

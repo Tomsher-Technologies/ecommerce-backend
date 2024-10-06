@@ -430,7 +430,6 @@ class CartController extends BaseController {
                         }
                     }
                 } else {
-                    console.log(Number(productVariantData.cartMaxQuantity));
                     if (productVariantData.cartMinQuantity || productVariantData.cartMaxQuantity) {
                         if ((productVariantData.cartMinQuantity != "") && Number(productVariantData.cartMinQuantity) > quantityProduct) {
                             return controller.sendErrorResponse(res, 200, {
