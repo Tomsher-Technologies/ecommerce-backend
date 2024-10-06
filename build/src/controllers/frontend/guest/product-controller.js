@@ -574,7 +574,7 @@ class ProductController extends base_controller_1.default {
                             ...query, "brand": { $in: brandIds }
                         };
                     }
-                    else {
+                    else if (brandIds.length > 0) {
                         query = {
                             ...query, "brand": { $in: brandIds },
                         };
