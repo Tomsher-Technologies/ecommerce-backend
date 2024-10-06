@@ -381,12 +381,12 @@ class CheckoutService {
                 if (productAmount) {
                     const couponDiscountAmount = calculateTotalDiscountAmountDifference(productAmount, discountType, discountAmount);
                     const totalCouponAmount = Number((discountType === couponDiscountType.percentage) ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount)) : couponDiscountAmount);
-                    const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
+                    const cartTotalAmount = (parseFloat(cartDetails?.totalAmount.toFixed(2)) || 0) - totalCouponAmount;
                     cartUpdate = {
                         ...cartUpdate,
                         couponId: couponDetails._id,
-                        totalAmount: cartTotalAmount,
-                        totalCouponAmount: totalCouponAmount
+                        totalAmount: Number(cartTotalAmount.toFixed(2)),
+                        totalCouponAmount: Number(totalCouponAmount.toFixed(2))
                     };
                 }
             };
@@ -397,7 +397,7 @@ class CheckoutService {
             } else if (couponDetails?.couponType == couponTypes.forProduct) {
                 cartProductDetails.map(async (product: any) => {
                     if (couponDetails?.couponApplyValues.includes((product.productId.toString()))) {
-                        totalAmount += product.productAmount
+                        totalAmount += Number(product.productAmount.toFixed(2));
                     }
                 });
                 updateTotalCouponAmount(totalAmount, couponAmount, discountType)
@@ -407,7 +407,7 @@ class CheckoutService {
                     if (couponDetails?.couponApplyValues.includes((category.categoryId.toString()))) {
                         const matchProduct = cartProductDetails.find((cartProduct: any) => cartProduct.productId.toString() === category.productId.toString());
                         if (matchProduct) {
-                            totalAmount += matchProduct.productAmount
+                            totalAmount += Number(matchProduct.productAmount.toFixed(2));
                         }
                     }
                 });
@@ -418,7 +418,7 @@ class CheckoutService {
                     if (couponDetails?.couponApplyValues.includes((product.brand.toString()))) {
                         const matchProduct = cartProductDetails.find((cartProduct: any) => cartProduct.productId.toString() === product._id.toString());
                         if (matchProduct) {
-                            totalAmount += matchProduct.productAmount
+                            totalAmount += Number(matchProduct.productAmount.toFixed(2));
                         }
                     }
                 });

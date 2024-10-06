@@ -264,19 +264,19 @@ class CartController extends base_controller_1.default {
                 let singleProductDiscountTotal = 0;
                 var cartOrderData;
                 const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });
-                const shippingCharge = (shippingAmount ? Number(shippingAmount.blockValues.shippingCharge) : 0);
+                const shippingCharge = (shippingAmount ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
                 const taxDetails = await tax_model_1.default.findOne({ countryId: country });
                 if (offerProduct) {
                     if (offerProduct && offerProduct.offerType) {
                         if (offerProduct.offerType == offers_1.offerTypes.percent) {
-                            offerAmount = productVariantData.discountPrice > 0 ? (productVariantData.discountPrice * (offerProduct.offerIN / 100)) : (productVariantData.price * (offerProduct.offerIN / 100));
+                            offerAmount = Number(productVariantData.discountPrice) > 0 ? (Number(productVariantData.discountPrice) * (Number(offerProduct.offerIN) / 100)) : (Number(productVariantData.price) * (Number(offerProduct.offerIN) / 100));
                         }
                         if (offerProduct.offerType == offers_1.offerTypes.amountOff) {
-                            offerAmount = offerProduct.offerIN;
+                            offerAmount = Number(offerProduct.offerIN);
                         }
                     }
                 }
-                singleProductTotal = offerAmount > 0 ? ((productVariantData.discountPrice > 0) ? (productVariantData.discountPrice - offerAmount) : (productVariantData.price - offerAmount)) : (productVariantData.discountPrice ? productVariantData.discountPrice : productVariantData.price);
+                singleProductTotal = offerAmount > 0 ? ((Number(productVariantData.discountPrice) > 0) ? (Number(productVariantData.discountPrice) - offerAmount) : (Number(productVariantData.price) - offerAmount)) : (Number(productVariantData.discountPrice) ? Number(productVariantData.discountPrice) : Number(productVariantData.price));
                 if (existingCart) {
                     const existingCartProduct = await cart_order_product_model_1.default.findOne({
                         $and: [
@@ -302,7 +302,7 @@ class CartController extends base_controller_1.default {
                                     totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - existingCartProduct.productDiscountAmount;
                                     totalProductOriginalPrice = existingCart?.totalProductOriginalPrice - existingCartProduct.productOriginalPrice;
                                     totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount;
-                                    const removeGiftWrapAmount = existingCartProduct.giftWrapAmount;
+                                    const removeGiftWrapAmount = Number(existingCartProduct.giftWrapAmount);
                                     const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                                     const cartUpdate = await cart_order_model_1.default.findByIdAndUpdate(existingCartProduct.cartId, {
                                         totalProductAmount: totalAmountOfProduct,
@@ -354,8 +354,8 @@ class CartController extends base_controller_1.default {
                         }
                     }
                     singleProductTotal *= quantityProduct;
-                    singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
-                    singleProductOriginalTotal = quantityProduct * productVariantData.price;
+                    singleProductDiscountTotal = (Number(productVariantData.price) * quantityProduct) - singleProductTotal;
+                    singleProductOriginalTotal = quantityProduct * Number(productVariantData.price);
                     if (!existingCartProduct) {
                         totalDiscountAmountOfProduct = existingCart.totalDiscountAmount + singleProductDiscountTotal;
                         totalAmountOfProduct = existingCart.totalProductAmount + singleProductTotal;
@@ -430,8 +430,8 @@ class CartController extends base_controller_1.default {
                         }
                     }
                     singleProductTotal *= quantityProduct;
-                    singleProductDiscountTotal = (productVariantData.price * quantityProduct) - singleProductTotal;
-                    singleProductOriginalTotal = productVariantData.price * quantityProduct;
+                    singleProductDiscountTotal = (Number(productVariantData.price) * quantityProduct) - singleProductTotal;
+                    singleProductOriginalTotal = Number(productVariantData.price) * quantityProduct;
                     totalDiscountAmountOfProduct = singleProductDiscountTotal;
                     totalAmountOfProduct = singleProductTotal;
                     totalProductOriginalPrice = singleProductOriginalTotal;

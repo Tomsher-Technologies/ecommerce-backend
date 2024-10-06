@@ -603,7 +603,7 @@ class ProductController extends BaseController {
                         query = {
                             ...query, "brand": { $in: brandIds }
                         };
-                    } else {
+                    } else if (brandIds.length > 0) {
                         query = {
                             ...query, "brand": { $in: brandIds },
                         }
