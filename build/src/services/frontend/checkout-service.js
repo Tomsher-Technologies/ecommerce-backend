@@ -359,7 +359,7 @@ class CheckoutService {
                 if (productAmount) {
                     const couponDiscountAmount = (0, helpers_1.calculateTotalDiscountAmountDifference)(productAmount, discountType, discountAmount);
                     const totalCouponAmount = Number((discountType === cart_1.couponDiscountType.percentage) ? Math.min(couponDiscountAmount, Number(couponDetails?.discountMaxRedeemAmount)) : couponDiscountAmount);
-                    const cartTotalAmount = cartDetails?.totalAmount - Number(totalCouponAmount);
+                    const cartTotalAmount = cartDetails?.totalAmount - totalCouponAmount;
                     cartUpdate = {
                         ...cartUpdate,
                         couponId: couponDetails._id,
