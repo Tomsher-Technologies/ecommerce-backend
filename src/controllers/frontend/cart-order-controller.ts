@@ -322,6 +322,7 @@ class CartController extends BaseController {
                                         totalDiscountAmount: totalDiscountAmountOfProduct,
                                         totalShippingAmount: finalShippingCharge,
                                         totalGiftWrapAmount: existingCart.totalGiftWrapAmount - removeGiftWrapAmount,
+                                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(totalAmountOfProduct) * Number(taxDetails.taxPercentage)) / (100 + Number(taxDetails.taxPercentage))).toFixed(2) : 0,
                                         totalAmount: (totalAmountOfProduct + (existingCart.totalGiftWrapAmount - removeGiftWrapAmount)) + finalShippingCharge,
                                     }, { new: true, useFindAndModify: false });
                                 }
@@ -392,7 +393,7 @@ class CartController extends BaseController {
                         totalDiscountAmount: totalDiscountAmountOfProduct,
                         totalShippingAmount: finalShippingCharge,
                         totalGiftWrapAmount: totalGiftWrapAmount,
-                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(totalAmountOfProduct) * Number(taxDetails.taxPercentage)) / (100 + Number(taxDetails.taxPercentage))).toFixed(2) : 0,
                         totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount,
                         isGuest: customer ? false : true
                     };
@@ -466,7 +467,8 @@ class CartController extends BaseController {
                         totalShippingAmount: finalShippingCharge,
 
                         // codAmount: Number(codAmount.blockValues.codCharge),
-                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(totalAmountOfProduct) * Number(taxDetails.taxPercentage)) / (100 + Number(taxDetails.taxPercentage))).toFixed(2) : 0,
+                        // totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
                         totalAmount: totalAmountOfProduct + finalShippingCharge,
                         isGuest: customer ? false : true
                     };

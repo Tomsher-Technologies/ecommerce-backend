@@ -377,11 +377,11 @@
                         </td>
                         <td>
                             <%=currencyCode %>
-                                <%= product.productAmount.toFixed(2)/ product.quantity %>
+                                <%= product.productAmount.toFixed(2) / product.quantity %>
                         </td>
                         <td>
                             <div class="summary-column">
-                                <div>Item subtotal:</div>
+                                <div>Item subtotal(Inclusive of <%=tax.taxTitle%>):</div>
                                 <div>
                                     <%=currencyCode %>
                                         <%= product.productAmount.toFixed(2) %>

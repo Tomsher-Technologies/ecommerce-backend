@@ -23,7 +23,6 @@ import ProductVariantsModel from "../../../model/admin/ecommerce/product/product
 import { tamaraAutoriseOrder, tamaraCheckout } from "../../../lib/payment-gateway/tamara-payments";
 import CartOrdersModel from "../../../model/frontend/cart-order-model";
 import CartOrderProductsModel from "../../../model/frontend/cart-order-product-model";
-import TaxsModel from "../../../model/admin/setup/tax-model";
 
 const controller = new BaseController();
 
