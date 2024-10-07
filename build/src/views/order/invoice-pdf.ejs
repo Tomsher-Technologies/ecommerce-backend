@@ -204,11 +204,11 @@
     </div>
 
     <div class="title">
-      <% if (orderDetails.country.countrySubDomain !== 'kw' && orderDetails.country.countrySubDomain !== 'qa') { %>
+      <% if (orderDetails.country.countrySubDomain !=='kw' && orderDetails.country.countrySubDomain !=='qa' ) { %>
         <b>TAX INVOICE</b>
-      <% } else { %>
-        <b>INVOICE</b>
-      <% } %>
+        <% } else { %>
+          <b>INVOICE</b>
+          <% } %>
     </div>
 
     <div class="row">
@@ -222,16 +222,18 @@
                       <%= storePostalCode %>
           </p>
           <% } %>
-          <% if (tollFreeNo) { %>
-            <p> Toll free number: <%= tollFreeNo %></p>
-        <% } %>
-        <% if (TRNNo) { %>
-          <p>TRN - <%= TRNNo %></p>
-          <% } %>
+            <% if (tollFreeNo) { %>
+              <p> Toll free number: <%= tollFreeNo %>
+              </p>
+              <% } %>
+                <% if (TRNNo) { %>
+                  <p>TRN - <%= TRNNo %>
+                  </p>
+                  <% } %>
       </div>
       <div class="column text-right">
         <% if(orderDetails.shippingAddress) { %>
-        <strong>Shipped To:</strong>
+          <strong>Shipped To:</strong>
           <p>
             <%= orderDetails.shippingAddress.name %><br>
               <%= orderDetails.shippingAddress.address1 %>,<br>
@@ -241,17 +243,17 @@
           </p>
           <% } %>
 
-          <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length > 0) { %>
-            <strong>Pickup store address:</strong>
+            <% if(orderDetails.pickupFromStore && Object.keys(orderDetails.pickupFromStore).length> 0) { %>
+              <strong>Pickup store address:</strong>
               <p>
                 <%= orderDetails.pickupFromStore.storeTitle %><br>
                   <%= orderDetails.pickupFromStore.storeAddress %>,<br>
-                    <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,--> Email -<%= 
-                          orderDetails.pickupFromStore.storeEmail %><br>
-                          Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
+                    <!-- <%= orderDetails.pickupFromStore.city %>, <%= orderDetails.pickupFromStore.state %>,--> Email -
+                    <%= orderDetails.pickupFromStore.storeEmail %><br>
+                      Phone No. - <%= orderDetails.pickupFromStore.storePhone %>
               </p>
               <% } %>
-          </div>
+      </div>
     </div>
 
     <div class="row">
@@ -282,167 +284,171 @@
           <% } else { %>
             <p>
               <% if(orderDetails.shippingAddress!=null) { %>
-              <%= orderDetails.shippingAddress.name %><br>
-                <%= orderDetails.shippingAddress.address1 %>,<br>
-                  <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
-                        orderDetails.shippingAddress.country %>
-                        <% } %>
-   
+                <%= orderDetails.shippingAddress.name %><br>
+                  <%= orderDetails.shippingAddress.address1 %>,<br>
+                    <%= orderDetails.shippingAddress.city %>, <%= orderDetails.shippingAddress.state %>, <%=
+                          orderDetails.shippingAddress.country %>
+                          <% } %>
+
             </p>
             <% } %>
       </div>
     </div>
-    <% if(shop==='Homestyle') { %>
-    <div class="row">
-      <div class="column">
-        <strong>Shipping Note:</strong>
-        <p>
-          <%= orderDetails.orderComments %>
-        </p>
+    <% if(shop==='Homestyle' ) { %>
+      <div class="row">
+        <div class="column">
+          <strong>Shipping Note:</strong>
+          <p>
+            <%= orderDetails.orderComments %>
+          </p>
+        </div>
       </div>
-    </div>
-    <% } %>
-    <hr>
+      <% } %>
+        <hr>
 
-    <h3>Order summary</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Item</th>
-          <th>MRP</th>
-          <th>Price</th>
-          <th>Quantity</th>
-          <th class="text-right-cell">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% orderDetails.products.forEach(product=> { %>
-          <tr>
-            <td>
-              <%= product.productDetails.variantDetails.variantSku %>
-            </td>
-            <td>
-              <% if (product.productDetails.variantDetails.extraProductTitle &&
-                product.productDetails.variantDetails.extraProductTitle !=='' ) { %>
-                <%= product.productDetails.variantDetails.extraProductTitle %>
-                  <% } else { %>
-                    <%= product.productDetails.productTitle %>
-                      <% } %>
-            </td>
-            <td>
-              <%= product.productDetails.variantDetails.price.toFixed(2) %>
-            </td>
-            <td>
-              <%= product.productAmount.toFixed(2) %>
-            </td>
-            <td>
-              <%= product.quantity %><% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %><% } %>
-            </td>
-            <td class="text-right-cell">
-              <%= product.productAmount.toFixed(2) %>
-            </td>
-          </tr>
-          <% }); %>
-          <% if (orderDetails.totalProductOriginalPrice> 0) { %>
-            <tr class="summary-row">
-              <td colspan="5" class="text-right-cell">Total MRP</td>
-              <td class="text-right-cell">
-                <%=currencyCode %>
-                  <%= orderDetails.totalProductOriginalPrice.toFixed(2) %>
-              </td>
+        <h3>Order summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Item</th>
+              <th>MRP</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th class="text-right-cell">Total</th>
             </tr>
-            <% } %>
-            <% if (orderDetails.totalDiscountAmount> 0) { %>
-              <tr class="summary-row">
-                <td colspan="5" class="text-right-cell">Discount</td>
+          </thead>
+          <tbody>
+            <% orderDetails.products.forEach(product=> { %>
+              <tr>
+                <td>
+                  <%= product.productDetails.variantDetails.variantSku %>
+                </td>
+                <td>
+                  <% if (product.productDetails.variantDetails.extraProductTitle &&
+                    product.productDetails.variantDetails.extraProductTitle !=='' ) { %>
+                    <%= product.productDetails.variantDetails.extraProductTitle %>
+                      <% } else { %>
+                        <%= product.productDetails.productTitle %>
+                          <% } %>
+                </td>
+                <td>
+                  <%= product.productDetails.variantDetails.price.toFixed(2) %>
+                </td>
+                <td>
+                  <%= product.productAmount.toFixed(2) / product.quantity %>
+                </td>
+                <td>
+                  <%= product.quantity %>
+                    <% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %>
+                        <% } %>
+                </td>
                 <td class="text-right-cell">
-                  <%=currencyCode %>
-                    <%= orderDetails.totalDiscountAmount.toFixed(2) %>
+                  <%= product.productAmount.toFixed(2) %>
                 </td>
               </tr>
-              <% } %>
-
-              <% if (orderDetails.totalProductOriginalPrice> 0) { %>
-                <tr class="summary-row">
-                  <td colspan="5" class="text-right-cell">Sub Total</td>
-                  <td class="text-right-cell">
-                    <%=currencyCode %>
-                      <%= orderDetails.totalProductAmount.toFixed(2) %>
-                  </td>
-                </tr>
-                <% } %>
-              <% if (orderDetails.totalCouponAmount> 0) { %>
-                <tr class="summary-row">
-                  <td colspan="5" class="text-right-cell">Coupon</td>
-                  <td class="text-right-cell">
-                    <%=currencyCode %>
-                      <%= orderDetails.totalCouponAmount.toFixed(2) %>
-                  </td>
-                </tr>
-                <% } %>
-              <% if (orderDetails.totalGiftWrapAmount> 0) { %>
-                <tr class="summary-row">
-                  <td colspan="5" class="text-right-cell">Gift Wrap Charge</td>
-                  <td class="text-right-cell">
-                    <%=currencyCode %>
-                      <%= orderDetails.totalGiftWrapAmount.toFixed(2) %>
-                  </td>
-                </tr>
-                <% } %>
-
-                <!-- <tr class="summary-row">
-                  <td colspan="5" class="text-right-cell">Sub Total</td>
-                  <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
-                  </td>
-                </tr> -->
-                <% if (tax && Number(tax.taxPercentage)> 0) { %>
+              <% }); %>
+                <% if (orderDetails.totalProductOriginalPrice> 0) { %>
                   <tr class="summary-row">
-                    <td colspan="5" class="text-right-cell">
-                      <%=tax.taxTitle%>
-                        <%=tax.taxPercentage%>%
-                    </td>
+                    <td colspan="5" class="text-right-cell">Total MRP</td>
                     <td class="text-right-cell">
                       <%=currencyCode %>
-                        <%= orderDetails.totalTaxAmount %>
+                        <%= orderDetails.totalProductOriginalPrice.toFixed(2) %>
                     </td>
                   </tr>
                   <% } %>
-
-                    <% if (orderDetails.paymentMethodCharge> 0) { %>
+                    <% if (orderDetails.totalDiscountAmount> 0) { %>
                       <tr class="summary-row">
-                        <td colspan="5" class="text-right-cell">COD Charges</td>
+                        <td colspan="5" class="text-right-cell">Discount</td>
                         <td class="text-right-cell">
                           <%=currencyCode %>
-                            <%= orderDetails.paymentMethodCharge.toFixed(2) %>
+                            <%= orderDetails.totalDiscountAmount.toFixed(2) %>
                         </td>
                       </tr>
                       <% } %>
 
-                        <% if (orderDetails.totalShippingAmount> 0) { %>
+                        <% if (orderDetails.totalProductOriginalPrice> 0) { %>
                           <tr class="summary-row">
-                            <td colspan="5" class="text-right-cell">Delivery Charges</td>
+                            <td colspan="5" class="text-right-cell">Sub Total(Inclusive of <%=tax.taxTitle%>)</td>
                             <td class="text-right-cell">
                               <%=currencyCode %>
-                                <%= orderDetails.totalShippingAmount.toFixed(2) %>
+                                <%= orderDetails.totalProductAmount.toFixed(2) %>
                             </td>
                           </tr>
                           <% } %>
+                            <% if (orderDetails.totalCouponAmount> 0) { %>
+                              <tr class="summary-row">
+                                <td colspan="5" class="text-right-cell">Coupon</td>
+                                <td class="text-right-cell">
+                                  <%=currencyCode %>
+                                    <%= orderDetails.totalCouponAmount.toFixed(2) %>
+                                </td>
+                              </tr>
+                              <% } %>
+                                <% if (orderDetails.totalGiftWrapAmount> 0) { %>
+                                  <tr class="summary-row">
+                                    <td colspan="5" class="text-right-cell">Gift Wrap Charge</td>
+                                    <td class="text-right-cell">
+                                      <%=currencyCode %>
+                                        <%= orderDetails.totalGiftWrapAmount.toFixed(2) %>
+                                    </td>
+                                  </tr>
+                                  <% } %>
 
-                            <tr class="summary-row">
-                              <td colspan="5" class="text-right-cell">Total <% if (tax && tax.taxTitle) { %>(Inclusive of <%=tax.taxTitle%>)<% } %></td>
-                              <td class="text-right-cell">
-                                <%=currencyCode %>
-                                  <%= orderDetails.totalAmount.toFixed(2) %>
-                              </td>
-                            </tr>
-      </tbody>
-    </table>
+                                    <!-- <tr class="summary-row">
+                  <td colspan="5" class="text-right-cell">Sub Total</td>
+                  <td class="text-right-cell"><%=currencyCode %> <%= orderDetails.totalAmount %>
+                  </td>
+                </tr> -->
+                                    <% if (tax && Number(tax.taxPercentage)> 0) { %>
+                                      <tr class="summary-row">
+                                        <td colspan="5" class="text-right-cell">
+                                          <%=tax.taxTitle%>
+                                            <%=tax.taxPercentage%>%
+                                        </td>
+                                        <td class="text-right-cell">
+                                          <%=currencyCode %>
+                                            <%= orderDetails.totalTaxAmount %>
+                                        </td>
+                                      </tr>
+                                      <% } %>
+
+                                        <% if (orderDetails.paymentMethodCharge> 0) { %>
+                                          <tr class="summary-row">
+                                            <td colspan="5" class="text-right-cell">COD Charges</td>
+                                            <td class="text-right-cell">
+                                              <%=currencyCode %>
+                                                <%= orderDetails.paymentMethodCharge.toFixed(2) %>
+                                            </td>
+                                          </tr>
+                                          <% } %>
+
+                                            <% if (orderDetails.totalShippingAmount> 0) { %>
+                                              <tr class="summary-row">
+                                                <td colspan="5" class="text-right-cell">Delivery Charges</td>
+                                                <td class="text-right-cell">
+                                                  <%=currencyCode %>
+                                                    <%= orderDetails.totalShippingAmount.toFixed(2) %>
+                                                </td>
+                                              </tr>
+                                              <% } %>
+
+                                                <tr class="summary-row">
+                                                  <td colspan="5" class="text-right-cell">Total <% if (tax &&
+                                                      tax.taxTitle) { %>(Inclusive of <%=tax.taxTitle%>)<% } %>
+                                                  </td>
+                                                  <td class="text-right-cell">
+                                                    <%=currencyCode %>
+                                                      <%= orderDetails.totalAmount.toFixed(2) %>
+                                                  </td>
+                                                </tr>
+          </tbody>
+        </table>
 
   </div>
   <p style="font-size: 10px; color: #6d6e71; text-align: center; font-style: italic; margin-top: 20px;">
     This document is computer generated and does not require the signature or the stamp in order to be considered valid.
-</p>
+  </p>
 </body>
 
 </html>
