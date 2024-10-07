@@ -333,7 +333,7 @@
                           <% } %>
                 </td>
                 <td>
-                  <%= product.productOriginalPrice.toFixed(2) / product.quantity  %>
+                  <%= (Number(product.productOriginalPrice).toFixed(2) / product.quantity) %>
                 </td>
                 <td>
                   <%= product.productAmount.toFixed(2) / product.quantity %>
