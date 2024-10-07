@@ -277,7 +277,7 @@ class CartController extends BaseController {
 
                 var cartOrderData
                 const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: country })
-                const shippingCharge = (shippingAmount ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
+                const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
                 const taxDetails: any = await TaxsModel.findOne({ countryId: country })
 
                 if (offerProduct) {
@@ -311,11 +311,11 @@ class CartController extends BaseController {
                                 if (checkCartProducts && checkCartProducts.length == 0) {
                                     const deletedData = await CartService.destroy(existingCartProduct.cartId);
                                 } else {
-                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - existingCartProduct.productDiscountAmount
-                                    totalProductOriginalPrice = existingCart?.totalProductOriginalPrice - existingCartProduct.productOriginalPrice
-                                    totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount
-                                    const removeGiftWrapAmount = Number(existingCartProduct.giftWrapAmount)
-                                    const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0
+                                    totalDiscountAmountOfProduct = existingCart?.totalDiscountAmount - existingCartProduct.productDiscountAmount;
+                                    totalProductOriginalPrice = existingCart?.totalProductOriginalPrice - existingCartProduct.productOriginalPrice;
+                                    totalAmountOfProduct = existingCart?.totalProductAmount - existingCartProduct.productAmount;
+                                    const removeGiftWrapAmount = Number(existingCartProduct.giftWrapAmount);
+                                    const finalShippingCharge = shippingCharge > 0 ? ((totalAmountOfProduct) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
                                     const cartUpdate = await CartOrdersModel.findByIdAndUpdate(existingCartProduct.cartId, {
                                         totalProductAmount: totalAmountOfProduct,
                                         totalProductOriginalPrice: totalProductOriginalPrice,
@@ -392,7 +392,7 @@ class CartController extends BaseController {
                         totalDiscountAmount: totalDiscountAmountOfProduct,
                         totalShippingAmount: finalShippingCharge,
                         totalGiftWrapAmount: totalGiftWrapAmount,
-                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
                         totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount,
                         isGuest: customer ? false : true
                     };
@@ -466,7 +466,7 @@ class CartController extends BaseController {
                         totalShippingAmount: finalShippingCharge,
 
                         // codAmount: Number(codAmount.blockValues.codCharge),
-                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
                         totalAmount: totalAmountOfProduct + finalShippingCharge,
                         isGuest: customer ? false : true
                     };
