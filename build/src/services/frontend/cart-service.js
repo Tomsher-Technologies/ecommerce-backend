@@ -119,7 +119,11 @@ class CartService {
     }
     async updateCartPrice(options) {
         const { cartDetails, countryId, cartOrderProductUpdateOperations } = options;
-        if (cartOrderProductUpdateOperations.length > 0) {
+        const totalProductAmount = cartDetails.products.reduce((total, product) => {
+            return total + product.productAmount;
+        }, 0);
+        const totalAmount = totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount;
+        if (cartOrderProductUpdateOperations.length > 0 || totalAmount !== cartDetails.totalAmount) {
             await cart_order_product_model_1.default.bulkWrite(cartOrderProductUpdateOperations);
             const [aggregationResult] = await cart_order_product_model_1.default.aggregate([
                 { $match: { cartId: cartDetails._id } },

@@ -29,7 +29,7 @@ class CartController extends BaseController {
 
     async findUserCart(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 20, sortby = '', sortorder = '' } = req.query as QueryParams;
+            const { page_size = 1, limit = 200, sortby = '', sortorder = '' } = req.query as QueryParams;
             let country = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
             if (!country) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
@@ -137,13 +137,14 @@ class CartController extends BaseController {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            const cartDetails: any = await CartService.findCartPopulate({
+            let cartDetails: any = await CartService.findCartPopulate({
                 query,
                 hostName: req.get('origin'),
                 simple: '1'
             });
 
             if (cartDetails && Object.keys(cartDetails).length > 0) {
+
                 const variantIds = cartDetails.products.map((product: any) => product.variantId);
                 const productVariants = await ProductVariantsModel.find({
                     _id: { $in: variantIds }
@@ -161,22 +162,23 @@ class CartController extends BaseController {
                     countryId: country,
                     cartOrderProductUpdateOperations
                 });
-            }
-            else {
+            } else {
                 return controller.sendErrorResponse(res, 200, {
                     message: 'Active cart not fount1'
                 });
             }
-            const cart: any = await CartService.findCartPopulate({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query,
-                hostName: req.get('origin'),
-                sort
-            });
-            if (cart) {
+            if (!cartDetails) {
+                cartDetails = await CartService.findCartPopulate({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query,
+                    hostName: req.get('origin'),
+                    sort
+                });
+            }
+            if (cartDetails) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: cart,
+                    requestedData: cartDetails,
                     message: 'Your cart is ready!'
                 });
             } else {

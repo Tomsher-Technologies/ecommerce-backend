@@ -122,6 +122,7 @@ const invoicePdfGenerator = async (res, req, orderDetails, basicDetailsSettings,
         });
     }
     else {
+        console.log('here');
         ejs.renderFile(path_1.default.join(__dirname, '../../views/order', 'invoice-pdf.ejs'), pdfGenerateData, async (err, html) => {
             if (err) {
                 return false;

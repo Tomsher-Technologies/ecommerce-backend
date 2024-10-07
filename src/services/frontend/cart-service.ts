@@ -132,7 +132,12 @@ class CartService {
 
     async updateCartPrice(options: { cartDetails: any; countryId: ObjectId; cartOrderProductUpdateOperations: any }): Promise<any> {
         const { cartDetails, countryId, cartOrderProductUpdateOperations } = options;
-        if (cartOrderProductUpdateOperations.length > 0) {
+
+        const totalProductAmount = cartDetails.products.reduce((total: number, product: any) => {
+            return total + product.productAmount;
+        }, 0);
+        const totalAmount = totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount
+        if (cartOrderProductUpdateOperations.length > 0 || totalAmount !== cartDetails.totalAmount) {
             await CartOrderProductsModel.bulkWrite(cartOrderProductUpdateOperations);
             const [aggregationResult] = await CartOrderProductsModel.aggregate([
                 { $match: { cartId: cartDetails._id } },
