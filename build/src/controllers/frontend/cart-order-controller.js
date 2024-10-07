@@ -26,7 +26,7 @@ const controller = new base_controller_1.default();
 class CartController extends base_controller_1.default {
     async findUserCart(req, res) {
         try {
-            const { page_size = 1, limit = 20, sortby = '', sortorder = '' } = req.query;
+            const { page_size = 1, limit = 200, sortby = '', sortorder = '' } = req.query;
             let country = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
             if (!country) {
                 return controller.sendErrorResponse(res, 500, { message: 'Country is missing' });
@@ -129,7 +129,7 @@ class CartController extends base_controller_1.default {
             if (sortby && sortorder) {
                 sort[sortby] = sortorder === 'desc' ? -1 : 1;
             }
-            const cartDetails = await cart_service_1.default.findCartPopulate({
+            let cartDetails = await cart_service_1.default.findCartPopulate({
                 query,
                 hostName: req.get('origin'),
                 simple: '1'
@@ -158,16 +158,18 @@ class CartController extends base_controller_1.default {
                     message: 'Active cart not fount1'
                 });
             }
-            const cart = await cart_service_1.default.findCartPopulate({
-                page: parseInt(page_size),
-                limit: parseInt(limit),
-                query,
-                hostName: req.get('origin'),
-                sort
-            });
-            if (cart) {
+            if (!cartDetails) {
+                cartDetails = await cart_service_1.default.findCartPopulate({
+                    page: parseInt(page_size),
+                    limit: parseInt(limit),
+                    query,
+                    hostName: req.get('origin'),
+                    sort
+                });
+            }
+            if (cartDetails) {
                 return controller.sendSuccessResponse(res, {
-                    requestedData: cart,
+                    requestedData: cartDetails,
                     message: 'Your cart is ready!'
                 });
             }
