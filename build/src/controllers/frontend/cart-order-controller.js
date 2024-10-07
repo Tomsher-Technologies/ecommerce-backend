@@ -264,7 +264,7 @@ class CartController extends base_controller_1.default {
                 let singleProductDiscountTotal = 0;
                 var cartOrderData;
                 const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: country });
-                const shippingCharge = (shippingAmount ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
+                const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
                 const taxDetails = await tax_model_1.default.findOne({ countryId: country });
                 if (offerProduct) {
                     if (offerProduct && offerProduct.offerType) {
@@ -380,7 +380,7 @@ class CartController extends base_controller_1.default {
                         totalDiscountAmount: totalDiscountAmountOfProduct,
                         totalShippingAmount: finalShippingCharge,
                         totalGiftWrapAmount: totalGiftWrapAmount,
-                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
                         totalAmount: totalAmountOfProduct + finalShippingCharge + totalGiftWrapAmount,
                         isGuest: customer ? false : true
                     };
@@ -447,7 +447,7 @@ class CartController extends base_controller_1.default {
                         totalDiscountAmount: totalDiscountAmountOfProduct,
                         totalShippingAmount: finalShippingCharge,
                         // codAmount: Number(codAmount.blockValues.codCharge),
-                        totalTaxAmount: taxDetails ? ((taxDetails.taxPercentage / 100) * totalAmountOfProduct).toFixed(2) : 0,
+                        totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * totalAmountOfProduct).toFixed(2) : 0,
                         totalAmount: totalAmountOfProduct + finalShippingCharge,
                         isGuest: customer ? false : true
                     };
