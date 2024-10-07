@@ -332,8 +332,12 @@
                         <%= product.productDetails.productTitle %>
                           <% } %>
                 </td>
-              
-              
+                <td>
+                  <%= (Number(product.productOriginalPrice).toFixed(2) / product.quantity).toFixed(2) %>
+                </td>
+                <td>
+                  <%= product.productAmount.toFixed(2) / product.quantity %>
+                </td>
                 <td>
                   <%= product.quantity %>
                     <% if (product.productDetails.unit> 0) { %>-<%= product.productDetails.unit %>
