@@ -123,15 +123,16 @@ class CheckoutController extends BaseController {
                         productTitle,
                     })
                 }
-                await CartService.updateCartPrice({ // price updation
+                const updatedCartOrderValues = await CartService.updateCartPrice({ // price updation
                     cartDetails,
                     countryId: countryData._id,
                     cartOrderProductUpdateOperations
                 })
 
-                if (errorArray.length > 0) {
+                if (errorArray.length > 0 || updatedCartOrderValues) {
+                    const errorMessage = updatedCartOrderValues ? 'Please refresh your cart' : ''
                     return controller.sendErrorResponse(res, 200, {
-                        validation: errorArray,
+                        validation: errorMessage ?? errorArray,
                         message: 'Validation error',
                     });
                 }
