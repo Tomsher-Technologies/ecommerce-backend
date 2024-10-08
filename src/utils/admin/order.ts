@@ -124,7 +124,7 @@ export const invoicePdfGenerator = async (res: Response, req: Request, orderDeta
                 await pdfGenerator({ html, res, preview: req.query.preview })
             });
     } else {
-        console.log('here');
+        // console.log('here', JSON.stringify(pdfGenerateData, null, 2));
         ejs.renderFile(path.join(__dirname, '../../views/order', 'invoice-pdf.ejs'),
             pdfGenerateData,
             async (err: any, html: any) => {

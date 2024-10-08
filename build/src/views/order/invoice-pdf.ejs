@@ -369,9 +369,14 @@
 
                         <% if (orderDetails.totalProductOriginalPrice> 0) { %>
                           <tr class="summary-row">
-                            <td colspan="5" class="text-right-cell">Sub Total(Inclusive of <%=tax.taxTitle%>)</td>
+                            <td colspan="5" class="text-right-cell">
+                              Sub Total
+                              <% if (tax && tax.taxTitle) { %>
+                                (Inclusive of <%= tax.taxTitle %>)
+                                  <% } %>
+                            </td>
                             <td class="text-right-cell">
-                              <%=currencyCode %>
+                              <%= currencyCode %>
                                 <%= orderDetails.totalProductAmount.toFixed(2) %>
                             </td>
                           </tr>

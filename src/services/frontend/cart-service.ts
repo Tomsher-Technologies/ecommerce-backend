@@ -155,12 +155,13 @@ class CartService {
             if (aggregationResult) {
                 const { _id, ...restValues } = aggregationResult;
                 if (restValues) {
-                    const updatedCartOrderValues = await CartOrdersModel.findByIdAndUpdate(cartDetails._id, {
+                    const updatedCartOrderValues = await CartOrdersModel.findOneAndUpdate(cartDetails._id, {
                         ...restValues,
                         totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount,
                         totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(restValues.totalProductAmount) * Number(taxDetails.taxPercentage)) / (100 + Number(taxDetails.taxPercentage))).toFixed(2) : 0,
                         // totalTaxAmount: (taxDetails && Number(taxDetails?.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * Number(restValues.totalProductAmount)).toFixed(2) : 0
                     });
+                    return updatedCartOrderValues;
                 }
             }
         }

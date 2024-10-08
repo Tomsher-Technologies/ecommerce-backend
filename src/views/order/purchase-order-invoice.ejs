@@ -299,7 +299,7 @@
                         <td>
                             <strong>Order Date:</strong>
                             <%= new Date(orderDetails.orderStatusAt).toLocaleString() %>
-                                                        <!-- <div class="order-details-separator"></div> -->
+                                <!-- <div class="order-details-separator"></div> -->
                                 <!-- <strong>Shipping Service:</strong> Standard -->
                                 <div class="order-details-separator"></div>
                                 <strong>Payment Method:</strong>
@@ -349,10 +349,9 @@
                                          <%= apiAppUrl%><%= product.productDetails.variantDetails.variantImageUrl %>
                                        <% } else { %>
                                          <%= apiAppUrl%><%= product.productDetails.productImageUrl %>
-                                       <% } %>"
-                                 class="product-img" alt="Product Image" crossorigin="anonymous"
-                                 style="width: 75px; height: 75px;">
-                          </td>
+                                       <% } %>" class="product-img" alt="Product Image" crossorigin="anonymous"
+                                style="width: 75px; height: 75px;">
+                        </td>
                         <td>
                             <% if (product.productDetails.variantDetails.productVariantAttributes.length> 0) { %>
                                 <% product.productDetails.variantDetails.productVariantAttributes.forEach(function(attribute)
@@ -381,7 +380,12 @@
                         </td>
                         <td>
                             <div class="summary-column">
-                                <div>Item subtotal(Inclusive of <%=tax.taxTitle%>):</div>
+                                <div>
+                                    Item subtotal
+                                    <% if (tax && tax.taxTitle) { %>
+                                        (Inclusive of <%= tax.taxTitle %>)
+                                            <% } %>:
+                                </div>
                                 <div>
                                     <%=currencyCode %>
                                         <%= product.productAmount.toFixed(2) %>
@@ -416,7 +420,8 @@
                 <div class="row">
                     <div>Gift Wrap Charge</div>
                     <div>
-                        <%=currencyCode %> <%= orderDetails.totalGiftWrapAmount.toFixed(2) %>
+                        <%=currencyCode %>
+                            <%= orderDetails.totalGiftWrapAmount.toFixed(2) %>
                     </div>
                 </div>
                 <% } %>
@@ -424,7 +429,8 @@
                         <div class="row">
                             <div>Coupon</div>
                             <div>
-                                <%=currencyCode %> <%= orderDetails.totalCouponAmount.toFixed(2) %>
+                                <%=currencyCode %>
+                                    <%= orderDetails.totalCouponAmount.toFixed(2) %>
                             </div>
                         </div>
                         <% } %>
@@ -432,11 +438,12 @@
                                 <div class="row">
                                     <div>COD Charges</div>
                                     <div>
-                                        <%=currencyCode %> <%= orderDetails.paymentMethodCharge.toFixed(2) %>
+                                        <%=currencyCode %>
+                                            <%= orderDetails.paymentMethodCharge.toFixed(2) %>
                                     </div>
                                 </div>
                                 <% } %>
-                                <% if (orderDetails.totalShippingAmount> 0) { %>
+                                    <% if (orderDetails.totalShippingAmount> 0) { %>
                                         <div class="row">
                                             <div>Delivery Charges</div>
                                             <div>
@@ -451,7 +458,9 @@
                                                 <div>
                                                     <strong>
                                                         <%= currencyCode %>
-                                                        <%= (parseFloat(orderDetails.totalAmount.toFixed(2)) - parseFloat(orderDetails.totalReturnedProductAmount.toFixed(2))).toFixed(2) %>
+                                                            <%= (parseFloat(orderDetails.totalAmount.toFixed(2)) -
+                                                                parseFloat(orderDetails.totalReturnedProductAmount.toFixed(2))).toFixed(2)
+                                                                %>
                                                     </strong>
                                                 </div>
                                             </div>

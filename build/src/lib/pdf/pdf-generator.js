@@ -7,6 +7,7 @@ exports.pdfGenerator = void 0;
 const puppeteer_1 = __importDefault(require("puppeteer"));
 const pdfGenerator = async ({ html, res, preview, bulkExport = false }) => {
     let browser = null;
+    console.log('html', html);
     try {
         browser = await puppeteer_1.default.launch({
             headless: true,

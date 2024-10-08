@@ -371,7 +371,12 @@
                     <td><%=currencyCode %> <%= product.productAmount.toFixed(2)/ product.quantity %></td>
                     <td>
                         <div class="summary-column">
-                            <div>Item subtotal(Inclusive of <%=tax.taxTitle%>):</div>
+                            <div>
+                                Item subtotal
+                                <% if (tax && tax.taxTitle) { %>
+                                  (Inclusive of <%= tax.taxTitle %>)
+                                <% } %>:
+                              </div>
                             <div><%=currencyCode %> <%= product.productAmount.toFixed(2) %></div>
                             
                             <div>Refund:</div>

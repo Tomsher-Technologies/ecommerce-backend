@@ -113,14 +113,15 @@ class CheckoutController extends base_controller_1.default {
                         productTitle,
                     });
                 }
-                await cart_service_1.default.updateCartPrice({
+                const updatedCartOrderValues = await cart_service_1.default.updateCartPrice({
                     cartDetails,
                     countryId: countryData._id,
                     cartOrderProductUpdateOperations
                 });
-                if (errorArray.length > 0) {
+                if (errorArray.length > 0 || updatedCartOrderValues) {
+                    const errorMessage = updatedCartOrderValues ? 'Please refresh your cart' : '';
                     return controller.sendErrorResponse(res, 200, {
-                        validation: errorArray,
+                        validation: errorMessage ?? errorArray,
                         message: 'Validation error',
                     });
                 }
