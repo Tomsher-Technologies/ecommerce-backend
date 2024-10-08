@@ -133,7 +133,7 @@ class CheckoutService {
                     stateId: null,
                     cityId: null,
                     totalCouponAmount: 0,
-                    totalAmount: cartUpdate.totalCouponAmount > 0 ? cartUpdate.totalAmount - cartUpdate.totalCouponAmount : cartUpdate.totalAmount,
+                    totalAmount: cartUpdate.totalCouponAmount > 0 ? cartUpdate.totalAmount + cartUpdate.totalCouponAmount : cartUpdate.totalAmount,
                 };
                 await cart_order_model_1.default.findByIdAndUpdate(cartDetails._id, cartUpdate, { new: true, useFindAndModify: false });
                 return {
