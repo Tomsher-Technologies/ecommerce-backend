@@ -20,23 +20,9 @@ class CouponService {
         return coupon_model_1.default.aggregate(pipeline).exec();
     }
     async checkCouponCode(options) {
-        const { query, user, deviceType, uuid } = options;
+        const { query, user, deviceType, uuid, clearActiveCartCoupon = '0' } = options;
         const currentDate = new Date();
         try {
-            let cartQuery = { cartStatus: '1' };
-            if (user && user._id) {
-                cartQuery.customerId = user._id;
-            }
-            else if (uuid) {
-                cartQuery.guestUserId = uuid;
-            }
-            const cartDetails = await cart_service_1.default.findOneCart(cartQuery);
-            if (!cartDetails) {
-                return {
-                    status: false,
-                    message: 'Active cart is not found!'
-                };
-            }
             const couponDetails = await this.findOne({
                 ...query,
                 status: '1',
@@ -49,6 +35,47 @@ class CouponService {
                 return {
                     status: false,
                     message: 'Coupon not found!'
+                };
+            }
+            if (clearActiveCartCoupon === '1') {
+                const activeCartCouponUsedQuery = {
+                    couponId: couponDetails._id,
+                    cartStatus: cart_1.cartStatus.active
+                };
+                if (user && user._id) {
+                    activeCartCouponUsedQuery.customerId = user._id;
+                }
+                else if (uuid) {
+                    activeCartCouponUsedQuery.guestUserId = uuid;
+                }
+                const update = await cart_order_model_1.default.updateMany({
+                    ...activeCartCouponUsedQuery,
+                    totalCouponAmount: { $gt: 0 }
+                }, [
+                    {
+                        $set: {
+                            couponId: null,
+                            totalCouponAmount: 0,
+                            totalAmount: {
+                                $subtract: ["$totalAmount", "$totalCouponAmount"] // Update totalAmount by subtracting totalCouponAmount
+                            }
+                        }
+                    }
+                ]);
+                console.log('update', update);
+            }
+            let cartQuery = { cartStatus: '1' };
+            if (user && user._id) {
+                cartQuery.customerId = user._id;
+            }
+            else if (uuid) {
+                cartQuery.guestUserId = uuid;
+            }
+            const cartDetails = await cart_service_1.default.findOneCart(cartQuery);
+            if (!cartDetails) {
+                return {
+                    status: false,
+                    message: 'Active cart is not found!'
                 };
             }
             if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
