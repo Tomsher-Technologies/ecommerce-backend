@@ -191,9 +191,7 @@ class ProductsController extends BaseController {
                                                 const slugData = newProduct?.productTitle + "-" + countryData.countryShortTitle + '-' + (productVariantsIndex + 1) // generate slug
                                                 if (slugData !== '') {
                                                     if (((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]))) {
-
                                                         const checkDuplication = await ProductVariantService.checkDuplication(variants[variantsIndex].countryId, variants[variantsIndex].productVariants[productVariantsIndex], slugify(slugData))
-
                                                         if (checkDuplication) {
                                                             await deleteFunction(newProduct._id)
                                                             return controller.sendErrorResponse(res, 200, {
@@ -243,13 +241,11 @@ class ProductsController extends BaseController {
 
                                                         if ((variants[variantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex]) && (variants[variantsIndex].productVariants[productVariantsIndex].productSpecification) && ((variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length > 0)) {
                                                             for (let j = 0; j < (variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification.length; j++) {
-
                                                                 const specificationData = {
                                                                     productId: newProduct._id,
                                                                     variantId: productVariantData._id,
                                                                     ...(variants as any)[variantsIndex].productVariants[productVariantsIndex].productSpecification[j]
                                                                 }
-
                                                                 await ProductSpecificationService.create(specificationData)
                                                             }
                                                         }
@@ -268,31 +264,11 @@ class ProductsController extends BaseController {
                                                     validation: 'Country is required'
                                                 }, req);
                                             }
-
                                         }
-
                                     }
-
                                 }
-
                             }
-
                         }
-
-
-
-                        // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        //     file.fieldname &&
-                        //     file.fieldname.startsWith('languageValues[') &&
-                        //     file.fieldname.includes('[productImage]')
-                        // );
-                        // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        //     file.fieldname &&
-                        //     file.fieldname.startsWith('languageValues[') &&
-                        //     file.fieldname.includes('[languageValues][galleryImage]')
-                        // );
-
-
                         if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
                             await languageValues?.map(async (languageValue: any, index: number) => {
 

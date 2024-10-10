@@ -1,5 +1,5 @@
 import { FilterOptionsProps, frontendPagination } from '../../../components/pagination';
-import { couponDeviceType, couponDiscountType, couponTypes } from '../../../constants/cart';
+import { cartStatus, couponDeviceType, couponDiscountType, couponTypes } from '../../../constants/cart';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 
@@ -14,6 +14,7 @@ interface CheckCouponOptions {
     user: { _id: string };
     deviceType: string;
     uuid: string | undefined;
+    clearActiveCartCoupon?: string;
 }
 
 interface CheckValues {
@@ -34,24 +35,9 @@ class CouponService {
         return CouponModel.aggregate(pipeline).exec();
     }
     async checkCouponCode(options: CheckCouponOptions): Promise<CheckValues> {
-        const { query, user, deviceType, uuid } = options;
+        const { query, user, deviceType, uuid, clearActiveCartCoupon = '0' } = options;
         const currentDate = new Date();
         try {
-            let cartQuery: any = { cartStatus: '1' };
-            if (user && user._id) {
-                cartQuery.customerId = user._id;
-            } else if (uuid) {
-                cartQuery.guestUserId = uuid;
-            }
-
-            const cartDetails = await CartService.findOneCart(cartQuery);
-            if (!cartDetails) {
-                return {
-                    status: false,
-                    message: 'Active cart is not found!'
-                };
-            }
-
             const couponDetails: any = await this.findOne({
                 ...query,
                 status: '1',
@@ -67,6 +53,53 @@ class CouponService {
                     message: 'Coupon not found!'
                 };
             }
+
+            if (clearActiveCartCoupon === '1') {
+                const activeCartCouponUsedQuery: any = {
+                    couponId: couponDetails._id,
+                    cartStatus: cartStatus.active
+                };
+                if (user && user._id) {
+                    activeCartCouponUsedQuery.customerId = user._id;
+                } else if (uuid) {
+                    activeCartCouponUsedQuery.guestUserId = uuid;
+                }
+                const update = await CartOrdersModel.updateMany(
+                    {
+                        ...activeCartCouponUsedQuery,
+                        totalCouponAmount: { $gt: 0 }
+                    },
+                    [
+                        {
+                            $set: {
+                                couponId: null,
+                                totalCouponAmount: 0,
+                                totalAmount: {
+                                    $subtract: ["$totalAmount", "$totalCouponAmount"] // Update totalAmount by subtracting totalCouponAmount
+                                }
+                            }
+                        }
+                    ]
+                );
+                console.log('update', update);
+            }
+
+            let cartQuery: any = { cartStatus: '1' };
+            if (user && user._id) {
+                cartQuery.customerId = user._id;
+            } else if (uuid) {
+                cartQuery.guestUserId = uuid;
+            }
+
+            const cartDetails = await CartService.findOneCart(cartQuery);
+            if (!cartDetails) {
+                return {
+                    status: false,
+                    message: 'Active cart is not found!'
+                };
+            }
+
+
 
             if (cartDetails.totalAmount < Number(couponDetails.minPurchaseValue)) {
                 return {

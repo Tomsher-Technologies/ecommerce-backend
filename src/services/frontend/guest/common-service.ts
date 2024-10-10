@@ -372,7 +372,9 @@ class CommonService {
                                 $match: {
                                     $expr: {
                                         $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
-                                    }
+                                    },
+                                    quantity: { $gt: 0 },
+                                    status: "1"
                                 }
                             },
                             ...(getattribute === '1' ? [...productVariantAttributesLookup] : []),
@@ -382,9 +384,14 @@ class CommonService {
                         ]
                     }
                 };
+                productPipeline.push(modifiedPipeline);
+                productPipeline.push({
+                    $match: {
+                        productVariants: { $ne: [] }
+                    }
+                });
                 productPipeline.push(brandLookup, brandObject,)
                 productPipeline.push(productCategoryLookup);
-                productPipeline.push(modifiedPipeline);
 
                 productPipeline.push(productMultilanguageFieldsLookup);
                 productPipeline.push(productFinalProject);

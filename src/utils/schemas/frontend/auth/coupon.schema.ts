@@ -6,4 +6,5 @@ export const applyCouponSchema = zod.object({
         required_error: 'Device type is required',
         invalid_type_error: 'Device type must be either "desktop" or "mobile"',
     }),
+    clearActiveCartCoupon:zod.string().optional()
 });
