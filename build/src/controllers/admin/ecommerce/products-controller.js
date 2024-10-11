@@ -250,16 +250,6 @@ class ProductsController extends base_controller_1.default {
                                 }
                             }
                         }
-                        // const languageValuesImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        //     file.fieldname &&
-                        //     file.fieldname.startsWith('languageValues[') &&
-                        //     file.fieldname.includes('[productImage]')
-                        // );
-                        // const languageValuesGalleryImages = (req as any).files && (req as any).files.filter((file: any) =>
-                        //     file.fieldname &&
-                        //     file.fieldname.startsWith('languageValues[') &&
-                        //     file.fieldname.includes('[languageValues][galleryImage]')
-                        // );
                         if (languageValues && Array.isArray(languageValues) && languageValues?.length > 0) {
                             await languageValues?.map(async (languageValue, index) => {
                                 // let productImageUrl = ''

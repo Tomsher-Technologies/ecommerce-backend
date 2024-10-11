@@ -591,13 +591,25 @@ class ProductController extends BaseController {
                     }
                     if (keyword) {
                         const brandByTitleId = await BrandsModel.find({ brandTitle: { $regex: keywordRegexSingle } }, '_id');
-
+                        if (brandByTitleId && brandByTitleId.length > 0) {
+                            if (query.$or) {
+                                query.$or = [
+                                    ...query.$or,
+                                    { brand: { $in: brandByTitleId.map(brand => brand._id) } },
+                                ];
+                            } else {
+                                query.$or = [
+                                    { brand: { $in: brandByTitleId.map(brand => brand._id) } },
+                                ];
+                            }
+                        }
                         brandIds.push(...brandByTitleId.map(brand => brand._id));
                     }
                     if (brandSlugs.length > 0) {
                         const foundBrands = await BrandsModel.find({ slug: { $in: brandSlugs } }, '_id');
                         brandIds.push(...foundBrands.map(brand => brand._id));
                     }
+                    console.log('brandIds', brandIds);
 
                     if (brand) {
                         query = {

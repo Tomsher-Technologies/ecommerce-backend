@@ -328,7 +328,9 @@ class CommonService {
                                 $match: {
                                     $expr: {
                                         $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
-                                    }
+                                    },
+                                    quantity: { $gt: 0 },
+                                    status: "1"
                                 }
                             },
                             ...(getattribute === '1' ? [...product_config_1.productVariantAttributesLookup] : []),
@@ -338,9 +340,14 @@ class CommonService {
                         ]
                     }
                 };
+                productPipeline.push(modifiedPipeline);
+                productPipeline.push({
+                    $match: {
+                        productVariants: { $ne: [] }
+                    }
+                });
                 productPipeline.push(product_config_1.brandLookup, product_config_1.brandObject);
                 productPipeline.push(product_config_1.productCategoryLookup);
-                productPipeline.push(modifiedPipeline);
                 productPipeline.push(product_config_1.productMultilanguageFieldsLookup);
                 productPipeline.push(product_config_1.productFinalProject);
                 const { pipeline: offerPipeline, getOfferList, offerApplied } = await this.findOffers(0, hostName);

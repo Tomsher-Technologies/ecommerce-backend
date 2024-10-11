@@ -52,23 +52,14 @@ class CouponController extends base_controller_1.default {
                 if (couponCode) {
                     const validatedData = coupon_schema_1.applyCouponSchema.safeParse(req.body);
                     if (validatedData.success) {
-                        const { deviceType } = validatedData.data;
+                        const { deviceType, clearActiveCartCoupon } = validatedData.data;
                         const query = {
                             countryId,
                             couponCode,
                         };
                         const user = res.locals.user;
-                        // const customerDetails = await CustomerModel.findOne({ _id: user });
-                        // if (!customerDetails || customerDetails?.isGuest === true || !customerDetails?.isVerified) {
-                        //     const message = !customerDetails
-                        //         ? 'User is not found'
-                        //         : customerDetails.isGuest === true
-                        //             ? 'User is a guest and not eligible'
-                        //             : 'User is not verified';
-                        //     return controller.sendErrorResponse(res, 200, { message });
-                        // }
                         const uuid = req.header('User-Token');
-                        const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user, deviceType, uuid });
+                        const couponDetails = await coupon_service_1.default.checkCouponCode({ query, user, deviceType, uuid, clearActiveCartCoupon });
                         if (couponDetails?.status) {
                             return controller.sendSuccessResponse(res, {
                                 requestedData: couponDetails?.requestedData,
