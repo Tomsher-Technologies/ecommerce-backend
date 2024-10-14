@@ -43,7 +43,7 @@ class OrderService {
         const pipeline: any[] = [
             ...((!getTotalCount && getCartProducts === '1') ? [modifiedPipeline] : [cartProductsLookup]),
             ...((!getTotalCount && getCartProducts) ? [couponLookup, { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } }] : []),
-            ...(!getTotalCount ? [paymentMethodLookup, customerLookup, ...pickupStoreLookupPipeline , orderListObjectLookup] : []),
+            ...(!getTotalCount ? [paymentMethodLookup, customerLookup, ...pickupStoreLookupPipeline, orderListObjectLookup] : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('shippingId', 'shippingAddress') : []),
             ...((!getTotalCount && getAddress === '1') ? shippingAndBillingLookup('billingId', 'billingAddress') : []),
             countriesLookup,
@@ -184,6 +184,7 @@ class OrderService {
 
     async orderListExcelExport(options: any): Promise<any> {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
+        console.log('results', JSON.stringify(query, null, 2));
 
         const defaultSort = { 'cartDetails.orderStatusAt': -1 };
         let finalSort = sort || defaultSort;

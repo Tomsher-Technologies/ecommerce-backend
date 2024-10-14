@@ -94,9 +94,9 @@ export const exportOrderReport = async (res: Response, orderData: any, orderSum:
             'Shipping Name': order.shippingAddress?.name,
             'Payment Method': order.paymentMethod.paymentMethodTitle,
             'Shipping Address': JSON.stringify(shippingAddress),
-            'Shipping Phone': order.shippingAddress.phoneNumber,
+            'Shipping Phone': order.shippingAddress?.phoneNumber,
             'Billing Address': JSON.stringify(billingAddress),
-            'Billing Phone': order.billingAddress.phoneNumber,
+            'Billing Phone': order.billingAddress?.phoneNumber,
         }
     });
 

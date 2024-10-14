@@ -171,6 +171,7 @@ class OrderService {
     }
     async orderListExcelExport(options) {
         const { query, skip, limit, sort, getTotalCount } = (0, pagination_1.pagination)(options.query || {}, options);
+        console.log('results', JSON.stringify(query, null, 2));
         const defaultSort = { 'cartDetails.orderStatusAt': -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);

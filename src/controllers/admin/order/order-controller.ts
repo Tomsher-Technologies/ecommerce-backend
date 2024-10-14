@@ -40,12 +40,49 @@ class OrdersController extends BaseController {
 
             const userData = await res.locals.user;
 
+            const addQueryField = (field: string, value: any, isId: boolean = false) => {
+                if (value) {
+                    query = {
+                        ...query,
+                        [field]: isId ? new mongoose.Types.ObjectId(value) : value
+                    };
+                }
+            };
+
             const country = getCountryId(userData);
             query = { cartStatus: { $ne: cartStatusJson.active } }
-            if (country) {
-                query.countryId = country;
-            } else if (countryId) {
-                query.countryId = new mongoose.Types.ObjectId(countryId)
+            if (isExcel === '1') {
+                addQueryField('cartDetails.countryId', country || countryId, Boolean(countryId));
+                addQueryField('cartDetails.customerId', customerId, true);
+                addQueryField('cartDetails.orderStatus', orderStatus);
+                addQueryField('cartDetails.couponId', couponId, true);
+                addQueryField('cartDetails.paymentMethodId', paymentMethodId, true);
+                addQueryField('cartDetails.pickupStoreId', pickupStoreId, true);
+
+                if (deliveryType === deliveryTypesJson.shipping) {
+                    query['cartDetails.pickupStoreId'] = null;
+                } else if (deliveryType === deliveryTypesJson.pickupFromSrore) {
+                    query['cartDetails.pickupStoreId'] = { $ne: null };
+                }
+
+                addQueryField('cartDetails.stateId', stateId, true);
+                addQueryField('cartDetails.cityId', cityId, true);
+            } else {
+                addQueryField('countryId', country || countryId, Boolean(countryId));
+                addQueryField('customerId', customerId, true);
+                addQueryField('orderStatus', orderStatus);
+                addQueryField('couponId', couponId, true);
+                addQueryField('paymentMethodId', paymentMethodId, true);
+                addQueryField('pickupStoreId', pickupStoreId, true);
+
+                if (deliveryType === deliveryTypesJson.shipping) {
+                    query.pickupStoreId = null;
+                } else if (deliveryType === deliveryTypesJson.pickupFromSrore) {
+                    query.pickupStoreId = { $ne: null };
+                }
+
+                addQueryField('stateId', stateId, true);
+                addQueryField('cityId', cityId, true);
             }
 
             if (keyword) {
@@ -62,57 +99,6 @@ class OrdersController extends BaseController {
                     ...query
                 } as any;
             }
-            if (customerId) {
-                query = {
-                    ...query, customerId: new mongoose.Types.ObjectId(customerId)
-                } as any;
-            }
-
-            if (orderStatus) {
-                query = {
-                    ...query, orderStatus: orderStatus
-                } as any;
-            }
-
-            if (couponId) {
-                query = {
-                    ...query, couponId: new mongoose.Types.ObjectId(couponId)
-                } as any;
-            }
-
-            if (paymentMethodId) {
-                query = {
-                    ...query, paymentMethodId: new mongoose.Types.ObjectId(paymentMethodId)
-                } as any;
-            }
-
-            if (pickupStoreId) {
-                query = {
-                    ...query, pickupStoreId: new mongoose.Types.ObjectId(pickupStoreId)
-                } as any;
-            }
-            if (deliveryType === deliveryTypesJson.shipping) {
-                query = {
-                    ...query, pickupStoreId: null
-                } as any;
-            }
-            if (deliveryType === deliveryTypesJson.pickupFromSrore) {
-                query = {
-                    ...query, pickupStoreId: { $ne: null }
-                } as any;
-            }
-            if (stateId) {
-                query = {
-                    ...query, stateId: new mongoose.Types.ObjectId(stateId)
-                } as any;
-            }
-
-            if (cityId) {
-                query = {
-                    ...query, cityId: new mongoose.Types.ObjectId(cityId)
-                } as any;
-            }
-
 
             if (fromDate || endDate) {
                 const dateFilter: { $gte?: Date; $lte?: Date } = {};
