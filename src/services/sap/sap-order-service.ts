@@ -11,7 +11,7 @@ class SapOrderService {
         const { query, skip, limit, sort, getTotalCount } = pagination(options.query || {}, options);
         const { getaddress, getCartProducts, getpaymentmethod, getcustomer } = options;
 
-        const defaultSort = { orderStatusAt: -1 };
+        const defaultSort = { orderId: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
         if (sortKeys.length === 0) {

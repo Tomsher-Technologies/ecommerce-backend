@@ -26,9 +26,6 @@ import CountryModel from '../../../model/admin/setup/country-model';
 import CustomerModel from '../../../model/frontend/customers-model';
 import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import { collections } from '../../../constants/collections';
-import GeneralService from '../../../services/admin/general-service';
-import AdminTaskLogModel from '../../../model/admin/task-log';
-
 const controller = new BaseController();
 
 class OrdersController extends BaseController {

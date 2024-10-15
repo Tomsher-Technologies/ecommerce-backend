@@ -135,23 +135,27 @@ export const exportProductExcel = async (res: Response, products: any) => {
 
     products.forEach((product: any) => {
         product.productVariants.forEach((variant: any) => {
-            variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
-                allGalleryImageKeys.add(`Gallery_Image_${imgIndex + 1}`);
-            });
-
-            variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
-                allAttributeKeys.add(`Attribute_Option_${attrIndex + 1}`);
-                allAttributeKeys.add(`Attribute_Type_${attrIndex + 1}`);
-                allAttributeKeys.add(`Attribute_Name_${attrIndex + 1}`);
-                allAttributeKeys.add(`Attribute_Value_${attrIndex + 1}`);
-            });
-
-            variant.productSpecification.forEach((specification: any, specIndex: number) => {
-                allSpecificationKeys.add(`Specification_Option_${specIndex + 1}`);
-                allSpecificationKeys.add(`Specification_Display_Name_${specIndex + 1}`);
-                allSpecificationKeys.add(`Specification_Name_${specIndex + 1}`);
-                allSpecificationKeys.add(`Specification_Value_${specIndex + 1}`);
-            });
+            if (Array.isArray(variant.variantImageGallery) && variant.variantImageGallery.length > 0) {
+                variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
+                    allGalleryImageKeys.add(`Gallery_Image_${imgIndex + 1}`);
+                });
+            }
+            if (Array.isArray(variant.productVariantAttributes) && variant.productVariantAttributes.length > 0) {
+                variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
+                    allAttributeKeys.add(`Attribute_Option_${attrIndex + 1}`);
+                    allAttributeKeys.add(`Attribute_Type_${attrIndex + 1}`);
+                    allAttributeKeys.add(`Attribute_Name_${attrIndex + 1}`);
+                    allAttributeKeys.add(`Attribute_Value_${attrIndex + 1}`);
+                });
+            }
+            if (Array.isArray(variant.productSpecification) && variant.productSpecification.length > 0) {
+                variant.productSpecification.forEach((specification: any, specIndex: number) => {
+                    allSpecificationKeys.add(`Specification_Option_${specIndex + 1}`);
+                    allSpecificationKeys.add(`Specification_Display_Name_${specIndex + 1}`);
+                    allSpecificationKeys.add(`Specification_Name_${specIndex + 1}`);
+                    allSpecificationKeys.add(`Specification_Value_${specIndex + 1}`);
+                });
+            }
         });
     });
 
@@ -183,25 +187,27 @@ export const exportProductExcel = async (res: Response, products: any) => {
                 if (index === 0) {
                     totalQuantity = product.productVariants.reduce((sum: number, v: any) => sum + v.quantity, 0);
                 }
-
-                variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
-                    variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
-                });
-
-                variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
-                    attributes[`Attribute_Option_${attrIndex + 1}`] = attribute.attributeTitle;
-                    attributes[`Attribute_Type_${attrIndex + 1}`] = attribute.attributeType;
-                    attributes[`Attribute_Name_${attrIndex + 1}`] = attribute.attributeDetail.itemName;
-                    attributes[`Attribute_Value_${attrIndex + 1}`] = attribute.attributeDetail.itemValue;
-                });
-
-                variant.productSpecification.forEach((specification: any, specIndex: number) => {
-                    specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
-                    specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
-                    specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
-                    specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
-                });
-
+                if (Array.isArray(variant.variantImageGallery) && variant.variantImageGallery.length > 0) {
+                    variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
+                        variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                    });
+                }
+                if (Array.isArray(variant.productVariantAttributes) && variant.productVariantAttributes.length > 0) {
+                    variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
+                        attributes[`Attribute_Option_${attrIndex + 1}`] = attribute.attributeTitle;
+                        attributes[`Attribute_Type_${attrIndex + 1}`] = attribute.attributeType;
+                        attributes[`Attribute_Name_${attrIndex + 1}`] = attribute.attributeDetail.itemName;
+                        attributes[`Attribute_Value_${attrIndex + 1}`] = attribute.attributeDetail.itemValue;
+                    });
+                }
+                if (Array.isArray(variant.productSpecification) && variant.productSpecification.length > 0) {
+                    variant.productSpecification.forEach((specification: any, specIndex: number) => {
+                        specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                        specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                        specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                        specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+                    });
+                }
                 itemType = (product.sku === variant.variantSku) ? 'config-item' : 'variant';
 
                 // Parent_SKU: variant.isDefault === '1' ? null : product.sku,
@@ -244,16 +250,19 @@ export const exportProductExcel = async (res: Response, products: any) => {
                 });
             });
         } else {
-            product.imageGallery.forEach((image: any, imgIndex: number) => {
-                variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
-            });
-
-            product.productSpecification.forEach((specification: any, specIndex: number) => {
-                specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
-                specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
-                specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
-                specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
-            });
+            if (Array.isArray(product.imageGallery) && product.imageGallery.length > 0) {
+                product.imageGallery.forEach((image: any, imgIndex: number) => {
+                    variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                });
+            }
+            if (Array.isArray(product.productSpecification) && product.productSpecification.length > 0) {
+                product.productSpecification.forEach((specification: any, specIndex: number) => {
+                    specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                    specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                    specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                    specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+                });
+            }
 
             productData.push({
                 Product_Title: product.productTitle,

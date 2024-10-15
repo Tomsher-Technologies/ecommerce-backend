@@ -60,13 +60,6 @@ class ProductsController extends base_controller_1.default {
                 country = (0, helpers_1.getCountryId)(userData);
             }
             const filterProducts = await (0, products_1.filterProduct)(req.query, country);
-            const products = await product_service_1.default.findAll({
-                page: parseInt(page_size),
-                limit: parseInt(limit),
-                query: filterProducts.query,
-                sort: filterProducts.sort
-            });
-            const count = await product_service_1.default.getTotalCount(filterProducts.query);
             let isExcel = req.query.isExcel;
             if (isExcel == '1') {
                 const products = await product_service_1.default.exportProducts({
@@ -78,9 +71,16 @@ class ProductsController extends base_controller_1.default {
                 await (0, reports_1.exportProductExcel)(res, products);
             }
             else {
-                controller.sendSuccessResponse(res, {
-                    requestedData: products,
-                    totalCount: count,
+                // const count = await ProductsService.getTotalCount(filterProducts.query)
+                const products = await product_service_1.default.findAll({
+                    page: parseInt(page_size),
+                    limit: parseInt(limit),
+                    query: filterProducts.query,
+                    sort: filterProducts.sort
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: products.products,
+                    totalCount: products.totalCount,
                     message: 'Success'
                 }, 200);
             }

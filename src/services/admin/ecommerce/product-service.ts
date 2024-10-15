@@ -36,7 +36,7 @@ class ProductsService {
             },
         };
     }
-    async findAll(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
+    async findAll(options: FilterOptionsProps = {}): Promise<any> {
 
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
@@ -67,15 +67,38 @@ class ProductsService {
                 }
             },
             brandLookup,
-            brandObject,
-            this.multilanguageFieldsLookup,
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
+            brandObject,
+            // this.multilanguageFieldsLookup,
             { $sort: finalSort },
         ];
 
-        return ProductsModel.aggregate(pipeline).exec();
+
+        const facetPipeline = [
+            {
+                $facet: {
+                    totalCount: [{ $match: query }, { $count: 'count' }],
+                    products: [
+                        { $skip: skip },
+                        { $limit: limit }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    totalCount: 1,
+                    products: 1
+                }
+            }
+        ];
+
+        pipeline.push(...facetPipeline);
+
+        const retVal = await ProductsModel.aggregate(pipeline).exec();
+        const products = retVal[0]?.products || [];
+        const totalCount = retVal[0]?.totalCount?.[0]?.count || 0;
+
+        return { products, totalCount };
     }
 
     async getTotalCount(query: any = {}): Promise<number> {
@@ -233,18 +256,19 @@ class ProductsService {
                     ]
                 },
             },
-            imageLookup,
             brandLookup,
-            brandObject,
-            seoLookup('productSeo'),
-            productSeoObject,
-            this.multilanguageFieldsLookup,
-            productSpecificationsLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
+            imageLookup,
+            brandObject,
+            seoLookup('productSeo'),
+            productSeoObject,
+            productSpecificationsLookup,
+            this.multilanguageFieldsLookup,
             { $sort: finalSort },
         ];
+
         const productDataWithValues = await ProductsModel.aggregate(pipeline);
 
         return productDataWithValues;
