@@ -60,13 +60,21 @@ class SapController extends base_controller_1.default {
                 }
                 else {
                     query = {
-                        ...query, orderId
+                        ...query,
+                        $or: [
+                            { orderId: Number(orderId) },
+                            { orderId: orderId.toString() }
+                        ]
                     };
                 }
             }
             if (orderIdAfter) {
                 query = {
-                    ...query, orderId: { $gt: orderIdAfter }
+                    ...query,
+                    $or: [
+                        { orderId: { $gt: Number(orderIdAfter) } },
+                        { orderId: { $gt: orderIdAfter.toString() } }
+                    ]
                 };
             }
             if (orderStatus) {
@@ -74,6 +82,7 @@ class SapController extends base_controller_1.default {
                     ...query, orderStatus: orderStatus
                 };
             }
+            console.log('query', orderIdAfter);
             if (fromDate || endDate) {
                 const dateFilter = {};
                 if (fromDate)

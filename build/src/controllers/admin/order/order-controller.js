@@ -32,13 +32,47 @@ class OrdersController extends base_controller_1.default {
             const { page_size = 1, limit = 10, cartStatus = '', sortby = '', sortorder = '', keyword = '', countryId = '', customerId = '', pickupStoreId = '', paymentMethodId = '', couponId = '', cityId = '', stateId = '', fromDate, endDate, isExcel, isPdfExport, orderStatus = '', deliveryType } = req.query;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
+            const addQueryField = (field, value, isId = false) => {
+                if (value) {
+                    query = {
+                        ...query,
+                        [field]: isId ? new mongoose_1.default.Types.ObjectId(value) : value
+                    };
+                }
+            };
             const country = (0, helpers_1.getCountryId)(userData);
             query = { cartStatus: { $ne: cart_1.cartStatus.active } };
-            if (country) {
-                query.countryId = country;
+            if (isExcel === '1') {
+                addQueryField('cartDetails.countryId', country || countryId, Boolean(countryId));
+                addQueryField('cartDetails.customerId', customerId, true);
+                addQueryField('cartDetails.orderStatus', orderStatus);
+                addQueryField('cartDetails.couponId', couponId, true);
+                addQueryField('cartDetails.paymentMethodId', paymentMethodId, true);
+                addQueryField('cartDetails.pickupStoreId', pickupStoreId, true);
+                if (deliveryType === cart_1.deliveryTypesJson.shipping) {
+                    query['cartDetails.pickupStoreId'] = null;
+                }
+                else if (deliveryType === cart_1.deliveryTypesJson.pickupFromSrore) {
+                    query['cartDetails.pickupStoreId'] = { $ne: null };
+                }
+                addQueryField('cartDetails.stateId', stateId, true);
+                addQueryField('cartDetails.cityId', cityId, true);
             }
-            else if (countryId) {
-                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            else {
+                addQueryField('countryId', country || countryId, Boolean(countryId));
+                addQueryField('customerId', customerId, true);
+                addQueryField('orderStatus', orderStatus);
+                addQueryField('couponId', couponId, true);
+                addQueryField('paymentMethodId', paymentMethodId, true);
+                addQueryField('pickupStoreId', pickupStoreId, true);
+                if (deliveryType === cart_1.deliveryTypesJson.shipping) {
+                    query.pickupStoreId = null;
+                }
+                else if (deliveryType === cart_1.deliveryTypesJson.pickupFromSrore) {
+                    query.pickupStoreId = { $ne: null };
+                }
+                addQueryField('stateId', stateId, true);
+                addQueryField('cityId', cityId, true);
             }
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
@@ -52,51 +86,6 @@ class OrdersController extends base_controller_1.default {
                         { 'paymentMethod.paymentMethodTitle': keywordRegex },
                     ],
                     ...query
-                };
-            }
-            if (customerId) {
-                query = {
-                    ...query, customerId: new mongoose_1.default.Types.ObjectId(customerId)
-                };
-            }
-            if (orderStatus) {
-                query = {
-                    ...query, orderStatus: orderStatus
-                };
-            }
-            if (couponId) {
-                query = {
-                    ...query, couponId: new mongoose_1.default.Types.ObjectId(couponId)
-                };
-            }
-            if (paymentMethodId) {
-                query = {
-                    ...query, paymentMethodId: new mongoose_1.default.Types.ObjectId(paymentMethodId)
-                };
-            }
-            if (pickupStoreId) {
-                query = {
-                    ...query, pickupStoreId: new mongoose_1.default.Types.ObjectId(pickupStoreId)
-                };
-            }
-            if (deliveryType === cart_1.deliveryTypesJson.shipping) {
-                query = {
-                    ...query, pickupStoreId: null
-                };
-            }
-            if (deliveryType === cart_1.deliveryTypesJson.pickupFromSrore) {
-                query = {
-                    ...query, pickupStoreId: { $ne: null }
-                };
-            }
-            if (stateId) {
-                query = {
-                    ...query, stateId: new mongoose_1.default.Types.ObjectId(stateId)
-                };
-            }
-            if (cityId) {
-                query = {
-                    ...query, cityId: new mongoose_1.default.Types.ObjectId(cityId)
                 };
             }
             if (fromDate || endDate) {

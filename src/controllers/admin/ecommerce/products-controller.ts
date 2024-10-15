@@ -62,13 +62,6 @@ class ProductsController extends BaseController {
                 country = getCountryId(userData);
             }
             const filterProducts = await filterProduct(req.query, country)
-            const products = await ProductsService.findAll({
-                page: parseInt(page_size as string),
-                limit: parseInt(limit as string),
-                query: filterProducts.query,
-                sort: filterProducts.sort
-            });
-            const count = await ProductsService.getTotalCount(filterProducts.query)
             let isExcel = req.query.isExcel
             if (isExcel == '1') {
                 const products = await ProductsService.exportProducts({
@@ -77,11 +70,19 @@ class ProductsController extends BaseController {
                     query: filterProducts.query,
                     sort: filterProducts.sort
                 });
+
                 await exportProductExcel(res, products)
             } else {
-                controller.sendSuccessResponse(res, {
-                    requestedData: products,
-                    totalCount: count,
+                // const count = await ProductsService.getTotalCount(filterProducts.query)
+                const products = await ProductsService.findAll({
+                    page: parseInt(page_size as string),
+                    limit: parseInt(limit as string),
+                    query: filterProducts.query,
+                    sort: filterProducts.sort
+                });
+                return controller.sendSuccessResponse(res, {
+                    requestedData: products.products,
+                    totalCount: products.totalCount,
                     message: 'Success'
                 }, 200);
             }
@@ -1007,7 +1008,7 @@ class ProductsController extends BaseController {
                                                                                 }
                                                                                 if (existingVariantDetails) {
                                                                                     await ProductVariantService.update(existingVariantDetails._id, productVariants)
-                                                                                    await ProductGalleryImagesModel.deleteMany({ variantId: existingVariantDetails._id});
+                                                                                    await ProductGalleryImagesModel.deleteMany({ variantId: existingVariantDetails._id });
                                                                                     const galleryImagesToInsert = galleryImageArray.map(galleryImage => ({
                                                                                         variantId: existingVariantDetails._id,
                                                                                         ...galleryImage

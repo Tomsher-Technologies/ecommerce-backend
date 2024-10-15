@@ -63,21 +63,31 @@ class SapController extends BaseController {
                     } as any;
                 } else {
                     query = {
-                        ...query, orderId
+                        ...query,
+                        $or: [
+                            { orderId: Number(orderId) },
+                            { orderId: orderId.toString() }
+                        ]
                     } as any;
                 }
             }
             if (orderIdAfter) {
                 query = {
-                    ...query, orderId: { $gt: orderIdAfter }
+                    ...query,
+                    $or: [
+                        { orderId: { $gt: Number(orderIdAfter) } }, 
+                        { orderId: { $gt: orderIdAfter.toString() } }
+                    ]
                 } as any;
             }
-       
+            
             if (orderStatus) {
                 query = {
                     ...query, orderStatus: orderStatus
                 } as any;
             }
+            console.log('query', orderIdAfter);
+
 
             if (fromDate || endDate) {
                 const dateFilter: { $gte?: Date; $lte?: Date } = {};

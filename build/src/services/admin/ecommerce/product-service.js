@@ -64,14 +64,33 @@ class ProductsService {
                 }
             },
             product_config_1.brandLookup,
-            product_config_1.brandObject,
-            this.multilanguageFieldsLookup,
             { $match: query },
-            { $skip: skip },
-            { $limit: limit },
+            product_config_1.brandObject,
+            // this.multilanguageFieldsLookup,
             { $sort: finalSort },
         ];
-        return product_model_1.default.aggregate(pipeline).exec();
+        const facetPipeline = [
+            {
+                $facet: {
+                    totalCount: [{ $match: query }, { $count: 'count' }],
+                    products: [
+                        { $skip: skip },
+                        { $limit: limit }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    totalCount: 1,
+                    products: 1
+                }
+            }
+        ];
+        pipeline.push(...facetPipeline);
+        const retVal = await product_model_1.default.aggregate(pipeline).exec();
+        const products = retVal[0]?.products || [];
+        const totalCount = retVal[0]?.totalCount?.[0]?.count || 0;
+        return { products, totalCount };
     }
     async getTotalCount(query = {}) {
         try {
@@ -213,16 +232,16 @@ class ProductsService {
                     ]
                 },
             },
-            product_config_1.imageLookup,
             product_config_1.brandLookup,
-            product_config_1.brandObject,
-            (0, common_config_1.seoLookup)('productSeo'),
-            product_config_1.productSeoObject,
-            this.multilanguageFieldsLookup,
-            product_config_1.productSpecificationsLookup,
             { $match: query },
             { $skip: skip },
             { $limit: limit },
+            product_config_1.imageLookup,
+            product_config_1.brandObject,
+            (0, common_config_1.seoLookup)('productSeo'),
+            product_config_1.productSeoObject,
+            product_config_1.productSpecificationsLookup,
+            this.multilanguageFieldsLookup,
             { $sort: finalSort },
         ];
         const productDataWithValues = await product_model_1.default.aggregate(pipeline);
