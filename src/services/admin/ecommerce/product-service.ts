@@ -221,7 +221,7 @@ class ProductsService {
         }
     }
 
-    async exportProducts(options: FilterOptionsProps = {}): Promise<ProductsProps[]> {
+    async exportProducts(options: FilterOptionsProps = {}): Promise<any> {
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -235,43 +235,9 @@ class ProductsService {
             },
             status: "1"
         };
-        const pipeline = [
-            productCategoryLookup,
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.productvariants.productvariants}`,
-                    localField: '_id',
-                    foreignField: 'productId',
-                    as: 'productVariants',
-                    pipeline: [
-                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : []),
-                        ...productVariantAttributesAdminLookup,
-                        addFieldsProductVariantAttributes,
-                        ...productSpecificationAdminLookup,
-                        addFieldsProductSpecification,
-                        productSeoLookup,
-                        addFieldsProductSeo,
-                        variantImageGalleryLookup,
-                        countriesLookup
-                    ]
-                },
-            },
-            brandLookup,
-            { $match: query },
-            { $skip: skip },
-            { $limit: limit },
-            imageLookup,
-            brandObject,
-            seoLookup('productSeo'),
-            productSeoObject,
-            productSpecificationsLookup,
-            this.multilanguageFieldsLookup,
-            { $sort: finalSort },
-        ];
 
-        const productDataWithValues = await ProductsModel.aggregate(pipeline);
 
-        return productDataWithValues;
+      
     }
 
     async variantProductList(options: any = {}): Promise<any | null> {
