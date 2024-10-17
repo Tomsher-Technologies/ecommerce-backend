@@ -245,12 +245,12 @@ class ProductsService {
                     as: 'productVariants',
                     pipeline: [
                         ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : []),
-                        ...productVariantAttributesAdminLookup,
-                        addFieldsProductVariantAttributes,
-                        ...productSpecificationAdminLookup,
-                        addFieldsProductSpecification,
-                        productSeoLookup,
-                        addFieldsProductSeo,
+                        // ...productVariantAttributesAdminLookup,
+                        // addFieldsProductVariantAttributes,
+                        // ...productSpecificationAdminLookup,
+                        // addFieldsProductSpecification,
+                        // productSeoLookup,
+                        // addFieldsProductSeo,
                         variantImageGalleryLookup,
                         countriesLookup
                     ]
