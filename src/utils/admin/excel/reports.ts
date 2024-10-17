@@ -136,6 +136,7 @@ export const exportProductExcel = async (res: Response, products: any) => {
     products.forEach((product: any) => {
         product.productVariants.forEach((variant: any) => {
             if (Array.isArray(variant.variantImageGallery) && variant.variantImageGallery.length > 0) {
+                
                 variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
                     allGalleryImageKeys.add(`Gallery_Image_${imgIndex + 1}`);
                 });
