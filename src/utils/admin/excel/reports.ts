@@ -250,54 +250,60 @@ export const exportProductExcel = async (res: Response, products: any) => {
                 });
             });
         } else {
-            if (Array.isArray(product.imageGallery) && product.imageGallery.length > 0) {
-                product.imageGallery.forEach((image: any, imgIndex: number) => {
-                    variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
-                });
-            }
-            if (Array.isArray(product.productSpecification) && product.productSpecification.length > 0) {
-                product.productSpecification.forEach((specification: any, specIndex: number) => {
-                    specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
-                    specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
-                    specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
-                    specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
-                });
-            }
+            product.productVariants.forEach((variant: any, index: number) => {
+                if (Array.isArray(variant.variantImageGallery) && variant.variantImageGallery.length > 0) {
+                    variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
+                        variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                    });
+                } else if (Array.isArray(product.imageGallery) && product.imageGallery.length > 0) {
+                    product.imageGallery.forEach((image: any, imgIndex: number) => {
+                        variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                    });
+                }
+                if (Array.isArray(product.productSpecification) && product.productSpecification.length > 0) {
+                    product.productSpecification.forEach((specification: any, specIndex: number) => {
+                        specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                        specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                        specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                        specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+                    });
+                }
 
-            productData.push({
-                Product_Title: product.productTitle,
-                Description: product.description,
-                Long_Description: product.longDescription,
-                Parent_SKU: null,
-                SKU: product.sku,
-                Item_Type: 'simple-item',
-                Category: categoryTitles,
-                Image: product.productImageUrl,
-                ...variantImages,
-                Unit: product.unit,
-                Hight: product.measurements.hight,
-                Length: product.measurements.length,
-                Width: product.measurements.width,
-                Weight: product.measurements.Weight,
-                Tags: product.tags,
-                Brand: product.brand?.brandTitle,
-                Country: product.productVariants[0]?.country[0].countryTitle,
-                Warehouse: product?.warehouse,
-                Price: product.productVariants[0]?.price,
-                Discount_Price: product.productVariants[0]?.discountPrice,
-                Quantity: product.productVariants[0]?.quantity,
-                Total_Quantity: product.productVariants[0]?.quantity,
-                Cart_Min_Quantity: product.productVariants[0]?.cartMinQuantity,
-                Cart_Max_Quantity: product.productVariants[0]?.cartMaxQuantity,
-                Is_Default: product.productVariants[0].isDefault,
-                Meta_Title: product.productSeo?.metaTitle,
-                Meta_Keywords: product.productSeo?.metaKeywords,
-                Meta_Description: product.productSeo?.metaDescription,
-                OG_Title: product.productSeo?.ogTitle,
-                OG_Description: product.productSeo?.ogDescription,
-                Twitter_Title: product.productSeo?.twitterTitle,
-                Twitter_Description: product.productSeo?.twitterDescription,
-                ...specifications
+                productData.push({
+                    Product_Title: product.productTitle,
+                    Description: product.description,
+                    Long_Description: product.longDescription,
+                    Parent_SKU: null,
+                    SKU: product.sku,
+                    Item_Type: 'simple-item',
+                    Category: categoryTitles,
+                    Image: product.productImageUrl,
+                    ...variantImages,
+                    Unit: product.unit,
+                    Hight: product.measurements.hight,
+                    Length: product.measurements.length,
+                    Width: product.measurements.width,
+                    Weight: product.measurements.Weight,
+                    Tags: product.tags,
+                    Brand: product.brand?.brandTitle,
+                    Country: variant?.country[0].countryTitle,
+                    Warehouse: product?.warehouse,
+                    Price: variant?.price,
+                    Discount_Price: variant?.discountPrice,
+                    Quantity: variant?.quantity,
+                    Total_Quantity: variant?.quantity,
+                    Cart_Min_Quantity: variant?.cartMinQuantity,
+                    Cart_Max_Quantity: variant?.cartMaxQuantity,
+                    Is_Default: variant.isDefault,
+                    Meta_Title: product.productSeo?.metaTitle,
+                    Meta_Keywords: product.productSeo?.metaKeywords,
+                    Meta_Description: product.productSeo?.metaDescription,
+                    OG_Title: product.productSeo?.ogTitle,
+                    OG_Description: product.productSeo?.ogDescription,
+                    Twitter_Title: product.productSeo?.twitterTitle,
+                    Twitter_Description: product.productSeo?.twitterDescription,
+                    ...specifications
+                });
             });
         }
     });
@@ -338,6 +344,7 @@ export const exportProductExcel = async (res: Response, products: any) => {
         ...Array.from(allAttributeKeys),
         ...Array.from(allSpecificationKeys)
     ];
+
     await generateExcelFile(res, productData, columnOrder, 'products');
 }
 
