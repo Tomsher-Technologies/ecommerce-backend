@@ -211,6 +211,41 @@ class ProductsService {
             },
             status: "1"
         };
+        const pipeline = [
+            product_config_1.productCategoryLookup,
+            {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'productVariants',
+                    pipeline: [
+                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : []),
+                        ...product_config_1.productVariantAttributesAdminLookup,
+                        product_config_1.addFieldsProductVariantAttributes,
+                        ...product_config_1.productSpecificationAdminLookup,
+                        product_config_1.addFieldsProductSpecification,
+                        product_config_1.productSeoLookup,
+                        product_config_1.addFieldsProductSeo,
+                        product_config_1.variantImageGalleryLookup,
+                        customer_config_1.countriesLookup
+                    ]
+                },
+            },
+            product_config_1.brandLookup,
+            { $match: query },
+            { $skip: skip },
+            { $limit: limit },
+            product_config_1.imageLookup,
+            product_config_1.brandObject,
+            (0, common_config_1.seoLookup)('productSeo'),
+            product_config_1.productSeoObject,
+            product_config_1.productSpecificationsLookup,
+            this.multilanguageFieldsLookup,
+            { $sort: finalSort },
+        ];
+        const productDataWithValues = await product_model_1.default.aggregate(pipeline);
+        return productDataWithValues;
     }
     async variantProductList(options = {}) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
