@@ -547,6 +547,7 @@ class ProductService {
         if (query['_id']) {
             variantLookupMatch._id = query['_id'];
         }
+        console.log('query', JSON.stringify(query, null, 2));
 
         if (query['slug']) {
             variantLookupMatch.slug = query['slug'];
@@ -595,9 +596,7 @@ class ProductService {
                 }
             },
             {
-                $match: {
-                    ...query 
-                }
+                $match: query
             },
             {
                 $project: {
@@ -625,6 +624,9 @@ class ProductService {
                 }
             }
         ];
+
+        // console.log('query', JSON.stringify(query, null, 2));
+
         pipeline.push(
             {
                 $addFields: {
