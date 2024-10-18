@@ -547,6 +547,19 @@ class ProductService {
                 }
             },
             {
+                $lookup: {
+                    from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productCategory',
+                }
+            },
+            {
+                $match: {
+                    productCategory: { $ne: [] }
+                }
+            },
+            {
                 $match: query
             },
             {
@@ -572,6 +585,7 @@ class ProductService {
                     offerData: 1,
                     offerId: 1,
                     productDetails: { $arrayElemAt: ["$productDetails", 0] },
+                    productCategory: 1
                 }
             }
         ];

@@ -595,6 +595,19 @@ class ProductService {
                 }
             },
             {
+                $lookup: {
+                    from: `${collections.ecommerce.products.productcategorylinks}`,
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productCategory',
+                }
+            },
+            {
+                $match: {
+                    productCategory: { $ne: [] }
+                }
+            },
+            {
                 $match: query
             },
             {
@@ -604,7 +617,7 @@ class ProductService {
                     productId: 1,
                     countryId: 1,
                     variantSku: 1,
-                    slug: 1,    
+                    slug: 1,
                     showOrder: 1,
                     extraProductTitle: 1,
                     variantDescription: 1,
@@ -620,6 +633,7 @@ class ProductService {
                     offerData: 1,
                     offerId: 1,
                     productDetails: { $arrayElemAt: ["$productDetails", 0] },
+                    productCategory: 1
                 }
             }
         ];
