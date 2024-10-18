@@ -136,7 +136,7 @@ export const exportProductExcel = async (res: Response, products: any) => {
     products.forEach((product: any) => {
         product.productVariants.forEach((variant: any) => {
             if (Array.isArray(variant.variantImageGallery) && variant.variantImageGallery.length > 0) {
-                
+
                 variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
                     allGalleryImageKeys.add(`Gallery_Image_${imgIndex + 1}`);
                 });
@@ -192,6 +192,10 @@ export const exportProductExcel = async (res: Response, products: any) => {
                     variant.variantImageGallery.forEach((image: any, imgIndex: number) => {
                         variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
                     });
+                } else if (Array.isArray(product.imageGallery) && product.imageGallery.length > 0) {
+                    product.imageGallery.forEach((image: any, imgIndex: number) => {
+                        variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                    });
                 }
                 if (Array.isArray(variant.productVariantAttributes) && variant.productVariantAttributes.length > 0) {
                     variant.productVariantAttributes.forEach((attribute: any, attrIndex: number) => {
@@ -203,6 +207,13 @@ export const exportProductExcel = async (res: Response, products: any) => {
                 }
                 if (Array.isArray(variant.productSpecification) && variant.productSpecification.length > 0) {
                     variant.productSpecification.forEach((specification: any, specIndex: number) => {
+                        specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                        specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                        specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                        specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+                    });
+                } else if (Array.isArray(product.productSpecification) && product.productSpecification.length > 0) {
+                    product.productSpecification.forEach((specification: any, specIndex: number) => {
                         specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
                         specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
                         specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
