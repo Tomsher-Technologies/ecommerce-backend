@@ -547,7 +547,6 @@ class ProductService {
         if (query['_id']) {
             variantLookupMatch._id = query['_id'];
         }
-        console.log('query', JSON.stringify(query, null, 2));
 
         if (query['slug']) {
             variantLookupMatch.slug = query['slug'];
@@ -605,7 +604,7 @@ class ProductService {
                     productId: 1,
                     countryId: 1,
                     variantSku: 1,
-                    slug: 1,
+                    slug: 1,    
                     showOrder: 1,
                     extraProductTitle: 1,
                     variantDescription: 1,

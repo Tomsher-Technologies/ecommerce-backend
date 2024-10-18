@@ -500,7 +500,6 @@ class ProductService {
         if (query['_id']) {
             variantLookupMatch._id = query['_id'];
         }
-        console.log('query', JSON.stringify(query, null, 2));
         if (query['slug']) {
             variantLookupMatch.slug = query['slug'];
         }

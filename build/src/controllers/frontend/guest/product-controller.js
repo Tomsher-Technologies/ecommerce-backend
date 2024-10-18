@@ -175,7 +175,7 @@ class ProductController extends base_controller_1.default {
             }
             let matchProductIds = [];
             if (brand && brandIds.length > 0) {
-                matchProductIds = await product_model_1.default.distinct('_id', { brand: { $in: brandIds } });
+                matchProductIds = await product_model_1.default.distinct('_id', { brand: { $in: brandIds }, _id: { $in: productIds } });
             }
             else {
                 if (brandIds.length > 0) {

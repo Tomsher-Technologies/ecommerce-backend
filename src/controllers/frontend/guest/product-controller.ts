@@ -188,7 +188,7 @@ class ProductController extends BaseController {
             }
             let matchProductIds = []
             if (brand && brandIds.length > 0) {
-                matchProductIds = await ProductsModel.distinct('_id', { brand: { $in: brandIds } });
+                matchProductIds = await ProductsModel.distinct('_id', { brand: { $in: brandIds }, _id: { $in: productIds } });
             } else {
                 if (brandIds.length > 0) {
                     brandFilter = { "productDetails.brand": { $in: brandIds } };
