@@ -29,7 +29,7 @@ import BrandsModel from '../../../model/admin/ecommerce/brands-model';
 class ProductService {
 
     async findProductList(productOption: any): Promise<any> {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getcategory = '1', getbrand = '1', getLanguageValues = '1', notCheckQuantity = false, getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
         const { skip, limit } = frontendPagination(productOption.query || {}, productOption);
 
         let finalSort: any = [];
@@ -68,7 +68,7 @@ class ProductService {
             $expr: {
                 $eq: ['$countryId', new mongoose.Types.ObjectId(countryId)]
             },
-            quantity: { $gt: 0 },
+            ... (!notCheckQuantity ? { quantity: { $gt: 0 } } : {}),
             status: "1"
         };
 
@@ -116,7 +116,7 @@ class ProductService {
         let pipeline: any[] = [
             ...finalSort,
             modifiedPipeline,
-            productCategoryLookup,
+            ...((getcategory === '1') ? [productCategoryLookup] : []),
             ...(getbrand === '1' ? [brandLookup, brandObject] : []),
             ...(getimagegallery === '1' ? [imageLookup] : []),
             ...(getspecification === '1' ? [productSpecificationsLookup] : []),

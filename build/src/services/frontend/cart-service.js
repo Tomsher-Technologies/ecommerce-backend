@@ -13,6 +13,8 @@ const language_model_1 = __importDefault(require("../../model/admin/setup/langua
 const common_service_1 = __importDefault(require("./guest/common-service"));
 const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model"));
 const cart_order_model_2 = __importDefault(require("../../model/frontend/cart-order-model"));
+const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
+const website_setup_1 = require("../../constants/website-setup");
 class CartService {
     constructor() {
         this.cartLookup = {
@@ -140,11 +142,36 @@ class CartService {
             if (aggregationResult) {
                 const { _id, ...restValues } = aggregationResult;
                 if (restValues) {
+                    let totalShippingAmount = cartDetails.totalShippingAmount;
+                    if (totalShippingAmount === 0) {
+                        const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: cartDetails.countryId });
+                        const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
+                        totalShippingAmount = shippingCharge > 0 ? ((restValues.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                    }
                     const updatedCartOrderValues = await cart_order_model_2.default.findOneAndUpdate(cartDetails._id, {
                         ...restValues,
-                        totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount,
+                        totalShippingAmount,
+                        totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + totalShippingAmount,
                         totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(restValues.totalProductAmount) * Number(taxDetails.taxPercentage)) / (100 + Number(taxDetails.taxPercentage))).toFixed(2) : 0,
                         // totalTaxAmount: (taxDetails && Number(taxDetails?.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * Number(restValues.totalProductAmount)).toFixed(2) : 0
+                    });
+                    return updatedCartOrderValues;
+                }
+            }
+        }
+        else { // when pickup with payment gatway, then return back , the shipping amount is zero
+            let totalShippingAmount = cartDetails.totalShippingAmount;
+            if (totalShippingAmount === 0) {
+                const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: cartDetails.countryId });
+                const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
+                totalShippingAmount = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                if (totalShippingAmount > 0) {
+                    const updatedCartOrderValues = await cart_order_model_2.default.findOneAndUpdate(cartDetails._id, {
+                        ...totalShippingAmount,
+                        pickupStoreId: null,
+                        couponId: null,
+                        totalShippingAmount,
+                        totalAmount: cartDetails.totalAmount + totalShippingAmount,
                     });
                     return updatedCartOrderValues;
                 }

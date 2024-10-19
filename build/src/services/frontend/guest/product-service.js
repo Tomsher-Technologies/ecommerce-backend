@@ -28,7 +28,7 @@ const product_variants_model_1 = __importDefault(require("../../../model/admin/e
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
 class ProductService {
     async findProductList(productOption) {
-        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
+        var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getcategory = '1', getbrand = '1', getLanguageValues = '1', notCheckQuantity = false, getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
         const { skip, limit } = (0, pagination_1.frontendPagination)(productOption.query || {}, productOption);
         let finalSort = [];
         if (!collectionProductsData) {
@@ -64,7 +64,7 @@ class ProductService {
             $expr: {
                 $eq: ['$countryId', new mongoose_1.default.Types.ObjectId(countryId)]
             },
-            quantity: { $gt: 0 },
+            ...(!notCheckQuantity ? { quantity: { $gt: 0 } } : {}),
             status: "1"
         };
         if (query['productVariants._id']) {
@@ -108,7 +108,7 @@ class ProductService {
         let pipeline = [
             ...finalSort,
             modifiedPipeline,
-            product_config_1.productCategoryLookup,
+            ...((getcategory === '1') ? [product_config_1.productCategoryLookup] : []),
             ...(getbrand === '1' ? [product_config_1.brandLookup, product_config_1.brandObject] : []),
             ...(getimagegallery === '1' ? [product_config_1.imageLookup] : []),
             ...(getspecification === '1' ? [product_config_1.productSpecificationsLookup] : []),
