@@ -9,6 +9,8 @@ import LanguagesModel from '../../model/admin/setup/language-model';
 import commonService from './guest/common-service';
 import TaxsModel from '../../model/admin/setup/tax-model';
 import CartOrdersModel from '../../model/frontend/cart-order-model';
+import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
+import { blockReferences } from '../../constants/website-setup';
 
 class CartService {
 
@@ -155,11 +157,35 @@ class CartService {
             if (aggregationResult) {
                 const { _id, ...restValues } = aggregationResult;
                 if (restValues) {
+                    let totalShippingAmount = cartDetails.totalShippingAmount
+                    if (totalShippingAmount === 0) {
+                        const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: cartDetails.countryId });
+                        const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
+                        totalShippingAmount = shippingCharge > 0 ? ((restValues.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                    }
                     const updatedCartOrderValues = await CartOrdersModel.findOneAndUpdate(cartDetails._id, {
                         ...restValues,
-                        totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount,
+                        totalShippingAmount,
+                        totalAmount: restValues.totalProductAmount + cartDetails.totalGiftWrapAmount + totalShippingAmount,
                         totalTaxAmount: (taxDetails && Number(taxDetails.taxPercentage) > 0) ? ((Number(restValues.totalProductAmount) * Number(taxDetails.taxPercentage)) / (100 + Number(taxDetails.taxPercentage))).toFixed(2) : 0,
                         // totalTaxAmount: (taxDetails && Number(taxDetails?.taxPercentage) > 0) ? ((Number(taxDetails.taxPercentage) / 100) * Number(restValues.totalProductAmount)).toFixed(2) : 0
+                    });
+                    return updatedCartOrderValues;
+                }
+            }
+        } else { // when pickup with payment gatway, then return back , the shipping amount is zero
+            let totalShippingAmount = cartDetails.totalShippingAmount
+            if (totalShippingAmount === 0) {
+                const shippingAmount: any = await WebsiteSetupModel.findOne({ blockReference: blockReferences.shipmentSettings, countryId: cartDetails.countryId });
+                const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);
+                totalShippingAmount = shippingCharge > 0 ? ((cartDetails.totalProductAmount) - (Number(shippingAmount.blockValues.freeShippingThreshold)) > 0 ? 0 : shippingCharge) : 0;
+                if (totalShippingAmount > 0) {
+                    const updatedCartOrderValues = await CartOrdersModel.findOneAndUpdate(cartDetails._id, {
+                        ...totalShippingAmount,
+                        pickupStoreId: null,
+                        couponId: null,
+                        totalShippingAmount,
+                        totalAmount: cartDetails.totalAmount + totalShippingAmount,
                     });
                     return updatedCartOrderValues;
                 }

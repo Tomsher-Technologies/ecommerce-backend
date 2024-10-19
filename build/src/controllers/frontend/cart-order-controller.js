@@ -216,8 +216,11 @@ class CartController extends base_controller_1.default {
                 const productVariant = await product_service_1.default.findProductList({
                     countryId: country,
                     query,
+                    getcategory: '0',
+                    getbrand: '0',
+                    notCheckQuantity: true,
                     hostName: req.get('origin'),
-                    getLanguageValues: '0'
+                    getLanguageValues: '0',
                 });
                 if (productVariant && productVariant.length === 0) {
                     return controller.sendErrorResponse(res, 200, { message: 'Product not found!' });
@@ -228,8 +231,8 @@ class CartController extends base_controller_1.default {
                 const productVariantData = productVariant[0].productVariants[0];
                 if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
                     return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: "Item Out of stock"
+                        message: 'Product Unavailable',
+                        validation: 'Item currently out of stock. Please adjust the quantity or remove it from your cart.'
                     });
                 }
                 const customer = res.locals.user || null;

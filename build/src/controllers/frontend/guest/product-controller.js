@@ -1553,7 +1553,7 @@ class ProductController extends base_controller_1.default {
         }
     }
     async youMayLikeAlso(req, res) {
-        const { getbrand = '0', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query;
+        const { getbrand = '0', getcategory = '0', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query;
         const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
         if (!countryId) {
             return controller.sendErrorResponse(res, 200, {
@@ -1580,6 +1580,7 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     getbrand,
+                    getcategory,
                     page: 1,
                     limit: parseInt(limit),
                     hostName: req.get('origin'),
@@ -1597,6 +1598,7 @@ class ProductController extends base_controller_1.default {
                     getattribute,
                     getspecification,
                     getbrand,
+                    getcategory,
                     page: 1,
                     limit: parseInt(limit),
                     hostName: req.get('origin'),

@@ -105,6 +105,7 @@ export interface ProductsFrontendQueryParams {
     collectionbrand?: any;
     collectioncategory?: any;
     getbrand?: number | string;
+    getcategory?: number | string;
     getfilterattributes?: number | string;
     getdiscount?: number | string;
     getimagegallery?: number | string;

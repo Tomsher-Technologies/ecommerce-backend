@@ -144,7 +144,6 @@ class CartController extends BaseController {
             });
 
             if (cartDetails && Object.keys(cartDetails).length > 0) {
-
                 const variantIds = cartDetails.products.map((product: any) => product.variantId);
                 const productVariants = await ProductVariantsModel.find({
                     _id: { $in: variantIds }
@@ -225,8 +224,11 @@ class CartController extends BaseController {
                 const productVariant: any = await ProductService.findProductList({
                     countryId: country,
                     query,
+                    getcategory: '0',
+                    getbrand: '0',
+                    notCheckQuantity: true,
                     hostName: req.get('origin'),
-                    getLanguageValues: '0'
+                    getLanguageValues: '0',
                 });
 
                 if (productVariant && productVariant.length === 0) {
@@ -236,14 +238,15 @@ class CartController extends BaseController {
                 if (productVariant[0].productVariants && productVariant[0].productVariants.length === 0) {
                     return controller.sendErrorResponse(res, 200, { message: 'Product details are not found!' });
                 }
-                const productVariantData = productVariant[0].productVariants[0]
+                const productVariantData = productVariant[0].productVariants[0];
 
                 if (productVariantData && productVariantData.quantity <= 0 && quantity != 0) {
                     return controller.sendErrorResponse(res, 200, {
-                        message: 'Validation error',
-                        validation: "Item Out of stock"
+                        message: 'Product Unavailable',
+                        validation: 'Item currently out of stock. Please adjust the quantity or remove it from your cart.'
                     });
                 }
+
                 const customer = res.locals.user || null;
                 const guestUser = res.locals.uuid || null;
                 if (!customer && !guestUser) {

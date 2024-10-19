@@ -1621,7 +1621,7 @@ class ProductController extends BaseController {
     }
 
     async youMayLikeAlso(req: Request, res: Response): Promise<void> {
-        const { getbrand = '0', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query as ProductsFrontendQueryParams;
+        const { getbrand = '0', getcategory = '0', getattribute = '', getspecification = '', page_size = 1, limit = 30, } = req.query as ProductsFrontendQueryParams;
         const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
         if (!countryId) {
             return controller.sendErrorResponse(res, 200, {
@@ -1648,6 +1648,7 @@ class ProductController extends BaseController {
                     getattribute,
                     getspecification,
                     getbrand,
+                    getcategory,
                     page: 1,
                     limit: parseInt(limit as string),
                     hostName: req.get('origin'),
@@ -1666,6 +1667,7 @@ class ProductController extends BaseController {
                     getattribute,
                     getspecification,
                     getbrand,
+                    getcategory,
                     page: 1,
                     limit: parseInt(limit as string),
                     hostName: req.get('origin'),
