@@ -595,9 +595,20 @@ class ProductService {
                 }
             },
             {
-                $match: {
-                    ...query 
+                $lookup: {
+                    from: `${collections.ecommerce.products.productcategorylinks}`,
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productCategory',
                 }
+            },
+            {
+                $match: {
+                    productCategory: { $ne: [] }
+                }
+            },
+            {
+                $match: query
             },
             {
                 $project: {
@@ -622,9 +633,13 @@ class ProductService {
                     offerData: 1,
                     offerId: 1,
                     productDetails: { $arrayElemAt: ["$productDetails", 0] },
+                    productCategory: 1
                 }
             }
         ];
+
+        // console.log('query', JSON.stringify(query, null, 2));
+
         pipeline.push(
             {
                 $addFields: {

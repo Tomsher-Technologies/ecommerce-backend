@@ -183,6 +183,11 @@ const exportProductExcel = async (res, products) => {
                         variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
                     });
                 }
+                else if (Array.isArray(product.imageGallery) && product.imageGallery.length > 0) {
+                    product.imageGallery.forEach((image, imgIndex) => {
+                        variantImages[`Gallery_Image_${imgIndex + 1}`] = image.galleryImageUrl;
+                    });
+                }
                 if (Array.isArray(variant.productVariantAttributes) && variant.productVariantAttributes.length > 0) {
                     variant.productVariantAttributes.forEach((attribute, attrIndex) => {
                         attributes[`Attribute_Option_${attrIndex + 1}`] = attribute.attributeTitle;
@@ -193,6 +198,14 @@ const exportProductExcel = async (res, products) => {
                 }
                 if (Array.isArray(variant.productSpecification) && variant.productSpecification.length > 0) {
                     variant.productSpecification.forEach((specification, specIndex) => {
+                        specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
+                        specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
+                        specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
+                        specifications[`Specification_Value_${specIndex + 1}`] = specification.specificationDetail.itemValue;
+                    });
+                }
+                else if (Array.isArray(product.productSpecification) && product.productSpecification.length > 0) {
+                    product.productSpecification.forEach((specification, specIndex) => {
                         specifications[`Specification_Option_${specIndex + 1}`] = specification.specificationTitle;
                         specifications[`Specification_Display_Name_${specIndex + 1}`] = specification.specificationType;
                         specifications[`Specification_Name_${specIndex + 1}`] = specification.specificationDetail.itemName;
