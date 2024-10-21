@@ -169,49 +169,32 @@ class SpecificationService {
     async findOneSpecification(data) {
         const trimSpecificationTitle = data.specificationTitle.split('\n').map((line) => line.trim()).join('\n').trim();
         const slug = (0, helpers_1.slugify)(trimSpecificationTitle);
-        const resultSpecification = await specifications_model_1.default.findOne({ slug: slug });
-        if (resultSpecification) {
-            const specificationDetailResult = await this.findOneSpecificationDetail(data, resultSpecification._id);
-            const result = {
-                specificationId: resultSpecification._id,
-                specificationDetailId: specificationDetailResult._id
-            };
-            return result;
-        }
-        else {
-            const specificationData = {
-                specificationTitle: (0, helpers_1.capitalizeWords)(trimSpecificationTitle),
-                specificationDisplayName: data.specificationDisplayName,
-                isExcel: true,
-                slug: (0, helpers_1.slugify)(data.specificationTitle)
-            };
-            const specificationResult = await this.create(specificationData);
-            if (specificationResult) {
-                const specificationDetailResult = await this.findOneSpecificationDetail(data, specificationResult._id);
-                const result = {
-                    specificationId: specificationResult._id,
-                    specificationDetailId: specificationDetailResult._id
-                };
-                return result;
-            }
-        }
+        const resultSpecification = await specifications_model_1.default.findOneAndUpdate({ slug }, {
+            specificationTitle: (0, helpers_1.capitalizeWords)(trimSpecificationTitle),
+            specificationDisplayName: data.specificationDisplayName,
+            isExcel: true,
+        }, { new: true, upsert: true });
+        const specificationDetailResult = await this.findOneSpecificationDetail(data, resultSpecification._id);
+        return {
+            specificationId: resultSpecification._id,
+            specificationDetailId: specificationDetailResult?._id // Safe access with optional chaining
+        };
     }
     async findOneSpecificationDetail(data, specificationId) {
-        const resultBrand = await specifications_detail_model_1.default.findOne({ $and: [{ itemName: { $regex: new RegExp(data.itemName, 'i') } }, { specificationId: specificationId }] });
-        if (resultBrand) {
-            return resultBrand;
-        }
-        else {
-            const brandData = {
-                specificationId: specificationId,
-                itemName: data.itemName,
-                itemValue: data.itemValue,
-            };
-            const brandResult = await specifications_detail_model_1.default.create(brandData);
-            if (brandResult) {
-                return brandResult;
-            }
-        }
+        const resultBrand = await specifications_detail_model_1.default.findOne({
+            $and: [
+                { itemName: { $regex: new RegExp(data.itemName, 'i') } },
+                { specificationId }
+            ]
+        });
+        const brandData = {
+            specificationId,
+            itemName: data.itemName,
+            itemValue: data.itemValue,
+        };
+        return resultBrand
+            ? resultBrand
+            : await specifications_detail_model_1.default.create(brandData);
     }
 }
 exports.default = new SpecificationService();

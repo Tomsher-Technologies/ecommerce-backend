@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.formatAmount = exports.truncateWord = exports.normalizeWord = exports.calculateExpectedDeliveryDate = exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugifyManually = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
+exports.formatAmount = exports.truncateWord = exports.normalizeWord = exports.calculateExpectedDeliveryDate = exports.calculateWalletRewardPoints = exports.calculateTotalDiscountAmountDifference = exports.uploadImageFromUrl = exports.capitalizeWords = exports.calculateWalletAmount = exports.generateOTP = exports.dateConvertPm = exports.checkValueExists = exports.getIndexFromFieldName = exports.stringToArray = exports.isValidPriceFormat = exports.categorySlugifyManually = exports.categorySlugify = exports.slugify = exports.uploadGallaryImages = exports.deleteFile = exports.deleteImage = exports.handleFileUpload = exports.formatZodError = exports.getCountryIdWithSuperAdminWithCountryData = exports.getCountryIdWithSuperAdmin = exports.getCountryId = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
@@ -35,6 +35,18 @@ async function getCountryIdWithSuperAdmin(userData) {
     return undefined;
 }
 exports.getCountryIdWithSuperAdmin = getCountryIdWithSuperAdmin;
+function getCountryIdWithSuperAdminWithCountryData(userData, countries) {
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose_1.default.Types.ObjectId(userData.countryId);
+        }
+        else if (userData.userTypeID.slug === 'super-admin') {
+            return countries.find((country) => country.isOrigin === true)?._id;
+        }
+    }
+    return undefined;
+}
+exports.getCountryIdWithSuperAdminWithCountryData = getCountryIdWithSuperAdminWithCountryData;
 const formatZodError = (errors) => {
     const formattedErrors = {};
     errors.forEach((err) => {

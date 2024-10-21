@@ -164,24 +164,23 @@ class OfferService {
             const newOfferPrice = (0, offer_1.calculateOfferPrice)(offerType, offerIN, basePrice);
             if ((0, offer_1.shouldUpdateOffer)(offersBy, offerData?.offersBy)) {
                 return {
-                    updateOne: {
+                    updateMany: {
                         filter: { productId, countryId },
                         update: {
                             $set: {
                                 offerId: _id,
                                 offerPrice: newOfferPrice,
-                                offerData: { offerIN, offerType, offersBy, offerDateRange },
+                                offerData: { offerIN, offerType, offersBy, offerDateRange, offerUpdatedAt: new Date() },
                             },
                         },
                     },
                 };
             }
             else {
-                console.log(`Skipping update for productId: ${productId}`);
+                console.log(`Skipping update for productId: ${productId} | Current offersBy: ${offerData?.offersBy} | New offersBy: ${offersBy}`);
                 return null;
             }
         }).filter(Boolean);
-        console.log('bulkOps', JSON.stringify(bulkOps, null, 2));
         if (bulkOps.length > 0) {
             const bulkWriteResult = await product_variants_model_1.default.bulkWrite(bulkOps);
             console.log(`Bulk write completed. Matched: ${bulkWriteResult.matchedCount}, Modified: ${bulkWriteResult.modifiedCount}`);

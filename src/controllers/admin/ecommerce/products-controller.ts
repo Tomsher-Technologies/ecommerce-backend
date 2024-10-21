@@ -2,7 +2,7 @@ import 'module-alias/register';
 import { Request, Response } from 'express';
 import path from 'path';
 const xlsx = require('xlsx');
-import { capitalizeWords, dateConvertPm, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
+import { capitalizeWords, dateConvertPm, deleteFile, formatZodError, getCountryId, getCountryIdWithSuperAdmin, getCountryIdWithSuperAdminWithCountryData, handleFileUpload, slugify, uploadGallaryImages } from '../../../utils/helpers';
 import { productStatusSchema, productSchema, updateWebsitePrioritySchema, productExcelSchema } from '../../../utils/schemas/admin/ecommerce/products-schema';
 import { ProductsProps, ProductsQueryParams } from '../../../utils/types/products';
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from '../../../constants/admin/task-log';
@@ -593,8 +593,6 @@ class ProductsController extends BaseController {
         const validation: any = []
         var index = 2
 
-        // try {
-        // Load the Excel file
         if (req && req.file && req.file?.filename) {
             const excelDatas = await xlsx.readFile(path.resolve(__dirname, `../../../../public/uploads/product/excel/${req.file?.filename}`));
             if (excelDatas) {
@@ -639,6 +637,12 @@ class ProductsController extends BaseController {
                                         message: "Something went wrong"
                                     }, req);
                                 }
+                                const countries: any[] = await CountryModel.find();
+                                const countryMap = new Map();
+                                countries.forEach((country: any) => {
+                                    countryMap.set(country.countryTitle.toLowerCase(), country);
+                                    countryMap.set(country.countryShortTitle.toLowerCase(), country);
+                                });
 
                                 for await (let data of jsonData) {
                                     const imageUrl = data.Image;
@@ -654,12 +658,12 @@ class ProductsController extends BaseController {
                                                         if (data.Image) {
                                                             if (data.Brand) {
                                                                 const categoryArray = [];
+                                                                var countryData: any
                                                                 var brandId;
                                                                 var countryId;
                                                                 var warehouseId;
                                                                 const specificationData = [];
                                                                 const attributeData = [];
-                                                                var countryData: any
                                                                 if (data.Brand) {
                                                                     const brandData: any = await BrandsService.findBrandId(data.Brand)
                                                                     if (brandData) {
@@ -667,11 +671,14 @@ class ProductsController extends BaseController {
                                                                     }
                                                                 }
                                                                 if (data.Country) {
-                                                                    countryData = await CountryService.findCountryId({ $or: [{ countryTitle: data.Country }, { countryShortTitle: data.Country }] })
+                                                                    const countryKey = data.Country.toLowerCase();
+                                                                    countryData = countryMap.get(countryKey);
+
                                                                     if (countryData) {
-                                                                        countryId = countryData._id
+                                                                        countryId = countryData._id;
                                                                     }
                                                                 }
+
                                                                 if (!data.Country || countryId) {
 
                                                                     if (data.Warehouse) {
@@ -762,10 +769,7 @@ class ProductsController extends BaseController {
                                                                             attributeData.push({ attributeId: attributes.attributeId, attributeDetailId: attributes.attributeDetailId })
                                                                         }
                                                                     }
-
                                                                     const specificationCombinedArray = [];
-
-
                                                                     for (let index in specificationOption) {
                                                                         let option = specificationOption[index];
                                                                         let name = specificationName[index];
@@ -779,10 +783,8 @@ class ProductsController extends BaseController {
                                                                             specificationCombinedArray.push({ data: option || undefined, name: name || undefined, value: value || undefined, displayName: displayName || undefined });
                                                                         }
                                                                     }
-
                                                                     for await (let value of specificationCombinedArray) {
                                                                         if (value && value.data && value.name) {
-
                                                                             const specifications: any = await SpecificationService.findOneSpecification({ specificationTitle: value.data, itemName: value.name, itemValue: value.value, specificationDisplayName: value.displayName })
                                                                             specificationData.push({ specificationId: specifications.specificationId, specificationDetailId: specifications.specificationDetailId })
                                                                         }
@@ -839,7 +841,7 @@ class ProductsController extends BaseController {
                                                                     const userData = res.locals.user
 
                                                                     var productVariants: any = {
-                                                                        countryId: data.Country ? countryId : await getCountryIdWithSuperAdmin(userData),
+                                                                        countryId: data.Country ? countryId : getCountryIdWithSuperAdminWithCountryData(userData, countries),
                                                                         extraProductTitle: capitalizeWords(data.Product_Title),
                                                                         showOrder: data.Show_Order,
                                                                         // slug: slugify(slugData),
@@ -856,8 +858,7 @@ class ProductsController extends BaseController {
                                                                         createdBy: userData._id,
                                                                         isDefault: (data.Item_Type == 'config-item') ? 1 : 0
                                                                     }
-
-                                                                    const shortTitleOfCountry: any = await CountryModel.findOne({ _id: await getCountryIdWithSuperAdmin(userData) })
+                                                                    const shortTitleOfCountry = countries.find((country: any) => country._id.toString() === getCountryIdWithSuperAdminWithCountryData(userData, countries)?.toString())
 
                                                                     var countryForSlug
                                                                     if (countryData && countryData.countryShortTitle) {
