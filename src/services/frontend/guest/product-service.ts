@@ -6,7 +6,7 @@ import ProductsModel from '../../../model/admin/ecommerce/product-model';
 import SpecificationModel from '../../../model/admin/ecommerce/specifications-model';
 import LanguagesModel from '../../../model/admin/setup/language-model';
 import { attributeDetailLanguageFieldsReplace, attributeDetailsLookup, attributeLanguageFieldsReplace, attributeLookup, attributeProject, frontendVariantAttributesLookup } from '../../../utils/config/attribute-config';
-import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, productVariantAttributesLookup, productSpecificationLookup, variantImageGalleryLookup, productSpecificationsLookup, productLookup } from '../../../utils/config/product-config';
+import { brandLookup, brandObject, productCategoryLookup, imageLookup, productFinalProject, productMultilanguageFieldsLookup, productProject, productlanguageFieldsReplace, productVariantAttributesLookup, productSpecificationLookup, variantImageGalleryLookup, productSpecificationsLookup, productLookup, productCategoryWithVariantLookup, productVariantLookup } from '../../../utils/config/product-config';
 import { specificationDetailLanguageFieldsReplace, specificationLanguageLookup, specificationDetailsLookup, specificationLanguageFieldsReplace, specificationProject } from '../../../utils/config/specification-config';
 import { getLanguageValueFromSubdomain } from '../../../utils/frontend/sub-domain';
 import { collections } from '../../../constants/collections';
@@ -560,85 +560,55 @@ class ProductService {
                 }
             },
             { $sort: finalSort },
-            {
-                $lookup: {
-                    from: "products",
-                    let: { productId: "$productId" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: { $eq: ["$_id", "$$productId"] },
-                                status: '1'
-                            }
-                        },
-                        {
-                            $project: {
-                                _id: 1,
-                                productTitle: 1,
-                                starRating: 1,
-                                productImageUrl: 1,
-                                description: 1,
-                                longDescription: 1,
-                                brand: 1,
-                                tags: 1,
-                                productCode: 1,
-                                status: 1,
-                            }
-                        }
-                    ],
-                    as: "productDetails"
-                }
-            },
-            {
-                $match: {
-                    productDetails: { $ne: [] }
-                }
-            },
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.productcategorylinks}`,
-                    localField: 'productId',
-                    foreignField: 'productId',
-                    as: 'productCategory',
-                }
-            },
-            {
-                $match: {
-                    productCategory: { $ne: [] }
-                }
-            },
-            {
-                $match: query
-            },
-            {
-                $project: {
-                    _id: 1,
-                    itemCode: 1,
-                    productId: 1,
-                    countryId: 1,
-                    variantSku: 1,
-                    slug: 1,
-                    showOrder: 1,
-                    extraProductTitle: 1,
-                    variantDescription: 1,
-                    variantImageUrl: 1,
-                    price: 1,
-                    offerPrice: 1,
-                    discountPrice: 1,
-                    quantity: 1,
-                    cartMinQuantity: 1,
-                    cartMaxQuantity: 1,
-                    isDefault: 1,
-                    status: 1,
-                    offerData: 1,
-                    offerId: 1,
-                    productDetails: { $arrayElemAt: ["$productDetails", 0] },
-                    productCategory: 1
-                }
-            }
-        ];
 
-        // console.log('query', JSON.stringify(query, null, 2));
+        ];
+        const hasProductTitleCondition = (orConditions: any[]) => {
+            return Array.isArray(orConditions) && orConditions.length > 0
+                ? orConditions.some((condition: any) => condition.hasOwnProperty('productDetails.productTitle'))
+                : false;
+        };
+        if (query.$or && hasProductTitleCondition(query.$or) || query['productDetails.brand']) {
+            pipeline.push(...productVariantLookup);
+        }
+
+        // Continue building the rest of the pipeline
+        pipeline.push({
+            $match: query
+        });
+
+
+        if (query['productCategory.categoryId']) {
+            pipeline.push(...productCategoryWithVariantLookup)
+        }
+        pipeline.push({
+            $match: query
+        })
+        pipeline.push({
+            $project: {
+                _id: 1,
+                itemCode: 1,
+                productId: 1,
+                countryId: 1,
+                variantSku: 1,
+                slug: 1,
+                showOrder: 1,
+                extraProductTitle: 1,
+                variantDescription: 1,
+                variantImageUrl: 1,
+                price: 1,
+                offerPrice: 1,
+                discountPrice: 1,
+                quantity: 1,
+                cartMinQuantity: 1,
+                cartMaxQuantity: 1,
+                isDefault: 1,
+                status: 1,
+                offerData: 1,
+                offerId: 1,
+                productDetails: { $arrayElemAt: ["$productDetails", 0] },
+                productCategory: 1
+            }
+        })
 
         pipeline.push(
             {
@@ -722,84 +692,88 @@ class ProductService {
                 }
             }
         }
-
-        pipeline.push({
-            $facet: {
-                data: [
-                    {
-                        $match: {}
-                    },
-                    ...(skip ? [{ $skip: skip }] : []),
-                    ...(limit ? [{ $limit: limit }] : []),
-                ],
-                productIds: [
-                    {
-                        $group: {
-                            _id: null,
-                            productIds: { $addToSet: "$productId" }
-                        }
-                    }
-                ],
-                ... ((getbrand === '1') ? {
-                    brandIds: [
+        const facetPipeline = [
+            {
+                $facet: {
+                    data: [
                         {
-                            $group: {
-                                _id: null,
-                                brandIds: { $addToSet: "$productDetails.brand" }
-                            }
-                        }
-                    ]
-                } : {}),
-                variantIds: [
-                    {
-                        $group: {
-                            _id: null,
-                            variantIds: { $addToSet: "$_id" }
-                        }
-                    },
-                ],
-                ...(getdiscount === '1' ? {
-                    discountRanges: [
-                        {
-                            $group: {
-                                _id: null,
-                                maxDiscount: { $max: "$discountPercentage" }
-                            }
+                            $match: {}
                         },
-                        {
-                            $project: {
-                                discountRanges: {
-                                    $map: {
-                                        input: { $range: [10, { $ceil: "$maxDiscount" }, 10] },
-                                        as: "range",
-                                        in: "$$range"
+                        ...(skip ? [{ $skip: skip }] : []),
+                        ...(limit ? [{ $limit: limit }] : []),
+                        ...((!hasProductTitleCondition(query.$or) && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined)) ? productVariantLookup : []),
+                        ...((query['productCategory.categoryId'] === '' || query['productCategory.categoryId'] === undefined) ? productCategoryWithVariantLookup : []),
+
+                    ],
+                    // productIds: [
+                    //     {
+                    //         $group: {
+                    //             _id: null,
+                    //             productIds: { $addToSet: "$productId" }
+                    //         }
+                    //     }
+                    // ],
+                    ... ((getbrand === '1') ? {
+                        brandIds: [
+                            {
+                                $group: {
+                                    _id: null,
+                                    brandIds: { $addToSet: "$productDetails.brand" }
+                                }
+                            }
+                        ]
+                    } : {}),
+                    // variantIds: [
+                    //     {
+                    //         $group: {
+                    //             _id: null,
+                    //             variantIds: { $addToSet: "$_id" }
+                    //         }
+                    //     },
+                    // ],
+                    ...(getdiscount === '1' ? {
+                        discountRanges: [
+                            {
+                                $group: {
+                                    _id: null,
+                                    maxDiscount: { $max: "$discountPercentage" }
+                                }
+                            },
+                            {
+                                $project: {
+                                    discountRanges: {
+                                        $map: {
+                                            input: { $range: [10, { $ceil: "$maxDiscount" }, 10] },
+                                            as: "range",
+                                            in: "$$range"
+                                        }
                                     }
                                 }
                             }
-                        }
-                    ]
-                } : {}),
-                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
+                        ]
+                    } : {}),
+                    ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
+                }
             },
-        });
-
-        pipeline.push({
-            $project: {
-                data: 1,
-                productIds: {
-                    $arrayElemAt: ["$productIds.productIds", 0]
-                },
-                variantIds: { $arrayElemAt: ["$variantIds.variantIds", 0] },
-                ...(getbrand === '1' ? { brandIds: { $arrayElemAt: ["$brandIds.brandIds", 0] } } : {}),
-                ...(getdiscount === '1' ? { discountRanges: { $arrayElemAt: ["$discountRanges.discountRanges", 0] } } : {}),
-                ...(isCount === 1 ? { totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] } } : {})
+            {
+                $project: {
+                    data: 1,
+                    // productIds: { $arrayElemAt: ["$productIds.productIds", 0] },
+                    // variantIds: { $arrayElemAt: ["$variantIds.variantIds", 0] },
+                    ...(getbrand === '1' ? { brandIds: { $arrayElemAt: ["$brandIds.brandIds", 0] } } : {}),
+                    ...(getdiscount === '1' ? { discountRanges: { $arrayElemAt: ["$discountRanges.discountRanges", 0] } } : {}),
+                    ...(isCount === 1 ? { totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] } } : {})
+                }
             }
-        });
+        ];
+
+        pipeline.push(...facetPipeline);
+
 
         let productData = await ProductVariantsModel.aggregate(pipeline).exec();
         let products = productData[0].data;
-        let productIds = productData[0].productIds;
-        let variantIds = productData[0].variantIds;
+        // let productIds = productData[0].productIds;
+        // let variantIds = productData[0].variantIds;
         let brandIds = productData[0].brandIds;
         let discountRanges = productData[0].discountRanges;
         let paginatedVariantIds = products.flatMap((variant: any) => variant._id);
@@ -815,17 +789,17 @@ class ProductService {
             brands = await BrandsModel.find({ _id: { $in: brandIds }, status: '1' }).select('_id brandTitle slug brandBannerImageUrl brandImageUrl description status')
         }
 
-        if (getfilterattributes === '1') {
-            filterAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
-                variantId: { $in: variantIds }
-            }));
-        }
+        // if (getfilterattributes === '1') {
+        //     filterAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
+        //         variantId: { $in: variantIds }
+        //     }));
+        // }
 
         if (isCount == 1) {
             const totalCount = productData[0].totalCount;
-            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands, productIds, variantIds, }
+            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands }
         } else {
-            return { productVariantAttributes, filterAttributes, products, brands, productIds, variantIds, }
+            return { productVariantAttributes, filterAttributes, products, brands }
         }
     }
     async getProductDetailsV2(productFindableValues: any, options: any) {

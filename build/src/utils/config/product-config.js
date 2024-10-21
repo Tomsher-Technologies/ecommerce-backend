@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookupVariantWise = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.brandLookupVariant = exports.productCategoryLookupVariantWise = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
+exports.productDetailsWithVariant = exports.productProject = exports.productFinalProject = exports.productlanguageFieldsReplace = exports.productMultilanguageFieldsLookup = exports.imageLookupVariantWise = exports.imageLookup = exports.brandObject = exports.brandLookup = exports.productSpecificationsLookup = exports.specificationsLookup = exports.productSeoObject = exports.productCategoryLookup = exports.productCategoryWithVariantLookup = exports.productVariantLookup = exports.brandLookupVariant = exports.productCategoryLookupVariantWise = exports.variantLookup = exports.productSpecificationAdminLookup = exports.productVariantAttributesAdminLookup = exports.variantImageGalleryLookup = exports.addFieldsProductSeo = exports.productSeoLookup = exports.addFieldsProductsSpecification = exports.addFieldsProductSpecification = exports.productSpecificationLookup = exports.addFieldsProductVariantAttributes = exports.productvariantattributesWithProductIdLookup = exports.productVariantAttributesLookup = exports.productLookup = void 0;
 const collections_1 = require("../../constants/collections");
 const multi_languages_1 = require("../../constants/multi-languages");
 const customer_config_1 = require("./customer-config");
@@ -394,6 +394,57 @@ exports.brandLookupVariant = [{
             'productDetails.brand': { $arrayElemAt: ['$brand', 0] }
         }
     }];
+exports.productVariantLookup = [
+    {
+        $lookup: {
+            from: "products",
+            let: { productId: "$productId" },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: { $eq: ["$_id", "$$productId"] },
+                        status: '1'
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        productTitle: 1,
+                        starRating: 1,
+                        productImageUrl: 1,
+                        description: 1,
+                        longDescription: 1,
+                        brand: 1,
+                        tags: 1,
+                        productCode: 1,
+                        status: 1,
+                    }
+                }
+            ],
+            as: "productDetails"
+        }
+    },
+    {
+        $match: {
+            productDetails: { $ne: [] }
+        }
+    }
+];
+exports.productCategoryWithVariantLookup = [
+    {
+        $lookup: {
+            from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
+            localField: 'productId',
+            foreignField: 'productId',
+            as: 'productCategory',
+        }
+    },
+    {
+        $match: {
+            productCategory: { $ne: [] }
+        }
+    },
+];
 exports.productCategoryLookup = {
     $lookup: {
         from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,

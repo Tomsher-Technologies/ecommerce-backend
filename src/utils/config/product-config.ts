@@ -409,6 +409,58 @@ export const brandLookupVariant = [{
     }
 }]
 
+export const productVariantLookup = [
+    {
+        $lookup: {
+            from: "products",
+            let: { productId: "$productId" },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: { $eq: ["$_id", "$$productId"] },
+                        status: '1'
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        productTitle: 1,
+                        starRating: 1,
+                        productImageUrl: 1,
+                        description: 1,
+                        longDescription: 1,
+                        brand: 1,
+                        tags: 1,
+                        productCode: 1,
+                        status: 1,
+                    }
+                }
+            ],
+            as: "productDetails"
+        }
+    },
+    {
+        $match: {
+            productDetails: { $ne: [] }
+        }
+    }
+]
+
+export const productCategoryWithVariantLookup = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productcategorylinks}`,
+            localField: 'productId',
+            foreignField: 'productId',
+            as: 'productCategory',
+        }
+    },
+    {
+        $match: {
+            productCategory: { $ne: [] }
+        }
+    },
+]
 
 export const productCategoryLookup = {
     $lookup: {
