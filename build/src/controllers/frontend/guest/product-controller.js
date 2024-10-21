@@ -28,7 +28,8 @@ const controller = new base_controller_1.default();
 class ProductController extends base_controller_1.default {
     async findAllVariantProductsV1(req, res) {
         const { page_size = 1, limit = 20, keyword = '', getbrand = '0', category = '', brand = '', collectionproduct = '', collectionbrand = '', collectioncategory = '', getimagegallery = 0, categories = '', brands = '', attribute = '', specification = '', offer = '', sortby = '', sortorder = '', maxprice = '', minprice = '', discount = '', getattribute = '', getdiscount = '', getfilterattributes = '', getspecification = '' } = req.query;
-        let query = { 'productDetails.status': "1" };
+        let query = {};
+        // let query: any = { 'productDetails.status': "1" };
         let collectionProductsData = null;
         let discountValue;
         let offers;
@@ -53,6 +54,7 @@ class ProductController extends base_controller_1.default {
             keywordRegex = new RegExp(`${keyword}`, 'i');
             const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             keywordRegexSingle = new RegExp(`\\b${escapedKeyword}`, 'i');
+            const regex = new RegExp(`^${keyword}`, 'i');
             const brandByTitleId = await brands_model_1.default.find({
                 $or: [
                     { brandTitle: { $regex: keywordRegex } },
@@ -64,8 +66,8 @@ class ProductController extends base_controller_1.default {
                 $or: [
                     { 'productDetails.productTitle': { $regex: keywordRegexSingle } },
                     { 'extraProductTitle': { $regex: keywordRegexSingle } },
-                    { slug: { $regex: new RegExp(`^${keyword}`, 'i') } },
-                    { 'variantSku': { $regex: new RegExp(`^${keyword}`, 'i') } },
+                    { slug: { $regex: regex } },
+                    { 'variantSku': { $regex: regex } },
                     ...(brandByTitleId.length > 0 ? [{ 'productDetails.brand': { $in: brandByTitleId.map(brand => brand._id) } }] : []),
                 ],
             };
