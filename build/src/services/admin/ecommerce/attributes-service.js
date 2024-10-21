@@ -119,51 +119,25 @@ class AttributesService {
         const { attributeTitle, attributeType } = attributeKeyValue;
         const trimAttributeTitle = attributeTitle.split('\n').map((line) => line.trim()).join('\n').trim();
         const slug = (0, helpers_1.slugify)(trimAttributeTitle);
-        if (attributeTitle && attributeType) {
-            const resultAttribute = await attribute_model_1.default.findOne({ slug: slug, attributeType });
-            if (resultAttribute) {
-                const attributeDetailResult = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id);
-                const result = {
-                    attributeId: resultAttribute._id,
-                    attributeDetailId: attributeDetailResult._id
-                };
-                return result;
-            }
-            else {
-                const attributeData = {
-                    attributeTitle: (0, helpers_1.capitalizeWords)(trimAttributeTitle),
-                    attributeType: attributeType,
-                    isExcel: true,
-                    slug: slug
-                };
-                const attributeResult = await this.create(attributeData);
-                if (attributeResult) {
-                    const attributeDetailResult = await this.findOneAttributeDetail(attributeKeyValue, attributeResult._id);
-                    const result = {
-                        attributeId: attributeResult._id,
-                        attributeDetailId: attributeDetailResult._id
-                    };
-                    return result;
-                }
-            }
+        if (!attributeTitle || !attributeType) {
+            return null;
         }
+        const resultAttribute = await attribute_model_1.default.findOneAndUpdate({ slug, attributeType }, {
+            attributeTitle: (0, helpers_1.capitalizeWords)(trimAttributeTitle),
+            isExcel: true
+        }, { new: true, upsert: true });
+        const attributeDetailResult = await this.findOneAttributeDetail(attributeKeyValue, resultAttribute._id);
+        return {
+            attributeId: resultAttribute._id,
+            attributeDetailId: attributeDetailResult?._id
+        };
     }
     async findOneAttributeDetail(attributeData, attributeId) {
-        const resultAttribute = await attribute_detail_model_1.default.findOne({ $and: [{ itemName: { $regex: new RegExp(attributeData.attributeItemName, 'i') } }, { attributeId: attributeId }] });
-        if (resultAttribute) {
-            return resultAttribute;
-        }
-        else {
-            const insertAttributeDetail = {
-                attributeId: attributeId,
-                itemName: attributeData.attributeItemName,
-                itemValue: attributeData.attributeItemValue,
-            };
-            const attributeDetailsResult = await attribute_detail_model_1.default.create(insertAttributeDetail);
-            if (attributeDetailsResult) {
-                return attributeDetailsResult;
-            }
-        }
+        const { attributeItemName, attributeItemValue } = attributeData;
+        const resultAttribute = await attribute_detail_model_1.default.findOneAndUpdate({ itemName: attributeItemName, attributeId }, {
+            $setOnInsert: { itemValue: attributeItemValue },
+        }, { new: true, upsert: true });
+        return resultAttribute;
     }
     async update(attributeId, attributeData) {
         const updatedAttributes = await attribute_model_1.default.findByIdAndUpdate(attributeId, attributeData, { new: true, useFindAndModify: false });

@@ -40,6 +40,18 @@ export async function getCountryIdWithSuperAdmin(userData: any): Promise<mongoos
     return undefined;
 }
 
+export function getCountryIdWithSuperAdminWithCountryData(userData: any, countries: any) {
+
+    if (userData && userData.userTypeID && userData.countryId) {
+        if (userData.userTypeID.slug !== 'super-admin') {
+            return new mongoose.Types.ObjectId(userData.countryId);
+        } else if (userData.userTypeID.slug === 'super-admin') {
+            return countries.find((country: any) => country.isOrigin === true)?._id
+        }
+    }
+    return undefined;
+}
+
 export const formatZodError = (errors: ZodError['errors']): Record<string, string> => {
     const formattedErrors: Record<string, string> = {};
     errors.forEach((err: ZodValidationError) => {
@@ -158,7 +170,7 @@ export const categorySlugify = (text: string): string => {
         .replace(/\s+/g, '_')          // Replace spaces with underscores
         .replace(/_+/g, '_')           // Replace multiple underscores with a single underscore
         .replace(/_+$/, '');           // Remove trailing underscores
-                // .replace(/-/g, '_')                // Replace hyphens with underscores
+    // .replace(/-/g, '_')                // Replace hyphens with underscores
 
 };
 
@@ -230,7 +242,7 @@ export function calculateWalletAmount(earnPoints: number, referAndEarn: any) {
 
 
 export const capitalizeWords = (sentence: string): string => {
-    if (!sentence) return ""; 
+    if (!sentence) return "";
 
     return sentence.replace(/(\b\w|'\w)/g, (match) => {
         if (match.startsWith("'")) {
@@ -385,7 +397,7 @@ export const truncateWord = (word: string, maxWords: number): string => {
 };
 
 export const formatAmount = (amount: any) => {
-    return amount !== undefined && amount !== null 
+    return amount !== undefined && amount !== null
         ? parseFloat(amount).toFixed(2)
         : "0.00";
 }
