@@ -282,10 +282,10 @@ class CustomerController extends base_controller_1.default {
         updatedData.updatedAt = new Date();
         const updatedAddress = await customer_service_1.default.updateCustomerAddress(existingAddress.id, { ...updatedData, isGuest: existingAddress.isGuest });
         if (updatedAddress) {
-            controller.sendSuccessResponse(res, { requestedData: updatedAddress, message: "Address updated successfully" }, 200);
+            return controller.sendSuccessResponse(res, { requestedData: updatedAddress, message: "Address updated successfully" }, 200);
         }
         else {
-            controller.sendErrorResponse(res, 200, { message: 'Failed to update the address' });
+            return controller.sendErrorResponse(res, 200, { message: 'Failed to update the address' });
         }
     }
     static async createNewAddress(customerId, newAddressData, res) {
@@ -297,10 +297,10 @@ class CustomerController extends base_controller_1.default {
         newAddressData.createdAt = new Date();
         const createdAddress = await customer_service_1.default.createCustomerAddress(newAddressData);
         if (createdAddress) {
-            controller.sendSuccessResponse(res, { requestedData: createdAddress, message: "Address created successfully" }, 200);
+            return controller.sendSuccessResponse(res, { requestedData: createdAddress, message: "Address created successfully" }, 200);
         }
         else {
-            controller.sendErrorResponse(res, 200, { message: 'Failed to create the address' });
+            return controller.sendErrorResponse(res, 200, { message: 'Failed to create the address' });
         }
     }
 }

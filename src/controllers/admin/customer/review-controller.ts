@@ -2,9 +2,8 @@ import { Request, Response } from "express";
 
 import BaseController from "../base-controller";
 import ReviewService from "../../../services/admin/customer/review-service";
-import { formatZodError, getCountryId } from "../../../utils/helpers";
+import { formatZodError } from "../../../utils/helpers";
 import { QueryParams } from "../../../utils/types/common";
-import mongoose from "mongoose";
 import { reviewStatusSchema } from "../../../utils/schemas/frontend/auth/review-schema";
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from "../../../constants/admin/task-log";
 import { collections } from "../../../constants/collections";
@@ -18,12 +17,12 @@ class ReviewController extends BaseController {
             const reviewStatus = status
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
-            const country = getCountryId(userData);
-            if (country) {
-                query.countryId = country;
-            } else if (countryId) {
-                query.countryId = new mongoose.Types.ObjectId(countryId)
-            }
+            // const country = getCountryId(userData);
+            // if (country) {
+            //     query.countryId = country;
+            // } else if (countryId) {
+            //     query.countryId = new mongoose.Types.ObjectId(countryId)
+            // }
 
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
@@ -75,8 +74,11 @@ class ReviewController extends BaseController {
                     const user = await res.locals.user;
                     const updatedReview = await ReviewService.update(reviewId, updatedReviewData);
                     if (updatedReview) {
+                        const reviews: any = await ReviewService.findAll({
+                            query:{_id:updatedReview._id},
+                        })
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedReview,
+                            requestedData: reviews[0]?.reviewData[0],
                             message: 'Review status updated successfully!'
                         }, 200,
                             { // task log

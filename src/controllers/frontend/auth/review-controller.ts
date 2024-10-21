@@ -10,6 +10,7 @@ import { orderProductStatusJson } from "../../../constants/cart";
 import { getOrderProductsDetailsLookup } from "../../../utils/config/cart-order-config";
 import CartOrderModel from '../../../model/frontend/cart-order-model';
 import { reviewArrayJson } from "../../../constants/review";
+import CommonService from "../../../services/frontend/guest/common-service";
 
 const controller = new BaseController();
 
@@ -17,6 +18,12 @@ class ReviewController extends BaseController {
 
     async updateReview(req: Request, res: Response): Promise<void> {
         try {
+            const countryId = await CommonService.findOneCountrySubDomainWithId(req.get('origin'));
+            if (!countryId) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
+            }
             const validatedData = reviewSchema.safeParse(req.body);
 
             if (validatedData.success) {
@@ -40,7 +47,7 @@ class ReviewController extends BaseController {
                             product.orderProductStatus === orderProductStatusJson.delivered ||
                             product.orderProductStatus === orderProductStatusJson.returned ||
                             product.orderProductStatus === orderProductStatusJson.refunded ||
-                            product.orderProductStatus === orderProductStatusJson.pickup
+                            product.orderProductStatus === orderProductStatusJson.completed
                         )
                     );
 
@@ -51,6 +58,7 @@ class ReviewController extends BaseController {
                 const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
                 if (targetProduct) {
                     const reviewData = {
+                        countryId,
                         customerName,
                         customerId: user._id,
                         productId,

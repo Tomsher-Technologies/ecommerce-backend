@@ -170,7 +170,7 @@ class OfferService {
                             $set: {
                                 offerId: _id,
                                 offerPrice: newOfferPrice,
-                                offerData: { offerIN, offerType, offersBy },
+                                offerData: { offerIN, offerType, offersBy, offerDateRange },
                             },
                         },
                     },
@@ -181,6 +181,7 @@ class OfferService {
                 return null;
             }
         }).filter(Boolean);
+        console.log('bulkOps', JSON.stringify(bulkOps, null, 2));
         if (bulkOps.length > 0) {
             const bulkWriteResult = await product_variants_model_1.default.bulkWrite(bulkOps);
             console.log(`Bulk write completed. Matched: ${bulkWriteResult.matchedCount}, Modified: ${bulkWriteResult.modifiedCount}`);

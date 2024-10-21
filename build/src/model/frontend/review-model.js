@@ -25,7 +25,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const collections_1 = require("../../constants/collections");
+const review_1 = require("../../constants/review");
 const reviewSchema = new mongoose_1.Schema({
+    countryId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: `${collections_1.collections.setup.countries}`,
+        required: true
+    },
     customerId: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: `${collections_1.collections.customer.customers}`,
@@ -61,7 +67,8 @@ const reviewSchema = new mongoose_1.Schema({
     },
     reviewStatus: {
         type: String,
-        required: true
+        required: true,
+        enum: [review_1.reviewArrayJson.pending, review_1.reviewArrayJson.pending, review_1.reviewArrayJson.approved]
     },
     rating: {
         type: Number,
