@@ -12,10 +12,17 @@ const cart_1 = require("../../../constants/cart");
 const cart_order_config_1 = require("../../../utils/config/cart-order-config");
 const cart_order_model_1 = __importDefault(require("../../../model/frontend/cart-order-model"));
 const review_1 = require("../../../constants/review");
+const common_service_1 = __importDefault(require("../../../services/frontend/guest/common-service"));
 const controller = new base_controller_1.default();
 class ReviewController extends base_controller_1.default {
     async updateReview(req, res) {
         try {
+            const countryId = await common_service_1.default.findOneCountrySubDomainWithId(req.get('origin'));
+            if (!countryId) {
+                return controller.sendErrorResponse(res, 500, {
+                    message: 'Country is missing'
+                });
+            }
             const validatedData = review_schema_1.reviewSchema.safeParse(req.body);
             if (validatedData.success) {
                 const { customerName, productId, reviewTitle, reviewContent, rating } = validatedData.data;
@@ -35,7 +42,7 @@ class ReviewController extends base_controller_1.default {
                         (product.orderProductStatus === cart_1.orderProductStatusJson.delivered ||
                             product.orderProductStatus === cart_1.orderProductStatusJson.returned ||
                             product.orderProductStatus === cart_1.orderProductStatusJson.refunded ||
-                            product.orderProductStatus === cart_1.orderProductStatusJson.pickup));
+                            product.orderProductStatus === cart_1.orderProductStatusJson.completed));
                     if (products.length > 0) {
                         filteredProducts.push(...products);
                     }
@@ -43,6 +50,7 @@ class ReviewController extends base_controller_1.default {
                 const targetProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
                 if (targetProduct) {
                     const reviewData = {
+                        countryId,
                         customerName,
                         customerId: user._id,
                         productId,

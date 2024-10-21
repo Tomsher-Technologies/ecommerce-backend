@@ -1,8 +1,6 @@
 import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
-import { whishlistLookup, customerProject, addField, orderLookup, billingLookup, shippingLookup, customerDetailProject, orderWalletTransactionLookup, referredWalletTransactionLookup, referrerWalletTransactionLookup, countriesLookup, reportOrderLookup, addressLookup } from '../../../utils/config/customer-config';
 import ReviewModel, { ReviewProps } from '../../../model/frontend/review-model';
-import { productLookup, variantLookup } from '../../../utils/config/product-config';
 import { collections } from '../../../constants/collections';
 
 
@@ -15,39 +13,69 @@ class ReviewService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-
         const pipeline: any[] = [
             { $match: query },
             {
                 $lookup: {
-                    from:`${collections.ecommerce.products.products}`,
+                    from: `${collections.ecommerce.products.products}`,
                     localField: 'productId',
                     foreignField: '_id',
-                    as: 'productDetails'
+                    as: 'productDetails',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                starRating: 1,
+                                productTitle: 1,
+                                slug: 1
+                            }
+                        }
+                    ]
                 }
             },
-            {
-                $unwind: {
-                    path: '$productDetails',
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-
-            // Lookup for variant details
+            { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
-                    from:`${collections.ecommerce.products.productvariants.productvariants}`,
+                    from: `${collections.customer.customers}`,
+                    localField: 'customerId',
+                    foreignField: '_id',
+                    as: 'customer',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                customerCode: 1,
+                                email: 1,
+                                firstName: 1,
+                                phone: 1,
+                                guestPhone: 1,
+                                guestEmail: 1,
+                                referralCode: 1,
+                            }
+                        }
+                    ]
+                }
+            },
+            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: `${collections.ecommerce.products.productvariants.productvariants}`,
                     localField: 'variantId',
                     foreignField: '_id',
-                    as: 'variantDetails'
+                    as: 'variantDetails',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                variantSku: 1,
+                                slug: 1,
+                                extraProductTitle: 1,
+                            }
+                        }
+                    ]
                 }
             },
-            {
-                $unwind: {
-                    path: '$variantDetails',
-                    preserveNullAndEmptyArrays: true
-                }
-            },
+            { $unwind: { path: '$variantDetails', preserveNullAndEmptyArrays: true } },
             {
                 $facet: {
                     reviewData: [
@@ -58,29 +86,21 @@ class ReviewService {
                             $project: {
                                 _id: 1,
                                 customerId: 1,
-                                productId: {
-                                    _id: '$productDetails._id',
-                                    productTitle: '$productDetails.productTitle',
-                                    slug: '$productDetails.slug'
-                                },
                                 name: 1,
                                 reviewTitle: 1,
                                 reviewContent: 1,
                                 reviewImageUrl1: 1,
                                 reviewImageUrl2: 1,
-                                ReviewStatus: 1,
+                                rating: 1,
+                                reviewStatus: 1,
                                 approvedBy: 1,
                                 createdAt: 1,
                                 updatedAt: 1,
                                 __v: 1,
                                 customerName: 1,
-                                reviewStatus: 1,
-                                variantId: {
-                                    _id: '$variantDetails._id',
-                                    variantSku: '$variantDetails.variantSku',
-                                    slug: '$variantDetails.slug',
-                                    extraProductTitle: '$variantDetails.extraProductTitle',
-                                }
+                                customer: 1,
+                                productDetails: 1,
+                                variantDetails: 1
                             }
                         }
                     ],

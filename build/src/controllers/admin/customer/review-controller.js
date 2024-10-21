@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const base_controller_1 = __importDefault(require("../base-controller"));
 const review_service_1 = __importDefault(require("../../../services/admin/customer/review-service"));
 const helpers_1 = require("../../../utils/helpers");
-const mongoose_1 = __importDefault(require("mongoose"));
 const review_schema_1 = require("../../../utils/schemas/frontend/auth/review-schema");
 const task_log_1 = require("../../../constants/admin/task-log");
 const collections_1 = require("../../../constants/collections");
@@ -18,13 +17,12 @@ class ReviewController extends base_controller_1.default {
             const reviewStatus = status;
             let query = { _id: { $exists: true } };
             const userData = await res.locals.user;
-            const country = (0, helpers_1.getCountryId)(userData);
-            if (country) {
-                query.countryId = country;
-            }
-            else if (countryId) {
-                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
-            }
+            // const country = getCountryId(userData);
+            // if (country) {
+            //     query.countryId = country;
+            // } else if (countryId) {
+            //     query.countryId = new mongoose.Types.ObjectId(countryId)
+            // }
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
@@ -73,8 +71,11 @@ class ReviewController extends base_controller_1.default {
                     const user = await res.locals.user;
                     const updatedReview = await review_service_1.default.update(reviewId, updatedReviewData);
                     if (updatedReview) {
+                        const reviews = await review_service_1.default.findAll({
+                            query: { _id: updatedReview._id },
+                        });
                         return controller.sendSuccessResponse(res, {
-                            requestedData: updatedReview,
+                            requestedData: reviews[0]?.reviewData[0],
                             message: 'Review status updated successfully!'
                         }, 200, {
                             userId: user._id,

@@ -22,30 +22,62 @@ class ReviewService {
                     from: `${collections_1.collections.ecommerce.products.products}`,
                     localField: 'productId',
                     foreignField: '_id',
-                    as: 'productDetails'
+                    as: 'productDetails',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                starRating: 1,
+                                productTitle: 1,
+                                slug: 1
+                            }
+                        }
+                    ]
                 }
             },
+            { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
             {
-                $unwind: {
-                    path: '$productDetails',
-                    preserveNullAndEmptyArrays: true
+                $lookup: {
+                    from: `${collections_1.collections.customer.customers}`,
+                    localField: 'customerId',
+                    foreignField: '_id',
+                    as: 'customer',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                customerCode: 1,
+                                email: 1,
+                                firstName: 1,
+                                phone: 1,
+                                guestPhone: 1,
+                                guestEmail: 1,
+                                referralCode: 1,
+                            }
+                        }
+                    ]
                 }
             },
-            // Lookup for variant details
+            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
                     from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
                     localField: 'variantId',
                     foreignField: '_id',
-                    as: 'variantDetails'
+                    as: 'variantDetails',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                variantSku: 1,
+                                slug: 1,
+                                extraProductTitle: 1,
+                            }
+                        }
+                    ]
                 }
             },
-            {
-                $unwind: {
-                    path: '$variantDetails',
-                    preserveNullAndEmptyArrays: true
-                }
-            },
+            { $unwind: { path: '$variantDetails', preserveNullAndEmptyArrays: true } },
             {
                 $facet: {
                     reviewData: [
@@ -56,29 +88,21 @@ class ReviewService {
                             $project: {
                                 _id: 1,
                                 customerId: 1,
-                                productId: {
-                                    _id: '$productDetails._id',
-                                    productTitle: '$productDetails.productTitle',
-                                    slug: '$productDetails.slug'
-                                },
                                 name: 1,
                                 reviewTitle: 1,
                                 reviewContent: 1,
                                 reviewImageUrl1: 1,
                                 reviewImageUrl2: 1,
-                                ReviewStatus: 1,
+                                rating: 1,
+                                reviewStatus: 1,
                                 approvedBy: 1,
                                 createdAt: 1,
                                 updatedAt: 1,
                                 __v: 1,
                                 customerName: 1,
-                                reviewStatus: 1,
-                                variantId: {
-                                    _id: '$variantDetails._id',
-                                    variantSku: '$variantDetails.variantSku',
-                                    slug: '$variantDetails.slug',
-                                    extraProductTitle: '$variantDetails.extraProductTitle',
-                                }
+                                customer: 1,
+                                productDetails: 1,
+                                variantDetails: 1
                             }
                         }
                     ],

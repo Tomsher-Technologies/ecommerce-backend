@@ -169,7 +169,12 @@ class OffersController extends base_controller_1.default {
                     };
                     const updatedOffer = await offer_service_1.default.update(offerId, updatedofferData);
                     if (updatedOffer) {
+                        // const { appliedValues, offerApplyValues, appliedValuesForBrand, ...rest } = updatedOffer
+                        // console.log('update', rest);
                         await offer_service_1.default.setOfferApplicableProducts(updatedOffer);
+                        // return controller.sendErrorResponse(res, 200, {
+                        //     message: 'Offer Id not found!',
+                        // }, req);
                         return controller.sendSuccessResponse(res, {
                             requestedData: updatedOffer,
                             message: 'Offer updated successfully!'
@@ -194,7 +199,7 @@ class OffersController extends base_controller_1.default {
                         });
                     }
                     else {
-                        controller.sendErrorResponse(res, 200, {
+                        return controller.sendErrorResponse(res, 200, {
                             message: 'Offer Id not found!',
                         }, req);
                     }

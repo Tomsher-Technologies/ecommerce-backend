@@ -97,7 +97,7 @@ adminRouter.use('/stores/store', store_routes_1.default);
 adminRouter.use('/orders', orders_routes_1.default);
 //customers
 adminRouter.use('/customers', customers_routes_1.default);
-adminRouter.use('/reviews', review_routes_1.default);
+adminRouter.use('/customers/reviews', review_routes_1.default);
 adminRouter.use('/customers/newsletter', newsletter_routes_1.default);
 adminRouter.use('/customers/contact-us', contact_us_routes_1.default);
 //dashboard

@@ -338,9 +338,9 @@ class CustomerController extends BaseController {
         updatedData.updatedAt = new Date();
         const updatedAddress = await CustomerService.updateCustomerAddress(existingAddress.id, { ...updatedData, isGuest: existingAddress.isGuest });
         if (updatedAddress) {
-            controller.sendSuccessResponse(res, { requestedData: updatedAddress, message: "Address updated successfully" }, 200);
+            return controller.sendSuccessResponse(res, { requestedData: updatedAddress, message: "Address updated successfully" }, 200);
         } else {
-            controller.sendErrorResponse(res, 200, { message: 'Failed to update the address' });
+            return controller.sendErrorResponse(res, 200, { message: 'Failed to update the address' });
         }
     }
 
@@ -355,9 +355,9 @@ class CustomerController extends BaseController {
 
         const createdAddress = await CustomerService.createCustomerAddress(newAddressData);
         if (createdAddress) {
-            controller.sendSuccessResponse(res, { requestedData: createdAddress, message: "Address created successfully" }, 200);
+            return controller.sendSuccessResponse(res, { requestedData: createdAddress, message: "Address created successfully" }, 200);
         } else {
-            controller.sendErrorResponse(res, 200, { message: 'Failed to create the address' });
+            return controller.sendErrorResponse(res, 200, { message: 'Failed to create the address' });
         }
     }
 

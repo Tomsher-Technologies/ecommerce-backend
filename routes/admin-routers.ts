@@ -119,7 +119,7 @@ adminRouter.use('/orders', OrderRoutes);
 
 //customers
 adminRouter.use('/customers', CustomerRoutes);
-adminRouter.use('/reviews', ReviewRoutes);
+adminRouter.use('/customers/reviews', ReviewRoutes);
 adminRouter.use('/customers/newsletter', NewsletterRoutes);
 adminRouter.use('/customers/contact-us', ContactUsRoutes);
 
