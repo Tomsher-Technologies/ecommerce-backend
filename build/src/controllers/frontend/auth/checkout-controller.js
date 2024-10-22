@@ -118,7 +118,6 @@ class CheckoutController extends base_controller_1.default {
                     countryId: countryData._id,
                     cartOrderProductUpdateOperations
                 });
-                console.log('return', updatedCartOrderValues);
                 if (errorArray.length > 0 || updatedCartOrderValues) {
                     const errorMessage = updatedCartOrderValues ? 'Please refresh your cart' : '';
                     return controller.sendErrorResponse(res, 200, {

@@ -126,8 +126,6 @@ class CartService {
             return total + product.productAmount;
         }, 0);
         const totalAmount = totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount;
-        console.log('cartOrderProductUpdateOperations', JSON.stringify(cartOrderProductUpdateOperations, null, 2));
-        console.log('totalAmount !== cartDetails.totalAmount', totalAmount, cartDetails.totalAmount, totalAmount !== cartDetails.totalAmount);
         if (cartOrderProductUpdateOperations.length > 0 || (0, helpers_1.roundToTwo)(totalAmount) !== (0, helpers_1.roundToTwo)(cartDetails.totalAmount)) {
             await cart_order_product_model_1.default.bulkWrite(cartOrderProductUpdateOperations);
             const [aggregationResult] = await cart_order_product_model_1.default.aggregate([
@@ -164,7 +162,6 @@ class CartService {
         }
         else { // when pickup with payment gatway, then return back , the shipping amount is zero
             let totalShippingAmount = cartDetails.totalShippingAmount;
-            console.log('totalShippingAmount', totalShippingAmount);
             if (totalShippingAmount === 0) {
                 const shippingAmount = await website_setup_model_1.default.findOne({ blockReference: website_setup_1.blockReferences.shipmentSettings, countryId: cartDetails.countryId });
                 const shippingCharge = ((shippingAmount && Number(shippingAmount?.blockValues?.shippingCharge) > 0) ? Number(shippingAmount?.blockValues?.shippingCharge) : 0);

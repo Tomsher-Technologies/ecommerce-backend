@@ -990,16 +990,7 @@ class ProductsController extends base_controller_1.default {
                                                                             const productDetails = await product_service_1.default.find({ sku: data.Parent_SKU });
                                                                             if (productDetails) {
                                                                                 var slugData;
-                                                                                // if (data.Product_Title === product.productTitle) {
-                                                                                //     slugData = product?.slug
-                                                                                // }
-                                                                                // else {
-                                                                                //     slugData = product?.slug + "-" + data.Product_Title
-                                                                                // }
-                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU; // generate slug
-                                                                                // if (data.Product_Title === productVariants.extraProductTitle) {
-                                                                                //     productVariants.extraProductTitle = ""
-                                                                                // }
+                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU;
                                                                                 const variantDetails = await product_variant_service_1.default.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
                                                                                     productVariants = {
