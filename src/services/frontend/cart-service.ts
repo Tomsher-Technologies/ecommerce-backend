@@ -11,6 +11,7 @@ import TaxsModel from '../../model/admin/setup/tax-model';
 import CartOrdersModel from '../../model/frontend/cart-order-model';
 import WebsiteSetupModel from '../../model/admin/setup/website-setup-model';
 import { blockReferences } from '../../constants/website-setup';
+import { roundToTwo } from '../../utils/helpers';
 
 class CartService {
 
@@ -142,7 +143,7 @@ class CartService {
         console.log('cartOrderProductUpdateOperations', JSON.stringify(cartOrderProductUpdateOperations, null, 2));
         console.log('totalAmount !== cartDetails.totalAmount', totalAmount, cartDetails.totalAmount, totalAmount !== cartDetails.totalAmount);
 
-        if (cartOrderProductUpdateOperations.length > 0 || totalAmount !== cartDetails.totalAmount) {
+        if (cartOrderProductUpdateOperations.length > 0 || roundToTwo(totalAmount) !== roundToTwo(cartDetails.totalAmount)) {
             await CartOrderProductsModel.bulkWrite(cartOrderProductUpdateOperations);
             const [aggregationResult] = await CartOrderProductsModel.aggregate([
                 { $match: { cartId: cartDetails._id } },
