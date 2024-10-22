@@ -181,20 +181,20 @@ class SpecificationService {
         };
     }
     async findOneSpecificationDetail(data, specificationId) {
-        const resultBrand = await specifications_detail_model_1.default.findOne({
+        const resultSpecifucation = await specifications_detail_model_1.default.findOne({
             $and: [
-                { itemName: { $regex: new RegExp(data.itemName, 'i') } },
+                { itemName: data.itemName },
                 { specificationId }
             ]
         });
-        const brandData = {
+        const specifucationData = {
             specificationId,
             itemName: data.itemName,
             itemValue: data.itemValue,
         };
-        return resultBrand
-            ? resultBrand
-            : await specifications_detail_model_1.default.create(brandData);
+        return resultSpecifucation
+            ? resultSpecifucation
+            : await specifications_detail_model_1.default.create(specifucationData);
     }
 }
 exports.default = new SpecificationService();

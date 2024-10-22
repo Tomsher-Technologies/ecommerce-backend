@@ -206,21 +206,21 @@ class SpecificationService {
     }
 
     async findOneSpecificationDetail(data: any, specificationId: string): Promise<void | null> {
-        const resultBrand: any = await SpecificationDetailModel.findOne({
+        const resultSpecifucation: any = await SpecificationDetailModel.findOne({
             $and: [
-                { itemName: { $regex: new RegExp(data.itemName, 'i') } },
+                { itemName: data.itemName },
                 { specificationId }
             ]
         });
-        const brandData = {
+        const specifucationData = {
             specificationId,
             itemName: data.itemName,
             itemValue: data.itemValue,
         };
 
-        return resultBrand
-            ? resultBrand
-            : await SpecificationDetailModel.create(brandData);
+        return resultSpecifucation
+            ? resultSpecifucation
+            : await SpecificationDetailModel.create(specifucationData);
     }
 
 }
