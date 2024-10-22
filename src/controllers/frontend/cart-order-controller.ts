@@ -206,9 +206,9 @@ class CartController extends BaseController {
                 let totalAmountOfProduct = 0;
                 let totalDiscountAmountOfProduct = 0;
                 let quantityProduct = quantity || 1;
-                let totalProductOriginalPrice = 0
-                let totalGiftWrapAmount = 0
-                let query: any = {}
+                let totalProductOriginalPrice = 0;
+                let totalGiftWrapAmount = 0;
+                let query: any = {};
 
                 if (variantId) {
                     query = {
@@ -303,6 +303,7 @@ class CartController extends BaseController {
                             { variantId: productVariantData._id }
                         ]
                     });
+
                     if (quantity === 1) {
                         quantityProduct = existingCartProduct ? (quantityChange ? quantity : existingCartProduct.quantity + 1) : quantity
                     } else if (addOnQuantity) {
@@ -501,10 +502,10 @@ class CartController extends BaseController {
                     const products = await CartService.findCartPopulate({
                         query: { _id: newCartOrder._id, cartStatus: "1" }, hostName: req.get('origin'),
                     })
+                    console.log('existingCartProduct', products);
+
                     return controller.sendSuccessResponse(res, {
-                        requestedData: {
-                            ...products
-                        },
+                        requestedData: products,
                         message: 'Cart updated successfully!'
                     }, 200);
                 }

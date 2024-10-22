@@ -159,13 +159,13 @@ class OfferService {
             return;
         }
         const bulkOps = productVariants.map(productVariant => {
-            const { productId, price, discountPrice, offerData } = productVariant;
+            const { _id: variantId, productId, price, discountPrice, offerData } = productVariant;
             const basePrice = discountPrice > 0 ? discountPrice : price;
             const newOfferPrice = (0, offer_1.calculateOfferPrice)(offerType, offerIN, basePrice);
             if ((0, offer_1.shouldUpdateOffer)(offersBy, offerData?.offersBy)) {
                 return {
-                    updateMany: {
-                        filter: { productId, countryId },
+                    updateOne: {
+                        filter: { _id: variantId, countryId },
                         update: {
                             $set: {
                                 offerId: _id,

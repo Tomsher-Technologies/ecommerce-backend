@@ -481,10 +481,9 @@ class CartController extends base_controller_1.default {
                     const products = await cart_service_1.default.findCartPopulate({
                         query: { _id: newCartOrder._id, cartStatus: "1" }, hostName: req.get('origin'),
                     });
+                    console.log('existingCartProduct', products);
                     return controller.sendSuccessResponse(res, {
-                        requestedData: {
-                            ...products
-                        },
+                        requestedData: products,
                         message: 'Cart updated successfully!'
                     }, 200);
                 }

@@ -1269,7 +1269,7 @@ class ProductController extends BaseController {
                     allProductVariants = await ProductVariantsModel.find({
                         productId: variantDetails.productId,
                         countryId
-                    }).select('_id productId variantSku slug isDefault quantity').exec();
+                    }).select('_id productId variantSku slug isDefault quantity offerData').exec();
                     if (allProductVariants && allProductVariants.length > 0) {
                         allProductVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
                             variantId: { $in: allProductVariants.map((variant: any) => variant._id) }
