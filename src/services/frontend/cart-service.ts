@@ -139,6 +139,8 @@ class CartService {
             return total + product.productAmount;
         }, 0);
         const totalAmount = totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount
+        console.log('cartOrderProductUpdateOperations', JSON.stringify(cartOrderProductUpdateOperations, null, 2));
+
         if (cartOrderProductUpdateOperations.length > 0 || totalAmount !== cartDetails.totalAmount) {
             await CartOrderProductsModel.bulkWrite(cartOrderProductUpdateOperations);
             const [aggregationResult] = await CartOrderProductsModel.aggregate([
