@@ -181,7 +181,7 @@ class OfferService {
             console.log('No product variants found for the products');
             return;
         }
-        console.log('productVariants', productVariants.length);
+        console.log('productVariants', productVariants.find((varia: any) => varia.productId.toString() === '66d4177ce3cfc14ddcb8ba7e'));
         const bulkOps: any = productVariants.map(productVariant => {
             const { _id: variantId, productId, price, discountPrice, offerData }: any = productVariant;
             const basePrice = discountPrice > 0 ? discountPrice : price;
