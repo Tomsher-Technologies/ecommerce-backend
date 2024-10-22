@@ -492,7 +492,7 @@ class ProductService {
 
     }
     async getProductVariantDetailsV1(productFindableValues: any, options: any) {
-        var { query, queryValues, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getfilterattributes = '1', getattribute, getdiscount, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
+        var { query, queryValues, sort, collectionProductsData, discount, getimagegallery, countryId, getcategory = '1', getbrand = '1', getLanguageValues = '1', getfilterattributes = '1', getattribute, getdiscount, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
         const { skip, limit } = frontendPagination(options.query || {}, options);
 
         const defaultSort = { createdAt: -1 };
@@ -773,6 +773,7 @@ class ProductService {
         let paginatedVariantIds = products.flatMap((variant: any) => variant._id);
         let productVariantAttributes: any[] = [];
         let brands: any[] = [];
+        let categories: any[] = [];
         let filterAttributes: any[] = [];
         if ((paginatedVariantIds.length > 0 && (getattribute === '1'))) {
             productVariantAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
@@ -783,6 +784,8 @@ class ProductService {
             brands = await BrandsModel.find({ _id: { $in: brandIds }, status: '1' }).select('_id brandTitle slug brandBannerImageUrl brandImageUrl description status')
         }
 
+
+
         // if (getfilterattributes === '1') {
         //     filterAttributes = await ProductVariantAttributesModel.aggregate(frontendVariantAttributesLookup({
         //         variantId: { $in: variantIds }
@@ -791,9 +794,13 @@ class ProductService {
 
         if (isCount == 1) {
             const totalCount = productData[0].totalCount;
-            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands }
+            if (products && products.length > 0 && getcategory === '1') {
+                let categoryIds = products.flatMap((product: any) => product.productCategory ? product.productCategory.map((category: any) => category.categoryId) : []);
+                categories = await CategoryModel.find({ _id: { $in: categoryIds }, status: '1' }).select('_id categoryTitle slug parentCategory categoryImageUrl status')
+            }
+            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands, categories }
         } else {
-            return { productVariantAttributes, filterAttributes, products, brands }
+            return { productVariantAttributes, filterAttributes, products, brands, categories }
         }
     }
     async getProductDetailsV2(productFindableValues: any, options: any) {

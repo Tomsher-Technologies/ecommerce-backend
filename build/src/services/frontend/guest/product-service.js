@@ -453,7 +453,7 @@ class ProductService {
         }
     }
     async getProductVariantDetailsV1(productFindableValues, options) {
-        var { query, queryValues, sort, collectionProductsData, discount, getimagegallery, countryId, getbrand = '1', getLanguageValues = '1', getfilterattributes = '1', getattribute, getdiscount, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
+        var { query, queryValues, sort, collectionProductsData, discount, getimagegallery, countryId, getcategory = '1', getbrand = '1', getLanguageValues = '1', getfilterattributes = '1', getattribute, getdiscount, getspecification, hostName, offers, minprice, maxprice, isCount } = options;
         const { skip, limit } = (0, pagination_1.frontendPagination)(options.query || {}, options);
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
@@ -711,6 +711,7 @@ class ProductService {
         let paginatedVariantIds = products.flatMap((variant) => variant._id);
         let productVariantAttributes = [];
         let brands = [];
+        let categories = [];
         let filterAttributes = [];
         if ((paginatedVariantIds.length > 0 && (getattribute === '1'))) {
             productVariantAttributes = await product_variant_attribute_model_1.default.aggregate((0, attribute_config_1.frontendVariantAttributesLookup)({
@@ -727,10 +728,14 @@ class ProductService {
         // }
         if (isCount == 1) {
             const totalCount = productData[0].totalCount;
-            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands };
+            if (products && products.length > 0 && getcategory === '1') {
+                let categoryIds = products.flatMap((product) => product.productCategory ? product.productCategory.map((category) => category.categoryId) : []);
+                categories = await category_model_1.default.find({ _id: { $in: categoryIds }, status: '1' }).select('_id categoryTitle slug parentCategory categoryImageUrl status');
+            }
+            return { productVariantAttributes, filterAttributes, discountRanges, products, totalCount, brands, categories };
         }
         else {
-            return { productVariantAttributes, filterAttributes, products, brands };
+            return { productVariantAttributes, filterAttributes, products, brands, categories };
         }
     }
     async getProductDetailsV2(productFindableValues, options) {
