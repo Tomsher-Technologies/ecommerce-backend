@@ -401,3 +401,5 @@ export const formatAmount = (amount: any) => {
         ? parseFloat(amount).toFixed(2)
         : "0.00";
 }
+
+export const roundToTwo = (num: number) => Math.round(num * 100) / 100;

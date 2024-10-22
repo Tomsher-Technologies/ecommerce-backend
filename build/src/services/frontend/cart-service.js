@@ -15,6 +15,7 @@ const tax_model_1 = __importDefault(require("../../model/admin/setup/tax-model")
 const cart_order_model_2 = __importDefault(require("../../model/frontend/cart-order-model"));
 const website_setup_model_1 = __importDefault(require("../../model/admin/setup/website-setup-model"));
 const website_setup_1 = require("../../constants/website-setup");
+const helpers_1 = require("../../utils/helpers");
 class CartService {
     constructor() {
         this.cartLookup = {
@@ -127,7 +128,7 @@ class CartService {
         const totalAmount = totalProductAmount + cartDetails.totalGiftWrapAmount + cartDetails.totalShippingAmount;
         console.log('cartOrderProductUpdateOperations', JSON.stringify(cartOrderProductUpdateOperations, null, 2));
         console.log('totalAmount !== cartDetails.totalAmount', totalAmount, cartDetails.totalAmount, totalAmount !== cartDetails.totalAmount);
-        if (cartOrderProductUpdateOperations.length > 0 || totalAmount !== cartDetails.totalAmount) {
+        if (cartOrderProductUpdateOperations.length > 0 || (0, helpers_1.roundToTwo)(totalAmount) !== (0, helpers_1.roundToTwo)(cartDetails.totalAmount)) {
             await cart_order_product_model_1.default.bulkWrite(cartOrderProductUpdateOperations);
             const [aggregationResult] = await cart_order_product_model_1.default.aggregate([
                 { $match: { cartId: cartDetails._id } },
