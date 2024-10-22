@@ -158,6 +158,7 @@ class OfferService {
             console.log('No product variants found for the products');
             return;
         }
+        console.log('productVariants', productVariants.length);
         const bulkOps = productVariants.map(productVariant => {
             const { _id: variantId, productId, price, discountPrice, offerData } = productVariant;
             const basePrice = discountPrice > 0 ? discountPrice : price;
@@ -181,6 +182,7 @@ class OfferService {
                 return null;
             }
         }).filter(Boolean);
+        console.log('bulkOps', bulkOps.length);
         if (bulkOps.length > 0) {
             const bulkWriteResult = await product_variants_model_1.default.bulkWrite(bulkOps);
             console.log(`Bulk write completed. Matched: ${bulkWriteResult.matchedCount}, Modified: ${bulkWriteResult.modifiedCount}`);
