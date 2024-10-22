@@ -567,15 +567,9 @@ class ProductService {
                 ? orConditions.some((condition: any) => condition.hasOwnProperty('productDetails.productTitle'))
                 : false;
         };
-        if (query.$or && hasProductTitleCondition(query.$or) || query['productDetails.brand']) {
+        if (query.$or && hasProductTitleCondition(query.$or) || query['productDetails.brand'] || getbrand === '1') {
             pipeline.push(...productVariantLookup);
         }
-
-        // Continue building the rest of the pipeline
-        pipeline.push({
-            $match: query
-        });
-
 
         if (query['productCategory.categoryId']) {
             pipeline.push(...productCategoryWithVariantLookup)
@@ -701,7 +695,7 @@ class ProductService {
                         },
                         ...(skip ? [{ $skip: skip }] : []),
                         ...(limit ? [{ $limit: limit }] : []),
-                        ...((!hasProductTitleCondition(query.$or) && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined)) ? productVariantLookup : []),
+                        ...((!hasProductTitleCondition(query.$or) && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined) && getbrand === '0') ? productVariantLookup : []),
                         ...((query['productCategory.categoryId'] === '' || query['productCategory.categoryId'] === undefined) ? productCategoryWithVariantLookup : []),
 
                     ],
