@@ -107,7 +107,6 @@ class CustomerController extends BaseController {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
 
-
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
                 query = {
