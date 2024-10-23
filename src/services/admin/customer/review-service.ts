@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { FilterOptionsProps, pagination } from '../../../components/pagination';
 import ReviewModel, { ReviewProps } from '../../../model/frontend/review-model';
 import { collections } from '../../../constants/collections';
+import { reviewCsutomerLookup, reviewProductLookup, reviewProductVariantLookup } from '../../../utils/config/review-config';
 
 
 class ReviewService {
@@ -13,79 +14,27 @@ class ReviewService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        const pipeline: any[] = [
+        let pipeline: any[] = [
             { $match: query },
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.products}`,
-                    localField: 'productId',
-                    foreignField: '_id',
-                    as: 'productDetails',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                starRating: 1,
-                                productTitle: 1,
-                                slug: 1
-                            }
-                        }
-                    ]
-                }
-            },
-            { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: `${collections.customer.customers}`,
-                    localField: 'customerId',
-                    foreignField: '_id',
-                    as: 'customer',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                customerCode: 1,
-                                email: 1,
-                                firstName: 1,
-                                phone: 1,
-                                guestPhone: 1,
-                                guestEmail: 1,
-                                referralCode: 1,
-                            }
-                        }
-                    ]
-                }
-            },
-            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.products.productvariants.productvariants}`,
-                    localField: 'variantId',
-                    foreignField: '_id',
-                    as: 'variantDetails',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                variantSku: 1,
-                                slug: 1,
-                                extraProductTitle: 1,
-                            }
-                        }
-                    ]
-                }
-            },
-            { $unwind: { path: '$variantDetails', preserveNullAndEmptyArrays: true } },
+            { $sort: finalSort },
+
+        ];
+        const facetPipeline = [
             {
                 $facet: {
                     reviewData: [
                         { $skip: skip },
                         { $limit: limit },
-                        { $sort: finalSort },
+                        ...reviewProductVariantLookup,
+                        ...((query['customerId'] === '' || query['customerId'] === undefined) ? reviewCsutomerLookup : []),
+                        ...((query['productId'] === '' || query['productId'] === undefined) ? reviewProductLookup : []),
                         {
                             $project: {
                                 _id: 1,
+                                countryId: 1,
                                 customerId: 1,
+                                productId: 1,
+                                variantId: 1,
                                 name: 1,
                                 reviewTitle: 1,
                                 reviewContent: 1,
@@ -115,7 +64,17 @@ class ReviewService {
                     totalCount: { $arrayElemAt: ['$totalCount.count', 0] }
                 }
             }
-        ];
+        ]
+
+        if (query['customerId']) {
+            pipeline.push(...reviewCsutomerLookup)
+        }
+        if (query['productId']) {
+            pipeline.push(...reviewProductLookup)
+        }
+
+        pipeline.push(...facetPipeline);
+        
         const createdCartWithValues = await ReviewModel.aggregate(pipeline);
         return createdCartWithValues;
     }

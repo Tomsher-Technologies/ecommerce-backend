@@ -36,10 +36,10 @@ export const filterProduct = async (data: any, countryId: import("mongoose").Typ
                 { productTitle: keywordRegex },
                 { slug: keywordRegex },
                 { sku: keywordRegex },
-                { 'productCategory.category.categoryTitle': keywordRegex },
+                // { 'productCategory.category.categoryTitle': keywordRegex },
                 { 'brand.brandTitle': keywordRegex },
-                { 'productCategory.category.slug': keywordRegex },
-                { 'brand.slug': keywordRegex },
+                // { 'productCategory.category.slug': keywordRegex },
+                // { 'brand.slug': keywordRegex },
                 { 'productVariants.slug': keywordRegex },
                 { 'productVariants.variantSku': keywordRegex },
                 { 'productVariants.extraProductTitle': keywordRegex }
@@ -239,3 +239,9 @@ export const checkRequiredColumns = async (worksheet: any, requiredColumns: any)
         }
     }
 }
+
+export const hasProductTitleCondition = (orConditions: any[]) => {
+    return Array.isArray(orConditions) && orConditions.length > 0
+        ? orConditions.some((condition: any) => condition.hasOwnProperty('productDetails.productTitle'))
+        : false;
+};

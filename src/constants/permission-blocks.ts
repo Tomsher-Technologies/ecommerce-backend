@@ -24,7 +24,7 @@ export const permissionBlocks = {
     },
     customers: {
         customers: 'customers',
-        whishlists: 'whishlists',
+        wishlist: 'wishlist',
         reviews: 'reviews',
         newsletter: 'newsletter',
         contactus: 'contactus'

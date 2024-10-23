@@ -26,6 +26,7 @@ const category_model_1 = __importDefault(require("../../../model/admin/ecommerce
 const product_category_link_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-category-link-model"));
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
 const brands_model_1 = __importDefault(require("../../../model/admin/ecommerce/brands-model"));
+const products_1 = require("../../../utils/admin/products");
 class ProductService {
     async findProductList(productOption) {
         var { query, sort, collectionProductsData, discount, getimagegallery, countryId, getcategory = '1', getbrand = '1', getLanguageValues = '1', notCheckQuantity = false, getattribute, getspecification, hostName, offers, minprice, maxprice, isCount } = productOption;
@@ -513,12 +514,7 @@ class ProductService {
             },
             { $sort: finalSort },
         ];
-        const hasProductTitleCondition = (orConditions) => {
-            return Array.isArray(orConditions) && orConditions.length > 0
-                ? orConditions.some((condition) => condition.hasOwnProperty('productDetails.productTitle'))
-                : false;
-        };
-        if (query.$or && hasProductTitleCondition(query.$or) || query['productDetails.brand'] || getbrand === '1') {
+        if (query.$or && (0, products_1.hasProductTitleCondition)(query.$or) || query['productDetails.brand'] || getbrand === '1') {
             pipeline.push(...product_config_1.productVariantLookup);
         }
         if (query['productCategory.categoryId']) {
@@ -637,7 +633,7 @@ class ProductService {
                         },
                         ...(skip ? [{ $skip: skip }] : []),
                         ...(limit ? [{ $limit: limit }] : []),
-                        ...((!hasProductTitleCondition(query.$or) && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined) && getbrand === '0') ? product_config_1.productVariantLookup : []),
+                        ...((!(0, products_1.hasProductTitleCondition)(query.$or) && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined) && getbrand === '0') ? product_config_1.productVariantLookup : []),
                         ...((query['productCategory.categoryId'] === '' || query['productCategory.categoryId'] === undefined) ? product_config_1.productCategoryWithVariantLookup : []),
                     ],
                     // productIds: [

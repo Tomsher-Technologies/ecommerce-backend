@@ -53,7 +53,7 @@ class ProductsController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { page_size = 1, limit = 10, countryId } = req.query as ProductsQueryParams;
+            const { page_size = 1, limit = 10, countryId, getvariants = '1', getcategory = '1', getbrand = '1' } = req.query as ProductsQueryParams;
             const userData = await res.locals.user;
             var country: any
             if (countryId) {
@@ -78,6 +78,9 @@ class ProductsController extends BaseController {
                     page: parseInt(page_size as string),
                     limit: parseInt(limit as string),
                     query: filterProducts.query,
+                    getvariants,
+                    getcategory,
+                    getbrand,
                     sort: filterProducts.sort
                 });
                 return controller.sendSuccessResponse(res, {
@@ -1053,7 +1056,7 @@ class ProductsController extends BaseController {
 
                                                                             if (productDetails) {
                                                                                 var slugData
-                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU 
+                                                                                slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU
                                                                                 const variantDetails = await ProductVariantService.find({ $and: [{ variantSku: data.SKU, countryId: productVariants.countryId }] });
                                                                                 if (!variantDetails) {
                                                                                     productVariants = {
@@ -1598,9 +1601,9 @@ class ProductsController extends BaseController {
                         { 'productDetails.sku': keywordRegex },
                         { 'productDetails.slug': keywordRegex },
                         { 'productDetails.brand.slug': keywordRegex },
-                        { '.brandTitle': keywordRegex },
-                        { 'productDetails.productCategory.category.slug': keywordRegex },
-                        { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
+                        { 'brand.brandTitle': keywordRegex },
+                        { 'productCategory.category.slug': keywordRegex },
+                        { 'productCategory.category.categoryTitle': keywordRegex },
                     ],
                     ...query
                 } as any;
@@ -1610,14 +1613,14 @@ class ProductsController extends BaseController {
             if (categoryId) {
                 query = {
                     query,
-                    'productDetails.productCategory.category._id': new mongoose.Types.ObjectId(categoryId)
+                    'productCategory.category._id': new mongoose.Types.ObjectId(categoryId)
                 }
             }
 
             if (brandId) {
                 query = {
                     ...query,
-                    'productDetails.brand._id': new mongoose.Types.ObjectId(brandId)
+                    'productDetails.brand': new mongoose.Types.ObjectId(brandId)
                 }
             }
             if (fromDate || endDate) {

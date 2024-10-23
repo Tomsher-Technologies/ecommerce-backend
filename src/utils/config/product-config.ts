@@ -1,3 +1,4 @@
+import { pipeline } from "stream";
 import { collections } from "../../constants/collections";
 import { multiLanguageSources } from "../../constants/multi-languages";
 import ProductsModel from "../../model/admin/ecommerce/product-model";
@@ -337,77 +338,71 @@ export const variantLookup = {
     }
 };
 
-export const productCategoryLookupVariantWise = [{
-    $lookup: {
-        from: `${collections.ecommerce.products.productcategorylinks}`,
-        localField: 'productDetails._id', // Match the product's ID
-        foreignField: 'productId',
-        as: 'productCategory',
-        pipeline: [
-            {
-                $lookup: {
-                    from: `${collections.ecommerce.categories}`,
-                    localField: 'categoryId',
-                    foreignField: '_id',
-                    as: 'category',
+export const productCategoryLookupVariantWise = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.products.productcategorylinks}`,
+            localField: 'productId', // Match the product's ID
+            foreignField: 'productId',
+            as: 'productCategory',
+            pipeline: [
+                {
+                    $lookup: {
+                        from: `${collections.ecommerce.categories}`,
+                        localField: 'categoryId',
+                        foreignField: '_id',
+                        as: 'category',
+                    },
                 },
-            },
-            {
-                $unwind: '$category'
-            },
-            {
-                $project: {
-                    _id: 1,
-                    productId: 1,
-                    category: {
+                {
+                    $unwind: '$category'
+                },
+                {
+                    $project: {
                         _id: 1,
-                        categoryTitle: 1,
-                        slug: 1,
-                        parentCategory: 1,
-                        level: 1,
-                        categoryImageUrl: 1,
-                        categorySecondImageUrl: 1,
-                        status: 1,
+                        productId: 1,
+                        category: {
+                            _id: 1,
+                            categoryTitle: 1,
+                            slug: 1,
+                            parentCategory: 1,
+                            level: 1,
+                            categoryImageUrl: 1,
+                            categorySecondImageUrl: 1,
+                            status: 1,
+                        }
                     }
                 }
-            }
-        ]
+            ]
+        },
     },
-},
-{
-    $addFields: {
-        'productDetails.productCategory': '$productCategory'
-    }
-}
 ]
 
-export const brandLookupVariant = [{
-    $lookup: {
-        from: `${collections.ecommerce.brands}`,
-        localField: 'productDetails.brand',
-        foreignField: '_id',
-        as: 'brand',
-        pipeline: [
-            {
-                $project: {
-                    _id: 1,
-                    brandTitle: 1,
-                    description: 1,
-                    brandBannerImageUrl: 1,
-                    slug: 1,
-                    brandImageUrl: 1,
-                    status: 1,
-                }
-            },
-        ],
-    },
+export const brandLookupVariant = [
+    {
+        $lookup: {
+            from: `${collections.ecommerce.brands}`,
+            localField: 'productDetails.brand',
+            foreignField: '_id',
+            as: 'brand',
+            pipeline: [
+                {
+                    $project: {
+                        _id: 1,
+                        brandTitle: 1,
+                        description: 1,
+                        brandBannerImageUrl: 1,
+                        slug: 1,
+                        brandImageUrl: 1,
+                        status: 1,
+                    }
+                },
+            ],
+        },
 
-},
-{
-    $addFields: {
-        'productDetails.brand': { $arrayElemAt: ['$brand', 0] }
-    }
-}]
+    },
+    { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } }
+]
 
 export const productVariantLookup = [
     {

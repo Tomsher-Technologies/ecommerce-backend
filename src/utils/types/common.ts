@@ -17,6 +17,9 @@ export interface QueryParams {
     sourceFromReferenceId?: string;
     sourceCollection?: string;
     activity?: string;
+    productId?: string;
+    customerId?: string;
+    variantId?: string;
 }
 
 export interface UserDataProps {

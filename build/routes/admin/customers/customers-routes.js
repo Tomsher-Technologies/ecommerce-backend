@@ -15,4 +15,5 @@ router.use(auth_middleware_1.default);
 router.get('/customer-list', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.customers.customers, readOnly: 1 }), customer_controller_1.default.findAll);
 router.get('/customer-detail/:id', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.customers.customers, readOnly: 1 }), customer_controller_1.default.findCustomer);
 router.post('/import-excel', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.customers.customers, writeOnly: 1 }), uploadExcel.single('customerExcel'), customer_controller_1.default.importExcel);
+router.get('/wishlist', (0, admin_user_permission_roll_middleware_1.default)({ permissionBlock: permission_blocks_1.permissionBlocks.customers.wishlist, readOnly: 1 }), customer_controller_1.default.findAllWishlist);
 exports.default = router;

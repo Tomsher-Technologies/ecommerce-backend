@@ -11,6 +11,7 @@ import { multiLanguageSources } from '../../../constants/multi-languages';
 import { collections } from '../../../constants/collections';
 import { countriesLookup } from '../../../utils/config/customer-config';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
+import { hasProductTitleCondition } from '../../../utils/admin/products';
 
 class ProductsService {
     private multilanguageFieldsLookup: any;
@@ -36,9 +37,10 @@ class ProductsService {
             },
         };
     }
-    async findAll(options: FilterOptionsProps = {}): Promise<any> {
+    async findAll(options: any = {}): Promise<any> {
 
         const { query, skip, limit, sort } = pagination(options.query || {}, options);
+        const { getvariants = '1', getbrand = '1', getcategory = '1' } = options
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -54,8 +56,7 @@ class ProductsService {
         };
         // const hasProductVariantsFilter = Object.keys(query).some(key => key.includes('productVariants'));
         let pipeline: any[] = [
-            productCategoryLookup,
-            {
+            ...(getvariants === '1' ? [{
                 $lookup: {
                     from: `${collections.ecommerce.products.productvariants.productvariants}`,
                     localField: '_id',
@@ -65,14 +66,10 @@ class ProductsService {
                         ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : [])
                     ]
                 }
-            },
-            brandLookup,
-            { $match: query },
-            brandObject,
+            }] : []),
             // this.multilanguageFieldsLookup,
             { $sort: finalSort },
         ];
-
 
         const facetPipeline = [
             {
@@ -80,7 +77,9 @@ class ProductsService {
                     totalCount: [{ $match: query }, { $count: 'count' }],
                     products: [
                         { $skip: skip },
-                        { $limit: limit }
+                        { $limit: limit },
+                        ...((getcategory === '1' && (query['productCategory.category._id'] === '' || query['productCategory.category._id'] === undefined)) ? [productCategoryLookup,] : []),
+                        ...((getbrand === '1' && (query['brand._id'] === '' || query['brand._id'] === undefined)) ? [brandLookup, { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } }] : []),
                     ]
                 }
             },
@@ -91,6 +90,15 @@ class ProductsService {
                 }
             }
         ];
+
+        if (query['productCategory.category._id']) {
+            pipeline.push(productCategoryLookup)
+        }
+        if (query['brand._id']) {
+            pipeline.push(brandLookup)
+            pipeline.push({ $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } })
+        }
+        pipeline.push({ $match: query })
 
         pipeline.push(...facetPipeline);
 
@@ -286,99 +294,53 @@ class ProductsService {
         }
 
         let pipeline: any[] = [
-            {
-                $match: query,
-            },
             { $sort: finalSort },
-            productLookup,
-            { $unwind: "$productDetails" },
+
         ]
-        if (getCountry === '1') {
-            pipeline.push(countriesLookup, { $unwind: '$country' });
-        }
-        if (getCategory === '1') {
-            pipeline.push(...productCategoryLookupVariantWise);
-        }
-        if (getBrand === '1') {
-            pipeline.push(...brandLookupVariant);
-        }
-        if (getAttribute === '1') {
-            pipeline.push(...productVariantAttributesAdminLookup, addFieldsProductVariantAttributes);
-        }
-        if (getSpecification === '1') {
-            pipeline.push(...productSpecificationAdminLookup, addFieldsProductSpecification);
-        }
 
-        if (getProductGalleryImage === '1') {
-            pipeline.push(imageLookupVariantWise);
-        }
-
-        if (getGalleryImage === '1') {
-            pipeline.push(variantImageGalleryLookup);
-        }
-
-        // pipeline.push(
-        //     {
-        //         $project: {
-        //             _id: 1,
-        //             productId: 1,
-        //             countryId: 1,
-        //             variantSku: 1,
-        //             extraProductTitle: 1,
-        //             price: 1,
-        //             discountPrice: 1,
-        //             quantity: 1,
-        //             cartMinQuantity: 1,
-        //             cartMaxQuantity: 1,
-        //             hsn: 1,
-        //             mpn: 1,
-        //             barcode: 1,
-        //             isExcel: 1,
-        //             isDefault: 1,
-        //             status: 1,
-        //             productDetails: 1,
-        //             country: 1,
-        //             productVariantAttributes: 1,
-        //             productSpecification: 1,
-        //             variantImageGallery: 1,
-        //         }
-        //     });
-
-        const dataPipeline: any[] = [{ $match: {} }];
-
-        if (skip) {
-            dataPipeline.push({ $skip: skip });
-        }
-
-        if (limit) {
-            dataPipeline.push({ $limit: limit });
-        }
-
-
-        pipeline.push({
-            $facet: {
-                data: dataPipeline,
-                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
-            },
-        },
-            (isCount === 1 ? {
-                $project: {
-                    data: 1,
-                    totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
+        const facetPipeline = [
+            {
+                $facet: {
+                    totalCount: [{ $match: query }, { $count: 'count' }],
+                    products: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        ...brandLookupVariant,
+                        ...(getCountry === '1' ? [countriesLookup, { $unwind: '$country' }] : []),
+                        ...((!query.$or && hasProductTitleCondition(query.$or) || (getBrand === '1' && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined))) ?
+                            [productLookup, { $unwind: "$productDetails" }] : []),
+                        ...((getCategory === '1' && (query['productCategory.category._id'] === '' || query['productCategory.category._id'] === undefined)) ? productCategoryLookupVariantWise : []),
+                        ...(getAttribute === '1' ? [...productVariantAttributesAdminLookup, addFieldsProductVariantAttributes] : []),
+                        ...(getSpecification === '1' ? [...productSpecificationAdminLookup, addFieldsProductSpecification] : []),
+                        ...(getProductGalleryImage === '1' ? [imageLookupVariantWise] : []),
+                        ...(getGalleryImage === '1' ? [variantImageGalleryLookup] : []),
+                    ]
                 }
-            } :
-                {
-                    $project: {
-                        data: 1,
-                    }
-                })
-        )
-        // pipeline.push(productLookup)
-        const outOfStockSKUs = await ProductVariantsModel.aggregate(pipeline);
+            },
+            {
+                $project: {
+                    totalCount: 1,
+                    products: 1
+                }
+            }
+        ];
 
-        const products = outOfStockSKUs[0].data;
+        if (query.$or && hasProductTitleCondition(query.$or) || query['productDetails.brand']) {
+            pipeline.push(...[productLookup, { $unwind: "$productDetails" },])
+        }
+
+        if (query['productCategory.category._id']) {
+            pipeline.push(productCategoryLookupVariantWise)
+        }
+
+        pipeline.push({ $match: query })
+        pipeline.push(...facetPipeline);
+
+        const retVal = await ProductVariantsModel.aggregate(pipeline);
+
+        const products = retVal[0].products;
         if (isCount == 1) {
-            const totalCount = outOfStockSKUs[0].totalCount;
+            const totalCount = retVal[0]?.totalCount?.[0]?.count || 0;
             return { products, totalCount }
         } else {
             return products

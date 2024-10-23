@@ -325,10 +325,11 @@ exports.variantLookup = {
         ]
     }
 };
-exports.productCategoryLookupVariantWise = [{
+exports.productCategoryLookupVariantWise = [
+    {
         $lookup: {
             from: `${collections_1.collections.ecommerce.products.productcategorylinks}`,
-            localField: 'productDetails._id', // Match the product's ID
+            localField: 'productId', // Match the product's ID
             foreignField: 'productId',
             as: 'productCategory',
             pipeline: [
@@ -362,13 +363,9 @@ exports.productCategoryLookupVariantWise = [{
             ]
         },
     },
-    {
-        $addFields: {
-            'productDetails.productCategory': '$productCategory'
-        }
-    }
 ];
-exports.brandLookupVariant = [{
+exports.brandLookupVariant = [
+    {
         $lookup: {
             from: `${collections_1.collections.ecommerce.brands}`,
             localField: 'productDetails.brand',
@@ -389,11 +386,8 @@ exports.brandLookupVariant = [{
             ],
         },
     },
-    {
-        $addFields: {
-            'productDetails.brand': { $arrayElemAt: ['$brand', 0] }
-        }
-    }];
+    { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } }
+];
 exports.productVariantLookup = [
     {
         $lookup: {

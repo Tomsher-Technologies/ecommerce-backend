@@ -7,13 +7,14 @@ import { QueryParams } from "../../../utils/types/common";
 import { reviewStatusSchema } from "../../../utils/schemas/frontend/auth/review-schema";
 import { adminTaskLog, adminTaskLogActivity, adminTaskLogStatus } from "../../../constants/admin/task-log";
 import { collections } from "../../../constants/collections";
+import mongoose from "mongoose";
 
 const controller = new BaseController();
 
 class ReviewController extends BaseController {
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { countryId = '', page_size = 1, limit = 10, status = '', sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { countryId = '', productId = '', customerId = '', variantId = '', page_size = 1, limit = 10, status = '', sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             const reviewStatus = status
             let query: any = { _id: { $exists: true } };
             const userData = await res.locals.user;
@@ -37,6 +38,22 @@ class ReviewController extends BaseController {
             if (reviewStatus) {
                 query = {
                     ...query, reviewStatus: reviewStatus
+                } as any;
+            }
+         
+            if (productId) {
+                query = {
+                    ...query, productId: new mongoose.Types.ObjectId(productId)
+                } as any;
+            }
+            if (customerId) {
+                query = {
+                    ...query, customerId: new mongoose.Types.ObjectId(customerId)
+                } as any;
+            }
+            if (variantId) {
+                query = {
+                    ...query, variantId: new mongoose.Types.ObjectId(variantId)
                 } as any;
             }
 
@@ -75,7 +92,7 @@ class ReviewController extends BaseController {
                     const updatedReview = await ReviewService.update(reviewId, updatedReviewData);
                     if (updatedReview) {
                         const reviews: any = await ReviewService.findAll({
-                            query:{_id:updatedReview._id},
+                            query: { _id: updatedReview._id },
                         })
                         return controller.sendSuccessResponse(res, {
                             requestedData: reviews[0]?.reviewData[0],
