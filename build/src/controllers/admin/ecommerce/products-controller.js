@@ -1046,6 +1046,7 @@ class ProductsController extends base_controller_1.default {
                                                                                             }));
                                                                                             await product_gallery_images_model_1.default.insertMany(galleryImagesToInsert);
                                                                                         }
+                                                                                        console.log('variantId', variantDetails._id);
                                                                                         await product_variant_attribute_model_1.default.deleteMany({ variantId: variantDetails._id });
                                                                                         const attributesToInsert = attributeData.map(attribute => ({
                                                                                             variantId: variantDetails._id,

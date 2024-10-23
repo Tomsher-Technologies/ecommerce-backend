@@ -246,7 +246,7 @@
                             <%= product.productDetails.productTitle %>
                               <% } %></td>
                     <td style="text-align: center;"><%= product.quantity %></td>
-                    <td style="text-align: center;"><% if (product.productDetails.unit> 0) { %> <%= product.productDetails.unit %><% } %></td>
+                    <td style="text-align: center;"><% if (product.productDetails.unit !=='' ) { %> <%= product.productDetails.unit %><% } %></td>
                     <td style="text-align: right;"> <%= product.productOriginalPrice.toFixed(2) / product.quantity %></td>
                     <td style="text-align: right;"><%= product.productAmount.toFixed(2) %></td>
                     <td style="text-align: right;"><%= product.productAmount.toFixed(2) %></td>

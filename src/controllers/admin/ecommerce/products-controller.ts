@@ -683,7 +683,6 @@ class ProductsController extends BaseController {
                                                                 }
 
                                                                 if (!data.Country || countryId) {
-
                                                                     if (data.Warehouse) {
                                                                         const warehouseData = await WarehouseModel.findOne({ warehouseTitle: data.Warehouse })
                                                                         if (warehouseData) {
@@ -1050,10 +1049,8 @@ class ProductsController extends BaseController {
                                                                             }
                                                                         }
                                                                     } else if (data.Item_Type == 'variant') {
-
                                                                         if (data.Parent_SKU) {
                                                                             const productDetails: any = await ProductsService.find({ sku: data.Parent_SKU })
-
                                                                             if (productDetails) {
                                                                                 var slugData
                                                                                 slugData = data.Product_Title + "-" + countryForSlug + '-' + data.SKU
@@ -1113,6 +1110,8 @@ class ProductsController extends BaseController {
 
                                                                                             await ProductGalleryImagesModel.insertMany(galleryImagesToInsert);
                                                                                         }
+                                                                                        console.log('variantId', variantDetails._id);
+
                                                                                         await ProductVariantAttributesModel.deleteMany({ variantId: variantDetails._id });
                                                                                         const attributesToInsert = attributeData.map(attribute => ({
                                                                                             variantId: variantDetails._id,

@@ -40,3 +40,5 @@ const productGallaryImagesSchema: Schema<ProductGalleryImagesProps> = new Schema
 const ProductGalleryImagesModel = mongoose.model<ProductGalleryImagesProps>(`${collections.ecommerce.products.productgallaryimages}`, productGallaryImagesSchema);
 
 export default ProductGalleryImagesModel;
+
+
