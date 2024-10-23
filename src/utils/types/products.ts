@@ -63,6 +63,9 @@ export interface ProductsQueryParams {
     variantId?: string;
     getGalleryImage?: string;
     getProductGalleryImage?: string;
+    getvariants?: string;
+    getcategory?: string;
+    getbrand?: string;
 }
 
 export interface ProductVariantsProps {

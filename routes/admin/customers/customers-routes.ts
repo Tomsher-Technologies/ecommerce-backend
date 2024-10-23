@@ -16,6 +16,6 @@ router.use(authMiddleware);
 router.get('/customer-list', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers, readOnly: 1 }), CustomerController.findAll);
 router.get('/customer-detail/:id', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers, readOnly: 1 }), CustomerController.findCustomer);
 router.post('/import-excel', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.customers, writeOnly: 1 }), uploadExcel.single('customerExcel'), CustomerController.importExcel);
-
+router.get('/wishlist', userPermissionMiddleware({ permissionBlock: permissionBlocks.customers.wishlist, readOnly: 1 }), CustomerController.findAllWishlist);
 
 export default router;

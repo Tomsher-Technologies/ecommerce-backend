@@ -24,6 +24,7 @@ import CategoryModel from '../../../model/admin/ecommerce/category-model';
 import ProductCategoryLinkModel from '../../../model/admin/ecommerce/product/product-category-link-model';
 import ProductVariantsModel from '../../../model/admin/ecommerce/product/product-variants-model';
 import BrandsModel from '../../../model/admin/ecommerce/brands-model';
+import { hasProductTitleCondition } from '../../../utils/admin/products';
 
 
 class ProductService {
@@ -562,11 +563,7 @@ class ProductService {
             { $sort: finalSort },
 
         ];
-        const hasProductTitleCondition = (orConditions: any[]) => {
-            return Array.isArray(orConditions) && orConditions.length > 0
-                ? orConditions.some((condition: any) => condition.hasOwnProperty('productDetails.productTitle'))
-                : false;
-        };
+   
         if (query.$or && hasProductTitleCondition(query.$or) || query['productDetails.brand'] || getbrand === '1') {
             pipeline.push(...productVariantLookup);
         }

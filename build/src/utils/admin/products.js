@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkRequiredColumns = exports.deleteFunction = exports.defaultSLugAndSkuSettings = exports.filterProduct = void 0;
+exports.hasProductTitleCondition = exports.checkRequiredColumns = exports.deleteFunction = exports.defaultSLugAndSkuSettings = exports.filterProduct = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const helpers_1 = require("../helpers");
 const collections_products_service_1 = __importDefault(require("../../services/admin/website/collections-products-service"));
@@ -36,10 +36,10 @@ const filterProduct = async (data, countryId) => {
                 { productTitle: keywordRegex },
                 { slug: keywordRegex },
                 { sku: keywordRegex },
-                { 'productCategory.category.categoryTitle': keywordRegex },
+                // { 'productCategory.category.categoryTitle': keywordRegex },
                 { 'brand.brandTitle': keywordRegex },
-                { 'productCategory.category.slug': keywordRegex },
-                { 'brand.slug': keywordRegex },
+                // { 'productCategory.category.slug': keywordRegex },
+                // { 'brand.slug': keywordRegex },
                 { 'productVariants.slug': keywordRegex },
                 { 'productVariants.variantSku': keywordRegex },
                 { 'productVariants.extraProductTitle': keywordRegex }
@@ -230,3 +230,9 @@ const checkRequiredColumns = async (worksheet, requiredColumns) => {
     }
 };
 exports.checkRequiredColumns = checkRequiredColumns;
+const hasProductTitleCondition = (orConditions) => {
+    return Array.isArray(orConditions) && orConditions.length > 0
+        ? orConditions.some((condition) => condition.hasOwnProperty('productDetails.productTitle'))
+        : false;
+};
+exports.hasProductTitleCondition = hasProductTitleCondition;

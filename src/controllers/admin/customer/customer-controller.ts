@@ -26,7 +26,7 @@ class CustomerController extends BaseController {
 
     async findAll(req: Request, res: Response): Promise<void> {
         try {
-            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            const { countryId = '', customerId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
             let query: any = { _id: { $exists: true } };
             const isExcel = req.query.isExcel
             const userData = await res.locals.user;
@@ -36,6 +36,7 @@ class CustomerController extends BaseController {
             } else if (countryId) {
                 query.countryId = new mongoose.Types.ObjectId(countryId)
             }
+
 
             if (keyword) {
                 const keywordRegex = new RegExp(keyword, 'i');
@@ -47,6 +48,11 @@ class CustomerController extends BaseController {
                         { referralCode: keywordRegex }
                     ],
                     ...query
+                } as any;
+            }
+            if (customerId) {
+                query = {
+                    ...query, _id: new mongoose.Types.ObjectId(customerId)
                 } as any;
             }
 
@@ -88,7 +94,75 @@ class CustomerController extends BaseController {
         }
     }
 
+    async findAllWishlist(req: Request, res: Response): Promise<void> {
+        try {
+            const { countryId = '', customerId = '', productId = '', variantId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query as QueryParams;
+            let query: any = { _id: { $exists: true } };
+            const isExcel = req.query.isExcel
+            const userData = await res.locals.user;
+            const country = getCountryId(userData);
+            if (country) {
+                query.countryId = country;
+            } else if (countryId) {
+                query.countryId = new mongoose.Types.ObjectId(countryId)
+            }
 
+
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { firstName: keywordRegex },
+                        { email: keywordRegex },
+                        { phone: keywordRegex },
+                        { referralCode: keywordRegex }
+                    ],
+                    ...query
+                } as any;
+            }
+            if (customerId) {
+                query = {
+                    ...query, customerId: new mongoose.Types.ObjectId(customerId)
+                } as any;
+            }
+            if (productId) {
+                query = {
+                    ...query, productId: new mongoose.Types.ObjectId(productId)
+                } as any;
+            }
+            if (variantId) {
+                query = {
+                    ...query, variantId: new mongoose.Types.ObjectId(variantId)
+                } as any;
+            }
+
+            if (status && status !== '') {
+                query.status = { $in: Array.isArray(status) ? status : [status] };
+            } else {
+                query.status = '1';
+            }
+
+            const sort: any = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+
+            const customers: any = await CustomerService.findAllWishlist({
+                page: parseInt(page_size as string),
+                limit: parseInt(limit as string),
+                query,
+                sort,
+                isCount: 1
+            });
+            return controller.sendSuccessResponse(res, {
+                requestedData: customers?.products || [],
+                totalCount: customers?.totalCount || 0,
+                message: 'Success!'
+            }, 200);
+        } catch (error: any) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
 
     async findCustomer(req: Request, res: Response): Promise<void> {
         try {
@@ -254,6 +328,7 @@ class CustomerController extends BaseController {
         }
 
     }
+
 
 
 }

@@ -1,7 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.seoLookup = void 0;
+exports.seoLookup = exports.addLookupProject = void 0;
 const collections_1 = require("../../constants/collections");
+const addLookupProject = (lookup, projectFields) => {
+    const clonedLookup = { ...lookup };
+    clonedLookup.$lookup.pipeline = [
+        {
+            $project: projectFields
+        }
+    ];
+    return clonedLookup;
+};
+exports.addLookupProject = addLookupProject;
 const seoLookup = (alias) => {
     return {
         $lookup: {

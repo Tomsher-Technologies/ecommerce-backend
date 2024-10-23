@@ -21,7 +21,7 @@ const controller = new base_controller_1.default();
 class CustomerController extends base_controller_1.default {
     async findAll(req, res) {
         try {
-            const { countryId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            const { countryId = '', customerId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
             let query = { _id: { $exists: true } };
             const isExcel = req.query.isExcel;
             const userData = await res.locals.user;
@@ -42,6 +42,11 @@ class CustomerController extends base_controller_1.default {
                         { referralCode: keywordRegex }
                     ],
                     ...query
+                };
+            }
+            if (customerId) {
+                query = {
+                    ...query, _id: new mongoose_1.default.Types.ObjectId(customerId)
                 };
             }
             if (status && status !== '') {
@@ -75,6 +80,73 @@ class CustomerController extends base_controller_1.default {
                     return controller.sendErrorResponse(res, 200, { message: 'Customer Data not found' });
                 }
             }
+        }
+        catch (error) {
+            return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });
+        }
+    }
+    async findAllWishlist(req, res) {
+        try {
+            const { countryId = '', customerId = '', productId = '', variantId = '', page_size = 1, limit = 10, status = ['0', '1', '2'], sortby = '', sortorder = '', keyword = '' } = req.query;
+            let query = { _id: { $exists: true } };
+            const isExcel = req.query.isExcel;
+            const userData = await res.locals.user;
+            const country = (0, helpers_1.getCountryId)(userData);
+            if (country) {
+                query.countryId = country;
+            }
+            else if (countryId) {
+                query.countryId = new mongoose_1.default.Types.ObjectId(countryId);
+            }
+            if (keyword) {
+                const keywordRegex = new RegExp(keyword, 'i');
+                query = {
+                    $or: [
+                        { firstName: keywordRegex },
+                        { email: keywordRegex },
+                        { phone: keywordRegex },
+                        { referralCode: keywordRegex }
+                    ],
+                    ...query
+                };
+            }
+            if (customerId) {
+                query = {
+                    ...query, customerId: new mongoose_1.default.Types.ObjectId(customerId)
+                };
+            }
+            if (productId) {
+                query = {
+                    ...query, productId: new mongoose_1.default.Types.ObjectId(productId)
+                };
+            }
+            if (variantId) {
+                query = {
+                    ...query, variantId: new mongoose_1.default.Types.ObjectId(variantId)
+                };
+            }
+            if (status && status !== '') {
+                query.status = { $in: Array.isArray(status) ? status : [status] };
+            }
+            else {
+                query.status = '1';
+            }
+            const sort = {};
+            if (sortby && sortorder) {
+                sort[sortby] = sortorder === 'desc' ? -1 : 1;
+            }
+            const customers = await customer_service_1.default.findAllWishlist({
+                page: parseInt(page_size),
+                limit: parseInt(limit),
+                query,
+                sort,
+                isCount: 1
+            });
+            return controller.sendSuccessResponse(res, {
+                requestedData: customers?.products || [],
+                totalCount: customers?.totalCount || 0,
+                message: 'Success!'
+            }, 200);
         }
         catch (error) {
             return controller.sendErrorResponse(res, 500, { message: error.message || 'Some error occurred while fetching coupons' });

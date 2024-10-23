@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const pagination_1 = require("../../../components/pagination");
 const review_model_1 = __importDefault(require("../../../model/frontend/review-model"));
-const collections_1 = require("../../../constants/collections");
+const review_config_1 = require("../../../utils/config/review-config");
 class ReviewService {
     async findAll(options = {}) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
@@ -15,79 +15,26 @@ class ReviewService {
         if (sortKeys.length === 0) {
             finalSort = defaultSort;
         }
-        const pipeline = [
+        let pipeline = [
             { $match: query },
-            {
-                $lookup: {
-                    from: `${collections_1.collections.ecommerce.products.products}`,
-                    localField: 'productId',
-                    foreignField: '_id',
-                    as: 'productDetails',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                starRating: 1,
-                                productTitle: 1,
-                                slug: 1
-                            }
-                        }
-                    ]
-                }
-            },
-            { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: `${collections_1.collections.customer.customers}`,
-                    localField: 'customerId',
-                    foreignField: '_id',
-                    as: 'customer',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                customerCode: 1,
-                                email: 1,
-                                firstName: 1,
-                                phone: 1,
-                                guestPhone: 1,
-                                guestEmail: 1,
-                                referralCode: 1,
-                            }
-                        }
-                    ]
-                }
-            },
-            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
-                    localField: 'variantId',
-                    foreignField: '_id',
-                    as: 'variantDetails',
-                    pipeline: [
-                        {
-                            $project: {
-                                _id: 1,
-                                variantSku: 1,
-                                slug: 1,
-                                extraProductTitle: 1,
-                            }
-                        }
-                    ]
-                }
-            },
-            { $unwind: { path: '$variantDetails', preserveNullAndEmptyArrays: true } },
+            { $sort: finalSort },
+        ];
+        const facetPipeline = [
             {
                 $facet: {
                     reviewData: [
                         { $skip: skip },
                         { $limit: limit },
-                        { $sort: finalSort },
+                        ...review_config_1.reviewProductVariantLookup,
+                        ...((query['customerId'] === '' || query['customerId'] === undefined) ? review_config_1.reviewCsutomerLookup : []),
+                        ...((query['productId'] === '' || query['productId'] === undefined) ? review_config_1.reviewProductLookup : []),
                         {
                             $project: {
                                 _id: 1,
+                                countryId: 1,
                                 customerId: 1,
+                                productId: 1,
+                                variantId: 1,
                                 name: 1,
                                 reviewTitle: 1,
                                 reviewContent: 1,
@@ -118,6 +65,13 @@ class ReviewService {
                 }
             }
         ];
+        if (query['customerId']) {
+            pipeline.push(...review_config_1.reviewCsutomerLookup);
+        }
+        if (query['productId']) {
+            pipeline.push(...review_config_1.reviewProductLookup);
+        }
+        pipeline.push(...facetPipeline);
         const createdCartWithValues = await review_model_1.default.aggregate(pipeline);
         return createdCartWithValues;
     }

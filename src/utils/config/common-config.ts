@@ -1,5 +1,15 @@
 import { collections } from "../../constants/collections";
 
+export const addLookupProject = (lookup: any, projectFields: any) => {
+    const clonedLookup = { ...lookup };
+    clonedLookup.$lookup.pipeline = [
+        {
+            $project: projectFields
+        }
+    ];
+    
+    return clonedLookup;
+};
 
 export const seoLookup = (alias: string) => {
     return {

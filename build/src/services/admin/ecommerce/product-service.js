@@ -13,6 +13,7 @@ const multi_languages_1 = require("../../../constants/multi-languages");
 const collections_1 = require("../../../constants/collections");
 const customer_config_1 = require("../../../utils/config/customer-config");
 const product_variants_model_1 = __importDefault(require("../../../model/admin/ecommerce/product/product-variants-model"));
+const products_1 = require("../../../utils/admin/products");
 class ProductsService {
     constructor() {
         this.multilanguageFieldsLookup = {
@@ -37,6 +38,7 @@ class ProductsService {
     }
     async findAll(options = {}) {
         const { query, skip, limit, sort } = (0, pagination_1.pagination)(options.query || {}, options);
+        const { getvariants = '1', getbrand = '1', getcategory = '1' } = options;
         const defaultSort = { createdAt: -1 };
         let finalSort = sort || defaultSort;
         const sortKeys = Object.keys(finalSort);
@@ -51,21 +53,17 @@ class ProductsService {
         };
         // const hasProductVariantsFilter = Object.keys(query).some(key => key.includes('productVariants'));
         let pipeline = [
-            product_config_1.productCategoryLookup,
-            {
-                $lookup: {
-                    from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
-                    localField: '_id',
-                    foreignField: 'productId',
-                    as: 'productVariants',
-                    pipeline: [
-                        ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : [])
-                    ]
-                }
-            },
-            product_config_1.brandLookup,
-            { $match: query },
-            product_config_1.brandObject,
+            ...(getvariants === '1' ? [{
+                    $lookup: {
+                        from: `${collections_1.collections.ecommerce.products.productvariants.productvariants}`,
+                        localField: '_id',
+                        foreignField: 'productId',
+                        as: 'productVariants',
+                        pipeline: [
+                            ...(query['productVariants.countryId'] ? [{ $match: variantLookupMatch }] : [])
+                        ]
+                    }
+                }] : []),
             // this.multilanguageFieldsLookup,
             { $sort: finalSort },
         ];
@@ -75,7 +73,9 @@ class ProductsService {
                     totalCount: [{ $match: query }, { $count: 'count' }],
                     products: [
                         { $skip: skip },
-                        { $limit: limit }
+                        { $limit: limit },
+                        ...((getcategory === '1' && (query['productCategory.category._id'] === '' || query['productCategory.category._id'] === undefined)) ? [product_config_1.productCategoryLookup,] : []),
+                        ...((getbrand === '1' && (query['brand._id'] === '' || query['brand._id'] === undefined)) ? [product_config_1.brandLookup, { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } }] : []),
                     ]
                 }
             },
@@ -86,6 +86,14 @@ class ProductsService {
                 }
             }
         ];
+        if (query['productCategory.category._id']) {
+            pipeline.push(product_config_1.productCategoryLookup);
+        }
+        if (query['brand._id']) {
+            pipeline.push(product_config_1.brandLookup);
+            pipeline.push({ $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } });
+        }
+        pipeline.push({ $match: query });
         pipeline.push(...facetPipeline);
         const retVal = await product_model_1.default.aggregate(pipeline).exec();
         const products = retVal[0]?.products || [];
@@ -257,88 +265,46 @@ class ProductsService {
             finalSort = defaultSort;
         }
         let pipeline = [
-            {
-                $match: query,
-            },
             { $sort: finalSort },
-            product_config_1.productLookup,
-            { $unwind: "$productDetails" },
         ];
-        if (getCountry === '1') {
-            pipeline.push(customer_config_1.countriesLookup, { $unwind: '$country' });
-        }
-        if (getCategory === '1') {
-            pipeline.push(...product_config_1.productCategoryLookupVariantWise);
-        }
-        if (getBrand === '1') {
-            pipeline.push(...product_config_1.brandLookupVariant);
-        }
-        if (getAttribute === '1') {
-            pipeline.push(...product_config_1.productVariantAttributesAdminLookup, product_config_1.addFieldsProductVariantAttributes);
-        }
-        if (getSpecification === '1') {
-            pipeline.push(...product_config_1.productSpecificationAdminLookup, product_config_1.addFieldsProductSpecification);
-        }
-        if (getProductGalleryImage === '1') {
-            pipeline.push(product_config_1.imageLookupVariantWise);
-        }
-        if (getGalleryImage === '1') {
-            pipeline.push(product_config_1.variantImageGalleryLookup);
-        }
-        // pipeline.push(
-        //     {
-        //         $project: {
-        //             _id: 1,
-        //             productId: 1,
-        //             countryId: 1,
-        //             variantSku: 1,
-        //             extraProductTitle: 1,
-        //             price: 1,
-        //             discountPrice: 1,
-        //             quantity: 1,
-        //             cartMinQuantity: 1,
-        //             cartMaxQuantity: 1,
-        //             hsn: 1,
-        //             mpn: 1,
-        //             barcode: 1,
-        //             isExcel: 1,
-        //             isDefault: 1,
-        //             status: 1,
-        //             productDetails: 1,
-        //             country: 1,
-        //             productVariantAttributes: 1,
-        //             productSpecification: 1,
-        //             variantImageGallery: 1,
-        //         }
-        //     });
-        const dataPipeline = [{ $match: {} }];
-        if (skip) {
-            dataPipeline.push({ $skip: skip });
-        }
-        if (limit) {
-            dataPipeline.push({ $limit: limit });
-        }
-        pipeline.push({
-            $facet: {
-                data: dataPipeline,
-                ...(isCount === 1 ? { totalCount: [{ $count: "totalCount" }] } : {}),
+        const facetPipeline = [
+            {
+                $facet: {
+                    totalCount: [{ $match: query }, { $count: 'count' }],
+                    products: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        ...product_config_1.brandLookupVariant,
+                        ...(getCountry === '1' ? [customer_config_1.countriesLookup, { $unwind: '$country' }] : []),
+                        ...((!query.$or && (0, products_1.hasProductTitleCondition)(query.$or) || (getBrand === '1' && (query['productDetails.brand'] === '' || query['productDetails.brand'] === undefined))) ?
+                            [product_config_1.productLookup, { $unwind: "$productDetails" }] : []),
+                        ...((getCategory === '1' && (query['productCategory.category._id'] === '' || query['productCategory.category._id'] === undefined)) ? product_config_1.productCategoryLookupVariantWise : []),
+                        ...(getAttribute === '1' ? [...product_config_1.productVariantAttributesAdminLookup, product_config_1.addFieldsProductVariantAttributes] : []),
+                        ...(getSpecification === '1' ? [...product_config_1.productSpecificationAdminLookup, product_config_1.addFieldsProductSpecification] : []),
+                        ...(getProductGalleryImage === '1' ? [product_config_1.imageLookupVariantWise] : []),
+                        ...(getGalleryImage === '1' ? [product_config_1.variantImageGalleryLookup] : []),
+                    ]
+                }
             },
-        }, (isCount === 1 ? {
-            $project: {
-                data: 1,
-                totalCount: { $arrayElemAt: ["$totalCount.totalCount", 0] }
-            }
-        } :
             {
                 $project: {
-                    data: 1,
+                    totalCount: 1,
+                    products: 1
                 }
-            }));
-        // pipeline.push(productLookup)
-        const outOfStockSKUs = await product_variants_model_1.default.aggregate(pipeline);
-        const products = outOfStockSKUs[0].data;
+            }
+        ];
+        if (query.$or && (0, products_1.hasProductTitleCondition)(query.$or) || query['productDetails.brand']) {
+            pipeline.push(...[product_config_1.productLookup, { $unwind: "$productDetails" },]);
+        }
+        if (query['productCategory.category._id']) {
+            pipeline.push(product_config_1.productCategoryLookupVariantWise);
+        }
+        pipeline.push({ $match: query });
+        pipeline.push(...facetPipeline);
+        const retVal = await product_variants_model_1.default.aggregate(pipeline);
+        const products = retVal[0].products;
         if (isCount == 1) {
-            const totalCount = outOfStockSKUs[0].totalCount;
+            const totalCount = retVal[0]?.totalCount?.[0]?.count || 0;
             return { products, totalCount };
         }
         else {

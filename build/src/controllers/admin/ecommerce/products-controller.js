@@ -50,7 +50,7 @@ class ProductsController extends base_controller_1.default {
     // }
     async findAll(req, res) {
         try {
-            const { page_size = 1, limit = 10, countryId } = req.query;
+            const { page_size = 1, limit = 10, countryId, getvariants = '1', getcategory = '1', getbrand = '1' } = req.query;
             const userData = await res.locals.user;
             var country;
             if (countryId) {
@@ -76,6 +76,9 @@ class ProductsController extends base_controller_1.default {
                     page: parseInt(page_size),
                     limit: parseInt(limit),
                     query: filterProducts.query,
+                    getvariants,
+                    getcategory,
+                    getbrand,
                     sort: filterProducts.sort
                 });
                 return controller.sendSuccessResponse(res, {
@@ -1525,9 +1528,9 @@ class ProductsController extends base_controller_1.default {
                         { 'productDetails.sku': keywordRegex },
                         { 'productDetails.slug': keywordRegex },
                         { 'productDetails.brand.slug': keywordRegex },
-                        { '.brandTitle': keywordRegex },
-                        { 'productDetails.productCategory.category.slug': keywordRegex },
-                        { 'productDetails.productCategory.category.categoryTitle': keywordRegex },
+                        { 'brand.brandTitle': keywordRegex },
+                        { 'productCategory.category.slug': keywordRegex },
+                        { 'productCategory.category.categoryTitle': keywordRegex },
                     ],
                     ...query
                 };
@@ -1535,13 +1538,13 @@ class ProductsController extends base_controller_1.default {
             if (categoryId) {
                 query = {
                     query,
-                    'productDetails.productCategory.category._id': new mongoose_1.default.Types.ObjectId(categoryId)
+                    'productCategory.category._id': new mongoose_1.default.Types.ObjectId(categoryId)
                 };
             }
             if (brandId) {
                 query = {
                     ...query,
-                    'productDetails.brand._id': new mongoose_1.default.Types.ObjectId(brandId)
+                    'productDetails.brand': new mongoose_1.default.Types.ObjectId(brandId)
                 };
             }
             if (fromDate || endDate) {
